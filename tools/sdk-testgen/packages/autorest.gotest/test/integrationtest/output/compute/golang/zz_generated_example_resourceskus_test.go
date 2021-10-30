@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -22,10 +21,8 @@ func ExampleResourceSKUsClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewResourceSKUsClient(con,
-		"<subscription-id>")
+	client := golang.NewResourceSKUsClient("<subscription-id>", cred, nil)
 	pager := client.List(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {

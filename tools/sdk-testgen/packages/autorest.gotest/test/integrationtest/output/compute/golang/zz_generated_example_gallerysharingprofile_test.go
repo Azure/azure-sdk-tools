@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGallerySharingProfileClient(con,
-		"<subscription-id>")
+	client := golang.NewGallerySharingProfileClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",

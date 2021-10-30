@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryApplicationVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -78,10 +75,8 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryApplicationVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -128,10 +123,8 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryApplicationVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -150,10 +143,8 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryApplicationVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -175,10 +166,8 @@ func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryApplicationVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	pager := client.ListByGalleryApplication("<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",

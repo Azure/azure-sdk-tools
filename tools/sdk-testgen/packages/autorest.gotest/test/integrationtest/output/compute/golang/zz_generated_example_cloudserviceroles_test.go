@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -22,10 +21,8 @@ func ExampleCloudServiceRolesClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRolesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRolesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<role-name>",
 		"<resource-group-name>",
@@ -43,10 +40,8 @@ func ExampleCloudServiceRolesClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRolesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRolesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
 		"<cloud-service-name>",
 		nil)

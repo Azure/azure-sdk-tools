@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -49,10 +46,8 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -70,10 +65,8 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	_, err = client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -90,10 +83,8 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	_, err = client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -110,10 +101,8 @@ func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	_, err = client.SimulateEviction(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -130,10 +119,8 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetVMsClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRunCommand(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",

@@ -25,10 +25,8 @@ func ExampleExtensionsClient_Create() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewExtensionsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Create(ctx,
 \\"<extension-id>\\",
 \\"<farm-beats-resource-name>\\",
@@ -46,10 +44,8 @@ func ExampleExtensionsClient_Get() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewExtensionsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Get(ctx,
 \\"<extension-id>\\",
 \\"<farm-beats-resource-name>\\",
@@ -67,10 +63,8 @@ func ExampleExtensionsClient_Update() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewExtensionsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Update(ctx,
 \\"<extension-id>\\",
 \\"<farm-beats-resource-name>\\",
@@ -88,10 +82,8 @@ func ExampleExtensionsClient_Delete() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewExtensionsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.Delete(ctx,
 \\"<extension-id>\\",
 \\"<farm-beats-resource-name>\\",
@@ -108,10 +100,8 @@ func ExampleExtensionsClient_ListByFarmBeats() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewExtensionsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
 nil)
@@ -149,9 +139,8 @@ func ExampleFarmBeatsExtensionsClient_List() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsExtensionsClient(con)
+	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
 	pager := client.List(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -169,9 +158,8 @@ func ExampleFarmBeatsExtensionsClient_Get() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsExtensionsClient(con)
+	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
 	res, err := client.Get(ctx,
 \\"<farm-beats-extension-id>\\",
 nil)
@@ -207,10 +195,8 @@ func ExampleFarmBeatsModelsClient_Get() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Get(ctx,
 \\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
@@ -227,10 +213,8 @@ func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.CreateOrUpdate(ctx,
 \\"<farm-beats-resource-name>\\",
 \\"<resource-group-name>\\",
@@ -256,10 +240,8 @@ func ExampleFarmBeatsModelsClient_Update() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Update(ctx,
 \\"<farm-beats-resource-name>\\",
 \\"<resource-group-name>\\",
@@ -282,10 +264,8 @@ func ExampleFarmBeatsModelsClient_Delete() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.Delete(ctx,
 \\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
@@ -301,10 +281,8 @@ func ExampleFarmBeatsModelsClient_ListBySubscription() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListBySubscription(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -322,10 +300,8 @@ func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewFarmBeatsModelsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByResourceGroup(\\"<resource-group-name>\\",
 nil)
 	for pager.NextPage(ctx) {
@@ -364,10 +340,8 @@ func ExampleLocationsClient_CheckNameAvailability() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewLocationsClient(con,
-\\"<subscription-id>\\")
+	client := armagfood.NewLocationsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"<name>\\"),
@@ -403,9 +377,8 @@ func ExampleOperationsClient_List() {
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := armagfood.NewOperationsClient(con)
+	client := armagfood.NewOperationsClient(cred, nil)
 	pager := client.List(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -442,10 +415,9 @@ import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 
 var (
 	ctx            context.Context
-	subscriptionId string
+    options        arm.ClientOptions
 	cred           azcore.TokenCredential
 	err            error
-	con            *arm.Connection
 	mockHost       string
 )
 
@@ -457,8 +429,7 @@ func TestExtensions_Create(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Create(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
@@ -479,8 +450,7 @@ func TestExtensions_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Get(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
@@ -501,8 +471,7 @@ func TestExtensions_Update(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Update(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
@@ -523,8 +492,7 @@ func TestExtensions_Delete(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.Delete(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
@@ -542,8 +510,7 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByFarmBeats(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
 &ExtensionsListByFarmBeatsOptions{})
@@ -567,7 +534,7 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsExtensionsClient(con)
+	client := NewFarmBeatsExtensionsClient(cred, &options)
 	pager := client.List(&FarmBeatsExtensionsListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -589,7 +556,7 @@ func TestFarmBeatsExtensions_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsExtensionsClient(con)
+	client := NewFarmBeatsExtensionsClient(cred, &options)
 	res, err := client.Get(ctx,
 \\"DTN.ContentServices\\",
 &FarmBeatsExtensionsGetOptions{})
@@ -608,8 +575,7 @@ func TestFarmBeatsModels_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Get(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
@@ -629,8 +595,7 @@ func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
@@ -659,8 +624,7 @@ func TestFarmBeatsModels_Update(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Update(ctx,
 \\"examples-farmBeatsResourceName\\",
 \\"examples-rg\\",
@@ -686,8 +650,7 @@ func TestFarmBeatsModels_Delete(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.Delete(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
@@ -704,8 +667,7 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListBySubscription(&FarmBeatsModelsListBySubscriptionOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -727,8 +689,7 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByResourceGroup(\\"examples-rg\\",
 &FarmBeatsModelsListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -751,8 +712,7 @@ func TestLocations_CheckNameAvailability(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewLocationsClient(con,
-\\"11111111-2222-3333-4444-555555555555\\")
+	client := NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.CheckNameAvailability(ctx,
 CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"existingaccountname\\"),
@@ -783,7 +743,7 @@ func TestOperations_List(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewOperationsClient(con)
+	client := NewOperationsClient(cred, &options)
 	pager := client.List(&OperationsListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -810,7 +770,6 @@ func getEnv(key, fallback string) string {
 
 func setUp() {
 	ctx = context.Background()
-	subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"00000000-0000-0000-0000-000000000000\\")
 	mockHost = getEnv(\\"AZURE_VIRTUAL_SERVER_HOST\\", \\"https://localhost:8443\\")
 
 	tr := &http.Transport{}
@@ -819,17 +778,27 @@ func setUp() {
 	}
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
-	cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{AuthorityHost: mockHost, HTTPClient: client})
+	
+    cred, err = azidentity.NewEnvironmentCredential(
+		&azidentity.EnvironmentCredentialOptions{
+			AuthorityHost: azidentity.AuthorityHost(mockHost), 
+			ClientOptions: azcore.ClientOptions{
+				Transport: client,
+			},
+		})
 	if err != nil {
 		panic(err)
 	}
 
-	con = arm.NewConnection(mockHost, cred, &arm.ConnectionOptions{
-		Logging: policy.LogOptions{
-			IncludeBody: true,
+	options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
 		},
-		HTTPClient: client,
-	})
+		Host: arm.Endpoint(mockHost),
+	}
 }
 
 func tearDown() {
@@ -891,8 +860,7 @@ func scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t *testing.T) {
 
     
 	// From step SignalR_checknameAvailability
-			signalRClient := armsignalr.NewSignalRClient(con,
-subscriptionId)
+			signalRClient := armsignalr.NewSignalRClient(subscriptionId)
 	{
 			_, err = signalRClient.CheckNameAvailability(ctx,
 location,

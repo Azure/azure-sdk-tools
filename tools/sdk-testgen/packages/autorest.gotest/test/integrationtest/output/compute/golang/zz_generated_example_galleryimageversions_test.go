@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -117,10 +114,8 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -166,10 +161,8 @@ func ExampleGalleryImageVersionsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -188,10 +181,8 @@ func ExampleGalleryImageVersionsClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -213,10 +204,8 @@ func ExampleGalleryImageVersionsClient_ListByGalleryImage() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	pager := client.ListByGalleryImage("<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-image-name>",

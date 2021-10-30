@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -23,10 +22,8 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -51,10 +48,8 @@ func ExampleProximityPlacementGroupsClient_Update() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	res, err := client.Update(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -78,10 +73,8 @@ func ExampleProximityPlacementGroupsClient_Delete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	_, err = client.Delete(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -97,10 +90,8 @@ func ExampleProximityPlacementGroupsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -117,10 +108,8 @@ func ExampleProximityPlacementGroupsClient_ListBySubscription() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	pager := client.ListBySubscription(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -138,10 +127,8 @@ func ExampleProximityPlacementGroupsClient_ListByResourceGroup() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewProximityPlacementGroupsClient(con,
-		"<subscription-id>")
+	client := golang.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
 	for pager.NextPage(ctx) {

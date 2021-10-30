@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -23,10 +22,8 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewAvailabilitySetsClient(con,
-		"<subscription-id>")
+	client := golang.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<availability-set-name>",
@@ -52,10 +49,8 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewAvailabilitySetsClient(con,
-		"<subscription-id>")
+	client := golang.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
 	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("<expand>")})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {

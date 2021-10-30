@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -24,10 +23,8 @@ func ExampleVirtualMachineScaleSetRollingUpgradesClient_BeginStartExtensionUpgra
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachineScaleSetRollingUpgradesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachineScaleSetRollingUpgradesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginStartExtensionUpgrade(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",

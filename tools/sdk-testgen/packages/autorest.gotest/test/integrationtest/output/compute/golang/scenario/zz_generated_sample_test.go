@@ -54,8 +54,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	}
 
 	// From step Create or Update a proximity placement group.
-	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(con,
-		subscriptionId)
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		proximityPlacementGroupsCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
 			resourceGroupName,
@@ -107,8 +106,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	}
 
 	// From step Create a vm with Host Encryption using encryptionAtHost property.
-	virtualMachinesClient := golang.NewVirtualMachinesClient(con,
-		subscriptionId)
+	virtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId)
 	{
 		fakeStepVar := "signalrswaggertest6"
 		virtualMachinesCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
@@ -178,8 +176,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 
 func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 	// From step Delete proximity placement group
-	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(con,
-		subscriptionId)
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		_, err = proximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
@@ -193,8 +190,7 @@ func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 
 func prepare() {
 	// From step Delete proximity placement group
-	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(con,
-		subscriptionId)
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		_, err = proximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,

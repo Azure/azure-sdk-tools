@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -22,10 +21,8 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceOperatingSystemsClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	res, err := client.GetOSVersion(ctx,
 		"<location>",
 		"<os-version-name>",
@@ -42,10 +39,8 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceOperatingSystemsClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	pager := client.ListOSVersions("<location>",
 		nil)
 	for pager.NextPage(ctx) {
@@ -64,10 +59,8 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceOperatingSystemsClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	res, err := client.GetOSFamily(ctx,
 		"<location>",
 		"<os-family-name>",
@@ -84,10 +77,8 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceOperatingSystemsClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	pager := client.ListOSFamilies("<location>",
 		nil)
 	for pager.NextPage(ctx) {

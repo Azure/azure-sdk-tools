@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -54,10 +51,8 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -84,10 +79,8 @@ func ExampleDiskAccessesClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -104,10 +97,8 @@ func ExampleDiskAccessesClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -127,10 +118,8 @@ func ExampleDiskAccessesClient_ListByResourceGroup() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
 	for pager.NextPage(ctx) {
@@ -149,10 +138,8 @@ func ExampleDiskAccessesClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	pager := client.List(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -170,10 +157,8 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	_, err = client.GetPrivateLinkResources(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -189,10 +174,8 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdateAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -222,10 +205,8 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	res, err := client.GetAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -243,10 +224,8 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDeleteAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
@@ -267,10 +246,8 @@ func ExampleDiskAccessesClient_ListPrivateEndpointConnections() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewDiskAccessesClient(con,
-		"<subscription-id>")
+	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	pager := client.ListPrivateEndpointConnections("<resource-group-name>",
 		"<disk-access-name>",
 		nil)

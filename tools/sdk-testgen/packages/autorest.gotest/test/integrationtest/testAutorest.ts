@@ -48,7 +48,7 @@ async function runAutorest(readmePath: string, extraOption: string[]) {
 function getExtraOption(outputFolder: string, lang: string) {
     let ret = [`--output-folder=${outputFolder}`];
     if (lang === 'golang') {
-        ret = ret.concat(['--use=@autorest/go@4.0.0-preview.28', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0']);
+        ret = ret.concat(['--use=@autorest/go@4.0.0-preview.31', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0']);
     }
     return ret;
 }

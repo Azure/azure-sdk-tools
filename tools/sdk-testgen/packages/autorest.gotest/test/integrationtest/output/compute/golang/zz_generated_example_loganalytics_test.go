@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleLogAnalyticsClient_BeginExportRequestRateByInterval() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewLogAnalyticsClient(con,
-		"<subscription-id>")
+	client := golang.NewLogAnalyticsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginExportRequestRateByInterval(ctx,
 		"<location>",
 		golang.RequestRateByIntervalInput{
@@ -56,10 +53,8 @@ func ExampleLogAnalyticsClient_BeginExportThrottledRequests() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewLogAnalyticsClient(con,
-		"<subscription-id>")
+	client := golang.NewLogAnalyticsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginExportThrottledRequests(ctx,
 		"<location>",
 		golang.ThrottledRequestsInput{

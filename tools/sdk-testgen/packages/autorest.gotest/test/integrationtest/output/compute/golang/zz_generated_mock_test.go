@@ -27,12 +27,11 @@ import (
 )
 
 var (
-	ctx            context.Context
-	subscriptionId string
-	cred           azcore.TokenCredential
-	err            error
-	con            *arm.Connection
-	mockHost       string
+	ctx      context.Context
+	options  arm.ClientOptions
+	cred     azcore.TokenCredential
+	err      error
+	mockHost string
 )
 
 func TestOperations_List(t *testing.T) {
@@ -46,8 +45,7 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewAvailabilitySetsClient(con,
-		"1")
+	client := NewAvailabilitySetsClient("1", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myAvailabilitySet",
@@ -88,8 +86,7 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewAvailabilitySetsClient(con,
-		"{subscriptionId}")
+	client := NewAvailabilitySetsClient("{subscriptionId}", cred, &options)
 	pager := client.ListBySubscription(&AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("virtualMachines\\$ref")})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -119,8 +116,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"$(resourceName)",
@@ -148,8 +144,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	res, err := client.Update(ctx,
 		"myResourceGroup",
 		"myProximityPlacementGroup",
@@ -176,8 +171,7 @@ func TestProximityPlacementGroups_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	_, err := client.Delete(ctx,
 		"myResourceGroup",
 		"$(resourceName)",
@@ -194,8 +188,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myProximityPlacementGroup",
@@ -215,8 +208,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	pager := client.ListBySubscription(&ProximityPlacementGroupsListBySubscriptionOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -238,8 +230,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewProximityPlacementGroupsClient(con,
-		"{subscription-id}")
+	client := NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&ProximityPlacementGroupsListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -262,8 +253,7 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDedicatedHostGroupsClient(con,
-		"{subscription-id}")
+	client := NewDedicatedHostGroupsClient("{subscription-id}", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -305,8 +295,7 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDedicatedHostGroupsClient(con,
-		"{subscriptionId}")
+	client := NewDedicatedHostGroupsClient("{subscriptionId}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -334,8 +323,7 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDedicatedHostsClient(con,
-		"{subscription-id}")
+	client := NewDedicatedHostsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -382,8 +370,7 @@ func TestDedicatedHosts_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDedicatedHostsClient(con,
-		"{subscriptionId}")
+	client := NewDedicatedHostsClient("{subscriptionId}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
@@ -416,8 +403,7 @@ func TestSshPublicKeys_Create(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSSHPublicKeysClient(con,
-		"{subscription-id}")
+	client := NewSSHPublicKeysClient("{subscription-id}", cred, &options)
 	res, err := client.Create(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
@@ -453,8 +439,7 @@ func TestSshPublicKeys_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSSHPublicKeysClient(con,
-		"{subscriptionId}")
+	client := NewSSHPublicKeysClient("{subscriptionId}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
@@ -474,8 +459,7 @@ func TestSshPublicKeys_GenerateKeyPair(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSSHPublicKeysClient(con,
-		"{subscription-id}")
+	client := NewSSHPublicKeysClient("{subscription-id}", cred, &options)
 	res, err := client.GenerateKeyPair(ctx,
 		"myResourceGroup",
 		"mySshPublicKeyName",
@@ -571,8 +555,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscriptionId}")
+	client := NewVirtualMachinesClient("{subscriptionId}", cred, &options)
 	pager := client.ListByLocation("eastus",
 		&VirtualMachinesListByLocationOptions{})
 	for pager.NextPage(ctx) {
@@ -599,8 +582,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2691,8 +2673,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2837,8 +2818,7 @@ func TestVirtualMachines_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2859,8 +2839,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2892,8 +2871,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	_, err := client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2927,8 +2905,7 @@ func TestVirtualMachines_Generalize(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	_, err := client.Generalize(ctx,
 		"myResourceGroup",
 		"myVMName",
@@ -2953,8 +2930,7 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	_, err := client.ListAvailableSizes(ctx,
 		"myResourceGroup",
 		"myVmName",
@@ -2975,8 +2951,7 @@ func TestVirtualMachines_Reapply(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginReapply(ctx,
 		"ResourceGroup",
 		"VMName",
@@ -3009,8 +2984,7 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginReimage(ctx,
 		"myResourceGroup",
 		"myVMName",
@@ -3034,8 +3008,7 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	_, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"VMName",
@@ -3056,8 +3029,7 @@ func TestVirtualMachines_SimulateEviction(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	_, err := client.SimulateEviction(ctx,
 		"ResourceGroup",
 		"VMName",
@@ -3074,8 +3046,7 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginAssessPatches(ctx,
 		"myResourceGroupName",
 		"myVMName",
@@ -3096,8 +3067,7 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginInstallPatches(ctx,
 		"myResourceGroupName",
 		"myVMName",
@@ -3128,8 +3098,7 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachinesClient(con,
-		"24fb23e3-6ba3-41f0-9b6e-e41131d5d61e")
+	client := NewVirtualMachinesClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, &options)
 	poller, err := client.BeginRunCommand(ctx,
 		"crptestar98131",
 		"vm3036",
@@ -3153,8 +3122,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	pager := client.ListByLocation("eastus",
 		&VirtualMachineScaleSetsListByLocationOptions{})
 	for pager.NextPage(ctx) {
@@ -3177,8 +3145,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -5173,8 +5140,7 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -5195,8 +5161,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -5304,8 +5269,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewImagesClient(con,
-		"{subscription-id}")
+	client := NewImagesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -5685,8 +5649,7 @@ func TestImages_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewImagesClient(con,
-		"{subscription-id}")
+	client := NewImagesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -5727,8 +5690,7 @@ func TestImages_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewImagesClient(con,
-		"{subscription-id}")
+	client := NewImagesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -5748,8 +5710,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewImagesClient(con,
-		"{subscription-id}")
+	client := NewImagesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&ImagesListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -5772,8 +5733,7 @@ func TestImages_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewImagesClient(con,
-		"{subscription-id}")
+	client := NewImagesClient("{subscription-id}", cred, &options)
 	pager := client.List(&ImagesListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -5795,8 +5755,7 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointCollectionsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myRpc",
@@ -5837,8 +5796,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointCollectionsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myRpc",
@@ -5870,8 +5828,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointCollectionsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	pager := client.List("myResourceGroup",
 		&RestorePointCollectionsListOptions{})
 	for pager.NextPage(ctx) {
@@ -5894,8 +5851,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointCollectionsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	pager := client.ListAll(&RestorePointCollectionsListAllOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -5917,8 +5873,7 @@ func TestRestorePoints_Create(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreate(ctx,
 		"myResourceGroup",
 		"rpcName",
@@ -5953,8 +5908,7 @@ func TestRestorePoints_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewRestorePointsClient(con,
-		"{subscription-id}")
+	client := NewRestorePointsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
@@ -6003,8 +5957,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetRollingUpgradesClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetRollingUpgradesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginStartExtensionUpgrade(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6029,8 +5982,7 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMExtensionsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6090,8 +6042,7 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMExtensionsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6128,8 +6079,7 @@ func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMExtensionsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6152,8 +6102,7 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMExtensionsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6175,8 +6124,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMExtensionsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
 	_, err := client.List(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6210,8 +6158,7 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6233,8 +6180,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6255,8 +6201,7 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	_, err := client.GetInstanceView(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -6294,8 +6239,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	_, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"myvmScaleSet",
@@ -6317,8 +6261,7 @@ func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	_, err := client.SimulateEviction(ctx,
 		"ResourceGroup",
 		"VmScaleSetName",
@@ -6336,8 +6279,7 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginRunCommand(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -6364,8 +6306,7 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewLogAnalyticsClient(con,
-		"{subscription-id}")
+	client := NewLogAnalyticsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginExportRequestRateByInterval(ctx,
 		"westus",
 		RequestRateByIntervalInput{
@@ -6394,8 +6335,7 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewLogAnalyticsClient(con,
-		"{subscription-id}")
+	client := NewLogAnalyticsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginExportThrottledRequests(ctx,
 		"westus",
 		ThrottledRequestsInput{
@@ -6426,8 +6366,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"subid")
+	client := NewVirtualMachineRunCommandsClient("subid", cred, &options)
 	pager := client.List("SoutheastAsia",
 		&VirtualMachineRunCommandsListOptions{})
 	for pager.NextPage(ctx) {
@@ -6450,8 +6389,7 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"24fb23e3-6ba3-41f0-9b6e-e41131d5d61e")
+	client := NewVirtualMachineRunCommandsClient("24fb23e3-6ba3-41f0-9b6e-e41131d5d61e", cred, &options)
 	res, err := client.Get(ctx,
 		"SoutheastAsia",
 		"RunPowerShellScript",
@@ -6471,8 +6409,7 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -6520,8 +6457,7 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -6553,8 +6489,7 @@ func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -6576,8 +6511,7 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	res, err := client.GetByVirtualMachine(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -6598,8 +6532,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	pager := client.ListByVirtualMachine("myResourceGroup",
 		"myVM",
 		&VirtualMachineRunCommandsListByVirtualMachineOptions{})
@@ -6623,8 +6556,7 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6673,8 +6605,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6707,8 +6638,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6731,8 +6661,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
@@ -6754,8 +6683,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewVirtualMachineScaleSetVMRunCommandsClient(con,
-		"{subscription-id}")
+	client := NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, &options)
 	pager := client.List("myResourceGroup",
 		"myvmScaleSet",
 		"0",
@@ -6780,8 +6708,7 @@ func TestResourceSkus_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewResourceSKUsClient(con,
-		"{subscription-id}")
+	client := NewResourceSKUsClient("{subscription-id}", cred, &options)
 	pager := client.List(&ResourceSKUsListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -6805,8 +6732,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDisksClient(con,
-		"{subscription-id}")
+	client := NewDisksClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -7191,8 +7117,7 @@ func TestDisks_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDisksClient(con,
-		"{subscription-id}")
+	client := NewDisksClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -7332,8 +7257,7 @@ func TestDisks_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDisksClient(con,
-		"{subscription-id}")
+	client := NewDisksClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myManagedDisk",
@@ -7357,8 +7281,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDisksClient(con,
-		"{subscription-id}")
+	client := NewDisksClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&DisksListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -7381,8 +7304,7 @@ func TestDisks_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDisksClient(con,
-		"{subscription-id}")
+	client := NewDisksClient("{subscription-id}", cred, &options)
 	pager := client.List(&DisksListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -7412,8 +7334,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSnapshotsClient(con,
-		"{subscription-id}")
+	client := NewSnapshotsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot1",
@@ -7507,8 +7428,7 @@ func TestSnapshots_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSnapshotsClient(con,
-		"{subscription-id}")
+	client := NewSnapshotsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"mySnapshot",
@@ -7532,8 +7452,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSnapshotsClient(con,
-		"{subscription-id}")
+	client := NewSnapshotsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&SnapshotsListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -7556,8 +7475,7 @@ func TestSnapshots_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSnapshotsClient(con,
-		"{subscription-id}")
+	client := NewSnapshotsClient("{subscription-id}", cred, &options)
 	pager := client.List(&SnapshotsListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -7587,8 +7505,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7659,8 +7576,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7755,8 +7671,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7776,8 +7691,7 @@ func TestDiskEncryptionSets_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7798,8 +7712,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&DiskEncryptionSetsListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -7822,8 +7735,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	pager := client.List(&DiskEncryptionSetsListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -7845,8 +7757,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskEncryptionSetsClient(con,
-		"{subscription-id}")
+	client := NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	pager := client.ListAssociatedResources("myResourceGroup",
 		"myDiskEncryptionSet",
 		&DiskEncryptionSetsListAssociatedResourcesOptions{})
@@ -7864,8 +7775,7 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -7894,8 +7804,7 @@ func TestDiskAccesses_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -7925,8 +7834,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -7958,8 +7866,7 @@ func TestDiskAccesses_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -7980,8 +7887,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&DiskAccessesListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -8004,8 +7910,7 @@ func TestDiskAccesses_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	pager := client.List(&DiskAccessesListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -8027,8 +7932,7 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	_, err := client.GetPrivateLinkResources(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -8045,8 +7949,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdateAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -8079,8 +7982,7 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	res, err := client.GetAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -8101,8 +8003,7 @@ func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDeleteAPrivateEndpointConnection(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -8124,8 +8025,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskAccessesClient(con,
-		"{subscription-id}")
+	client := NewDiskAccessesClient("{subscription-id}", cred, &options)
 	pager := client.ListPrivateEndpointConnections("myResourceGroup",
 		"myDiskAccess",
 		&DiskAccessesListPrivateEndpointConnectionsOptions{})
@@ -8149,8 +8049,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskRestorePointClient(con,
-		"{subscription-id}")
+	client := NewDiskRestorePointClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"rpc",
@@ -8172,8 +8071,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewDiskRestorePointClient(con,
-		"{subscription-id}")
+	client := NewDiskRestorePointClient("{subscription-id}", cred, &options)
 	pager := client.ListByRestorePoint("myResourceGroup",
 		"rpc",
 		"vmrp",
@@ -8198,8 +8096,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8258,8 +8155,7 @@ func TestGalleries_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8288,8 +8184,7 @@ func TestGalleries_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8321,8 +8216,7 @@ func TestGalleries_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8343,8 +8237,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		&GalleriesListByResourceGroupOptions{})
 	for pager.NextPage(ctx) {
@@ -8367,8 +8260,7 @@ func TestGalleries_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleriesClient(con,
-		"{subscription-id}")
+	client := NewGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.List(&GalleriesListOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -8390,8 +8282,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewGalleryImagesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8431,8 +8322,7 @@ func TestGalleryImages_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewGalleryImagesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8469,8 +8359,7 @@ func TestGalleryImages_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewGalleryImagesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8491,8 +8380,7 @@ func TestGalleryImages_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewGalleryImagesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8514,8 +8402,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewGalleryImagesClient("{subscription-id}", cred, &options)
 	pager := client.ListByGallery("myResourceGroup",
 		"myGalleryName",
 		&GalleryImagesListByGalleryOptions{})
@@ -8539,8 +8426,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9049,8 +8935,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9136,8 +9021,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9201,8 +9085,7 @@ func TestGalleryImageVersions_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9225,8 +9108,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	pager := client.ListByGalleryImage("myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
@@ -9251,8 +9133,7 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9289,8 +9170,7 @@ func TestGalleryApplications_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9324,8 +9204,7 @@ func TestGalleryApplications_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9346,8 +9225,7 @@ func TestGalleryApplications_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9369,8 +9247,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationsClient("{subscription-id}", cred, &options)
 	pager := client.ListByGallery("myResourceGroup",
 		"myGalleryName",
 		&GalleryApplicationsListByGalleryOptions{})
@@ -9394,8 +9271,7 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9448,8 +9324,7 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9499,8 +9374,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9536,8 +9410,7 @@ func TestGalleryApplicationVersions_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9560,8 +9433,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGalleryApplicationVersionsClient(con,
-		"{subscription-id}")
+	client := NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	pager := client.ListByGalleryApplication("myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
@@ -9586,8 +9458,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewGallerySharingProfileClient(con,
-		"{subscription-id}")
+	client := NewGallerySharingProfileClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9639,8 +9510,7 @@ func TestSharedGalleries_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleriesClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
 		&SharedGalleriesListOptions{})
 	for pager.NextPage(ctx) {
@@ -9657,8 +9527,7 @@ func TestSharedGalleries_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleriesClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleriesClient("{subscription-id}", cred, &options)
 	_, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
@@ -9675,8 +9544,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
 		"galleryUniqueName",
 		&SharedGalleryImagesListOptions{})
@@ -9694,8 +9562,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleryImagesClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
 	_, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
@@ -9713,8 +9580,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
@@ -9733,8 +9599,7 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewSharedGalleryImageVersionsClient(con,
-		"{subscription-id}")
+	client := NewSharedGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	_, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
@@ -9753,8 +9618,7 @@ func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9776,8 +9640,7 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9798,8 +9661,7 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	_, err := client.GetInstanceView(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9817,8 +9679,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	pager := client.List("ConstosoRG",
 		"{cs-name}",
 		&CloudServiceRoleInstancesListOptions{})
@@ -9842,8 +9703,7 @@ func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginRestart(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9865,8 +9725,7 @@ func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginReimage(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9888,8 +9747,7 @@ func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRoleInstancesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginRebuild(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
@@ -9915,8 +9773,7 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRolesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRolesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"{role-name}",
 		"ConstosoRG",
@@ -9937,8 +9794,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceRolesClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceRolesClient("{subscription-id}", cred, &options)
 	pager := client.List("ConstosoRG",
 		"{cs-name}",
 		&CloudServiceRolesListOptions{})
@@ -9962,8 +9818,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10213,8 +10068,7 @@ func TestCloudServices_Update(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10243,8 +10097,7 @@ func TestCloudServices_Delete(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDelete(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10265,8 +10118,7 @@ func TestCloudServices_Get(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	res, err := client.Get(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10286,8 +10138,7 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	_, err := client.GetInstanceView(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10304,8 +10155,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	pager := client.ListAll(&CloudServicesListAllOptions{})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -10327,8 +10177,7 @@ func TestCloudServices_List(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	pager := client.List("ConstosoRG",
 		&CloudServicesListOptions{})
 	for pager.NextPage(ctx) {
@@ -10351,8 +10200,7 @@ func TestCloudServices_Start(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginStart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10373,8 +10221,7 @@ func TestCloudServices_PowerOff(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginPowerOff(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10395,8 +10242,7 @@ func TestCloudServices_Restart(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginRestart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10422,8 +10268,7 @@ func TestCloudServices_Reimage(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginReimage(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10449,8 +10294,7 @@ func TestCloudServices_Rebuild(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginRebuild(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10476,8 +10320,7 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginDeleteInstances(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10503,8 +10346,7 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesUpdateDomainClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
 	poller, err := client.BeginWalkUpdateDomain(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10526,8 +10368,7 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesUpdateDomainClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
 	res, err := client.GetUpdateDomain(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -10548,8 +10389,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServicesUpdateDomainClient(con,
-		"{subscription-id}")
+	client := NewCloudServicesUpdateDomainClient("{subscription-id}", cred, &options)
 	pager := client.ListUpdateDomains("ConstosoRG",
 		"{cs-name}",
 		&CloudServicesUpdateDomainListUpdateDomainsOptions{})
@@ -10573,8 +10413,7 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceOperatingSystemsClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	res, err := client.GetOSVersion(ctx,
 		"westus2",
 		"WA-GUEST-OS-3.90_202010-02",
@@ -10594,8 +10433,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceOperatingSystemsClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	pager := client.ListOSVersions("westus2",
 		&CloudServiceOperatingSystemsListOSVersionsOptions{})
 	for pager.NextPage(ctx) {
@@ -10618,8 +10456,7 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceOperatingSystemsClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	res, err := client.GetOSFamily(ctx,
 		"westus2",
 		"3",
@@ -10639,8 +10476,7 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := NewCloudServiceOperatingSystemsClient(con,
-		"{subscription-id}")
+	client := NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	pager := client.ListOSFamilies("westus2",
 		&CloudServiceOperatingSystemsListOSFamiliesOptions{})
 	for pager.NextPage(ctx) {
@@ -10673,7 +10509,6 @@ func getEnv(key, fallback string) string {
 
 func setUp() {
 	ctx = context.Background()
-	subscriptionId = getEnv("SUBSCRIPTION_ID", "00000000-0000-0000-0000-000000000000")
 	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
 
 	tr := &http.Transport{}
@@ -10682,17 +10517,27 @@ func setUp() {
 	}
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
-	cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{AuthorityHost: mockHost, HTTPClient: client})
+
+	cred, err = azidentity.NewEnvironmentCredential(
+		&azidentity.EnvironmentCredentialOptions{
+			AuthorityHost: azidentity.AuthorityHost(mockHost),
+			ClientOptions: azcore.ClientOptions{
+				Transport: client,
+			},
+		})
 	if err != nil {
 		panic(err)
 	}
 
-	con = arm.NewConnection(mockHost, cred, &arm.ConnectionOptions{
-		Logging: policy.LogOptions{
-			IncludeBody: true,
+	options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
 		},
-		HTTPClient: client,
-	})
+		Host: arm.Endpoint(mockHost),
+	}
 }
 
 func tearDown() {

@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -24,10 +23,8 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesUpdateDomainClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginWalkUpdateDomain(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -48,10 +45,8 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesUpdateDomainClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	res, err := client.GetUpdateDomain(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -69,10 +64,8 @@ func ExampleCloudServicesUpdateDomainClient_ListUpdateDomains() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesUpdateDomainClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	pager := client.ListUpdateDomains("<resource-group-name>",
 		"<cloud-service-name>",
 		nil)

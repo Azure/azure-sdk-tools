@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -24,10 +23,8 @@ func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
@@ -48,10 +45,8 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
@@ -69,10 +64,8 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	_, err = client.GetInstanceView(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
@@ -89,10 +82,8 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
 		"<cloud-service-name>",
 		nil)
@@ -112,10 +103,8 @@ func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRestart(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
@@ -136,10 +125,8 @@ func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReimage(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
@@ -160,10 +147,8 @@ func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServiceRoleInstancesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRebuild(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",

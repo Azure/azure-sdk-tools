@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleVirtualMachinesClient_ListByLocation() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	pager := client.ListByLocation("<location>",
 		nil)
 	for pager.NextPage(ctx) {
@@ -47,10 +44,8 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -119,10 +114,8 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -195,10 +188,8 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -218,10 +209,8 @@ func ExampleVirtualMachinesClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -238,10 +227,8 @@ func ExampleVirtualMachinesClient_InstanceView() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	_, err = client.InstanceView(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -257,10 +244,8 @@ func ExampleVirtualMachinesClient_Generalize() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	_, err = client.Generalize(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -276,10 +261,8 @@ func ExampleVirtualMachinesClient_ListAvailableSizes() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	_, err = client.ListAvailableSizes(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -295,10 +278,8 @@ func ExampleVirtualMachinesClient_BeginReapply() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReapply(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -318,10 +299,8 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -344,10 +323,8 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	_, err = client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -363,10 +340,8 @@ func ExampleVirtualMachinesClient_SimulateEviction() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	_, err = client.SimulateEviction(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -382,10 +357,8 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginAssessPatches(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -405,10 +378,8 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginInstallPatches(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -438,10 +409,8 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewVirtualMachinesClient(con,
-		"<subscription-id>")
+	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRunCommand(ctx,
 		"<resource-group-name>",
 		"<vm-name>",

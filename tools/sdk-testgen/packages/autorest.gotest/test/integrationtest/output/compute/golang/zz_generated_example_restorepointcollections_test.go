@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -23,10 +22,8 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewRestorePointCollectionsClient(con,
-		"<subscription-id>")
+	client := golang.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -56,10 +53,8 @@ func ExampleRestorePointCollectionsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewRestorePointCollectionsClient(con,
-		"<subscription-id>")
+	client := golang.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -76,10 +71,8 @@ func ExampleRestorePointCollectionsClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewRestorePointCollectionsClient(con,
-		"<subscription-id>")
+	client := golang.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
 		nil)
 	for pager.NextPage(ctx) {
@@ -98,10 +91,8 @@ func ExampleRestorePointCollectionsClient_ListAll() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewRestorePointCollectionsClient(con,
-		"<subscription-id>")
+	client := golang.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
 	pager := client.ListAll(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {

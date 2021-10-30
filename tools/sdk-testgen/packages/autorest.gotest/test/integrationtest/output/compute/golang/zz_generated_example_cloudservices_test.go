@@ -14,7 +14,6 @@ import (
 
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
@@ -25,10 +24,8 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -93,10 +90,8 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -122,10 +117,8 @@ func ExampleCloudServicesClient_BeginDelete() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -145,10 +138,8 @@ func ExampleCloudServicesClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -165,10 +156,8 @@ func ExampleCloudServicesClient_GetInstanceView() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	_, err = client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -184,10 +173,8 @@ func ExampleCloudServicesClient_ListAll() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	pager := client.ListAll(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
@@ -205,10 +192,8 @@ func ExampleCloudServicesClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
 		nil)
 	for pager.NextPage(ctx) {
@@ -227,10 +212,8 @@ func ExampleCloudServicesClient_BeginStart() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginStart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -250,10 +233,8 @@ func ExampleCloudServicesClient_BeginPowerOff() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginPowerOff(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -273,10 +254,8 @@ func ExampleCloudServicesClient_BeginRestart() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRestart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -301,10 +280,8 @@ func ExampleCloudServicesClient_BeginReimage() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -329,10 +306,8 @@ func ExampleCloudServicesClient_BeginRebuild() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRebuild(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -357,10 +332,8 @@ func ExampleCloudServicesClient_BeginDeleteInstances() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewCloudServicesClient(con,
-		"<subscription-id>")
+	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDeleteInstances(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",

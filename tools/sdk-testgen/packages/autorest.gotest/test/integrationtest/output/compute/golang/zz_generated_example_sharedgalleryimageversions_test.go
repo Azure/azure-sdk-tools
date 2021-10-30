@@ -12,7 +12,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
@@ -22,10 +21,8 @@ func ExampleSharedGalleryImageVersionsClient_List() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewSharedGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewSharedGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	pager := client.List("<location>",
 		"<gallery-unique-name>",
 		"<gallery-image-name>",
@@ -43,10 +40,8 @@ func ExampleSharedGalleryImageVersionsClient_Get() {
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := golang.NewSharedGalleryImageVersionsClient(con,
-		"<subscription-id>")
+	client := golang.NewSharedGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	_, err = client.Get(ctx,
 		"<location>",
 		"<gallery-unique-name>",

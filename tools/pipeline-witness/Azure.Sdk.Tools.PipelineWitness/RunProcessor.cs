@@ -30,6 +30,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.vssConnection = vssConnection ?? throw new ArgumentNullException(nameof(vssConnection));
         }
 
+        private const string Account = "azure-sdk";
         private readonly IFailureAnalyzer failureAnalyzer;
         private readonly ILogger<RunProcessor> logger;
         private readonly CosmosClient cosmosClient;
@@ -41,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             // We want to throw if we start getting messages from other Azure DevOps
             // organizations since currently Pipeline Witness is designed to only work
             // against our instance.
-            return uri.Host == "dev.azure.com" && uri.PathAndQuery.StartsWith("/azure-sdk/");
+            return uri.Host == "dev.azure.com" && uri.PathAndQuery.StartsWith($"/{Account}/");
         }
 
         public async Task ProcessRunAsync(Uri runUri)
@@ -141,7 +142,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var container = await GetItemContainerAsync("azure-pipelines-runs");
             await container.UpsertItemAsync(run);
 
-            await this.blobUploadProcessor.UploadLogBlobsAsync(build);
+            await this.blobUploadProcessor.UploadBuildBlobsAsync(Account, build, timeline);
         }
 
         public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)

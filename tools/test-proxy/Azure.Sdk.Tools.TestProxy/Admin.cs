@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new string[]{}, documentBody:body);
         }
 
-        public object GenerateInstance(string typePrefix, string name, string[] acceptableEmptyArgs, JsonDocument documentBody = null)
+        private object GenerateInstance(string typePrefix, string name, string[] acceptableEmptyArgs, JsonDocument documentBody = null)
         {
             try
             {

@@ -7,11 +7,10 @@ import { formatParameterTypeName, getFinalResponseEnvelopeName, getMethodParamet
 import { values } from '@azure-tools/linq';
 
 // homo structureed with getAPIParametersSig() in autorest.go
-export function getAPIParametersSig(op: any): Array<[string, string, Parameter | GroupProperty]> {
+export function getAPIParametersSig(op: Operation): Array<[string, string, Parameter]> {
     const methodParams = getMethodParameters(op);
-    const params = new Array<[string, string, Parameter | GroupProperty]>();
+    const params = new Array<[string, string, Parameter]>();
     if (!isPageableOperation(op) || isLROOperation(op)) {
-        // imports.add('context')       // comment out since has been envolved in .njk
         params.push(['ctx', 'context.Context', undefined]);
     }
     for (const methodParam of values(methodParams)) {
@@ -20,11 +19,8 @@ export function getAPIParametersSig(op: any): Array<[string, string, Parameter |
     return params;
 }
 
-// homo structured with logic in generateOperations() in autorest.go
-export function getClientParametersSig(group: OperationGroup): Array<[string, string, Parameter | GroupProperty]> {
+export function getClientParametersSig(group: OperationGroup): Array<[string, string, Parameter]> {
     const params = [];
-    // imports.add('armcore')       // comment out since has been envolved in .njk
-    params.push(['con', '*arm.Connection']);
 
     for (const parameter of values((group.language.go?.clientParams || []) as Parameter[])) {
         params.push([parameter.language.go.name, formatParameterTypeName(parameter), parameter]);

@@ -10,7 +10,6 @@ import (
 	"log"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"{{packagePath}}"
 )
@@ -25,9 +24,8 @@ func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
-	con := arm.NewDefaultConnection(cred, nil)
 	ctx := context.Background()
-	client := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutputForExample}})
+	client := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutputForExample + ", " if example.clientParametersOutputForExample else ""}}cred, nil)
 
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}

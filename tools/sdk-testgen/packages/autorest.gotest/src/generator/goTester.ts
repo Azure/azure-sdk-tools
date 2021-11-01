@@ -6,7 +6,7 @@
 import * as _ from 'lodash';
 import * as path from 'path';
 import { ArraySchema, ChoiceSchema, DateTimeSchema, DictionarySchema, GroupProperty, Metadata, ObjectSchema, Parameter, Schema, SchemaType } from '@autorest/codemodel';
-import { Config, TargetMode } from '../common/constant';
+import { Config, TargetMode, variableDefaults } from '../common/constant';
 import {
     ExampleModel,
     ExampleParameter,
@@ -84,24 +84,27 @@ class GoExampleModel extends ExampleModel {
 export class GoTestGenerator extends TestGenerator {
     importManager: ImportManager;
     definedVariables: Record<string, string> = {};
-    filePrefix: string;
 
     public constructor(public host: Host, public codeModel: TestCodeModel, public testConfig: TestConfig) {
         super(host, codeModel, testConfig);
-        this.filePrefix = this.testConfig.getValue(Config.filePrefix, '');
-        if (this.filePrefix.length > 0 && this.filePrefix[this.filePrefix.length - 1] !== '_') {
-            this.filePrefix += '_';
+    }
+
+    private getFilePrefix(configName: string) {
+        let filePrefix = this.testConfig.getValue(configName, variableDefaults[configName]);
+        if (filePrefix.length > 0 && filePrefix[filePrefix.length - 1] !== '_') {
+            filePrefix += '_';
         }
+        return filePrefix;
     }
 
     public getMockTestFilename() {
-        return `${this.filePrefix}mock_test.go`;
+        return `${this.getFilePrefix(Config.testFilePrefix)}mock_test.go`;
     }
 
     public getScenarioTestFilename(testDef: TestDefinitionModel): string {
         const file = path.basename(testDef._filePath);
         const filename = file.split('.').slice(0, -1).join('.');
-        return `scenario/${this.filePrefix}${filename}_test.go`;
+        return `scenario/${this.getFilePrefix(Config.testFilePrefix)}${filename}_test.go`;
     }
 
     public getLanguageName(meta: any): string {
@@ -352,7 +355,7 @@ export class GoTestGenerator extends TestGenerator {
             const tmplPath = path.relative(process.cwd(), path.join(`${__dirname}`, `../../src/template/${templateFile}`));
             const packageName: string = this.codeModel.language.go.packageName;
             this.writeToHost(
-                `${this.filePrefix}example_${groupKey}_test.go`.toLowerCase(),
+                `${this.getFilePrefix(Config.exampleFilePrefix)}example_${groupKey}_test.go`.toLowerCase(),
                 this.render(tmplPath, {
                     exampleGroups: exampleGroups,
                     packageName: packageName,

@@ -7,7 +7,14 @@ export enum Config {
     outputFolder = 'output-folder',
     module = 'module',
     filePrefix = 'file-prefix',
+    exampleFilePrefix = 'example-file-prefix',
+    testFilePrefix = 'test-file-prefix',
 }
+
+export const variableDefaults = {
+    [Config.exampleFilePrefix]: 'ze_generated_',
+    [Config.testFilePrefix]: 'zt_generated_',
+};
 
 export enum TargetMode {
     mockTest = 'MOCK-TEST',

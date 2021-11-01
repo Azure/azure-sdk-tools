@@ -1,0 +1,17 @@
+{
+  "name": "@autorest/gotest",
+  "entries": [
+    {
+      "version": "1.0.0",
+      "tag": "@autorest/gotest_v1.0.0",
+      "date": "Mon, 01 Nov 2021 09:01:05 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Init public version of autorest extension for GO test generation"
+          }
+        ]
+      }
+    }
+  ]
+}

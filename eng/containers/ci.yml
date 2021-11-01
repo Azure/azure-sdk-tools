@@ -28,6 +28,13 @@ parameters:
     dockerFile: 'tools/stress-cluster/services/Stress.Watcher/Dockerfile'
     stableTags:
     - 'latest'
+  - name: stress_common_tools
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'engsys/eng-common-tools'
+    prepareScript: tools/stress-cluster/prepare.ps1
+    dockerFile: 'tools/stress-cluster/Dockerfile'
+    stableTags:
+    - 'latest'
 
 trigger:
   branches:
@@ -39,6 +46,7 @@ trigger:
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/Dockerfile
+    - tools/stress-cluster/Dockerfile
 
 pr:
   branches:
@@ -50,6 +58,7 @@ pr:
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/Dockerfile
+    - tools/stress-cluster/Dockerfile
 
 variables:
   - name: containerRegistry

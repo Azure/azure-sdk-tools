@@ -3,14 +3,15 @@
   # Please use 'testing' for the image repo name when testing
   # e.g. azsdkengsys.azurecr.io/testing/eng-common-tools
   image: azsdkengsys.azurecr.io/engsys/eng-common-tools
-  command: 
+  command:
     - 'pwsh'
     - '-NonInteractive'
     - '-NoProfile'
     - '-c'
     - './common/TestResources/deploy-stress-test-resources.ps1'
+    - '-TemplateParametersPath'
     - '/mnt/testresources/parameters.json'
-
+    
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env

@@ -2,7 +2,7 @@
 
 exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
 Object {
-  "example_extensions_test.go": "//go:build go1.16
+  "ze_generated_example_extensions_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -14,7 +14,6 @@ import (
 	\\"log\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
@@ -116,7 +115,7 @@ nil)
 }
 
 ",
-  "example_farmbeatsextensions_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsextensions_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -128,7 +127,6 @@ import (
 	\\"log\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
@@ -170,7 +168,7 @@ nil)
 }
 
 ",
-  "example_farmbeatsmodels_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsmodels_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -182,7 +180,6 @@ import (
 	\\"log\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
@@ -315,7 +312,7 @@ nil)
 }
 
 ",
-  "example_locations_test.go": "//go:build go1.16
+  "ze_generated_example_locations_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -327,7 +324,6 @@ import (
 	\\"log\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
@@ -354,7 +350,7 @@ nil)
 }
 
 ",
-  "example_operations_test.go": "//go:build go1.16
+  "ze_generated_example_operations_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -366,7 +362,6 @@ import (
 	\\"log\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
@@ -388,7 +383,7 @@ func ExampleOperationsClient_List() {
 }
 
 ",
-  "mock_test.go": "//go:build go1.16
+  "zt_generated_mock_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -810,7 +805,7 @@ func tearDown() {
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "scenario/signalR_test.go": "//go:build go1.16
+  "scenario/zt_generated_signalR_test.go": "//go:build go1.16
 // +build go1.16
 
 

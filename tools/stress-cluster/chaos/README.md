@@ -143,6 +143,8 @@ The usage of helm charts allows for two primary scenarios:
 - Stress tests can easily take dependencies on core configuration and templates required to interact with the cluster
 - Stress tests can easily be deployed and removed via the `helm` command line tool.
 
+**To quickly bootstrap a stress test package configuration, see the [stress test generator](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/generator/README.md)**
+
 ### Layout
 
 The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):

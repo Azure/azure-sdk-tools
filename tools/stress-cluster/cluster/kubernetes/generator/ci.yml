@@ -1,0 +1,22 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/stress-cluster/cluster/kubernetes/generator
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/stress-cluster/cluster/kubernetes/generator
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/stress-cluster/cluster/kubernetes/generator
+    DotNetCoreVersion: 5.0.301

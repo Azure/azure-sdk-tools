@@ -1,3 +1,4 @@
+from typing import OrderedDict
 import re
 import inspect
 import logging
@@ -27,8 +28,8 @@ class DocstringParser:
     """
 
     def __init__(self, docstring):
-        self.pos_args = []
-        self.kw_args = []
+        self.pos_args = OrderedDict()
+        self.kw_args = OrderedDict()
         self.ret_type = None
         self.docstring = docstring
 
@@ -102,8 +103,8 @@ class DocstringParser:
             logging.error("Docstring is empty to parse")
             return
 
-        self.pos_args = self.find_args("param")
-        self.kw_args = self.find_args("keyword")
+        self.pos_args = { x.argname: x for x in self.find_args("param") }
+        self.kw_args = { x.argname: x for x in self.find_args("keyword") }
         self.ret_type = self.find_return_type()
 
 

@@ -1,5 +1,6 @@
 import logging
 import inspect
+from typing import OrderedDict
 import astroid
 import operator
 import re
@@ -52,7 +53,7 @@ class FunctionNode(NodeEntityBase):
     def __init__(self, namespace, parent_node, obj, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         self.annotations = []
-        self.args = []
+        self.args = OrderedDict()
         self.return_type = None
         self.namespace_id = self.generate_id()
         # Set name space level ID as full name
@@ -108,14 +109,14 @@ class FunctionNode(NodeEntityBase):
         """
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args.append(ArgType("cls"))
+            self.args["cls"] = ArgType("cls")
 
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
         params = sig.parameters
         # Add all keyword only args here temporarily until docstring is parsed
         # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
-        self.kw_args = []
+        self.kw_args = OrderedDict()
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
             # set default value if available
@@ -126,9 +127,9 @@ class FunctionNode(NodeEntityBase):
                 arg.argname = KW_ARG_NAME
 
             if params[argname].kind == Parameter.KEYWORD_ONLY:
-                self.kw_args.append(arg)
+                self.kw_args[argname] = arg
             else:
-                self.args.append(arg)
+                self.args[argname] = arg
 
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
@@ -147,22 +148,22 @@ class FunctionNode(NodeEntityBase):
 
     def _copy_kw_args(self):
         # Copy kw only args from signature and docstring
-        kwargs = [x for x in self.args if x.argname == KW_ARG_NAME]
+        kwargs = [x for x in self.args.keys() if x == KW_ARG_NAME]
         # add keyword args
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
-            self.args.append(ArgType("*"))
-            self.kw_args.sort(key=operator.attrgetter("argname"))
+            self.args["*"] = ArgType("*")
+            self.kw_args = OrderedDict(sorted(self.kw_args.items()))
             # Add parsed keyword args to function signature after updating current function node as parent in arg
-            for arg in self.kw_args:
+            for arg in self.kw_args.values():
                 arg.set_function_node(self)
-                self.args.append(arg)
+                self.args[arg.argname] = arg
 
             # remove arg with name "**kwarg and add at the end"
             if kwargs:
                 kw_arg = kwargs[0]
-                self.args.remove(kw_arg)
-                self.args.append(kw_arg)
+                self.args.pop(kw_arg)
+                self.args[kw_arg.argname] = kw_arg
 
         # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
         if not kwargs and is_kwarg_mandatory(self.name):
@@ -195,15 +196,13 @@ class FunctionNode(NodeEntityBase):
                 self.return_type = parsed_docstring.ret_type
 
             # Update arg type from docstring if available and if argtype is missing from signatrue parsing
-            arg_type_dict = dict(
-                [(x.argname, x.argtype) for x in parsed_docstring.pos_args]
-            )
-            for pos_arg in self.args:
-                pos_arg.argtype = arg_type_dict.get(
-                    pos_arg.argname, pos_arg.argtype
-                )
+            for key, val in self.args.items():
+                docstring_match = parsed_docstring.pos_args.get(key, None)
+                val.argtype = docstring_match.argtype if docstring_match else val.argtype
 
-            self.kw_args.extend(parsed_docstring.kw_args)            
+            # TODO: Merge the kw_args from the docstring kwargs.
+            for key, val in parsed_docstring.kw_args.items():
+                self.kw_args[key] = val
 
 
     def _generate_short_type(self, long_type):
@@ -252,13 +251,13 @@ class FunctionNode(NodeEntityBase):
             apiview.begin_group()
 
         # Generate token for each arg
-        for index in range(args_count):
+        for index, key in enumerate(self.args.keys()):
             # Add new line if args are listed in new line
             if use_multi_line:
                 apiview.add_new_line()
                 apiview.add_whitespace()
 
-            self.args[index].generate_tokens(
+            self.args[key].generate_tokens(
                 apiview, self.namespace_id, use_multi_line
             )
             # Add punctuation between types except for last one

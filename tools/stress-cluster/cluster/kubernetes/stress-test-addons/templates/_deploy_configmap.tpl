@@ -7,6 +7,4 @@ metadata:
 data:
   template: |
     {{- .Files.Get "stress-test-resources.json" | nindent 4 }}
-  parameters: |
-    {{- .Files.Get "parameters.json" | nindent 4 }}
 {{ end }}

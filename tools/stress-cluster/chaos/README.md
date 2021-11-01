@@ -70,7 +70,6 @@ To create any resources in the cluster, you will need to create a namespace for 
 
 ```
 kubectl create namespace <your alias>
-kubectl label namespace <namespace> owners=<your alias>
 ```
 
 You will then need to build and push your container image to a registry the cluster has access to:
@@ -153,7 +152,6 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 <stress test root directory>
     Dockerfile                          # A Dockerfile for building the stress test image
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
-    parameters.json                     # An ARM template parameters file that will be used at runtime along with the ARM template
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
     templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
@@ -163,7 +161,7 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 
     values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
-    <source directories>         # Directories containing code for stress tests
+    <source dirs, e.g. src/>     # Directories containing code for stress tests
     <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
 ```
 
@@ -175,7 +173,7 @@ Fields in `Chart.yaml`
 1. The `name` field will get used as the helm release name. To deploy instances of the same stress test release in parallel, update this field.
 1. The `annotations.stressTest` field must be set to true for the script to discover the test.
 1. The `annotations.namespace` field must be set, and governs which kubernetes namespace the stress test package will be
-   installed into as a helm release.
+   installed into as a helm release when deployed by CI. Locally, this defaults to your username instead.
 1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
    script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
@@ -272,7 +270,7 @@ version: 0.1.0
 appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
-  namespace: <your stress test namespace>
+  namespace: <your stress test namespace, e.g. python>
   <optional key/value annotations for filtering>
 
 dependencies:
@@ -352,14 +350,16 @@ For more detailed examples, see:
 
 ### Scenarios and values.yaml
 
-For cases where the same job config must be run for multiple instances, a `scenarios` list can be specified in a file called `values.yaml`.
+In order to run multiple tests but re-use the same job yaml, a special config key called `scenarios` can be used. Under
+the hood, the stress test tools will duplicate the job yaml for each scenario. A common pattern is to represent each
+test case with a file and/or argument passed to the stress program via the container command.
 
 For example, given a stress test package with multiple tests represented as separate files:
 
 ```
 values.yaml
 templates/
-app/
+src/
   scenarioLongRunning.js
   scenarioPeekMessages.js
   scenarioBatchReceive.js

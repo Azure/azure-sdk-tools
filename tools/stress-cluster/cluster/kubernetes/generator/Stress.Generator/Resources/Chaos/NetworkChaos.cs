@@ -178,7 +178,7 @@ spec:
 
         public string? Name { get; set; }
 
-        [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
+        [ResourceProperty("A list of domains/CNAME records to apply network chaos to/from, for example 'servicebus.windows.net'")]
         public List<string>? ExternalTargets { get; set; }
 
         [ResourceProperty("Packet direction. Options: 'to', 'from', 'both'")]

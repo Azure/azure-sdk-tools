@@ -5,6 +5,4 @@
     items:
       - key: template
         path: test-resources.json
-      - key: parameters
-        path: parameters.json
 {{ end }}

@@ -14,6 +14,7 @@
     using Microsoft.TeamFoundation.Build.WebApi;
 
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
 
     public class BlobUploadProcessor
@@ -26,6 +27,7 @@
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) },
             Formatting = Formatting.None,
         };
 

@@ -23,6 +23,10 @@ metadata:
     # kubectl commands (e.g. `kubectl logs -l testName=(( Name )) -n <namespace>)
     testName: (( Name ))
 spec:
+  # In cases where a stress test has higher resource requirements or needs a dedicated node,
+  # a new nodepool can be provisioned and labeled to allow custom scheduling.
+  nodeSelector:
+    sku: 'default'  # options: 'default', 'highMem'
   containers:
     - name: (( Name ))
       command: (( Command ))

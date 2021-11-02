@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         var valueResult = jsonElement.GetString();
 
-                        if(String.IsNullOrEmpty(valueResult))
+                        if(string.IsNullOrEmpty(valueResult))
                         {
                             if (!acceptableEmptyArgs.Contains(param.Name))
                             {

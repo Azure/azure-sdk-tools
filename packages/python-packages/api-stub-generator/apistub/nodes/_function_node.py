@@ -154,11 +154,9 @@ class FunctionNode(NodeEntityBase):
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
             self.args["*"] = ArgType("*")
-            self.kw_args = OrderedDict(sorted(self.kw_args.items()))
-            # Add parsed keyword args to function signature after updating current function node as parent in arg
-            for arg in self.kw_args.values():
+            for argname, arg in sorted(self.kw_args.items()):
                 arg.set_function_node(self)
-                self.args[arg.argname] = arg
+                self.args[argname] = arg
 
         # re-append "**kwargs" to the end of the arguments list
         if kwargs_param:
@@ -205,12 +203,18 @@ class FunctionNode(NodeEntityBase):
 
             # Update keyword argument metadata from the docstring if it was not included in the
             # signature parsing.
-            for argname, kw_arg in parsed_docstring.kw_args.items():
+            remaining_docstring_kwargs = set(parsed_docstring.kw_args.keys())
+            for argname, kw_arg in self.kw_args.items():
                 docstring_match = parsed_docstring.kw_args.get(argname, None)
                 if not docstring_match:
                     continue
+                remaining_docstring_kwargs.remove(argname)
                 kw_arg.argtype = kw_arg.argtype or docstring_match.argtype
                 kw_arg.default = kw_arg.default or docstring_match.default
+            
+            # ensure any kwargs described only in the docstrings are added
+            for argname in remaining_docstring_kwargs:
+                self.kw_args[argname] = parsed_docstring.kw_args[argname]
 
 
     def _generate_short_type(self, long_type):

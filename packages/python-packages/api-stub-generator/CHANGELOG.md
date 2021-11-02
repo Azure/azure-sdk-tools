@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.2.5 (Unreleased)
+Fixed bug in which kwargs were duplicated in certain instances.
+
 ## Version 0.2.2 (Unreleased)
 Bug fixes in type hint parser
 

@@ -115,7 +115,7 @@ class FunctionNode(NodeEntityBase):
         sig = inspect.signature(self.obj)
         params = sig.parameters
         # Add all keyword only args here temporarily until docstring is parsed
-        # This is to handle the scenario is keyword arg typehint (py3 style is present in signature itself)
+        # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
         for argname in params:
             arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
@@ -134,11 +134,9 @@ class FunctionNode(NodeEntityBase):
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
 
-        # parse docstring
         self._parse_docstring()
-        # parse type hints
         self._parse_typehint()
-        self._copy_kw_args()
+        self._order_final_args()
 
         if not self.return_type and is_typehint_mandatory(self.name):
             self.add_error("Return type is missing in both typehint and docstring")
@@ -146,9 +144,12 @@ class FunctionNode(NodeEntityBase):
         self._validate_pageable_api()
 
 
-    def _copy_kw_args(self):
-        # Copy kw only args from signature and docstring
-        kwargs = [x for x in self.args.keys() if x == KW_ARG_NAME]
+    def _order_final_args(self):
+
+        # temporarily remove the kwargs param from arguments if presetn
+        # from the signature inspection
+        kwargs_param = self.args.pop("kwargs", None) or self.args.pop(KW_ARG_NAME, None)
+
         # add keyword args
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
@@ -159,14 +160,12 @@ class FunctionNode(NodeEntityBase):
                 arg.set_function_node(self)
                 self.args[arg.argname] = arg
 
-            # remove arg with name "**kwarg and add at the end"
-            if kwargs:
-                kw_arg = kwargs[0]
-                self.args.pop(kw_arg)
-                self.args[kw_arg.argname] = kw_arg
+        # re-append "**kwargs" to the end of the arguments list
+        if kwargs_param:
+            self.args[kwargs_param.argname] = kwargs_param
 
         # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
-        if not kwargs and is_kwarg_mandatory(self.name):
+        if not kwargs_param and is_kwarg_mandatory(self.name):
             self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
 
 
@@ -195,14 +194,23 @@ class FunctionNode(NodeEntityBase):
                 )
                 self.return_type = parsed_docstring.ret_type
 
-            # Update arg type from docstring if available and if argtype is missing from signatrue parsing
-            for key, val in self.args.items():
-                docstring_match = parsed_docstring.pos_args.get(key, None)
-                val.argtype = docstring_match.argtype if docstring_match else val.argtype
+            # Update positional argument metadata from the docstring if it was not included in the
+            # signature parsing.
+            for argname, signature_arg in self.args.items():
+                docstring_match = parsed_docstring.pos_args.get(argname, None)
+                if not docstring_match:
+                    continue
+                signature_arg.argtype = signature_arg.argtype or docstring_match.argtype
+                signature_arg.default = signature_arg.default or docstring_match.default
 
-            # TODO: Merge the kw_args from the docstring kwargs.
-            for key, val in parsed_docstring.kw_args.items():
-                self.kw_args[key] = val
+            # Update keyword argument metadata from the docstring if it was not included in the
+            # signature parsing.
+            for argname, kw_arg in parsed_docstring.kw_args.items():
+                docstring_match = parsed_docstring.kw_args.get(argname, None)
+                if not docstring_match:
+                    continue
+                kw_arg.argtype = kw_arg.argtype or docstring_match.argtype
+                kw_arg.default = kw_arg.default or docstring_match.default
 
 
     def _generate_short_type(self, long_type):
@@ -211,6 +219,7 @@ class FunctionNode(NodeEntityBase):
         for g in groups:
             short_type = short_type.replace(g[0], g[1])
         return short_type
+
 
     def _parse_typehint(self):
 

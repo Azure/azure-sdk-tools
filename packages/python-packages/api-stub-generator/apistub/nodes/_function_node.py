@@ -72,10 +72,10 @@ class FunctionNode(NodeEntityBase):
         
         for line in code.splitlines():
             # skip decorators
-            if line.startswith("@"):
+            if line.strip().startswith("@"):
                 continue
             # the first non-decorator line should be the function signature
-            self.is_async = line.startswith("async def")
+            self.is_async = line.strip().startswith("async def")
             self.def_key = "async def" if self.is_async else "def"
             break
 

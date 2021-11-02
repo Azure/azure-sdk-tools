@@ -8,7 +8,7 @@
     - '-NonInteractive'
     - '-NoProfile'
     - '-c'
-    - './scripts/stress-test/deploy-stress-test-resources.ps1'
+    - '/scripts/stress-test/deploy-stress-test-resources.ps1'
     - '-TemplateParametersPath'
     - '/mnt/testresources/parameters.json'
 

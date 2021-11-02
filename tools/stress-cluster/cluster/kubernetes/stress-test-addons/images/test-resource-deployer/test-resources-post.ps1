@@ -7,6 +7,9 @@ param (
 )
 
 $outputFile = "$env:ENV_FILE"
+if ([string]::IsNullOrEmpty($outputFile)) {
+    throw "Output file path not specified as env varialbe `$env:ENV_FILE"
+}
 
 $environmentText = ''
 foreach($entry in $DeploymentOutputs.GetEnumerator()) {

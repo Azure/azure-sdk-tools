@@ -64,7 +64,7 @@ class DocstringParser:
 
     def find_return_type(self):
         # Find return type from docstring
-        ret_type = re.search(find_docstring_return_type, self.docstring)
+        ret_type = re.search(find_docstring_return_type, self.docstring.replace("\n", ""))
         if ret_type:
             return ret_type.groups()[-1]
         return None

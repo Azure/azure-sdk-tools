@@ -250,16 +250,6 @@ namespace Azure.Sdk.Tools.TestProxy
             return upstreamRequest;
         }
 
-        public void AddRecordSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
-        {
-            if (!RecordingSessions.TryGetValue(recordingId, out var session))
-            {
-                throw new InvalidOperationException("No recording loaded with that ID.");
-            }
-
-            session.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
-        }
-
         #endregion
 
         #region playback functionality
@@ -389,39 +379,52 @@ namespace Azure.Sdk.Tools.TestProxy
             return entry;
         }
 
-        public void AddPlaybackSanitizer(string recordingId, RecordedTestSanitizer sanitizer)
+        #endregion
+
+        #region common functions
+        public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
-            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
+            if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
             {
-                throw new InvalidOperationException("No recording loaded with that ID.");
+                playbackSession.AdditionalSanitizers.Add(sanitizer);
             }
 
-            session.AdditionalSanitizers.Add(sanitizer);
-        }
-
-        public void SetPlaybackMatcher(string recordingId, RecordMatcher matcher)
-        {
-            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
+            if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                throw new InvalidOperationException("No recording loaded with that ID.");
+                recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
             }
 
-            session.CustomMatcher = matcher;
+            if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
+            {
+                inMemSession.AdditionalSanitizers.Add(sanitizer);
+            }
+
+            if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
+            {
+                throw new BadHttpRequestException($"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+            }
         }
 
-        public void AddPlaybackTransform(string recordingId, ResponseTransform transform)
+        public void AddTransformToRecording(string recordingId, ResponseTransform transform)
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
-                throw new InvalidOperationException("No recording loaded with that ID.");
+                throw new BadHttpRequestException($"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
             session.AdditionalTransforms.Add(transform);
         }
 
-        #endregion
 
-        #region common functions
+        public void SetMatcherForRecording(string recordingId, RecordMatcher matcher)
+        {
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
+            {
+                throw new BadHttpRequestException($"{recordingId} is not an active playback session. Check the value being passed and try again.");
+            }
+
+            session.CustomMatcher = matcher;
+        }
 
         public void SetDefaultExtensions(string recordingId = null)
         {

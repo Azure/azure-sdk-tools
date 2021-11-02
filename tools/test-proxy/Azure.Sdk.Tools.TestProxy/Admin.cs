@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -46,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void AddTransform()
+        public async Task AddTransform()
         {
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -55,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.AddPlaybackTransform(recordingId, t);
+                _recordingHandler.AddTransformToRecording(recordingId, t);
             }
             else
             {
@@ -64,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void AddSanitizer()
+        public async Task AddSanitizer()
         {
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -73,7 +74,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.AddRecordSanitizer(recordingId, s);
+                _recordingHandler.AddSanitizerToRecording(recordingId, s);
             }
             else
             {
@@ -82,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void SetMatcher()
+        public async Task SetMatcher()
         {
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -91,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.SetPlaybackMatcher(recordingId, m);
+                _recordingHandler.SetMatcherForRecording(recordingId, m);
             }
             else
             {
@@ -101,25 +102,24 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public object GetSanitizer(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);
         }
 
         public object GetTransform(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, new HashSet<string>() { }, documentBody: body);
         }
 
         public object GetMatcher(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new HashSet<string>() { }, documentBody:body);
         }
 
-        public object GenerateInstance(string typePrefix, string name, JsonDocument body = null)
+        private object GenerateInstance(string typePrefix, string name, HashSet<string> acceptableEmptyArgs, JsonDocument documentBody = null)
         {
             try
             {
                 Type t = Type.GetType(typePrefix + name);
-
 
                 var arg_list = new List<Object> { };
 
@@ -130,9 +130,18 @@ namespace Azure.Sdk.Tools.TestProxy
                 // walk across our constructor params. check inside the body for a resulting value for each of them
                 foreach (var param in paramsSet)
                 {
-                    if (body != null && body.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                     {
                         var valueResult = jsonElement.GetString();
+
+                        if(string.IsNullOrEmpty(valueResult))
+                        {
+                            if (!acceptableEmptyArgs.Contains(param.Name))
+                            {
+                                throw new BadHttpRequestException($"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                            }
+                        }
+                        
                         arg_list.Add((object)valueResult);
                     }
                     else
@@ -144,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         else
                         {
                             // TODO: make this a specific argument not found exception
-                            throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
+                            throw new BadHttpRequestException($"Required parameter key {param} was not found in the request body.");
                         }
                     }
                 }

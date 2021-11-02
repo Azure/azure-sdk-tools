@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             testRecordingHandler.Sanitizers.Clear();
             testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.AddRecordSanitizer(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.Sanitizers.Clear();
             testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Transforms.Clear();
-            testRecordingHandler.AddRecordSanitizer(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.SetDefaultExtensions();
             var session = testRecordingHandler.RecordingSessions.First().Value;
 

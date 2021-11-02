@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class AdminFunctionalityTests
     {
         [Fact]
-        public async void TestSetMatcher()
+        public async Task TestSetMatcher()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();

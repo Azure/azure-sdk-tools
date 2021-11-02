@@ -67,7 +67,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
           condition: contains(variables['imageName'], 'ubuntu')
 
-        - script: 'cp azure-tools-oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: 'cp oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
           condition: contains(variables['imageName'], 'ubuntu')

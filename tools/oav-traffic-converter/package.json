@@ -1,0 +1,31 @@
+{
+  "name": "oav-traffic-converter",
+  "version": "1.0.0",
+  "description": "A little package that can be called as a tool to convert azure sdk test-proxy files to the format consumed by the live validation format of oav.",
+  "main": "./build/cli.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "watched-build": "tsc -p . --watch",
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azure-sdk-tools.git"
+  },
+  "dependencies": {
+    "@types/node": "^7.0.5",
+    "@types/yargs": "^8.0.1",
+    "yargs": "^8.0.2"
+  },
+  "keywords": [
+    "utility",
+    "json",
+    "tool"
+  ],
+  "author": "scbedd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/azure-sdk-tools/issues"
+  },
+  "homepage": "https://github.com/azure-sdk-tools/tools/oav-traffic-converter"
+}

@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/azure-sdk-tools/issues"
   },
+  "bin": {
+    "oavc":"./dist/cli.js"
+  },
   "homepage": "https://github.com/azure-sdk-tools/tools/oav-traffic-converter"
 }

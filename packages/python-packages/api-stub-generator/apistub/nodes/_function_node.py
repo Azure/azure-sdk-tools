@@ -192,25 +192,25 @@ class FunctionNode(NodeEntityBase):
                 )
                 self.return_type = parsed_docstring.ret_type
 
-            # Update positional argument metadata from the docstring if it was not included in the
-            # signature parsing.
+            # Update positional argument metadata from the docstring; otherwise, stick with
+            # what was parsed from the signature.
             for argname, signature_arg in self.args.items():
                 docstring_match = parsed_docstring.pos_args.get(argname, None)
                 if not docstring_match:
                     continue
-                signature_arg.argtype = signature_arg.argtype or docstring_match.argtype
-                signature_arg.default = signature_arg.default or docstring_match.default
+                signature_arg.argtype = docstring_match.argtype or signature_arg.argtype
+                signature_arg.default = docstring_match.default or signature_arg.default
 
-            # Update keyword argument metadata from the docstring if it was not included in the
-            # signature parsing.
+            # Update keyword argument metadata from the docstring; otherwise, stick with
+            # what was parsed from the signature.
             remaining_docstring_kwargs = set(parsed_docstring.kw_args.keys())
             for argname, kw_arg in self.kw_args.items():
                 docstring_match = parsed_docstring.kw_args.get(argname, None)
                 if not docstring_match:
                     continue
                 remaining_docstring_kwargs.remove(argname)
-                kw_arg.argtype = kw_arg.argtype or docstring_match.argtype
-                kw_arg.default = kw_arg.default or docstring_match.default
+                kw_arg.argtype = docstring_match.argtype or kw_arg.argtype
+                kw_arg.default = docstring_match.default or kw_arg.default
             
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:

@@ -102,20 +102,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public object GetSanitizer(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new string[] { "value" }, documentBody: body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);
         }
 
         public object GetTransform(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, new string[]{}, documentBody: body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, new HashSet<string>() { }, documentBody: body);
         }
 
         public object GetMatcher(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new string[]{}, documentBody:body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new HashSet<string>() { }, documentBody:body);
         }
 
-        private object GenerateInstance(string typePrefix, string name, string[] acceptableEmptyArgs, JsonDocument documentBody = null)
+        private object GenerateInstance(string typePrefix, string name, HashSet<string> acceptableEmptyArgs, JsonDocument documentBody = null)
         {
             try
             {

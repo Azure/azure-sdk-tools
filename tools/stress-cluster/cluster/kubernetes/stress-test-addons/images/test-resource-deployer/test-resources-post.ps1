@@ -8,7 +8,7 @@ param (
 
 $outputFile = "$env:ENV_FILE"
 if ([string]::IsNullOrEmpty($outputFile)) {
-    throw "Output file path not specified as env varialbe `$env:ENV_FILE"
+    throw "Output file path not specified as env variable `$env:ENV_FILE"
 }
 
 $environmentText = ''

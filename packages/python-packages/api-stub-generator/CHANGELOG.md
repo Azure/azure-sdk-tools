@@ -2,6 +2,7 @@
 
 ## Version 0.2.5 (Unreleased)
 Fixed bug in which kwargs were duplicated in certain instances.
+Fixed but where, in some instances, return types were truncated.
 
 ## Version 0.2.2 (Unreleased)
 Bug fixes in type hint parser

@@ -18,10 +18,10 @@ Get-ChildItem -Path $secretsDir | ForEach-Object {
 
 $templateParams = Get-Content $TemplateParametersPath | ConvertFrom-json -AsHashTable
 mkdir /azure
-Copy-Item "/common/scripts/stress-testing/test-resources-post.ps1" -Destination "/azure/"
+Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
-& $PSScriptRoot/New-TestResources.ps1 `
+& /common/TestResources/New-TestResources.ps1 `
     -BaseName $env:BASE_NAME `
     -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
     -TenantId $secrets.AZURE_TENANT_ID `

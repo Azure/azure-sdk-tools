@@ -1,17 +1,17 @@
 {{ define "stress-test-addons.init-deploy" }}
 - name: init-azure-deployer
   # Please use 'testing' for the image repo name when testing
-  # e.g. azsdkengsys.azurecr.io/testing/eng-common-tools
-  image: azsdkengsys.azurecr.io/engsys/eng-common-tools
+  # e.g. azsdkengsys.azurecr.io/testing/deploy-test-resources
+  image: azsdkengsys.azurecr.io/stress/deploy-test-resources
   command:
     - 'pwsh'
     - '-NonInteractive'
     - '-NoProfile'
     - '-c'
-    - './common/TestResources/deploy-stress-test-resources.ps1'
+    - './scripts/stress-test/deploy-stress-test-resources.ps1'
     - '-TemplateParametersPath'
     - '/mnt/testresources/parameters.json'
-    
+
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env

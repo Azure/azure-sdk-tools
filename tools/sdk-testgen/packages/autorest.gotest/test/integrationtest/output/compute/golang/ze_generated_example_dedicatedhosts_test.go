@@ -67,7 +67,7 @@ func ExampleDedicatedHostsClient_Get() {
 		"<resource-group-name>",
 		"<host-group-name>",
 		"<host-name>",
-		nil)
+		&golang.DedicatedHostsGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

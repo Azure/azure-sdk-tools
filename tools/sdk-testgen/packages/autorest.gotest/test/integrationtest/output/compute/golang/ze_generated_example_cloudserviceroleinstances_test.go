@@ -51,7 +51,7 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		nil)
+		&golang.CloudServiceRoleInstancesGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
 		"<cloud-service-name>",
-		nil)
+		&golang.CloudServiceRoleInstancesListOptions{Expand: nil})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)

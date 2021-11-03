@@ -52,7 +52,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		nil)
+		&golang.VirtualMachineScaleSetVMsGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

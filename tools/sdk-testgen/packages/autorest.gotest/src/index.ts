@@ -16,3 +16,4 @@ extension.Add('go-tester', goTester);
 extension.Add('go-linter', goLinter);
 
 extension.Run();
+

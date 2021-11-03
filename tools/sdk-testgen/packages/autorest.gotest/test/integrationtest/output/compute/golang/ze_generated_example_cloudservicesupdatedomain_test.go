@@ -29,7 +29,7 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		1,
-		nil)
+		&golang.CloudServicesUpdateDomainBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

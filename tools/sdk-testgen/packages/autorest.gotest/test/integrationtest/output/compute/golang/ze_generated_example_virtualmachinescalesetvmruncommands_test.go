@@ -38,11 +38,11 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
-					{
+					&golang.RunCommandInputParameter{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					},
-					{
+					&golang.RunCommandInputParameter{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					}},
@@ -132,7 +132,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<run-command-name>",
-		nil)
+		&golang.VirtualMachineScaleSetVMRunCommandsGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_List() {
 	pager := client.List("<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		nil)
+		&golang.VirtualMachineScaleSetVMRunCommandsListOptions{Expand: nil})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)

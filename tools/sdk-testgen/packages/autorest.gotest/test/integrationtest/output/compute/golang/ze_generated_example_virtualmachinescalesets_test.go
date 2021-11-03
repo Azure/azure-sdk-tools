@@ -61,12 +61,12 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							{
+							&golang.VirtualMachineScaleSetNetworkConfiguration{
 								Name: to.StringPtr("<name>"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										{
+										&golang.VirtualMachineScaleSetIPConfiguration{
 											Name: to.StringPtr("<name>"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -144,7 +144,7 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		nil)
+		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

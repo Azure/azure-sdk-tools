@@ -75,11 +75,11 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
-					{
+					&golang.RunCommandInputParameter{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					},
-					{
+					&golang.RunCommandInputParameter{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					}},
@@ -166,7 +166,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 		"<resource-group-name>",
 		"<vm-name>",
 		"<run-command-name>",
-		nil)
+		&golang.VirtualMachineRunCommandsGetByVirtualMachineOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -183,7 +183,7 @@ func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 	client := golang.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
 	pager := client.ListByVirtualMachine("<resource-group-name>",
 		"<vm-name>",
-		nil)
+		&golang.VirtualMachineRunCommandsListByVirtualMachineOptions{Expand: nil})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)

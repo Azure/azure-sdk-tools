@@ -59,7 +59,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						{
+						&golang.NetworkInterfaceReference{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("<id>"),
 							},
@@ -126,7 +126,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						{
+						&golang.NetworkInterfaceReference{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("<id>"),
 							},
@@ -142,13 +142,13 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						{
+						&golang.DataDisk{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
-						{
+						&golang.DataDisk{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
@@ -214,7 +214,7 @@ func ExampleVirtualMachinesClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		nil)
+		&golang.VirtualMachinesGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

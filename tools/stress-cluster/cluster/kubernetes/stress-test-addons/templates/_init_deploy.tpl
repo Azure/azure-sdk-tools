@@ -1,31 +1,23 @@
 {{ define "stress-test-addons.init-deploy" }}
 - name: init-azure-deployer
-  image: mcr.microsoft.com/azure-cli
-  command: ['bash', '-c']
-  args:
-    - |
-      source /mnt/secrets/static/* &&
-      az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
-      az account set -s $AZURE_SUBSCRIPTION_ID &&
-      groupName='{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
-      az group create -l westus2 -g $groupName &&
-      group=$(az group show -g $groupName -o tsv --query "id") &&
-      az tag create --resource-id $group --tags DeleteAfter="$(date -d '+192:00:00' -Iseconds -u | sed 's/UTC/Z/')" &&
-      az deployment group create \
-          -g $groupName \
-          -n $groupName \
-          -f /mnt/testresources/test-resources.json \
-          --parameters /mnt/testresources/parameters.json \
-          --parameters testApplicationOid=$AZURE_CLIENT_OID > /dev/null &&
-      az deployment group show \
-          -g $groupName \
-          -n $groupName \
-          -o json \
-          --query properties.outputs \
-          | jq -r 'keys[] as $k | "\($k | ascii_upcase)=\(.[$k].value)"' >> /mnt/outputs/.env
+  # Please use 'testing' for the image repo name when testing
+  # e.g. azsdkengsys.azurecr.io/testing/deploy-test-resources
+  image: azsdkengsys.azurecr.io/stress/deploy-test-resources
+  command:
+    - 'pwsh'
+    - '-NonInteractive'
+    - '-NoProfile'
+    - '-c'
+    - '/scripts/stress-test/deploy-stress-test-resources.ps1'
+    - '-TemplateParametersPath'
+    - '/mnt/testresources/parameters.json'
+
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env
+    - name: BASE_NAME
+      value: '{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
+
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources

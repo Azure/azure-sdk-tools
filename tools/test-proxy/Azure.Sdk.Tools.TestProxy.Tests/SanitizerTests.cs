@@ -323,9 +323,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var replacementValue = "BodyIsSanitized";
 
             var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.Location", value: replacementValue);
+            var originalValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
             session.Session.Sanitize(bodyKeySanitizer);
+            var newValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
 
-            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+            Assert.DoesNotContain(replacementValue, newValue);
+            Assert.Equal(originalValue, newValue);
         }
 
 

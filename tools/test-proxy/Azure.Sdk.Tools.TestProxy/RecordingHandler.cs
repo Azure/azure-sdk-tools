@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -401,7 +402,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
             {
-                throw new BadHttpRequestException($"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
             }
         }
 
@@ -409,7 +410,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
-                throw new BadHttpRequestException($"{recordingId} is not an active playback session. Check the value being passed and try again.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
             session.AdditionalTransforms.Add(transform);
@@ -420,7 +421,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
-                throw new BadHttpRequestException($"{recordingId} is not an active playback session. Check the value being passed and try again.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
             session.CustomMatcher = matcher;

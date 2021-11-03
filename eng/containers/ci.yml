@@ -28,6 +28,13 @@ parameters:
     dockerFile: 'tools/stress-cluster/services/Stress.Watcher/Dockerfile'
     stableTags:
     - 'latest'
+  - name: stress_deploy_test_resources
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'stress/deploy-test-resources'
+    prepareScript: tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/prepare.ps1
+    dockerFile: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile'
+    stableTags:
+    - 'latest'
 
 trigger:
   branches:
@@ -39,6 +46,7 @@ trigger:
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/Dockerfile
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile
 
 pr:
   branches:
@@ -50,6 +58,7 @@ pr:
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/Dockerfile
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile
 
 variables:
   - name: containerRegistry

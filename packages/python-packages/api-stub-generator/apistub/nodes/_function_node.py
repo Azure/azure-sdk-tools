@@ -10,7 +10,6 @@ from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 
-KW_ARG_NAME = "**kwargs"
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
 TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
@@ -124,12 +123,12 @@ class FunctionNode(NodeEntityBase):
                 arg.default = str(params[argname].default)
             # Store handle to kwarg object to replace it later
             if params[argname].kind == Parameter.VAR_KEYWORD:
-                arg.argname = KW_ARG_NAME
+                arg.argname = f"**{argname}"
 
             if params[argname].kind == Parameter.KEYWORD_ONLY:
-                self.kw_args[argname] = arg
+                self.kw_args[arg.argname] = arg
             else:
-                self.args[argname] = arg
+                self.args[arg.argname] = arg
 
         if sig.return_annotation:
             self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
@@ -145,10 +144,18 @@ class FunctionNode(NodeEntityBase):
 
 
     def _order_final_args(self):
-
-        # temporarily remove the kwargs param from arguments if presetn
-        # from the signature inspection
-        kwargs_param = self.args.pop("kwargs", None) or self.args.pop(KW_ARG_NAME, None)
+        # find and temporarily remove the kwargs param from arguments
+        #  if present from the signature inspection
+        kwargs_param = None
+        kwargs_name = None
+        if not kwargs_param:
+            for argname in self.args:
+                # find kwarg params with a different name, like config
+                if argname.startswith("**"):
+                    kwargs_name = argname
+                    break
+            if kwargs_name:
+                kwargs_param = self.args.pop(kwargs_name, None)
 
         # add keyword args
         if self.kw_args:
@@ -160,7 +167,7 @@ class FunctionNode(NodeEntityBase):
 
         # re-append "**kwargs" to the end of the arguments list
         if kwargs_param:
-            self.args[kwargs_param.argname] = kwargs_param
+            self.args[kwargs_name] = kwargs_param
 
         # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
         if not kwargs_param and is_kwarg_mandatory(self.name):

@@ -38,37 +38,25 @@ variables:
 
 stages:
   - stage: InstallAndTest
+
+    pool:
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
+
     jobs:
       - job: Test
-        strategy:
-          matrix:
-            linux:
-              imageName: 'ubuntu-latest'
-            mac:
-              imageName: 'macos-latest'
-            windows:
-              imageName: 'windows-latest'
-        pool:
-          vmImage: $(imageName)
+
         steps:
         - task: NodeTool@0
           inputs:
             versionSpec: '$(NodeVersion)'
-          displayName: 'Install Node.js'
+          displayName: 'Use Node $(NodeVersion)'
 
         - script: |
             npm install
-          displayName: 'npm install'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
-
-        - script: |
             npm pack
-          displayName: 'npm pack'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
-          condition: contains(variables['imageName'], 'ubuntu')
-
-        - script: 'cp oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-          displayName: 'copy to staging dir'
+            cp oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)
+          displayName: 'Package into Artifact Dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
           condition: contains(variables['imageName'], 'ubuntu')
 
@@ -83,6 +71,10 @@ stages:
     - stage: Release
       dependsOn: InstallAndTest
       condition: succeeded()
+      pool:
+        name: azsdk-pool-mms-ubuntu-2004-general
+        vmImage: MMSUbuntu20.04
+
       jobs:
       - job: approve
         pool: server
@@ -104,11 +96,10 @@ stages:
             downloadType: 'single'
             artifactName: '$(VAR_ARIFACT_NAME)'
             downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-        - script: |
-            echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
-            sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
-            sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
 
+
+
+        - script: |
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
             echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc 
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz

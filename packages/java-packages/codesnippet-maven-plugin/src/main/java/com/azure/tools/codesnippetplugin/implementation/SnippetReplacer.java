@@ -27,14 +27,14 @@ import java.util.regex.Pattern;
 
 public final class SnippetReplacer {
     static final Pattern SNIPPET_DEF_BEGIN =
-        Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
-    static final Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+        Pattern.compile("\\s*\\/\\/\\s*BEGIN\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]+)\\s*");
+    static final Pattern SNIPPET_DEF_END = Pattern.compile("\\s*\\/\\/\\s*END\\:\\s+([a-zA-Z0-9\\.\\#\\-\\_]+)\\s*");
     static final Pattern SNIPPET_SRC_CALL_BEGIN =
-        Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+        Pattern.compile("(\\s*)\\*?\\s*<!--\\s+src_embed\\s+([a-zA-Z0-9\\.\\#\\-\\_]+)\\s*-->");
     static final Pattern SNIPPET_SRC_CALL_END =
-        Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*-->");
+        Pattern.compile("(\\s*)\\*?\\s*<!--\\s+end\\s+([a-zA-Z0-9\\.\\#\\-\\_]+)\\s*-->");
     static final Pattern SNIPPET_README_CALL_BEGIN =
-        Pattern.compile("```(\\s*)?java\\s+([a-zA-Z0-9\\.\\#\\-\\_]*)\\s*");
+        Pattern.compile("```(\\s*)?java\\s+([a-zA-Z0-9\\.\\#\\-\\_]+)\\s*");
     static final Pattern SNIPPET_README_CALL_END = Pattern.compile("```");
     static final Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
     static final Pattern END_OF_LINE_WHITESPACES = Pattern.compile("[\\s]+$");
@@ -260,6 +260,8 @@ public final class SnippetReplacer {
                         badSnippetCalls.add(new VerifyResult(file, currentSnippetId));
                         needsAmend = true;
                         inSnippet = false;
+                        // Even though the snippet is missing, don't break the file.
+                        modifiedLines.append(line).append(lineSep);
                         continue;
                     }
 

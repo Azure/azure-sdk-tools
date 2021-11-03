@@ -153,7 +153,6 @@ namespace Azure.Sdk.Tools.TestProxy
                         }
                         else
                         {
-                            // TODO: make this a specific argument not found exception
                             throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
                         }
                     }

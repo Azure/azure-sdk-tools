@@ -22,7 +22,7 @@
     "json",
     "tool"
   ],
-  "author": "scbedd",
+  "author": "azure-sdk",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/azure-sdk-tools/issues"

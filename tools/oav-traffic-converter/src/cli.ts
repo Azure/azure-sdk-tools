@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
 The only requirements actually necessary are native node types `fs` and `path`.
 

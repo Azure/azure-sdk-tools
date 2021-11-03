@@ -48,14 +48,12 @@ stages:
             cp @azure-tools/oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)
           displayName: 'Package into Artifact Dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
-          condition: contains(variables['imageName'], 'ubuntu')
 
         - task: PublishBuildArtifacts@1
           inputs:
             PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
             ArtifactName: '$(VAR_ARIFACT_NAME)'
             publishLocation: 'Container'
-          condition: contains(variables['imageName'], 'ubuntu')
         
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release
@@ -86,8 +84,6 @@ stages:
             downloadType: 'single'
             artifactName: '$(VAR_ARIFACT_NAME)'
             downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-
-
 
         - script: |
             echo -e "\e[32m[$(date -u)] LOG: publish the package"

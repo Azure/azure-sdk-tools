@@ -16,6 +16,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
+     * [Node size requirements](#node-size-requirements)
   * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
@@ -382,6 +383,45 @@ scenarios:
 ```
 
 The underlying `stress-test-addons` helm library will handle a scenarios list automatically, and deploy multiple instances of the stress test job, one for each scenario.
+
+### Node Size Requirements
+
+The stress test cluster is deployed with several node SKUs (see [agentPoolProfiles declaration and
+variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/cluster.bicep)), with tests defaulting to the SKU labeled 'default'.
+By adding the `nodeSelector` field to the job spec, you can override which nodes the test container will
+be provisioned to. For support adding a custom or dedicated node SKU, reach out to the EngSys team.
+
+Available common SKUs in stress test clusters:
+
+- 'default' - Standard\_D2\_v3
+- 'highMem' - Standard\_D4ds\_v4
+
+To deploy a stress test to a custom node (see also
+[example](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/network-stress-example/templates/testjob.yaml)):
+
+```
+spec:
+  nodeSelector:
+    sku: 'highMem'
+  containers:
+    < container spec ... >
+```
+
+To add a new temporary nodepool (for cluster admins/engsys), see example below:
+
+```
+az aks nodepool add \
+    -g <cluster group> \
+    --cluster-name <cluster name> \
+    -n <nodepool name> \
+    --enable-encryption-at-host \
+    --enable-cluster-autoscaler \
+    --node-count 1 \
+    --min-count 1 \
+    --max-count 3 \
+    --node-vm-size <azure vm sku> \
+    --labels "sku=<nodepool sku label>"
+```
 
 ## Deploying a Stress Test
 

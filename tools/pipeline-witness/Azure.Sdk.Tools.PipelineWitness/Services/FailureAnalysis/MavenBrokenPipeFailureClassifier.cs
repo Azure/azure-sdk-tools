@@ -11,14 +11,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class MavenBrokenPipeFailureClassifier : IFailureClassifier
     {
-        public MavenBrokenPipeFailureClassifier(VssConnection vssConnection)
+        public MavenBrokenPipeFailureClassifier(BuildLogProvider buildLogProvider)
         {
-            this.vssConnection = vssConnection;
-            buildClient = vssConnection.GetClient<BuildHttpClient>();
+            this.buildLogProvider = buildLogProvider;
         }
 
-        private VssConnection vssConnection;
-        private BuildHttpClient buildClient;
+        private readonly BuildLogProvider buildLogProvider;
 
         public async Task ClassifyAsync(FailureAnalyzerContext context)
         {
@@ -32,11 +30,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             foreach (var failedTask in failedTasks)
             {
-                var lines = await buildClient.GetBuildLogLinesAsync(
-                    context.Build.Project.Id,
-                    context.Build.Id,
-                    failedTask.Log.Id
-                    );
+                var lines = await buildLogProvider.GetLogLinesAsync(context.Build, failedTask.Log.Id);
 
                 if (lines.Any(line => line.Contains("Connection reset") || line.Contains("Connection timed out") || line.Contains("504 Gateway Timeout")))
                 {

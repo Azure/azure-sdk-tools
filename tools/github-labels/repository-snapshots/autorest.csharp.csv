@@ -24,7 +24,7 @@ Label,Authorization,,e99695
 Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,Automation,,e99695
 Label,AVS,,e99695
-Label,Azure Arc enabled servers,,e99695
+Label,Azure Arc Enabled Servers,,e99695
 Label,Azure Stack,,e99695
 Label,Azure.Core,,e99695
 Label,Azure.Identity,,e99695
@@ -73,12 +73,20 @@ Label,Compute - VM,,e99695
 Label,Compute - VMSS,,e99695
 Label,Confidential Ledger,,e99695
 Label,Connected Kubernetes,,e99695
-Label,Consumption,,e99695
+Label,Consumption - Billing,All issues in consumption where billing/price-related data is shown.,e99695
+Label,Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
+Label,Consumption - RIandShowBack,All issues in consumption associated with Reservation and ShowBack.,e99695
+Label,Consumption - UsageDetailsAndExport,All issues in consumption for usage details API and exports API.,e99695
 Label,Container Instances,,e99695
 Label,Container Registry,,e99695
 Label,Container Service,,e99695
 Label,Cosmos,,e99695
-Label,Cost Management,,e99695
+Label,Cost Management - Billing,All issues in cost management where billing/price-related data is shown.,e99695
+Label,Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
+Label,Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
+Label,Cost Management - RIandShowBack,All issues in cost management associated with Reservation and ShowBack.,e99695
+Label,Cost Management - UsageDetailsAndExport,All issues in cost management for usage details API and exports API.,e99695
 Label,Custom Providers,,e99695
 Label,Customer Insights,,e99695
 Label,customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
@@ -100,6 +108,7 @@ Label,DataBox Edge,,e99695
 Label,dependencies,Pull requests that update a dependency file,0366d6
 Label,design-discussion,An area of design currently under discussion and open to team and community feedback.,0BABDF
 Label,Dev Spaces,,e99695
+Label,Device Update,,e99695
 Label,DevOps,,e99695
 Label,Devtestlab,,e99695
 Label,Digital Twins,,e99695

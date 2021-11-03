@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Release.Name }}-test-resources"
+  name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
   namespace: {{ .Release.Namespace }}
 data:
   template: |

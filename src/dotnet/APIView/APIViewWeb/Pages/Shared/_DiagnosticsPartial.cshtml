@@ -7,24 +7,26 @@
         APIView.CodeDiagnosticLevel.Warning => "code-diagnostics-warn",
         _ => "code-diagnostics-error"
     };
-    <td colspan="2" class="@diagnosticClass">
-        @foreach (var lineDiagnostic in Model)
-        {
-            <p>
-                @if (lineDiagnostic.Text.StartsWith("DO"))
-                {
-                    @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
-                }
-                else
-                {
-                    @lineDiagnostic.Text
-                }
+    <td colspan="3" class="@diagnosticClass">
+        <div>
+            @foreach (var lineDiagnostic in Model)
+            {
+                <p>
+                    @if (lineDiagnostic.Text.StartsWith("DO"))
+                    {
+                        @:✅ <b>DO</b> @lineDiagnostic.Text.Substring(2)
+                    }
+                    else
+                    {
+                        @lineDiagnostic.Text
+                    }
 
-                @if (!string.IsNullOrEmpty(lineDiagnostic.HelpLinkUri))
-                {
-                    <a href="@lineDiagnostic.HelpLinkUri">Details</a>
-                }
-            </p>
-        }
+                    @if (!string.IsNullOrEmpty(lineDiagnostic.HelpLinkUri))
+                    {
+                        <a href="@lineDiagnostic.HelpLinkUri">Details</a>
+                    }
+                </p>
+            }
+        </div>
     </td>
 }

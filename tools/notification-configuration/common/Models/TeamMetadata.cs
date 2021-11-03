@@ -1,6 +1,6 @@
-﻿using NotificationConfiguration.Enums;
+﻿using Azure.Sdk.Tools.NotificationConfiguration.Enums;
 
-namespace NotificationConfiguration.Models
+namespace Azure.Sdk.Tools.NotificationConfiguration.Models
 {
     /// <summary>
     /// Object describing a Team in DevOps

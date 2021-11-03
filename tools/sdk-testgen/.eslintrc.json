@@ -1,0 +1,106 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier",
+        "plugin:prettier/recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings",
+        "plugin:import/typescript"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module",
+        "project": ["./tsconfig.json"]
+    },
+    "plugins": ["@typescript-eslint", "sort-imports-es6-autofix"],
+    "rules": {
+        "prefer-template": 0,
+        "linebreak-style": 0,
+        "indent": 0,
+        "no-console": "off",
+        "import/extensions": [
+            "error",
+            "ignorePackages",
+            {
+                "js": "never",
+                "jsx": "never",
+                "ts": "never",
+                "tsx": "never",
+                "json": "never"
+            }
+        ],
+        "sort-imports-es6-autofix/sort-imports-es6": [
+            2,
+            {
+                "ignoreCase": false,
+                "ignoreMemberSort": false,
+                "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+            }
+        ],
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
+        "eqeqeq": "error",
+        "@typescript-eslint/naming-convention": [
+            "error",
+            {
+                "selector": ["class", "interface", "enum", "typeParameter", "typeLike", "default"],
+                "format": ["PascalCase"],
+                "filter": {
+                    "regex": "^_$",
+                    "match": false
+                }
+            },
+            {
+                "selector": ["enumMember", "variable", "parameter", "function", "method", "property", "memberLike"],
+                "format": ["camelCase"],
+                "filter": {
+                    "regex": "^_$",
+                    "match": false
+                }
+            },
+            {
+                "selector": ["default"],
+                "modifiers": ["global", "const"],
+                "format": ["UPPER_CASE"],
+                "filter": {
+                    "regex": "^_$",
+                    "match": false
+                }
+            },
+            {
+                "selector": ["objectLiteralProperty"],
+                "format": null
+            }
+        ],
+        "new-parens": "error",
+        "no-new-wrappers": "error",
+        "no-array-constructor": "error",
+        "no-throw-literal": "error",
+        "guard-for-in": "error",
+        "curly": ["error", "all"],
+        "default-case": "error",
+        "prefer-arrow-callback": "error",
+        "func-style": ["error", "declaration"],
+        "@typescript-eslint/consistent-type-assertions": [
+            "warn",
+            {
+                "assertionStyle": "as",
+                "objectLiteralTypeAssertions": "allow-as-parameter"
+            }
+        ],
+        "semi": ["error", "always"],
+        "import/no-absolute-path": "error",
+        "import/no-default-export": "error",
+        "import/no-mutable-exports": "error",
+        "@typescript-eslint/no-unnecessary-type-assertion": "error",
+        "@typescript-eslint/array-type": ["error", { "default": "array-simple" }],
+        "arrow-parens": [2, "always"],
+        "@typescript-eslint/no-unused-vars": ["error", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }]
+    }
+}

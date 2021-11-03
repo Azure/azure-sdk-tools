@@ -15,3 +15,5 @@
 /tools/pipeline-generator/ @weshaggard @benbp
 /tools/test-proxy/ @scbedd @mikeharder
 /tools/stress-cluster/ @benbp @ckairen
+/tools/mock-service-host/ @changll @chenjieshi
+/tools/sdk-testgen/ @changll @chenjieshi

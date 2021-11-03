@@ -35,8 +35,9 @@
         </div>
 
         <div class="btn-group float-right pr-5">
-            <a class="btn btn-secondary" active-if="!@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: false)>Manual</a>
-            <a class="btn btn-secondary" active-if="@Model.Automatic" asp-all-route-data=@Model.GetRoutingData(automatic: true)>Automatic</a>
+            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
+            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
+            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
         </div>
 
     </div>

@@ -11,14 +11,17 @@
     };
 }
 
-<tr class="code-line" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line @lineClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+    <td class="line-number @lineClass">@Model.LineNumber</td>
     <td class="line-comment-button-cell">
         @if (!isRemoved && Model.CodeLine.ElementId != null)
         {
             <a class="line-comment-button">+</a>
         }
     </td>
-    <td class="code @lineClass"><span class="code-inner">@Html.Raw(Model.CodeLine.DisplayString)</span></td>
+    <td class="code @lineClass">
+        <span class="code-inner">@Html.Raw(Model.CodeLine.DisplayString)</span>
+    </td>
 </tr>
 @if (Model.Diagnostics.Any())
 {

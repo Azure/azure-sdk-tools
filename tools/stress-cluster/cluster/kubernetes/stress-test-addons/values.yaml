@@ -1,21 +1,32 @@
 env: test
-
 appInsightsKeySecretName:
-  test: appInsightsInstrumentationKey-uj7jqs4ukw2gi
+  test: appInsightsInstrumentationKey-tbiruti6oi24k
   prod: appInsightsInstrumentationKey-dqojlttkovp2c
-  dev: 'not-specified'
+  dev: ""
+debugStorageKeySecretName:
+  test: debugStorageKey-tbiruti6oi24k
+  prod: ""
+  dev: ""
+debugStorageAccountSecretName:
+  test: debugStorageAccount-tbiruti6oi24k
+  prod: ""
+  dev: ""
+debugFileShareName:
+  test: stressfilestbiruti6oi24k
+  prod: ""
+  dev: ""
 staticTestSecretsKeyvaultName:
-  test: StressTestSecrets
-  prod: StressTestSecrets
-  dev: 'not-specified'
+  test: stress-secrets-test
+  prod: StressSecretsProd
+  dev: ""
 clusterTestSecretsKeyvaultName:
-  test: stress-kv-uj7jqs4ukw2gi
+  test: stress-kv-tbiruti6oi24k
   prod: stress-kv-dqojlttkovp2c
-  dev: 'not-specified'
+  dev: ""
 secretProviderIdentity:
-  test: bc7712b9-1622-4b7f-9943-604c73cda131
+  test: 9eca3e6f-842f-495f-b106-4f3331406e79
   prod: ea706f92-1d9a-4611-9cde-8305aa3d9e98
-  dev: 'not-specified'
+  dev: ""
 subscription:
   test: public
   prod: public
@@ -24,3 +35,4 @@ tenantId:
   test: 72f988bf-86f1-41af-91ab-2d7cd011db47
   prod: 72f988bf-86f1-41af-91ab-2d7cd011db47
   dev: 72f988bf-86f1-41af-91ab-2d7cd011db47
+

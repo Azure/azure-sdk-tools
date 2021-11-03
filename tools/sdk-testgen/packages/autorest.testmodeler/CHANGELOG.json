@@ -1,0 +1,17 @@
+{
+  "name": "@autorest/testmodeler",
+  "entries": [
+    {
+      "version": "1.0.0",
+      "tag": "@autorest/testmodeler_v1.0.0",
+      "date": "Fri, 29 Oct 2021 05:53:50 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Init public version of autorest extension for test modeler"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -19,7 +19,7 @@ spec:
       containers:
       - name: stresswatcher
         imagePullPolicy: Always
-        image: azsdkengsys.azurecr.io/stress/stresswatcher:latest
+        image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
         command: ["dotnet", "Stress.Watcher.dll"]
         volumeMounts:
         - name: public

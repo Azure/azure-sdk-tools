@@ -161,6 +161,9 @@ metadata:
   name: '(( Name ))-{{ .Release.Name }}-{{ .Release.Revision }}'
   namespace: {{ .Release.Namespace }}
 spec:
+  scheduler:
+    cron: '(( Schedule ))'
+  duration: '(( Duration ))'
   selector:
     labelSelectors:
       # This label must match the testInstance label of the pod(s) to target chaos against.
@@ -178,11 +181,17 @@ spec:
 
         public string? Name { get; set; }
 
-        [ResourceProperty("A list of domains/CNAME records, like servicebus.windows.net")]
+        [ResourceProperty("A list of domains/CNAME records to apply network chaos to/from, for example 'servicebus.windows.net'")]
         public List<string>? ExternalTargets { get; set; }
 
         [ResourceProperty("Packet direction. Options: 'to', 'from', 'both'")]
         public string? Direction { get; set; }
+
+        [OptionalResourceProperty("Frequency with which the network chaos should run, e.g. '@every 30s' or a valid cron expression. See also https://chaos-mesh.org/docs/define-scheduling-rules/#schedule-field")]
+        public string? Schedule { get; set; }
+
+        [OptionalResourceProperty("Duration of the network chaos, e.g. '12s'. Set this if a cron schedule has been set")]
+        public string? Duration { get; set; }
 
         [NestedResourceProperty(
           "Type of network chaos.",

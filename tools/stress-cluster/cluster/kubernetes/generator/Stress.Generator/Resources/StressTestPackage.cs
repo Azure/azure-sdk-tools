@@ -14,8 +14,8 @@ description: (( Name )) stress test package
 version: 0.1.1
 appVersion: v0.1
 annotations:
-  stressTest: 'true'
   namespace: (( Namespace ))
+  stressTest: 'true'  # do not change, required for deployment auto-discovery
 
 dependencies:
 - name: stress-test-addons
@@ -33,6 +33,16 @@ Place files relevant to your application code within this directory
 # Build your Dockerfile here
 # Reference docs: https://docs.docker.com/engine/reference/builder/
 # Best practices docs: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+
+FROM <appropriate base image, e.g. node:12-alpine>
+
+RUN mkdir /src
+ADD ./src /src
+
+WORKDIR /src
+RUN <your build commands>
+
+CMD [""your"", ""app"", ""command""];
 ";
 
         private string HelmIgnoreContents = @"
@@ -41,16 +51,28 @@ Place files relevant to your application code within this directory
 # Docs: https://helm.sh/docs/chart_template_guide/helm_ignore_file/
 
 src/
+.env
 ";
 
         private string ValuesContents = @"
-# Leave this file empty unless you plan to generate job files in a loop for a list of scenarios.
+# Leave this file empty unless you plan to support multiple test cases and want to avoid duplicating yaml.
 # See https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/README.md#scenarios-and-valuesyaml
+
+# scenarios:
+#   - myScenarioA
+#   - myScenarioB
+#   - myScenarioC
 ";
 
         private string ReadmeContents = @"
 This is a stress test package, used for deploying and testing Azure SDKs in real world scenarios.
 Docs: https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/README.md
+
+Examples:
+  - https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples
+  - https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/eventhub/azure-eventhub/stress
+  - https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/servicebus/service-bus/test/stress
+  - https://github.com/Azure/azure-sdk-for-net/tree/feature/storage/chaos-testing-prototype/sdk/storage/chaos
 ";
 
         [ResourceProperty("Stress Test Name")]

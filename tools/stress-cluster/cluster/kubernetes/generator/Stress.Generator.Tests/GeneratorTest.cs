@@ -107,6 +107,8 @@ namespace Stress.Generator.Tests
 
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
+            prompter.AddResponse("n");
+            prompter.AddResponse("n");
             prompter.AddResponse("LossAction");
             prompter.AddResponse("0.5");
             prompter.AddResponse("y");
@@ -151,6 +153,8 @@ namespace Stress.Generator.Tests
 
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
+            prompter.AddResponse("n");
+            prompter.AddResponse("n");
             prompter.AddResponse("LossAction");
             prompter.AddResponse("invalid1");
             prompter.AddResponse("invalid2");
@@ -209,12 +213,24 @@ namespace Stress.Generator.Tests
             prompter.AddResponse("TestStressPackage");
             prompter.AddResponse("TestStressNamespace");
             prompter.AddResponse(nameof(JobWithoutAzureResourceDeployment));
+            // Command
             prompter.AddResponse("bash -c sleep 3600");
+            // Enable chaos
             prompter.AddResponse("true");
+            // Another resource
             prompter.AddResponse("y");
             prompter.AddResponse(nameof(NetworkChaos));
+            // External target
             prompter.AddResponse("bing.com");
+            // Packet Direction
             prompter.AddResponse("to");
+            // Schedule
+            prompter.AddResponse("y");
+            prompter.AddResponse("@every 30s");
+            // Duration
+            prompter.AddResponse("y");
+            prompter.AddResponse("12s");
+            // Network Action Type
             prompter.AddResponse("LossAction");
             prompter.AddResponse("0.5");
             prompter.AddResponse("n");
@@ -251,6 +267,8 @@ namespace Stress.Generator.Tests
             prompter.AddResponse(nameof(NetworkChaos));
             prompter.AddResponse("bing.com");
             prompter.AddResponse("to");
+            prompter.AddResponse("n");
+            prompter.AddResponse("n");
             prompter.AddResponse("DelayAction");
             prompter.AddResponse("50ms");
             prompter.AddResponse("n");

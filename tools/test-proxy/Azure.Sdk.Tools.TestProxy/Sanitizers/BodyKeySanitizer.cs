@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                     jsonO = JToken.Parse(body);
                 }
             }
-            catch(JsonReaderException e)
+            catch(JsonReaderException)
             {
                 return body;
             }

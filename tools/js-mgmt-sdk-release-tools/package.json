@@ -1,5 +1,5 @@
 {
-  "name": "azure-track2-js-sdk-release-tools",
+  "name": "@azure-tools/js-mgmt-release-tools",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -9,9 +9,9 @@
     "prepack": "npm run build"
   },
   "bin": {
-    "track2-js-sdk-changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
-    "track2-codegen-automation": "./dist/generateCodesInLocalCLI.js",
-    "track2-codegen-automation-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+    "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
+    "codegen-automation": "./dist/generateCodesInLocalCLI.js",
+    "automation-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

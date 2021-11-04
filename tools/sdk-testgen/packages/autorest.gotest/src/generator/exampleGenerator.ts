@@ -29,7 +29,7 @@ export class ExampleDataRender extends MockTestDataRender {
 
 export class ExampleCodeGenerator extends BaseCodeGenerator {
     public generateCode(extraParam: Record<string, unknown> = {}): void {
-        for (let [groupKey, exampleGroups] of Object.entries(MockTestDefinitionModel.groupByOperationGroup(this.context.codeModel.testModel.mockTest.exampleGroups))) {
+        for (const [groupKey, exampleGroups] of Object.entries(MockTestDefinitionModel.groupByOperationGroup(this.context.codeModel.testModel.mockTest.exampleGroups))) {
             let exampleModel: ExampleModel = null;
             for (const exampleGroup of exampleGroups) {
                 if (exampleGroup.examples.length > 0) {
@@ -37,15 +37,16 @@ export class ExampleCodeGenerator extends BaseCodeGenerator {
                     break;
                 }
             }
-            if (exampleModel == null) {
+            if (exampleModel === null) {
                 continue;
             }
 
-            if (groupKey === '') {
-                groupKey = exampleModel.operationGroup.language.go.name;
-            }
-
-            this.renderAndWrite({ exampleGroups: exampleGroups }, 'exampleTest.go.njk', `${this.getFilePrefix(Config.exampleFilePrefix)}example_${groupKey}_test.go`, extraParam);
+            this.renderAndWrite(
+                { exampleGroups: exampleGroups },
+                'exampleTest.go.njk',
+                `${this.getFilePrefix(Config.exampleFilePrefix)}example_${groupKey === '' ? exampleModel.operationGroup.language.go.name : groupKey}_test.go`,
+                extraParam,
+            );
         }
     }
 }

@@ -115,20 +115,22 @@ export class MockTestDataRender extends BaseDataRender {
                 case SchemaType.String:
                 case SchemaType.Constant:
                     return '"<' + Helper.toKebabCase(this.getLanguageName(param)) + '>"';
-                case SchemaType.Array:
-                    let elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
+                case SchemaType.Array: {
+                    const elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
                     let elementTypeName = this.getLanguageName((param.schema as ArraySchema).elementType);
                     const polymophismName = (param.schema as ArraySchema).elementType.language.go.discriminatorInterface;
                     if (polymophismName) {
                         elementTypeName = polymophismName;
                     }
-                    let packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
+                    const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
                     return `[]${elementPtr}${packageName}${elementTypeName}{}`;
-                case SchemaType.Dictionary:
-                    elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
-                    elementTypeName = this.getLanguageName((param.schema as DictionarySchema).elementType);
-                    packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
+                }
+                case SchemaType.Dictionary: {
+                    const elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
+                    const elementTypeName = this.getLanguageName((param.schema as DictionarySchema).elementType);
+                    const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
                     return `map[string]${elementPtr}${packageName}${elementTypeName}{}`;
+                }
                 case SchemaType.Boolean:
                     return 'false';
                 case SchemaType.Integer:
@@ -136,6 +138,8 @@ export class MockTestDataRender extends BaseDataRender {
                     return '0';
                 case SchemaType.Object:
                     return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                default:
+                    return '';
             }
         }
     }
@@ -193,7 +197,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
 
         const rawValue = this.getRawValue(exampleValue);
-        if (rawValue == null) {
+        if (rawValue === null) {
             return this.getDefaultValue(exampleValue, isPtr === undefined ? !exampleValue.language.go.byValue : isPtr);
         }
         return this.rawValueToString(rawValue, exampleValue.schema, isPtr === undefined ? !exampleValue.language.go.byValue : isPtr);

@@ -1,4 +1,4 @@
-module apiview
+module apiviewgo
 
 go 1.14
 

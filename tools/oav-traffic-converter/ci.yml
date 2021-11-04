@@ -44,6 +44,7 @@ stages:
 
         - script: |
             npm install
+            npm run build
             npm pack
             cp azure-tools-oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)
           displayName: 'Package into Artifact Dir'

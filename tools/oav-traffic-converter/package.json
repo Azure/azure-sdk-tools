@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/oav-traffic-converter",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A little package that can be called as a tool to convert azure sdk test-proxy files to the format consumed by the live validation format of oav.",
   "main": "./build/cli.js",
   "scripts": {

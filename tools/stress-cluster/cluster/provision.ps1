@@ -121,10 +121,10 @@ function DeployClusterResources([hashtable]$params) {
 }
 
 function LoadEnvParams() {
-    $params = (Get-Content $PSScriptRoot/azure/parameters/$env.json | ConvertFrom-Json -AsHashtable).parameters
-
-    if (!$params) {
-        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$env.json"
+    try {
+        $params = (Get-Content $PSScriptRoot/azure/parameters/$env.json | ConvertFrom-Json -AsHashtable).parameters
+    } catch {
+        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$env.json. Check that any lines marked '// add me' are filled in and that the file exists."
         exit 1
     }
 

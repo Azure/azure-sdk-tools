@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -84,9 +86,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            await Assert.ThrowsAsync<BadHttpRequestException>(
+            var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.SetMatcher()
             );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
         [Fact]
@@ -131,9 +134,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             testRecordingHandler.Sanitizers.Clear();
             
-            await Assert.ThrowsAsync<BadHttpRequestException>(
+            var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
             );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
         [Fact]
@@ -202,9 +206,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            await Assert.ThrowsAsync<BadHttpRequestException>(
+            var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
             );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
         [Fact]
@@ -274,9 +279,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            await Assert.ThrowsAsync<BadHttpRequestException>(
+            var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddTransform()
             );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
     }
 }

@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override string SanitizeTextBody(string contentType, string body)
         {
+            bool sanitized = false;
             JToken jsonO;
             // Prevent default behavior where JSON.NET will convert DateTimeOffset
             // into a DateTime.
@@ -53,15 +54,22 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 // HasValues is false for tokens with children. We will not apply sanitization if that is the case.
                 if (!token.HasValues)
                 {
-                    var replacement = StringSanitizer.SanitizeValue(token.Value<string>(), _newValue, _regexValue, _groupForReplace);
+                    var originalValue = token.Value<string>();
+
+                    var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
 
                     // this sanitizer should only apply to actual values
                     // if we attempt to apply a regex update to a jtoken that has a more complex type, throw
                     token.Replace(JToken.FromObject(replacement));
+
+                    if(originalValue != replacement)
+                    {
+                        sanitized = true;
+                    }
                 }
             }
-            
-            return JsonConvert.SerializeObject(jsonO, SerializerSettings);
+
+            return sanitized ? JsonConvert.SerializeObject(jsonO, SerializerSettings) : body;
         }
 
 

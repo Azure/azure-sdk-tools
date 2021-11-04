@@ -1,0 +1,55 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
+
+namespace Azure.Sdk.Tools.TestProxy.Common
+{
+    public class HttpExceptionMiddleware
+    {
+        private readonly RequestDelegate next;
+
+        public HttpExceptionMiddleware(RequestDelegate next)
+        {
+            this.next = next;
+        }
+
+        public async Task Invoke(HttpContext context)
+        {
+            try
+            {
+                await this.next.Invoke(context);
+            }
+            catch (HttpException e)
+            {
+                var response = context.Response;
+                if (response.HasStarted)
+                {
+                    throw;
+                }
+
+                int statusCode = (int)e.StatusCode;
+                if (statusCode >= 500 && statusCode <= 599)
+                {
+                    throw;
+                }
+
+                response.Clear();
+                response.StatusCode = statusCode;
+                response.ContentType = "application/json;";
+
+                var bodyObj = new
+                {
+                    Message = e.Message,
+                    Status = e.StatusCode.ToString()
+                };
+
+                var body = JsonSerializer.Serialize(bodyObj);
+                await context.Response.WriteAsync(body);
+            }
+        }
+    }
+}

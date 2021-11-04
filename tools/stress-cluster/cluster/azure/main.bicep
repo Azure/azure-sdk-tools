@@ -8,9 +8,7 @@ param staticTestSecretsKeyvaultName string
 param staticTestSecretsKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param tags object
-param enableMonitoring bool = false
 param enableHighMemAgentPool bool = false
-param enableDebugStorage bool = false
 
 // Azure Developer Platform Team Group
 // https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/GroupDetailsMenuBlade/Overview/groupId/56709ad9-8962-418a-ad0d-4b25fa962bae
@@ -30,7 +28,7 @@ resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
 // https://docs.microsoft.com/en-us/azure/azure-monitor/logs/cross-workspace-query#identifying-an-application
 var resourceSuffix = uniqueString(group.id)
 
-module logWorkspace 'monitoring/log-analytics-workspace.bicep' = if (enableMonitoring) {
+module logWorkspace 'monitoring/log-analytics-workspace.bicep' = {
     name: 'logs'
     scope: group
     params: {
@@ -39,7 +37,7 @@ module logWorkspace 'monitoring/log-analytics-workspace.bicep' = if (enableMonit
     }
 }
 
-module appInsights 'monitoring/app-insights.bicep' = if (enableMonitoring) {
+module appInsights 'monitoring/app-insights.bicep' = {
     name: 'appInsights'
     scope: group
     params: {
@@ -49,10 +47,11 @@ module appInsights 'monitoring/app-insights.bicep' = if (enableMonitoring) {
     }
 }
 
-module dashboard 'monitoring/workbook.bicep' = if (enableMonitoring) {
+module dashboard 'monitoring/workbook.bicep' = {
     name: 'dashboard'
     scope: group
     params: {
+        workbookDisplayName: 'Azure SDK Stress Testing - ${groupSuffix}'
         logAnalyticsResource: logWorkspace.outputs.id
     }
 }
@@ -64,9 +63,8 @@ module cluster 'cluster/cluster.bicep' = {
         clusterName: clusterName
         tags: tags
         groupSuffix: groupSuffix
-        enableMonitoring: enableMonitoring
         enableHighMemAgentPool: enableHighMemAgentPool
-        workspaceId: enableMonitoring ? logWorkspace.outputs.id : ''
+        workspaceId: logWorkspace.outputs.id
     }
 }
 
@@ -80,7 +78,7 @@ module containerRegistry 'cluster/acr.bicep' = {
     }
 }
 
-module storage 'cluster/storage.bicep' = if (enableDebugStorage) {
+module storage 'cluster/storage.bicep' = {
     name: 'storage'
     scope: group
     params: {
@@ -102,7 +100,7 @@ var debugStorageKeySecretValue = '${storage.outputs.key}'
 var debugStorageAccountSecretName = 'debugStorageAccount-${resourceSuffix}'
 var debugStorageAccountSecretValue = '${storage.outputs.name}'
 
-module keyvault 'cluster/keyvault.bicep' = if (enableMonitoring) {
+module keyvault 'cluster/keyvault.bicep' = {
     name: 'keyvault'
     scope: group
     params: {

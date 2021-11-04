@@ -20,9 +20,6 @@
     "staticTestSecretsKeyvaultGroup": {
       "value": // add me, e.g. rg-stress-secrets-<your alias>
     },
-    "enableDebugStorage": {
-        "value": true
-    },
     "tags": {
       "value": {
         "environment": "Dev",

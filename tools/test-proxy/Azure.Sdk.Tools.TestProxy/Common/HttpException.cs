@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public HttpException(int httpStatusCode)
             : this((HttpStatusCode)httpStatusCode)
         {
+            this.StatusCode = statusCode;        
         }
 
         public HttpException(HttpStatusCode statusCode, string message)

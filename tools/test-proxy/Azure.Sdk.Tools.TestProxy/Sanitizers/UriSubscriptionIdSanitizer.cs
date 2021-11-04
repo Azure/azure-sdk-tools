@@ -1,7 +1,8 @@
 ﻿namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// This sanitizer relies on UriRegexSanitizer to replace real subscriptionIds within a URI w/ a default or configured fake value.
+    /// This sanitizer relies on UriRegexSanitizer to replace real subscriptionIds within a URI w/ a default or configured fake value. This sanitizer ONLY affects
+    /// the URI of a request/response pair.
     /// </summary>
     public class UriSubscriptionIdSanitizer : UriRegexSanitizer
     {

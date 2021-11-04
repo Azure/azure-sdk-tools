@@ -19,10 +19,11 @@ namespace APIViewWeb
             _pullRequestsContainer = client.GetContainer("APIView", "PullRequests");
         }
 
-        public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string filePath)
+        public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string packageName)
         {
-            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.FilePath = '{filePath}'";
-            return await GetPullRequestFromQueryAsync(query);
+            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.PackageName = '{packageName}'";
+            var requests = await GetPullRequestFromQueryAsync(query);
+            return requests.Count > 0 ? requests[0] : null;
         }
 
         public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
@@ -32,27 +33,20 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(bool isOpen)
         {
-            var pullRequests = new List<PullRequestModel>();
-            var queryDefinition = new QueryDefinition("SELECT * FROM PullRequests c WHERE c.IsOpen = @isOpen").WithParameter("@isClosed", isOpen);
-            var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(queryDefinition);
+            var query = $"SELECT * FROM PullRequests c WHERE c.IsOpen = {(isOpen? "true": "false")}";
+            return await GetPullRequestFromQueryAsync(query);
+        }
+
+        private async Task<List<PullRequestModel>> GetPullRequestFromQueryAsync(string query)
+        {
+            var allRequests = new List<PullRequestModel>();
+            var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(query);
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
-                pullRequests.AddRange(result.Resource);
+                allRequests.AddRange(result.Resource);
             }
-            return pullRequests;
-        }
-
-        private async Task<PullRequestModel> GetPullRequestFromQueryAsync(string query)
-        {
-            var itemQueryIterator = _pullRequestsContainer.GetItemQueryIterator<PullRequestModel>(query);
-            if (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                return result.Resource?.GetEnumerator()?.Current;
-            }
-
-            return null;
+            return allRequests;
         }
     }
 }

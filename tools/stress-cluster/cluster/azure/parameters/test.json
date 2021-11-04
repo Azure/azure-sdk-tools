@@ -2,8 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "subscriptionId": {
+      "value": "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+    },
     "groupSuffix": {
-      "value": ""
+      "value": "test"
     },
     "clusterName": {
       "value": "stress-test"
@@ -12,12 +15,18 @@
       "value": "westus2"
     },
     "staticTestSecretsKeyvaultName": {
-      "value": "StressTestSecrets"
+      "value": "stress-secrets-test"
     },
     "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-StressTestSecrets"
+      "value": "rg-stress-secrets-test"
     },
     "enableMonitoring": {
+        "value": true
+    },
+    "enableDebugStorage": {
+        "value": true
+    },
+    "enableHighMemAgentPool": {
         "value": true
     },
     "tags": {

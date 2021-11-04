@@ -39,6 +39,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return handler;
         }
 
+        public static string GenerateStringFromStream(Stream s)
+        {
+            s.Position = 0;
+            using StreamReader reader = new StreamReader(s);
+
+            return reader.ReadToEnd();
+        }
+
         public static byte[] GenerateByteRequestBody(string s)
         {
             return Encoding.UTF8.GetBytes(s);

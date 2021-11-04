@@ -15,7 +15,7 @@ namespace APIViewWeb.Controllers
         private readonly PullRequestManager _pullRequestManager;
         private readonly ILogger _logger;
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nuget", "-sources.jar" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar" };
 
         public PullRequestController(PullRequestManager pullRequestManager, ILogger<AutoReviewController> logger)
         {
@@ -30,14 +30,15 @@ namespace APIViewWeb.Controllers
             string filePath, 
             int pullRequestNumber, 
             string commitSha,
-            string repoName)
+            string repoName,
+            string packageName)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
 
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName);
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName, packageName);
             return Ok();
         }
 

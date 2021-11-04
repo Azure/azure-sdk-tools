@@ -9,6 +9,7 @@ trigger:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator
 
@@ -23,6 +24,7 @@ pr:
     include:
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator
 
@@ -47,7 +49,7 @@ stages:
       - job: 'Build'
 
         pool:
-          vmImage: 'vs2017-win2016'
+          vmImage: 'windows-2019'
 
         steps:
           - task: NodeTool@0
@@ -131,7 +133,7 @@ stages:
           - 'Build'
 
         pool:
-          vmImage: 'vs2017-win2016'
+          vmImage: 'windows-2019'
 
         steps:
 

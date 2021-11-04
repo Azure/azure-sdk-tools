@@ -507,7 +507,7 @@ namespace ApiView
         {
             if (NeedsAccessibility(symbol))
             {
-                builder.Keyword(SyntaxFacts.GetText(symbol.DeclaredAccessibility));
+                builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
                 builder.Space();
             }
             foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
@@ -602,6 +602,7 @@ namespace ApiView
             switch (accessibility)
             {
                 case Accessibility.ProtectedAndInternal:
+                    return Accessibility.Internal;
                 case Accessibility.ProtectedOrInternal:
                     return Accessibility.Protected;
                 default:
@@ -613,7 +614,6 @@ namespace ApiView
         {
             switch (s.DeclaredAccessibility)
             {
-                case Accessibility.ProtectedAndInternal:
                 case Accessibility.Protected:
                 case Accessibility.ProtectedOrInternal:
                 case Accessibility.Public:

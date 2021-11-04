@@ -38,19 +38,16 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var reviews = await GetReviewsAsync(false, language, packageName, true);
+            var reviews = await GetReviewsAsync(false, language, packageName, ReviewType.Automatic);
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, bool? isAutomatic = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType filterType = ReviewType.Manual)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 
-            //Add filter if looking for automatic or manual reviews only
-            if (isAutomatic != null)
-            {
-                queryStringBuilder.Append("AND (IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic ");
-            }
+            //Add filter if looking for automatic, manual or PR reviews
+            queryStringBuilder.Append("AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
 
             // Add language and package name clause
             // Currently we don't have any use case of searching for a package name across languages
@@ -68,7 +65,7 @@ namespace APIViewWeb
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
-                .WithParameter("@isAutomatic", isAutomatic)
+                .WithParameter("@filterType", filterType)
                 .WithParameter("@isClosed", isClosed);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);

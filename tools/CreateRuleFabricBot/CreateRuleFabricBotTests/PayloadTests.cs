@@ -55,10 +55,10 @@ namespace Tests
       ""capabilityId"": ""PrAutoLabel"",
       ""subCapability"": ""Path"",
       ""version"": ""1.0"",
-      ""id"": ""AzureSDKPullRequestLabelFolder_test_repo"",
+      ""id"": ""AzureSDKPullRequestLabelFolder_repo_test"",
       ""config"": {
         ""configs"": [
-            { ""labels"": [""Label1""], ""pathFilter"": [""test""], ""exclude"": [ """" ]  }
+            { ""label"": ""Label1"", ""pathFilter"": [""test""], ""exclude"": [ """" ]  }
         ],
       ""taskName"" :""Auto PR based on folder paths ""
       }
@@ -74,9 +74,7 @@ namespace Tests
             PathConfig pc = new PathConfig("folder", "path");
 
             string expectedPayload = @"{
-  ""labels"": [
-    ""path""
-  ],
+  ""label"": ""path"",
   ""pathFilter"": [ ""folder"" ], ""exclude"": [ """" ]
 }";
 

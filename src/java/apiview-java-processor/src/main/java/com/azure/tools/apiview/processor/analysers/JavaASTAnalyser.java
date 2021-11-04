@@ -64,6 +64,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,6 +101,8 @@ public class JavaASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
+
+    private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
     private final APIListing apiListing;
 
@@ -1333,10 +1336,10 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         addToken(new Token(DOCUMENTATION_RANGE_START));
-        Arrays.stream(jd.toString().split(MiscUtils.LINEBREAK)).forEach(line -> {
+        Arrays.stream(SPLIT_NEWLINE.split(jd.toString())).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             final String wrappedString = MiscUtils.wrap(line, 120);
-            Arrays.stream(wrappedString.split(MiscUtils.LINEBREAK)).forEach(line2 -> {
+            Arrays.stream(SPLIT_NEWLINE.split(wrappedString)).forEach(line2 -> {
                 addToken(makeWhitespace());
 
                 addToken(new Token(COMMENT, line2));

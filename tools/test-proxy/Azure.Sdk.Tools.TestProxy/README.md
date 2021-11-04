@@ -22,12 +22,10 @@ There is a walkthrough through the process below in the [how do I use the test p
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+> dotnet tool install azure.sdk.tools.testproxy --global --prerelease --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
 ```
 
 This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)
-
-Note that given there are only dev versions available, please add `--version <selectedVersion>`. You will see a failure that **gives you the latest version of the package** if you do not provide this additional argument.
 
 After successful installation, run the tool:
 
@@ -49,9 +47,25 @@ The Azure SDK Team maintains a public Azure Container Registry.
 > docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
+For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
+
+```powershell
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
+
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
 Within the container, recording outputs are written within the directory `/etc/testproxy`.
+
+#### A note about docker caching
+
+The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines may be running outdated versions of the test-proxy.
+
+To ensure that your local copy is up to date, run:
+
+```powershell
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
 
 ## Command line arguments
 
@@ -156,16 +170,31 @@ POST to the proxy server:
 
 ```json
 URL: https://localhost:5001/record/stop
-headers {
+headers: {
     "x-recording-id": "<x-recording-id>",
+    "Content-Type": "application/json"
+}
+<optional> body: {
+    "key1": "value1",
+    "key2": "value2"
 }
 ```
+
+The `Content-Type` must be set ONLY if a body with values is also sent. Read section directly below [storing variables](#storing-variables) for a description.
 
 This will **finalize** your recording by:
 
 - Removing from active sessions.
 - Applying session/recording sanitizers.
 - Saving to disk.
+
+#### Storing `variables`
+
+In the above example notice that there is an optional body. This is extremely useful when your tests have an element of "randomness" to them. A great example of non-secret randomness would be a `tablename` provided during `tables storage` tests. It is extremely common for a given azure-sdk test framework to generate a name like `u324bca`. Unfortunately, randomness can lead to difficulties during `playback`. The URI, headers, and body of a request must match _exactly_ with a recording entry.
+
+Given that reccordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
+
+An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
 
 ## How do I use the test-proxy to play a recording back?
 
@@ -183,6 +212,12 @@ headers {
 ```
 
 As with `/record/start`, check response header `x-recording-id` to get the recording-id for usage later on.
+
+#### Optional `variables` returned
+
+In the case where a user set `variables` in `/Record/Stop`, those values will also be returned in the `body` of the result from `/Playback/Start`. There is no manipulation of these values, whatever is saved during `/Record/Stop` should be identical to what is available from `/Playback/Start`.
+
+As one could guess based on the routes, these variables are saved and returned on a per-recording basis.
 
 ### During your test run
 
@@ -270,6 +305,16 @@ body: {
 }
 ```
 
+#### A note about where sanitizers apply
+
+Each sanitizer is optionally prefaced with the **specific part** of the request/response pair that it applies to. These prefixes are
+
+- `Uri`
+- `Header`
+- `Body`
+
+A sanitizer that does _not_ include this prefix is something different, and probably applies at the session level instead on an individual request/response pair.
+
 ### For Sanitizers, Matchers, or Transforms in general
 
 When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`. Where applicable.
@@ -280,7 +325,7 @@ When invoked as basic requests to the `Admin` controller, these settings will be
 
 Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
 
-### Viewing Available/Active Sanitizers, Matchers, and Transforms
+### Viewing available/active Sanitizers, Matchers, and Transforms
 
 Launch the test-proxy through your chosen method, then visit:
 
@@ -288,6 +333,33 @@ Launch the test-proxy through your chosen method, then visit:
 - `<proxyUrl>/Info/Active` to see all currently active.
 
 Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface.
+
+### Resetting active Sanitizers, Matchers, and Transforms
+
+Given that the test-proxy offers the ability to set up customizations for an entire session or a single recording, it also must provide the ability to **reset** these settings without entirely restarting the server.
+
+This is allowed through the use of the `/Admin/Reset` API. A `reset` operation "returns to default".
+
+#### Reset the session
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+```
+
+This API operates exclusively on the `Session` level if no recordingId is provided in the header. Any customizations on individual recordings are left untouched.
+
+#### Reset for a specific recordingId
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+headers: {
+    "x-recording-id": "<guid>"
+}
+```
+
+If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
 
 ## Testing
 

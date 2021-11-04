@@ -168,7 +168,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             return lines.Select(
-                diffLine => new CodeLineModel(
+                (diffLine, index) => new CodeLineModel(
                     diffLine.Kind,
                     diffLine.Line,
                     diffLine.Kind != DiffLineKind.Removed &&
@@ -178,18 +178,20 @@ namespace APIViewWeb.Pages.Assemblies
 
                     diffLine.Kind != DiffLineKind.Removed ?
                         diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
-                        Array.Empty<CodeDiagnostic>()
+                        Array.Empty<CodeDiagnostic>(),
+                    ++index
                 )).ToArray();
         }
 
         private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments)
         {
             return lines.Select(
-                line => new CodeLineModel(
+                (line, index) => new CodeLineModel(
                     DiffLineKind.Unchanged,
                     line,
                     comments.TryGetThreadForLine(line.ElementId, out var thread) ? thread : null,
-                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray()
+                    diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
+                    ++index
                 )).ToArray();
         }
 

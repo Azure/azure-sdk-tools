@@ -56,7 +56,7 @@ namespace APIViewWeb.Controllers
             // So it rely on approval status of latest revision of automatic review for the package
             // With new restriction of creating automatic review only from master branch or GA version, this should ensure latest revision
             // is infact the version intended to be released.
-            var reviews = await _reviewManager.GetReviewsAsync(false, language, packageName: packageName, automatic: true);
+            var reviews = await _reviewManager.GetReviewsAsync(false, language, packageName: packageName, ReviewType.Automatic);
             var review = reviews.FirstOrDefault();
             if (review != null)
             {

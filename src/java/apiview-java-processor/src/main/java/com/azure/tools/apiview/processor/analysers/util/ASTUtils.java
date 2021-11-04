@@ -20,9 +20,11 @@ import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class ASTUtils {
+    private static final Pattern MAKE_ID = Pattern.compile("\"| ");
 
     public static Optional<String> getPackageName(CompilationUnit cu) {
         return cu.getPackageDeclaration().map(PackageDeclaration::getNameAsString);
@@ -93,7 +95,7 @@ public class ASTUtils {
         return makeId(getNodeFullyQualifiedName(variableDeclarator.getParentNode()) + "." + variableDeclarator.getNameAsString());
     }
 
-    public static String makeId(CallableDeclaration callableDeclaration) {
+    public static String makeId(CallableDeclaration<?> callableDeclaration) {
         return makeId(getNodeFullyQualifiedName(callableDeclaration.getParentNode()) + "." + callableDeclaration.getDeclarationAsString());
     }
 
@@ -102,7 +104,7 @@ public class ASTUtils {
     }
 
     public static String makeId(String fullPath) {
-        return fullPath.replaceAll("\"| ", "-");
+        return MAKE_ID.matcher(fullPath).replaceAll("-");
     }
 
     /**

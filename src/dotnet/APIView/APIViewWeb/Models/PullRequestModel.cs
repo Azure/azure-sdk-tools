@@ -17,5 +17,6 @@ namespace APIViewWeb.Models
         public bool IsOpen { get; set; } = true;
         public string ReviewId { get; set; }
         public string Author { get; set; }
+        public string PackageName { get; set; }
     }
 }

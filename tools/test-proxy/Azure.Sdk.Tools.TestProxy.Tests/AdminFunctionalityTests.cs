@@ -1,9 +1,11 @@
+using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -19,22 +21,175 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// </summary>
     public class AdminFunctionalityTests
     {
-
-
         [Fact]
-        public void TestSetMatcher()
+        public async Task TestSetMatcher()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
 
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.SetMatcher();
+
+            var result = testRecordingHandler.Matcher;
+            Assert.True(result is BodilessMatcher);
         }
 
         [Fact]
-        public void TestAddSanitizer()
+        public async void TestSetMatcherIndividualRecording()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.SetMatcher();
+
+            var result = testRecordingHandler.PlaybackSessions[recordingId].CustomMatcher;
+            Assert.True(result is BodilessMatcher);
+        }
+
+        [Fact]
+        public async void TestSetMatcherThrowsOnBadRecordingId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-recording-id"] = "bad-recording-id";
+            httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await Assert.ThrowsAsync<BadHttpRequestException>(
+               async () => await controller.SetMatcher()
+            );
+        }
+
+        [Fact]
+        public async void TestAddSanitizer()
         {
             // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            var apiVersion = "2016-03-21";
-            httpContext.Request.Headers["x-api-version"] = apiVersion;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            httpContext.Request.ContentLength = 92;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var result = testRecordingHandler.Sanitizers.First();
+            Assert.True(result is HeaderRegexSanitizer);
+        }
+
+        [Fact]
+        public async void TestAddSanitizerWrongEmptyValue()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            httpContext.Request.ContentLength = 92;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            
+            await Assert.ThrowsAsync<BadHttpRequestException>(
+               async () => await controller.AddSanitizer()
+            );
+        }
+
+        [Fact]
+        public async void TestAddSanitizerAcceptableEmptyValue()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"\" }");
+            httpContext.Request.ContentLength = 92;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var result = testRecordingHandler.Sanitizers.First();
+            Assert.True(result is HeaderRegexSanitizer);
+        }
+
+        [Fact]
+        public async void TestAddSanitizerIndividualRecording()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            httpContext.Request.ContentLength = 92;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller .AddSanitizer();
+
+            var result = testRecordingHandler.PlaybackSessions[recordingId].AdditionalSanitizers.First();
+            Assert.True(result is HeaderRegexSanitizer);
+        }
+
+        [Fact]
+        public async void TestAddSanitizerThrowsOnBadRecordingId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-recording-id"] = "bad-recording-id";
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
@@ -47,18 +202,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
-
-            controller.AddSanitizer();
-
-            var result = testRecordingHandler.Sanitizers.First();
-            Assert.True(result is HeaderRegexSanitizer);
+            await Assert.ThrowsAsync<BadHttpRequestException>(
+               async () => await controller.AddSanitizer()
+            );
         }
 
         [Fact]
-        public void TestAddTransform()
+        public async Task TestAddTransform()
         {
-            // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             var apiVersion = "2016-03-21";
@@ -74,33 +225,58 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             testRecordingHandler.Transforms.Clear();
-
-            // act
-            controller.AddTransform();
-
+            await controller .AddTransform();
             var result = testRecordingHandler.Transforms.First();
 
-            // assert
             Assert.True(result is ApiVersionTransform);
         }
 
         [Fact]
-        public void TestAddTransformIndividualRecording()
+        public async void TestAddTransformIndividualRecording()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            var apiVersion = "2016-03-21";
+            httpContext.Request.Headers["x-api-version"] = apiVersion;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
 
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller .AddTransform();
+
+            var result = testRecordingHandler.PlaybackSessions[recordingId].AdditionalTransforms.First();
+            Assert.True(result is ApiVersionTransform);
         }
 
-
         [Fact]
-        public void TestAddSanitizerIndividualRecording()
+        public async void TestAddTransformThrowsOnBadRecordingId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var apiVersion = "2016-03-21";
+            httpContext.Request.Headers["x-api-version"] = apiVersion;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
+            httpContext.Request.Headers["x-recording-id"] = "bad-recording-id";
 
-        }
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
 
-        [Fact]
-        public void TestSetMatcherIndividualRecording()
-        {
-
+            await Assert.ThrowsAsync<BadHttpRequestException>(
+               async () => await controller.AddTransform()
+            );
         }
     }
 }

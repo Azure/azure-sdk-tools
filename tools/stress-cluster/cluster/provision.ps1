@@ -40,7 +40,7 @@ function DeployStaticResources([hashtable]$params) {
 
     $sp = RunOrExitOnFailure az ad sp create-for-rbac `
         -o json `
-        -n "stress-provisioner-$env" `
+        -n "stress-provisioner-$($params.groupSuffix)" `
         --role Contributor `
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
@@ -54,16 +54,22 @@ function DeployStaticResources([hashtable]$params) {
         AZURE_SUBSCRIPTION_ID = $params.subscriptionId
     }
 
-    $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }
-    $secret = $dotenv -join "`n"
-
-    RunOrExitOnFailure az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --value $secret -n public
+    # Powershell on windows does not play nicely passing strings with newlines as secret values
+    # to the Azure CLI keyvault command, so use a file here instead.
+    $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
+    $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
+    (-join $dotenv) | Out-File $envFile
+    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n public
+    Remove-Item -Force $envFile
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
 }
 
 function UpdateOutputs([hashtable]$params) {
     $outputs = (az deployment sub show `
         -o json `
-        -n stress-deploy-$env `
+        -n "stress-deploy-$($params.groupSuffix)" `
         --query properties.outputs `
         --subscription $params.subscriptionId
     ) | ConvertFrom-Json
@@ -91,7 +97,7 @@ function DeployClusterResources([hashtable]$params) {
     RunOrExitOnFailure az deployment sub create `
         -o json `
         --subscription $params.subscriptionId `
-        -n stress-deploy-$env `
+        -n "stress-deploy-$($params.groupSuffix)" `
         -l $params.clusterLocation `
         -f $PSScriptRoot/azure/main.bicep `
         --parameters $PSScriptRoot/azure/parameters/$env.json

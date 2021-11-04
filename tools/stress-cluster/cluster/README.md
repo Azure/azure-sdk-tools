@@ -6,6 +6,7 @@ Table of Contents
    * [Test Cluster](#test-cluster)
    * [Prod Cluster](#prod-cluster)
    * [Local Cluster](#local-cluster)
+* [Stress Test Addons](#stress-test-addons)
 * [Development](#development)
    * [Bicep templates](#bicep-templates)
    * [Helm templates](#helm-templates)
@@ -112,6 +113,12 @@ in an Azure AKS cluster (shared or personal).
 kind create cluster
 ```
 
+# Stress test addons
+Steps for deploying the stress test addons helm chart:
+1. Increment the version number in Chart.yaml (e.g. 0.1.0 -> 0.1.1)
+1. Run ./deploy.ps1
+1. Update all the helm chart versions for stress-test-addons refernces in stress-cluster/chaos/examples/
+1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the examples directory, this will update all the nested helm charts (-login tag is needed for the first run)
 
 # Development
 

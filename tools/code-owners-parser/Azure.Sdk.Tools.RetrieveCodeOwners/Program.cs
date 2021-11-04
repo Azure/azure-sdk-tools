@@ -33,10 +33,8 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         {
             var target = targetDirectory.ToLower().Trim();
             var codeOwnersLocation = Path.Join(rootDirectory, ".github", "CODEOWNERS");
-
             var parsedEntries = CodeOwnersFile.ParseFile(codeOwnersLocation);
-            var filteredEntries = parsedEntries.Where(
-                entries => entries.PathExpression.Trim(new char[] {'/','\\' }).Equals(target.Trim(new char[] { '/', '\\' })));
+            var filteredEntries = findOwnerEntries(target, parsedEntries);
 
             client.BaseAddress = new Uri("https://api.github.com/");
             client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
@@ -124,6 +122,25 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                 Console.WriteLine($"Http call {uriStub} to failed.");
                 throw;
             }
+        }
+        private static IEnumerable<CodeOwnerEntry> findOwnerEntries(string target, List<CodeOwnerEntry> parsedEntries)
+        {
+            var originalTarget = target;
+            while (!String.IsNullOrEmpty(target))
+            {
+                var currentLevelEntries = parsedEntries.Where(
+                entries => entries.PathExpression.Trim(new char[] { '/', '\\' }).Equals(target.Trim(new char[] { '/', '\\' })));
+                if (currentLevelEntries.Count() > 0)
+                {
+                    return currentLevelEntries;
+                }
+                else
+                {
+                    target = target.Remove(target.LastIndexOf("/") + 1);
+                }
+            }
+
+            throw new ArgumentException(String.Format("Parameter 'target' {0} from 'targetDirectory' is not valid.", originalTarget));
         }
     }
 }

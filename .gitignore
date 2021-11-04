@@ -487,3 +487,8 @@ src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
 # npm
 *-lock.json
 src/swift/SwiftAPIView.xcworkspace/xcuserdata
+
+# oav converter
+tools/oav-traffic-converter/input-example/
+tools/oav-traffic-converter/output-example/
+tools/oav-traffic-converter/build/

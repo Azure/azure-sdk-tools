@@ -34,6 +34,7 @@ variables:
   NodeVersion: '14.x'
   VAR_ARTIFACT_NAME: "drop"
   VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+  NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
   - stage: InstallAndBuild

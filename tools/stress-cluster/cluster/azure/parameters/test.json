@@ -20,12 +20,6 @@
     "staticTestSecretsKeyvaultGroup": {
       "value": "rg-stress-secrets-test"
     },
-    "enableMonitoring": {
-        "value": true
-    },
-    "enableDebugStorage": {
-        "value": true
-    },
     "enableHighMemAgentPool": {
         "value": true
     },

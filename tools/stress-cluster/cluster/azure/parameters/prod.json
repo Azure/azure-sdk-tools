@@ -23,9 +23,6 @@
     "staticTestSecretsKeyvaultGroup": {
       "value": "rg-stress-secrets-prod"
     },
-    "enableMonitoring": {
-        "value": true
-    },
     "tags": {
       "value": {
         "environment": "Prod",

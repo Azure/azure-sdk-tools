@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             var target = targetDirectory.ToLower().Trim();
             var codeOwnersLocation = Path.Join(rootDirectory, ".github", "CODEOWNERS");
             var parsedEntries = CodeOwnersFile.ParseFile(codeOwnersLocation);
-            var filteredEntries = findOwnerEntries(target, parsedEntries);
+            var filteredEntries = findClosestMatch(target, parsedEntries);
 
             client.BaseAddress = new Uri("https://api.github.com/");
             client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
@@ -43,30 +43,26 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             List<string> users = new List<string>();
             List<string> teams = new List<string>();
             List<string> labels = new List<string>();
-
-            if (filteredEntries.Count() > 0)
+            if (filteredEntries != null)
             {
-                Console.WriteLine($"Found a folder to match {target}");
-
-                foreach (var entry in filteredEntries)
+                Console.WriteLine($"Found the closest code owners to match {target}:");
+                Console.WriteLine(String.Join(", ", filteredEntries.Owners));
+                foreach (var alias in filteredEntries.Owners)
                 {
-                    foreach (var alias in entry.Owners)
+                    var userUriStub = $"users/{alias}";
+                    if (VerifyAlias(userUriStub))
                     {
-                        var userUriStub = $"users/{alias}";
-                        if (VerifyAlias(userUriStub))
-                        {
-                            users.Add(alias);
-                            continue;
-                        }
-                        else
-                        {
-                            // Assume its a team alias
-                            teams.Add(alias);
-                        }
+                        users.Add(alias);
+                        continue;
                     }
-                    labels.AddRange(entry.PRLabels);
-                    labels.AddRange(entry.ServiceLabels);
+                    else
+                    {
+                        // Assume its a team alias
+                        teams.Add(alias);
+                    }
                 }
+                labels.AddRange(filteredEntries.PRLabels);
+                labels.AddRange(filteredEntries.ServiceLabels);
             }
 
             if (vsoOwningUsers != null) {
@@ -123,24 +119,26 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                 throw;
             }
         }
-        private static IEnumerable<CodeOwnerEntry> findOwnerEntries(string target, List<CodeOwnerEntry> parsedEntries)
+
+        private static CodeOwnerEntry findClosestMatch(string filePath, List<CodeOwnerEntry> entries)
         {
-            var originalTarget = target;
-            while (!String.IsNullOrEmpty(target))
+            // Normalize the start and end of the paths by trimming slash
+            filePath = filePath.Trim('/');
+
+            // We want to find the match closest to the bottom of the codeowners file
+            for (int i = entries.Count - 1; i >= 0; i--)
             {
-                var currentLevelEntries = parsedEntries.Where(
-                entries => entries.PathExpression.Trim(new char[] { '/', '\\' }).Equals(target.Trim(new char[] { '/', '\\' })));
-                if (currentLevelEntries.Count() > 0)
+                string pathExpression = entries[i].PathExpression.Trim('/');
+
+                // Note that this only matches on paths without glob patterns which is good enough
+                // for our current scenarios but in the future might need to support globs
+                if (filePath.StartsWith(pathExpression, StringComparison.OrdinalIgnoreCase))
                 {
-                    return currentLevelEntries;
-                }
-                else
-                {
-                    target = target.Remove(target.LastIndexOf("/") + 1);
+                    return entries[i];
                 }
             }
 
-            throw new ArgumentException(String.Format("Parameter 'target' {0} from 'targetDirectory' is not valid.", originalTarget));
+            return null;
         }
     }
 }

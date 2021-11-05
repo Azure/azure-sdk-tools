@@ -2,6 +2,8 @@ param (
     [string]$env = 'test'
 )
 
+$STATIC_TEST_SECRETS_NAME="public"
+
 function Run()
 {
     Write-Host "`n==> $args`n" -ForegroundColor Green
@@ -59,7 +61,7 @@ function DeployStaticResources([hashtable]$params) {
     $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
     $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
     (-join $dotenv) | Out-File $envFile
-    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n public
+    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_SECRETS_NAME
     Remove-Item -Force $envFile
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE
@@ -84,6 +86,7 @@ function UpdateOutputs([hashtable]$params) {
     $values.staticTestSecretsKeyvaultName.$env = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
     $values.clusterTestSecretsKeyvaultName.$env = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
     $values.secretProviderIdentity.$env = $outputs.SECRET_PROVIDER_CLIENT_ID.value
+    $values.subscription.$env = $STATIC_TEST_SECRETS_NAME
     $values.tenantId.$env = $outputs.TENANT_ID.value
 
     $values | ConvertTo-Yaml | Out-File $valuesFile

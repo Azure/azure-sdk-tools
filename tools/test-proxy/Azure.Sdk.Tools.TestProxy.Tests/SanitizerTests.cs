@@ -304,6 +304,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyKeySanitizerHandlesNonJSON()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
         public void BodyKeySanitizerRegexReplace()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");

@@ -37,15 +37,23 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             bool sanitized = false;
             JToken jsonO;
-            // Prevent default behavior where JSON.NET will convert DateTimeOffset
-            // into a DateTime.
-            if (!LegacyConvertJsonDateTokens)
+
+            try
             {
-                jsonO = JsonConvert.DeserializeObject<JToken>(body, SerializerSettings);
+                // Prevent default behavior where JSON.NET will convert DateTimeOffset
+                // into a DateTime.
+                if (!LegacyConvertJsonDateTokens)
+                {
+                    jsonO = JsonConvert.DeserializeObject<JToken>(body, SerializerSettings);
+                }
+                else
+                {
+                    jsonO = JToken.Parse(body);
+                }
             }
-            else
+            catch(JsonReaderException)
             {
-                jsonO = JToken.Parse(body);
+                return body;
             }
 
             

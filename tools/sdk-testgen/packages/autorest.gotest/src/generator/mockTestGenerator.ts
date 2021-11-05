@@ -155,6 +155,21 @@ export class MockTestDataRender extends BaseDataRender {
         }
     }
 
+    public hasProperties(exampleValue: ExampleValue): boolean {
+        if (exampleValue.schema?.type !== SchemaType.Dictionary && exampleValue.schema?.type !== SchemaType.Object) {
+            return false;
+        }
+        if (Object.keys(exampleValue.properties || {}).length > 0) {
+            return true;
+        }
+        for (const [_, parentValue] of Object.entries(exampleValue.parentsValue || {})) {
+            if (this.hasProperties(parentValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean | undefined, elemByVal = false, inArray = false): string {
         if (exampleValue === null || exampleValue === undefined || exampleValue.isNull) {
             return 'nil';
@@ -192,7 +207,10 @@ export class MockTestDataRender extends BaseDataRender {
                 output = `${ptr}${this.context.packageName + '.'}${this.getLanguageName(exampleValue.schema)}{\n`;
             }
             for (const [_, parentValue] of Object.entries(exampleValue.parentsValue || {})) {
-                output += `${this.getLanguageName(parentValue)}: ${this.exampleValueToString(parentValue, false)},\n`;
+                if (this.hasProperties(parentValue)) {
+                    const propertyName = parentValue.schema?.type === SchemaType.Dictionary ? 'AdditionalProperties' : this.getLanguageName(parentValue);
+                    output += `${propertyName}: ${this.exampleValueToString(parentValue, false)},\n`;
+                }
             }
             for (const [_, value] of Object.entries(exampleValue.properties || {})) {
                 output += `${this.getLanguageName(value)}: ${this.exampleValueToString(value, undefined)},\n`;

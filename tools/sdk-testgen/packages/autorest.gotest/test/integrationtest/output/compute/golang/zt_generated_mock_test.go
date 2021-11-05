@@ -50,6 +50,19 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myAvailabilitySet",
 		golang.AvailabilitySet{
+			AdditionalProperties: map[string]map[string]interface{}{
+				"anyProperty": map[string]interface{}{
+					"0": "f",
+					"1": "a",
+					"2": "k",
+					"3": "e",
+					"4": "V",
+					"5": "a",
+					"6": "l",
+					"7": "u",
+					"8": "e",
+				},
+			},
 			Resource: golang.Resource{
 				Location: to.StringPtr("westus"),
 			},
@@ -520,7 +533,7 @@ func TestVirtualMachineImages_ListPublishers(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_ListSkus(t *testing.T) {
+func TestVirtualMachineImages_ListSKUs(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
@@ -540,7 +553,7 @@ func TestVirtualMachineImagesEdgeZone_ListPublishers(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_ListSkus(t *testing.T) {
+func TestVirtualMachineImagesEdgeZone_ListSKUs(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
@@ -5206,7 +5219,7 @@ func TestVirtualMachineScaleSets_ListAll(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineScaleSets_ListSkus(t *testing.T) {
+func TestVirtualMachineScaleSets_ListSKUs(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 

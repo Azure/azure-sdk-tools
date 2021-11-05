@@ -28,6 +28,19 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 		"<resource-group-name>",
 		"<availability-set-name>",
 		golang.AvailabilitySet{
+			AdditionalProperties: map[string]map[string]interface{}{
+				"anyProperty": map[string]interface{}{
+					"0": "f",
+					"1": "a",
+					"2": "k",
+					"3": "e",
+					"4": "V",
+					"5": "a",
+					"6": "l",
+					"7": "u",
+					"8": "e",
+				},
+			},
 			Resource: golang.Resource{
 				Location: to.StringPtr("<location>"),
 			},

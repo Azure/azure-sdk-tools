@@ -192,4 +192,31 @@ export class Helper {
             return src;
         }
     }
+
+    public static pathIsIncluded(paths: Set<any[]>, path: any[]): boolean {
+        for (const t of paths) {
+            if (t.length > path.length) {
+                continue;
+            }
+            let isDiff = false;
+            for (let i = 0; i < t.length; i++) {
+                if (t[i] !== path[i]) {
+                    isDiff = true;
+                    break;
+                }
+            }
+            if (!isDiff) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static filterPathsByPrefix(paths: Set<string[]>, prefix: string[]): Set<string[]> {
+        return new Set(
+            Array.from(paths)
+                .filter((x) => x.length >= prefix.length && x.slice(0, prefix.length).join(',') === prefix.join(','))
+                .map((x) => x.slice(prefix.length)),
+        );
+    }
 }

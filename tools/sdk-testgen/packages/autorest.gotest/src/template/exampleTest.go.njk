@@ -18,13 +18,13 @@ import (
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
 // x-ms-original-file: {{example.originalFile}}
-func Example{{example.operationGroup.language.go.name if example.operationGroup.$key == "" else example.operationGroup.language.go.name + "Client"}}_{{example.opName}}() {
+func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := {{packageName}}.New{{example.operationGroup.language.go.name if example.operationGroup.$key == "" else example.operationGroup.language.go.name + "Client"}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
+	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
 
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}

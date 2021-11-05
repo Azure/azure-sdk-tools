@@ -54,7 +54,12 @@ export class MockTestDataRender extends BaseDataRender {
         for (const variable of ['ID']) {
             for (const p of allReturnProperties) {
                 if (this.getLanguageName(p) === variable) {
-                    example.nonNilReturns.push(`${this.getLanguageName(responseSchema)}.${variable}`);
+                    const elementName = this.getLanguageName(responseSchema);
+                    let polymophismGet = '';
+                    if (responseSchema.language.go.discriminatorInterface !== undefined) {
+                        polymophismGet = '.Get' + elementName + '()';
+                    }
+                    example.nonNilReturns.push(`${elementName}${polymophismGet}.${variable}`);
                 }
             }
         }
@@ -77,13 +82,15 @@ export class MockTestDataRender extends BaseDataRender {
     protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[]): string {
         // get cooresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
+            // isPtr need to consider two situation: 1) param is required 2) param is polymorphism
+            const isPtr: boolean = !param.required || (param.schema.type == SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) == true;
             for (const methodParameter of exampleParameters) {
                 if (this.getLanguageName(methodParameter.parameter) === name) {
                     // go codegen use pointer for not required param
-                    return this.exampleValueToString(methodParameter.exampleValue, !methodParameter.parameter.required, elementByValueForParam(methodParameter.parameter));
+                    return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(methodParameter.parameter));
                 }
             }
-            return this.getDefaultValue(param, !param.required);
+            return this.getDefaultValue(param, isPtr);
         };
 
         if ((parameter as GroupProperty).originalParameter) {
@@ -145,7 +152,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
     }
 
-    protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean | undefined, elemByVal: boolean = false): string {
+    protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean | undefined, elemByVal: boolean = false, inArray: boolean = false): string {
         if (exampleValue === null || exampleValue === undefined || exampleValue.isNull) {
             return 'nil';
         }
@@ -167,12 +174,17 @@ export class MockTestDataRender extends BaseDataRender {
             } else {
                 const result =
                     `${ptr}[]${elementPtr}${packageName}${elementTypeName}{\n` +
-                    exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, true)).join(',\n') +
+                    exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, true)).join(',\n') +
                     '}';
                 return result;
             }
         } else if (exampleValue.schema?.type === SchemaType.Object) {
-            let output = `${ptr}${this.context.packageName + '.'}${this.getLanguageName(exampleValue.schema)}{\n`;
+            let output: string;
+            if (inArray) {
+                output = `{\n`;
+            } else {
+                output = `${ptr}${this.context.packageName + '.'}${this.getLanguageName(exampleValue.schema)}{\n`;
+            }
             for (const [_, parentValue] of Object.entries(exampleValue.parentsValue || {})) {
                 output += `${this.getLanguageName(parentValue)}: ${this.exampleValueToString(parentValue, false)},\n`;
             }
@@ -220,6 +232,8 @@ export class MockTestDataRender extends BaseDataRender {
         }
         if (schema.type === SchemaType.Constant || goType === 'string') {
             ret = this.getStringValue(rawValue);
+        } else if (goType.startsWith('int') || goType.startsWith('uint') || goType.startsWith('float')) {
+            ret = `${Number(rawValue)}`;
         } else if (goType === 'time.Time') {
             this.context.importManager.add('time');
             const timeFormat = (schema as DateTimeSchema).format === 'date-time-rfc1123' ? 'time.RFC1123' : 'time.RFC3339Nano';

@@ -30,15 +30,16 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });
     const stableVersion = getLatestStableVersion(npmViewResult);
-    if (!stableVersion) {
-        logger.logError(`Invalid latest version ${stableVersion}`);
-        process.exit(1);
-    }
-    if (npmViewResult.exitCode !== 0 || (isBetaVersion(stableVersion) && isStableRelease)) {
+
+    if (npmViewResult.exitCode !== 0 || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.log(`Package ${packageName} is first${npmViewResult.exitCode !== 0? ' ': ' stable'} release, generating changelogs and setting version for first${npmViewResult.exitCode !== 0? ' ': ' stable'} release...`);
         makeChangesForFirstRelease(packageFolderPath, isStableRelease);
         logger.log(`Generate changelogs and setting version for first${npmViewResult.exitCode !== 0? ' ': ' stable'} release successfully`);
     } else {
+        if (!stableVersion) {
+            logger.logError(`Invalid latest version ${stableVersion}`);
+            process.exit(1);
+        }
         logger.log(`Package ${packageName} has been released before, checking whether previous release is track2 sdk...`)
         const usedVersions = npmViewResult['versions'];
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.

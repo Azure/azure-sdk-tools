@@ -255,7 +255,7 @@ export class MockTestDataRender extends BaseDataRender {
             ret = `func() time.Time { t, _ := time.Parse(${timeFormat}, "${rawValue}"); return t}()`;
         } else if (goType === 'map[string]interface{}') {
             ret = GoHelper.obejctToString(rawValue);
-        } else if (goType === 'interface{}') {
+        } else if (goType === 'interface{}' && Array.isArray(rawValue)) {
             ret = GoHelper.arrayToString(rawValue);
         } else if (goType === 'bool') {
             ret = rawValue.toString();

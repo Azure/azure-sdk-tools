@@ -55,11 +55,11 @@ export class MockTestDataRender extends BaseDataRender {
             for (const p of allReturnProperties) {
                 if (this.getLanguageName(p) === variable) {
                     const elementName = this.getLanguageName(responseSchema);
-                    let polymophismGet = '';
                     if (responseSchema.language.go.discriminatorInterface !== undefined) {
-                        polymophismGet = '.Get' + elementName + '()';
+                        example.nonNilReturns.push(`${responseSchema.language.go.discriminatorInterface}.Get${elementName}().${variable}`);
+                    } else {
+                        example.nonNilReturns.push(`${elementName}.${variable}`);
                     }
-                    example.nonNilReturns.push(`${elementName}${polymophismGet}.${variable}`);
                 }
             }
         }
@@ -85,7 +85,7 @@ export class MockTestDataRender extends BaseDataRender {
             // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
             const isPolymophismValue =
                 param?.schema?.type === SchemaType.Object &&
-                ((param.schema as ObjectSchema).discriminatorValue || (param.schema as ObjectSchema).discriminator?.property.isDiscriminator);
+                ((param.schema as ObjectSchema).discriminatorValue !== undefined || (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true);
             let isPtr: boolean = !param.required || isPolymophismValue === true;
             if (param.language.go.byValue && isPolymophismValue !== true) {
                 isPtr = false;
@@ -169,7 +169,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
         const isPolymophismValue =
             exampleValue?.schema?.type === SchemaType.Object &&
-            ((exampleValue.schema as ObjectSchema).discriminatorValue || (exampleValue.schema as ObjectSchema).discriminator?.property.isDiscriminator);
+            ((exampleValue.schema as ObjectSchema).discriminatorValue !== undefined || (exampleValue.schema as ObjectSchema).discriminator?.property.isDiscriminator === true);
         const ptr = (exampleValue.language?.go?.byValue && !isPolymophismValue) || isPtr === false ? '' : '&';
         if (exampleValue.schema?.type === SchemaType.Array) {
             const elementIsPtr = exampleValue.schema.language.go.elementIsPtr && !elemByVal;

@@ -115,12 +115,12 @@ kind create cluster
 
 # Deploying Stress Test Addons
 Steps for deploying the stress test addons helm chart:
-1. Increment the version number in [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1).
-1. Run [deploy.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/deploy.sh).
-1. Update all the helm chart versions for stress-test-addons dependency references in [stress-cluster/chaos/examples/](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples)**/Chart.yaml.
-   1. Please verify that the tests have succeeded with each pod to reaching Running/Completed state.
+1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1).
+1. Run [deploy.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/deploy.ps1).
+1. Update all the helm chart versions for stress-test-addons dependency references in `azure-sdk-tools/tools/stress-cluster/chaos/examples/**/Chart.yaml`.
 1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the [examples](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples) directory, this will update all the nested helm charts (-login tag is needed for the first run).
-1. Update all the stress tests across the other repos in the same manner.
+   1. Run `kubectl get pods -n examples -w` to monitor the status of each pod and look for Running/Completed and make sure there are no errors.
+1. Update all the stress tests' Chart.yaml files across the other repos in the same manner.
 
 # Development
 

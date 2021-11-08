@@ -35,9 +35,9 @@ variables:
   - name: NodeVersion
     value: '14.x'
   - name: VAR_ARTIFACT_NAME
-  - value: 'drop'
+    value: 'drop'
   - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
-  - value: $(Build.ArtifactStagingDirectory)
+    value: $(Build.ArtifactStagingDirectory)
 
 stages:
   - stage: InstallAndBuild

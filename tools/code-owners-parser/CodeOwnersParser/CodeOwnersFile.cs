@@ -71,12 +71,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public static List<string> ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
         {
-            var codeOwnerEntries = ParseFile(filePathOrUrl);
+            var codeOwnerEntries = ParseFile(codeOwnersFilePathOrUrl);
             // Normalize the start and end of the paths by trimming slash
             targetPath = targetPath.Trim('/');
 
             // We want to find the match closest to the bottom of the codeowners file.
-            // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and 'PackagePath'.
+            // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and then 'PackagePath'.
             for (int i = codeOwnerEntries.Count - 1; i >= 0; i--)
             {
                 if (FindClosestMatch(targetPath, codeOwnerEntries[i].PathExpression)) {

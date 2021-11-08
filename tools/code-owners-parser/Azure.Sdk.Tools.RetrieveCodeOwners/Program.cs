@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         {
             var target = targetDirectory.ToLower().Trim();
             var codeOwnersLocation = Path.Join(rootDirectory, ".github", "CODEOWNERS");
-            var owners = CodeOwnersFile.ParseAndFindClosestMatch(codeOwnersLocation, target);
+            var owners = CodeOwnersFile.ParseAndFindOwnersForClosestMatch(codeOwnersLocation, target);
             if (owners == null)
             {
                 Console.WriteLine(String.Format("We cannot find any closest code owners from the target path {0}", targetDirectory));

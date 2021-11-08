@@ -31,7 +31,7 @@ pr:
       - tools/js-mgmt-sdk-release-tools
 
 variables:
-  - template: eng/pipelines/templates/variables/globals.yml
+  - template: ../../eng/pipelines/templates/variables/globals.yml
   - name: NodeVersion
     value: '14.x'
   - name: VAR_ARTIFACT_NAME

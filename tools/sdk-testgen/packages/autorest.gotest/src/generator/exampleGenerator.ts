@@ -29,7 +29,7 @@ export class ExampleDataRender extends MockTestDataRender {
 
 export class ExampleCodeGenerator extends BaseCodeGenerator {
     public generateCode(extraParam: Record<string, unknown> = {}): void {
-        for (const [groupKey, exampleGroups] of Object.entries(MockTestDefinitionModel.groupByOperationGroup(this.context.codeModel.testModel.mockTest.exampleGroups))) {
+        for (const [_, exampleGroups] of Object.entries(MockTestDefinitionModel.groupByOperationGroup(this.context.codeModel.testModel.mockTest.exampleGroups))) {
             let exampleModel: ExampleModel = null;
             for (const exampleGroup of exampleGroups) {
                 if (exampleGroup.examples.length > 0) {

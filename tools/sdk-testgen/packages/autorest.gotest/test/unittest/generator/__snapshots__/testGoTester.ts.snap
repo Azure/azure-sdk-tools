@@ -2,7 +2,7 @@
 
 exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
 Object {
-  "ze_generated_example_Extensions_test.go": "//go:build go1.16
+  "ze_generated_example_extensions_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -104,8 +104,8 @@ func ExampleExtensionsClient_ListByFarmBeats() {
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
-&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: nil,
-ExtensionCategories: nil,
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
+ExtensionCategories: []*string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -120,7 +120,7 @@ SkipToken: nil,
 }
 
 ",
-  "ze_generated_example_FarmBeatsExtensions_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -145,10 +145,10 @@ func ExampleFarmBeatsExtensionsClient_List() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
-	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: nil,
-FarmBeatsExtensionNames: nil,
-ExtensionCategories: nil,
-PublisherIDs: nil,
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
+FarmBeatsExtensionNames: []*string{},
+ExtensionCategories: []*string{},
+PublisherIDs: []*string{},
 MaxPageSize: nil,
 })
 	for pager.NextPage(ctx) {
@@ -179,7 +179,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_FarmBeatsModels_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -326,7 +326,7 @@ SkipToken: nil,
 }
 
 ",
-  "ze_generated_example_Locations_test.go": "//go:build go1.16
+  "ze_generated_example_locations_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -363,7 +363,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_Operations_test.go": "//go:build go1.16
+  "ze_generated_example_operations_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -522,8 +522,8 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByFarmBeats(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
-&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: nil,
-ExtensionCategories: nil,
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
+ExtensionCategories: []*string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -548,10 +548,10 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
-	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: nil,
-FarmBeatsExtensionNames: nil,
-ExtensionCategories: nil,
-PublisherIDs: nil,
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
+FarmBeatsExtensionNames: []*string{},
+ExtensionCategories: []*string{},
+PublisherIDs: []*string{},
 MaxPageSize: nil,
 })
 	for pager.NextPage(ctx) {
@@ -887,9 +887,9 @@ func scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t *testing.T) {
 
     
 	// From step SignalR_checknameAvailability
-			signalRClient := armsignalr.NewNewSignalRClient(subscriptionId)
+			SignalRClient := armsignalr.NewSignalRClient(subscriptionId)
 	{
-			_, err = signalRClient.CheckNameAvailability(ctx,
+			_, err = SignalRClient.CheckNameAvailability(ctx,
 location,
 &armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
 Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
@@ -904,7 +904,7 @@ Name: to.StringPtr(\\"my-signalr-service\\"),
     
 	// From step SignalR_CreateOrUpdate
 	{
-			signalRCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
+			signalRCreateOrUpdatePollerResponse, err := SignalRClient.BeginCreateOrUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -922,19 +922,19 @@ Capacity: to.Int32Ptr(1),
 Properties: &armsignalr.SignalRProperties{
 SignalRCreateOrUpdateProperties: armsignalr.SignalRCreateOrUpdateProperties{
 Features: []*armsignalr.SignalRFeature{
-&armsignalr.SignalRFeature{
+{
 Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
 Value: to.StringPtr(\\"Serverless\\"),
 Properties: map[string]*string{
 },
 },
-&armsignalr.SignalRFeature{
+{
 Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 Value: to.StringPtr(\\"True\\"),
 Properties: map[string]*string{
 },
 },
-&armsignalr.SignalRFeature{
+{
 Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
 Value: to.StringPtr(\\"False\\"),
 Properties: map[string]*string{
@@ -947,7 +947,7 @@ to.StringPtr(\\"https://bar.com\\")},
 },
 Upstream: &armsignalr.ServerlessUpstreamSettings{
 Templates: []*armsignalr.UpstreamTemplate{
-&armsignalr.UpstreamTemplate{
+{
 HubPattern: to.StringPtr(\\"*\\"),
 EventPattern: to.StringPtr(\\"connect,disconnect\\"),
 CategoryPattern: to.StringPtr(\\"*\\"),
@@ -968,7 +968,7 @@ armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
 Deny: nil,
 },
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
-&armsignalr.PrivateEndpointACL{
+{
 NetworkACL: armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
 armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
@@ -1001,7 +1001,7 @@ Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
     
 	// From step SignalR_ListKey
 	{
-			_, err = signalRClient.ListKeys(ctx,
+			_, err = SignalRClient.ListKeys(ctx,
 resourceGroupName,
 resourceName,
 nil)
@@ -1013,7 +1013,7 @@ nil)
     
 	// From step SignalR_Delete
 	{
-			signalRDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
+			signalRDeletePollerResponse, err := SignalRClient.BeginDelete(ctx,
 resourceGroupName,
 resourceName,
 nil)

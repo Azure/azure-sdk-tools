@@ -42,7 +42,7 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 						ReplicaCount:       to.Int32Ptr(1),
 						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("<name>"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
@@ -90,7 +90,7 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 						ReplicaCount:       to.Int32Ptr(1),
 						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("<name>"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),

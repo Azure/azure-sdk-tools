@@ -38,11 +38,11 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					},
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("<name>"),
 						Value: to.StringPtr("<value>"),
 					}},

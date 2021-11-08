@@ -35,11 +35,11 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 				Configuration: to.StringPtr("<configuration>"),
 				NetworkProfile: &golang.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
-						&golang.LoadBalancerConfiguration{
+						{
 							Name: to.StringPtr("<name>"),
 							Properties: &golang.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
-									&golang.LoadBalancerFrontendIPConfiguration{
+									{
 										Name: to.StringPtr("<name>"),
 										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &golang.SubResource{
@@ -53,7 +53,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 				PackageURL: to.StringPtr("<package-url>"),
 				RoleProfile: &golang.CloudServiceRoleProfile{
 					Roles: []*golang.CloudServiceRoleProfileProperties{
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("<name>"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("<name>"),
@@ -61,7 +61,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 								Tier:     to.StringPtr("<tier>"),
 							},
 						},
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("<name>"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("<name>"),

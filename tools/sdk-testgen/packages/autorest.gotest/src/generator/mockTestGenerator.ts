@@ -10,9 +10,9 @@ import { ExampleParameter, ExampleValue } from '@autorest/testmodeler/dist/src/c
 import { GoExampleModel, GoMockTestDefinitionModel } from '../common/model';
 import { GoHelper } from '../util/goHelper';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
+import { elementByValueForParam } from '@autorest/go/dist/generator/helpers';
 import { generateReturnsInfo, getAPIParametersSig, getClientParametersSig, getSchemaResponse } from '../util/codegenBridge';
 import { isLROOperation, isPageableOperation } from '@autorest/go/dist/common/helpers';
-import { elementByValueForParam } from '@autorest/go/dist/generator/helpers';
 export class MockTestDataRender extends BaseDataRender {
     public renderData(): void {
         const mockTest = this.context.codeModel.testModel.mockTest as GoMockTestDefinitionModel;
@@ -83,7 +83,7 @@ export class MockTestDataRender extends BaseDataRender {
         // get cooresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
             // isPtr need to consider two situation: 1) param is required 2) param is polymorphism
-            let isPtr: boolean = !param.required || (param.schema.type == SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) == true;
+            let isPtr: boolean = !param.required || (param.schema.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) === true;
             if (param.language.go.byValue) {
                 isPtr = false;
             }
@@ -155,7 +155,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
     }
 
-    protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean | undefined, elemByVal: boolean = false, inArray: boolean = false): string {
+    protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean | undefined, elemByVal = false, inArray = false): string {
         if (exampleValue === null || exampleValue === undefined || exampleValue.isNull) {
             return 'nil';
         }

@@ -39,17 +39,17 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("<name>"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 											},
@@ -63,17 +63,17 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("<name>"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 											},
@@ -126,11 +126,11 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("<name>"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("<name>"),
 								RegionalReplicaCount: to.Int32Ptr(2),
 								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),

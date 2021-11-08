@@ -32,7 +32,7 @@ func ExampleRestorePointsClient_BeginCreate() {
 		"<restore-point-name>",
 		golang.RestorePoint{
 			ExcludeDisks: []*golang.APIEntityReference{
-				&golang.APIEntityReference{
+				{
 					ID: to.StringPtr("<id>"),
 				}},
 		},

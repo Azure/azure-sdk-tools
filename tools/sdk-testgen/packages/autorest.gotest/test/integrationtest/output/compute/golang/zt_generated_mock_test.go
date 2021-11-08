@@ -596,7 +596,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -660,7 +660,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -724,7 +724,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -789,7 +789,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -860,7 +860,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -920,12 +920,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkAPIVersion: golang.NetworkAPIVersionTwoThousandTwenty1101.ToPtr(),
 					NetworkInterfaceConfigurations: []*golang.VirtualMachineNetworkInterfaceConfiguration{
-						&golang.VirtualMachineNetworkInterfaceConfiguration{
+						{
 							Name: to.StringPtr("{nic-config-name}"),
 							Properties: &golang.VirtualMachineNetworkInterfaceConfigurationProperties{
 								DeleteOption: golang.DeleteOptionsDelete.ToPtr(),
 								IPConfigurations: []*golang.VirtualMachineNetworkInterfaceIPConfiguration{
-									&golang.VirtualMachineNetworkInterfaceIPConfiguration{
+									{
 										Name: to.StringPtr("{ip-config-name}"),
 										Properties: &golang.VirtualMachineNetworkInterfaceIPConfigurationProperties{
 											Primary: to.BoolPtr(true),
@@ -995,7 +995,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1060,7 +1060,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
 							},
@@ -1125,7 +1125,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1191,7 +1191,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1256,7 +1256,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1322,7 +1322,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1378,7 +1378,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1394,7 +1394,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
@@ -1402,7 +1402,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/myDisk0.vhd"),
 							},
 						},
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
@@ -1453,7 +1453,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1510,7 +1510,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1567,7 +1567,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1619,7 +1619,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1684,7 +1684,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1742,7 +1742,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1758,7 +1758,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						&golang.DataDisk{
+						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
@@ -1772,7 +1772,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
-						&golang.DataDisk{
+						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
 							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
@@ -1841,7 +1841,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1908,7 +1908,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -1977,7 +1977,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2042,7 +2042,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2106,7 +2106,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2164,7 +2164,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2180,12 +2180,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 						},
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
@@ -2238,7 +2238,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2305,7 +2305,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2372,7 +2372,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2438,7 +2438,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2496,7 +2496,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2554,7 +2554,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2612,7 +2612,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2628,7 +2628,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						DisablePasswordAuthentication: to.BoolPtr(true),
 						SSH: &golang.SSHConfiguration{
 							PublicKeys: []*golang.SSHPublicKey{
-								&golang.SSHPublicKey{
+								{
 									Path:    to.StringPtr("/home/{your-username}/.ssh/authorized_keys"),
 									KeyData: to.StringPtr("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCeClRAk2ipUs/l5voIsDC5q9RI+YSRd1Bvd/O+axgY4WiBzG+4FwJWZm/mLLe5DoOdHQwmU2FrKXZSW4w2sYE70KeWnrFViCOX5MTVvJgPE8ClugNl8RWth/tU849DvM9sT7vFgfVSHcAS2yDRyDlueii+8nF2ym8XWAPltFVCyLHRsyBp5YPqK8JFYIa1eybKsY3hEAxRCA+/7bq8et+Gj3coOsuRmrehav7rE6N12Pb80I6ofa6SM5XNYq4Xk0iYNx7R3kdz0Jj9XgZYWjAHjJmT0gTRoOnt6upOuxK7xI/ykWrllgpXrCPu3Ymz+c+ujaqcxDopnAl2lmf69/J1"),
 								}},
@@ -2684,7 +2684,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2700,13 +2700,13 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
@@ -2752,7 +2752,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
-						&golang.NetworkInterfaceReference{
+						{
 							SubResource: golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							},
@@ -2768,14 +2768,14 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DetachOption: golang.DiskDetachOptionTypesForceDetach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
-						&golang.DataDisk{
+						{
 							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
@@ -3161,12 +3161,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3229,12 +3229,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3306,12 +3306,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3378,12 +3378,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3450,12 +3450,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3517,12 +3517,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3541,7 +3541,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
-							&golang.VirtualMachineScaleSetDataDisk{
+							{
 								Caching:      golang.CachingTypesReadWrite.ToPtr(),
 								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
@@ -3609,12 +3609,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3625,14 +3625,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 									Primary: to.BoolPtr(true),
 								},
 							},
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{fpgaNic-Name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableAcceleratedNetworking: to.BoolPtr(false),
 									EnableFpga:                  to.BoolPtr(true),
 									EnableIPForwarding:          to.BoolPtr(false),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{fpgaNic-Name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Primary:                 to.BoolPtr(true),
@@ -3706,12 +3706,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3782,12 +3782,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3867,12 +3867,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -3940,16 +3940,16 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												ApplicationGatewayBackendAddressPools: []*golang.SubResource{
-													&golang.SubResource{
+													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationGateways/{existing-application-gateway-name}/backendAddressPools/{existing-backend-address-pool-name}"),
 													}},
 												Subnet: &golang.APIEntityReference{
@@ -4017,20 +4017,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												LoadBalancerBackendAddressPools: []*golang.SubResource{
-													&golang.SubResource{
+													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/{existing-load-balancer-name}/backendAddressPools/{existing-backend-address-pool-name}"),
 													}},
 												LoadBalancerInboundNatPools: []*golang.SubResource{
-													&golang.SubResource{
+													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/{existing-load-balancer-name}/inboundNatPools/{existing-nat-pool-name}"),
 													}},
 												PublicIPAddressConfiguration: &golang.VirtualMachineScaleSetPublicIPAddressConfiguration{
@@ -4108,12 +4108,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4187,12 +4187,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4260,12 +4260,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4284,12 +4284,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
-							&golang.VirtualMachineScaleSetDataDisk{
+							{
 								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
-							&golang.VirtualMachineScaleSetDataDisk{
+							{
 								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
@@ -4350,12 +4350,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4432,12 +4432,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4511,7 +4511,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					ExtensionProfile: &golang.VirtualMachineScaleSetExtensionProfile{
 						ExtensionsTimeBudget: to.StringPtr("PT1H20M"),
 						Extensions: []*golang.VirtualMachineScaleSetExtension{
-							&golang.VirtualMachineScaleSetExtension{
+							{
 								Name: to.StringPtr("{extension-name}"),
 								Properties: &golang.VirtualMachineScaleSetExtensionProperties{
 									Type:                    to.StringPtr("{extension-Type}"),
@@ -4524,12 +4524,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4602,12 +4602,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4675,12 +4675,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4748,12 +4748,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4821,12 +4821,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4845,7 +4845,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 							DisablePasswordAuthentication: to.BoolPtr(true),
 							SSH: &golang.SSHConfiguration{
 								PublicKeys: []*golang.SSHPublicKey{
-									&golang.SSHPublicKey{
+									{
 										Path:    to.StringPtr("/home/{your-username}/.ssh/authorized_keys"),
 										KeyData: to.StringPtr("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCeClRAk2ipUs/l5voIsDC5q9RI+YSRd1Bvd/O+axgY4WiBzG+4FwJWZm/mLLe5DoOdHQwmU2FrKXZSW4w2sYE70KeWnrFViCOX5MTVvJgPE8ClugNl8RWth/tU849DvM9sT7vFgfVSHcAS2yDRyDlueii+8nF2ym8XWAPltFVCyLHRsyBp5YPqK8JFYIa1eybKsY3hEAxRCA+/7bq8et+Gj3coOsuRmrehav7rE6N12Pb80I6ofa6SM5XNYq4Xk0iYNx7R3kdz0Jj9XgZYWjAHjJmT0gTRoOnt6upOuxK7xI/ykWrllgpXrCPu3Ymz+c+ujaqcxDopnAl2lmf69/J1"),
 									}},
@@ -4903,12 +4903,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -4982,12 +4982,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -5056,12 +5056,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
-							&golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
 								Name: to.StringPtr("{vmss-name}"),
 								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
 									EnableIPForwarding: to.BoolPtr(true),
 									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
-										&golang.VirtualMachineScaleSetIPConfiguration{
+										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &golang.APIEntityReference{
@@ -5080,12 +5080,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
-							&golang.VirtualMachineScaleSetDataDisk{
+							{
 								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
-							&golang.VirtualMachineScaleSetDataDisk{
+							{
 								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
@@ -5524,7 +5524,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
-						&golang.ImageDataDisk{
+						{
 							ImageDisk: golang.ImageDisk{
 								BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
 							},
@@ -5564,7 +5564,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
-						&golang.ImageDataDisk{
+						{
 							ImageDisk: golang.ImageDisk{
 								ManagedDisk: &golang.SubResource{
 									ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
@@ -5608,7 +5608,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
-						&golang.ImageDataDisk{
+						{
 							ImageDisk: golang.ImageDisk{
 								Snapshot: &golang.SubResource{
 									ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
@@ -5880,7 +5880,7 @@ func TestRestorePoints_Create(t *testing.T) {
 		"rpName",
 		golang.RestorePoint{
 			ExcludeDisks: []*golang.APIEntityReference{
-				&golang.APIEntityReference{
+				{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
 				}},
 		},
@@ -6421,11 +6421,11 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("param1"),
 						Value: to.StringPtr("value1"),
 					},
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("param2"),
 						Value: to.StringPtr("value2"),
 					}},
@@ -6569,11 +6569,11 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("param1"),
 						Value: to.StringPtr("value1"),
 					},
-					&golang.RunCommandInputParameter{
+					{
 						Name:  to.StringPtr("param2"),
 						Value: to.StringPtr("value2"),
 					}},
@@ -8440,17 +8440,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 											},
@@ -8464,17 +8464,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("East US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 											},
@@ -8524,17 +8524,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 											},
@@ -8548,17 +8548,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("East US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 											},
@@ -8608,11 +8608,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 											},
@@ -8626,11 +8626,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("East US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 											},
@@ -8649,7 +8649,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
-						&golang.GalleryDataDiskImage{
+						{
 							GalleryDiskImage: golang.GalleryDiskImage{
 								HostCaching: golang.HostCachingNone.ToPtr(),
 								Source: &golang.GalleryArtifactVersionSource{
@@ -8695,17 +8695,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 											},
@@ -8719,17 +8719,17 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("East US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
 											},
 											Lun: to.Int32Ptr(0),
 										},
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 											},
@@ -8779,11 +8779,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 											},
@@ -8797,11 +8797,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("East US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 											},
@@ -8820,7 +8820,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
-						&golang.GalleryDataDiskImage{
+						{
 							GalleryDiskImage: golang.GalleryDiskImage{
 								HostCaching: golang.HostCachingNone.ToPtr(),
 								Source: &golang.GalleryArtifactVersionSource{
@@ -8866,11 +8866,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name: to.StringPtr("West US"),
 								Encryption: &golang.EncryptionImages{
 									DataDiskImages: []*golang.DataDiskImageEncryption{
-										&golang.DataDiskImageEncryption{
+										{
 											DiskImageEncryption: golang.DiskImageEncryption{
 												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
 											},
@@ -8884,7 +8884,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("East US"),
 								RegionalReplicaCount: to.Int32Ptr(2),
 								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
@@ -8893,7 +8893,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
-						&golang.GalleryDataDiskImage{
+						{
 							GalleryDiskImage: golang.GalleryDiskImage{
 								HostCaching: golang.HostCachingNone.ToPtr(),
 								Source: &golang.GalleryArtifactVersionSource{
@@ -8946,11 +8946,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("West US"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("East US"),
 								RegionalReplicaCount: to.Int32Ptr(2),
 								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
@@ -8987,11 +8987,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("West US"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("East US"),
 								RegionalReplicaCount: to.Int32Ptr(2),
 								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
@@ -9288,7 +9288,7 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 						ReplicaCount:       to.Int32Ptr(1),
 						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("West US"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
@@ -9338,7 +9338,7 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 						ReplicaCount:       to.Int32Ptr(1),
 						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
 						TargetRegions: []*golang.TargetRegion{
-							&golang.TargetRegion{
+							{
 								Name:                 to.StringPtr("West US"),
 								RegionalReplicaCount: to.Int32Ptr(1),
 								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
@@ -9464,13 +9464,13 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		"myGalleryName",
 		golang.SharingUpdate{
 			Groups: []*golang.SharingProfileGroup{
-				&golang.SharingProfileGroup{
+				{
 					Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
-				&golang.SharingProfileGroup{
+				{
 					Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
@@ -9828,11 +9828,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
 				NetworkProfile: &golang.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
-						&golang.LoadBalancerConfiguration{
+						{
 							Name: to.StringPtr("contosolb"),
 							Properties: &golang.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
-									&golang.LoadBalancerFrontendIPConfiguration{
+									{
 										Name: to.StringPtr("contosofe"),
 										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &golang.SubResource{
@@ -9846,7 +9846,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				PackageURL: to.StringPtr("{PackageUrl}"),
 				RoleProfile: &golang.CloudServiceRoleProfile{
 					Roles: []*golang.CloudServiceRoleProfileProperties{
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("ContosoFrontend"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("Standard_D1_v2"),
@@ -9854,7 +9854,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 								Tier:     to.StringPtr("Standard"),
 							},
 						},
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("ContosoBackend"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("Standard_D1_v2"),
@@ -9888,11 +9888,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
 				NetworkProfile: &golang.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
-						&golang.LoadBalancerConfiguration{
+						{
 							Name: to.StringPtr("myLoadBalancer"),
 							Properties: &golang.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
-									&golang.LoadBalancerFrontendIPConfiguration{
+									{
 										Name: to.StringPtr("myfe"),
 										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &golang.SubResource{
@@ -9906,7 +9906,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				PackageURL: to.StringPtr("{PackageUrl}"),
 				RoleProfile: &golang.CloudServiceRoleProfile{
 					Roles: []*golang.CloudServiceRoleProfileProperties{
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("ContosoFrontend"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("Standard_D1_v2"),
@@ -9940,11 +9940,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
 				NetworkProfile: &golang.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
-						&golang.LoadBalancerConfiguration{
+						{
 							Name: to.StringPtr("contosolb"),
 							Properties: &golang.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
-									&golang.LoadBalancerFrontendIPConfiguration{
+									{
 										Name: to.StringPtr("contosofe"),
 										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &golang.SubResource{
@@ -9957,12 +9957,12 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				},
 				OSProfile: &golang.CloudServiceOsProfile{
 					Secrets: []*golang.CloudServiceVaultSecretGroup{
-						&golang.CloudServiceVaultSecretGroup{
+						{
 							SourceVault: &golang.SubResource{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.KeyVault/vaults/{keyvault-name}"),
 							},
 							VaultCertificates: []*golang.CloudServiceVaultCertificate{
-								&golang.CloudServiceVaultCertificate{
+								{
 									CertificateURL: to.StringPtr("https://{keyvault-name}.vault.azure.net:443/secrets/ContosoCertificate/{secret-id}"),
 								}},
 						}},
@@ -9970,7 +9970,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				PackageURL: to.StringPtr("{PackageUrl}"),
 				RoleProfile: &golang.CloudServiceRoleProfile{
 					Roles: []*golang.CloudServiceRoleProfileProperties{
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("ContosoFrontend"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("Standard_D1_v2"),
@@ -10004,7 +10004,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
 				ExtensionProfile: &golang.CloudServiceExtensionProfile{
 					Extensions: []*golang.Extension{
-						&golang.Extension{
+						{
 							Name: to.StringPtr("RDPExtension"),
 							Properties: &golang.CloudServiceExtensionProperties{
 								Type:                    to.StringPtr("RDP"),
@@ -10018,11 +10018,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				},
 				NetworkProfile: &golang.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
-						&golang.LoadBalancerConfiguration{
+						{
 							Name: to.StringPtr("contosolb"),
 							Properties: &golang.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
-									&golang.LoadBalancerFrontendIPConfiguration{
+									{
 										Name: to.StringPtr("contosofe"),
 										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &golang.SubResource{
@@ -10036,7 +10036,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				PackageURL: to.StringPtr("{PackageUrl}"),
 				RoleProfile: &golang.CloudServiceRoleProfile{
 					Roles: []*golang.CloudServiceRoleProfileProperties{
-						&golang.CloudServiceRoleProfileProperties{
+						{
 							Name: to.StringPtr("ContosoFrontend"),
 							SKU: &golang.CloudServiceRoleSKU{
 								Name:     to.StringPtr("Standard_D1_v2"),

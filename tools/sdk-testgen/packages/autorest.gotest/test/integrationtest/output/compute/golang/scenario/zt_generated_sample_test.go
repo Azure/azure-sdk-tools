@@ -55,9 +55,9 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	}
 
 	// From step Create or Update a proximity placement group.
-	proximityPlacementGroupsClient := golang.NewNewProximityPlacementGroupsClient(subscriptionId)
+	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
-		proximityPlacementGroupsCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
+		proximityPlacementGroupsCreateOrUpdateResponse, err := ProximityPlacementGroupsClient.CreateOrUpdate(ctx,
 			resourceGroupName,
 			resourceName,
 			golang.ProximityPlacementGroup{
@@ -97,7 +97,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 
 	// From step Delete proximity placement group
 	{
-		_, err = proximityPlacementGroupsClient.Delete(ctx,
+		_, err = ProximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
 			resourceName,
 			nil)
@@ -107,10 +107,10 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	}
 
 	// From step Create a vm with Host Encryption using encryptionAtHost property.
-	virtualMachinesClient := golang.NewNewVirtualMachinesClient(subscriptionId)
+	VirtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId)
 	{
 		fakeStepVar := "signalrswaggertest6"
-		virtualMachinesCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
+		virtualMachinesCreateOrUpdatePollerResponse, err := VirtualMachinesClient.BeginCreateOrUpdate(ctx,
 			resourceGroupName,
 			"myVM",
 			golang.VirtualMachine{
@@ -128,7 +128,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 					},
 					NetworkProfile: &golang.NetworkProfile{
 						NetworkInterfaces: []*golang.NetworkInterfaceReference{
-							&golang.NetworkInterfaceReference{
+							{
 								SubResource: golang.SubResource{
 									ID: to.StringPtr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 								},
@@ -177,9 +177,9 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 
 func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 	// From step Delete proximity placement group
-	proximityPlacementGroupsClient := golang.NewNewProximityPlacementGroupsClient(subscriptionId)
+	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
-		_, err = proximityPlacementGroupsClient.Delete(ctx,
+		_, err = ProximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
 			resourceName,
 			nil)
@@ -191,9 +191,9 @@ func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 
 func prepare() {
 	// From step Delete proximity placement group
-	proximityPlacementGroupsClient := golang.NewNewProximityPlacementGroupsClient(subscriptionId)
+	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
-		_, err = proximityPlacementGroupsClient.Delete(ctx,
+		_, err = ProximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
 			resourceName,
 			nil)

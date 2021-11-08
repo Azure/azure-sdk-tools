@@ -149,7 +149,11 @@ export class MockTestDataRender extends BaseDataRender {
                 case SchemaType.Number:
                     return '0';
                 case SchemaType.Object:
-                    return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    if (isPtr) {
+                        return `&${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    } else {
+                        return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    }
                 default:
                     return '';
             }

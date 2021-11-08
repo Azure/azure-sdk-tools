@@ -83,7 +83,10 @@ export class MockTestDataRender extends BaseDataRender {
         // get cooresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
             // isPtr need to consider two situation: 1) param is required 2) param is polymorphism
-            const isPtr: boolean = !param.required || (param.schema.type == SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) == true;
+            let isPtr: boolean = !param.required || (param.schema.type == SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) == true;
+            if (param.language.go.byValue) {
+                isPtr = false;
+            }
             for (const methodParameter of exampleParameters) {
                 if (this.getLanguageName(methodParameter.parameter) === name) {
                     // go codegen use pointer for not required param
@@ -156,7 +159,9 @@ export class MockTestDataRender extends BaseDataRender {
         if (exampleValue === null || exampleValue === undefined || exampleValue.isNull) {
             return 'nil';
         }
-        const isPolymophismValue = exampleValue?.schema?.type === SchemaType.Object && (exampleValue.schema as ObjectSchema).discriminatorValue;
+        const isPolymophismValue =
+            exampleValue?.schema?.type === SchemaType.Object &&
+            ((exampleValue.schema as ObjectSchema).discriminatorValue || (exampleValue.schema as ObjectSchema).discriminator?.property.isDiscriminator);
         const ptr = (exampleValue.language?.go?.byValue && !isPolymophismValue) || isPtr === false ? '' : '&';
         if (exampleValue.schema?.type === SchemaType.Array) {
             const elementIsPtr = exampleValue.schema.language.go.elementIsPtr && !elemByVal;
@@ -172,9 +177,10 @@ export class MockTestDataRender extends BaseDataRender {
                 const result = `${ptr}[]${elementPtr}${packageName}${elementTypeName}{}`;
                 return result;
             } else {
+                // for pholymophism element, need to add type name, so pass false for inArray
                 const result =
                     `${ptr}[]${elementPtr}${packageName}${elementTypeName}{\n` +
-                    exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, true)).join(',\n') +
+                    exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, elementIsPolymophism ? false : true)).join(',\n') +
                     '}';
                 return result;
             }
@@ -229,10 +235,11 @@ export class MockTestDataRender extends BaseDataRender {
         if ([SchemaType.Choice, SchemaType.SealedChoice].indexOf(schema.type) >= 0) {
             const choiceValue = Helper.findChoiceValue(schema as ChoiceSchema, rawValue);
             ret = this.context.packageName + '.' + this.getLanguageName(choiceValue);
-        }
-        if (schema.type === SchemaType.Constant || goType === 'string') {
+        } else if (schema.type === SchemaType.Constant || goType === 'string') {
             ret = this.getStringValue(rawValue);
-        } else if (goType.startsWith('int') || goType.startsWith('uint') || goType.startsWith('float')) {
+        } else if (schema.type === SchemaType.ByteArray) {
+            ret = `[]byte(${this.getStringValue(rawValue)})`;
+        } else if (['int32', 'int64', 'float32', 'float64'].indexOf(goType) >= 0) {
             ret = `${Number(rawValue)}`;
         } else if (goType === 'time.Time') {
             this.context.importManager.add('time');

@@ -2,6 +2,8 @@ param (
     [string]$env = 'test'
 )
 
+$STATIC_TEST_SECRETS_NAME="public"
+
 function Run()
 {
     Write-Host "`n==> $args`n" -ForegroundColor Green
@@ -40,7 +42,7 @@ function DeployStaticResources([hashtable]$params) {
 
     $sp = RunOrExitOnFailure az ad sp create-for-rbac `
         -o json `
-        -n "stress-provisioner-$env" `
+        -n "stress-provisioner-$($params.groupSuffix)" `
         --role Contributor `
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
@@ -54,16 +56,22 @@ function DeployStaticResources([hashtable]$params) {
         AZURE_SUBSCRIPTION_ID = $params.subscriptionId
     }
 
-    $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }
-    $secret = $dotenv -join "`n"
-
-    RunOrExitOnFailure az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --value $secret -n public
+    # Powershell on windows does not play nicely passing strings with newlines as secret values
+    # to the Azure CLI keyvault command, so use a file here instead.
+    $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
+    $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
+    (-join $dotenv) | Out-File $envFile
+    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_SECRETS_NAME
+    Remove-Item -Force $envFile
+    if ($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
 }
 
 function UpdateOutputs([hashtable]$params) {
     $outputs = (az deployment sub show `
         -o json `
-        -n stress-deploy-$env `
+        -n "stress-deploy-$($params.groupSuffix)" `
         --query properties.outputs `
         --subscription $params.subscriptionId
     ) | ConvertFrom-Json
@@ -78,6 +86,7 @@ function UpdateOutputs([hashtable]$params) {
     $values.staticTestSecretsKeyvaultName.$env = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
     $values.clusterTestSecretsKeyvaultName.$env = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
     $values.secretProviderIdentity.$env = $outputs.SECRET_PROVIDER_CLIENT_ID.value
+    $values.subscription.$env = $STATIC_TEST_SECRETS_NAME
     $values.tenantId.$env = $outputs.TENANT_ID.value
 
     $values | ConvertTo-Yaml | Out-File $valuesFile
@@ -91,7 +100,7 @@ function DeployClusterResources([hashtable]$params) {
     RunOrExitOnFailure az deployment sub create `
         -o json `
         --subscription $params.subscriptionId `
-        -n stress-deploy-$env `
+        -n "stress-deploy-$($params.groupSuffix)" `
         -l $params.clusterLocation `
         -f $PSScriptRoot/azure/main.bicep `
         --parameters $PSScriptRoot/azure/parameters/$env.json
@@ -115,10 +124,10 @@ function DeployClusterResources([hashtable]$params) {
 }
 
 function LoadEnvParams() {
-    $params = (Get-Content $PSScriptRoot/azure/parameters/$env.json | ConvertFrom-Json -AsHashtable).parameters
-
-    if (!$params) {
-        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$env.json"
+    try {
+        $params = (Get-Content $PSScriptRoot/azure/parameters/$env.json | ConvertFrom-Json -AsHashtable).parameters
+    } catch {
+        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$env.json. Check that any lines marked '// add me' are filled in and that the file exists."
         exit 1
     }
 

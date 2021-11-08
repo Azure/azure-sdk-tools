@@ -37,7 +37,15 @@ namespace Stress.Generator
 
                 package.Write();
 
-                Console.WriteLine($"Stress test created at {outdir}");
+                Console.WriteLine($"********************************************************************************");
+                Console.WriteLine($"Stress test package created at {outdir}. See README.md in that directory for more help.");
+                Console.WriteLine($"Next steps:");
+                Console.WriteLine($"1. Install stress test development tools: https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/README.md#installation");
+                Console.WriteLine($"2. Add test code to ./src/");
+                Console.WriteLine($"3. Update 'Dockerfile' (see contents for help).");
+                Console.WriteLine($"4. Run the following command from within your language repository to deploy the package:");
+                Console.WriteLine($"   pwsh -c $(git rev-parse --show-toplevel)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages");
+                Console.WriteLine($"********************************************************************************");
             });
         }
     }

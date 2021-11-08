@@ -6,6 +6,8 @@ metadata:
     testName: packet-loss
     chaos: "true"
 spec:
+  nodeSelector:
+    sku: 'default'
   containers:
     - name: network-example
       command: ["bash", "poll.sh"]

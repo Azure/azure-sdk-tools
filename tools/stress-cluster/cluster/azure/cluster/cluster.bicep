@@ -7,7 +7,6 @@ param location string = resourceGroup().location
 param enableHighMemAgentPool bool = false
 
 // monitoring parameters
-param enableMonitoring bool = false
 param workspaceId string
 
 var kubernetesVersion = '1.21.2'
@@ -59,7 +58,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    addonProfiles: (enableMonitoring ? {
+    addonProfiles: {
       azureKeyvaultSecretsProvider: {
         enabled: true
       }
@@ -69,7 +68,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
           logAnalyticsWorkspaceResourceID: workspaceId
         }
       }
-    } : null)
+    }
     kubernetesVersion: kubernetesVersion
     enableRBAC: true
     dnsPrefix: dnsPrefix
@@ -84,7 +83,7 @@ resource cluster 'Microsoft.ContainerService/managedClusters@2020-09-01' = {
 // Add Monitoring Metrics Publisher role to omsagent identity. Required to publish metrics data to
 // cluster resource container insights.
 // https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-update-metrics
-resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (enableMonitoring) {
+resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: '${guid('monitoringMetricsPublisherRole', resourceGroup().id)}'
   scope: cluster
   properties: {

@@ -15,9 +15,3 @@ export const variableDefaults = {
     [Config.exampleFilePrefix]: 'ze_generated_',
     [Config.testFilePrefix]: 'zt_generated_',
 };
-
-export enum TargetMode {
-    mockTest = 'MOCK-TEST',
-    scenarioTest = 'SCENARIO-TEST',
-    sample = 'SAMPLE',
-}

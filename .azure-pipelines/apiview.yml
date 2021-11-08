@@ -7,6 +7,7 @@ trigger:
       - hotfix/*
   paths:
     include:
+      - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/ts/ts-genapi
@@ -22,6 +23,7 @@ pr:
       - hotfix/*
   paths:
     include:
+      - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
       - src/ts/ts-genapi
@@ -97,7 +99,7 @@ stages:
             displayName: 'Bundle API Parsers'
 
           - script: |
-              go build -o $(Build.ArtifactStagingDirectory)/APIViewWeb
+              go build
             workingDirectory: $(GoParserPackagePath)
             displayName: 'Build go parser'
 

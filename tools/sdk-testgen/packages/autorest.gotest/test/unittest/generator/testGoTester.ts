@@ -1,24 +1,33 @@
 import * as path from 'path';
 import * as process from 'process';
+import { BaseCodeGenerator } from '../../../src/generator/baseGenerator';
+import { ExampleCodeGenerator, ExampleDataRender } from '../../../src/generator/exampleGenerator';
 import { ExtensionName, TestCodeModel, TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
-import { GoTestGenerator, processRequest } from '../../../src/generator/goTester';
+import { GenerateContext } from '../../../src/generator/generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
+import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generator/mockTestGenerator';
 import { MockTool } from '../../tools';
+import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
+import { processRequest } from '../../../src/generator/goTester';
 
 describe('processRequest of go-tester', () => {
-    let spyGenerateMockTest;
-    let spyGenRenderData;
-    let spyGenerateExample;
-    let spyGenerateScenarioTest;
+    let spyExampleRenderData;
+    let spyExampleGenerateCode;
+    let spyMockTestRenderData;
+    let spyMockTestGenerateCode;
+    let spyScenarioTestRenderData;
+    let spyScenarioTestGenerateCode;
     beforeEach(() => {
         Helper.outputToModelerfour = jest.fn().mockResolvedValue(undefined);
         Helper.dump = jest.fn().mockResolvedValue(undefined);
         Helper.addCodeModelDump = jest.fn().mockResolvedValue(undefined);
-        spyGenerateMockTest = jest.spyOn(GoTestGenerator.prototype, 'generateMockTest').mockResolvedValue(undefined);
-        spyGenRenderData = jest.spyOn(GoTestGenerator.prototype, 'genRenderData').mockReturnValue(undefined);
-        spyGenerateExample = jest.spyOn(GoTestGenerator.prototype, 'generateExample').mockReturnValue(undefined);
-        spyGenerateScenarioTest = jest.spyOn(GoTestGenerator.prototype, 'generateScenarioTest').mockReturnValue(undefined);
+        spyExampleRenderData = jest.spyOn(ExampleDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spyExampleGenerateCode = jest.spyOn(ExampleCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
+        spyMockTestRenderData = jest.spyOn(MockTestDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spyMockTestGenerateCode = jest.spyOn(MockTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
+        spyScenarioTestRenderData = jest.spyOn(ScenarioTestDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spyScenarioTestGenerateCode = jest.spyOn(ScenarioTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -42,9 +51,12 @@ describe('processRequest of go-tester', () => {
 
         await processRequest(undefined);
 
-        expect(spyGenRenderData).toHaveBeenCalledTimes(1);
-        expect(spyGenerateMockTest).toHaveBeenCalledTimes(1);
-        expect(spyGenerateExample).not.toHaveBeenCalled();
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).toHaveBeenCalledTimes(2);
         expect(Helper.dump).toHaveBeenCalledTimes(1);
@@ -66,10 +78,12 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
 
-        expect(spyGenRenderData).toHaveBeenCalledTimes(1);
-        expect(spyGenerateMockTest).toHaveBeenCalledTimes(1);
-        expect(spyGenerateExample).not.toHaveBeenCalled();
-        expect(spyGenerateScenarioTest).not.toHaveBeenCalled();
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).not.toHaveBeenCalled();
         expect(Helper.dump).toHaveBeenCalledTimes(1);
@@ -90,7 +104,12 @@ describe('processRequest of go-tester', () => {
             }),
         });
         await processRequest(undefined);
-        expect(spyGenerateMockTest).not.toHaveBeenCalled();
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate sdk example if generate-sdk-example is true', async () => {
@@ -108,7 +127,12 @@ describe('processRequest of go-tester', () => {
             }),
         });
         await processRequest(undefined);
-        expect(spyGenerateExample).toHaveBeenCalledTimes(1);
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).toHaveBeenCalledTimes(1);
+        expect(spyExampleGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate scenario test if generate-scenario-test is true', async () => {
@@ -126,7 +150,12 @@ describe('processRequest of go-tester', () => {
             }),
         });
         await processRequest(undefined);
-        expect(spyGenerateScenarioTest).toHaveBeenCalledTimes(1);
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyScenarioTestGenerateCode).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -148,15 +177,23 @@ describe('GoTestGenerator from RP agrifood', () => {
 
     it('Generate MockTest and SDK example', async () => {
         const outputs = {};
-        const spyGenerate = jest.spyOn(GoTestGenerator.prototype, 'writeToHost').mockImplementation((filename, output) => {
+        const spyCodeGenerate = jest.spyOn(BaseCodeGenerator.prototype as any, 'writeToHost').mockImplementation((filename: string, output: string) => {
             outputs[filename] = output;
         });
 
-        const generator = await new GoTestGenerator(undefined, testCodeModel.codeModel, new TestConfig({}));
-        generator.genRenderData();
-        await generator.generateMockTest('mockTest.go.njk');
-        generator.generateExample('exampleTest.go.njk');
-        await generator.generateScenarioTest('scenarioTest.go.njk');
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const mockTestDataRender = new MockTestDataRender(context);
+        mockTestDataRender.renderData();
+        const mockTestCodeGenerator = new MockTestCodeGenerator(context);
+        mockTestCodeGenerator.generateCode({});
+        const exampleDataRender = new ExampleDataRender(context);
+        exampleDataRender.renderData();
+        const exampleCodeGenerator = new ExampleCodeGenerator(context);
+        exampleCodeGenerator.generateCode({});
+        const scenarioTestDataRender = new ScenarioTestDataRender(context);
+        scenarioTestDataRender.renderData();
+        const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
+        scenarioTestCodeGenerator.generateCode({});
 
         let exampleFiles = 0;
         for (const group of testCodeModel.codeModel.operationGroups) {
@@ -168,7 +205,7 @@ describe('GoTestGenerator from RP agrifood', () => {
             }
         }
 
-        expect(spyGenerate).toHaveBeenCalledTimes(1 /* mock test */ + exampleFiles + testCodeModel.codeModel.testModel.scenarioTests.length);
+        expect(spyCodeGenerate).toHaveBeenCalledTimes(1 /* mock test */ + exampleFiles + testCodeModel.codeModel.testModel.scenarioTests.length);
         expect(outputs).toMatchSnapshot();
     });
 });
@@ -204,15 +241,19 @@ describe('GoTestGenerator from RP signalR', () => {
 
     it('Generate scenario test', async () => {
         const outputs = {};
-        const spyGenerate = jest.spyOn(GoTestGenerator.prototype, 'writeToHost').mockImplementation((filename, output) => {
+        const spyCodeGenerate = jest.spyOn(BaseCodeGenerator.prototype as any, 'writeToHost').mockImplementation((filename: string, output: string) => {
             outputs[filename] = output;
         });
 
-        const generator = await new GoTestGenerator(undefined, testCodeModel.codeModel, new TestConfig({}));
-        generator.genRenderData();
-        await generator.generateScenarioTest('scenarioTest.go.njk');
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const mockTestDataRender = new MockTestDataRender(context);
+        mockTestDataRender.renderData();
+        const scenarioTestDataRender = new ScenarioTestDataRender(context);
+        scenarioTestDataRender.renderData();
+        const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
+        scenarioTestCodeGenerator.generateCode({});
 
-        expect(spyGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length);
+        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length);
         expect(outputs).toMatchSnapshot();
     });
 });

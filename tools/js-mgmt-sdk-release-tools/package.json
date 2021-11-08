@@ -1,0 +1,36 @@
+{
+  "name": "@azure-tools/js-mgmt-release-tools",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node dist/generateChangelogAndBumpVersionCLI.js",
+    "debug": "node --inspect-brk dist/generateChangelogAndBumpVersionCLI.js",
+    "build": "tsc",
+    "prepack": "npm run build"
+  },
+  "bin": {
+    "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
+    "codegen-automation": "./dist/generateCodesInLocalCLI.js",
+    "automation-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+  },
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "dependencies": {
+    "@azure-tools/openapi-tools-common": "^1.2.2",
+    "@ts-common/azure-js-dev-tools": "^22.4.22",
+    "colors": "^1.4.0",
+    "command-line-args": "^5.1.1",
+    "comment-json": "^4.1.0",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.10",
+    "log": "^6.0.0",
+    "parse-ts-to-ast": "^0.1.1",
+    "semver": "^7.3.5",
+    "shelljs": "^0.8.4",
+    "simple-git": "^2.40.0",
+    "ts-morph": "^12.0.0",
+    "tslib": "^1.9.3",
+    "url-join": "^4.0.1",
+    "yaml": "^1.10.2"
+  }
+}

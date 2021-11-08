@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -138,7 +139,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         {
                             if (!acceptableEmptyArgs.Contains(param.Name))
                             {
-                                throw new BadHttpRequestException($"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                                throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
                             }
                         }
                         
@@ -152,8 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         }
                         else
                         {
-                            // TODO: make this a specific argument not found exception
-                            throw new BadHttpRequestException($"Required parameter key {param} was not found in the request body.");
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
                         }
                     }
                 }

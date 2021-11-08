@@ -17,3 +17,4 @@
 /tools/stress-cluster/ @benbp @ckairen
 /tools/mock-service-host/ @changll @chenjieshi
 /tools/sdk-testgen/ @changll @chenjieshi
+/tools/js-mgmt-sdk-release-tools/ @weidong @qiaozha

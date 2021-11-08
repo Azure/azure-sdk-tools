@@ -2,7 +2,7 @@
 
 exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
 Object {
-  "ze_generated_example_extensions_test.go": "//go:build go1.16
+  "ze_generated_example_extensions_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -15,8 +15,9 @@ import (
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
 
 // x-ms-original-file: 
 func ExampleExtensionsClient_Create() {
@@ -103,7 +104,11 @@ func ExampleExtensionsClient_ListByFarmBeats() {
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
-nil)
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
+ExtensionCategories: []*string{},
+MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
@@ -115,7 +120,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_farmbeatsextensions_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -128,8 +133,9 @@ import (
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
 
 // x-ms-original-file: 
 func ExampleFarmBeatsExtensionsClient_List() {
@@ -139,7 +145,12 @@ func ExampleFarmBeatsExtensionsClient_List() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
-	pager := client.List(nil)
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
+FarmBeatsExtensionNames: []*string{},
+ExtensionCategories: []*string{},
+PublisherIDs: []*string{},
+MaxPageSize: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
@@ -168,7 +179,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_farmbeatsmodels_test.go": "//go:build go1.16
+  "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -181,7 +192,6 @@ import (
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
 import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 
@@ -280,7 +290,9 @@ func ExampleFarmBeatsModelsClient_ListBySubscription() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
-	pager := client.ListBySubscription(nil)
+	pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
@@ -300,7 +312,9 @@ func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByResourceGroup(\\"<resource-group-name>\\",
-nil)
+&armagfood.FarmBeatsModelsListByResourceGroupOptions{MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
@@ -312,7 +326,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_locations_test.go": "//go:build go1.16
+  "ze_generated_example_locations_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -325,7 +339,6 @@ import (
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
 import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 
@@ -350,7 +363,7 @@ nil)
 }
 
 ",
-  "ze_generated_example_operations_test.go": "//go:build go1.16
+  "ze_generated_example_operations_client_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -363,8 +376,9 @@ import (
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/agfood/armagfood\\"
 )
+import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+
 
 // x-ms-original-file: 
 func ExampleOperationsClient_List() {
@@ -388,7 +402,7 @@ func ExampleOperationsClient_List() {
 
 
 
-package armagfood
+package armagfood_test
 
 import (
 	\\"context\\"
@@ -424,12 +438,12 @@ func TestExtensions_Create(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Create(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
-&ExtensionsCreateOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -445,12 +459,12 @@ func TestExtensions_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Get(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
-&ExtensionsGetOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -466,12 +480,12 @@ func TestExtensions_Update(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Update(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
-&ExtensionsUpdateOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -487,12 +501,12 @@ func TestExtensions_Delete(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.Delete(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
-&ExtensionsDeleteOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -505,10 +519,14 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByFarmBeats(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
-&ExtensionsListByFarmBeatsOptions{})
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
+ExtensionCategories: []*string{},
+MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
@@ -529,8 +547,13 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsExtensionsClient(cred, &options)
-	pager := client.List(&FarmBeatsExtensionsListOptions{})
+	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
+FarmBeatsExtensionNames: []*string{},
+ExtensionCategories: []*string{},
+PublisherIDs: []*string{},
+MaxPageSize: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
@@ -551,10 +574,10 @@ func TestFarmBeatsExtensions_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsExtensionsClient(cred, &options)
+	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
 	res, err := client.Get(ctx,
 \\"DTN.ContentServices\\",
-&FarmBeatsExtensionsGetOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,11 +593,11 @@ func TestFarmBeatsModels_Get(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Get(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
-&FarmBeatsModelsGetOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -590,12 +613,12 @@ func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.CreateOrUpdate(ctx,
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
-FarmBeats{
-TrackedResource: TrackedResource{
+armagfood.FarmBeats{
+TrackedResource: armagfood.TrackedResource{
 Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 \\"key2\\": to.StringPtr(\\"value2\\"),
@@ -603,7 +626,7 @@ Tags: map[string]*string{
 Location: to.StringPtr(\\"eastus2\\"),
 },
 },
-&FarmBeatsModelsCreateOrUpdateOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -619,17 +642,17 @@ func TestFarmBeatsModels_Update(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	res, err := client.Update(ctx,
 \\"examples-farmBeatsResourceName\\",
 \\"examples-rg\\",
-FarmBeatsUpdateRequestModel{
+armagfood.FarmBeatsUpdateRequestModel{
 Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 \\"key2\\": to.StringPtr(\\"value2\\"),
 },
 },
-&FarmBeatsModelsUpdateOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -645,11 +668,11 @@ func TestFarmBeatsModels_Delete(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.Delete(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
-&FarmBeatsModelsDeleteOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -662,8 +685,10 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	pager := client.ListBySubscription(&FarmBeatsModelsListBySubscriptionOptions{})
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
@@ -684,9 +709,11 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByResourceGroup(\\"examples-rg\\",
-&FarmBeatsModelsListByResourceGroupOptions{})
+&armagfood.FarmBeatsModelsListByResourceGroupOptions{MaxPageSize: nil,
+SkipToken: nil,
+})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
@@ -707,13 +734,13 @@ func TestLocations_CheckNameAvailability(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
+	client := armagfood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	_, err := client.CheckNameAvailability(ctx,
-CheckNameAvailabilityRequest{
+armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"existingaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
-&LocationsCheckNameAvailabilityOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -721,11 +748,11 @@ Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 
     // From example Locations_CheckNameAvailability_Available
 	_, err = client.CheckNameAvailability(ctx,
-CheckNameAvailabilityRequest{
+armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"newaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
-&LocationsCheckNameAvailabilityOptions{})
+nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -738,8 +765,8 @@ func TestOperations_List(t *testing.T) {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
 		}
 	}()
-	client := NewOperationsClient(cred, &options)
-	pager := client.List(&OperationsListOptions{})
+	client := armagfood.NewOperationsClient(cred, &options)
+	pager := client.List(nil)
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
@@ -810,21 +837,26 @@ Object {
 
 
 
-package armsignalr_scenario
+package armsignalr_test
 
 import (
 	\\"context\\"
-	\\"encoding/json\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/signalr/armsignalr\\"
 	\\"log\\"
+	\\"net/http\\"
 	\\"os\\"
 	\\"runtime/debug\\"
 	\\"testing\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"golang.org/x/net/http2\\"
+)
+import (
+	\\"encoding/json\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
 	\\"time\\"
 )
 
@@ -855,9 +887,9 @@ func scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t *testing.T) {
 
     
 	// From step SignalR_checknameAvailability
-			signalRClient := armsignalr.NewSignalRClient(subscriptionId)
+			SignalRClient := armsignalr.NewSignalRClient(subscriptionId)
 	{
-			_, err = signalRClient.CheckNameAvailability(ctx,
+			_, err = SignalRClient.CheckNameAvailability(ctx,
 location,
 &armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
 Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
@@ -872,7 +904,7 @@ Name: to.StringPtr(\\"my-signalr-service\\"),
     
 	// From step SignalR_CreateOrUpdate
 	{
-			signalRCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
+			signalRCreateOrUpdatePollerResponse, err := SignalRClient.BeginCreateOrUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -969,7 +1001,7 @@ Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
     
 	// From step SignalR_ListKey
 	{
-			_, err = signalRClient.ListKeys(ctx,
+			_, err = SignalRClient.ListKeys(ctx,
 resourceGroupName,
 resourceName,
 nil)
@@ -981,7 +1013,7 @@ nil)
     
 	// From step SignalR_Delete
 	{
-			signalRDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
+			signalRDeletePollerResponse, err := SignalRClient.BeginDelete(ctx,
 resourceGroupName,
 resourceName,
 nil)

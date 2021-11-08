@@ -89,3 +89,4 @@ jobs:
           -Login
           -Subscription '${{ parameters.Subscription }}'
           -DeployId '$(Build.BuildNumber)'
+          -CI

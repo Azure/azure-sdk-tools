@@ -16,6 +16,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
+     * [Node size requirements](#node-size-requirements)
   * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
@@ -70,7 +71,6 @@ To create any resources in the cluster, you will need to create a namespace for 
 
 ```
 kubectl create namespace <your alias>
-kubectl label namespace <namespace> owners=<your alias>
 ```
 
 You will then need to build and push your container image to a registry the cluster has access to:
@@ -153,7 +153,6 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 <stress test root directory>
     Dockerfile                          # A Dockerfile for building the stress test image
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
-    parameters.json                     # An ARM template parameters file that will be used at runtime along with the ARM template
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
     templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
@@ -163,7 +162,7 @@ The basic layout for a stress test is the following (see `examples/stress_deploy
 
     values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
-    <source directories>         # Directories containing code for stress tests
+    <source dirs, e.g. src/>     # Directories containing code for stress tests
     <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
 ```
 
@@ -175,7 +174,7 @@ Fields in `Chart.yaml`
 1. The `name` field will get used as the helm release name. To deploy instances of the same stress test release in parallel, update this field.
 1. The `annotations.stressTest` field must be set to true for the script to discover the test.
 1. The `annotations.namespace` field must be set, and governs which kubernetes namespace the stress test package will be
-   installed into as a helm release.
+   installed into as a helm release when deployed by CI. Locally, this defaults to your username instead.
 1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
    script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
@@ -272,7 +271,7 @@ version: 0.1.0
 appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
-  namespace: <your stress test namespace>
+  namespace: <your stress test namespace, e.g. python>
   <optional key/value annotations for filtering>
 
 dependencies:
@@ -352,14 +351,16 @@ For more detailed examples, see:
 
 ### Scenarios and values.yaml
 
-For cases where the same job config must be run for multiple instances, a `scenarios` list can be specified in a file called `values.yaml`.
+In order to run multiple tests but re-use the same job yaml, a special config key called `scenarios` can be used. Under
+the hood, the stress test tools will duplicate the job yaml for each scenario. A common pattern is to represent each
+test case with a file and/or argument passed to the stress program via the container command.
 
 For example, given a stress test package with multiple tests represented as separate files:
 
 ```
 values.yaml
 templates/
-app/
+src/
   scenarioLongRunning.js
   scenarioPeekMessages.js
   scenarioBatchReceive.js
@@ -382,6 +383,45 @@ scenarios:
 ```
 
 The underlying `stress-test-addons` helm library will handle a scenarios list automatically, and deploy multiple instances of the stress test job, one for each scenario.
+
+### Node Size Requirements
+
+The stress test cluster is deployed with several node SKUs (see [agentPoolProfiles declaration and
+variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/cluster.bicep)), with tests defaulting to the SKU labeled 'default'.
+By adding the `nodeSelector` field to the job spec, you can override which nodes the test container will
+be provisioned to. For support adding a custom or dedicated node SKU, reach out to the EngSys team.
+
+Available common SKUs in stress test clusters:
+
+- 'default' - Standard\_D2\_v3
+- 'highMem' - Standard\_D4ds\_v4
+
+To deploy a stress test to a custom node (see also
+[example](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/network-stress-example/templates/testjob.yaml)):
+
+```
+spec:
+  nodeSelector:
+    sku: 'highMem'
+  containers:
+    < container spec ... >
+```
+
+To add a new temporary nodepool (for cluster admins/engsys), see example below:
+
+```
+az aks nodepool add \
+    -g <cluster group> \
+    --cluster-name <cluster name> \
+    -n <nodepool name> \
+    --enable-encryption-at-host \
+    --enable-cluster-autoscaler \
+    --node-count 1 \
+    --min-count 1 \
+    --max-count 3 \
+    --node-vm-size <azure vm sku> \
+    --labels "sku=<nodepool sku label>"
+```
 
 ## Deploying a Stress Test
 

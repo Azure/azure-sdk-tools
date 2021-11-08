@@ -92,7 +92,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     });
             });
 
-
             services.AddControllers(options =>
             {
                 options.InputFormatters.Add(new EmptyBodyFormatter());
@@ -109,6 +108,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 app.UseDeveloperExceptionPage();
             }
             app.UseCors("DefaultPolicy");
+            app.UseMiddleware<HttpExceptionMiddleware>();
 
             MapRecording(app);
             app.UseRouting();

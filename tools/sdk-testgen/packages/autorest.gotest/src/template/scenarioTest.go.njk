@@ -3,8 +3,22 @@
 
 {{copyright}}
 
-package {{packageName}}_scenario
+package {{packageName}}_test
 
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"runtime/debug"
+	"testing"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"golang.org/x/net/http2"
+)
 {{imports}}
 
 var (

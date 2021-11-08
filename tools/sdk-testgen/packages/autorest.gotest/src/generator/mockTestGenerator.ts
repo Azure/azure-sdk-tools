@@ -93,7 +93,7 @@ export class MockTestDataRender extends BaseDataRender {
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(methodParameter.parameter));
                 }
             }
-            return this.getDefaultValue(param, isPtr);
+            return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
         };
 
         if ((parameter as GroupProperty).originalParameter) {
@@ -117,7 +117,7 @@ export class MockTestDataRender extends BaseDataRender {
         return findExampleParameter(paramName, parameter);
     }
 
-    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean) {
+    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
         if (isPtr) {
             return 'nil';
         } else {
@@ -127,7 +127,8 @@ export class MockTestDataRender extends BaseDataRender {
                 case SchemaType.Constant:
                     return '"<' + Helper.toKebabCase(this.getLanguageName(param)) + '>"';
                 case SchemaType.Array: {
-                    const elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
+                    const elementIsPtr = param.schema.language.go.elementIsPtr && !elemByVal;
+                    const elementPtr = elementIsPtr ? '*' : '';
                     let elementTypeName = this.getLanguageName((param.schema as ArraySchema).elementType);
                     const polymophismName = (param.schema as ArraySchema).elementType.language.go.discriminatorInterface;
                     if (polymophismName) {

@@ -1,4 +1,5 @@
 ﻿using OutputColorizer;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -66,6 +67,36 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             }
             Colorizer.WriteLine("[Green!Done]");
             return entries;
+        }
+
+        public static List<string> ParseAndFindClosestMatch(string filePathOrUrl, string targetPath)
+        {
+            var codeOwnerEntries = ParseFile(filePathOrUrl);
+            // Normalize the start and end of the paths by trimming slash
+            targetPath = targetPath.Trim('/');
+
+            // We want to find the match closest to the bottom of the codeowners file.
+            // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and 'PackagePath'.
+            for (int i = codeOwnerEntries.Count - 1; i >= 0; i--)
+            {
+                if (FindClosestMatch(targetPath, codeOwnerEntries[i].PathExpression)) {
+                    return codeOwnerEntries[i].Owners;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool FindClosestMatch(string target, string codeOwnerPath)
+        {
+            codeOwnerPath = codeOwnerPath.Trim('/');
+            // Note that this only matches on paths without glob patterns which is good enough
+            // for our current scenarios but in the future might need to support globs
+            if (target.StartsWith(codeOwnerPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            return false;
         }
 
         private static string NormalizeLine(string line)

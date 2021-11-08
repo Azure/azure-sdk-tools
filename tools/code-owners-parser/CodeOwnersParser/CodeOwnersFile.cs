@@ -79,24 +79,16 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and then 'PackagePath'.
             for (int i = codeOwnerEntries.Count - 1; i >= 0; i--)
             {
-                if (FindClosestMatch(targetPath, codeOwnerEntries[i].PathExpression)) {
+                string codeOwnerPath = codeOwnerEntries[i].PathExpression.Trim('/');
+                // Note that this only matches on paths without glob patterns which is good enough
+                // for our current scenarios but in the future might need to support globs
+                if (targetPath.StartsWith(codeOwnerPath, StringComparison.OrdinalIgnoreCase))
+                {
                     return codeOwnerEntries[i].Owners;
                 }
             }
 
             return null;
-        }
-
-        private static bool FindClosestMatch(string target, string codeOwnerPath)
-        {
-            codeOwnerPath = codeOwnerPath.Trim('/');
-            // Note that this only matches on paths without glob patterns which is good enough
-            // for our current scenarios but in the future might need to support globs
-            if (target.StartsWith(codeOwnerPath, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            return false;
         }
 
         private static string NormalizeLine(string line)

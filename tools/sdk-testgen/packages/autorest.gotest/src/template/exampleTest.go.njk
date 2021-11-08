@@ -11,7 +11,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"{{packagePath}}"
 )
 {{imports}}
 
@@ -19,19 +18,19 @@ import (
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
 // x-ms-original-file: {{example.originalFile}}
-func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}() {
+func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutputForExample + ", " if example.clientParametersOutputForExample else ""}}cred, nil)
+	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
 
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}
-	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- else %}
-	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
 	if err != nil {
 		log.Fatal(err)
@@ -43,7 +42,7 @@ func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}
 	}
 	{%- endif %}
 	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
@@ -58,7 +57,7 @@ func Example{{example.operationGroup.language.go.name}}Client_{{example.opName}}
 		{%- endif %}
 	}
 	{%- else %}
-	client.{{example.opName}}({{example.methodParametersOutputForExample}})
+	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
 	{%- for variable in example.nonNilReturns %}

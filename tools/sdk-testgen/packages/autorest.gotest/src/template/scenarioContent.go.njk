@@ -3,9 +3,9 @@
 	// From step {{step.step}}
 	{%- if step.type == "restCall" %}
 		{%- set example = step.exampleModel %}
-		{%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.name + "Client") %}
+		{%- set clientVariable = example.operationGroup.language.go.clientName %}
 		{%- if allVariables.indexOf(clientVariable)<0 %}
-			{{clientVariable}} := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutput}})
+			{{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput}})
 			{%- set _ = allVariables.push(clientVariable) %}
 		{%- endif %}
 	{%- endif %}

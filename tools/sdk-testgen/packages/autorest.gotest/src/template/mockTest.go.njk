@@ -3,7 +3,7 @@
 
 {{copyright}}
 
-package {{packageName}}
+package {{packageName}}_test
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func Test{{exampleGroup.operationId}}(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
 	{%- endif %}
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}

@@ -15,7 +15,10 @@ export class GenerateContext {
     public constructor(public host: Host, public codeModel: TestCodeModel, public testConfig: TestConfig) {
         this.packageName = this.codeModel?.language?.go?.packageName;
         this.importManager = new ImportManager();
-        const module = this.testConfig.getValue(Config.module);
+        let module = undefined;
+        if (this.packageName) {
+            module = this.testConfig.getValue(Config.module, `github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/${this.packageName.substr(3)}/${this.packageName}`);
+        }
         if (module) {
             this.importManager.add(module);
         }

@@ -16,7 +16,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 // x-ms-original-file: 
@@ -104,8 +107,8 @@ func ExampleExtensionsClient_ListByFarmBeats() {
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
-&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
-ExtensionCategories: []*string{},
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []string{},
+ExtensionCategories: []string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -134,7 +137,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 // x-ms-original-file: 
@@ -145,10 +151,10 @@ func ExampleFarmBeatsExtensionsClient_List() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
-	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
-FarmBeatsExtensionNames: []*string{},
-ExtensionCategories: []*string{},
-PublisherIDs: []*string{},
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []string{},
+FarmBeatsExtensionNames: []string{},
+ExtensionCategories: []string{},
+PublisherIDs: []string{},
 MaxPageSize: nil,
 })
 	for pager.NextPage(ctx) {
@@ -193,7 +199,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 // x-ms-original-file: 
@@ -340,7 +349,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 // x-ms-original-file: 
@@ -377,7 +389,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 // x-ms-original-file: 
@@ -418,7 +433,10 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 	\\"golang.org/x/net/http2\\"
 )
-import \\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+import (
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+)
 
 
 
@@ -522,8 +540,8 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	pager := client.ListByFarmBeats(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
-&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []*string{},
-ExtensionCategories: []*string{},
+&armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []string{},
+ExtensionCategories: []string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -548,10 +566,10 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
-	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []*string{},
-FarmBeatsExtensionNames: []*string{},
-ExtensionCategories: []*string{},
-PublisherIDs: []*string{},
+	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []string{},
+FarmBeatsExtensionNames: []string{},
+ExtensionCategories: []string{},
+PublisherIDs: []string{},
 MaxPageSize: nil,
 })
 	for pager.NextPage(ctx) {
@@ -856,6 +874,7 @@ import (
 import (
 	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
 	\\"time\\"
 )

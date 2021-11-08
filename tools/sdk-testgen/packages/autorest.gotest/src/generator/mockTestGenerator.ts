@@ -82,9 +82,12 @@ export class MockTestDataRender extends BaseDataRender {
     protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[]): string {
         // get cooresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
-            // isPtr need to consider two situation: 1) param is required 2) param is polymorphism
-            let isPtr: boolean = !param.required || (param.schema.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) === true;
-            if (param.language.go.byValue) {
+            // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
+            const isPolymophismValue =
+                param?.schema?.type === SchemaType.Object &&
+                ((param.schema as ObjectSchema).discriminatorValue || (param.schema as ObjectSchema).discriminator?.property.isDiscriminator);
+            let isPtr: boolean = !param.required || isPolymophismValue === true;
+            if (param.language.go.byValue && isPolymophismValue !== true) {
                 isPtr = false;
             }
             for (const methodParameter of exampleParameters) {

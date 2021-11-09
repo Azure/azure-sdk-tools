@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "1.1.1",
+      "tag": "@autorest/gotest_v1.1.1",
+      "date": "Tue, 09 Nov 2021 10:20:51 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Remove `go mod tidy` process."
+          }
+        ]
+      }
+    },
+    {
       "version": "1.1.0",
       "tag": "@autorest/gotest_v1.1.0",
       "date": "Tue, 09 Nov 2021 09:17:24 GMT",

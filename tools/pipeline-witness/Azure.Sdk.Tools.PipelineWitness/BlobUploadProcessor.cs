@@ -3,17 +3,20 @@
     using System;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using Azure.Sdk.Tools.PipelineWitness.Services;
     using Azure.Storage.Blobs;
+    using Azure.Storage.Blobs.Models;
 
     using Microsoft.Extensions.Logging;
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
+    using Microsoft.WindowsAzure.Storage;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -156,6 +159,10 @@
 
                 await blobClient.UploadAsync(new BinaryData(content));
             }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for build {BuildId}", build.Id);
+            }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error processing build blob for build {BuildId}", build.Id);
@@ -167,12 +174,13 @@
         {
             try
             {
-                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                var blobPath =
+                    $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
                 var blobClient = this.buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing timeline for build {BuildId}", build.Id);
+                    this.logger.LogInformation("Skipping existing timeline for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
                     return;
                 }
 
@@ -183,45 +191,52 @@
                 }
 
                 var builder = new StringBuilder();
-                foreach(var record in timeline.Records)
+                foreach (var record in timeline.Records)
                 {
-                    builder.AppendLine(JsonConvert.SerializeObject(new
-                    {
-                        OrganizationName = account,
-                        ProjectId = build.Project.Id,
-                        BuildId = build.Id,
-                        BuildTimelineId = timeline.Id,
-                        RepositoryId = build.Repository.Id,
-                        RecordId = record.Id,
-                        ParentId = record.ParentId,
-                        ChangeId = timeline.ChangeId,
-                        LastChangedBy = timeline.LastChangedBy,
-                        LastChangedOn = timeline.LastChangedOn,
-                        RecordChangeId = record.ChangeId,
-                        DetailsChangeId = record.Details?.ChangeId,
-                        DetailsId = record.Details?.Id,
-                        WorkerName = record.WorkerName,
-                        RecordName = record.Name,
-                        Order = record.Order,
-                        StartTime = record.StartTime,
-                        FinishTime = record.FinishTime,
-                        WarningCount = record.WarningCount,
-                        ErrorCount = record.ErrorCount,
-                        LogId = record.Log?.Id,
-                        LogType = record.Log?.Type,
-                        PercentComplete = record.PercentComplete,
-                        Result = record.Result,
-                        State = record.State,
-                        TaskId = record.Task?.Id,
-                        TaskName = record.Task?.Name,
-                        TaskVersion = record.Task?.Version,
-                        Type = record.RecordType,
-                        Issues = record.Issues?.Any() == true ? JsonConvert.SerializeObject(record.Issues, jsonSettings) : null,
-                        EtlIngestDate = DateTime.UtcNow,
-                    }, jsonSettings));
+                    builder.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project.Id,
+                            BuildId = build.Id,
+                            BuildTimelineId = timeline.Id,
+                            RepositoryId = build.Repository.Id,
+                            RecordId = record.Id,
+                            ParentId = record.ParentId,
+                            ChangeId = timeline.ChangeId,
+                            LastChangedBy = timeline.LastChangedBy,
+                            LastChangedOn = timeline.LastChangedOn,
+                            RecordChangeId = record.ChangeId,
+                            DetailsChangeId = record.Details?.ChangeId,
+                            DetailsId = record.Details?.Id,
+                            WorkerName = record.WorkerName,
+                            RecordName = record.Name,
+                            Order = record.Order,
+                            StartTime = record.StartTime,
+                            FinishTime = record.FinishTime,
+                            WarningCount = record.WarningCount,
+                            ErrorCount = record.ErrorCount,
+                            LogId = record.Log?.Id,
+                            LogType = record.Log?.Type,
+                            PercentComplete = record.PercentComplete,
+                            Result = record.Result,
+                            State = record.State,
+                            TaskId = record.Task?.Id,
+                            TaskName = record.Task?.Name,
+                            TaskVersion = record.Task?.Version,
+                            Type = record.RecordType,
+                            Issues = record.Issues?.Any() == true
+                                ? JsonConvert.SerializeObject(record.Issues, jsonSettings)
+                                : null,
+                            EtlIngestDate = DateTime.UtcNow,
+                        }, jsonSettings));
                 }
 
                 await blobClient.UploadAsync(new BinaryData(builder.ToString()));
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing timeline blob for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
             }
             catch (Exception ex)
             {
@@ -287,6 +302,10 @@
                 }
 
                 await blobClient.UploadAsync(tempFile);
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for log {LogId} for build {BuildId}", log.Id, build.Id);
             }
             catch (Exception ex)
             {
@@ -389,6 +408,10 @@
                 }, jsonSettings);
 
                 await blobClient.UploadAsync(new BinaryData(content));
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for test run {RunId} for build {BuildId}", testRun.Id, build.Id);
             }
             catch (Exception ex)
             {

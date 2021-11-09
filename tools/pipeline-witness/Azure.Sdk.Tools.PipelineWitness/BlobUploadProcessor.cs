@@ -176,6 +176,12 @@
                     return;
                 }
 
+                if (timeline.Records == null)
+                {
+                    this.logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
+                    return;
+                }
+
                 var builder = new StringBuilder();
                 foreach(var record in timeline.Records)
                 {

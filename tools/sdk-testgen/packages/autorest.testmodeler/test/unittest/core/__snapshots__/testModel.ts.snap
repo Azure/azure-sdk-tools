@@ -7761,12 +7761,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               parentsValue:
                 TrackedResource:
                   schema: *ref_12
-                  parentsValue:
-                    Resource:
-                      schema: *ref_13
-                      parentsValue: {}
-                      properties: {}
-                      language: *ref_42
+                  parentsValue: {}
                   properties:
                     location:
                       schema: *ref_239
@@ -17176,12 +17171,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               parentsValue:
                 TrackedResource:
                   schema: *ref_12
-                  parentsValue:
-                    Resource:
-                      schema: *ref_13
-                      parentsValue: {}
-                      properties: {}
-                      language: *ref_42
+                  parentsValue: {}
                   properties:
                     location:
                       schema: *ref_239
@@ -20724,12 +20714,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               parentsValue:
                 TrackedResource:
                   schema: *ref_12
-                  parentsValue:
-                    Resource:
-                      schema: *ref_13
-                      parentsValue: {}
-                      properties: {}
-                      language: *ref_42
+                  parentsValue: {}
                   properties:
                     location:
                       schema: *ref_239

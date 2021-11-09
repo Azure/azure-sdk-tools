@@ -160,18 +160,29 @@ export class ExampleValue {
             }
 
             instance.parentsValue = {};
+            function addParentValue(parent: ComplexSchema) {
+                const parentValue = ExampleValue.createInstance(rawValue, usedProperties, parent, parent.language, false);
+                if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
+                    instance.parentsValue[parent.language.default.name] = parentValue;
+                }
+            }
+
+            // Add normal parentValues
             if (splitParentsValue && Object.prototype.hasOwnProperty.call(childSchema, 'parents') && (childSchema as ObjectSchema).parents) {
                 for (const parent of (childSchema as ObjectSchema).parents.immediate) {
                     if (childSchema.type === SchemaType.Object) {
-                        const parentValue = this.createInstance(rawValue, usedProperties, parent, parent.language, false);
-                        if (
-                            (parentValue.properties && Object.keys(parentValue.properties).length > 0) ||
-                            (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)
-                        ) {
-                            instance.parentsValue[parent.language.default.name] = parentValue;
-                        }
+                        addParentValue(parent);
                     } else {
                         console.warn(`${parent.language.default.name} is NOT a object type of parent of ${childSchema.language.default.name}!`);
+                    }
+                }
+            }
+
+            // Add AdditionalProperties as ParentValue
+            if (Object.prototype.hasOwnProperty.call(childSchema, 'parents') && (childSchema as ObjectSchema).parents) {
+                for (const parent of (childSchema as ObjectSchema).parents.immediate) {
+                    if (parent.type === SchemaType.Dictionary) {
+                        addParentValue(parent);
                     }
                 }
             }

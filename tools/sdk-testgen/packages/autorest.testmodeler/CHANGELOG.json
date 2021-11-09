@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "1.0.1",
+      "tag": "@autorest/testmodeler_v1.0.1",
+      "date": "Tue, 09 Nov 2021 09:17:24 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix `AdditionalProperties` model problem and duplicate operation id problem."
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.0",
       "tag": "@autorest/testmodeler_v1.0.0",
       "date": "Fri, 29 Oct 2021 05:53:50 GMT",

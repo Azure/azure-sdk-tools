@@ -42,8 +42,34 @@ export class GoHelper {
         return ret;
     }
 
-    public static isPrimitiveType(type: string) {
-        const firstChar = type[0];
-        return firstChar === firstChar.toLowerCase();
+    public static addPackage(type: string, packageName: string) {
+        let result = '';
+        let tmpType = '';
+        let pos = 0;
+        while (pos < type.length) {
+            if (type[pos] === '[' || type[pos] === ']' || type[pos] === '*') {
+                if (tmpType !== '') {
+                    if (tmpType[0] === tmpType[0].toLowerCase()) {
+                        result += tmpType;
+                    } else {
+                        result += packageName + '.' + tmpType;
+                    }
+                    tmpType = '';
+                }
+                result += type[pos];
+            } else {
+                tmpType += type[pos];
+            }
+            pos++;
+        }
+        if (tmpType !== '') {
+            if (tmpType[0] === tmpType[0].toLowerCase()) {
+                result += tmpType;
+            } else {
+                result += packageName + '.' + tmpType;
+            }
+            tmpType = '';
+        }
+        return result;
     }
 }

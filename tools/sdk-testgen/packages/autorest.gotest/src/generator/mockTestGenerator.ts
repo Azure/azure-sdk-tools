@@ -55,11 +55,11 @@ export class MockTestDataRender extends BaseDataRender {
             for (const p of allReturnProperties) {
                 if (this.getLanguageName(p) === variable) {
                     const elementName = this.getLanguageName(responseSchema);
-                    let polymophismGet = '';
                     if (responseSchema.language.go.discriminatorInterface !== undefined) {
-                        polymophismGet = '.Get' + elementName + '()';
+                        example.nonNilReturns.push(`${responseSchema.language.go.discriminatorInterface}.Get${elementName}().${variable}`);
+                    } else {
+                        example.nonNilReturns.push(`${elementName}.${variable}`);
                     }
-                    example.nonNilReturns.push(`${elementName}${polymophismGet}.${variable}`);
                 }
             }
         }
@@ -82,9 +82,10 @@ export class MockTestDataRender extends BaseDataRender {
     protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[]): string {
         // get cooresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
-            // isPtr need to consider two situation: 1) param is required 2) param is polymorphism
-            let isPtr: boolean = !param.required || (param.schema.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator) === true;
-            if (param.language.go.byValue) {
+            // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
+            const isPolymophismValue = param?.schema?.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true;
+            let isPtr: boolean = !param.required || isPolymophismValue === true;
+            if (param.language.go.byValue && isPolymophismValue !== true) {
                 isPtr = false;
             }
             for (const methodParameter of exampleParameters) {
@@ -93,7 +94,7 @@ export class MockTestDataRender extends BaseDataRender {
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(methodParameter.parameter));
                 }
             }
-            return this.getDefaultValue(param, isPtr);
+            return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
         };
 
         if ((parameter as GroupProperty).originalParameter) {
@@ -117,7 +118,7 @@ export class MockTestDataRender extends BaseDataRender {
         return findExampleParameter(paramName, parameter);
     }
 
-    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean) {
+    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
         if (isPtr) {
             return 'nil';
         } else {
@@ -127,20 +128,19 @@ export class MockTestDataRender extends BaseDataRender {
                 case SchemaType.Constant:
                     return '"<' + Helper.toKebabCase(this.getLanguageName(param)) + '>"';
                 case SchemaType.Array: {
-                    const elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
+                    const elementIsPtr = param.schema.language.go.elementIsPtr && !elemByVal;
+                    const elementPtr = elementIsPtr ? '*' : '';
                     let elementTypeName = this.getLanguageName((param.schema as ArraySchema).elementType);
                     const polymophismName = (param.schema as ArraySchema).elementType.language.go.discriminatorInterface;
                     if (polymophismName) {
                         elementTypeName = polymophismName;
                     }
-                    const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
-                    return `[]${elementPtr}${packageName}${elementTypeName}{}`;
+                    return `[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{}`;
                 }
                 case SchemaType.Dictionary: {
                     const elementPtr = param.schema.language.go.elementIsPtr ? '*' : '';
                     const elementTypeName = this.getLanguageName((param.schema as DictionarySchema).elementType);
-                    const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
-                    return `map[string]${elementPtr}${packageName}${elementTypeName}{}`;
+                    return `map[string]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{}`;
                 }
                 case SchemaType.Boolean:
                     return 'false';
@@ -148,7 +148,11 @@ export class MockTestDataRender extends BaseDataRender {
                 case SchemaType.Number:
                     return '0';
                 case SchemaType.Object:
-                    return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    if (isPtr) {
+                        return `&${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    } else {
+                        return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
+                    }
                 default:
                     return '';
             }
@@ -161,7 +165,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
         const isPolymophismValue =
             exampleValue?.schema?.type === SchemaType.Object &&
-            ((exampleValue.schema as ObjectSchema).discriminatorValue || (exampleValue.schema as ObjectSchema).discriminator?.property.isDiscriminator);
+            ((exampleValue.schema as ObjectSchema).discriminatorValue !== undefined || (exampleValue.schema as ObjectSchema).discriminator?.property.isDiscriminator === true);
         const ptr = (exampleValue.language?.go?.byValue && !isPolymophismValue) || isPtr === false ? '' : '&';
         if (exampleValue.schema?.type === SchemaType.Array) {
             const elementIsPtr = exampleValue.schema.language.go.elementIsPtr && !elemByVal;
@@ -172,14 +176,13 @@ export class MockTestDataRender extends BaseDataRender {
             if (elementIsPolymophism) {
                 elementTypeName = schema.elementType.language.go.discriminatorInterface;
             }
-            const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
             if (exampleValue.elements === undefined) {
-                const result = `${ptr}[]${elementPtr}${packageName}${elementTypeName}{}`;
+                const result = `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{}`;
                 return result;
             } else {
                 // for pholymophism element, need to add type name, so pass false for inArray
                 const result =
-                    `${ptr}[]${elementPtr}${packageName}${elementTypeName}{\n` +
+                    `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{\n` +
                     exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, elementIsPolymophism ? false : true)).join(',\n') +
                     '}';
                 return result;
@@ -202,8 +205,7 @@ export class MockTestDataRender extends BaseDataRender {
         } else if (exampleValue.schema?.type === SchemaType.Dictionary) {
             const elementPtr = exampleValue.schema.language.go.elementIsPtr && !elemByVal ? '*' : '';
             const elementTypeName = this.getLanguageName((exampleValue.schema as DictionarySchema).elementType);
-            const packageName = GoHelper.isPrimitiveType(elementTypeName) ? '' : this.context.packageName + '.';
-            let output = `${ptr}map[string]${elementPtr}${packageName}${elementTypeName}{\n`;
+            let output = `${ptr}map[string]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{\n`;
             for (const [key, value] of Object.entries(exampleValue.properties || {})) {
                 output += `"${key}": ${this.exampleValueToString(value, exampleValue.schema.language.go.elementIsPtr)},\n`;
             }
@@ -247,6 +249,8 @@ export class MockTestDataRender extends BaseDataRender {
             ret = `func() time.Time { t, _ := time.Parse(${timeFormat}, "${rawValue}"); return t}()`;
         } else if (goType === 'map[string]interface{}') {
             ret = GoHelper.obejctToString(rawValue);
+        } else if (goType === 'interface{}' && Array.isArray(rawValue)) {
+            ret = GoHelper.arrayToString(rawValue);
         } else if (goType === 'bool') {
             ret = rawValue.toString();
         }

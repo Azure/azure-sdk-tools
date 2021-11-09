@@ -123,6 +123,13 @@ export class ExampleValue {
             return instance;
         }
 
+        function addParentValue(parent: ComplexSchema) {
+            const parentValue = ExampleValue.createInstance(rawValue, usedProperties, parent, parent.language, false);
+            if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
+                instance.parentsValue[parent.language.default.name] = parentValue;
+            }
+        }
+
         if (schema.type === SchemaType.Array && Array.isArray(rawValue)) {
             instance.elements = rawValue.map((x) => this.createInstance(x, new Set(), (schema as ArraySchema).elementType, undefined));
         } else if (schema.type === SchemaType.Object && rawValue === Object(rawValue)) {
@@ -160,13 +167,6 @@ export class ExampleValue {
             }
 
             instance.parentsValue = {};
-            function addParentValue(parent: ComplexSchema) {
-                const parentValue = ExampleValue.createInstance(rawValue, usedProperties, parent, parent.language, false);
-                if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
-                    instance.parentsValue[parent.language.default.name] = parentValue;
-                }
-            }
-
             // Add normal parentValues
             if (splitParentsValue && Object.prototype.hasOwnProperty.call(childSchema, 'parents') && (childSchema as ObjectSchema).parents) {
                 for (const parent of (childSchema as ObjectSchema).parents.immediate) {

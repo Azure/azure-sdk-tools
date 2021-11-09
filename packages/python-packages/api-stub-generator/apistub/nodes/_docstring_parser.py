@@ -30,8 +30,35 @@ class DocstringParser:
     def __init__(self, docstring):
         self.pos_args = OrderedDict()
         self.kw_args = OrderedDict()
+        self.ivars = OrderedDict()
         self.ret_type = None
         self.docstring = docstring
+        self._parse()
+
+    def _parse(self):
+        """Parses a docstring without regex."""
+        if not self.docstring:
+            logging.error("Docstring is empty to parse")
+            return
+
+        line_regex = re.compile(r"^\s*:([^:]+):(.*)")
+
+        for line_no, line in enumerate([x.replace("\n", "").strip() for x in self.docstring.splitlines()]):
+            match = line_regex.match(line)
+            if not match:
+                continue
+
+            (tag, remainder) = match.groups()
+            split_tag = tag.split()
+            if len(split_tag) == 2:
+                (keyword, name) = split_tag
+                test = "best"
+            elif len(split_tag) == 3:
+                (keyword, typename, name) = split_tag
+                test = "best"
+            else:
+                continue
+
 
     def find_type(self, type_name="type", var_name=""):
         # This method will find argument type or return type from docstring

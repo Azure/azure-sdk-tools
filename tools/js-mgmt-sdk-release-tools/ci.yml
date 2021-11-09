@@ -31,9 +31,13 @@ pr:
       - tools/js-mgmt-sdk-release-tools
 
 variables:
-  NodeVersion: '14.x'
-  VAR_ARTIFACT_NAME: "drop"
-  VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
+  - template: ../../eng/pipelines/templates/variables/globals.yml
+  - name: NodeVersion
+    value: '14.x'
+  - name: VAR_ARTIFACT_NAME
+    value: 'drop'
+  - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
+    value: $(Build.ArtifactStagingDirectory)
 
 stages:
   - stage: InstallAndBuild

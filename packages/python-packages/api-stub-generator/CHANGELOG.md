@@ -2,6 +2,7 @@
 
 ## Version 0.2.5 (Unreleased)
 Fixed bug in which kwargs were duplicated in certain instances.
+Fix issue where non-async methods were erroneously marked async.
 Fixed but where, in some instances, return types were truncated.
 
 ## Version 0.2.2 (Unreleased)

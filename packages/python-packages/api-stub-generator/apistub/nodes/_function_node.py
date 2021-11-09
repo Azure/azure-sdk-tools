@@ -69,9 +69,16 @@ class FunctionNode(NodeEntityBase):
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
         code = inspect.getsource(self.obj).strip()
-        # We cannot do "startswith" check here due to annotations or decorators present for functions
-        self.is_async = "async def" in code
-        self.def_key = "async def" if self.is_async else "def"
+        
+        for line in code.splitlines():
+            # skip decorators
+            if line.strip().startswith("@"):
+                continue
+            # the first non-decorator line should be the function signature
+            self.is_async = line.strip().startswith("async def")
+            self.def_key = "async def" if self.is_async else "def"
+            break
+
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:
             self.namespace_id += ":async"
@@ -86,7 +93,7 @@ class FunctionNode(NodeEntityBase):
                     if hasattr(x, "name")
                 ]
         except:
-            # todo Update exception details in error
+            # TODO: Update exception details in error
             error_message = "Error in parsing decorators for function {}".format(
                 self.name
             )

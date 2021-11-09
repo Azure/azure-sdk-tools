@@ -15,7 +15,7 @@ find_union_type_regex = (
     "(?<!:):{0}\s?{1}:[\s]*([\w.]*((\[[^\n]+\])|(\([^\n]+\))))(?!:)"
 )
 find_multi_type_regex = "(?<!:):({0})\s?{1}:([^:]+)(?!:)"
-find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:\n]+)(?!:)"
+find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:]+)(?!:)"
 
 # Regex to parse type hints
 find_type_hint_ret_type = "(?<!#)\s->\s+([^\n:]*)"
@@ -64,9 +64,14 @@ class DocstringParser:
 
     def find_return_type(self):
         # Find return type from docstring
+
         ret_type = re.search(find_docstring_return_type, self.docstring)
         if ret_type:
-            return ret_type.groups()[-1]
+            ret_type_val = ret_type.groups()[-1]
+            # clean up return types spread over multiple lines
+            ret_type_val = "".join([x.strip() for x in ret_type_val.splitlines()])
+            return ret_type_val.replace(",", ", ").replace("  ", " ")
+
         return None
 
     def find_args(self, arg_type="param"):

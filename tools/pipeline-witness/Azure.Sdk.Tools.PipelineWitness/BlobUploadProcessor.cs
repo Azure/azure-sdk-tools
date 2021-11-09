@@ -12,6 +12,8 @@
 
     using Microsoft.Extensions.Logging;
     using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.TeamFoundation.TestManagement.WebApi;
+    using Microsoft.VisualStudio.Services.TestResults.WebApi;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -22,6 +24,7 @@
         private const string BuildsContainerName = "builds";
         private const string BuildLogLinesContainerName = "buildloglines";
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
+        private const string TestRunsContainerNameTestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -33,12 +36,14 @@
 
         private readonly ILogger<BlobUploadProcessor> logger;
         private readonly BuildLogProvider logProvider;
+        private readonly TestResultsHttpClient testResultsClient;
         private readonly BuildHttpClient buildClient;
         private readonly BlobContainerClient buildLogLinesContainerClient;
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
+        private readonly BlobContainerClient testRunsContainerClient;
 
-        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient)
+        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient, TestResultsHttpClient testResultsClient)
         {
             if (blobServiceClient == null)
             {
@@ -48,9 +53,11 @@
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
             this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
+            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
             this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
+            this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerNameTestRunsContainerName);
         }
 
         public async Task UploadBuildBlobsAsync(
@@ -59,6 +66,8 @@
             Timeline timeline)
         {
             await UploadBuildBlobAsync(account, build);
+
+            await UploadTestRunBlobsAsync(account, build);
 
             await UploadTimelineBlobAsync(account, build, timeline);
 
@@ -286,5 +295,101 @@
                 }
             }
         }
+
+        private async Task UploadTestRunBlobsAsync(string account, Build build)
+        {
+            try
+            {
+                var continuationToken = string.Empty;
+                var buildIds = new[] { build.Id };
+                var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
+                var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
+
+                do
+                {
+                    var page = await testResultsClient.QueryTestRunsAsync2(
+                        build.Project.Id,
+                        minLastUpdatedDate,
+                        maxLastUpdatedDate,
+                        continuationToken: continuationToken,
+                        buildIds: buildIds
+                    );
+
+                    foreach (var testRun in page)
+                    {
+                        await UploadTestRunBlobAsync(account, build, testRun);
+                    }
+
+                    continuationToken = page.ContinuationToken;
+                } while (!string.IsNullOrEmpty(continuationToken));
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test runs for build {BuildId}", build.Id);
+                throw;
+            }
+        }
+
+        private async Task UploadTestRunBlobAsync(string account, Build build, TestRun testRun)
+        {
+            try
+            {
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    this.logger.LogInformation("Skipping existing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                    return;
+                }
+
+                var stats = testRun.RunStatistics.ToDictionary(x => x.Outcome, x => x.Count);
+
+                var content = JsonConvert.SerializeObject(new
+                {
+                    OrganizationName = account,
+                    ProjectId = build.Project.Id,
+                    BuildId = build.Id,
+                    BuildDefinitionId = build.Definition.Id,
+                    TestRunId = testRun.Id,
+                    Title = testRun.Name,
+                    StartedDate = testRun.StartedDate,
+                    CompletedDate = testRun.CompletedDate,
+                    ResultDurationSeconds = 0,
+                    RunDurationSeconds = (int)testRun.CompletedDate.Subtract(testRun.StartedDate).TotalSeconds,
+                    BranchName = build.SourceBranch,
+                    HasDetail = default(bool?),
+                    IsAutomated = testRun.IsAutomated,
+                    ResultAbortedCount = stats.TryGetValue("Aborted", out var value) ? value : 0,
+                    ResultBlockedCount = stats.TryGetValue("Blocked", out value) ? value : 0,
+                    ResultCount = testRun.TotalTests,
+                    ResultErrorCount = stats.TryGetValue("Error", out value) ? value : 0,
+                    ResultFailCount = stats.TryGetValue("Failed", out value) ? value : 0,
+                    ResultInconclusiveCount = stats.TryGetValue("Inconclusive", out value) ? value : 0,
+                    ResultNoneCount = stats.TryGetValue("None", out value) ? value : 0,
+                    ResultNotApplicableCount = stats.TryGetValue("NotApplicable", out value) ? value : 0,
+                    ResultNotExecutedCount = stats.TryGetValue("NotExecuted", out value) ? value : 0,
+                    ResultNotImpactedCount = stats.TryGetValue("NotImpacted", out value) ? value : 0,
+                    ResultPassCount = stats.TryGetValue("Passed", out value) ? value : 0,
+                    ResultTimeoutCount = stats.TryGetValue("Timeout", out value) ? value : 0,
+                    ResultWarningCount = stats.TryGetValue("Warning", out value) ? value : 0,
+                    TestRunType = testRun.IsAutomated ? "Automated" : "Manual",
+                    Workflow = !string.IsNullOrEmpty(testRun.Build?.Id) || testRun.BuildConfiguration != null ? "Build"
+                        : testRun.Release?.Id > 0 ? "Release"
+                        : "",
+                    OrganizationId = default(string),
+                    Data = default(string),
+                    EtlIngestDate = DateTime.UtcNow,
+                }, jsonSettings);
+
+                await blobClient.UploadAsync(new BinaryData(content));
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                throw;
+            }
+        }
+
     }
 }

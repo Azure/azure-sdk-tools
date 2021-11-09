@@ -5,16 +5,6 @@
     ViewData["Title"] = Model.Review.DisplayName;
 }
 
-@if (Model.Review.UpdateAvailable)
-{
-    <div class="alert alert-warning" role="alert" asp-resource="@Model.Review" asp-requirement="@ReviewOwnerRequirement.Instance">
-        <form asp-page-handler="RefreshModel" class=".form-inline" method="post" asp-route-id="@Model.Review.ReviewId">
-            Your code review uses older format and can be updated
-            <button type="submit" class="btn btn-link">Update model</button>
-        </form>
-    </div>
-}
-
 <div class="row">
     <div class="col my-2">
         <div class="dropdown float-left mr-2">

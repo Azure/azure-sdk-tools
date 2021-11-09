@@ -2232,11 +2232,11 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   go: *ref_65
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_128
+        operationGroup: &ref_123
           $key: Extensions
           operations:
             - *ref_66
-            - &ref_127
+            - &ref_128
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
@@ -2245,7 +2245,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_123
+                  language: &ref_124
                     default:
                       name: extensionId
                       description: Id of extension resource.
@@ -2261,7 +2261,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_124
+                  language: &ref_125
                     default:
                       name: farmBeatsResourceName
                       description: FarmBeats resource name.
@@ -2277,7 +2277,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   schema: *ref_8
                   implementation: Method
                   required: true
-                  language: &ref_125
+                  language: &ref_126
                     default:
                       name: resourceGroupName
                       description: The name of the resource group. The name is case insensitive.
@@ -2328,7 +2328,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                 - *ref_71
               responses:
                 - schema: *ref_9
-                  language: &ref_126
+                  language: &ref_127
                     default:
                       name: ''
                       description: Success
@@ -3470,6 +3470,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       language: *ref_26
                   language: *ref_18
               language: *ref_54
+    operation: *ref_66
+    operationGroup: *ref_123
   - operationId: Extensions_Get
     examples:
       - name: Extensions_Get
@@ -3488,20 +3490,20 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
           - exampleValue:
               schema: *ref_5
               rawValue: provider.extension
-              language: *ref_123
+              language: *ref_124
             parameter: *ref_69
           - exampleValue:
               schema: *ref_5
               rawValue: examples-farmbeatsResourceName
-              language: *ref_124
+              language: *ref_125
             parameter: *ref_70
           - exampleValue:
               schema: *ref_8
               rawValue: examples-rg
-              language: *ref_125
+              language: *ref_126
             parameter: *ref_71
-        operation: *ref_127
-        operationGroup: *ref_128
+        operation: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -3585,7 +3587,9 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       rawValue: User
                       language: *ref_26
                   language: *ref_18
-              language: *ref_126
+              language: *ref_127
+    operation: *ref_128
+    operationGroup: *ref_123
   - operationId: Extensions_Update
     examples:
       - name: Extensions_Update
@@ -3617,7 +3621,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_131
             parameter: *ref_85
         operation: *ref_133
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -3702,6 +3706,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       language: *ref_26
                   language: *ref_18
               language: *ref_132
+    operation: *ref_133
+    operationGroup: *ref_123
   - operationId: Extensions_Delete
     examples:
       - name: Extensions_Delete
@@ -3733,11 +3739,13 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_136
             parameter: *ref_98
         operation: *ref_137
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200': {}
           '204': {}
+    operation: *ref_137
+    operationGroup: *ref_123
   - operationId: Extensions_ListByFarmBeats
     examples:
       - name: Extensions_ListByFarmBeats
@@ -3764,7 +3772,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_139
             parameter: *ref_112
         operation: *ref_113
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -3857,6 +3865,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   language: *ref_141
               language: *ref_140
             headers: *ref_143
+    operation: *ref_113
+    operationGroup: *ref_123
   - operationId: FarmBeatsExtensions_List
     examples:
       - name: FarmBeatsExtensions_List
@@ -4517,17 +4527,17 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   go: *ref_208
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_224
+        operationGroup: &ref_220
           $key: FarmBeatsExtensions
           operations:
             - *ref_200
-            - &ref_223
+            - &ref_224
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
                 - *ref_67
                 - &ref_209
-                  schema: &ref_221
+                  schema: &ref_222
                     type: string
                     apiVersions:
                       - version: 2020-05-12-preview
@@ -4542,7 +4552,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                     protocol: {}
                   implementation: Method
                   required: true
-                  language: &ref_220
+                  language: &ref_221
                     default:
                       name: farmBeatsExtensionId
                       description: farmBeatsExtensionId to be queried.
@@ -4590,7 +4600,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                 - *ref_209
               responses:
                 - schema: *ref_11
-                  language: &ref_222
+                  language: &ref_223
                     default:
                       name: ''
                       description: Success
@@ -5470,6 +5480,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   language: *ref_144
               language: *ref_198
             headers: *ref_199
+    operation: *ref_200
+    operationGroup: *ref_220
   - operationId: FarmBeatsExtensions_Get
     examples:
       - name: FarmBeatsExtensions_Get
@@ -5481,12 +5493,12 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_53
         methodParameters:
           - exampleValue:
-              schema: *ref_221
+              schema: *ref_222
               rawValue: DTN.ContentServices
-              language: *ref_220
+              language: *ref_221
             parameter: *ref_209
-        operation: *ref_223
-        operationGroup: *ref_224
+        operation: *ref_224
+        operationGroup: *ref_220
         originalFile: ''
         responses:
           '200':
@@ -6010,7 +6022,9 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       rawValue: '2021-04-12T15:30:01Z'
                       language: *ref_27
                   language: *ref_146
-              language: *ref_222
+              language: *ref_223
+    operation: *ref_224
+    operationGroup: *ref_220
   - operationId: FarmBeatsModels_Get
     examples:
       - name: FarmBeatsModels_Get
@@ -6264,11 +6278,11 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   go: *ref_252
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_323
+        operationGroup: &ref_317
           $key: FarmBeatsModels
           operations:
             - *ref_253
-            - &ref_322
+            - &ref_323
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
@@ -6277,7 +6291,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_317
+                  language: &ref_318
                     default:
                       name: farmBeatsResourceName
                       description: FarmBeats resource name.
@@ -6293,7 +6307,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   schema: *ref_8
                   implementation: Method
                   required: true
-                  language: &ref_318
+                  language: &ref_319
                     default:
                       name: resourceGroupName
                       description: The name of the resource group. The name is case insensitive.
@@ -6313,7 +6327,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       schema: *ref_16
                       implementation: Method
                       required: true
-                      language: &ref_319
+                      language: &ref_320
                         default:
                           name: body
                           description: FarmBeats resource create or update request object.
@@ -6362,7 +6376,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                 - *ref_256
               responses:
                 - schema: *ref_16
-                  language: &ref_320
+                  language: &ref_321
                     default:
                       name: ''
                       description: Success
@@ -6377,7 +6391,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       statusCodes:
                         - '200'
                 - schema: *ref_16
-                  language: &ref_321
+                  language: &ref_322
                     default:
                       name: ''
                       description: Success
@@ -7715,6 +7729,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       language: *ref_26
                   language: *ref_227
               language: *ref_242
+    operation: *ref_253
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_CreateOrUpdate
     examples:
       - name: FarmBeatsModels_CreateOrUpdate
@@ -7733,12 +7749,12 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
           - exampleValue:
               schema: *ref_5
               rawValue: examples-farmbeatsResourceName
-              language: *ref_317
+              language: *ref_318
             parameter: *ref_255
           - exampleValue:
               schema: *ref_8
               rawValue: examples-rg
-              language: *ref_318
+              language: *ref_319
             parameter: *ref_256
           - exampleValue:
               schema: *ref_16
@@ -7763,10 +7779,10 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       language: *ref_235
                   language: *ref_234
               properties: {}
-              language: *ref_319
+              language: *ref_320
             parameter: *ref_254
-        operation: *ref_322
-        operationGroup: *ref_323
+        operation: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -7852,7 +7868,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_320
+              language: *ref_321
           '201':
             body:
               schema: *ref_16
@@ -7936,7 +7952,9 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_321
+              language: *ref_322
+    operation: *ref_323
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Update
     examples:
       - name: FarmBeatsModels_Update
@@ -7979,7 +7997,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_326
             parameter: *ref_267
         operation: *ref_331
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -8066,6 +8084,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                       language: *ref_26
                   language: *ref_227
               language: *ref_330
+    operation: *ref_331
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Delete
     examples:
       - name: FarmBeatsModels_Delete
@@ -8092,11 +8112,13 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_333
             parameter: *ref_281
         operation: *ref_334
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200': {}
           '204': {}
+    operation: *ref_334
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListBySubscription
     examples:
       - name: FarmBeatsModels_ListBySubscription
@@ -8113,7 +8135,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
             parameter: *ref_53
         methodParameters: []
         operation: *ref_292
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -8208,6 +8230,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   language: *ref_336
               language: *ref_335
             headers: *ref_338
+    operation: *ref_292
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListByResourceGroup
     examples:
       - name: FarmBeatsModels_ListByResourceGroup
@@ -8229,7 +8253,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
               language: *ref_339
             parameter: *ref_307
         operation: *ref_308
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -8324,6 +8348,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   language: *ref_336
               language: *ref_340
             headers: *ref_341
+    operation: *ref_308
+    operationGroup: *ref_317
   - operationId: Locations_CheckNameAvailability
     examples:
       - name: Locations_CheckNameAvailability_AlreadyExists
@@ -8801,6 +8827,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   rawValue: true
                   language: *ref_348
               language: *ref_356
+    operation: *ref_367
+    operationGroup: *ref_368
   - operationId: Operations_List
     examples:
       - name: Operations_List
@@ -9385,7 +9413,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   go: *ref_400
                 protocol: {}
           protocol: {}
-        operationGroup:
+        operationGroup: &ref_401
           $key: Operations
           operations:
             - *ref_392
@@ -9671,6 +9699,8 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                           language: *ref_374
                   language: *ref_369
               language: *ref_389
+    operation: *ref_392
+    operationGroup: *ref_401
 "
 `;
 
@@ -11612,11 +11642,11 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   go: *ref_65
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_128
+        operationGroup: &ref_123
           $key: Extensions
           operations:
             - *ref_66
-            - &ref_127
+            - &ref_128
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
@@ -11625,7 +11655,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_123
+                  language: &ref_124
                     default:
                       name: extensionId
                       description: Id of extension resource.
@@ -11641,7 +11671,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_124
+                  language: &ref_125
                     default:
                       name: farmBeatsResourceName
                       description: FarmBeats resource name.
@@ -11657,7 +11687,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   schema: *ref_8
                   implementation: Method
                   required: true
-                  language: &ref_125
+                  language: &ref_126
                     default:
                       name: resourceGroupName
                       description: The name of the resource group. The name is case insensitive.
@@ -11708,7 +11738,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                 - *ref_71
               responses:
                 - schema: *ref_9
-                  language: &ref_126
+                  language: &ref_127
                     default:
                       name: ''
                       description: Success
@@ -12850,6 +12880,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_18
               language: *ref_54
+    operation: *ref_66
+    operationGroup: *ref_123
   - operationId: Extensions_Get
     examples:
       - name: Extensions_Get
@@ -12868,20 +12900,20 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
           - exampleValue:
               schema: *ref_5
               rawValue: provider.extension
-              language: *ref_123
+              language: *ref_124
             parameter: *ref_69
           - exampleValue:
               schema: *ref_5
               rawValue: examples-farmbeatsResourceName
-              language: *ref_124
+              language: *ref_125
             parameter: *ref_70
           - exampleValue:
               schema: *ref_8
               rawValue: examples-rg
-              language: *ref_125
+              language: *ref_126
             parameter: *ref_71
-        operation: *ref_127
-        operationGroup: *ref_128
+        operation: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -12965,7 +12997,9 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: User
                       language: *ref_26
                   language: *ref_18
-              language: *ref_126
+              language: *ref_127
+    operation: *ref_128
+    operationGroup: *ref_123
   - operationId: Extensions_Update
     examples:
       - name: Extensions_Update
@@ -12997,7 +13031,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_131
             parameter: *ref_85
         operation: *ref_133
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -13082,6 +13116,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_18
               language: *ref_132
+    operation: *ref_133
+    operationGroup: *ref_123
   - operationId: Extensions_Delete
     examples:
       - name: Extensions_Delete
@@ -13113,11 +13149,13 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_136
             parameter: *ref_98
         operation: *ref_137
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200': {}
           '204': {}
+    operation: *ref_137
+    operationGroup: *ref_123
   - operationId: Extensions_ListByFarmBeats
     examples:
       - name: Extensions_ListByFarmBeats
@@ -13144,7 +13182,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_139
             parameter: *ref_112
         operation: *ref_113
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -13237,6 +13275,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_141
               language: *ref_140
             headers: *ref_143
+    operation: *ref_113
+    operationGroup: *ref_123
   - operationId: FarmBeatsExtensions_List
     examples:
       - name: FarmBeatsExtensions_List
@@ -13897,17 +13937,17 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   go: *ref_208
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_224
+        operationGroup: &ref_220
           $key: FarmBeatsExtensions
           operations:
             - *ref_200
-            - &ref_223
+            - &ref_224
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
                 - *ref_67
                 - &ref_209
-                  schema: &ref_221
+                  schema: &ref_222
                     type: string
                     apiVersions:
                       - version: 2020-05-12-preview
@@ -13922,7 +13962,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                     protocol: {}
                   implementation: Method
                   required: true
-                  language: &ref_220
+                  language: &ref_221
                     default:
                       name: farmBeatsExtensionId
                       description: farmBeatsExtensionId to be queried.
@@ -13970,7 +14010,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                 - *ref_209
               responses:
                 - schema: *ref_11
-                  language: &ref_222
+                  language: &ref_223
                     default:
                       name: ''
                       description: Success
@@ -14850,6 +14890,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_144
               language: *ref_198
             headers: *ref_199
+    operation: *ref_200
+    operationGroup: *ref_220
   - operationId: FarmBeatsExtensions_Get
     examples:
       - name: FarmBeatsExtensions_Get
@@ -14861,12 +14903,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_53
         methodParameters:
           - exampleValue:
-              schema: *ref_221
+              schema: *ref_222
               rawValue: DTN.ContentServices
-              language: *ref_220
+              language: *ref_221
             parameter: *ref_209
-        operation: *ref_223
-        operationGroup: *ref_224
+        operation: *ref_224
+        operationGroup: *ref_220
         originalFile: ''
         responses:
           '200':
@@ -15390,7 +15432,9 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: '2021-04-12T15:30:01Z'
                       language: *ref_27
                   language: *ref_146
-              language: *ref_222
+              language: *ref_223
+    operation: *ref_224
+    operationGroup: *ref_220
   - operationId: FarmBeatsModels_Get
     examples:
       - name: FarmBeatsModels_Get
@@ -15644,11 +15688,11 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   go: *ref_252
                 protocol: {}
           protocol: {}
-        operationGroup: &ref_323
+        operationGroup: &ref_317
           $key: FarmBeatsModels
           operations:
             - *ref_253
-            - &ref_322
+            - &ref_323
               apiVersions:
                 - version: 2020-05-12-preview
               parameters:
@@ -15657,7 +15701,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   schema: *ref_5
                   implementation: Method
                   required: true
-                  language: &ref_317
+                  language: &ref_318
                     default:
                       name: farmBeatsResourceName
                       description: FarmBeats resource name.
@@ -15673,7 +15717,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   schema: *ref_8
                   implementation: Method
                   required: true
-                  language: &ref_318
+                  language: &ref_319
                     default:
                       name: resourceGroupName
                       description: The name of the resource group. The name is case insensitive.
@@ -15693,7 +15737,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       schema: *ref_16
                       implementation: Method
                       required: true
-                      language: &ref_319
+                      language: &ref_320
                         default:
                           name: body
                           description: FarmBeats resource create or update request object.
@@ -15742,7 +15786,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                 - *ref_256
               responses:
                 - schema: *ref_16
-                  language: &ref_320
+                  language: &ref_321
                     default:
                       name: ''
                       description: Success
@@ -15757,7 +15801,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       statusCodes:
                         - '200'
                 - schema: *ref_16
-                  language: &ref_321
+                  language: &ref_322
                     default:
                       name: ''
                       description: Success
@@ -17095,6 +17139,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_227
               language: *ref_242
+    operation: *ref_253
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_CreateOrUpdate
     examples:
       - name: FarmBeatsModels_CreateOrUpdate
@@ -17113,12 +17159,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
           - exampleValue:
               schema: *ref_5
               rawValue: examples-farmbeatsResourceName
-              language: *ref_317
+              language: *ref_318
             parameter: *ref_255
           - exampleValue:
               schema: *ref_8
               rawValue: examples-rg
-              language: *ref_318
+              language: *ref_319
             parameter: *ref_256
           - exampleValue:
               schema: *ref_16
@@ -17143,10 +17189,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_235
                   language: *ref_234
               properties: {}
-              language: *ref_319
+              language: *ref_320
             parameter: *ref_254
-        operation: *ref_322
-        operationGroup: *ref_323
+        operation: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -17232,7 +17278,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_320
+              language: *ref_321
           '201':
             body:
               schema: *ref_16
@@ -17316,7 +17362,9 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_321
+              language: *ref_322
+    operation: *ref_323
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Update
     examples:
       - name: FarmBeatsModels_Update
@@ -17359,7 +17407,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_326
             parameter: *ref_267
         operation: *ref_331
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -17446,6 +17494,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_227
               language: *ref_330
+    operation: *ref_331
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Delete
     examples:
       - name: FarmBeatsModels_Delete
@@ -17472,11 +17522,13 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_333
             parameter: *ref_281
         operation: *ref_334
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200': {}
           '204': {}
+    operation: *ref_334
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListBySubscription
     examples:
       - name: FarmBeatsModels_ListBySubscription
@@ -17493,7 +17545,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_53
         methodParameters: []
         operation: *ref_292
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -17588,6 +17640,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_336
               language: *ref_335
             headers: *ref_338
+    operation: *ref_292
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListByResourceGroup
     examples:
       - name: FarmBeatsModels_ListByResourceGroup
@@ -17609,7 +17663,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_339
             parameter: *ref_307
         operation: *ref_308
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -17704,6 +17758,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_336
               language: *ref_340
             headers: *ref_341
+    operation: *ref_308
+    operationGroup: *ref_317
   - operationId: Locations_CheckNameAvailability
     examples:
       - name: Locations_CheckNameAvailability_AlreadyExists
@@ -18181,6 +18237,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   rawValue: true
                   language: *ref_348
               language: *ref_356
+    operation: *ref_367
+    operationGroup: *ref_368
   - operationId: Operations_List
     examples:
       - name: Operations_List
@@ -19051,6 +19109,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                           language: *ref_374
                   language: *ref_369
               language: *ref_389
+    operation: *ref_392
+    operationGroup: *ref_401
   - operationId: Extensions_Create
     examples:
       - name: Extensions_Create
@@ -19082,7 +19142,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_7
             parameter: *ref_51
         operation: *ref_66
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '201':
@@ -19167,8 +19227,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_18
               language: *ref_54
+    operation: *ref_66
+    operationGroup: *ref_123
   - operationId: Extensions_Get
     examples: []
+    operation: *ref_128
+    operationGroup: *ref_123
   - operationId: Extensions_Update
     examples:
       - name: Extensions_Update
@@ -19200,7 +19264,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_131
             parameter: *ref_85
         operation: *ref_133
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -19285,8 +19349,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_18
               language: *ref_132
+    operation: *ref_133
+    operationGroup: *ref_123
   - operationId: Extensions_Delete
     examples: []
+    operation: *ref_137
+    operationGroup: *ref_123
   - operationId: Extensions_ListByFarmBeats
     examples:
       - name: Extensions_ListByFarmBeats
@@ -19313,7 +19381,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_139
             parameter: *ref_112
         operation: *ref_113
-        operationGroup: *ref_128
+        operationGroup: *ref_123
         originalFile: ''
         responses:
           '200':
@@ -19406,6 +19474,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_141
               language: *ref_140
             headers: *ref_143
+    operation: *ref_113
+    operationGroup: *ref_123
   - operationId: FarmBeatsExtensions_List
     examples:
       - name: FarmBeatsExtensions_List
@@ -19417,7 +19487,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_53
         methodParameters: []
         operation: *ref_200
-        operationGroup: *ref_224
+        operationGroup: *ref_220
         originalFile: ''
         responses:
           '200':
@@ -19954,6 +20024,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_144
               language: *ref_198
             headers: *ref_199
+    operation: *ref_200
+    operationGroup: *ref_220
   - operationId: FarmBeatsExtensions_Get
     examples:
       - name: FarmBeatsExtensions_Get
@@ -19965,12 +20037,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_53
         methodParameters:
           - exampleValue:
-              schema: *ref_221
+              schema: *ref_222
               rawValue: DTN.ContentServices
-              language: *ref_220
+              language: *ref_221
             parameter: *ref_209
-        operation: *ref_223
-        operationGroup: *ref_224
+        operation: *ref_224
+        operationGroup: *ref_220
         originalFile: ''
         responses:
           '200':
@@ -20494,7 +20566,9 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: '2021-04-12T15:30:01Z'
                       language: *ref_27
                   language: *ref_146
-              language: *ref_222
+              language: *ref_223
+    operation: *ref_224
+    operationGroup: *ref_220
   - operationId: FarmBeatsModels_Get
     examples:
       - name: FarmBeatsModels_Get
@@ -20521,7 +20595,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_226
             parameter: *ref_241
         operation: *ref_253
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -20608,6 +20682,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_227
               language: *ref_242
+    operation: *ref_253
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_CreateOrUpdate
     examples:
       - name: FarmBeatsModels_CreateOrUpdate
@@ -20626,12 +20702,12 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
           - exampleValue:
               schema: *ref_5
               rawValue: examples-farmbeatsResourceName
-              language: *ref_317
+              language: *ref_318
             parameter: *ref_255
           - exampleValue:
               schema: *ref_8
               rawValue: examples-rg
-              language: *ref_318
+              language: *ref_319
             parameter: *ref_256
           - exampleValue:
               schema: *ref_16
@@ -20656,10 +20732,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_235
                   language: *ref_234
               properties: {}
-              language: *ref_319
+              language: *ref_320
             parameter: *ref_254
-        operation: *ref_322
-        operationGroup: *ref_323
+        operation: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -20745,7 +20821,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_320
+              language: *ref_321
           '201':
             body:
               schema: *ref_16
@@ -20829,7 +20905,9 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       rawValue: User
                       language: *ref_26
                   language: *ref_227
-              language: *ref_321
+              language: *ref_322
+    operation: *ref_323
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Update
     examples:
       - name: FarmBeatsModels_Update
@@ -20872,7 +20950,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_326
             parameter: *ref_267
         operation: *ref_331
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -20959,6 +21037,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                       language: *ref_26
                   language: *ref_227
               language: *ref_330
+    operation: *ref_331
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_Delete
     examples:
       - name: FarmBeatsModels_Delete
@@ -20985,11 +21065,13 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_333
             parameter: *ref_281
         operation: *ref_334
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200': {}
           '204': {}
+    operation: *ref_334
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListBySubscription
     examples:
       - name: FarmBeatsModels_ListBySubscription
@@ -21006,7 +21088,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
             parameter: *ref_53
         methodParameters: []
         operation: *ref_292
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -21101,6 +21183,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_336
               language: *ref_335
             headers: *ref_338
+    operation: *ref_292
+    operationGroup: *ref_317
   - operationId: FarmBeatsModels_ListByResourceGroup
     examples:
       - name: FarmBeatsModels_ListByResourceGroup
@@ -21122,7 +21206,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
               language: *ref_339
             parameter: *ref_307
         operation: *ref_308
-        operationGroup: *ref_323
+        operationGroup: *ref_317
         originalFile: ''
         responses:
           '200':
@@ -21217,6 +21301,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   language: *ref_336
               language: *ref_340
             headers: *ref_341
+    operation: *ref_308
+    operationGroup: *ref_317
   - operationId: Locations_CheckNameAvailability
     examples:
       - name: Locations_CheckNameAvailability_AlreadyExists
@@ -21309,6 +21395,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   rawValue: true
                   language: *ref_348
               language: *ref_356
+    operation: *ref_367
+    operationGroup: *ref_368
   - operationId: Operations_List
     examples:
       - name: Operations_List
@@ -21593,6 +21681,8 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                           language: *ref_374
                   language: *ref_369
               language: *ref_389
+    operation: *ref_392
+    operationGroup: *ref_401
 "
 `;
 

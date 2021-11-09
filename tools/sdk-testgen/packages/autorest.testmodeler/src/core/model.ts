@@ -63,8 +63,12 @@ export class MockTestDefinitionModel {
 
 export class ExampleGroup {
     operationId: string;
+    operationGroup: OperationGroup;
+    operation: Operation;
     examples: ExampleModel[] = [];
-    public constructor(operationId: string) {
+    public constructor(operationGroup: OperationGroup, operation: Operation, operationId: string) {
+        this.operationGroup = operationGroup;
+        this.operation = operation;
         this.operationId = operationId;
     }
 }
@@ -112,15 +116,22 @@ export class ExampleValue {
         );
     }
 
-    public static createInstance(rawValue: any, schema: Schema, language: Languages, searchDescents = true): ExampleValue {
+    public static createInstance(rawValue: any, usedProperties: Set<string[]>, schema: Schema, language: Languages, searchDescents = true): ExampleValue {
         const instance = new ExampleValue(schema, language);
         if (!schema) {
             instance.rawValue = rawValue;
             return instance;
         }
 
+        function addParentValue(parent: ComplexSchema) {
+            const parentValue = ExampleValue.createInstance(rawValue, usedProperties, parent, parent.language, false);
+            if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
+                instance.parentsValue[parent.language.default.name] = parentValue;
+            }
+        }
+
         if (schema.type === SchemaType.Array && Array.isArray(rawValue)) {
-            instance.elements = rawValue.map((x) => this.createInstance(x, (schema as ArraySchema).elementType, undefined));
+            instance.elements = rawValue.map((x) => this.createInstance(x, new Set(), (schema as ArraySchema).elementType, undefined));
         } else if (schema.type === SchemaType.Object && rawValue === Object(rawValue)) {
             const childSchema: ComplexSchema = searchDescents ? Helper.findInDescents(schema as ObjectSchema, rawValue) : schema;
             instance.schema = childSchema;
@@ -129,35 +140,59 @@ export class ExampleValue {
             const splitParentsValue = TestCodeModeler.instance.testConfig.getValue(Config.splitParentsValue, false);
             for (const property of Helper.getAllProperties(childSchema, !splitParentsValue)) {
                 if (property.flattenedNames) {
-                    const value = Helper.queryByPath(rawValue, property.flattenedNames);
-                    if (value.length === 1) {
-                        instance.properties[property.serializedName] = this.createInstance(value[0], property.schema, property.language);
-                        instance.properties[property.serializedName].flattenedNames = property.flattenedNames;
+                    if (!Helper.pathIsIncluded(usedProperties, property.flattenedNames)) {
+                        const value = Helper.queryByPath(rawValue, property.flattenedNames);
+                        if (value.length === 1) {
+                            instance.properties[property.serializedName] = this.createInstance(
+                                value[0],
+                                Helper.filterPathsByPrefix(usedProperties, property.flattenedNames),
+                                property.schema,
+                                property.language,
+                            );
+                            instance.properties[property.serializedName].flattenedNames = property.flattenedNames;
+                            usedProperties.add(property.flattenedNames);
+                        }
                     }
                 } else {
-                    if (Object.prototype.hasOwnProperty.call(rawValue, property.serializedName)) {
-                        instance.properties[property.serializedName] = this.createInstance(rawValue[property.serializedName], property.schema, property.language);
+                    if (Object.prototype.hasOwnProperty.call(rawValue, property.serializedName) && !Helper.pathIsIncluded(usedProperties, [property.serializedName])) {
+                        instance.properties[property.serializedName] = this.createInstance(
+                            rawValue[property.serializedName],
+                            Helper.filterPathsByPrefix(usedProperties, [property.serializedName]),
+                            property.schema,
+                            property.language,
+                        );
+                        usedProperties.add([property.serializedName]);
                     }
                 }
             }
 
             instance.parentsValue = {};
+            // Add normal parentValues
             if (splitParentsValue && Object.prototype.hasOwnProperty.call(childSchema, 'parents') && (childSchema as ObjectSchema).parents) {
                 for (const parent of (childSchema as ObjectSchema).parents.immediate) {
                     if (childSchema.type === SchemaType.Object) {
-                        const parentValue = this.createInstance(rawValue, parent, parent.language, false);
-                        if (Object.keys(parentValue.properties).length !== 0 || Object.keys(parentValue.parentsValue).length !== 0) {
-                            instance.parentsValue[parent.language.default.name] = parentValue;
-                        }
+                        addParentValue(parent);
                     } else {
                         console.warn(`${parent.language.default.name} is NOT a object type of parent of ${childSchema.language.default.name}!`);
+                    }
+                }
+            }
+
+            // Add AdditionalProperties as ParentValue
+            if (Object.prototype.hasOwnProperty.call(childSchema, 'parents') && (childSchema as ObjectSchema).parents) {
+                for (const parent of (childSchema as ObjectSchema).parents.immediate) {
+                    if (parent.type === SchemaType.Dictionary) {
+                        addParentValue(parent);
                     }
                 }
             }
         } else if (schema.type === SchemaType.Dictionary && rawValue === Object(rawValue)) {
             instance.properties = {};
             for (const [key, value] of Object.entries(rawValue)) {
-                instance.properties[key] = this.createInstance(value, (schema as DictionarySchema).elementType, undefined);
+                if (!Helper.pathIsIncluded(usedProperties, [key])) {
+                    instance.properties[key] = this.createInstance(value, usedProperties, (schema as DictionarySchema).elementType, undefined);
+                    usedProperties.add([key]);
+                }
             }
         } else {
             instance.rawValue = rawValue;
@@ -173,7 +208,7 @@ export class ExampleParameter {
 
     public constructor(parameter: Parameter, rawValue: any) {
         this.parameter = parameter;
-        this.exampleValue = ExampleValue.createInstance(rawValue, parameter?.schema, parameter.language);
+        this.exampleValue = ExampleValue.createInstance(rawValue, new Set(), parameter?.schema, parameter.language);
         if (this.parameter.protocol?.http?.in === 'query' && typeof this.exampleValue.rawValue === 'string') {
             this.exampleValue.rawValue = decodeURIComponent(this.exampleValue.rawValue.replace(/\+/g, '%20'));
         }
@@ -187,7 +222,7 @@ export class ExampleResponse {
     public static createInstance(rawResponse: ExampleExtensionResponse, schema: Schema, language: Languages): ExampleResponse {
         const instance = new ExampleResponse();
         if (rawResponse.body !== undefined) {
-            instance.body = ExampleValue.createInstance(rawResponse.body, schema, language);
+            instance.body = ExampleValue.createInstance(rawResponse.body, new Set(), schema, language);
         }
         instance.headers = rawResponse.headers;
         return instance;
@@ -285,7 +320,7 @@ export class TestCodeModeler {
         this.initiateTests();
         this.codeModel.operationGroups.forEach((operationGroup) => {
             operationGroup.operations.forEach((operation) => {
-                const exampleGroup = new ExampleGroup(operationGroup.language.default.name + '_' + operation.language.default.name);
+                const exampleGroup = new ExampleGroup(operationGroup, operation, operationGroup.language.default.name + '_' + operation.language.default.name);
                 for (const [exampleName, rawValue] of Object.entries(operation.extensions?.[ExtensionName.xMsExamples] ?? {})) {
                     if (!this.testConfig.isDisabledExample(exampleName)) {
                         exampleGroup.examples.push(this.createExampleModel(rawValue as ExampleExtension, exampleName, operation, operationGroup));

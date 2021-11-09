@@ -7896,6 +7896,9 @@
       }
     },
     "AvailabilitySet": {
+      "additionalProperties": {
+        "type": "object"
+      },
       "properties": {
         "properties": {
           "x-ms-client-flatten": true,

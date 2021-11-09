@@ -30,7 +30,7 @@ var (
 )
 
 {% for exampleGroup in exampleGroups %}
-func Test{{exampleGroup.operationId}}(t *testing.T) {
+func Test{{exampleGroup.operationGroup.$key}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
 {%- for example in exampleGroup.examples %}
     // From example {{example.name}}
 	{%- if config.testmodeler.mock['send-example-id'] %}

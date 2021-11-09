@@ -195,7 +195,8 @@ export class MockTestDataRender extends BaseDataRender {
                 output = `${ptr}${this.context.packageName + '.'}${this.getLanguageName(exampleValue.schema)}{\n`;
             }
             for (const [_, parentValue] of Object.entries(exampleValue.parentsValue || {})) {
-                output += `${this.getLanguageName(parentValue)}: ${this.exampleValueToString(parentValue, false)},\n`;
+                const propertyName = parentValue.schema?.type === SchemaType.Dictionary ? 'AdditionalProperties' : this.getLanguageName(parentValue);
+                output += `${propertyName}: ${this.exampleValueToString(parentValue, false)},\n`;
             }
             for (const [_, value] of Object.entries(exampleValue.properties || {})) {
                 output += `${this.getLanguageName(value)}: ${this.exampleValueToString(value, undefined)},\n`;

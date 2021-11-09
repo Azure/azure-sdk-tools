@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 01 Nov 2021 09:01:05 GMT and should not be manually modified.
+This log was last generated on Tue, 09 Nov 2021 09:17:24 GMT and should not be manually modified.
+
+## 1.1.0
+Tue, 09 Nov 2021 09:17:24 GMT
+
+### Minor changes
+
+- Refactor structure and fix most of generation problem.
 
 ## 1.0.0
 Mon, 01 Nov 2021 09:01:05 GMT

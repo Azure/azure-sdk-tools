@@ -164,7 +164,10 @@ export class ExampleValue {
                 for (const parent of (childSchema as ObjectSchema).parents.immediate) {
                     if (childSchema.type === SchemaType.Object) {
                         const parentValue = this.createInstance(rawValue, usedProperties, parent, parent.language, false);
-                        if (parentValue.properties || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
+                        if (
+                            (parentValue.properties && Object.keys(parentValue.properties).length > 0) ||
+                            (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)
+                        ) {
                             instance.parentsValue[parent.language.default.name] = parentValue;
                         }
                     } else {

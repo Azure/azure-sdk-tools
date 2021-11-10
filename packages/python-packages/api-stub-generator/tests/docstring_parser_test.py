@@ -17,7 +17,7 @@ Dummy docstring to verify standard return types and param types
 :rtype: Union[str, int]
 """
 
-docstring_Union_return_type2 = """
+docstring_union_return_type_followed_by_irrelevant_text = """
 Dummy docstring to verify standard return types and param types
 :rtype: Union(str, int)
 Dummy string at new line
@@ -65,6 +65,20 @@ docstring_param_nested_union = """
 :param dummyarg: Optional group to check if user exists in.
 :type dummyarg: typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]
 """
+
+docstring_param_multi_line_type_followed_by_irrelevant_text = """
+:param dummyarg: Optional group to check if user exists in.
+:type dummyarg: typing.Union[~azure.eventhub.EventDataBatch,
+    List[~azure.eventhub.EventData]]
+.. admonition:: Example:
+.. literalinclude:: ../samples/sample_detect_language.py
+    :start-after: [START batch_detect_language]
+    :end-before: [END batch_detect_language]
+    :language: python
+    :dedent: 8
+    :caption: Detecting language in a batch of documents.
+"""
+
 
 docstring_multi_complex_type = """
         :param documents: The set of documents to process as part of this batch.
@@ -129,8 +143,14 @@ class TestDocStringParser:
     def test_return_union_return_type(self):
         self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
     
-    def test_return_union_return_type1(self):
-        self._test_return_type(docstring_Union_return_type2, "Union(str, int)")
+    def test_return_union_return_type_followed_by_irrelevant_text(self):
+        self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
+
+    def test_param_multi_line_type_followed_by_irrelevant_text(self):
+        self._test_variable_type(
+            docstring_param_multi_line_type_followed_by_irrelevant_text,
+            "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"
+        )
 
     def test_return_union_lower_case_return_type(self):
         self._test_return_type(docstring_union_return_type3, "union[str, int]")

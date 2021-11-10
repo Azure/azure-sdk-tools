@@ -6,19 +6,19 @@ from ._argtype import ArgType
 
 
 # REGEX to parse docstring
-find_arg_regex = "(?<!:):{}\s+([\w]*):(?!:)"
+find_arg_regex = "(?<!:):{}\\s+([\w]*):(?!:)"
 find_arg_and_type_regex = (
-    "(?<!:):{}\s+([~\w.]*[\[?[~\w.]*,?\s?[~\w.]*\]?]?)\s+([\w]*):(?!:)"
+    "(?<!:):{}\\s+([~\w.]*[\[?[~\w.]*,?\\s?[~\w.]*\]?]?)\\s+([\w]*):(?!:)"
 )
-find_single_type_regex = "(?<!:):{0}\s?{1}:[\s]*([\S]+)(?!:)"
+find_single_type_regex = "(?<!:):{0}\\s?{1}:[\\s]*([\S]+)(?!:)"
 find_union_type_regex = (
-    "(?<!:):{0}\s?{1}:[\s]*([\w.]*((\[[^\n]+\])|(\([^\n]+\))))(?!:)"
+    "(?<!:):{0}\\s?{1}:[\\s]*([\w.]*((\[[^\n]+\])|(\([^\n]+\))))(?!:)"
 )
-find_multi_type_regex = "(?<!:):({0})\s?{1}:([^:]+)(?!:)"
-find_docstring_return_type = "(?<!:):rtype\s?:\s+([^:]+)(?!:)"
+find_multi_type_regex = "(?<!:):({0})\\s?{1}:([^:]+)(?!:)"
+find_docstring_return_type = "(?<!:):rtype\\s?:\\s+([^:\n]+)(?!:)"
 
 # Regex to parse type hints
-find_type_hint_ret_type = "(?<!#)\s->\s+([^\n:]*)"
+find_type_hint_ret_type = "(?<!#)\\s->\\s+([^\n:]*)"
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 

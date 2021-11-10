@@ -22,6 +22,12 @@ find_type_hint_ret_type = "(?<!#)\s->\s+([^\n:]*)"
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 
+docstring_type_keywords = ["type", "vartype", "paramtype"]
+
+docstring_param_keywords = ["param", "ivar", "keyword"]
+
+docstring_return_keywords = ["rtype"]
+
 
 class DocstringParser:
     """This represents a parsed doc string which has list of positional and keyword arguements and return type
@@ -35,29 +41,92 @@ class DocstringParser:
         self.docstring = docstring
         self._parse()
 
+
+    def _process_arg_tuple(self, tag, text) -> Tuple[ArgType, bool]:
+        # When two items are found, it is either the name
+        # or the type. Example:
+        # :param name: The name of the thing.
+        # :type name: str
+        # Returns a tuple with the arg and a boolean indicating
+        # whether the arg is partial (missing type info) or not.
+        (keyword, label) = tag
+        if keyword in docstring_param_keywords:
+            arg = ArgType(name=label, argtype=None)
+            self._update_arg(arg, keyword)
+            return (arg, True)
+        elif keyword in docstring_type_keywords:
+            arg = self._arg_for_type(label, keyword)
+            if text:
+                self._update_argtype(arg, text)
+                return (arg, False)
+            else:
+                # if the text is empty string, then we need to examine the
+                # next line for type info
+                return (arg, True)
+
+
+    def _arg_for_type(self, name, keyword) -> ArgType:
+        if keyword == "type":
+            return self.pos_args[name]
+        elif keyword == "vartype":
+            return self.ivars[name]
+        elif keyword == "paramtype":
+            return self.kw_args[name]
+        else:
+            logging.error(f"Unexpected keyword {keyword}.")
+            return None
+
+
+    def _update_argtype(self, arg, text) -> ArgType:
+        # Need to parse type info
+        pass
+
+
+    def _process_arg_triple(self, tag):
+        # When three items are found, all necessary info is found
+        # and there can only be one simple type
+        # Example: :param str name: The name of the thing.
+        (keyword, typename, name) = tag
+        arg = ArgType(name=name, argtype=typename)
+        self._update_arg(arg, keyword)
+
+
+    def _update_arg(self, arg, keyword):
+        if keyword == "ivar":
+            self.ivars[arg.argname] = arg
+        elif keyword == "param":
+            self.pos_args[arg.argname] = arg
+        elif keyword == "keyword":
+            self.kw_args[arg.argname] = arg
+        else:
+            logging.error(f"Unexpected keyword: {keyword}")
+
+
     def _parse(self):
         """Parses a docstring without regex."""
         if not self.docstring:
-            logging.error("Docstring is empty to parse")
+            logging.error("Unable to parse empty docstring.")
             return
 
         line_regex = re.compile(r"^\s*:([^:]+):(.*)")
 
-        for line_no, line in enumerate([x.replace("\n", "").strip() for x in self.docstring.splitlines()]):
-            match = line_regex.match(line)
-            if not match:
-                continue
+        for line in [x.replace("\n", "").strip() for x in self.docstring.splitlines()]:
 
-            (tag, remainder) = match.groups()
-            split_tag = tag.split()
-            if len(split_tag) == 2:
-                (keyword, name) = split_tag
-                test = "best"
-            elif len(split_tag) == 3:
-                (keyword, typename, name) = split_tag
-                test = "best"
-            else:
-                continue
+            # certain args require parsing multiple lines and tags
+            partial_arg = None
+
+            match = line_regex.match(line)
+            if match:     
+                (tag, remainder) = match.groups()
+                split_tag = tag.split()
+                if len(split_tag) == 3:
+                    self._process_arg_triple(split_tag)
+                elif len(split_tag) == 2:
+                    (arg, is_partial) = self._process_arg_tuple(split_tag, remainder)
+                    partial_arg = arg if is_partial else None
+            elif partial_arg:
+                self._update_argtype(partial_arg, line)
+                partial_arg = None
 
 
     def find_type(self, type_name="type", var_name=""):

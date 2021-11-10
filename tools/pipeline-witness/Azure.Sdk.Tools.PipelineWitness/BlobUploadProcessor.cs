@@ -3,15 +3,20 @@
     using System;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using Azure.Sdk.Tools.PipelineWitness.Services;
     using Azure.Storage.Blobs;
+    using Azure.Storage.Blobs.Models;
 
     using Microsoft.Extensions.Logging;
     using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.TeamFoundation.TestManagement.WebApi;
+    using Microsoft.VisualStudio.Services.TestResults.WebApi;
+    using Microsoft.WindowsAzure.Storage;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -22,6 +27,7 @@
         private const string BuildsContainerName = "builds";
         private const string BuildLogLinesContainerName = "buildloglines";
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
+        private const string TestRunsContainerNameTestRunsContainerName = "testruns";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -33,12 +39,14 @@
 
         private readonly ILogger<BlobUploadProcessor> logger;
         private readonly BuildLogProvider logProvider;
+        private readonly TestResultsHttpClient testResultsClient;
         private readonly BuildHttpClient buildClient;
         private readonly BlobContainerClient buildLogLinesContainerClient;
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
+        private readonly BlobContainerClient testRunsContainerClient;
 
-        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient)
+        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient, TestResultsHttpClient testResultsClient)
         {
             if (blobServiceClient == null)
             {
@@ -48,9 +56,11 @@
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
             this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
+            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
             this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
+            this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerNameTestRunsContainerName);
         }
 
         public async Task UploadBuildBlobsAsync(
@@ -59,6 +69,8 @@
             Timeline timeline)
         {
             await UploadBuildBlobAsync(account, build);
+
+            await UploadTestRunBlobsAsync(account, build);
 
             await UploadTimelineBlobAsync(account, build, timeline);
 
@@ -147,6 +159,10 @@
 
                 await blobClient.UploadAsync(new BinaryData(content));
             }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for build {BuildId}", build.Id);
+            }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error processing build blob for build {BuildId}", build.Id);
@@ -158,55 +174,69 @@
         {
             try
             {
-                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                var blobPath =
+                    $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
                 var blobClient = this.buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing timeline for build {BuildId}", build.Id);
+                    this.logger.LogInformation("Skipping existing timeline for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
+                    return;
+                }
+
+                if (timeline.Records == null)
+                {
+                    this.logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
                     return;
                 }
 
                 var builder = new StringBuilder();
-                foreach(var record in timeline.Records)
+                foreach (var record in timeline.Records)
                 {
-                    builder.AppendLine(JsonConvert.SerializeObject(new
-                    {
-                        OrganizationName = account,
-                        ProjectId = build.Project.Id,
-                        BuildId = build.Id,
-                        BuildTimelineId = timeline.Id,
-                        RepositoryId = build.Repository.Id,
-                        RecordId = record.Id,
-                        ParentId = record.ParentId,
-                        ChangeId = timeline.ChangeId,
-                        LastChangedBy = timeline.LastChangedBy,
-                        LastChangedOn = timeline.LastChangedOn,
-                        RecordChangeId = record.ChangeId,
-                        DetailsChangeId = record.Details?.ChangeId,
-                        DetailsId = record.Details?.Id,
-                        WorkerName = record.WorkerName,
-                        RecordName = record.Name,
-                        Order = record.Order,
-                        StartTime = record.StartTime,
-                        FinishTime = record.FinishTime,
-                        WarningCount = record.WarningCount,
-                        ErrorCount = record.ErrorCount,
-                        LogId = record.Log?.Id,
-                        LogType = record.Log?.Type,
-                        PercentComplete = record.PercentComplete,
-                        Result = record.Result,
-                        State = record.State,
-                        TaskId = record.Task?.Id,
-                        TaskName = record.Task?.Name,
-                        TaskVersion = record.Task?.Version,
-                        Type = record.RecordType,
-                        Issues = record.Issues?.Any() == true ? JsonConvert.SerializeObject(record.Issues, jsonSettings) : null,
-                        EtlIngestDate = DateTime.UtcNow,
-                    }, jsonSettings));
+                    builder.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project.Id,
+                            BuildId = build.Id,
+                            BuildTimelineId = timeline.Id,
+                            RepositoryId = build.Repository.Id,
+                            RecordId = record.Id,
+                            ParentId = record.ParentId,
+                            ChangeId = timeline.ChangeId,
+                            LastChangedBy = timeline.LastChangedBy,
+                            LastChangedOn = timeline.LastChangedOn,
+                            RecordChangeId = record.ChangeId,
+                            DetailsChangeId = record.Details?.ChangeId,
+                            DetailsId = record.Details?.Id,
+                            WorkerName = record.WorkerName,
+                            RecordName = record.Name,
+                            Order = record.Order,
+                            StartTime = record.StartTime,
+                            FinishTime = record.FinishTime,
+                            WarningCount = record.WarningCount,
+                            ErrorCount = record.ErrorCount,
+                            LogId = record.Log?.Id,
+                            LogType = record.Log?.Type,
+                            PercentComplete = record.PercentComplete,
+                            Result = record.Result,
+                            State = record.State,
+                            TaskId = record.Task?.Id,
+                            TaskName = record.Task?.Name,
+                            TaskVersion = record.Task?.Version,
+                            Type = record.RecordType,
+                            Issues = record.Issues?.Any() == true
+                                ? JsonConvert.SerializeObject(record.Issues, jsonSettings)
+                                : null,
+                            EtlIngestDate = DateTime.UtcNow,
+                        }, jsonSettings));
                 }
 
                 await blobClient.UploadAsync(new BinaryData(builder.ToString()));
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing timeline blob for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
             }
             catch (Exception ex)
             {
@@ -273,6 +303,10 @@
 
                 await blobClient.UploadAsync(tempFile);
             }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for log {LogId} for build {BuildId}", log.Id, build.Id);
+            }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error processing log {LogId} for build {BuildId}", log.Id, build.Id);
@@ -286,5 +320,105 @@
                 }
             }
         }
+
+        private async Task UploadTestRunBlobsAsync(string account, Build build)
+        {
+            try
+            {
+                var continuationToken = string.Empty;
+                var buildIds = new[] { build.Id };
+                var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
+                var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
+
+                do
+                {
+                    var page = await testResultsClient.QueryTestRunsAsync2(
+                        build.Project.Id,
+                        minLastUpdatedDate,
+                        maxLastUpdatedDate,
+                        continuationToken: continuationToken,
+                        buildIds: buildIds
+                    );
+
+                    foreach (var testRun in page)
+                    {
+                        await UploadTestRunBlobAsync(account, build, testRun);
+                    }
+
+                    continuationToken = page.ContinuationToken;
+                } while (!string.IsNullOrEmpty(continuationToken));
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test runs for build {BuildId}", build.Id);
+                throw;
+            }
+        }
+
+        private async Task UploadTestRunBlobAsync(string account, Build build, TestRun testRun)
+        {
+            try
+            {
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    this.logger.LogInformation("Skipping existing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                    return;
+                }
+
+                var stats = testRun.RunStatistics.ToDictionary(x => x.Outcome, x => x.Count);
+
+                var content = JsonConvert.SerializeObject(new
+                {
+                    OrganizationName = account,
+                    ProjectId = build.Project.Id,
+                    BuildId = build.Id,
+                    BuildDefinitionId = build.Definition.Id,
+                    TestRunId = testRun.Id,
+                    Title = testRun.Name,
+                    StartedDate = testRun.StartedDate,
+                    CompletedDate = testRun.CompletedDate,
+                    ResultDurationSeconds = 0,
+                    RunDurationSeconds = (int)testRun.CompletedDate.Subtract(testRun.StartedDate).TotalSeconds,
+                    BranchName = build.SourceBranch,
+                    HasDetail = default(bool?),
+                    IsAutomated = testRun.IsAutomated,
+                    ResultAbortedCount = stats.TryGetValue("Aborted", out var value) ? value : 0,
+                    ResultBlockedCount = stats.TryGetValue("Blocked", out value) ? value : 0,
+                    ResultCount = testRun.TotalTests,
+                    ResultErrorCount = stats.TryGetValue("Error", out value) ? value : 0,
+                    ResultFailCount = stats.TryGetValue("Failed", out value) ? value : 0,
+                    ResultInconclusiveCount = stats.TryGetValue("Inconclusive", out value) ? value : 0,
+                    ResultNoneCount = stats.TryGetValue("None", out value) ? value : 0,
+                    ResultNotApplicableCount = stats.TryGetValue("NotApplicable", out value) ? value : 0,
+                    ResultNotExecutedCount = stats.TryGetValue("NotExecuted", out value) ? value : 0,
+                    ResultNotImpactedCount = stats.TryGetValue("NotImpacted", out value) ? value : 0,
+                    ResultPassCount = stats.TryGetValue("Passed", out value) ? value : 0,
+                    ResultTimeoutCount = stats.TryGetValue("Timeout", out value) ? value : 0,
+                    ResultWarningCount = stats.TryGetValue("Warning", out value) ? value : 0,
+                    TestRunType = testRun.IsAutomated ? "Automated" : "Manual",
+                    Workflow = !string.IsNullOrEmpty(testRun.Build?.Id) || testRun.BuildConfiguration != null ? "Build"
+                        : testRun.Release?.Id > 0 ? "Release"
+                        : "",
+                    OrganizationId = default(string),
+                    Data = default(string),
+                    EtlIngestDate = DateTime.UtcNow,
+                }, jsonSettings);
+
+                await blobClient.UploadAsync(new BinaryData(content));
+            }
+            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
+            {
+                this.logger.LogInformation("Ignoring exception from existing blob for test run {RunId} for build {BuildId}", testRun.Id, build.Id);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                throw;
+            }
+        }
+
     }
 }

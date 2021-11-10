@@ -20,6 +20,10 @@ find_docstring_return_type = "(?<!:):rtype\\s?:\\s+([^:\n]+)(?!:)"
 # Regex to parse type hints
 find_type_hint_ret_type = "(?<!#)\\s->\\s+([^\n:]*)"
 
+# New types
+
+line_tag_regex = re.compile(r"^\s*:([^:]+):(.*)")
+
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 
 docstring_type_keywords = ["type", "vartype", "paramtype"]
@@ -42,13 +46,14 @@ class DocstringParser:
         self._parse()
 
 
-    def _process_arg_tuple(self, tag, text) -> Tuple[ArgType, bool]:
+    def _process_arg_tuple(self, tag, line1, line2):
         # When two items are found, it is either the name
         # or the type. Example:
         # :param name: The name of the thing.
         # :type name: str
-        # Returns a tuple with the arg and a boolean indicating
-        # whether the arg is partial (missing type info) or not.
+        #
+        # This method has an inherent limitation that type info
+        # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
             arg = ArgType(name=label, argtype=None)
@@ -56,13 +61,20 @@ class DocstringParser:
             return (arg, True)
         elif keyword in docstring_type_keywords:
             arg = self._arg_for_type(label, keyword)
-            if text:
-                self._update_argtype(arg, text)
-                return (arg, False)
+            # If there's only useful text in the current or next line, we must
+            # assume that line contains the type info.
+            if line1 and not line2:
+                arg.argtype = line1
+            elif line2 and not line1:
+                arg.argtype = line2
+            elif line_tag_regex.match(line2):
+                # if line2 can be parsed into a tag, it can't 
+                # have extra type info for line1.
+                arg.argtype = line1
             else:
-                # if the text is empty string, then we need to examine the
-                # next line for type info
-                return (arg, True)
+                # TODO: When this assumption breaks down, you will need to revist...
+                # Assume both lines contain type info and concatenate
+                arg.argtype = " ".join([line1, line2])
 
 
     def _arg_for_type(self, name, keyword) -> ArgType:
@@ -75,10 +87,6 @@ class DocstringParser:
         else:
             logging.error(f"Unexpected keyword {keyword}.")
             return None
-
-
-    def _update_argtype(self, arg, text) -> ArgType:
-        arg.argtype = text
 
 
     def _process_arg_triple(self, tag):
@@ -107,25 +115,24 @@ class DocstringParser:
             logging.error("Unable to parse empty docstring.")
             return
 
-        line_regex = re.compile(r"^\s*:([^:]+):(.*)")
+        lines = [x.replace("\n", "").strip() for x in self.docstring.splitlines()]
+        for line_no, line in enumerate(lines):
 
-        for line in [x.replace("\n", "").strip() for x in self.docstring.splitlines()]:
+            match = line_tag_regex.match(line)
+            if not match:
+                continue
 
-            # certain args require parsing multiple lines and tags
-            partial_arg = None
-
-            match = line_regex.match(line)
-            if match:     
-                (tag, remainder) = match.groups()
-                split_tag = tag.split()
-                if len(split_tag) == 3:
-                    self._process_arg_triple(split_tag)
-                elif len(split_tag) == 2:
-                    (arg, is_partial) = self._process_arg_tuple(split_tag, remainder.strip())
-                    partial_arg = arg if is_partial else None
-            elif partial_arg:
-                self._update_argtype(partial_arg, line)
-                partial_arg = None
+            (tag, line1) = match.groups()
+            split_tag = tag.split()
+            if len(split_tag) == 3:
+                self._process_arg_triple(split_tag)
+            elif len(split_tag) == 2:
+                # retrieve next line, if available
+                try:
+                    line2 = lines[line_no + 1].strip()
+                except IndexError:
+                    line2 = None
+                self._process_arg_tuple(split_tag, line1.strip(), line2)
 
 
     def type_for(self, name):

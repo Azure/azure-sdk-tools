@@ -170,70 +170,38 @@ class TestNewDocStringParser:
         })
 
 
-# class TestDocStringParser:
+class TestDocStringParser:
 
-#     def _test_return_type(self, docstring, expected):
-#         docstring_parser = DocstringParser(docstring)
-#         assert expected == docstring_parser.find_return_type()
+    def _test_return_type(self, docstring, expected):
+        docstring_parser = DocstringParser(docstring)
+        assert expected == docstring_parser.find_return_type()
 
-#     def _test_variable_type(self, docstring, varname, expected):
-#         docstring_parser = DocstringParser(docstring)
-#         assert expected == docstring_parser.find_type("(type|keywordtype|paramtype|vartype)", varname)
-
-#     def _test_find_args(self, docstring, expected_args, is_keyword = False):
-#         parser = DocstringParser(docstring)
-#         expected = {}
-#         for arg in expected_args:
-#             expected[arg.argname] = arg
-#         for arg in parser.find_args('keyword' if is_keyword else 'param'):
-#             assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
+    def _test_find_args(self, docstring, expected_args, is_keyword = False):
+        parser = DocstringParser(docstring)
+        expected = {}
+        for arg in expected_args:
+            expected[arg.argname] = arg
+        for arg in parser.find_args('keyword' if is_keyword else 'param'):
+            assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
             
-#     def test_return_builtin_return_type(self):
-#         self._test_return_type(docstring_standard_return_type, "str")
+    def test_return_builtin_return_type(self):
+        self._test_return_type(docstring_standard_return_type, "str")
 
-#     def test_return_union_return_type(self):
-#         self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
+    def test_return_union_return_type(self):
+        self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
     
-#     def test_return_union_return_type_followed_by_irrelevant_text(self):
-#         self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
+    def test_return_union_return_type_followed_by_irrelevant_text(self):
+        self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
 
-#     def test_param_multi_line_type_followed_by_irrelevant_text(self):
-#         self._test_variable_type(
-#             docstring_param_multi_line_type_followed_by_irrelevant_text,
-#             "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"
-#         )
+    def test_return_union_lower_case_return_type(self):
+        self._test_return_type(docstring_union_return_type3, "union[str, int]")
 
-#     def test_return_union_lower_case_return_type(self):
-#         self._test_return_type(docstring_union_return_type3, "union[str, int]")
+    def test_multi_return_type(self):
+        self._test_return_type(docstring_multi_ret_type, "str or ~azure.test.testclass or None")
 
-#     def test_multi_return_type(self):
-#         self._test_return_type(docstring_multi_ret_type, "str or ~azure.test.testclass or None")
+    def test_dict_return_type(self):
+        self._test_return_type(docstring_dict_ret_type, "dict[str, int]")
 
-#     def test_dict_return_type(self):
-#         self._test_return_type(docstring_dict_ret_type, "dict[str, int]")
-
-#     def test_param_type(self):
-#         self._test_variable_type(docstring_param_type, "val", "str")
-
-#     def test_param_type_private(self):
-#         self._test_variable_type(docstring_param_type_private, "client", "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase")
-
-#     def test_params(self):
-#         args = [ArgType("name", "str"), ArgType("val", "str")]
-#         self._test_find_args(docstring_param_type, args)
-    
-#     def test_param_optional_type(self):
-#         self._test_variable_type(docstring_param_type_split, "pipe_id", "Union[str, int]")
-
-#     def test_param_or_type(self):
-#         self._test_variable_type(docstring_param_type_split, "data", "str or ~azure.dummy.datastream")
-#         self._test_variable_type(docstring_param_type_split, "pipeline", None)
-
-#     def test_type_typing_optional(self):
-#         self._test_variable_type(docstring_param_typing_optional, "group", "typing.Optional[str]")
-
-#     def test_nested_union_type(self):
-#         self._test_variable_type(docstring_param_nested_union, "dummyarg", "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]")
-
-#     def test_multi_text_analytics_type(self):
-#         self._test_variable_type(docstring_multi_complex_type, "documents", "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]")
+    def test_params(self):
+        args = [ArgType("name", "str"), ArgType("val", "str")]
+        self._test_find_args(docstring_param_type, args)

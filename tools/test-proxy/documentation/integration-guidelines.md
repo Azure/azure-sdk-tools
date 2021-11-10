@@ -49,7 +49,7 @@ Doing so allows you to unit test your language's interactions with the test-prox
 
 * [x] You **should** take advantage of the `variables` API to store and retrieve non-secret "random" elements of your tests.
 
-* [x] You **should** code in a `bypass proxy` test mode into your test framework.
+* [x] You **should** code in a `bypass proxy` test mode into your test framework. During `CI`, the environment variable `PROXY_MANUAL_START` will be set to `true`. This gives you an easy out for any language-specific auto-start of the test-proxy.
 
 When running your tests, there should be a fallback methodology that doesn't utilize the proxy at all in `record` mode. While the claim is that the test-proxy should not negatively affect your requests, it is also reality to admit the fact that bugs may have been overlooked. Ensuring this mode is available will allow you to easily rule out the test-proxy shenanigans when investigating test failures.
 

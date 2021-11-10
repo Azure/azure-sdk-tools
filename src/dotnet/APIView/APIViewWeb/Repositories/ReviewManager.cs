@@ -146,13 +146,12 @@ namespace APIViewWeb.Respositories
                         // file.Name property has been repurposed to store package name and version string
                         // This is causing issue when updating review using latest parser since it expects Name field as file name
                         // We have added a new property FileName which is only set for new reviews
-                        // All older reviews needs to be handled by checking Name field
-                        // If name field has no extension and File Name is Emtpy then use review.Name
-                        var fileName = file.FileName ?? (Path.HasExtension(file.Name) ? file.Name : review.Name);
+                        // All older reviews needs to be handled by checking review name field
+                        var fileName = file.FileName ?? (Path.HasExtension(review.Name) ? review.Name : file.Name);
                         var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, review.RunAnalysis);
                         await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
-                        InitializeFromCodeFile(file, codeFile);
-                        file.FileName = fileName;
+                        // update only version string
+                        file.VersionString = codeFile.VersionString;
                     }
                     catch (Exception ex) {
                         _telemetryClient.TrackTrace("Failed to update review " + review.ReviewId);

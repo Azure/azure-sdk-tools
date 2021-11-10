@@ -31,7 +31,7 @@ pr:
       - tools/mock-service-host
 
 variables:
-  NodeVersion: '13.x'
+  NodeVersion: '14.x'
   VAR_ARIFACT_NAME: "drop"
   VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
   NugetSecurityAnalysisWarningLevel: 'none'
@@ -53,7 +53,7 @@ stages:
         steps:
         - task: NodeTool@0
           inputs:
-            versionSpec: '13.x'
+            versionSpec: '$(NodeVersion)'
           displayName: 'Install Node.js'
 
         - script: |

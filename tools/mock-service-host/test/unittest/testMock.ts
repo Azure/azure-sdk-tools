@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as assert from 'assert'
+import Mocker from '../../src/mid/oav/mocker'
 import SwaggerMocker from '../../src/mid/oav/swaggerMocker'
 
 describe('isManagementUrlLevel() :', () => {
@@ -40,5 +41,20 @@ describe('isManagementUrlLevel() :', () => {
                 anytype: 'anyValue'
             })
         )
+    })
+})
+
+describe('Mocker: ', () => {
+    it('mock base64url', async () => {
+        const mocker = new Mocker()
+        const result = mocker.mock(
+            {
+                type: 'string',
+                format: 'base64url'
+            },
+            'fakeName'
+        )
+
+        assert.strictEqual(Buffer.from(result, 'base64url').toString('base64url'), result)
     })
 })

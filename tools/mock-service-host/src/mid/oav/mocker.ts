@@ -62,9 +62,12 @@ export default class Mocker {
         const length = this.getRandomInt(minLength, maxLength)
 
         const ret = 'a'.repeat(length)
-        if (paramSpec.format === 'byte') {
+        if (['byte', 'base64'].indexOf(paramSpec.format) >= 0) {
             const buff = Buffer.from(ret, 'utf-8')
             return buff.toString('base64')
+        } else if (paramSpec.format === 'base64url') {
+            const buff = Buffer.from(ret, 'utf-8')
+            return buff.toString('base64url')
         }
         return ret
     }

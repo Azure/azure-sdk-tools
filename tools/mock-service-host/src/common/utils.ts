@@ -40,7 +40,7 @@ export function replacePropertyValue(
         if (key === property && where(val)) {
             newObject[key] = newVal
         } else if (typeof val === 'object') {
-            newObject[key] = replacePropertyValue(property, newVal, val)
+            newObject[key] = replacePropertyValue(property, newVal, val, where)
         }
     })
 

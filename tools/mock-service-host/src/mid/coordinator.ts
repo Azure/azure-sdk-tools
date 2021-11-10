@@ -130,6 +130,7 @@ export class Coordinator {
             directory: path.resolve(this.config.specRetrievalLocalRelativePath),
             isPathCaseSensitive: false
         }
+        logger.info(`validator is initializing with options ${JSON.stringify(options, null, 4)}`)
         this.liveValidator = new oav.LiveValidator(options)
         await this.liveValidator.initialize()
         this.statusValue = ValidatorStatus.Initialized
@@ -292,7 +293,7 @@ export class Coordinator {
             //set name
             const path = getPath(getPureUrl(req.url))
             ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                return typeof v === 'string'
+                return typeof v === 'string' && v.match(/^a+$/) !== null
             })
 
             res.set(code, ret)

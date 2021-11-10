@@ -78,8 +78,7 @@ class DocstringParser:
 
 
     def _update_argtype(self, arg, text) -> ArgType:
-        # Need to parse type info
-        pass
+        arg.argtype = text
 
 
     def _process_arg_triple(self, tag):
@@ -122,11 +121,20 @@ class DocstringParser:
                 if len(split_tag) == 3:
                     self._process_arg_triple(split_tag)
                 elif len(split_tag) == 2:
-                    (arg, is_partial) = self._process_arg_tuple(split_tag, remainder)
+                    (arg, is_partial) = self._process_arg_tuple(split_tag, remainder.strip())
                     partial_arg = arg if is_partial else None
             elif partial_arg:
                 self._update_argtype(partial_arg, line)
                 partial_arg = None
+
+
+    def type_for(self, name):
+        arg = (
+            self.ivars.get(name, None) or
+            self.pos_args.get(name, None) or
+            self.kw_args.get(name, None)
+        )
+        return arg.argtype if arg else arg
 
 
     def find_type(self, type_name="type", var_name=""):

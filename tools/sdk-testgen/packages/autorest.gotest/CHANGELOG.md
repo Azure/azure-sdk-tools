@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Tue, 09 Nov 2021 09:17:24 GMT and should not be manually modified.
+This log was last generated on Tue, 09 Nov 2021 10:20:51 GMT and should not be manually modified.
+
+## 1.1.1
+Tue, 09 Nov 2021 10:20:51 GMT
+
+### Patches
+
+- Remove `go mod tidy` process.
 
 ## 1.1.0
 Tue, 09 Nov 2021 09:17:24 GMT

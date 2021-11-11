@@ -173,10 +173,6 @@ class TestDocstringParser:
             "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
         })
 
-    # def test_docstring_intentional_fail(self):
-    #     # TODO: Verify this does (or at least should) fail the CI.
-    #     assert False
-
     def test_return_builtin_return_type(self):
         self._test_return_type(docstring_standard_return_type, "str")
 

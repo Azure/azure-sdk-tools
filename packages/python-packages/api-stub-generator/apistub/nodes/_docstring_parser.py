@@ -87,8 +87,10 @@ class DocstringParser:
         elif line2 and not line1:
             self.ret_type = line2
         else:
-            # TODO: When this assumption breaks down, you will need to revist...
-            # Assume both lines contain type info and concatenate
+            # FIXME: How to distinguish between the case where
+            # the type info is fully contained on one line and followed
+            # by an irrelevant line from the case where the type info
+            # is split across two lines.
             self.ret_type = " ".join([line1, line2])
 
     def _update_arg(self, arg, keyword):

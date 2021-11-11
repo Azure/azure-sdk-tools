@@ -169,6 +169,10 @@ class TestNewDocStringParser:
             "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
         })
 
+    def test_docstring_intentional_fail(self):
+        # TODO: Verify this does (or at least should) fail the CI.
+        assert False
+
 
 class TestDocStringParser:
 

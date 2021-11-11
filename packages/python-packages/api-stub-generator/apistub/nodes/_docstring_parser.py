@@ -110,7 +110,7 @@ class DocstringParser:
 
 
     def _parse(self):
-        """Parses a docstring without regex."""
+        """Parses a docstring into an object."""
         if not self.docstring:
             logging.error("Unable to parse empty docstring.")
             return
@@ -143,6 +143,8 @@ class DocstringParser:
         )
         return arg.argtype if arg else arg
 
+
+# =========================== OLD STUFF ========================
 
     def find_type(self, type_name="type", var_name=""):
         # This method will find argument type or return type from docstring

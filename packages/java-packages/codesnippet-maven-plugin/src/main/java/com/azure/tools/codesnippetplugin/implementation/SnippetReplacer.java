@@ -34,7 +34,7 @@ public final class SnippetReplacer {
     private static final Pattern SNIPPET_SRC_CALL_BEGIN = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s+src_embed%s-->", SNIPPET_ID_CAPTURE));
     private static final Pattern SNIPPET_SRC_CALL_END = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s+end%s-->", SNIPPET_ID_CAPTURE));
     private static final Pattern SNIPPET_README_CALL_BEGIN = Pattern.compile(String.format("```(\\s*)?java%s", SNIPPET_ID_CAPTURE));
-    private static final Pattern SNIPPET_README_CALL_END = Pattern.compile("```");
+    private static final Pattern SNIPPET_README_CALL_END = Pattern.compile("```\\s*");
     private static final Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
     private static final Pattern END_OF_LINE_WHITESPACES = Pattern.compile("\\s+$");
 

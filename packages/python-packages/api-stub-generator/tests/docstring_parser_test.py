@@ -118,12 +118,16 @@ docstring_param_type_private = """
 :type client: ~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase
 """
 
-class TestNewDocStringParser:
+class TestDocstringParser:
 
     def _test_variable_type(self, docstring, expected):
         parser = DocstringParser(docstring)
         for varname, expect_val in expected.items():
             assert expect_val == parser.type_for(varname)
+
+    def _test_return_type(self, docstring, expected):
+        parser = DocstringParser(docstring)
+        assert expected == parser.ret_type
 
     def test_docstring_param_type(self):
         self._test_variable_type(docstring_param_type, {
@@ -169,25 +173,10 @@ class TestNewDocStringParser:
             "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
         })
 
-    def test_docstring_intentional_fail(self):
-        # TODO: Verify this does (or at least should) fail the CI.
-        assert False
+    # def test_docstring_intentional_fail(self):
+    #     # TODO: Verify this does (or at least should) fail the CI.
+    #     assert False
 
-
-class TestDocStringParser:
-
-    def _test_return_type(self, docstring, expected):
-        docstring_parser = DocstringParser(docstring)
-        assert expected == docstring_parser.find_return_type()
-
-    def _test_find_args(self, docstring, expected_args, is_keyword = False):
-        parser = DocstringParser(docstring)
-        expected = {}
-        for arg in expected_args:
-            expected[arg.argname] = arg
-        for arg in parser.find_args('keyword' if is_keyword else 'param'):
-            assert arg.argname in expected and arg.argtype == expected[arg.argname].argtype
-            
     def test_return_builtin_return_type(self):
         self._test_return_type(docstring_standard_return_type, "str")
 
@@ -205,7 +194,3 @@ class TestDocStringParser:
 
     def test_dict_return_type(self):
         self._test_return_type(docstring_dict_ret_type, "dict[str, int]")
-
-    def test_params(self):
-        args = [ArgType("name", "str"), ArgType("val", "str")]
-        self._test_find_args(docstring_param_type, args)

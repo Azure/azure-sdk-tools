@@ -5,6 +5,7 @@ package com.azure.tools.codesnippetplugin;
 
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
@@ -14,7 +15,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 @Mojo(name = "update-codesnippet", threadSafe = true, defaultPhase = LifecyclePhase.PROCESS_SOURCES)
 public final class UpdateCodesnippet extends SnippetBaseMojo {
     @Override
-    public void execute() throws MojoExecutionException {
+    public void execute() throws MojoExecutionException, MojoFailureException {
         executeCodesnippet(ExecutionMode.UPDATE);
     }
 }

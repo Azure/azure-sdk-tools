@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.tools.codesnippetplugin.implementation;
 
 import org.junit.Test;
@@ -31,7 +34,7 @@ public class SnippetReplacerTests {
     public void testSrcParse() throws Exception {
         Path testFile = getPathToResource("basic_src_snippet_parse.txt");
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
-            new ArrayList<>(Collections.singletonList(testFile.toAbsolutePath())));
+            Collections.singletonList(testFile.toAbsolutePath()));
 
         assertEquals(3, foundSnippets.size());
         assertEquals(3, foundSnippets.get("com.azure.data.applicationconfig.configurationclient.instantiation").size());
@@ -47,41 +50,32 @@ public class SnippetReplacerTests {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path codeForReplacement = getPathToResource("basic_src_snippet_insertion_before.txt");
         Path expectedOutCome = getPathToResource("basic_src_snippet_insertion_after.txt");
-        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
-        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
+        String expectedString = new String(Files.readAllBytes(expectedOutCome), StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
-            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, foundSnippets, "<pre>",
-            "</pre>", 1, "* ", false);
+        List<CodesnippetError> errors = SnippetReplacer.updateSourceCodeSnippets(codeForReplacement, foundSnippets, 120);
 
-        assertNotNull(opResult);
-        assertNotNull(opResult.result);
-        assertEquals(opResult.result.toString(), expectedString);
+        assertTrue(errors.isEmpty());
+        assertEquals(expectedString, new String(Files.readAllBytes(codeForReplacement), StandardCharsets.UTF_8));
     }
 
     @Test
-    public void testReadmeInsertion()
-        throws Exception {
+    public void testReadmeInsertion() throws Exception {
         /*
             Ensures html encoding, empty and populated snippets replacement
          */
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path codeForReplacement = getPathToResource("basic_readme_insertion_before.txt");
         Path expectedOutCome = getPathToResource("basic_readme_insertion_after.txt");
-        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
-        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
+        String expectedString = new String(Files.readAllBytes(expectedOutCome), StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
-            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets, "", "",
-            0, "", true);
+        List<CodesnippetError> errors = SnippetReplacer.updateReadmeCodesnippets(codeForReplacement, foundSnippets);
 
-        assertNotNull(opResult);
-        assertNotNull(opResult.result);
-        assertEquals(opResult.result.toString(), expectedString);
+        assertTrue(errors.isEmpty());
+        assertEquals(expectedString, new String(Files.readAllBytes(codeForReplacement), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -90,14 +84,12 @@ public class SnippetReplacerTests {
         Path verification = getPathToResource("readme_insertion_verification_failure.txt");
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
-            new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification,
-            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets,
-            "", "", 0, "", true);
+            Collections.singletonList(snippetSourceFile.toAbsolutePath()));
+        List<CodesnippetError> errors = SnippetReplacer.verifyReadmeCodesnippets(verification, foundSnippets);
 
-        assertNotNull(opResult.result);
-        assertEquals(1, opResult.result.size());
-        assertEquals("com.azure.core.http.rest.pagedflux.instantiation", opResult.result.get(0).snippetWithIssues);
+        assertNotNull(errors);
+        assertEquals(1, errors.size());
+        assertEquals("com.azure.core.http.rest.pagedflux.instantiation", errors.get(0).getSnippetId());
     }
 
     @Test
@@ -107,14 +99,13 @@ public class SnippetReplacerTests {
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<List<VerifyResult>> opResult = SnippetReplacer.verifySnippets(verification,
-            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, foundSnippets,
-            "<pre>", "</pre>", 1, "* ", false);
+        List<CodesnippetError> errors = SnippetReplacer.verifySourceCodeSnippets(verification, foundSnippets, 120);
 
-        assertNotNull(opResult.result);
-        assertEquals(2, opResult.result.size());
-        assertEquals("com.azure.data.applicationconfig.configurationclient.instantiation", opResult.result.get(0).snippetWithIssues);
-        assertEquals("com.azure.core.http.rest.pagedflux.instantiation", opResult.result.get(1).snippetWithIssues);
+        assertNotNull(errors);
+        assertEquals(2, errors.size());
+        assertEquals("com.azure.data.applicationconfig.configurationclient.instantiation",
+            errors.get(0).getSnippetId());
+        assertEquals("com.azure.core.http.rest.pagedflux.instantiation", errors.get(1).getSnippetId());
     }
 
     @Test
@@ -161,12 +152,10 @@ public class SnippetReplacerTests {
 
         Path codeForReplacement = getPathToResource("basic_src_snippet_insertion_before.txt");
 
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
-            SnippetReplacer.SNIPPET_SRC_CALL_BEGIN, SnippetReplacer.SNIPPET_SRC_CALL_END, emptyMap, "<pre>", "</pre>",
-            1, "* ", false);
+        List<CodesnippetError> errors = SnippetReplacer.updateSourceCodeSnippets(codeForReplacement, emptyMap, 120);
 
-        assertNotNull(opResult);
-        assertEquals(3, opResult.errorList.size());
+        assertNotNull(errors);
+        assertEquals(3, errors.size());
     }
 
     /**
@@ -177,15 +166,13 @@ public class SnippetReplacerTests {
         Path snippetSourceFile = getPathToResource("basic_src_snippet_parse.txt");
         Path codeForReplacement = getPathToResource("readme_code_fence_no_snippet_before.txt");
         Path expectedOutCome = getPathToResource("readme_code_fence_no_snippet_after.txt");
-        byte[] rawBytes = Files.readAllBytes(expectedOutCome);
-        String expectedString = new String(rawBytes, StandardCharsets.UTF_8);
+        String expectedString = new String(Files.readAllBytes(expectedOutCome), StandardCharsets.UTF_8);
 
         Map<String, List<String>> foundSnippets = SnippetReplacer.getAllSnippets(
             new ArrayList<>(Collections.singletonList(snippetSourceFile.toAbsolutePath())));
-        SnippetOperationResult<StringBuilder> opResult = SnippetReplacer.updateSnippets(codeForReplacement,
-            SnippetReplacer.SNIPPET_README_CALL_BEGIN, SnippetReplacer.SNIPPET_README_CALL_END, foundSnippets, "", "",
-            0, "", true);
+        List<CodesnippetError> errors = SnippetReplacer.updateReadmeCodesnippets(codeForReplacement, foundSnippets);
 
-        assertEquals(opResult.result.toString(), expectedString);
+        assertTrue(errors.isEmpty());
+        assertEquals(expectedString, new String(Files.readAllBytes(codeForReplacement), StandardCharsets.UTF_8));
     }
 }

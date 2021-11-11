@@ -29,7 +29,7 @@ steps:
 
   # nohup does NOT continue beyond the current session if you use it within powershell
   - bash: |
-      nohup $(Build.BinariesDirectory)/test-proxy/test-proxy >$(Build.SourcesDirectory)/test-proxy.log 2>$(Build.SourcesDirectory)/test-proxy.err &
+      nohup $(Build.BinariesDirectory)/test-proxy/test-proxy > $(Build.SourcesDirectory)/test-proxy.log 2>&1 &
     displayName: "Run the testproxy - linux/mac"
     condition: and(succeeded(), ne(variables['Agent.OS'],'Windows_NT'))
     workingDirectory: "${{ parameters.rootFolder }}"

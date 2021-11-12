@@ -1,5 +1,7 @@
 param (
-    [string]$env = 'test'
+    [string]$Environment = 'test',
+    [string]$Namespace = 'stress-infra',
+    [switch]$Development = $false
 )
 
 $STATIC_TEST_SECRETS_NAME="public"
@@ -79,15 +81,15 @@ function UpdateOutputs([hashtable]$params) {
     $valuesFile = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
     $values = ConvertFrom-Yaml -Ordered (Get-Content -Raw $valuesFile)
 
-    $values.appInsightsKeySecretName.$env = $outputs.APPINSIGHTS_KEY_SECRET_NAME.value
-    $values.debugStorageKeySecretName.$env = $outputs.DEBUG_STORAGE_KEY_SECRET_NAME.value
-    $values.debugStorageAccountSecretName.$env = $outputs.DEBUG_STORAGE_ACCOUNT_SECRET_NAME.value
-    $values.debugFileShareName.$env = $outputs.DEBUG_FILESHARE_NAME.value
-    $values.staticTestSecretsKeyvaultName.$env = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
-    $values.clusterTestSecretsKeyvaultName.$env = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
-    $values.secretProviderIdentity.$env = $outputs.SECRET_PROVIDER_CLIENT_ID.value
-    $values.subscription.$env = $STATIC_TEST_SECRETS_NAME
-    $values.tenantId.$env = $outputs.TENANT_ID.value
+    $values.appInsightsKeySecretName.$Environment = $outputs.APPINSIGHTS_KEY_SECRET_NAME.value
+    $values.debugStorageKeySecretName.$Environment = $outputs.DEBUG_STORAGE_KEY_SECRET_NAME.value
+    $values.debugStorageAccountSecretName.$Environment = $outputs.DEBUG_STORAGE_ACCOUNT_SECRET_NAME.value
+    $values.debugFileShareName.$Environment = $outputs.DEBUG_FILESHARE_NAME.value
+    $values.staticTestSecretsKeyvaultName.$Environment = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
+    $values.clusterTestSecretsKeyvaultName.$Environment = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
+    $values.secretProviderIdentity.$Environment = $outputs.SECRET_PROVIDER_CLIENT_ID.value
+    $values.subscription.$Environment = $STATIC_TEST_SECRETS_NAME
+    $values.tenantId.$Environment = $outputs.TENANT_ID.value
 
     $values | ConvertTo-Yaml | Out-File $valuesFile
 
@@ -103,7 +105,7 @@ function DeployClusterResources([hashtable]$params) {
         -n "stress-deploy-$($params.groupSuffix)" `
         -l $params.clusterLocation `
         -f $PSScriptRoot/azure/main.bicep `
-        --parameters $PSScriptRoot/azure/parameters/$env.json
+        --parameters $PSScriptRoot/azure/parameters/$Environment.json
 
     UpdateOutputs $params
 
@@ -113,21 +115,29 @@ function DeployClusterResources([hashtable]$params) {
         -g rg-stress-cluster-$($params.groupSuffix) `
         --overwrite `
         --subscription $params.subscriptionId
+}
 
+function DeployHelmResources() {
     Write-Host "Installing stress infrastructure charts"
     RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
     RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
-    RunOrExitOnFailure kubectl create namespace stress-infra --dry-run=client -o yaml | kubectl apply -f -
+    RunOrExitOnFailure kubectl create namespace $Namespace --dry-run=client -o yaml | kubectl apply -f -
+
+    # Skip installing chaos mesh charts in development mode (i.e. when testing stress watcher only).
+    $deployChaosMesh = "$(!$Development)".ToLower()
+
     RunOrExitOnFailure helm upgrade --install stress-infra `
-        -n stress-infra `
+        -n $Namespace `
+        --set stress-test-addons.env=$Environment `
+        --set deploy.chaosmesh=$deployChaosMesh `
         $PSScriptRoot/kubernetes/stress-infrastructure
 }
 
 function LoadEnvParams() {
     try {
-        $params = (Get-Content $PSScriptRoot/azure/parameters/$env.json | ConvertFrom-Json -AsHashtable).parameters
+        $params = (Get-Content $PSScriptRoot/azure/parameters/$Environment.json | ConvertFrom-Json -AsHashtable).parameters
     } catch {
-        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$env.json. Check that any lines marked '// add me' are filled in and that the file exists."
+        Write-Error "Error loading parameters file at $PSScriptRoot/azure/parameters/$Environment.json. Check that any lines marked '// add me' are filled in and that the file exists."
         exit 1
     }
 
@@ -143,10 +153,12 @@ function main() {
     # . (Join-Path $PSScriptRoot "../Helpers" PSModule-Helpers.ps1)
     # Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
 
-    $params = LoadEnvParams
-
-    DeployStaticResources $params
-    DeployClusterResources $params
+    if (!$Development) {
+        $params = LoadEnvParams
+        DeployStaticResources $params
+        DeployClusterResources $params
+    }
+    DeployHelmResources
 }
 
 # Don't call functions when the script is being dot sourced

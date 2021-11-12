@@ -58,6 +58,14 @@
       reviewsTable.draw(false);
     });
 
+    // Event on every draw of the table
+    reviewsTable.on('draw', function(e, settings){
+      if (settings.rowGroup.c.enable === false)
+      {
+        $('#reviews-table tbody tr').css("display","");
+      }
+    });
+
     // Group Rows by Package
     groupbyPackage.on("click", function() {
       collapsedGroups = {};
@@ -67,7 +75,6 @@
     // Disable Row Grouping
     disableRowgroup.on("click", function() {
       reviewsTable.rowGroup().disable().draw();
-      $('#reviews-table tr').css("display", "");
     });
 
     // Search

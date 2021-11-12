@@ -233,13 +233,13 @@ namespace Stress.Watcher
         {
             if (!ShouldDeleteResources(pod))
             {
-                Logger.Debug($"Skipping pod deletion for pod {pod.Name()}.");
+                Logger.Debug($"Skipping resource deletion.");
                 return;
             }
 
             var rgName = GetResourceGroupName(pod);
 
-            if (rgName == "")
+            if (string.IsNullOrEmpty(rgName))
             {
                 return;
             }
@@ -250,13 +250,12 @@ namespace Stress.Watcher
             try {
                 resourceGroup = await subscription.GetResourceGroups().GetAsync(rgName);
             } catch (Exception e){
-                Logger.Error($"Failed to get resource group {rgName} using subsription id {subscription.Id}");
-                Logger.Error($"Throwing exception: {e}");
-                return;
+                Logger.Error($"Failed to get resource group '{rgName}' using subsription id '{subscription.Id}'");
+                throw e;
             }
 
             await resourceGroup.DeleteAsync();
-            Logger.Information($"Deleting Resources {rgName}");
+            Logger.Information($"Deleted resources {rgName}");
         }
 
         public bool ShouldDeleteResources(V1Pod pod)
@@ -282,8 +281,8 @@ namespace Stress.Watcher
 
         public string GetResourceGroupName(V1Pod pod)
         {
-            var deployContainers = pod.Spec.InitContainers.Where(c => c.Name == "init-azure-deployer");
-            var envVars = deployContainers.First().Env;
+            var deployContainers = pod.Spec.InitContainers?.Where(c => c.Name == "init-azure-deployer");
+            var envVars = deployContainers?.First().Env;
             if (envVars == null) {
                 return "";
             }
@@ -291,7 +290,7 @@ namespace Stress.Watcher
             var rgName = envVars.Where(e => e.Name == "RESOURCE_GROUP_NAME").Select(e => e.Value);
             if (rgName.Count() == 0)
             {
-                Logger.Error("Cannot find the env variable RESOURCE_GROUP_NAME on the init container init-azure-deployer resource group name.");
+                Logger.Error("Cannot find the env variable 'RESOURCE_GROUP_NAME' on the init container 'init-azure-deployer' spec.");
                 return "";
             }
             if (rgName.First() == null) {

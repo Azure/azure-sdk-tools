@@ -22,7 +22,8 @@ Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
 & /common/TestResources/New-TestResources.ps1 `
-    -BaseName $env:BASE_NAME `
+    -BaseName $env:RESOURCE_GROUP_NAME `
+    -ResourceGroupName $env:RESOURCE_GROUP_NAME `
     -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
     -TenantId $secrets.AZURE_TENANT_ID `
     -ProvisionerApplicationId $secrets.AZURE_CLIENT_ID `

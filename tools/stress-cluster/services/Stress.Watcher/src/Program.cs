@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
 using CommandLine;
+using Azure.Identity;
+using Azure.ResourceManager;
+using dotenv.net;
 
 namespace Stress.Watcher
 {
@@ -42,7 +45,14 @@ namespace Stress.Watcher
             var client = new Kubernetes(config);
             var chaosClient = new GenericChaosClient(config);
 
-            var podEventHandler = new PodEventHandler(client, chaosClient, options.Namespace);
+            DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] {"/mnt/outputs/.env"}));
+            var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+            // Default to 'Azure SDK Developer Playground' subscription when testing locally outside of the stress cluster. 
+            subscriptionId = subscriptionId ?? "faa080af-c1d8-40ad-9cce-e1a450ca5b57";
+
+            ArmClient armClient = new ArmClient(subscriptionId, new DefaultAzureCredential());
+
+            var podEventHandler = new PodEventHandler(client, chaosClient, armClient, options.Namespace);
             
             var cts = new CancellationTokenSource();
             await podEventHandler.Watch(cts.Token);

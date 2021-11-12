@@ -32,11 +32,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");
 
-            // Install dev reqs
-            await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);
-
             // Install test tools
             await Util.RunAsync(pip, $"install -r {WorkingDirectory}/eng/test_tools.txt", projectDirectory, outputBuilder, errorBuilder);
+
+            // Install dev reqs
+            await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);
 
             // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)

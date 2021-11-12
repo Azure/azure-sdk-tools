@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var pip = Path.Combine(env, _envBin, "pip");
 
             // Install test tools
-            await Util.RunAsync(pip, $"install -r {WorkingDirectory}/eng/test_tools.txt", projectDirectory, outputBuilder, errorBuilder);
+            // await Util.RunAsync(pip, $"install -r {WorkingDirectory}/eng/test_tools.txt", projectDirectory, outputBuilder, errorBuilder);
 
             // Install dev reqs
             await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);

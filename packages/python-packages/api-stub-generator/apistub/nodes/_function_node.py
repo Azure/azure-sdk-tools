@@ -1,6 +1,6 @@
 import logging
 import inspect
-from typing import OrderedDict
+from collections import OrderedDict
 import astroid
 import operator
 import re

@@ -602,11 +602,17 @@ mark {
     border: 1px solid #dee2e6;
 }
 
+#reviews-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .bottom-right-floating {
     position:fixed;
     z-index: 10;
-    bottom:100px;
-    right:100px;
+    bottom:130px;
+    right:70px;
 }
 
 .btn-circle {

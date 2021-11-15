@@ -9,8 +9,7 @@
     - '-NoProfile'
     - '-c'
     - '/scripts/stress-test/deploy-stress-test-resources.ps1'
-    - '-TemplateParametersPath'
-    - '/mnt/testresources/parameters.json'
+
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env

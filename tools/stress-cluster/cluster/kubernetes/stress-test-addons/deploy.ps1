@@ -15,7 +15,6 @@ function RunOrExitOnFailure()
     }
 }
 $ErrorActionPreference = 'Stop'
-Set-PSDebug -trace 1
 $subscriptionId = "2cd617ea-1866-46b1-90e3-fffb087ebf9b"
 $env:AZURE_STORAGE_ACCOUNT="stresstestcharts"
 $env:AZURE_STORAGE_KEY=$(RunOrExitOnFailure az storage account keys list --subscription $subscriptionId --account-name $env:AZURE_STORAGE_ACCOUNT -o tsv --query '[0].value')

@@ -190,7 +190,7 @@ export class ExampleValue {
             instance.properties = {};
             for (const [key, value] of Object.entries(rawValue)) {
                 if (!Helper.pathIsIncluded(usedProperties, [key])) {
-                    instance.properties[key] = this.createInstance(value, usedProperties, (schema as DictionarySchema).elementType, undefined);
+                    instance.properties[key] = this.createInstance(value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined);
                     usedProperties.add([key]);
                 }
             }

@@ -45,8 +45,8 @@ trigger:
     - eng/containers/
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
-    - tools/stress-cluster/services/Stress.Watcher/Dockerfile
-    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile
+    - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
 
 pr:
   branches:
@@ -57,8 +57,8 @@ pr:
     - eng/containers/
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
-    - tools/stress-cluster/services/Stress.Watcher/Dockerfile
-    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile
+    - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
 
 variables:
   - name: containerRegistry

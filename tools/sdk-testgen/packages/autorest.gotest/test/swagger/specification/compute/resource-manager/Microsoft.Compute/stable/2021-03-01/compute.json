@@ -7897,7 +7897,7 @@
     },
     "AvailabilitySet": {
       "additionalProperties": {
-        "type": "object"
+        "type": "string"
       },
       "properties": {
         "properties": {

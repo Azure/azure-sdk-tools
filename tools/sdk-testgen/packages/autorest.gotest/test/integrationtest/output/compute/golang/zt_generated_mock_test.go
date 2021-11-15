@@ -50,18 +50,8 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myAvailabilitySet",
 		golang.AvailabilitySet{
-			AdditionalProperties: map[string]map[string]interface{}{
-				"anyProperty": map[string]interface{}{
-					"0": "f",
-					"1": "a",
-					"2": "k",
-					"3": "e",
-					"4": "V",
-					"5": "a",
-					"6": "l",
-					"7": "u",
-					"8": "e",
-				},
+			AdditionalProperties: map[string]*string{
+				"anyProperty": to.StringPtr("fakeValue"),
 			},
 			Resource: golang.Resource{
 				Location: to.StringPtr("westus"),
@@ -401,15 +391,15 @@ func TestDedicatedHosts_ListByHostGroup(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestSshPublicKeys_ListBySubscription(t *testing.T) {
+func TestSSHPublicKeys_ListBySubscription(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestSshPublicKeys_ListByResourceGroup(t *testing.T) {
+func TestSSHPublicKeys_ListByResourceGroup(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestSshPublicKeys_Create(t *testing.T) {
+func TestSSHPublicKeys_Create(t *testing.T) {
 	// From example Create a new SSH public key resource.
 	defer func() {
 		if r := recover(); r != nil {
@@ -437,15 +427,15 @@ func TestSshPublicKeys_Create(t *testing.T) {
 	}
 }
 
-func TestSshPublicKeys_Update(t *testing.T) {
+func TestSSHPublicKeys_Update(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestSshPublicKeys_Delete(t *testing.T) {
+func TestSSHPublicKeys_Delete(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestSshPublicKeys_Get(t *testing.T) {
+func TestSSHPublicKeys_Get(t *testing.T) {
 	// From example Get an ssh public key.
 	defer func() {
 		if r := recover(); r != nil {
@@ -465,7 +455,7 @@ func TestSshPublicKeys_Get(t *testing.T) {
 	}
 }
 
-func TestSshPublicKeys_GenerateKeyPair(t *testing.T) {
+func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	// From example Generate an SSH key pair.
 	defer func() {
 		if r := recover(); r != nil {
@@ -6714,7 +6704,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 	}
 }
 
-func TestResourceSkus_List(t *testing.T) {
+func TestResourceSKUs_List(t *testing.T) {
 	// From example Lists all available Resource SKUs
 	defer func() {
 		if r := recover(); r != nil {

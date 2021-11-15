@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.2.6 (Unreleased)
+Updated type parsing to properly handle cases in which type
+info wraps onto a second line.
+
 ## Version 0.2.5 (Unreleased)
 Fixed bug in which kwargs were duplicated in certain instances.
 Fix issue where non-async methods were erroneously marked async.

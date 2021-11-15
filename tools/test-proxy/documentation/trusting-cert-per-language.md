@@ -32,7 +32,7 @@ Also note that taken to trust this cert will _also apply to installing the dotne
 
 As always, [stack overflow comes through](https://stackoverflow.com/a/39358282). Unlike `go`, there is nothing specific that needs to happen in the test code itself.
 
-As a pre-req, ensure that the certificate file present [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/docker/dev_certificate/dotnet-devcert.crt) is downloaded and renamed to the `pem` file format. Normally a `.crt` file would be binary encoded in DER format, but the ASP.NET dev certs are not encoded that way when they are created, so we don't need to worry about re-encoding anything!
+As a pre-req, ensure that the certificate file present [here](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/common/testproxy/dotnet-devcert.crt) is downloaded and renamed to the `pem` file format. Normally a `.crt` file would be binary encoded in DER format, but the ASP.NET dev certs are not encoded that way when they are created, so we don't need to worry about re-encoding anything!
 
 To trust this certificate...
 

@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Tue, 09 Nov 2021 09:17:24 GMT and should not be manually modified.
+This log was last generated on Mon, 15 Nov 2021 09:39:03 GMT and should not be manually modified.
+
+## 1.0.2
+Mon, 15 Nov 2021 09:39:03 GMT
+
+### Patches
+
+- Fix `additionalProperties` problem.
 
 ## 1.0.1
 Tue, 09 Nov 2021 09:17:24 GMT

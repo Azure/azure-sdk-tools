@@ -30,6 +30,21 @@ class DocstringParser:
         self.docstring = docstring
         self._parse()
 
+    def _extract_type(self, line1, line2):
+        line1 = line1.strip()
+        if line1 == "":
+            # if the first line is blank, the type info
+            # must be on the second
+            return line2
+        if line1.endswith(",") or line1.endswith(" or"):
+            # if the first line ends with these values, the 
+            # type info wraps to the next line
+            return " ".join([line1, line2])
+        else:
+            # otherwise, the type info is fully contained on
+            # the first line
+            return line1
+
     def _process_arg_tuple(self, tag, line1, line2):
         # When two items are found, it is either the name
         # or the type. Example:
@@ -45,20 +60,7 @@ class DocstringParser:
             return (arg, True)
         elif keyword in docstring_type_keywords:
             arg = self._arg_for_type(label, keyword)
-            # If there's only useful text in the current or next line, we must
-            # assume that line contains the type info.
-            if line1 and not line2:
-                arg.argtype = line1
-            elif line2 and not line1:
-                arg.argtype = line2
-            elif line_tag_regex.match(line2):
-                # if line2 can be parsed into a tag, it can't 
-                # have extra type info for line1.
-                arg.argtype = line1
-            else:
-                # TODO: When this assumption breaks down, you will need to revist...
-                # Assume both lines contain type info and concatenate
-                arg.argtype = " ".join([line1, line2])
+            arg.argtype = self._extract_type(line1, line2)
 
     def _arg_for_type(self, name, keyword) -> ArgType:
         if keyword == "type":
@@ -80,18 +82,7 @@ class DocstringParser:
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
-        # If there's only useful text in the current or next line, we must
-        # assume that line contains the type info.
-        if line1 and not line2:
-            self.ret_type = line1
-        elif line2 and not line1:
-            self.ret_type = line2
-        else:
-            # FIXME: How to distinguish between the case where
-            # the type info is fully contained on one line and followed
-            # by an irrelevant line from the case where the type info
-            # is split across two lines.
-            self.ret_type = " ".join([line1, line2])
+        return self._extract_type(line1, line2)
 
     def _update_arg(self, arg, keyword):
         if keyword == "ivar":
@@ -131,7 +122,7 @@ class DocstringParser:
             if len(split_tag) == 2:
                 self._process_arg_tuple(split_tag, line1.strip(), line2)
             elif len(split_tag) == 1 and split_tag[0] == "rtype":
-                self._process_return_type(line1.strip(), line2)
+                self.ret_type = self._process_return_type(line1.strip(), line2)
 
     def type_for(self, name):
         arg = (

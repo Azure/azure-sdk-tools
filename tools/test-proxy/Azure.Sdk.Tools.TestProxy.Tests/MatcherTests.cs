@@ -33,7 +33,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var bodilessRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             bodilessRequest.Request.Body = new byte[] { };
-
+            bodilessRequest.Request.Headers["Content-Length"] = new string[] { "0" };
+            
             var expectedBodilessMatch = sessionForRetrieval.Session.Lookup(bodilessRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
@@ -44,6 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var differentBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             differentBodyRequest.Request.Body = TestHelpers.GenerateByteRequestBody("This is a test body :)");
+            differentBodyRequest.Request.Headers["Content-Length"] = new string[] { "15" };
 
             var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBodyRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }

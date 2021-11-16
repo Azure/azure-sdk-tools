@@ -7,6 +7,11 @@ namespace Azure.Sdk.Tools.TestProxy.Matchers
         /// <summary>
         /// This matcher adjusts the "match" operation to EXCLUDE the body when matching a request to a recording's entries.
         /// </summary>
-        public BodilessMatcher() : base(false) { }
+        public BodilessMatcher() : base(false)
+        {
+            // when we are ignoring bodies, we should also ignore any header that is directly 
+            // influenced by said body
+            ExcludeHeaders.Add("Content-Length");
+        }
     }
 }

@@ -198,7 +198,7 @@ class FunctionNode(NodeEntityBase):
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
             parsed_docstring = DocstringParser(docstring)
-            parsed_docstring.parse()
+
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
                 logging.debug(

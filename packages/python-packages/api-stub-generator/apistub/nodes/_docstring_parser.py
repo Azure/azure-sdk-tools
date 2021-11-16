@@ -19,7 +19,9 @@ docstring_return_keywords = ["rtype"]
 
 
 class DocstringParser:
-    """This represents a parsed doc string which has list of positional and keyword arguements and return type
+    """This represents a parsed doc string which contain positional, instance, and keyword arguments
+       and return type. Arguments are represented as key-value pairs where the key is the argument
+       name and the value is the argument itself.
     """
 
     def __init__(self, docstring):

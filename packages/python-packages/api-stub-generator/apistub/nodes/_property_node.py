@@ -34,10 +34,10 @@ class PropertyNode(NodeEntityBase):
             if docstring:
                 docstring_parser = DocstringParser(getattr(self.obj, "__doc__"))
                 try:
-                    self.type = docstring_parser.find_type()
+                    self.type = docstring_parser.type_for(self.name)
                     # Check for rtype docstring
                     if not self.type:
-                        self.type = docstring_parser.find_return_type()
+                        self.type = docstring_parser.ret_type
                 except:
                     self.errors.append("Failed to find type of property {}".format(self.name))
                     

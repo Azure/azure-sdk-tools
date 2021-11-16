@@ -2,7 +2,9 @@
 
 ## Version 0.2.6 (Unreleased)
 Updated type parsing to properly handle cases in which type
-info wraps onto a second line.
+  info wraps onto a second line.
+Fixed issue where ivar type was not properly parsed from
+  the docstring.
 
 ## Version 0.2.5 (Unreleased)
 Fixed bug in which kwargs were duplicated in certain instances.

@@ -171,7 +171,6 @@ stages:
               cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
               pip install tox
               tox
-              cd $(Build.SourcesDirectory)
             displayName: 'Test Python Package Parser'
 
           - task: PublishTestResults@2

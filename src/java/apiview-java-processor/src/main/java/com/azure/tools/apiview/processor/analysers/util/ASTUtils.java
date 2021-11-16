@@ -191,8 +191,8 @@ public class ASTUtils {
         }
 
         Node node = nodeOptional.get();
-        if (node instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration type = (ClassOrInterfaceDeclaration) node;
+        if (node instanceof TypeDeclaration<?>) {
+            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
             return type.getFullyQualifiedName().get();
         } else {
             return "";

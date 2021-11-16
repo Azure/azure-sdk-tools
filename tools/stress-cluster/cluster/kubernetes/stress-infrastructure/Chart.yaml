@@ -30,4 +30,5 @@ dependencies:
   condition: deploy.chaosmesh
 - name: stress-test-addons
   version: 0.1.10
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
+  #repository: https://stresstestcharts.blob.core.windows.net/helm/
+  repository: file:///home/ben/sdk/newt/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons

@@ -3,7 +3,7 @@ dependencies:
   repository: https://charts.chaos-mesh.org
   version: v0.5.1
 - name: stress-test-addons
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
-  version: 0.1.10
-digest: sha256:82871557dec947e52d9eaa9f9a13da84752691490984ce33773e9ab232db82b2
-generated: "2021-11-12T15:39:34.7151755-05:00"
+  repository: file:///home/ben/sdk/newt/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
+  version: 0.1.11
+digest: sha256:e88b471ac7e5076e96960756245f63cbedc519c8a6e45993aa91c613f9921428
+generated: "2021-11-16T17:36:40.5882616-05:00"

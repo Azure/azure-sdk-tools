@@ -28,7 +28,9 @@ spec:
         imagePullPolicy: Always
         image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
         command: ["dotnet", "Stress.Watcher.dll"]
-        {{- include "stress-test-addons.container-env" . | nindent 8 }}
+        {{- include "stress-test-addons.container-env" $ctx | nindent 8 }}
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" $ctx | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" $ctx | nindent 8 }}

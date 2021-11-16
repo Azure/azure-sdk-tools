@@ -2,6 +2,7 @@
 - name: debug-file-share-{{ .Release.Name }}
   azureFile:
     secretName: debugstorageaccountconfig
-    shareName: {{ get .Values.debugFileShareName .Values.env }}
+    {{ $addonvalues := index . "Values" "stress-test-addons" -}}
+    shareName: {{ get $addonvalues.debugFileShareName $addonvalues.env }}
     readOnly: false
 {{ end }}

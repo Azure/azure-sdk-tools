@@ -3,7 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license output.pushrmation.
  *--------------------------------------------------------------------------------------------*/
 
-import { ArraySchema, ChoiceSchema, DateTimeSchema, DictionarySchema, GroupProperty, Metadata, ObjectSchema, Parameter, Schema, SchemaType } from '@autorest/codemodel';
+import {
+    ArraySchema,
+    ChoiceSchema,
+    DateTimeSchema,
+    DictionarySchema,
+    GroupProperty,
+    ImplementationLocation,
+    Metadata,
+    ObjectSchema,
+    Parameter,
+    Schema,
+    SchemaType,
+} from '@autorest/codemodel';
 import { BaseCodeGenerator, BaseDataRender } from './baseGenerator';
 import { Config } from '../common/constant';
 import { ExampleParameter, ExampleValue } from '@autorest/testmodeler/dist/src/core/model';
@@ -103,6 +115,10 @@ export class MockTestDataRender extends BaseDataRender {
             let ret = `${ptr}${this.context.packageName + '.'}${this.getLanguageName(parameter.schema)}{`;
             let hasContent = false;
             for (const insideParameter of group.originalParameter) {
+                if (insideParameter.implementation === ImplementationLocation.Client) {
+                    // don't add globals to the per-method options struct
+                    continue;
+                }
                 const insideOutput = findExampleParameter(this.getLanguageName(insideParameter), insideParameter);
                 if (insideOutput) {
                     ret += `${this.getLanguageName(insideParameter)}: ${insideOutput},\n`;

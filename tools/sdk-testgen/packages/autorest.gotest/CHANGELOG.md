@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Tue, 09 Nov 2021 10:20:51 GMT and should not be manually modified.
+This log was last generated on Mon, 15 Nov 2021 09:39:03 GMT and should not be manually modified.
+
+## 1.1.2
+Mon, 15 Nov 2021 09:39:03 GMT
+
+### Patches
+
+- Fix some generation corner case.
 
 ## 1.1.1
 Tue, 09 Nov 2021 10:20:51 GMT

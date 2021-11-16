@@ -15,6 +15,8 @@ export class GoHelper {
                 ret += `,\n`;
             } else if (_.isString(value)) {
                 ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
+            } else if (value === null) {
+                ret += `"${key}": nil,\n`;
             } else {
                 ret += `"${key}": ${value},\n`;
             }

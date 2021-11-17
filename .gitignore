@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+#build/
 develop-eggs/
 dist/
 downloads/
@@ -25,7 +25,6 @@ wheels/
 *.egg
 MANIFEST
 *.pyc
-*.whl
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -286,6 +285,20 @@ publish/
 # checkin your Azure Web App publish settings, but sensitive information contained
 # in these scripts will be unencrypted
 PublishScripts/
+
+# NuGet Packages
+#*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+!packages/java-packages/
+!tools/sdk-testgen/packages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+# NuGet v3's project.json files produces more ignorable files
+#*.nuget.props
+#*.nuget.targets
 
 # Microsoft Azure Build Output
 csx/

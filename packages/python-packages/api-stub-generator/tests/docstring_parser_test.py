@@ -6,6 +6,7 @@
 
 from apistub.nodes import DocstringParser
 
+
 docstring_standard_return_type = """
 Dummy docstring to verify standard return types and param types
 :rtype: str

@@ -11,5 +11,6 @@
         public string LastVersion { get; set; }
         public double Last { get; set; }
         public double Source { get; set; }
+        public string Change => $"{((Source - Last) / Last) * 100:N2}%";
     }
 }

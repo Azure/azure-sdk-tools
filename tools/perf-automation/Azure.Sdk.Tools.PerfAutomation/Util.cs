@@ -1,5 +1,6 @@
 ﻿using Microsoft.Crank.Agent;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -18,16 +19,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path);
             var extension = Path.GetExtension(path);
 
-            var uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}{extension}");
+            return GetUniquePaths(Path.Join(directoryName, fileNameWithoutExtension), extension)[0];
+        }
+
+        public static string[] GetUniquePaths(string prefix, params string[] extensions)
+        {
+            var uniquePaths = extensions.Select(e => $"{prefix}{e}");
 
             int index = 0;
-            while (File.Exists(uniquePath))
-            {
+            while (uniquePaths.Any(p => File.Exists(p))) {
                 index++;
-                uniquePath = Path.Join(directoryName, $"{fileNameWithoutExtension}.{index}{extension}");
+                uniquePaths = extensions.Select(e => $"{prefix}.{index}{e}");
             }
 
-            return uniquePath;
+            return uniquePaths.ToArray();
         }
 
         // These commands must be run using "cmd /c" on Windows, since they are shell scripts rather than executables.

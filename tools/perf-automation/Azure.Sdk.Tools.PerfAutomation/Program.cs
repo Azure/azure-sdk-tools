@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.PerfAutomation.Models;
 using CommandLine;
 using CommandLine.Text;
 using CsvHelper;
+using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -40,6 +41,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             },
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             WriteIndented = true,
+        };
+
+        private static readonly CsvConfiguration CsvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            Delimiter = ", ",
         };
 
         public class CommonOptions
@@ -84,8 +90,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option("no-sync")]
             public bool NoSync { get; set; }
 
-            [Option('o', "output-file", Default = "results/results.json")]
-            public string OutputFile { get; set; }
+            [Option('o', "output-file-prefix", Default = "results/results")]
+            public string OutputFilePrefix { get; set; }
 
             [Option('p', "packageVersions", HelpText = "Regex of package versions to run")]
             public string PackageVersions { get; set; }
@@ -224,10 +230,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            var outputFile = Util.GetUniquePath(options.OutputFile);
+            var outputFiles = Util.GetUniquePaths(options.OutputFilePrefix, ".json", ".csv");
+
             // Create output file early so user sees it immediately
-            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-            using (File.Create(outputFile)) { }
+            foreach (var outputFile in outputFiles)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+                using (File.Create(outputFile)) { }
+            }
+
+            var outputJson = outputFiles[0];
+            var outputCsv = outputFiles[1];
 
             var results = new List<Result>();
 
@@ -245,7 +258,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         foreach (var packageVersions in serviceLanugageInfo.PackageVersions)
                         {
-                            await RunPackageVersion(options, outputFile, results, service,
+                            await RunPackageVersion(options, outputJson, outputCsv, results, service,
                                 language, serviceLanugageInfo, languageVersion, packageVersions);
                         }
                     }
@@ -253,7 +266,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
         }
 
-        private static async Task RunPackageVersion(RunOptions options, string outputFile, List<Result> results, ServiceInfo service,
+        private static async Task RunPackageVersion(RunOptions options, string outputJson, string outputCsv, List<Result> results, ServiceInfo service,
             Language language, ServiceLanguageInfo serviceLanguageInfo, string languageVersion, IDictionary<string, string> packageVersions)
         {
             try
@@ -342,6 +355,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             Project = serviceLanguageInfo.Project,
                             LanguageTestName = test.TestNames[language],
                             Arguments = allArguments,
+                            PrimaryPackage = serviceLanguageInfo.PrimaryPackage,
                             PackageVersions = packageVersions,
                             SetupStandardOutput = setupOutput,
                             SetupStandardError = setupError,
@@ -350,10 +364,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                         results.Add(result);
 
-                        using (var stream = File.OpenWrite(outputFile))
-                        {
-                            await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-                        }
+                        await WriteResults(outputJson, outputCsv, results);
                         if (setupException == null)
                         {
                             for (var i = 0; i < options.Iterations; i++)
@@ -395,10 +406,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                                 result.Iterations.Add(iterationResult);
 
-                                using (var stream = File.OpenWrite(outputFile))
-                                {
-                                    await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
-                                }
+                                await WriteResults(outputJson, outputCsv, results);
                             }
                         }
 
@@ -423,6 +431,50 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         Console.WriteLine();
                     }
                 }
+            }
+        }
+
+        private static async Task WriteResults(string outputJson, string outputCsv, List<Result> results)
+        {
+            using (var stream = File.OpenWrite(outputJson))
+            {
+                await JsonSerializer.SerializeAsync(stream, results, JsonOptions);
+            }
+
+            var groups = results.GroupBy(r => (r.Language, r.LanguageVersion, r.Service, r.Test, r.Arguments));
+            var resultSummaries = groups.Select(g =>
+            {
+                var resultSummary = new ResultSummary()
+                {
+                    Language = g.Key.Language,
+                    LanguageVersion = g.Key.LanguageVersion,
+                    Service = g.Key.Service,
+                    Test = g.Key.Test,
+                    Arguments = g.Key.Arguments,
+                };
+
+                foreach (var result in g)
+                {
+                    var primaryPackage = result.PrimaryPackage;
+                    var primaryPackageVersion = result.PackageVersions[primaryPackage];
+                    if (primaryPackageVersion == "source")
+                    {
+                        resultSummary.Source = result.OperationsPerSecondMax;
+                    }
+                    else
+                    {
+                        resultSummary.LastVersion = primaryPackageVersion;
+                        resultSummary.Last = result.OperationsPerSecondMax;
+                    }
+                }
+
+                return resultSummary;
+            });
+
+            using (var streamWriter = new StreamWriter(outputCsv))
+            using (var csvWriter = new CsvWriter(streamWriter, CsvConfiguration))
+            {
+                await csvWriter.WriteRecordsAsync(resultSummaries);
             }
         }
 

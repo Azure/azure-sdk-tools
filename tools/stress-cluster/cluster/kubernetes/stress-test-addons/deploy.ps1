@@ -28,7 +28,7 @@ RunOrExitOnFailure helm repo index --url https://stresstestcharts.blob.core.wind
 # az storage blob download -c helm -n index.yaml -f index.yaml
 
 $files = (Get-Item *.tgz).Name
-$confirmation = Read-Host "Do you want to update the helm repository to add $files? [y/n]"
+$confirmation = Read-Host "Do you want to update the helm repository to add ${files}? [y/n]"
 if ( $confirmation -match "[yY]" ) { 
     RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file index.yaml --name index.yaml
     RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file $files --name $files

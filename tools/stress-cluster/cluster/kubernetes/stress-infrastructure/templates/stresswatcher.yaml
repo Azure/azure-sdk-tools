@@ -1,3 +1,4 @@
+{{ $ctx := deepCopy . | merge (dict "Scenario" "watcher" ) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,48 +17,20 @@ spec:
       labels:
         app: stress-watcher
     spec:
+      nodeSelector:
+        sku: 'default'
+      initContainers:
+        # Init container template for injecting secrets
+        # (e.g. app insights instrumentation key, azure client credentials)
+        {{- include "stress-test-addons.init-env" $ctx | nindent 8 }}
       containers:
       - name: stresswatcher
         imagePullPolicy: Always
         image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
         command: ["dotnet", "Stress.Watcher.dll"]
-        volumeMounts:
-        - name: public
-          mountPath: /mnt/outputs
-          readOnly: true
+        {{- include "stress-test-addons.container-env" $ctx | nindent 8 }}
       volumes:
-      - name: public
-        secret:
-          secretName: public
-          items:
-          - key: value
-            path: .env
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: stress-resource-patcher-{{ .Release.Namespace }}
-rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: stress-resource-patcher-{{ .Release.Namespace }}
-subjects:
-- namespace: {{ .Release.Namespace }}
-  kind: ServiceAccount
-  name: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: stress-resource-patcher-{{ .Release.Namespace }}
+        # Volume template for mounting secrets
+        {{- include "stress-test-addons.env-volumes" $ctx | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" $ctx | nindent 8 }}

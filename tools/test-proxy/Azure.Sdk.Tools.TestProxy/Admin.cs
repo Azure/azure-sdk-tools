@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         if (param.IsOptional)
                         {
-                            arg_list.Add(null);
+                            arg_list.Add(param.DefaultValue);
                         }
                         else
                         {

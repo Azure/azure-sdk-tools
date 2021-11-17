@@ -124,8 +124,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
 
             httpContext.Request.Headers["x-abstraction-identifier"] = "BodyKeySanitizer";
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"jsonPath\": \"$.TableName\", \"value\": \"Sanitized\" }");
-            httpContext.Request.Headers["Content-Length"] = new string[] { "60" };
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"jsonPath\": \"$.TableName\" }");
+            httpContext.Request.Headers["Content-Length"] = new string[] { "34" };
             httpContext.Request.Headers["Content-Type"] = new string[] { "application/json" };
 
             var controller = new Admin(testRecordingHandler)

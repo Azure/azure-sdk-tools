@@ -5,7 +5,6 @@
 # --------------------------------------------------------------------------
 
 from apistub.nodes import DocstringParser
-from apistub.nodes import ArgType
 
 docstring_standard_return_type = """
 Dummy docstring to verify standard return types and param types

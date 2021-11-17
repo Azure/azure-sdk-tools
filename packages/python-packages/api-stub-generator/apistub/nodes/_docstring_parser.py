@@ -1,11 +1,8 @@
 from collections import OrderedDict
 import re
-import inspect
 import logging
 from ._argtype import ArgType
 
-
-find_type_hint_ret_type = "(?<!#)\\s->\\s+([^\n:]*)"
 
 line_tag_regex = re.compile(r"^\s*:([^:]+):(.*)")
 
@@ -133,31 +130,3 @@ class DocstringParser:
             self.kw_args.get(name, None)
         )
         return arg.argtype if arg else arg
-
-
-class TypeHintParser:
-    """TypeHintParser helps to find return type from type hint is type hint is available
-    :param object: obj
-    """
-
-    def __init__(self, obj):
-        self.obj = obj
-        try:
-            self.code = inspect.getsource(obj)
-        except:
-            self.code = None
-            logging.error("Failed to get source of object {}".format(obj))
-
-    def find_return_type(self):
-        """Returns return type is type hint is available
-        """
-        if not self.code:
-            return None
-
-        # Find return type from type hint
-        ret_type = re.search(find_type_hint_ret_type, self.code)
-        # Don't return None as string literal
-        if ret_type and ret_type != "None":
-            return ret_type.groups()[-1]
-        else:
-            return None

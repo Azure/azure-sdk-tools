@@ -497,6 +497,12 @@ namespace Azure.Sdk.Tools.TestProxy
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
+
+            if (rawTarget.StartsWith("//"))
+            {
+                rawTarget = "/" + rawTarget.Substring(2);
+            }
+
             return new Uri(host, rawTarget);
         }
 

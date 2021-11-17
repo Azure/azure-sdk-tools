@@ -17,7 +17,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/js-mgmt-sdk-release-tools
+      - tools/js-sdk-release-tools
 
 pr:
   branches:
@@ -28,7 +28,7 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/js-mgmt-sdk-release-tools
+      - tools/js-sdk-release-tools
 
 variables:
   - template: ../../eng/pipelines/templates/variables/globals.yml
@@ -62,17 +62,17 @@ stages:
         - script: |
             npm install
           displayName: 'npm install'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-mgmt-sdk-release-tools
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
         - script: |
             npm pack
           displayName: 'npm pack'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-mgmt-sdk-release-tools
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
           condition: contains(variables['imageName'], 'ubuntu')
 
-        - script: 'cp azure-tools-js-mgmt-release-tools-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: 'cp azure-tools-js-sdk-release-tools-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-mgmt-sdk-release-tools
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
           condition: contains(variables['imageName'], 'ubuntu')
 
         - task: PublishBuildArtifacts@1
@@ -121,5 +121,5 @@ stages:
             done
             rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
           displayName: Publish
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-mgmt-sdk-release-tools
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 

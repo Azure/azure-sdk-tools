@@ -1,5 +1,5 @@
 {
-  "name": "@azure-tools/js-mgmt-release-tools",
+  "name": "@azure-tools/js-sdk-release-tools",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -10,8 +10,8 @@
   },
   "bin": {
     "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
-    "codegen-automation": "./dist/generateCodesInLocalCLI.js",
-    "automation-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+    "hlc-code-gen": "./dist/generateCodesInLocalCLI.js",
+    "hlc-code-gen-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

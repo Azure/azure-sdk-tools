@@ -6,6 +6,8 @@ import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.BodyDeclaration;
 
+import java.util.function.Supplier;
+
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedConstructors;
@@ -25,8 +27,8 @@ public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
                 listing.addDiagnostic(new Diagnostic(WARNING, makeId(typeDeclaration), "This API is missing JavaDoc."));
             }
 
-            getPublicOrProtectedConstructors(typeDeclaration).forEach(n -> checkJavaDoc(n, makeId(n), listing));
-            getPublicOrProtectedFields(typeDeclaration).forEach(n -> checkJavaDoc(n, makeId(n), listing));
+            getPublicOrProtectedConstructors(typeDeclaration).forEach(n -> checkJavaDoc(n, () -> makeId(n), listing));
+            getPublicOrProtectedFields(typeDeclaration).forEach(n -> checkJavaDoc(n, () -> makeId(n), listing));
 
             getPublicOrProtectedMethods(typeDeclaration).forEach(n -> {
                 if (IGNORE_OVERRIDES && n.isAnnotationPresent("Override")) {
@@ -34,15 +36,15 @@ public class MissingJavaDocDiagnosticRule implements DiagnosticRule {
                     // class from which this method is specified already has sufficiently detailed JavaDoc and we have
                     // validated that elsewhere.
                 } else {
-                    checkJavaDoc(n, makeId(n), listing);
+                    checkJavaDoc(n, () -> makeId(n), listing);
                 }
             });
         });
     }
 
-    private void checkJavaDoc(BodyDeclaration<?> n, String id, APIListing listing) {
+    private void checkJavaDoc(BodyDeclaration<?> n, Supplier<String> idSupplier, APIListing listing) {
         if (!attemptToFindJavadocComment(n).isPresent()) {
-            listing.addDiagnostic(new Diagnostic(WARNING, id, "This API is missing JavaDoc."));
+            listing.addDiagnostic(new Diagnostic(WARNING, idSupplier.get(), "This API is missing JavaDoc."));
         }
     }
 }

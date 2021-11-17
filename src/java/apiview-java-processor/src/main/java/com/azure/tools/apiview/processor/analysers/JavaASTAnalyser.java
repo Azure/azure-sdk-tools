@@ -32,11 +32,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.AnnotationExpr;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.MemberValuePair;
-import com.github.javaparser.ast.expr.Name;
-import com.github.javaparser.ast.expr.NormalAnnotationExpr;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
@@ -333,12 +329,16 @@ public class JavaASTAnalyser implements Analyser {
             addToken(makeWhitespace());
             addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
 
-            v.forEach(d -> {
+            for (int i = 0; i < v.size(); i++) {
+                Dependency d = v.get(i);
                 addToken(makeWhitespace());
                 String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
                 addToken(new Token(TEXT, gav, gav));
-                addNewLine();
-            });
+
+                if (i < v.size() - 1) {
+                    addNewLine();
+                }
+            }
 
             addNewLine();
         });
@@ -798,8 +798,13 @@ public class JavaASTAnalyser implements Analyser {
 
                     final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
                     if (variableDeclaratorOption.isPresent()) {
-                        addToken(SPACE, new Token(PUNCTUATION, "="), SPACE);
-                        addToken(new Token(TEXT, variableDeclaratorOption.get().toString()));
+                        Expression e = variableDeclaratorOption.get();
+                        if (e.isObjectCreationExpr() && e.asObjectCreationExpr().getAnonymousClassBody().isPresent()) {
+                            // no-op because we don't want to include all of the anonymous inner class details
+                        } else {
+                            addToken(SPACE, new Token(PUNCTUATION, "="), SPACE);
+                            addToken(new Token(TEXT, variableDeclaratorOption.get().toString()));
+                        }
                     }
                 }
 

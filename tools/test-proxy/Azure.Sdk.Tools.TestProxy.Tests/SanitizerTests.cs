@@ -300,7 +300,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
             session.Session.Sanitize(bodyKeySanitizer);
 
-            Assert.Contains(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Contains(replacementValue, newBody);
+            Assert.Equal("{\"TableName\":\"sanitized.tablename\"}", newBody);
         }
 
         [Fact]

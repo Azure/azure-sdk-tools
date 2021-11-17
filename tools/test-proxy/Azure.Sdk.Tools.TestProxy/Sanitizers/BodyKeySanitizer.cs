@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation. Defaults to replacing the entire string.</param>
         /// <param name="groupForReplace">The regex capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".*", string groupForReplace = null)
+        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null)
         {
             _jsonPath = jsonPath;
             _newValue = value;

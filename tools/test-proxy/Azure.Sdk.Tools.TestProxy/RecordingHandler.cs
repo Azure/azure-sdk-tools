@@ -282,14 +282,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
             outgoingResponse.Headers.Add("x-recording-id", id);
 
-            if(session.Session.Variables.Count > 0)
-            {
-                var json = JsonSerializer.Serialize(session.Session.Variables);
-                outgoingResponse.Headers.Add("Content-Type", "application/json");
 
-                // Write to the response
-                await outgoingResponse.WriteAsync(json);
-            }
+            var json = JsonSerializer.Serialize(session.Session.Variables);
+            outgoingResponse.Headers.Add("Content-Type", "application/json");
+
+            // Write to the response
+            await outgoingResponse.WriteAsync(json);
         }
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)

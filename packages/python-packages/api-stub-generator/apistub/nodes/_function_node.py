@@ -2,7 +2,6 @@ import logging
 import inspect
 from collections import OrderedDict
 import astroid
-import operator
 import re
 from inspect import Parameter
 from ._docstring_parser import DocstringParser

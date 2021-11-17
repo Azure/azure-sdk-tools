@@ -10,7 +10,7 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
-      "launchBrowser": false,
+      "commandLineArgs": "--storage-location=\"C:/repo/sdk-for-python\"",
       "environmentVariables": {
         "Logging__LogLevel__Microsoft": "Information",
         "ASPNETCORE_ENVIRONMENT": "Development"

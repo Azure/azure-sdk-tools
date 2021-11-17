@@ -498,7 +498,7 @@ namespace APIViewWeb.Respositories
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
-                    await Task.Delay(5000);
+                    await Task.Delay(500);
                     await UpdateReviewAsync(review);
                 }
                 catch (Exception e)

@@ -10,8 +10,8 @@
   },
   "bin": {
     "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
-    "hlc-sdk-code-gen": "./dist/generateCodesInLocalCLI.js",
-    "hlc-sdk-code-gen-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+    "hlc-code-gen": "./dist/generateCodesInLocalCLI.js",
+    "hlc-code-gen-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

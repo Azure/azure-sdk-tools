@@ -15,7 +15,7 @@ npm install -g @azure-tools/js-sdk-release-tools
 You can use this command to generate codes, and then run rush update, rush build, and pack the generated codes.
 ```shell script
 cd azure-sdk-for-js
-hlc-sdk-code-gen --use=@autorest/typescript@6.0.0-beta.14 --readme=../azure-rest-api-specs/specification/iotspaces/resource-manager/readme.md
+hlc-code-gen --use=@autorest/typescript@6.0.0-beta.14 --readme=../azure-rest-api-specs/specification/iotspaces/resource-manager/readme.md
 ```
 hint: you can change the `readme` to yours.
 
@@ -23,7 +23,7 @@ hint: you can change the `readme` to yours.
 This command is only used in swagger pipeline.
 ```shell script
 cd azure-sdk-for-js
-hlc-sdk-code-gen-for-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
+hlc-code-gen-for-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
 ```
 
 ### Generate changelog and bump version for Azure Track2 JS SDK

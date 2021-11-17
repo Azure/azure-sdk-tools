@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         private const string _env = "env-perf";
         private static readonly string _envBin = Util.IsWindows ? "scripts" : "bin";
-        private static readonly string _python = Util.IsWindows ? "python" : "python3";
 
         protected override Language Language => Language.Python;
 
@@ -26,8 +25,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
+            // On Windows, always use "python".  On Unix-like systems, specify the major and minor versions, e.g "python3.7".
+            var systemPython = Util.IsWindows ? "python" : "python" + Regex.Match(languageVersion, @"^\d+\.\d+").Value;
+
             // Create venv
-            await Util.RunAsync(_python, $"-m venv {_env}", projectDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder, errorBuilder);
 
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");

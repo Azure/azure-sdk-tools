@@ -117,6 +117,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async void TestAddSanitizerWithOddDefaults()
+        {
+            // arrange
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            httpContext.Request.Headers["x-abstraction-identifier"] = "BodyKeySanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"jsonPath\": \"$.TableName\" }");
+            httpContext.Request.Headers["Content-Length"] = new string[] { "34" };
+            httpContext.Request.Headers["Content-Type"] = new string[] { "application/json" };
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var result = testRecordingHandler.Sanitizers.First();
+            Assert.True(result is BodyKeySanitizer);
+        }
+
+        [Fact]
         public async void TestAddSanitizerWrongEmptyValue()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

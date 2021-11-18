@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>
         /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".*", string groupForReplace = null)
+        public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".+", string groupForReplace = null)
         {
             _newValue = value;
             _regexValue = regex;

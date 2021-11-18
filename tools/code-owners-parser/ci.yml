@@ -26,3 +26,4 @@ extends:
   parameters:
     ToolDirectory: tools/code-owners-parser
     DotNetCoreVersion: 5.0.301
+    CustomTests: true

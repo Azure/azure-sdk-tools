@@ -76,9 +76,17 @@ kubectl create namespace <your alias>
 You will then need to build and push your container image to a registry the cluster has access to:
 
 ```
-az acr login -n stresstestregistry
-docker build . -t stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
-docker push stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
+# get registry in powershell
+$registry = az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" -o json
+$registryName = ($registry | ConvertFrom-Json).name
+
+# get registry in bash
+registry=$(az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" -o json)
+registryName=$(echo $registry | jq -r '.[].name')
+
+# Build and push development image to stress test cluster registry
+docker build . -t $registryName.azurecr.io/<your name>/<test job image name>:<version>
+docker push $registryName.azurecr.io/<your name>/<test job image name>:<version>
 ```
 
 To define a job that utilizes your test, create a file called testjob.yaml, including the below contents (with fields replaced):

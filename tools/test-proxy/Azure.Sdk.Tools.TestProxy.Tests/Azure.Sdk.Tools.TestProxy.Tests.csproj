@@ -18,6 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Test.RecordEntries\if_none_match_present.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Test.RecordEntries\oauth_request_with_variables.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -220,7 +220,7 @@ describe('GoTestGenerator from RP agrifood', () => {
 describe('GoTestGenerator from RP signalR', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
-        const codeModel = MockTool.loadCodeModel('signalR/test-modeler-pre.yaml');
+        const codeModel = MockTool.loadCodeModel('signalR/test-modeler.yaml');
         const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
         testCodeModel = TestCodeModeler.createInstance(
             codeModel as TestCodeModel,
@@ -244,8 +244,13 @@ describe('GoTestGenerator from RP signalR', () => {
                 configDefaults,
             ),
         );
-        testCodeModel.genMockTests();
-        await testCodeModel.loadTestResources();
+        if (!process.platform.toLowerCase().startsWith('win')) {
+            for (const scenarios of testCodeModel.codeModel.testModel.scenarioTests || []) {
+                if (scenarios._filePath) {
+                    scenarios._filePath = scenarios._filePath.split('\\').join('/');
+                }
+            }
+        }
     });
 
     afterEach(() => {

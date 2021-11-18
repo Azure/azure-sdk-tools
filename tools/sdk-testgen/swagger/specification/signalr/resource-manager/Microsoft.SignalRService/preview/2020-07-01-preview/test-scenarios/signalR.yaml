@@ -2,8 +2,8 @@ scope: ResourceGroup
 variables:
   resourceName: "aaa"
   resourceGroupPrefix: "apiTest-"
-testScenarios:
-  - description: Microsoft.SignalRService/signalR SignalR_CreateOrUpdate
+scenarios:
+  - description: Microsoft_SignalRService_SignalR_CreateOrUpdate
     steps:
       - step: Generate_Unique_string
         armTemplateDeployment: ./generate_unique_string.json

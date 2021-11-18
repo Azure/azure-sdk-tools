@@ -9,6 +9,8 @@ export enum Config {
     disabledExamples = 'testmodeler.mock.disabled-examples',
     sendExampleId = 'testmodeler.mock.send-example-id',
     verifyResponse = 'testmodeler.mock.verify-response',
+    scenarioCodeModelRestCallOnly = 'testmodeler.scenario.codemodel-restcall-only',
+    useExampleModel = 'testmodeler.use-example-model',
 }
 
 export const configDefaults = {
@@ -17,6 +19,8 @@ export const configDefaults = {
     [Config.splitParentsValue]: false,
     [Config.sendExampleId]: true,
     [Config.verifyResponse]: true,
+    [Config.scenarioCodeModelRestCallOnly]: true,
+    [Config.useExampleModel]: true,
 };
 
 export enum TestScenarioVariableNames {

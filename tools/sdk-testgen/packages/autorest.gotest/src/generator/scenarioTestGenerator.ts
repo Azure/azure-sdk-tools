@@ -11,10 +11,12 @@ import { GoExampleModel } from '../common/model';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { TestDefinitionModel, TestScenarioModel, TestStepArmTemplateDeploymentModel, TestStepRestCallModel } from '@autorest/testmodeler/dist/src/core/model';
-import { TestStep } from 'oav/dist/lib/testScenario/testResourceTypes';
+import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
+import { StepArmTemplateModel, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+
 export class ScenarioTestDataRender extends MockTestDataRender {
     definedVariables: Record<string, string> = {};
+    referencedVariables: Set<string> = new Set<string>();
 
     public renderData() {
         for (const testDef of this.context.codeModel.testModel.scenarioTests) {
@@ -34,7 +36,8 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             };
             this.genRenderDataForStep(testDef, step);
         }
-        for (const scenario of testDef.testScenarios as TestScenarioModel[]) {
+        for (const scenario of testDef.scenarios as TestScenarioModel[]) {
+            this.referencedVariables = new Set<string>();
             for (const step of scenario.steps) {
                 this.definedVariables = {
                     ...testDef.requiredVariablesDefault,
@@ -45,13 +48,18 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 };
                 this.genRenderDataForStep(testDef, step);
             }
+            for (const v in scenario.variables) {
+                if (!this.referencedVariables.has(v)) {
+                    delete scenario.variables[v];
+                }
+            }
         }
     }
 
-    private genRenderDataForStep(testDef: TestDefinitionModel, step: TestStep) {
+    private genRenderDataForStep(testDef: TestDefinitionModel, step: Step) {
         switch (step.type) {
             case OavStepType.restCall: {
-                const example = (step as TestStepRestCallModel).exampleModel as GoExampleModel;
+                const example = (step as StepRestCallModel).exampleModel as GoExampleModel;
                 this.fillExampleOutput(example);
                 if (step.outputVariables && Object.keys(step.outputVariables).length > 0) {
                     this.context.importManager.add('github.com/go-openapi/jsonpointer');
@@ -62,10 +70,10 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             case OavStepType.armTemplate: {
                 testDef.useArmTemplate = true;
                 this.context.importManager.add('encoding/json');
-                (step as TestStepArmTemplateDeploymentModel).outputVariableNames = [];
+                (step as StepArmTemplateModel).outputVariableNames = [];
                 for (const templateOutput of Object.keys(step.armTemplatePayload.outputs || {})) {
                     if (_.has(testDef.variables, templateOutput) || _.has(step.variables, templateOutput)) {
-                        (step as TestStepArmTemplateDeploymentModel).outputVariableNames.push(templateOutput);
+                        (step as StepArmTemplateModel).outputVariableNames.push(templateOutput);
                     }
                 }
                 break;
@@ -103,6 +111,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 ret.push(Helper.quotedEscapeString(s.substr(0, p)));
             }
             ret.push(placeHolder.slice(2, -1));
+            this.referencedVariables.add(ret.slice(-1)[0]);
             s = s.substr(p + placeHolder.length);
         }
         if (s.length > 0) {

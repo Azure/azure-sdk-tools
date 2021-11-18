@@ -30,19 +30,28 @@ class DocstringParser:
         self._parse()
 
     def _extract_type(self, line1, line2):
+        ret_val = ""
         line1 = line1.strip()
         if line1 == "":
             # if the first line is blank, the type info
             # must be on the second
-            return line2
+            ret_val = line2
         if line1.endswith(",") or line1.endswith(" or"):
             # if the first line ends with these values, the 
             # type info wraps to the next line
-            return " ".join([line1, line2])
+            ret_val = " ".join([line1, line2])
         else:
             # otherwise, the type info is fully contained on
             # the first line
-            return line1
+            ret_val = line1
+
+        return self._sanitize_type(ret_val)
+
+    def _sanitize_type(self, value):
+        # strip unnecessary quotes from type strings
+        for char in ['"', "'", "`"]:
+            value = value.replace(char, "")
+        return value
 
     def _process_arg_tuple(self, tag, line1, line2):
         # When two items are found, it is either the name
@@ -90,6 +99,8 @@ class DocstringParser:
         elif keyword == "param":
             self.pos_args[arg.argname] = arg
         elif keyword == "keyword":
+            # show kwarg is optional by setting default to "..."
+            arg.default = "..."
             self.kw_args[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")

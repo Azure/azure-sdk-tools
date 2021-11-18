@@ -36,7 +36,7 @@ class DocstringParser:
             # if the first line is blank, the type info
             # must be on the second
             ret_val = line2
-        if line1.endswith(",") or line1.endswith(" or"):
+        elif line1.endswith(",") or line1.endswith(" or"):
             # if the first line ends with these values, the 
             # type info wraps to the next line
             ret_val = " ".join([line1, line2])

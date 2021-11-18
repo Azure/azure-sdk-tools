@@ -84,11 +84,11 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-      # - job: CustomTests
-      #   condition: succeeded('${{parameters.CustomTests}}')
+      - job: CustomTests
+        condition: succeeded('${{parameters.CustomTests}}')
 
-      #   steps:
-      #     - template: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}/custom-tests.yml
+        steps:
+          - template: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}/custom-tests.yml
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:

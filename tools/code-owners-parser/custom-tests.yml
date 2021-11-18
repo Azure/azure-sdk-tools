@@ -1,0 +1,6 @@
+steps:
+  - pwsh: |
+      $output = dotnet run --code-owner-file-path "../Azure.Sdk.Tools.RetrieveCodeOwners.Tests/CODEOWNERS" --target-directory "sdk"
+      $output | ConvertFrom-Json
+    displayName: Test on code owner tool output
+    workingDirectory: tools\code-owners-parser\Azure.Sdk.Tools.RetrieveCodeOwners

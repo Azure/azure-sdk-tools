@@ -18,6 +18,9 @@ parameters:
   - name: NoWarn
     type: boolean
     default: false
+  - name: CustomTests
+    type: boolean
+    default: false
 
 variables:
   - template: ../variables/globals.yml
@@ -73,7 +76,6 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
-
           - task: PublishTestResults@2
             condition: succeededOrFailed()
             inputs:
@@ -82,6 +84,11 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
+      - job: CustomTests
+        condition: ${{parameters.CustomTests}}
+
+        steps:
+          - template: /${{parameters.ToolDirectory}}/custom-tests.yml
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:

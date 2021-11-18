@@ -85,7 +85,7 @@ stages:
               mergeTestResults: true
 
       - job: CustomTests
-        condition: '${{parameters.CustomTests}}''
+        condition: ${{parameters.CustomTests}}
 
         steps:
           - template: /${{parameters.ToolDirectory}}/custom-tests.yml

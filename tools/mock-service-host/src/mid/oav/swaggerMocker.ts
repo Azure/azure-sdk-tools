@@ -80,7 +80,7 @@ export default class SwaggerMocker {
                 }
             }
             // get(list)
-            if (responses[key]?.body?.value?.length) {
+            if (Array.isArray(responses[key]?.body?.value) && responses[key]?.body?.value?.length) {
                 responses[key]?.body?.value?.forEach((item: any) => {
                     if (item.id) {
                         const resourceName = item.name || 'resourceName'

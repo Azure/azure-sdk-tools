@@ -356,6 +356,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var bodyData = CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
+
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }

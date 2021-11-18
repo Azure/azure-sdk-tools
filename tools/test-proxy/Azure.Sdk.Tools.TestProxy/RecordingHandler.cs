@@ -272,6 +272,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 using var stream = System.IO.File.OpenRead(GetRecordingPath(sessionId));
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
                 session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+
+                foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(session.AdditionalSanitizers))
+                {
+                    session.Session.Sanitize(sanitizer);
+                }
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -356,6 +361,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var bodyData = CompressBody(match.Response.Body, match.Response.Headers);
 
                 outgoingResponse.ContentLength = bodyData.Length;
+
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
         }

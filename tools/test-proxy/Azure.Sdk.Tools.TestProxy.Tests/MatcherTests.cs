@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class MatcherTests
     {
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
+        public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
 
         [Fact]
         public void BodilessMatcherMatchesIdenticalRequest()
@@ -80,31 +81,54 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void HeaderlessMatcherMatchesHeaderlessRequest()
         {
-            throw new NotImplementedException();
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var headerlessRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            headerlessRequest.Request.Headers = new SortedDictionary<string, string[]>();
+
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(headerlessRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
         [Fact]
         public void HeaderlessMatcherMatchesDifferentHeadersRequest()
         {
-            throw new NotImplementedException();
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers.Remove(differentHeadersRequest.Request.Headers.Keys.Last());
+
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentHeadersRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
         [Fact]
         public void HeaderlessMatcherMatchesIdenticalHeadersRequest()
         {
-            throw new NotImplementedException();
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var identicalHeaders = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(identicalHeaders, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
         [Fact]
         public void HeaderlessMatcherThrowsOnDiffBody()
         {
-            throw new NotImplementedException();
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var diffBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            diffBodyRequest.Request.Body = Encoding.UTF8.GetBytes("A Different Request Body");
+
+            Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(diffBodyRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
         }
 
         [Fact]
         public void HeaderlessMatcherThrowsOnDiffUri()
         {
-            throw new NotImplementedException();
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differenUriRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differenUriRequest.RequestUri = "https://shouldntmatch.com";
+
+            Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differenUriRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
         }
     }
 }

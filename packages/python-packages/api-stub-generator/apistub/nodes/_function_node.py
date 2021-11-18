@@ -2,10 +2,10 @@ import logging
 import inspect
 from collections import OrderedDict
 import astroid
-import operator
 import re
 from inspect import Parameter
-from ._docstring_parser import DocstringParser, TypeHintParser
+from ._docstring_parser import DocstringParser
+from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
@@ -198,7 +198,7 @@ class FunctionNode(NodeEntityBase):
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
             parsed_docstring = DocstringParser(docstring)
-            parsed_docstring.parse()
+
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
                 logging.debug(
@@ -249,7 +249,7 @@ class FunctionNode(NodeEntityBase):
         # Parse type hint to get return type and types for positional args
         typehint_parser = TypeHintParser(self.obj)
         # Find return type from type hint if return type is not already set
-        type_hint_ret_type = typehint_parser.find_return_type()
+        type_hint_ret_type = typehint_parser.ret_type
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
         if  not type_hint_ret_type:
             if (is_typehint_mandatory(self.name)):

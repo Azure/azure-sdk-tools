@@ -30,19 +30,28 @@ class DocstringParser:
         self._parse()
 
     def _extract_type(self, line1, line2):
+        ret_val = ""
         line1 = line1.strip()
         if line1 == "":
             # if the first line is blank, the type info
             # must be on the second
-            return line2
-        if line1.endswith(",") or line1.endswith(" or"):
+            ret_val = line2
+        elif line1.endswith(",") or line1.endswith(" or"):
             # if the first line ends with these values, the 
             # type info wraps to the next line
-            return " ".join([line1, line2])
+            ret_val = " ".join([line1, line2])
         else:
             # otherwise, the type info is fully contained on
             # the first line
-            return line1
+            ret_val = line1
+
+        return self._sanitize_type(ret_val)
+
+    def _sanitize_type(self, value):
+        # strip unnecessary quotes from type strings
+        for char in ['"', "'", "`"]:
+            value = value.replace(char, "")
+        return value
 
     def _process_arg_tuple(self, tag, line1, line2):
         # When two items are found, it is either the name
@@ -59,15 +68,16 @@ class DocstringParser:
             return (arg, True)
         elif keyword in docstring_type_keywords:
             arg = self._arg_for_type(label, keyword)
-            arg.argtype = self._extract_type(line1, line2)
+            if arg:
+                arg.argtype = self._extract_type(line1, line2)
 
     def _arg_for_type(self, name, keyword) -> ArgType:
         if keyword == "type":
-            return self.pos_args[name]
+            return self.pos_args.get(name, None)
         elif keyword == "vartype":
-            return self.ivars[name]
+            return self.ivars.get(name, None)
         elif keyword == "paramtype":
-            return self.kw_args[name]
+            return self.kw_args.get(name, None)
         else:
             logging.error(f"Unexpected keyword {keyword}.")
             return None
@@ -89,6 +99,8 @@ class DocstringParser:
         elif keyword == "param":
             self.pos_args[arg.argname] = arg
         elif keyword == "keyword":
+            # show kwarg is optional by setting default to "..."
+            arg.default = "..."
             self.kw_args[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")
@@ -130,3 +142,11 @@ class DocstringParser:
             self.kw_args.get(name, None)
         )
         return arg.argtype if arg else arg
+
+    def default_for(self, name):
+        arg = (
+            self.ivars.get(name, None) or
+            self.pos_args.get(name, None) or
+            self.kw_args.get(name, None)
+        )
+        return arg.default if arg else arg

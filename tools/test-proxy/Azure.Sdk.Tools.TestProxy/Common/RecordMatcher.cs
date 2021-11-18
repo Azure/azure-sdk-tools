@@ -39,8 +39,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-client-request-id",
             "User-Agent",
             "x-ms-useragent",
+            "x-ms-version",
             "Request-Id",
-            "traceparent"
+            "traceparent",
+            "If-None-Match",
+            "sec-cha-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Referrer",
+            "Origin"
         };
 
         // Headers that don't indicate meaningful changes between updated recordings
@@ -132,7 +139,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry));
         }
 
-        private int CompareBodies(byte[] requestBody, byte[] responseBody, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] responseBody, StringBuilder descriptionBuilder = null)
         {
             if (!_compareBodies)
             {
@@ -276,7 +283,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     string.Join("; ", value.Split(';').Select(part => part.Trim())))) };
         }
 
-        private int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, StringBuilder descriptionBuilder = null)
+        public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, StringBuilder descriptionBuilder = null)
         {
             int difference = 0;
             var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);

@@ -75,6 +75,37 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 sessionForRetrieval.Session.Lookup(identicalBodyDiffHeaders, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
         }
+
+
+        [Fact]
+        public void HeaderlessMatcherMatchesHeaderlessRequest()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void HeaderlessMatcherMatchesDifferentHeadersRequest()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void HeaderlessMatcherMatchesIdenticalHeadersRequest()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void HeaderlessMatcherThrowsOnDiffBody()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void HeaderlessMatcherThrowsOnDiffUri()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

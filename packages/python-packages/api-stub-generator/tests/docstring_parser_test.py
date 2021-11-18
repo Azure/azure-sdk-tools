@@ -208,3 +208,12 @@ class TestDocstringParser:
             "name3": "str"
         })
         self._test_return_type(docstring_type_with_quotes, "list[str]")
+    
+    def test_defaults(self):
+        parser = DocstringParser(docstring_multi_complex_type)
+        # the docstring parser adds "..." for keyword-arguments
+        # to signify they are optional
+        assert parser.default_for("country_hint") == "..."
+        # for "everything else" we don't set a default from the docstring
+        # instead we will seek the default from the signature inspection
+        assert parser.default_for("documents") is None

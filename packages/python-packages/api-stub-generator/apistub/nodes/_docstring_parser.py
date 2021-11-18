@@ -142,3 +142,11 @@ class DocstringParser:
             self.kw_args.get(name, None)
         )
         return arg.argtype if arg else arg
+
+    def default_for(self, name):
+        arg = (
+            self.ivars.get(name, None) or
+            self.pos_args.get(name, None) or
+            self.kw_args.get(name, None)
+        )
+        return arg.default if arg else arg

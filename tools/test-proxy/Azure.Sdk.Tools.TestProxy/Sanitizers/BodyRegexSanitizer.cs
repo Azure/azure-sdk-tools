@@ -36,7 +36,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {
-            //TODO: how much of a risk is this to recordings?
             return Encoding.UTF8.GetBytes(StringSanitizer.SanitizeValue(Encoding.UTF8.GetString(body), _newValue, _regexValue, _groupForReplace));
         }
     }

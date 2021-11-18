@@ -59,15 +59,16 @@ class DocstringParser:
             return (arg, True)
         elif keyword in docstring_type_keywords:
             arg = self._arg_for_type(label, keyword)
-            arg.argtype = self._extract_type(line1, line2)
+            if arg:
+                arg.argtype = self._extract_type(line1, line2)
 
     def _arg_for_type(self, name, keyword) -> ArgType:
         if keyword == "type":
-            return self.pos_args[name]
+            return self.pos_args.get(name, None)
         elif keyword == "vartype":
-            return self.ivars[name]
+            return self.ivars.get(name, None)
         elif keyword == "paramtype":
-            return self.kw_args[name]
+            return self.kw_args.get(name, None)
         else:
             logging.error(f"Unexpected keyword {keyword}.")
             return None

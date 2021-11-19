@@ -41,6 +41,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = statusCode;
                 response.ContentType = "application/json;";
 
+                if(e is TestRecordingMismatchException)
+                {
+                    response.Headers.Add("x-request-mismatch", "true");
+                }
+                
                 var bodyObj = new
                 {
                     Message = e.Message,

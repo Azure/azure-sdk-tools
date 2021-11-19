@@ -9,9 +9,10 @@
     "prepack": "npm run build"
   },
   "bin": {
-    "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
-    "hlc-code-gen": "./dist/generateCodesInLocalCLI.js",
-    "hlc-code-gen-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+    "changelog-tool": "./dist/changelogTool.js",
+    "hlc-code-gen": "./dist/hlcCodeGenCli.js",
+    "hlc-code-gen-for-pipeline": "./dist/hlcCodegenForPipelineCli.js",
+    "rlc-code-gen": "./dist/llcCodegenAutomationCLI.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

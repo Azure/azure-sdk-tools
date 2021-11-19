@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {generateSdkAutomatically, OutputPackageInfo} from "./codegenGenerationCore/codegenCore";
+import {generateSdkAutomatically, OutputPackageInfo} from "./hlc/hlcCore";
 
 const shell = require('shelljs');
 const fs = require('fs');

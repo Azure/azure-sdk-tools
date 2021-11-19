@@ -277,8 +277,10 @@ export class Coordinator {
 
             let ret = _ret
             if (typeof ret === 'object') {
-                // simplified paging
-                ret = lodash.omit(ret, 'nextLink')
+                if (!Array.isArray(ret)) {
+                    // simplified paging
+                    ret = lodash.omit(ret, 'nextLink')
+                }
 
                 // simplified LRO
                 ret = replacePropertyValue('provisioningState', 'Succeeded', ret)

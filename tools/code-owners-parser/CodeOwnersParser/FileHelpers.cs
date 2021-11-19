@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             Uri uri = new Uri(fileOrUri, UriKind.Absolute);
             if (uri.Scheme.ToLowerInvariant() != "https")
             {
-                throw new ArgumentException("Cannot download off non-https uris");
+                throw new ArgumentException(string.Format("Cannot download off non-https uris, path: {0}", fileOrUri));
             }
 
             // try to download it.

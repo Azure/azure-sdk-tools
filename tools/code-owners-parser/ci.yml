@@ -35,3 +35,4 @@ extends:
           arguments: >
             -TargetDirectory "sdk"
             -CodeOwnerFileLocation "$(System.DefaultWorkingDirectory)/tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/CODEOWNERS"
+            -Test

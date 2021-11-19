@@ -33,6 +33,4 @@ extends:
           pwsh: true
           filePath: eng/common/scripts/get-codeowners.ps1
           arguments: >
-            -TargetDirectory "sdk"
-            -CodeOwnerFileLocation "$(System.DefaultWorkingDirectory)/tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/CODEOWNERS"
             -Test

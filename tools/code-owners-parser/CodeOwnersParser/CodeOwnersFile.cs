@@ -10,16 +10,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public static List<CodeOwnerEntry> ParseFile(string filePathOrUrl)
         {
             string content;
-            Colorizer.Write("Retrieving file content from [Yellow!{0}]... ", filePathOrUrl);
             content = FileHelpers.GetFileContents(filePathOrUrl);
-            Colorizer.WriteLine("[Green!Done]");
 
             return ParseContent(content);
         }
 
         public static List<CodeOwnerEntry> ParseContent(string fileContent)
         {
-            Colorizer.Write("Parsing CODEOWNERS table... ");
             List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
             string line;
 
@@ -65,11 +62,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
                 }
             }
-            Colorizer.WriteLine("[Green!Done]");
             return entries;
         }
 
-        public static List<string> ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
+        public static CodeOwnerEntry ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
         {
             var codeOwnerEntries = ParseFile(codeOwnersFilePathOrUrl);
             // Normalize the start and end of the paths by trimming slash
@@ -84,7 +80,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 // for our current scenarios but in the future might need to support globs
                 if (targetPath.StartsWith(codeOwnerPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    return codeOwnerEntries[i].Owners;
+                    return codeOwnerEntries[i];
                 }
             }
 

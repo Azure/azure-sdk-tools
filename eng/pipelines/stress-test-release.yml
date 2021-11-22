@@ -11,7 +11,7 @@ parameters:
     default: prod
   - name: ClusterGroup
     type: string
-    default: rg-stress-test-cluster-prod
+    default: rg-stress-cluster-prod
   - name: TestRepository
     displayName: Stress Test Repository
     type: string

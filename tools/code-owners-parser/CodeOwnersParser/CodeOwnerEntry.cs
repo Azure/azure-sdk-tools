@@ -145,19 +145,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         private static bool IsGitHubUserAlias(string alias)
         {
             var userUriStub = $"users/{alias}";
-            try
+            var response = client.GetAsync(userUriStub);
+            if (response.Result.IsSuccessStatusCode)
             {
-                var response = client.GetAsync(userUriStub);
-                if (response.Result.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                return false;
+                return true;
             }
-            catch
-            {
-                throw;
-            }
+            return false;
         }
     }
 }

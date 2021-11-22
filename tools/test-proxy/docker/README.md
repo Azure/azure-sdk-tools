@@ -24,15 +24,15 @@ docker build . -t test-proxy
 Start locally using:
 
 ```docker
-docker run -p 5000:5000 -p 5001:5001 -v <yourvolume>:/etc/testproxy -t test-proxy 
+docker run -p 5000:5000 -p 5001:5001 -v <yourvolume>:/srv/testproxy/ -t test-proxy
 ```
 
-Generated files will be within `/etc/testproxy/` inside the docker image. Providing a volume as shown above is necessary if you want to propogate these recordings onto your local file system.
+Generated files will be within `/srv/testproxy/` inside the docker image. Providing a volume as shown above is necessary if you want to propogate these recordings onto your local file system.
 
-If you _don't_ provide a volume bound to `/etc/testproxy`, it's not actually the end of the world. Use `docker cp` to grab those files into your host system.
+If you _don't_ provide a volume bound to `/srv/testproxy/`, it's not actually the end of the world. Use `docker cp` to grab those files into your host system.
 
 ```docker
-docker cp <containerid>:/etc/testproxy/ <target local path local path>
+docker cp <containerid>:/srv/testproxy/ <target local path local path>
 ```
 
 ### Windows Container

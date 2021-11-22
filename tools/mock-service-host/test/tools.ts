@@ -39,22 +39,6 @@ export function mockDefaultResponse(): VirtualServerResponse {
     return new VirtualServerResponse('500', createErrorBody(500, 'Default Response'))
 }
 
-export function storeAndCompare(
-    pair: RequestResponsePair,
-    response: VirtualServerResponse,
-    path: string
-) {
-    const expected = lodash.cloneDeep(pair)
-    pair.liveResponse.statusCode = response.statusCode
-    pair.liveResponse.body = response.body
-    pair.liveResponse.headers = response.headers
-
-    const newFile = path + '.new'
-    fs.writeFileSync(newFile, JSON.stringify(pair, null, 2)) // save new response for trouble shooting
-    assert.deepStrictEqual(pair, expected)
-    fs.unlinkSync(newFile) // remove the new file if pass the assert
-}
-
 export function createLiveRequestForCreateRG(sub = 'randomSub', rg = 'randomRG'): LiveRequest {
     return {
         url: `/subscriptions/${sub}/resourceGroups/${rg}`,

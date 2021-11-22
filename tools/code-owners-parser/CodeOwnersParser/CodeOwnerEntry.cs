@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             Owners.RemoveAll(r => IsTeamAlias(r));
         }
 
-        private static bool IsTeamAlias(string alias)
+        private static bool IsGitHubUserAlias(string alias)
         {
             var userUriStub = $"users/{alias}";
             try

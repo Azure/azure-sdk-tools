@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -18,6 +19,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public const string ServiceLabelMoniker = "ServiceLabel";
         public const string MissingFolder = "#/<NotInRepo>/";
 
+        private static readonly HttpClient client = new HttpClient();
+       
         public string PathExpression { get; set; } = "";
 
         public bool ContainsWildcard => PathExpression.Contains("*");
@@ -129,6 +132,25 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             // remove the path from the string.
             return line.Substring(ownerStartPosition);
+        }
+
+        public void FilterOutNonUserAliases()
+        {
+            client.BaseAddress = new Uri("https://api.github.com/");
+            client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            Owners.RemoveAll(r => !IsGitHubUserAlias(r));
+        }
+
+        private static bool IsGitHubUserAlias(string alias)
+        {
+            var userUriStub = $"users/{alias}";
+            var response = client.GetAsync(userUriStub);
+            if (response.Result.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

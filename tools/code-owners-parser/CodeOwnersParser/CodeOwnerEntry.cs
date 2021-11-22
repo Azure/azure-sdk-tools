@@ -142,20 +142,21 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             Owners.RemoveAll(r => IsTeamAlias(r));
         }
 
-        private static bool IsTeamAlias(string uriStub)
+        private static bool IsTeamAlias(string alias)
         {
+            var userUriStub = $"users/{alias}";
             try
             {
-                var response = client.GetAsync(uriStub);
+                var response = client.GetAsync(userUriStub);
                 if (response.Result.IsSuccessStatusCode)
                 {
-                    return true;
+                    return false;
                 }
-                return false;
+                return true;
             }
             catch
             {
-                Console.WriteLine($"Http call {uriStub} to failed.");
+                Console.WriteLine($"Http call {userUriStub} to failed.");
                 throw;
             }
         }

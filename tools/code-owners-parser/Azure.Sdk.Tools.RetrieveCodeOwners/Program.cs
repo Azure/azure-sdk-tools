@@ -11,13 +11,13 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         /// </summary>
         /// <param name="codeOwnerFilePath">The path of CODEOWNERS file in repo</param>
         /// <param name="targetDirectory">The directory whose information is to be retrieved</param>
-        /// <param name="filterTeamAlias">The directory whose information is to be retrieved</param>
+        /// <param name="filterTeamAlias">The option to filter out code owner team alias.</param>
         /// <returns>Exit code</returns>
 
         public static int Main(
             string codeOwnerFilePath,
             string targetDirectory,
-            bool filterTeamAlias
+            bool filterTeamAlias = false
             )
         {
             var target = targetDirectory.ToLower().Trim();
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                 }
                 if (filterTeamAlias)
                 {
-
+                    codeOwnerEntry.FilterOutTeamAlias();
                 }
                 var codeOwnerJson = JsonSerializer.Serialize<CodeOwnerEntry>(codeOwnerEntry, new JsonSerializerOptions { WriteIndented = true });
                 Console.WriteLine(codeOwnerJson);

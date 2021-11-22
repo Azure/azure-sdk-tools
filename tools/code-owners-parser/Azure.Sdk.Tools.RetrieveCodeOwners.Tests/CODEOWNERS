@@ -24,6 +24,9 @@
 # PRLabel: %label
 /sdk/eventhubs/ @person7 @person8
 
+# This is for testing non user aliases case.
+/sdk/testUser/ @Azure/azure-sdk-teams 
+
 # Example for service that does not have the code in the repo but wants issues to be labeled
 # Notice the use of the moniker /<NotInRepo>/
 # ServiceLabel: %label %Service Attention

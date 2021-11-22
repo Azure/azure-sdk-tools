@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             client.BaseAddress = new Uri("https://api.github.com/");
             client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            Owners.RemoveAll(r => IsTeamAlias(r));
+            Owners.RemoveAll(r => !IsGitHubUserAlias(r));
         }
 
         private static bool IsGitHubUserAlias(string alias)
@@ -150,13 +150,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 var response = client.GetAsync(userUriStub);
                 if (response.Result.IsSuccessStatusCode)
                 {
-                    return false;
+                    return true;
                 }
-                return true;
+                return false;
             }
             catch
             {
-                Console.WriteLine($"Http call {userUriStub} to failed.");
                 throw;
             }
         }

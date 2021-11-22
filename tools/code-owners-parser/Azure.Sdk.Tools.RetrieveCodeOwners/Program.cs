@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         /// </summary>
         /// <param name="codeOwnerFilePath">The path of CODEOWNERS file in repo</param>
         /// <param name="targetDirectory">The directory whose information is to be retrieved</param>
-        /// <param name="filterTeamAlias">The option to filter out code owner team alias.</param>
+        /// <param name="filterOutNonUserAliases">The option to filter out code owner team alias.</param>
         /// <returns>Exit code</returns>
 
         public static int Main(
@@ -28,9 +28,9 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
                     Console.Error.WriteLine(String.Format("We cannot find any matching code owners from the target path {0}", targetDirectory));
                     return 1;
                 }
-                if (filterTeamAlias)
+                if (filterOutNonUserAliases)
                 {
-                    codeOwnerEntry.FilterOutTeamAlias();
+                    codeOwnerEntry.FilterOutNonUserAliases();
                 }
                 var codeOwnerJson = JsonSerializer.Serialize<CodeOwnerEntry>(codeOwnerEntry, new JsonSerializerOptions { WriteIndented = true });
                 Console.WriteLine(codeOwnerJson);

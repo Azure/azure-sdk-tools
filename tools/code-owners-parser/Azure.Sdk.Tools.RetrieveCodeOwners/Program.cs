@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
         public static int Main(
             string codeOwnerFilePath,
             string targetDirectory,
-            bool filterTeamAlias = false
+            bool filterOutNonUserAliases = false
             )
         {
             var target = targetDirectory.ToLower().Trim();

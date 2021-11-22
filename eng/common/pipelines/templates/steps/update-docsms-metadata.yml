@@ -98,9 +98,9 @@ steps:
     BaseRepoBranch: $(TargetBranchName)
     BaseRepoOwner: ${{ parameters.TargetDocRepoOwner }}
     CommitMsg: "Update docs metadata"
-    ${{ if ${{parameters.UsingForkRepo}} }}:
+    ${{ if eq(${{parameters.UsingForkRepo}}, $true) }}:
       TargetRepoName: ${{ parameters.ForkRepoOwner }}
-    ${{ if not(${{parameters.UsingForkRepo}}) }}:
+    ${{ if ne(${{parameters.UsingForkRepo}}, $true) }}:
       TargetRepoName: ${{ parameters.TargetDocRepoName }}
     TargetRepoOwner: ${{ parameters.TargetDocRepoOwner }}
     WorkingDirectory: $(DocRepoLocation)

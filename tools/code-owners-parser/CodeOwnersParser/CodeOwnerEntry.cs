@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return line.Substring(ownerStartPosition);
         }
 
-        public void FilterOutTeamAlias()
+        public void FilterOutNonUserAliases()
         {
             client.BaseAddress = new Uri("https://api.github.com/");
             client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));

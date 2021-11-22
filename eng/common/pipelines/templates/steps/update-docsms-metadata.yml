@@ -26,7 +26,12 @@ parameters:
     type: object
     default:
       - '**'
-
+  - name: UsingForkRepo
+    type: boolean
+    default: false
+  - name: ForkRepoOwner
+    type: string
+    default: azure-sdk
 steps:
 - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml
 
@@ -47,9 +52,13 @@ steps:
 # exist, create it
 - ${{ if eq(parameters.DailyDocsBuild, 'true') }}:
   - template: /eng/common/pipelines/templates/steps/set-daily-docs-branch-name.yml
-
+  
   - pwsh: |
       $ErrorActionPreference = "Continue"
+      # Add remote fork repo
+      if (${{parameter.UsingForkRepo}}) {
+        git remote add azure-sdk https://github.com/${{ parameters.ForkRepoOwner }}/${{ parameters.TargetDocRepoName }}
+      }
       $RemoteName = "origin"
       $BranchName = "$(TargetBranchName)"
       # Fetch and checkout remote branch if it already exists otherwise create a new branch.
@@ -89,7 +98,10 @@ steps:
     BaseRepoBranch: $(TargetBranchName)
     BaseRepoOwner: ${{ parameters.TargetDocRepoOwner }}
     CommitMsg: "Update docs metadata"
-    TargetRepoName: ${{ parameters.TargetDocRepoName }}
+    ${{ if ${{parameters.UsingForkRepo}} }}:
+      TargetRepoName: ${{ parameters.ForkRepoOwner }}
+    ${{ if not(${{parameters.UsingForkRepo}}) }}:
+      TargetRepoName: ${{ parameters.TargetDocRepoName }}
     TargetRepoOwner: ${{ parameters.TargetDocRepoOwner }}
     WorkingDirectory: $(DocRepoLocation)
     ScriptDirectory: ${{ parameters.WorkingDirectory }}/${{ parameters.ScriptDirectory }}

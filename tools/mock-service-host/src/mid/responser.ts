@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 import * as fs from 'fs'
 import * as path from 'path'
+import { AjvSchemaValidator } from 'oav/dist/lib/swaggerValidator/ajvSchemaValidator'
 import { Config } from '../common/config'
 import { ExampleNotFound, ExampleNotMatch } from '../common/errors'
 import { Headers, ParameterType, SWAGGER_ENCODING, useREF } from '../common/constants'
@@ -8,9 +9,13 @@ import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { MockerCache, PayloadCache } from 'oav/dist/lib/generator/exampleCache'
 import { Operation, SwaggerExample, SwaggerSpec } from 'oav/dist/lib/swagger/swaggerTypes'
+import { TransformContext, getTransformContext } from 'oav/dist/lib/transform/context'
+import { applyGlobalTransformers, applySpecTransformers } from 'oav/dist/lib/transform/transformer'
+import { discriminatorTransformer } from 'oav/dist/lib/transform/discriminatorTransformer'
 import { injectable } from 'inversify'
 import { inversifyGetInstance } from 'oav/dist/lib/inversifyUtils'
 import { isNullOrUndefined } from '../common/utils'
+import { resolveNestedDefinitionTransformer } from 'oav/dist/lib/transform/resolveNestedDefinitionTransformer'
 import SwaggerMocker from './oav/swaggerMocker'
 
 export interface SwaggerExampleParameter {
@@ -30,12 +35,18 @@ export class ResponseGenerator {
     private mockerCache: MockerCache
     private payloadCache: PayloadCache
     private swaggerMocker: SwaggerMocker
+    public readonly transformContext: TransformContext
 
     constructor() {
         this.jsonLoader = inversifyGetInstance(JsonLoader, {})
         this.mockerCache = new MockerCache()
         this.payloadCache = new PayloadCache()
         this.swaggerMocker = new SwaggerMocker(this.jsonLoader, this.mockerCache, this.payloadCache)
+        const schemaValidator = new AjvSchemaValidator(this.jsonLoader)
+        this.transformContext = getTransformContext(this.jsonLoader, schemaValidator, [
+            resolveNestedDefinitionTransformer,
+            discriminatorTransformer
+        ])
     }
 
     private getSpecItem(spec: any, operationId: string): SpecItem | undefined {
@@ -147,6 +158,9 @@ export class ResponseGenerator {
     public async generate(operation: Operation, config: Config, liveRequest: LiveRequest) {
         const specFile = this.getSpecFileByOperation(operation, config)
         const spec = (await (this.jsonLoader.load(specFile) as unknown)) as SwaggerSpec
+        applySpecTransformers(spec, this.transformContext)
+        applyGlobalTransformers(this.transformContext)
+
         const specItem = this.getSpecItem(spec, operation.operationId as string)
         if (!specItem) {
             throw Error(`operation ${operation.operationId} can't be found in ${specFile}`)

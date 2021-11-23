@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/mock-service-host",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Azure Mock Service Host",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "tsc && npm run copyfiles",
     "copyfiles": "copyfiles -a \"./test/testData/**/*.json\" ./dist",
     "unit-test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
+    "unittest-update": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --updateSnapshot --config ./jest.unittest.config.js",
     "test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --runInBand",
     "eslint-fix": "eslint . --ext .ts --ignore-pattern node_modules/ --ignore-pattern dist/ --fix",
     "eslint": "eslint . --ext .ts --ignore-pattern node_modules/ --ignore-pattern dist/ --quiet",

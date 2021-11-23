@@ -80,7 +80,7 @@ export default class SwaggerMocker {
                 }
             }
             // get(list)
-            if (responses[key]?.body?.value?.length) {
+            if (Array.isArray(responses[key]?.body?.value) && responses[key]?.body?.value?.length) {
                 responses[key]?.body?.value?.forEach((item: any) => {
                     if (item.id) {
                         const resourceName = item.name || 'resourceName'
@@ -369,7 +369,10 @@ export default class SwaggerMocker {
             example = this.mocker.mock(definitionSpec, objName, arrItem)
         } else {
             /** type === number or integer  */
-            example = example ? example : this.mocker.mock(definitionSpec, objName)
+            example =
+                example && typeof example !== 'object'
+                    ? example
+                    : this.mocker.mock(definitionSpec, objName)
         }
         // return value for primary type: string, number, integer, boolean
         // "aaaa"

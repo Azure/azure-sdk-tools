@@ -49,6 +49,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void TestGetHeader()
+        {
+
+        }
+
+        public void TestGetHeaderThrowsOnMissingHeader()
+        {
+
+        }
+
+        [Fact]
         public void TestResetAfterAddition()
         {
             // arrange

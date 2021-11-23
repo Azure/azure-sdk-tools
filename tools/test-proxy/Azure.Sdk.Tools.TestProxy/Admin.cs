@@ -22,18 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public Admin(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpPost]
-        public void StartSession()
-        {
-            // so far, nothing necessary here
-        }
-
-        [HttpPost]
-        public void StopSession()
-        {
-            // so far, nothing necessary here
-        }
-
-        [HttpPost]
         public void Reset()
         {
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -160,11 +148,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 return Activator.CreateInstance(t, arg_list.ToArray());
             }
-            catch(Exception e)
+            catch
             {
-                e.Data.Add("Attempted Type", String.Format("Requested type {0} is not not recognized.", typePrefix + name));
-
-                throw;
+                throw new HttpException(HttpStatusCode.BadRequest, String.Format("Requested type {0} is not not recognized.", typePrefix + name));
             }
         }
 

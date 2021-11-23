@@ -23,6 +23,49 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// </summary>
     public class AdminFunctionalityTests
     {
+        public async void TestAddSanitizerThrowsOnInvalidAbstractionId()
+        {
+            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            //var httpContext = new DefaultHttpContext();
+            //httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
+            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
+            //httpContext.Request.ContentLength = 92;
+
+            //var controller = new Admin(testRecordingHandler)
+            //{
+            //    ControllerContext = new ControllerContext()
+            //    {
+            //        HttpContext = httpContext
+            //    }
+            //};
+            //testRecordingHandler.Sanitizers.Clear();
+
+            //var assertion = await Assert.ThrowsAsync<HttpException>(
+            //   async () => await controller.AddSanitizer()
+            //);
+            //assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        public async void TestAddSanitizerThrowsOnEmptyAbstractionId()
+        {
+        }
+
+        public async void TestAddTransformThrowsOnInvalidAbstractionId()
+        {
+        }
+
+        public async void TestAddTransformThrowsOnEmptyAbstractionId()
+        {
+        }
+
+        public async void TestSetMatcherThrowsOnInvalidAbstractionId()
+        {
+        }
+
+        public async void TestSetMatcherThrowsOnEmptyAbstractionId()
+        {
+        }
+
         [Fact]
         public async Task TestSetMatcher()
         {

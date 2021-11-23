@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// 
     /// The testing of the actual functionality of each of these concepts should take place in SanitizerTests, TransformTests, etc.
     /// </summary>
-    public class AdminFunctionalityTests
+    public class AdminTests
     {
         public async void TestAddSanitizerThrowsOnInvalidAbstractionId()
         {

@@ -34,7 +34,8 @@ RUN \
     # Run script to import certificate
     && chmod +x $CERT_FOLDER/$CERT_IMPORT_SH \
     && $CERT_FOLDER/$CERT_IMPORT_SH \
-    && rm $CERT_FOLDER/$CERT_IMPORT_SH
+    && rm $CERT_FOLDER/$CERT_IMPORT_SH \
+    && mkdir -p /srv/testproxy
 
 EXPOSE 5000 5001
 
@@ -42,4 +43,4 @@ WORKDIR /proxyserver
 
 COPY --from=build /proxyserver .
 
-ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]
+ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy"]

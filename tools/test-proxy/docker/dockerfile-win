@@ -34,7 +34,7 @@ USER ContainerAdministrator
 
 # while it may seem a bit strange to use "etc" on a windows container. We are mirroring
 # the methodology from the primary container, which is linux.
-RUN mkdir certwork & mkdir etc & cd etc & mkdir testproxy
+RUN mkdir certwork & mkdir srv & cd srv & mkdir testproxy
 ADD docker_build/dotnet-devcert.pfx certwork
 
 # we still need to import this certificate to ensure it's available to all users. there is _something_ gnarly going on that purely having the cert 
@@ -51,4 +51,4 @@ COPY --from=build_env /proxyserver .
 EXPOSE 5001
 EXPOSE 5000
 
-ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/etc/testproxy"]
+ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy/"]

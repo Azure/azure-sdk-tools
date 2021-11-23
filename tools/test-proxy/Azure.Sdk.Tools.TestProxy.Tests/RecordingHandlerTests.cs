@@ -251,13 +251,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
-            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request_wrong.json");
+            var recordingPath = "Test.RecordEntries/oauth_request_wrong.json";
+            var pathToRecording = Path.Combine(currentPath, recordingPath);
 
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            await Assert.ThrowsAsync<FileNotFoundException>(
+            var resultingException = await Assert.ThrowsAsync<HttpException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
+            Assert.Contains($"{recordingPath} does not exist", resultingException.Message);
         }
 
         [Fact]
@@ -269,9 +271,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingHandler = new RecordingHandler(currentPath);
 
-            await Assert.ThrowsAsync<FileNotFoundException>(
+            var resultingException = await Assert.ThrowsAsync<HttpException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
+            Assert.Contains($"{pathToRecording} does not exist", resultingException.Message);
         }
 
         [Fact]

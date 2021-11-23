@@ -27,9 +27,10 @@ extends:
     ToolDirectory: tools/code-owners-parser
     DotNetCoreVersion: 5.0.301
     TestPostSteps:
-      # This is a simple test for placeholder. Will replace the test with get-codeowners.ps1 in future.
-      - pwsh: |
-          $output = dotnet run --project "tools\code-owners-parser\Azure.Sdk.Tools.RetrieveCodeOwners\Azure.Sdk.Tools.RetrieveCodeOwners.csproj" `
-                      --code-owner-file-path "$(Build.SourcesDirectory)/tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/CODEOWNERS" --target-directory "sdk"
-          $output | ConvertFrom-Json
+      - task: PowerShell@2
         displayName: Test on code owner tool output
+        inputs:
+          pwsh: true
+          filePath: eng/common/scripts/get-codeowners.ps1
+          arguments: >
+            -Test

@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 }
             }
 
-            return null;
+            return new CodeOwnerEntry();
         }
 
         private static string NormalizeLine(string line)

@@ -35,7 +35,3 @@ extends:
           filePath: eng/common/scripts/get-codeowners.ps1
           arguments: >
             -Test
-      - pwsh: |
-          dotnet test
-        displayName: Test on code owner tool
-        workingDirectory: tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests

@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             new object[] { "/sd", true, new List<string>() }
         };
         [TestCaseSource("_sourceLists")]
-        public void testOnNormalOuput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
+        public void TestOnNormalOuput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
         {
             
             using (var consoleOutput = new ConsoleOutput())
@@ -34,12 +34,12 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         }
 
         [Test]
-        public void testOnError()
+        public void TestOnError()
         {
             Assert.AreEqual(1, Program.Main("PathNotExist", "sdk"));
         }
 
-        private void testExpectResult(List<string> expectReturn, string output)
+        private void TestExpectResult(List<string> expectReturn, string output)
         {
             CodeOwnerEntry codeOwnerEntry = JsonSerializer.Deserialize<CodeOwnerEntry>(output);
             List<string> actualReturn = codeOwnerEntry.Owners;

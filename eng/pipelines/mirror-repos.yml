@@ -86,6 +86,10 @@ jobs:
             TargetRepos:
               azure-sdk/vcpkg:
 
+          Azure/azure-docs-sdk-java:
+            TargetRepos: 
+              azure-sdk/azure-docs-sdk-java:
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)

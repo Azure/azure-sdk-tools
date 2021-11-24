@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             {
                 Program.Main(codeOwnerFilePath, targetDirectory, includeUserAliasesOnly);
                 var output = consoleOutput.GetOuput();
-                testExpectResult(expectedReturn, output);
+                TestExpectResult(expectedReturn, output);
                 consoleOutput.Dispose();
             }
         }

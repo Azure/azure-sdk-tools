@@ -29,9 +29,13 @@ extends:
     DotNetCoreVersion: 5.0.301
     TestPostSteps:
       - task: PowerShell@2
-        displayName: Test on code owner tool output
+        displayName: Test on code owner script
         inputs:
           pwsh: true
           filePath: eng/common/scripts/get-codeowners.ps1
           arguments: >
             -Test
+      - pwsh: |
+          dotnet test
+        displayName: Test on code owner tool
+        workingDirectory: tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests

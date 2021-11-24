@@ -8,9 +8,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     {
         public static string GetFileContents(string fileOrUri)
         {
-            if (File.Exists(fileOrUri))
+            string fullPath = (new DirectoryInfo(fileOrUri)).FullName;
+            if (File.Exists(fullPath))
             {
-                return File.ReadAllText(fileOrUri);
+                return File.ReadAllText(fullPath);
             }
 
             // try to parse it as an Uri

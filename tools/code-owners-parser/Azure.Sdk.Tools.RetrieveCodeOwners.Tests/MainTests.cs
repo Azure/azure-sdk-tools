@@ -5,6 +5,9 @@ using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
 {
+    /// <summary>
+    /// This is test of console app Azure.Sdk.Tools.RetrieveCodeOwners.
+    /// </summary>
     [TestFixture]
     public class MainTests
     {
@@ -20,6 +23,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             new object[] { "/sdk/testUser/", true, new List<string> { "azure-sdk" } },
             new object[] { "/sd", true, new List<string>() }
         };
+
         [TestCaseSource("_sourceLists")]
         public void TestOnNormalOuput(string targetDirectory, bool includeUserAliasesOnly, List<string> expectedReturn)
         {
@@ -28,7 +32,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             {
                 Program.Main(codeOwnerFilePath, targetDirectory, includeUserAliasesOnly);
                 var output = consoleOutput.GetOuput();
-                testExpectResult(expectedReturn, output);
+                TestExpectResult(expectedReturn, output);
                 consoleOutput.Dispose();
             }
         }

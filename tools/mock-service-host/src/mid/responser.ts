@@ -50,7 +50,10 @@ export class ResponseGenerator {
     }
 
     private getSpecItem(spec: any, operationId: string): SpecItem | undefined {
-        const paths = spec.paths
+        let paths = spec.paths || {}
+        if (spec['x-ms-paths']) {
+            paths = { ...paths, ...spec['x-ms-paths'] }
+        }
         for (const pathName of Object.keys(paths)) {
             for (const methodName of Object.keys(paths[pathName])) {
                 if (paths[pathName][methodName].operationId === operationId) {

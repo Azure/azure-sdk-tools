@@ -285,23 +285,19 @@ export class Coordinator {
                 // simplified LRO
                 ret = replacePropertyValue('provisioningState', 'Succeeded', ret)
 
-                if (
-                    code !== HttpStatusCode.OK &&
-                    code !== HttpStatusCode.NO_CONTENT &&
-                    code < 300
-                ) {
-                    res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
-                    res.setHeader('Retry-After', 1)
-                }
-                if (req.query?.[LRO_CALLBACK] === 'true') {
-                    ret.status = 'Succeeded'
-                }
-
                 //set name
                 const path = getPath(getPureUrl(req.url))
                 ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
                     return typeof v === 'string' && v.match(/^a+$/) !== null
                 })
+            }
+
+            if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
+                res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
+                res.setHeader('Retry-After', 1)
+            }
+            if (req.query?.[LRO_CALLBACK] === 'true') {
+                ret.status = 'Succeeded'
             }
 
             res.set(code, ret)

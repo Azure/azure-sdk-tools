@@ -286,7 +286,8 @@ export default class SwaggerMocker {
         example: any,
         visited: Set<string>,
         isRequest: boolean,
-        discriminatorValue: string | undefined = undefined
+        discriminatorValue: string | undefined = undefined,
+        useCache = false
     ) {
         if (!schema || typeof schema !== 'object') {
             logger.warn(`invalid schema.`)
@@ -297,7 +298,7 @@ export default class SwaggerMocker {
             return undefined
         }
         const cache = this.getCache(schema)
-        if (cache) {
+        if (useCache && cache) {
             return cache
         }
         const definitionSpec = this.getDefSpec(schema, visited)
@@ -400,7 +401,9 @@ export default class SwaggerMocker {
         if (requiredProperties && requiredProperties.length > 0) {
             cacheItem.required = requiredProperties
         }
-        this.mockCache.checkAndCache(schema, cacheItem)
+        if (useCache) {
+            this.mockCache.checkAndCache(schema, cacheItem)
+        }
         return cacheItem
     }
 

@@ -72,7 +72,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%v\n %v", err, string(debug.Stack()))
 		}
-		log.Printf("ProximityPlacementGroup.ID: %s\n", *proximityPlacementGroupsCreateOrUpdateResponse.ID)
+		log.Printf("Response result: %#v\n", proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsCreateOrUpdateResult)
 
 		var respBody interface{}
 		byteBody, err := response.MarshalJSON()
@@ -171,7 +171,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%v\n %v", err, string(debug.Stack()))
 		}
-		log.Printf("VirtualMachine.ID: %s\n", *response.ID)
+		log.Printf("Response result: %#v\n", response.VirtualMachinesCreateOrUpdateResult)
 	}
 }
 

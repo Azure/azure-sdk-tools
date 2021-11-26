@@ -39,7 +39,7 @@ func ExampleSSHPublicKeysClient_Create() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("SSHPublicKeyResource.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.SSHPublicKeysCreateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
@@ -57,7 +57,7 @@ func ExampleSSHPublicKeysClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("SSHPublicKeyResource.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.SSHPublicKeysGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
@@ -75,5 +75,5 @@ func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("SSHPublicKeyGenerateKeyPairResult.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.SSHPublicKeysGenerateKeyPairResult)
 }

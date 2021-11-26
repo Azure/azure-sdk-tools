@@ -30,7 +30,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("OSVersion.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSVersionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
@@ -48,7 +48,7 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("OSVersion.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -68,7 +68,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("OSFamily.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSFamilyResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
@@ -86,7 +86,7 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("OSFamily.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

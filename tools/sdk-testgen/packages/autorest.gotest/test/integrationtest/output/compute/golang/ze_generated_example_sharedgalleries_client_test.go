@@ -29,6 +29,9 @@ func ExampleSharedGalleriesClient_List() {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf("Pager result: %#v\n", v)
+		}
 	}
 }
 
@@ -40,11 +43,12 @@ func ExampleSharedGalleriesClient_Get() {
 	}
 	ctx := context.Background()
 	client := golang.NewSharedGalleriesClient("<subscription-id>", cred, nil)
-	_, err = client.Get(ctx,
+	res, err := client.Get(ctx,
 		"<location>",
 		"<gallery-unique-name>",
 		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.SharedGalleriesGetResult)
 }

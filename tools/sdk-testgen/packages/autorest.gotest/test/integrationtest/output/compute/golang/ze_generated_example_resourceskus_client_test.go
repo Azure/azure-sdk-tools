@@ -28,5 +28,8 @@ func ExampleResourceSKUsClient_List() {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf("Pager result: %#v\n", v)
+		}
 	}
 }

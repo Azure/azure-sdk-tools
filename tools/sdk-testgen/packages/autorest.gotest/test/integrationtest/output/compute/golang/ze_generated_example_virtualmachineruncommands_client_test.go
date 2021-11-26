@@ -33,7 +33,7 @@ func ExampleVirtualMachineRunCommandsClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("RunCommandDocumentBase.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -53,7 +53,7 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RunCommandDocument.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
@@ -99,7 +99,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
@@ -129,7 +129,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
@@ -170,7 +170,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsGetByVirtualMachineResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
@@ -189,7 +189,7 @@ func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("VirtualMachineRunCommand.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

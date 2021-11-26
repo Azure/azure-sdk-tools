@@ -67,27 +67,15 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		{%- if example.nonNilReturns.length > 0 %}
 		for _, v := range pager.PageResponse().Value {
-			{%- for variable in example.nonNilReturns %}
-			{%- set p = variable.split(".").slice(1).join(".") %}
-			fmt.Printf("{{variable}}: %s\n", *v.{{p}})
-			if v.{{p}} == nil {
-				t.Fatal("{{variable}} should not be nil!")
-			}
-			{%- endfor %}
+            t.Logf("Pager result: %#v\n", v)
 		}
-		{%- endif %}
 	}
 	{%- else %}
 	client.{{example.opName}}({{example.methodParametersOutput}})
 	{%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	{%- for variable in example.nonNilReturns %}
-	if res.{{variable}} == nil {
-		t.Fatal("{{variable}} should not be nil!")
-	}
-	{%- endfor %}
+	t.Logf("Response result: %#v\n", res.{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result)
 	{%- endif %}
 {%- if not loop.last %}
 

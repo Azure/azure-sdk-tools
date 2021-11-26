@@ -22,7 +22,6 @@ export class GoExampleModel extends ExampleModel {
     clientParametersOutput: string;
     clientParametersPlaceholderOutput: string;
     returnInfo: string[];
-    nonNilReturns: string[];
     checkResponse: boolean;
     pollerType: string;
     pageableType: string;

@@ -12,18 +12,23 @@ const date = yyyy + '-' + mm + '-' + dd;
 
 export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
-    const content = `## ${newVersion} (${date})
+    const content = `# Release History
+    
+## ${newVersion} (${date})
 
-  - Initial Release
+- Initial Release
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
     changeContextFile(packageFolderPath, newVersion);
+    changeClientFile(packageFolderPath, newVersion);
 }
 
 export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, nextPackageVersion: string) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const content = `## ${nextPackageVersion} (${date})
+    const content = `# Release History
+    
+## ${nextPackageVersion} (${date})
 
 This is the first preview for the new version of the \`${packageJsonData.name}\` package that follows the new [guidelines for TypeScript SDKs](https://azure.github.io/azure-sdk/typescript_introduction.html) for Azure services.
 
@@ -41,6 +46,7 @@ Please note that this version has breaking changes, all of which were made after
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, nextPackageVersion);
     changeContextFile(packageFolderPath, nextPackageVersion)
+    changeClientFile(packageFolderPath, nextPackageVersion)
 }
 
 function changePackageJSON(packageFolderPath: string, packageVersion: string) {
@@ -49,6 +55,7 @@ function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
 }
 
+// This function will be deleted in the future
 function changeContextFile(packageFolderPath: string, packageVersion: string) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const packageName = packageJsonData.name.replace("@azure/", "");
@@ -62,18 +69,34 @@ function changeContextFile(packageFolderPath: string, packageVersion: string) {
     })
 }
 
+function changeClientFile(packageFolderPath: string, packageVersion: string) {
+    const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
+    const packageName = packageJsonData.name.replace("@azure/", "");
+    const files: string[] = fs.readdirSync(path.join(packageFolderPath, 'src'));
+    files.forEach(file => {
+        if (file.endsWith('Client.ts')) {
+            const data: string = fs.readFileSync(path.join(packageFolderPath, 'src', file), 'utf8');
+            const result = data.replace(/const packageDetails = `azsdk-js-[0-9a-z-]+\/[0-9.a-z-]+`;/g, 'const packageDetails = `azsdk-js-' + packageName + '/' + packageVersion + '`;');
+            fs.writeFileSync(path.join(packageFolderPath, 'src', file), result, 'utf8');
+        }
+    })
+}
+
 export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog) {
     const originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-    const modifiedChangelogContent = `## ${packageVersion} (${date})
+    const modifiedChangelogContent = `# Release History
+    
+## ${packageVersion} (${date})
     
 ${changeLog.displayChangeLog()}
     
-${originalChangeLogContent}`;
+${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
 
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});
 
     changePackageJSON(packageFolderPath, packageVersion);
-    changeContextFile(packageFolderPath, packageVersion)
+    changeContextFile(packageFolderPath, packageVersion);
+    changeClientFile(packageFolderPath, packageVersion);
 }
 
 

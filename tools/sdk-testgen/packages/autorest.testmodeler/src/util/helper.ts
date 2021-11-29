@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as jp from 'jsonpath';
+import * as lodash from 'lodash';
 import * as path from 'path';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
 import { Host, Session } from '@autorest/extension-base';
@@ -218,5 +219,19 @@ export class Helper {
                 .filter((x) => x.length >= prefix.length && x.slice(0, prefix.length).join(',') === prefix.join(','))
                 .map((x) => x.slice(prefix.length)),
         );
+    }
+
+    public static uncapitalizeObjectKeys(obj) {
+        if (typeof obj !== 'object' || Array.isArray(obj)) {
+            return obj;
+        }
+
+        return lodash.transform(obj, (result, val, key) => {
+            if (typeof key === 'string') {
+                result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
+            } else {
+                result[key] = val;
+            }
+        });
     }
 }

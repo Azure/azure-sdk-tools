@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "1. uncapitalize example parameter names. 2. skip non-json examples",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

@@ -31031,10 +31031,10 @@ operationGroups:
           x-ms-examples:
             Create a proximity placement group.:
               parameters:
-                api-version: '2021-03-01'
-                parameters:
+                Parameters:
                   tags:
                     additionalProp1: string
+                api-version: '2021-03-01'
                 proximityPlacementGroupName: myProximityPlacementGroup
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
@@ -42856,8 +42856,7 @@ operationGroups:
           x-ms-examples:
             Create a custom-image scale set from an unmanaged generalized os image.:
               parameters:
-                api-version: '2021-03-01'
-                parameters:
+                Parameters:
                   location: westus
                   properties:
                     overprovision: true
@@ -42890,6 +42889,7 @@ operationGroups:
                     name: Standard_D1_v2
                     capacity: 3
                     tier: Standard
+                api-version: '2021-03-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'

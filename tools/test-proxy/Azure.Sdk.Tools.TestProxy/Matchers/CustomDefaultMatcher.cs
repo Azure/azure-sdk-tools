@@ -18,9 +18,9 @@ namespace Azure.Sdk.Tools.TestProxy.Matchers
         /// <param name="nonDefaultHeaderExclusions">A comma separated list of additional headers that should be excluded during matching.</param>
         public CustomDefaultMatcher(bool compareBodies = true, string nonDefaultHeaderExclusions = "") : base(compareBodies: compareBodies)
         {
-            foreach(var exclusion in nonDefaultHeaderExclusions.Split(",").Where(x => !String.IsNullOrEmpty(x.Trim())))
+            foreach(var exclusion in nonDefaultHeaderExclusions.Split(",").Where(x => !string.IsNullOrEmpty(x.Trim())))
             {
-                if (!ExcludeHeaders.TryGetValue(exclusion, out var _)){
+                if (!ExcludeHeaders.Contains(exclusion)){
                     ExcludeHeaders.Add(exclusion);
                 }
             }

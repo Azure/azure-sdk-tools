@@ -321,6 +321,7 @@ export class TestCodeModeler {
         this.codeModel.operationGroups.forEach((operationGroup) => {
             operationGroup.operations.forEach((operation) => {
                 const operationId = operationGroup.language.default.name + '_' + operation.language.default.name;
+                // TODO: skip non-json http bodys for now. Need to validate example type with body schema to support it.
                 const mediaTypes = operation.requests[0]?.protocol?.http?.mediaTypes;
                 if (mediaTypes && mediaTypes.indexOf('application/json') < 0) {
                     console.warn(`genMockTests: MediaTypes ${operation.requests[0]?.protocol?.http?.mediaTypes} in operation ${operationId} is not supported!`);

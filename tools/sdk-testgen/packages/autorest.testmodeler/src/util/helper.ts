@@ -226,7 +226,7 @@ export class Helper {
             return obj;
         }
 
-        return lodash.transform(obj, function (result, val, key) {
+        return lodash.transform(obj, (result, val, key) => {
             if (typeof key === 'string') {
                 result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
             } else {

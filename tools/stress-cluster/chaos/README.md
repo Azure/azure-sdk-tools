@@ -47,9 +47,11 @@ To access the cluster, run the following. These commands are unnecessary for str
 for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
 running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
 
-```
+```bash
+# Authenticate to Azure
 az login
-# Download the kubeconfig for the cluster
+
+# Download the kubeconfig for the cluster (creates a 'context' named 'stress-test')
 az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
 ```
 
@@ -69,24 +71,23 @@ The Dockerfile for your image should contain your test code/artifacts. See [docs
 
 To create any resources in the cluster, you will need to create a namespace for them to live in:
 
-```
+```bash
+# For simplicity of tracking use your user alias as the name of your namespace.
 kubectl create namespace <your alias>
 ```
 
-You will then need to build and push your container image to a registry the cluster has access to:
+You will then need to build and push your container image to an Azure Container Registry the cluster has access to:
 
+```bash
+# Get the default container registry for our Kubernetes cluster.
+az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
+# Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
 ```
-# get registry in powershell
-$registry = az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" -o json
-$registryName = ($registry | ConvertFrom-Json).name
 
-# get registry in bash
-registry=$(az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" -o json)
-registryName=$(echo $registry | jq -r '.[].name')
-
+```bash
 # Build and push development image to stress test cluster registry
-docker build . -t $registryName.azurecr.io/<your name>/<test job image name>:<version>
-docker push $registryName.azurecr.io/<your name>/<test job image name>:<version>
+docker build . -t "<registry server host name from above>/<your alias>/<test job image name>:<version>"
+docker push "<registry server host name from above>/<your username>/<test job image name>:<version>"
 ```
 
 To define a job that utilizes your test, create a file called testjob.yaml, including the below contents (with fields replaced):

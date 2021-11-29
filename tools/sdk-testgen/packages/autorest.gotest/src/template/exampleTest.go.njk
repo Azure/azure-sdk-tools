@@ -47,23 +47,15 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-		{%- if example.nonNilReturns.length > 0 %}
 		for _, v := range pager.PageResponse().Value {
-			{%- for variable in example.nonNilReturns %}
-			{%- set p = variable.split(".").slice(1).join(".") %}
-			log.Printf("{{variable}}: %s\n", *v.{{p}})
-			{%- endfor %}
+            log.Printf("Pager result: %#v\n", v)
 		}
-		{%- endif %}
 	}
 	{%- else %}
 	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	{%- for variable in example.nonNilReturns %}
-	{%- set p = variable.split(".").slice(1).join(".") %}
-	log.Printf("{{variable}}: %s\n", *res.{{p}})
-	{%- endfor %}
+	log.Printf("Response result: %#v\n", res.{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result)
 	{%- endif %}
 }
 {% endif %}

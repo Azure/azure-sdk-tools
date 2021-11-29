@@ -43,7 +43,7 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("AvailabilitySet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.AvailabilitySetsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
@@ -60,7 +60,7 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("AvailabilitySet.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

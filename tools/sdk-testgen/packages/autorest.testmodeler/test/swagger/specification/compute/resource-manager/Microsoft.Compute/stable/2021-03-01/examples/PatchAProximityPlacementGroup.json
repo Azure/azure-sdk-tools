@@ -4,7 +4,7 @@
     "resourceGroupName": "myResourceGroup",
     "api-version": "2021-03-01",
     "proximityPlacementGroupName": "myProximityPlacementGroup",
-    "parameters": {
+    "Parameters": {
       "tags": {
         "additionalProp1": "string"
       }

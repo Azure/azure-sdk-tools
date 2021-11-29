@@ -44,7 +44,7 @@ func ExampleRestorePointsClient_BeginCreate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RestorePoint.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.RestorePointsCreateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json
@@ -63,5 +63,5 @@ func ExampleRestorePointsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RestorePoint.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.RestorePointsGetResult)
 }

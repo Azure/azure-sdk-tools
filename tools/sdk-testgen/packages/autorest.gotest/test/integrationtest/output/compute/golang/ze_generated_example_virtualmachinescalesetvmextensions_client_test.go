@@ -73,7 +73,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
@@ -108,7 +108,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
@@ -151,7 +151,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSetVMExtension.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
@@ -162,7 +162,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
-	_, err = client.List(ctx,
+	res, err := client.List(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
@@ -170,4 +170,5 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsListResult)
 }

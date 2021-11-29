@@ -271,7 +271,7 @@ export class TestCodeModeler {
     }
 
     private createExampleModel(exampleExtension: ExampleExtension, exampleName, operation: Operation, operationGroup: OperationGroup): ExampleModel {
-        const parametersInExample = exampleExtension.parameters;
+        const parametersInExample = Helper.uncapitalizeObjectKeys(exampleExtension.parameters);
         const exampleModel = new ExampleModel(exampleName, operation, operationGroup);
         exampleModel.originalFile = Helper.getExampleRelativePath(exampleExtension['x-ms-original-file']);
         for (const parameter of Helper.allParameters(operation)) {
@@ -320,7 +320,14 @@ export class TestCodeModeler {
         this.initiateTests();
         this.codeModel.operationGroups.forEach((operationGroup) => {
             operationGroup.operations.forEach((operation) => {
-                const exampleGroup = new ExampleGroup(operationGroup, operation, operationGroup.language.default.name + '_' + operation.language.default.name);
+                const operationId = operationGroup.language.default.name + '_' + operation.language.default.name;
+                // TODO: skip non-json http bodys for now. Need to validate example type with body schema to support it.
+                const mediaTypes = operation.requests[0]?.protocol?.http?.mediaTypes;
+                if (mediaTypes && mediaTypes.indexOf('application/json') < 0) {
+                    console.warn(`genMockTests: MediaTypes ${operation.requests[0]?.protocol?.http?.mediaTypes} in operation ${operationId} is not supported!`);
+                    return;
+                }
+                const exampleGroup = new ExampleGroup(operationGroup, operation, operationId);
                 for (const [exampleName, rawValue] of Object.entries(operation.extensions?.[ExtensionName.xMsExamples] ?? {})) {
                     if (!this.testConfig.isDisabledExample(exampleName)) {
                         exampleGroup.examples.push(this.createExampleModel(rawValue as ExampleExtension, exampleName, operation, operationGroup));

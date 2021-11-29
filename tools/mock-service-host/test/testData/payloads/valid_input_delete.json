@@ -18,7 +18,6 @@
   },
   "liveResponse": {
     "statusCode": "200",
-    "headers": {},
-    "body": {}
+    "headers": {}
   }
 }

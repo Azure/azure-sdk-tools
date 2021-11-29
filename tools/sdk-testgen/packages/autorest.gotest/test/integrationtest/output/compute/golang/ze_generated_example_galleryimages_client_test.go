@@ -53,7 +53,7 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryImage.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryImagesCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
@@ -88,7 +88,7 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryImage.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryImagesUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
@@ -107,7 +107,7 @@ func ExampleGalleryImagesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryImage.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryImagesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
@@ -148,7 +148,7 @@ func ExampleGalleryImagesClient_ListByGallery() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("GalleryImage.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

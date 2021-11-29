@@ -61,21 +61,8 @@ export class MockTestDataRender extends BaseDataRender {
             }
             example.pageableType = example.operation.language.go.pageableType.name;
         }
-        const allReturnProperties = Helper.getAllProperties(responseSchema as any, true);
-        example.nonNilReturns = [];
-        for (const variable of ['ID']) {
-            for (const p of allReturnProperties) {
-                if (this.getLanguageName(p) === variable) {
-                    const elementName = this.getLanguageName(responseSchema);
-                    if (responseSchema.language.go.discriminatorInterface !== undefined) {
-                        example.nonNilReturns.push(`${responseSchema.language.go.discriminatorInterface}.Get${elementName}().${variable}`);
-                    } else {
-                        example.nonNilReturns.push(`${elementName}.${variable}`);
-                    }
-                }
-            }
-        }
-        example.checkResponse = example.nonNilReturns.length > 0;
+
+        example.checkResponse = responseSchema !== undefined;
     }
 
     // get GO code of all parameters for one operation invoke

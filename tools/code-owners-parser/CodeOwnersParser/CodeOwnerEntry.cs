@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public const string ServiceLabelMoniker = "ServiceLabel";
         public const string MissingFolder = "#/<NotInRepo>/";
 
-        private static readonly HttpClient client = new HttpClient();
+        private static HttpClient client;
        
         public string PathExpression { get; set; } = "";
 
@@ -134,14 +134,34 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             return line.Substring(ownerStartPosition);
         }
 
+        /// <summary>
+        /// Remove all code owners which are not github alias.
+        /// </summary>
         public void FilterOutNonUserAliases()
         {
-            client.BaseAddress = new Uri("https://api.github.com/");
-            client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            InitializeHttpClient();
             Owners.RemoveAll(r => !IsGitHubUserAlias(r));
         }
 
+        /// <summary>
+        /// Initialize singleton HttpClient for Github API calls.
+        /// </summary>
+        private static void InitializeHttpClient()
+        {
+            if (client == null)
+            {
+                client = new HttpClient();
+                client.BaseAddress = new Uri("https://api.github.com/");
+                client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+        }
+
+        /// <summary>
+        /// Helper method to check if it is valid github alias.
+        /// </summary>
+        /// <param name="alias">Alias string.</param>
+        /// <returns>True if it is a github alias, Otherwise false.</returns>
         private static bool IsGitHubUserAlias(string alias)
         {
             var userUriStub = $"users/{alias}";

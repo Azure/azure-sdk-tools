@@ -81,7 +81,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("CloudService.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
@@ -108,7 +108,7 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("CloudService.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServicesUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
@@ -147,7 +147,7 @@ func ExampleCloudServicesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("CloudService.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServicesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
@@ -158,13 +158,14 @@ func ExampleCloudServicesClient_GetInstanceView() {
 	}
 	ctx := context.Background()
 	client := golang.NewCloudServicesClient("<subscription-id>", cred, nil)
-	_, err = client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.CloudServicesGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
@@ -181,7 +182,7 @@ func ExampleCloudServicesClient_ListAll() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("CloudService.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -201,7 +202,7 @@ func ExampleCloudServicesClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("CloudService.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

@@ -25,8 +25,7 @@ import {
     createLiveRequestForDeleteApiManagementService,
     genFakeResponses,
     mockDefaultResponse,
-    mockRequest,
-    storeAndCompare
+    mockRequest
 } from '../tools'
 
 const statefulProfile = {
@@ -102,7 +101,7 @@ describe('generateResponse()', () => {
         const response = mockDefaultResponse()
         await coordinator.generateResponse(request, response, statelessProfile)
         assert.strictEqual(response.statusCode, pair.liveResponse.statusCode)
-        storeAndCompare(pair, response, fileName)
+        expect(response).toMatchSnapshot()
         pair.liveResponse.body = response.body
         pair.liveResponse.headers = response.headers
         pair.liveResponse.headers['Content-Type'] = 'application/json'
@@ -134,7 +133,7 @@ describe('generateResponse()', () => {
         const response = mockDefaultResponse()
         await coordinator.generateResponse(request, response, statelessProfile)
         assert.strictEqual(response.statusCode, pair.liveResponse.statusCode)
-        storeAndCompare(pair, response, fileName)
+        expect(response).toMatchSnapshot()
     })
 
     it('special rule of GET locations', async () => {
@@ -150,7 +149,7 @@ describe('generateResponse()', () => {
         const response = mockDefaultResponse()
         await coordinator.generateResponse(request, response, statelessProfile)
         assert.strictEqual(response.statusCode, pair.liveResponse.statusCode)
-        storeAndCompare(pair, response, fileName)
+        expect(response).toMatchSnapshot()
         if (!pair.liveResponse.headers) pair.liveResponse.headers = {}
         const result = await coordinator.Validator.validateLiveRequestResponse(pair)
         assert.strictEqual(result.requestValidationResult.isSuccessful, undefined) // since this is a special URI not handled by oav

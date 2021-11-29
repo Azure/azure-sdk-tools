@@ -66,7 +66,7 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
@@ -114,7 +114,7 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
@@ -134,7 +134,7 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("GalleryApplicationVersion.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
@@ -177,7 +177,7 @@ func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("GalleryApplicationVersion.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

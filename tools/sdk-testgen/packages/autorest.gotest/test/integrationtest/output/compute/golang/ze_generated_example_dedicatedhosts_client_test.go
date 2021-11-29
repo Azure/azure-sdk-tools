@@ -52,7 +52,7 @@ func ExampleDedicatedHostsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DedicatedHost.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DedicatedHostsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
@@ -71,5 +71,5 @@ func ExampleDedicatedHostsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DedicatedHost.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DedicatedHostsGetResult)
 }

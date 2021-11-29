@@ -8,24 +8,23 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     {
         public static string GetFileContents(string fileOrUri)
         {
-            if (File.Exists(fileOrUri))
-            {
-                return File.ReadAllText(fileOrUri);
-            }
-
             // try to parse it as an Uri
-            Uri uri = new Uri(fileOrUri, UriKind.Absolute);
-            if (uri.Scheme.ToLowerInvariant() != "https")
+            if (fileOrUri.StartsWith("https"))
             {
-                throw new ArgumentException(string.Format("Cannot download off non-https uris, path: {0}", fileOrUri));
+                using (HttpClient client = new HttpClient())
+                {
+                    HttpResponseMessage response = client.GetAsync(fileOrUri).ConfigureAwait(false).GetAwaiter().GetResult();
+                    return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                }
             }
 
-            // try to download it.
-            using (HttpClient client = new HttpClient())
+            string fullPath = Path.GetFullPath(fileOrUri);
+            if (File.Exists(fullPath))
             {
-                HttpResponseMessage response = client.GetAsync(fileOrUri).ConfigureAwait(false).GetAwaiter().GetResult();
-                return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                return File.ReadAllText(fullPath);
             }
+
+            throw new ArgumentException($"The path provided is neither local path nor https link. Please check your path: {fileOrUri} resolved to {fullPath}.");
         }
     }
 }

@@ -62,7 +62,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
@@ -93,7 +93,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
@@ -136,7 +136,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineRunCommand.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
@@ -156,7 +156,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("VirtualMachineRunCommand.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

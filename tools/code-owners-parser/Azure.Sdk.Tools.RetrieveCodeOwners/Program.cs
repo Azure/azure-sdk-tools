@@ -4,7 +4,10 @@ using Azure.Sdk.Tools.CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners
 {
-    class Program
+    /// <summary>
+    /// The tool command to retrieve code owners.
+    /// </summary>
+    public class Program
     {
         /// <summary>
         /// Retrieves codeowners information for specific section of the repo
@@ -23,11 +26,6 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners
             var target = targetDirectory.ToLower().Trim();
             try {
                 var codeOwnerEntry = CodeOwnersFile.ParseAndFindOwnersForClosestMatch(codeOwnerFilePath, target);
-                if (codeOwnerEntry == null)
-                {
-                    Console.Error.WriteLine(String.Format("We cannot find any matching code owners from the target path {0}", targetDirectory));
-                    return 1;
-                }
                 if (filterOutNonUserAliases)
                 {
                     codeOwnerEntry.FilterOutNonUserAliases();

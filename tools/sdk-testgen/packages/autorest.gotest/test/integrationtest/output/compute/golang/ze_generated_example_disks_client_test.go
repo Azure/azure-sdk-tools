@@ -50,7 +50,7 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Disk.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
@@ -78,7 +78,7 @@ func ExampleDisksClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Disk.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DisksUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
@@ -96,7 +96,7 @@ func ExampleDisksClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Disk.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DisksGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
@@ -114,7 +114,7 @@ func ExampleDisksClient_ListByResourceGroup() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("Disk.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -133,7 +133,7 @@ func ExampleDisksClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("Disk.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

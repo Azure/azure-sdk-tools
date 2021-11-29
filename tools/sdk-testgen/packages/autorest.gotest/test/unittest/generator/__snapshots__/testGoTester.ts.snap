@@ -38,7 +38,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsCreateResult)
 }
 
 // x-ms-original-file: 
@@ -57,7 +57,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsGetResult)
 }
 
 // x-ms-original-file: 
@@ -76,7 +76,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Extension.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsUpdateResult)
 }
 
 // x-ms-original-file: 
@@ -117,7 +117,7 @@ SkipToken: nil,
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf(\\"Extension.ID: %s\\\\n\\", *v.ID)
+            log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -162,7 +162,7 @@ MaxPageSize: nil,
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *v.ID)
+            log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -181,7 +181,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsGetResult)
 }
 
 ",
@@ -220,7 +220,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsGetResult)
 }
 
 // x-ms-original-file: 
@@ -247,7 +247,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: 
@@ -271,7 +271,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *res.ID)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsUpdateResult)
 }
 
 // x-ms-original-file: 
@@ -307,7 +307,7 @@ SkipToken: nil,
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+            log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -329,7 +329,7 @@ SkipToken: nil,
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
+            log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -363,7 +363,7 @@ func ExampleLocationsClient_CheckNameAvailability() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewLocationsClient(\\"<subscription-id>\\", cred, nil)
-	_, err = client.CheckNameAvailability(ctx,
+	res, err := client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"<name>\\"),
 Type: to.StringPtr(\\"<type>\\"),
@@ -372,6 +372,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
 }
 
 ",
@@ -407,6 +408,9 @@ func ExampleOperationsClient_List() {
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+            log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -465,9 +469,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Extension.ID == nil {
-		t.Fatal(\\"Extension.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsCreateResult)
 }
 
 func TestExtensions_Get(t *testing.T) {
@@ -486,9 +488,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Extension.ID == nil {
-		t.Fatal(\\"Extension.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsGetResult)
 }
 
 func TestExtensions_Update(t *testing.T) {
@@ -507,9 +507,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Extension.ID == nil {
-		t.Fatal(\\"Extension.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsUpdateResult)
 }
 
 func TestExtensions_Delete(t *testing.T) {
@@ -550,10 +548,7 @@ SkipToken: nil,
 			t.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf(\\"Extension.ID: %s\\\\n\\", *v.ID)
-			if v.ID == nil {
-				t.Fatal(\\"Extension.ID should not be nil!\\")
-			}
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -577,10 +572,7 @@ MaxPageSize: nil,
 			t.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf(\\"FarmBeatsExtension.ID: %s\\\\n\\", *v.ID)
-			if v.ID == nil {
-				t.Fatal(\\"FarmBeatsExtension.ID should not be nil!\\")
-			}
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -599,9 +591,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.FarmBeatsExtension.ID == nil {
-		t.Fatal(\\"FarmBeatsExtension.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsGetResult)
 }
 
 func TestFarmBeatsModels_Get(t *testing.T) {
@@ -619,9 +609,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.FarmBeats.ID == nil {
-		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsGetResult)
 }
 
 func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
@@ -648,9 +636,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.FarmBeats.ID == nil {
-		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsCreateOrUpdateResult)
 }
 
 func TestFarmBeatsModels_Update(t *testing.T) {
@@ -674,9 +660,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.FarmBeats.ID == nil {
-		t.Fatal(\\"FarmBeats.ID should not be nil!\\")
-	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsUpdateResult)
 }
 
 func TestFarmBeatsModels_Delete(t *testing.T) {
@@ -712,10 +696,7 @@ SkipToken: nil,
 			t.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
-			if v.ID == nil {
-				t.Fatal(\\"FarmBeats.ID should not be nil!\\")
-			}
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -737,10 +718,7 @@ SkipToken: nil,
 			t.Fatalf(\\"failed to advance page: %v\\", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf(\\"FarmBeats.ID: %s\\\\n\\", *v.ID)
-			if v.ID == nil {
-				t.Fatal(\\"FarmBeats.ID should not be nil!\\")
-			}
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -753,7 +731,7 @@ func TestLocations_CheckNameAvailability(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	_, err := client.CheckNameAvailability(ctx,
+	res, err := client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"existingaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
@@ -762,10 +740,11 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
 
 
     // From example Locations_CheckNameAvailability_Available
-	_, err = client.CheckNameAvailability(ctx,
+	res, err = client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"newaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
@@ -774,6 +753,7 @@ nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
 }
 
 func TestOperations_List(t *testing.T) {
@@ -788,6 +768,9 @@ func TestOperations_List(t *testing.T) {
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf(\\"failed to advance page: %v\\", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
 		}
 	}
 }
@@ -908,7 +891,7 @@ func scenarioMicrosoftSignalrserviceSignalrSignalrCreateorupdat(t *testing.T) {
 	// From step SignalR_checknameAvailability
 			SignalRClient := armsignalr.NewSignalRClient(subscriptionId)
 	{
-			_, err = SignalRClient.CheckNameAvailability(ctx,
+			signalRCheckNameAvailabilityResponse, err := SignalRClient.CheckNameAvailability(ctx,
 location,
 &armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
 Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
@@ -918,6 +901,7 @@ Name: to.StringPtr(\\"my-signalr-service\\"),
 		if err != nil {
 			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
 		}
+        log.Printf(\\"Response result: %#v\\\\n\\", signalRCheckNameAvailabilityResponse.SignalRCheckNameAvailabilityResult)
 	}
 
     
@@ -1014,19 +998,20 @@ Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
 		if err != nil {
 			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
 		}
-		log.Printf(\\"SignalRResource.ID: %s\\\\n\\", *response.ID)
+        log.Printf(\\"Response result: %#v\\\\n\\", response.SignalRCreateOrUpdateResult)
 	}
 
     
 	// From step SignalR_ListKey
 	{
-			_, err = SignalRClient.ListKeys(ctx,
+			signalRListKeysResponse, err := SignalRClient.ListKeys(ctx,
 resourceGroupName,
 resourceName,
 nil)
 		if err != nil {
 			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
 		}
+        log.Printf(\\"Response result: %#v\\\\n\\", signalRListKeysResponse.SignalRListKeysResult)
 	}
 
     

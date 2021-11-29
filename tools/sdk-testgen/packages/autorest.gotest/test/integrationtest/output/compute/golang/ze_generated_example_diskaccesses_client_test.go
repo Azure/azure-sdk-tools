@@ -42,7 +42,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskAccess.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskAccessesCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
@@ -70,7 +70,7 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskAccess.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskAccessesUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
@@ -88,7 +88,7 @@ func ExampleDiskAccessesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskAccess.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskAccessesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
@@ -127,7 +127,7 @@ func ExampleDiskAccessesClient_ListByResourceGroup() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("DiskAccess.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -146,7 +146,7 @@ func ExampleDiskAccessesClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("DiskAccess.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -159,13 +159,14 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	}
 	ctx := context.Background()
 	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
-	_, err = client.GetPrivateLinkResources(ctx,
+	res, err := client.GetPrivateLinkResources(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
 		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.DiskAccessesGetPrivateLinkResourcesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
@@ -196,7 +197,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("PrivateEndpointConnection.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskAccessesUpdateAPrivateEndpointConnectionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
@@ -215,7 +216,7 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("PrivateEndpointConnection.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskAccessesGetAPrivateEndpointConnectionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
@@ -256,7 +257,7 @@ func ExampleDiskAccessesClient_ListPrivateEndpointConnections() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("PrivateEndpointConnection.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

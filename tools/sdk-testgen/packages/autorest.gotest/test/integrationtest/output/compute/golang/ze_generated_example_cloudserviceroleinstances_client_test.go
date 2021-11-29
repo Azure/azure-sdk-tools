@@ -55,7 +55,7 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RoleInstance.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
@@ -66,7 +66,7 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	}
 	ctx := context.Background()
 	client := golang.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
-	_, err = client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -74,6 +74,7 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
@@ -92,7 +93,7 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("RoleInstance.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

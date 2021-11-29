@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 15 Nov 2021 09:39:03 GMT and should not be manually modified.
+This log was last generated on Mon, 29 Nov 2021 06:10:09 GMT and should not be manually modified.
+
+## 1.1.3
+Mon, 29 Nov 2021 06:10:09 GMT
+
+### Patches
+
+- Replace incomplete response check with just log temporarily.
 
 ## 1.1.2
 Mon, 15 Nov 2021 09:39:03 GMT

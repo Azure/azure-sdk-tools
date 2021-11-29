@@ -51,7 +51,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
@@ -85,7 +85,7 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
@@ -103,7 +103,7 @@ func ExampleDiskEncryptionSetsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("DiskEncryptionSet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
@@ -142,7 +142,7 @@ func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("DiskEncryptionSet.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -161,7 +161,7 @@ func ExampleDiskEncryptionSetsClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("DiskEncryptionSet.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -180,6 +180,9 @@ func ExampleDiskEncryptionSetsClient_ListAssociatedResources() {
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

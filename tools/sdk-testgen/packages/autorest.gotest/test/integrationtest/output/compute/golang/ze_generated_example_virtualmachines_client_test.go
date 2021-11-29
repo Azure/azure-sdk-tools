@@ -33,7 +33,7 @@ func ExampleVirtualMachinesClient_ListByLocation() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("VirtualMachine.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -105,7 +105,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachine.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
@@ -179,7 +179,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachine.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
@@ -218,7 +218,7 @@ func ExampleVirtualMachinesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachine.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
@@ -229,13 +229,14 @@ func ExampleVirtualMachinesClient_InstanceView() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
-	_, err = client.InstanceView(ctx,
+	res, err := client.InstanceView(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
 		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
@@ -263,13 +264,14 @@ func ExampleVirtualMachinesClient_ListAvailableSizes() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
-	_, err = client.ListAvailableSizes(ctx,
+	res, err := client.ListAvailableSizes(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
 		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesListAvailableSizesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
@@ -325,13 +327,14 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachinesClient("<subscription-id>", cred, nil)
-	_, err = client.RetrieveBootDiagnosticsData(ctx,
+	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
 		&golang.VirtualMachinesRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesRetrieveBootDiagnosticsDataResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
@@ -366,10 +369,11 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesAssessPatchesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
@@ -397,10 +401,11 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesInstallPatchesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
@@ -421,8 +426,9 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachinesRunCommandResult)
 }

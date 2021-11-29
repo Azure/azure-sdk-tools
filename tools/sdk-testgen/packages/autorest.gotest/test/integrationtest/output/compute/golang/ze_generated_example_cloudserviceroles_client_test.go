@@ -31,7 +31,7 @@ func ExampleCloudServiceRolesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("CloudServiceRole.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.CloudServiceRolesGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
@@ -50,7 +50,7 @@ func ExampleCloudServiceRolesClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("CloudServiceRole.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

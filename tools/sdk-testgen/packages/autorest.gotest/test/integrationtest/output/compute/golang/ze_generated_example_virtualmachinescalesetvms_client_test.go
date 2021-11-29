@@ -56,7 +56,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSetVM.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
@@ -67,7 +67,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
-	_, err = client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
@@ -75,6 +75,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
@@ -85,7 +86,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	}
 	ctx := context.Background()
 	client := golang.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
-	_, err = client.RetrieveBootDiagnosticsData(ctx,
+	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
@@ -93,6 +94,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
@@ -134,8 +136,9 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRunCommandResult)
 }

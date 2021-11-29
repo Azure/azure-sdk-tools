@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "1.0.3",
+      "tag": "@autorest/testmodeler_v1.0.3",
+      "date": "Mon, 29 Nov 2021 06:10:09 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "1. uncapitalize example parameter names. 2. skip non-json examples"
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.2",
       "tag": "@autorest/testmodeler_v1.0.2",
       "date": "Mon, 15 Nov 2021 09:39:03 GMT",

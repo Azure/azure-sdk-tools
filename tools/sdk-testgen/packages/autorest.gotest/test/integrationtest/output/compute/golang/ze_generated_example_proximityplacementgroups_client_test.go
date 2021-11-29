@@ -39,7 +39,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("ProximityPlacementGroup.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
@@ -64,7 +64,7 @@ func ExampleProximityPlacementGroupsClient_Update() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("ProximityPlacementGroup.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
@@ -99,7 +99,7 @@ func ExampleProximityPlacementGroupsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("ProximityPlacementGroup.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
@@ -116,7 +116,7 @@ func ExampleProximityPlacementGroupsClient_ListBySubscription() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("ProximityPlacementGroup.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -136,7 +136,7 @@ func ExampleProximityPlacementGroupsClient_ListByResourceGroup() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("ProximityPlacementGroup.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

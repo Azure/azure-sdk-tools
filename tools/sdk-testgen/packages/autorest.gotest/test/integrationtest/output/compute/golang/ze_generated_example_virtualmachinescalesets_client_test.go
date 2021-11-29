@@ -33,7 +33,7 @@ func ExampleVirtualMachineScaleSetsClient_ListByLocation() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("VirtualMachineScaleSet.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -109,7 +109,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
@@ -148,5 +148,5 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("VirtualMachineScaleSet.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
 }

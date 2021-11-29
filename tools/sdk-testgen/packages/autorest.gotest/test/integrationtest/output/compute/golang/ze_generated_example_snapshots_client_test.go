@@ -49,7 +49,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Snapshot.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
@@ -67,7 +67,7 @@ func ExampleSnapshotsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Snapshot.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.SnapshotsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
@@ -85,7 +85,7 @@ func ExampleSnapshotsClient_ListByResourceGroup() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("Snapshot.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -104,7 +104,7 @@ func ExampleSnapshotsClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("Snapshot.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

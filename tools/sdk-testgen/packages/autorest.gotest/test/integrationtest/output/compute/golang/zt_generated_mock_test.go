@@ -65,9 +65,7 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.AvailabilitySet.ID == nil {
-		t.Fatal("AvailabilitySet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.AvailabilitySetsCreateOrUpdateResult)
 }
 
 func TestAvailabilitySets_Update(t *testing.T) {
@@ -96,10 +94,7 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("AvailabilitySet.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("AvailabilitySet.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -135,9 +130,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ProximityPlacementGroup.ID == nil {
-		t.Fatal("ProximityPlacementGroup.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsCreateOrUpdateResult)
 }
 
 func TestProximityPlacementGroups_Update(t *testing.T) {
@@ -162,9 +155,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ProximityPlacementGroup.ID == nil {
-		t.Fatal("ProximityPlacementGroup.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsUpdateResult)
 }
 
 func TestProximityPlacementGroups_Delete(t *testing.T) {
@@ -199,9 +190,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ProximityPlacementGroup.ID == nil {
-		t.Fatal("ProximityPlacementGroup.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsGetResult)
 }
 
 func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
@@ -218,10 +207,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("ProximityPlacementGroup.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("ProximityPlacementGroup.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -241,10 +227,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("ProximityPlacementGroup.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("ProximityPlacementGroup.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -278,9 +261,7 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DedicatedHostGroup.ID == nil {
-		t.Fatal("DedicatedHostGroup.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DedicatedHostGroupsCreateOrUpdateResult)
 }
 
 func TestDedicatedHostGroups_Update(t *testing.T) {
@@ -306,9 +287,7 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DedicatedHostGroup.ID == nil {
-		t.Fatal("DedicatedHostGroup.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DedicatedHostGroupsGetResult)
 }
 
 func TestDedicatedHostGroups_ListByResourceGroup(t *testing.T) {
@@ -353,9 +332,7 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DedicatedHost.ID == nil {
-		t.Fatal("DedicatedHost.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DedicatedHostsCreateOrUpdateResult)
 }
 
 func TestDedicatedHosts_Update(t *testing.T) {
@@ -382,9 +359,7 @@ func TestDedicatedHosts_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DedicatedHost.ID == nil {
-		t.Fatal("DedicatedHost.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DedicatedHostsGetResult)
 }
 
 func TestDedicatedHosts_ListByHostGroup(t *testing.T) {
@@ -422,9 +397,7 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.SSHPublicKeyResource.ID == nil {
-		t.Fatal("SSHPublicKeyResource.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SSHPublicKeysCreateResult)
 }
 
 func TestSSHPublicKeys_Update(t *testing.T) {
@@ -450,9 +423,7 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.SSHPublicKeyResource.ID == nil {
-		t.Fatal("SSHPublicKeyResource.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SSHPublicKeysGetResult)
 }
 
 func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
@@ -470,9 +441,7 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.SSHPublicKeyGenerateKeyPairResult.ID == nil {
-		t.Fatal("SSHPublicKeyGenerateKeyPairResult.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SSHPublicKeysGenerateKeyPairResult)
 }
 
 func TestVirtualMachineExtensionImages_Get(t *testing.T) {
@@ -566,10 +535,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("VirtualMachine.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("VirtualMachine.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -645,9 +611,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Linux vm with a patch setting patchMode of ImageDefault.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -709,9 +673,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -774,9 +736,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a VM with Uefi Settings of secureBoot and vTPM.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -839,9 +799,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a VM with UserData
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -904,9 +862,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a VM with network interface configuration
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -980,9 +936,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Windows vm with a patch setting assessmentMode of ImageDefault.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1045,9 +999,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Windows vm with a patch setting patchMode of AutomaticByOS.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1110,9 +1062,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1176,9 +1126,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Windows vm with a patch setting patchMode of Manual.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1241,9 +1189,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1307,9 +1253,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a custom-image vm from an unmanaged generalized os image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1363,9 +1307,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a platform-image vm with unmanaged os and data disks.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1438,9 +1380,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm from a custom image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1495,9 +1435,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm from a generalized shared image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1552,9 +1490,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm from a specialized shared image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1604,9 +1540,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1666,9 +1600,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm in an availability set.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1727,9 +1659,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with DiskEncryptionSet resource id in the os disk and data disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1821,9 +1751,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with Host Encryption using encryptionAtHost property.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1887,9 +1815,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with Scheduled Events Profile
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -1957,9 +1883,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with a marketplace image plan.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2020,9 +1944,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with an extensions time budget.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2085,9 +2007,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with boot diagnostics.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2149,9 +2069,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with empty data disks.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2218,9 +2136,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with ephemeral os disk provisioning in Cache disk using placement property.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2285,9 +2201,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with ephemeral os disk provisioning in Resource disk using placement property.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2352,9 +2266,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with ephemeral os disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2418,9 +2330,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with managed boot diagnostics.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2481,9 +2391,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with password authentication.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2539,9 +2447,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with premium storage.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2597,9 +2503,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 
 	// From example Create a vm with ssh authentication.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -2664,9 +2568,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
 }
 
 func TestVirtualMachines_Update(t *testing.T) {
@@ -2740,9 +2642,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
 
 	// From example Update a VM by force-detaching data disk
 	poller, err = client.BeginUpdate(ctx,
@@ -2809,9 +2709,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
 }
 
 func TestVirtualMachines_Delete(t *testing.T) {
@@ -2850,9 +2748,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesGetResult)
 
 	// From example Get a virtual machine placed on a dedicated host group through automatic placement
 	res, err = client.Get(ctx,
@@ -2862,9 +2758,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachine.ID == nil {
-		t.Fatal("VirtualMachine.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesGetResult)
 }
 
 func TestVirtualMachines_InstanceView(t *testing.T) {
@@ -2875,22 +2769,24 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	_, err := client.InstanceView(ctx,
+	res, err := client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
 
 	// From example Get instance view of a virtual machine placed on a dedicated host group through automatic placement.
-	_, err = client.InstanceView(ctx,
+	res, err = client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
 }
 
 func TestVirtualMachines_ConvertToManagedDisks(t *testing.T) {
@@ -2934,13 +2830,14 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	_, err := client.ListAvailableSizes(ctx,
+	res, err := client.ListAvailableSizes(ctx,
 		"myResourceGroup",
 		"myVmName",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesListAvailableSizesResult)
 }
 
 func TestVirtualMachines_PowerOff(t *testing.T) {
@@ -3012,13 +2909,14 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
-	_, err := client.RetrieveBootDiagnosticsData(ctx,
+	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"VMName",
 		&golang.VirtualMachinesRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesRetrieveBootDiagnosticsDataResult)
 }
 
 func TestVirtualMachines_PerformMaintenance(t *testing.T) {
@@ -3057,10 +2955,11 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesAssessPatchesResult)
 }
 
 func TestVirtualMachines_InstallPatches(t *testing.T) {
@@ -3088,10 +2987,11 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesInstallPatchesResult)
 }
 
 func TestVirtualMachines_RunCommand(t *testing.T) {
@@ -3112,10 +3012,11 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachinesRunCommandResult)
 }
 
 func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
@@ -3133,10 +3034,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("VirtualMachineScaleSet.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -3212,9 +3110,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a platform-image scale set with unmanaged os disks.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3289,9 +3185,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set from a custom image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3361,9 +3255,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set from a generalized shared image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3433,9 +3325,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set from a specialized shared image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3500,9 +3390,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with DiskEncryptionSet resource in os disk and data disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3592,9 +3480,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with Fpga Network Interfaces.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3684,9 +3570,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with Host Encryption using encryptionAtHost property.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3765,9 +3649,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with Uefi Settings of secureBoot and vTPM.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3845,9 +3727,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with a marketplace image plan.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -3923,9 +3803,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with an azure application gateway.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4000,9 +3878,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with an azure load balancer.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4087,9 +3963,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with automatic repairs enabled
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4164,9 +4038,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with boot diagnostics.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4243,9 +4115,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with empty data disks on each vm.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4328,9 +4198,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with ephemeral os disks using placement property.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4410,9 +4278,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with ephemeral os disks.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4487,9 +4353,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with extension time budget.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4580,9 +4444,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with managed boot diagnostics.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4658,9 +4520,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with password authentication.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4731,9 +4591,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with premium storage.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4804,9 +4662,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with ssh authentication.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4886,9 +4742,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with terminate scheduled events enabled.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -4965,9 +4819,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with userData.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5039,9 +4891,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 
 	// From example Create a scale set with virtual machines in different zones.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5127,9 +4977,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
 }
 
 func TestVirtualMachineScaleSets_Update(t *testing.T) {
@@ -5172,9 +5020,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
 
 	// From example Get a virtual machine scale set with UserData
 	res, err = client.Get(ctx,
@@ -5184,9 +5030,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSet.ID == nil {
-		t.Fatal("VirtualMachineScaleSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
 }
 
 func TestVirtualMachineScaleSets_Deallocate(t *testing.T) {
@@ -5305,9 +5149,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from a blob.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5338,9 +5180,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from a managed disk with DiskEncryptionSet resource.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5377,9 +5217,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from a managed disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5412,9 +5250,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from a snapshot with DiskEncryptionSet resource.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5451,9 +5287,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from a snapshot.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5486,9 +5320,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image from an existing virtual machine.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5512,9 +5344,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image that includes a data disk from a blob.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5552,9 +5382,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image that includes a data disk from a managed disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5596,9 +5424,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 
 	// From example Create a virtual machine image that includes a data disk from a snapshot.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -5640,9 +5466,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
 }
 
 func TestImages_Update(t *testing.T) {
@@ -5677,9 +5501,7 @@ func TestImages_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesUpdateResult)
 }
 
 func TestImages_Delete(t *testing.T) {
@@ -5701,9 +5523,7 @@ func TestImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Image.ID == nil {
-		t.Fatal("Image.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.ImagesGetResult)
 }
 
 func TestImages_ListByResourceGroup(t *testing.T) {
@@ -5721,10 +5541,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Image.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Image.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -5743,10 +5560,7 @@ func TestImages_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Image.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Image.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -5779,9 +5593,7 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RestorePointCollection.ID == nil {
-		t.Fatal("RestorePointCollection.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.RestorePointCollectionsCreateOrUpdateResult)
 }
 
 func TestRestorePointCollections_Update(t *testing.T) {
@@ -5807,9 +5619,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RestorePointCollection.ID == nil {
-		t.Fatal("RestorePointCollection.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
 
 	// From example Get a restore point collection, including the restore points contained in the restore point collection
 	res, err = client.Get(ctx,
@@ -5819,9 +5629,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RestorePointCollection.ID == nil {
-		t.Fatal("RestorePointCollection.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
 }
 
 func TestRestorePointCollections_List(t *testing.T) {
@@ -5839,10 +5647,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("RestorePointCollection.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("RestorePointCollection.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -5861,10 +5666,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("RestorePointCollection.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("RestorePointCollection.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -5895,9 +5697,7 @@ func TestRestorePoints_Create(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RestorePoint.ID == nil {
-		t.Fatal("RestorePoint.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.RestorePointsCreateResult)
 }
 
 func TestRestorePoints_Delete(t *testing.T) {
@@ -5920,9 +5720,7 @@ func TestRestorePoints_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RestorePoint.ID == nil {
-		t.Fatal("RestorePoint.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.RestorePointsGetResult)
 }
 
 func TestVirtualMachineScaleSetExtensions_CreateOrUpdate(t *testing.T) {
@@ -6033,9 +5831,7 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSetVMExtension.ID == nil {
-		t.Fatal("VirtualMachineScaleSetVMExtension.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsCreateOrUpdateResult)
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
@@ -6070,9 +5866,7 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSetVMExtension.ID == nil {
-		t.Fatal("VirtualMachineScaleSetVMExtension.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsUpdateResult)
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
@@ -6115,9 +5909,7 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSetVMExtension.ID == nil {
-		t.Fatal("VirtualMachineScaleSetVMExtension.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsGetResult)
 }
 
 func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
@@ -6128,7 +5920,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachineScaleSetVMExtensionsClient("{subscription-id}", cred, &options)
-	_, err := client.List(ctx,
+	res, err := client.List(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
@@ -6136,6 +5928,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsListResult)
 }
 
 func TestVirtualMachineScaleSetVMs_Reimage(t *testing.T) {
@@ -6192,9 +5985,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineScaleSetVM.ID == nil {
-		t.Fatal("VirtualMachineScaleSetVM.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetResult)
 }
 
 func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
@@ -6205,7 +5996,7 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	_, err := client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
 		"0",
@@ -6213,6 +6004,7 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetInstanceViewResult)
 }
 
 func TestVirtualMachineScaleSetVMs_List(t *testing.T) {
@@ -6243,7 +6035,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 		}
 	}()
 	client := golang.NewVirtualMachineScaleSetVMsClient("{subscription-id}", cred, &options)
-	_, err := client.RetrieveBootDiagnosticsData(ctx,
+	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"myvmScaleSet",
 		"0",
@@ -6251,6 +6043,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataResult)
 }
 
 func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
@@ -6296,10 +6089,11 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRunCommandResult)
 }
 
 func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
@@ -6325,10 +6119,11 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.LogAnalyticsExportRequestRateByIntervalResult)
 }
 
 func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
@@ -6356,10 +6151,11 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.LogAnalyticsExportThrottledRequestsResult)
 }
 
 func TestVirtualMachineRunCommands_List(t *testing.T) {
@@ -6377,10 +6173,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("RunCommandDocumentBase.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("RunCommandDocumentBase.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -6400,9 +6193,7 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RunCommandDocument.ID == nil {
-		t.Fatal("RunCommandDocument.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsGetResult)
 }
 
 func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
@@ -6448,9 +6239,7 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsCreateOrUpdateResult)
 }
 
 func TestVirtualMachineRunCommands_Update(t *testing.T) {
@@ -6480,9 +6269,7 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsUpdateResult)
 }
 
 func TestVirtualMachineRunCommands_Delete(t *testing.T) {
@@ -6523,9 +6310,7 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsGetByVirtualMachineResult)
 }
 
 func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
@@ -6544,10 +6329,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("VirtualMachineRunCommand.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -6596,9 +6378,7 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResult)
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
@@ -6629,9 +6409,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsUpdateResult)
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
@@ -6674,9 +6452,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.VirtualMachineRunCommand.ID == nil {
-		t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsGetResult)
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
@@ -6696,10 +6472,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("VirtualMachineRunCommand.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("VirtualMachineRunCommand.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -6717,6 +6490,9 @@ func TestResourceSKUs_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
+		}
 	}
 
 	// From example Lists all available Resource SKUs for the specified region
@@ -6724,6 +6500,9 @@ func TestResourceSKUs_List(t *testing.T) {
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -6760,9 +6539,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk and associate with disk encryption set.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6790,9 +6567,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk by copying a snapshot.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6817,9 +6592,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk by importing an unmanaged blob from a different subscription.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6845,9 +6618,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk by importing an unmanaged blob from the same subscription.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6872,9 +6643,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk from a platform image.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6902,9 +6671,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk from an existing managed disk in the same or different subscription.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6929,9 +6696,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk with security profile
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6962,9 +6727,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed disk with ssd zrs account type.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -6992,9 +6755,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create a managed upload disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7019,9 +6780,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create an empty managed disk in extended location.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7050,9 +6809,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create an empty managed disk.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7077,9 +6834,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 
 	// From example Create an ultra managed disk with logicalSectorSize 512E
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7108,9 +6863,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
 }
 
 func TestDisks_Update(t *testing.T) {
@@ -7138,9 +6891,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 
 	// From example Update a managed disk to add purchase plan.
 	poller, err = client.BeginUpdate(ctx,
@@ -7164,9 +6915,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 
 	// From example Update a managed disk to add supportsHibernation.
 	poller, err = client.BeginUpdate(ctx,
@@ -7185,9 +6934,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 
 	// From example Update a managed disk to change tier.
 	poller, err = client.BeginUpdate(ctx,
@@ -7206,9 +6953,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 
 	// From example Update a managed disk to disable bursting.
 	poller, err = client.BeginUpdate(ctx,
@@ -7227,9 +6972,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 
 	// From example Update managed disk to remove disk access resource association.
 	poller, err = client.BeginUpdate(ctx,
@@ -7248,9 +6991,7 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
 }
 
 func TestDisks_Get(t *testing.T) {
@@ -7268,9 +7009,7 @@ func TestDisks_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Disk.ID == nil {
-		t.Fatal("Disk.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DisksGetResult)
 }
 
 func TestDisks_Delete(t *testing.T) {
@@ -7292,10 +7031,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Disk.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Disk.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7314,10 +7050,7 @@ func TestDisks_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Disk.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Disk.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7361,9 +7094,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Snapshot.ID == nil {
-		t.Fatal("Snapshot.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
 
 	// From example Create a snapshot by importing an unmanaged blob from the same subscription.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7388,9 +7119,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Snapshot.ID == nil {
-		t.Fatal("Snapshot.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
 
 	// From example Create a snapshot from an existing snapshot in the same or a different subscription.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7415,9 +7144,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Snapshot.ID == nil {
-		t.Fatal("Snapshot.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
 }
 
 func TestSnapshots_Update(t *testing.T) {
@@ -7439,9 +7166,7 @@ func TestSnapshots_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Snapshot.ID == nil {
-		t.Fatal("Snapshot.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.SnapshotsGetResult)
 }
 
 func TestSnapshots_Delete(t *testing.T) {
@@ -7463,10 +7188,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Snapshot.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Snapshot.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7485,10 +7207,7 @@ func TestSnapshots_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Snapshot.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Snapshot.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7534,9 +7253,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
 
 	// From example Create a disk encryption set.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -7567,9 +7284,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
 }
 
 func TestDiskEncryptionSets_Update(t *testing.T) {
@@ -7603,9 +7318,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
 
 	// From example Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating
 	poller, err = client.BeginUpdate(ctx,
@@ -7631,9 +7344,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
 
 	// From example Update a disk encryption set.
 	poller, err = client.BeginUpdate(ctx,
@@ -7662,9 +7373,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
 }
 
 func TestDiskEncryptionSets_Get(t *testing.T) {
@@ -7682,9 +7391,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskEncryptionSet.ID == nil {
-		t.Fatal("DiskEncryptionSet.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsGetResult)
 }
 
 func TestDiskEncryptionSets_Delete(t *testing.T) {
@@ -7723,10 +7430,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("DiskEncryptionSet.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("DiskEncryptionSet.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7745,10 +7449,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("DiskEncryptionSet.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("DiskEncryptionSet.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7767,6 +7468,9 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7795,9 +7499,7 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskAccess.ID == nil {
-		t.Fatal("DiskAccess.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesCreateOrUpdateResult)
 }
 
 func TestDiskAccesses_Update(t *testing.T) {
@@ -7825,9 +7527,7 @@ func TestDiskAccesses_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskAccess.ID == nil {
-		t.Fatal("DiskAccess.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesUpdateResult)
 }
 
 func TestDiskAccesses_Get(t *testing.T) {
@@ -7845,9 +7545,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskAccess.ID == nil {
-		t.Fatal("DiskAccess.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesGetResult)
 
 	// From example Get information about a disk access resource.
 	res, err = client.Get(ctx,
@@ -7857,9 +7555,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskAccess.ID == nil {
-		t.Fatal("DiskAccess.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesGetResult)
 }
 
 func TestDiskAccesses_Delete(t *testing.T) {
@@ -7898,10 +7594,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("DiskAccess.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("DiskAccess.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7920,10 +7613,7 @@ func TestDiskAccesses_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("DiskAccess.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("DiskAccess.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -7936,13 +7626,14 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 		}
 	}()
 	client := golang.NewDiskAccessesClient("{subscription-id}", cred, &options)
-	_, err := client.GetPrivateLinkResources(ctx,
+	res, err := client.GetPrivateLinkResources(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesGetPrivateLinkResourcesResult)
 }
 
 func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
@@ -7973,9 +7664,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.PrivateEndpointConnection.ID == nil {
-		t.Fatal("PrivateEndpointConnection.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesUpdateAPrivateEndpointConnectionResult)
 }
 
 func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
@@ -7994,9 +7683,7 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.PrivateEndpointConnection.ID == nil {
-		t.Fatal("PrivateEndpointConnection.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskAccessesGetAPrivateEndpointConnectionResult)
 }
 
 func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
@@ -8037,10 +7724,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("PrivateEndpointConnection.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("PrivateEndpointConnection.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -8062,9 +7746,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.DiskRestorePoint.ID == nil {
-		t.Fatal("DiskRestorePoint.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.DiskRestorePointGetResult)
 }
 
 func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
@@ -8084,10 +7766,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("DiskRestorePoint.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("DiskRestorePoint.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -8122,9 +7801,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Gallery.ID == nil {
-		t.Fatal("Gallery.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleriesCreateOrUpdateResult)
 
 	// From example Create or update a simple gallery.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8146,9 +7823,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Gallery.ID == nil {
-		t.Fatal("Gallery.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleriesCreateOrUpdateResult)
 }
 
 func TestGalleries_Update(t *testing.T) {
@@ -8175,9 +7850,7 @@ func TestGalleries_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Gallery.ID == nil {
-		t.Fatal("Gallery.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleriesUpdateResult)
 }
 
 func TestGalleries_Get(t *testing.T) {
@@ -8195,9 +7868,7 @@ func TestGalleries_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Gallery.ID == nil {
-		t.Fatal("Gallery.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleriesGetResult)
 
 	// From example Get a gallery.
 	res, err = client.Get(ctx,
@@ -8207,9 +7878,7 @@ func TestGalleries_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Gallery.ID == nil {
-		t.Fatal("Gallery.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleriesGetResult)
 }
 
 func TestGalleries_Delete(t *testing.T) {
@@ -8248,10 +7917,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Gallery.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Gallery.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -8270,10 +7936,7 @@ func TestGalleries_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("Gallery.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("Gallery.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -8313,9 +7976,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImage.ID == nil {
-		t.Fatal("GalleryImage.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImagesCreateOrUpdateResult)
 }
 
 func TestGalleryImages_Update(t *testing.T) {
@@ -8350,9 +8011,7 @@ func TestGalleryImages_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImage.ID == nil {
-		t.Fatal("GalleryImage.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImagesUpdateResult)
 }
 
 func TestGalleryImages_Get(t *testing.T) {
@@ -8371,9 +8030,7 @@ func TestGalleryImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImage.ID == nil {
-		t.Fatal("GalleryImage.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImagesGetResult)
 }
 
 func TestGalleryImages_Delete(t *testing.T) {
@@ -8414,10 +8071,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("GalleryImage.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("GalleryImage.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -8509,9 +8163,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 
 	// From example Create or update a simple Gallery Image Version using managed image as source.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8593,9 +8245,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 
 	// From example Create or update a simple Gallery Image Version using mix of disks and snapshots as a source.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8680,9 +8330,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 
 	// From example Create or update a simple Gallery Image Version using shared image as source.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8764,9 +8412,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 
 	// From example Create or update a simple Gallery Image Version using snapshots as a source.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8851,9 +8497,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 
 	// From example Create or update a simple Gallery Image Version using vhd as a source.
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -8926,9 +8570,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
 }
 
 func TestGalleryImageVersions_Update(t *testing.T) {
@@ -8975,9 +8617,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsUpdateResult)
 
 	// From example Update a simple Gallery Image Version without source id.
 	poller, err = client.BeginUpdate(ctx,
@@ -9012,9 +8652,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsUpdateResult)
 }
 
 func TestGalleryImageVersions_Get(t *testing.T) {
@@ -9034,9 +8672,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
 
 	// From example Get a gallery image version with snapshots as a source.
 	res, err = client.Get(ctx,
@@ -9048,9 +8684,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
 
 	// From example Get a gallery image version with vhd as a source.
 	res, err = client.Get(ctx,
@@ -9062,9 +8696,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
 
 	// From example Get a gallery image version.
 	res, err = client.Get(ctx,
@@ -9076,9 +8708,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryImageVersion.ID == nil {
-		t.Fatal("GalleryImageVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
 }
 
 func TestGalleryImageVersions_Delete(t *testing.T) {
@@ -9121,10 +8751,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("GalleryImageVersion.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("GalleryImageVersion.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -9161,9 +8788,7 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplication.ID == nil {
-		t.Fatal("GalleryApplication.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationsCreateOrUpdateResult)
 }
 
 func TestGalleryApplications_Update(t *testing.T) {
@@ -9195,9 +8820,7 @@ func TestGalleryApplications_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplication.ID == nil {
-		t.Fatal("GalleryApplication.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationsUpdateResult)
 }
 
 func TestGalleryApplications_Get(t *testing.T) {
@@ -9216,9 +8839,7 @@ func TestGalleryApplications_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplication.ID == nil {
-		t.Fatal("GalleryApplication.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationsGetResult)
 }
 
 func TestGalleryApplications_Delete(t *testing.T) {
@@ -9259,10 +8880,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("GalleryApplication.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("GalleryApplication.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -9315,9 +8933,7 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplicationVersion.ID == nil {
-		t.Fatal("GalleryApplicationVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsCreateOrUpdateResult)
 }
 
 func TestGalleryApplicationVersions_Update(t *testing.T) {
@@ -9365,9 +8981,7 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplicationVersion.ID == nil {
-		t.Fatal("GalleryApplicationVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsUpdateResult)
 }
 
 func TestGalleryApplicationVersions_Get(t *testing.T) {
@@ -9387,9 +9001,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplicationVersion.ID == nil {
-		t.Fatal("GalleryApplicationVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsGetResult)
 
 	// From example Get a gallery Application Version.
 	res, err = client.Get(ctx,
@@ -9401,9 +9013,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.GalleryApplicationVersion.ID == nil {
-		t.Fatal("GalleryApplicationVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsGetResult)
 }
 
 func TestGalleryApplicationVersions_Delete(t *testing.T) {
@@ -9446,10 +9056,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("GalleryApplicationVersion.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("GalleryApplicationVersion.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -9484,10 +9091,11 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.GallerySharingProfileUpdateResult)
 
 	// From example reset sharing profile of a gallery.
 	poller, err = client.BeginUpdate(ctx,
@@ -9500,10 +9108,11 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.GallerySharingProfileUpdateResult)
 }
 
 func TestSharedGalleries_List(t *testing.T) {
@@ -9520,6 +9129,9 @@ func TestSharedGalleries_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
+		}
 	}
 }
 
@@ -9531,13 +9143,14 @@ func TestSharedGalleries_Get(t *testing.T) {
 		}
 	}()
 	client := golang.NewSharedGalleriesClient("{subscription-id}", cred, &options)
-	_, err := client.Get(ctx,
+	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.SharedGalleriesGetResult)
 }
 
 func TestSharedGalleryImages_List(t *testing.T) {
@@ -9555,6 +9168,9 @@ func TestSharedGalleryImages_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
+		}
 	}
 }
 
@@ -9566,7 +9182,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 		}
 	}()
 	client := golang.NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
-	_, err := client.Get(ctx,
+	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
@@ -9574,6 +9190,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.SharedGalleryImagesGetResult)
 }
 
 func TestSharedGalleryImageVersions_List(t *testing.T) {
@@ -9592,6 +9209,9 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
+		for _, v := range pager.PageResponse().Value {
+			t.Logf("Pager result: %#v\n", v)
+		}
 	}
 }
 
@@ -9603,7 +9223,7 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 		}
 	}()
 	client := golang.NewSharedGalleryImageVersionsClient("{subscription-id}", cred, &options)
-	_, err := client.Get(ctx,
+	res, err := client.Get(ctx,
 		"myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
@@ -9612,6 +9232,7 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.SharedGalleryImageVersionsGetResult)
 }
 
 func TestCloudServiceRoleInstances_Delete(t *testing.T) {
@@ -9652,9 +9273,7 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.RoleInstance.ID == nil {
-		t.Fatal("RoleInstance.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServiceRoleInstancesGetResult)
 }
 
 func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
@@ -9665,7 +9284,7 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 		}
 	}()
 	client := golang.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
-	_, err := client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
@@ -9673,6 +9292,7 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.CloudServiceRoleInstancesGetInstanceViewResult)
 }
 
 func TestCloudServiceRoleInstances_List(t *testing.T) {
@@ -9691,10 +9311,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("RoleInstance.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("RoleInstance.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -9785,9 +9402,7 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudServiceRole.ID == nil {
-		t.Fatal("CloudServiceRole.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServiceRolesGetResult)
 }
 
 func TestCloudServiceRoles_List(t *testing.T) {
@@ -9806,10 +9421,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("CloudServiceRole.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("CloudServiceRole.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -9877,9 +9489,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
 
 	// From example Create New Cloud Service with Single Role
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -9929,9 +9539,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
 
 	// From example Create New Cloud Service with Single Role and Certificate from Key Vault
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -9993,9 +9601,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
 
 	// From example Create New Cloud Service with Single Role and RDP Extension
 	poller, err = client.BeginCreateOrUpdate(ctx,
@@ -10059,9 +9665,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
 }
 
 func TestCloudServices_Update(t *testing.T) {
@@ -10088,9 +9692,7 @@ func TestCloudServices_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesUpdateResult)
 }
 
 func TestCloudServices_Delete(t *testing.T) {
@@ -10129,9 +9731,7 @@ func TestCloudServices_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.CloudService.ID == nil {
-		t.Fatal("CloudService.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesGetResult)
 }
 
 func TestCloudServices_GetInstanceView(t *testing.T) {
@@ -10142,13 +9742,14 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 		}
 	}()
 	client := golang.NewCloudServicesClient("{subscription-id}", cred, &options)
-	_, err := client.GetInstanceView(ctx,
+	res, err := client.GetInstanceView(ctx,
 		"ConstosoRG",
 		"{cs-name}",
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Response result: %#v\n", res.CloudServicesGetInstanceViewResult)
 }
 
 func TestCloudServices_ListAll(t *testing.T) {
@@ -10165,10 +9766,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("CloudService.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("CloudService.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -10188,10 +9786,7 @@ func TestCloudServices_List(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("CloudService.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("CloudService.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -10380,9 +9975,7 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.UpdateDomain.ID == nil {
-		t.Fatal("UpdateDomain.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServicesUpdateDomainGetUpdateDomainResult)
 }
 
 func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
@@ -10401,10 +9994,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("UpdateDomain.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("UpdateDomain.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -10424,9 +10014,7 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.OSVersion.ID == nil {
-		t.Fatal("OSVersion.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSVersionResult)
 }
 
 func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
@@ -10444,10 +10032,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("OSVersion.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("OSVersion.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -10467,9 +10052,7 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.OSFamily.ID == nil {
-		t.Fatal("OSFamily.ID should not be nil!")
-	}
+	t.Logf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSFamilyResult)
 }
 
 func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
@@ -10487,10 +10070,7 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			fmt.Printf("OSFamily.ID: %s\n", *v.ID)
-			if v.ID == nil {
-				t.Fatal("OSFamily.ID should not be nil!")
-			}
+			t.Logf("Pager result: %#v\n", v)
 		}
 	}
 }

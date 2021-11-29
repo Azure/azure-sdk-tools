@@ -44,7 +44,7 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RestorePointCollection.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.RestorePointCollectionsCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
@@ -62,7 +62,7 @@ func ExampleRestorePointCollectionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("RestorePointCollection.ID: %s\n", *res.ID)
+	log.Printf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
@@ -80,7 +80,7 @@ func ExampleRestorePointCollectionsClient_List() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("RestorePointCollection.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
@@ -99,7 +99,7 @@ func ExampleRestorePointCollectionsClient_ListAll() {
 			log.Fatalf("failed to advance page: %v", err)
 		}
 		for _, v := range pager.PageResponse().Value {
-			log.Printf("RestorePointCollection.ID: %s\n", *v.ID)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }

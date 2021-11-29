@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordTests
     {
+        [Fact]
         public async void TestStartRecordSimple()
         {
             //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -37,18 +38,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             //assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestStartRecordInMemory()
         {
         }
 
+        [Fact]
         public async void TestStartRecord()
         {
         }
 
+        [Fact]
         public async void TestStopRecordingSimple()
         {
         }
 
+        [Fact]
         public async void TestStopRecordingInMemory()
         {
         }

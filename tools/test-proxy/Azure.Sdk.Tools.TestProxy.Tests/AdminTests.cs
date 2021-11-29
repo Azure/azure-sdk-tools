@@ -23,47 +23,131 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// </summary>
     public class AdminTests
     {
+        [Fact]
         public async void TestAddSanitizerThrowsOnInvalidAbstractionId()
         {
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
-            //httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
-            //httpContext.Request.ContentLength = 92;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidSanitizer";
 
-            //var controller = new Admin(testRecordingHandler)
-            //{
-            //    ControllerContext = new ControllerContext()
-            //    {
-            //        HttpContext = httpContext
-            //    }
-            //};
-            //testRecordingHandler.Sanitizers.Clear();
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
 
-            //var assertion = await Assert.ThrowsAsync<HttpException>(
-            //   async () => await controller.AddSanitizer()
-            //);
-            //assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestAddSanitizerThrowsOnEmptyAbstractionId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestAddTransformThrowsOnInvalidAbstractionId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidTransform";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Transforms.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestAddTransformThrowsOnEmptyAbstractionId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Transforms.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestSetMatcherThrowsOnInvalidAbstractionId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidMatcher";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.SetMatcher()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
+        [Fact]
         public async void TestSetMatcherThrowsOnEmptyAbstractionId()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.SetMatcher()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
         [Fact]

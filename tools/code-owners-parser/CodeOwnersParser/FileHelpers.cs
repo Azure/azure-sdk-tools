@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 return File.ReadAllText(fullPath);
             }
 
-            throw new ArgumentException($"The path provided is neither local path nor https link. Please check your path: {fileOrUri}");
+            throw new ArgumentException($"The path provided is neither local path nor https link. Please check your path: {fileOrUri} resolved to {fullPath}.");
         }
     }
 }

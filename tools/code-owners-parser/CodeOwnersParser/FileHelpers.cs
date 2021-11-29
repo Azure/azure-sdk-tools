@@ -8,9 +8,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     {
         public static string GetFileContents(string fileOrUri)
         {
-            string fullPath = (new DirectoryInfo(fileOrUri)).FullName;
             // try to parse it as an Uri
-            if (fullPath.StartsWith("https"))
+            if (fileOrUri.StartsWith("https"))
             {
                 using (HttpClient client = new HttpClient())
                 {
@@ -18,6 +17,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                     return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             }
+
+            string fullPath = Path.GetFullPath(fileOrUri);
             if (File.Exists(fullPath))
             {
                 return File.ReadAllText(fullPath);

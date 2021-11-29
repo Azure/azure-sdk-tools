@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         private const string codeOwnerFilePath = "CODEOWNERS";
 
         private static readonly object[] _sourceLists =
-       {
+        {
             new object[] {"sdk", false, new List<string> { "person1", "person2" } },
             new object[] { "/sdk", false, new List<string> { "person1", "person2" } },
             new object[] { "sdk/noPath", false, new List<string> { "person1", "person2" } },
@@ -37,10 +37,12 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
             }
         }
 
-        [Test]
-        public void TestOnError()
+        [TestCase("PathNotExist")]
+        [TestCase("http://testLink")]
+        [TestCase("https://testLink")]
+        public void TestOnError(string codeOwnerPath)
         {
-            Assert.AreEqual(1, Program.Main("PathNotExist", "sdk"));
+            Assert.AreEqual(1, Program.Main(codeOwnerPath, "sdk"));
         }
 
         private void TestExpectResult(List<string> expectReturn, string output)

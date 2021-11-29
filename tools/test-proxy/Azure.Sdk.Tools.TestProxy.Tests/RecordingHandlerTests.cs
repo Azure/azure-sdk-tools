@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -51,12 +52,56 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestGetHeader()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-test-presence"] = "This header has a value";
 
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            RecordingHandler.GetHeader(httpContext.Request, "x-test-presence");
         }
 
+        [Fact]
         public void TestGetHeaderThrowsOnMissingHeader()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
 
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = Assert.Throws<HttpException>(
+               () => RecordingHandler.GetHeader(httpContext.Request, "x-test-presence")
+            );
+        }
+
+        [Fact]
+        public void TestGetHeaderSilentOnAcceptableHeaderMiss()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var value = RecordingHandler.GetHeader(httpContext.Request, "x-test-presence", allowNulls: true);
+            Assert.Null(value);
         }
 
         [Fact]

@@ -4,7 +4,7 @@
     "resourceGroupName": "myResourceGroup",
     "vmScaleSetName": "{vmss-name}",
     "api-version": "2021-03-01",
-    "parameters": {
+    "Parameters": {
       "sku": {
         "tier": "Standard",
         "capacity": 3,

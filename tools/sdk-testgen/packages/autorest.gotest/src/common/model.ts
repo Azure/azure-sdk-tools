@@ -25,4 +25,5 @@ export class GoExampleModel extends ExampleModel {
     checkResponse: boolean;
     pollerType: string;
     pageableType: string;
+    pageableItemName: string;
 }

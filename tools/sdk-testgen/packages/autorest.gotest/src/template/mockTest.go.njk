@@ -67,7 +67,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
             t.Logf("Pager result: %#v\n", v)
 		}
 	}

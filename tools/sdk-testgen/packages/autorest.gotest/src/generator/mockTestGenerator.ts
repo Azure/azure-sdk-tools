@@ -24,7 +24,7 @@ import { GoHelper } from '../util/goHelper';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { elementByValueForParam } from '@autorest/go/dist/generator/helpers';
 import { generateReturnsInfo, getAPIParametersSig, getClientParametersSig, getSchemaResponse } from '../util/codegenBridge';
-import { isLROOperation, isPageableOperation } from '@autorest/go/dist/common/helpers';
+import { isLROOperation, isMultiRespOperation, isPageableOperation } from '@autorest/go/dist/common/helpers';
 export class MockTestDataRender extends BaseDataRender {
     public renderData(): void {
         const mockTest = this.context.codeModel.testModel.mockTest as GoMockTestDefinitionModel;
@@ -64,6 +64,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
 
         example.checkResponse = responseSchema !== undefined;
+        example.isMultiRespOperation = isMultiRespOperation(op);
     }
 
     // get GO code of all parameters for one operation invoke

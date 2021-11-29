@@ -75,7 +75,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 	client.{{example.opName}}({{example.methodParametersOutput}})
 	{%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	t.Logf("Response result: %#v\n", res.{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result)
+	t.Logf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
 	{%- endif %}
 {%- if not loop.last %}
 

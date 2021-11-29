@@ -55,7 +55,7 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	log.Printf("Response result: %#v\n", res.{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result)
+	log.Printf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
 	{%- endif %}
 }
 {% endif %}

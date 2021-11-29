@@ -4,7 +4,10 @@ using Azure.Sdk.Tools.CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners
 {
-    class Program
+    /// <summary>
+    /// The tool command to retrieve code owners.
+    /// </summary>
+    public class Program
     {
         /// <summary>
         /// Retrieves codeowners information for specific section of the repo

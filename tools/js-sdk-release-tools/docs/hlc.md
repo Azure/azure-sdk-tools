@@ -25,6 +25,7 @@ This command is only used in swagger pipeline.
 cd azure-sdk-for-js
 hlc-code-ge-for-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
 ```
+hint: you can get codegen version from [NPM](https://www.npmjs.com/package/@autorest/typescript).
 
 ### Generate changelog and bump version for Azure Track2 JS SDK
 This tool is used to generate changelog and bump version automatically.

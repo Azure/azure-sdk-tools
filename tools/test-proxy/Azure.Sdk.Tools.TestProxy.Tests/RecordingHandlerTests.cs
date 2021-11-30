@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -46,6 +47,61 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.Single(handlerForTest.Sanitizers);
                 Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
             }
+        }
+
+        [Fact]
+        public void TestGetHeader()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-test-presence"] = "This header has a value";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            RecordingHandler.GetHeader(httpContext.Request, "x-test-presence");
+        }
+
+        [Fact]
+        public void TestGetHeaderThrowsOnMissingHeader()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = Assert.Throws<HttpException>(
+               () => RecordingHandler.GetHeader(httpContext.Request, "x-test-presence")
+            );
+        }
+
+        [Fact]
+        public void TestGetHeaderSilentOnAcceptableHeaderMiss()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var value = RecordingHandler.GetHeader(httpContext.Request, "x-test-presence", allowNulls: true);
+            Assert.Null(value);
         }
 
         [Fact]
@@ -240,13 +296,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
-            var pathToRecording = Path.Combine(currentPath, "Test.RecordEntries/oauth_request_wrong.json");
+            var recordingPath = "Test.RecordEntries/oauth_request_wrong.json";
+            var pathToRecording = Path.Combine(currentPath, recordingPath);
 
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            await Assert.ThrowsAsync<FileNotFoundException>(
+            var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
+            Assert.Contains($"{recordingPath} does not exist", resultingException.Message);
         }
 
         [Fact]
@@ -258,9 +316,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingHandler = new RecordingHandler(currentPath);
 
-            await Assert.ThrowsAsync<FileNotFoundException>(
+            var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
+            Assert.Contains($"{pathToRecording} does not exist", resultingException.Message);
         }
 
         [Fact]

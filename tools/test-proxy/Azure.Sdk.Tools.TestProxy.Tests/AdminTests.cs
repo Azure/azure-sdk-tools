@@ -21,8 +21,135 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// 
     /// The testing of the actual functionality of each of these concepts should take place in SanitizerTests, TransformTests, etc.
     /// </summary>
-    public class AdminFunctionalityTests
+    public class AdminTests
     {
+        [Fact]
+        public async void TestAddSanitizerThrowsOnInvalidAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidSanitizer";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+        public async void TestAddSanitizerThrowsOnEmptyAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+        public async void TestAddTransformThrowsOnInvalidAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidTransform";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Transforms.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+        public async void TestAddTransformThrowsOnEmptyAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Transforms.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+        public async void TestSetMatcherThrowsOnInvalidAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidMatcher";
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.SetMatcher()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+        public async void TestSetMatcherThrowsOnEmptyAbstractionId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.SetMatcher()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
         [Fact]
         public async Task TestSetMatcher()
         {

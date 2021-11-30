@@ -92,8 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (!InMemorySessions.TryAdd(sessionId, session))
                 {
-                    // This should not happen as the key is a new GUID.
-                    throw new InvalidOperationException("Failed to save in-memory session.");
+                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
                 }
             }
             else
@@ -123,8 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!RecordingSessions.TryAdd(id, session))
             {
-                // This should not happen as the key is a new GUID.
-                throw new InvalidOperationException("Failed to add new session.");
+                throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new recording session under id {id}.");
             }
 
             outgoingResponse.Headers.Add("x-recording-id", id);
@@ -134,7 +132,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
-                throw new InvalidOperationException("No recording loaded with that ID.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
@@ -263,21 +261,27 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (!InMemorySessions.TryGetValue(sessionId, out session))
                 {
-                    throw new InvalidOperationException("Failed to retrieve in-memory session.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"There is no in-memory session with id {sessionId} available for playback retrieval.");
                 }
                 session.SourceRecordingId = sessionId;
             }
             else
             {
-                using var stream = System.IO.File.OpenRead(GetRecordingPath(sessionId));
+                var path = GetRecordingPath(sessionId);
+
+                if (!File.Exists(path))
+                {
+                    throw new TestRecordingMismatchException($"Recording file path {path} does not exist.");
+                }
+
+                using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
                 session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
             {
-                // This should not happen as the key is a new GUID.
-                throw new InvalidOperationException("Failed to add new session.");
+                throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new playback session under id {id}.");
             }
 
             outgoingResponse.Headers.Add("x-recording-id", id);
@@ -294,21 +298,21 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (!PlaybackSessions.TryRemove(recordingId, out var session))
             {
-                throw new InvalidOperationException("Unexpected failure to retrieve playback session.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
             if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
             {
                 if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
                 {
-                    throw new InvalidOperationException("Unexpected failure to retrieve in-memory session.");
+                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
                 }
 
                 Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);                
 
                 if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
                 {
-                    throw new InvalidOperationException("Unexpected failure to remove in-memory session.");
+                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to remove in-memory session {session.SourceRecordingId}.");
                 }
 
                 GC.Collect();
@@ -319,7 +323,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
-                throw new InvalidOperationException("No recording loaded with that ID.");
+                throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
@@ -463,6 +467,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public string GetRecordingPath(string file)
         {
+            if (String.IsNullOrWhiteSpace(file))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Recording file value of {file} is invalid. Try again with a populated filename.");
+            }
+
             var path = file;
 
             if (!Path.IsPathFullyQualified(file))
@@ -481,7 +490,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     return null;
                 }
-                throw new InvalidOperationException("Missing header: " + name);
+                throw new HttpException(HttpStatusCode.BadRequest, $"Expected header {name} is not populated in request.");
             }
 
             return value;
@@ -495,7 +504,22 @@ namespace Azure.Sdk.Tools.TestProxy
             // Using the RawTarget PREVENTS this automatic decode. We still lean on the URI constructors
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-            var host = new Uri(GetHeader(request, "x-recording-upstream-base-uri"));
+            var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
+            
+            // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
+            // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
+            if (rawTarget.StartsWith("//"))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"The URI being passed has two leading '/' in the Target, which will break URI combine with the hostname. Visible URI target: {rawTarget}.");
+            }
+
+            // it is easy to forget the x-recording-upstream-base-uri value
+            if (string.IsNullOrWhiteSpace(hostValue))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"The value present in header 'x-recording-upstream-base-uri' is not a valid hostname: {hostValue}.");
+            }
+
+            var host = new Uri(hostValue);
             return new Uri(host, rawTarget);
         }
 

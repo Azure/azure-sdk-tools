@@ -22,18 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public Admin(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
         [HttpPost]
-        public void StartSession()
-        {
-            // so far, nothing necessary here
-        }
-
-        [HttpPost]
-        public void StopSession()
-        {
-            // so far, nothing necessary here
-        }
-
-        [HttpPost]
         public void Reset()
         {
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -118,54 +106,50 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private object GenerateInstance(string typePrefix, string name, HashSet<string> acceptableEmptyArgs, JsonDocument documentBody = null)
         {
-            try
+            Type t = Type.GetType(typePrefix + name);
+
+            if (t == null)
             {
-                Type t = Type.GetType(typePrefix + name);
+                throw new HttpException(HttpStatusCode.BadRequest, String.Format("Requested type {0} is not not recognized.", typePrefix + name));
+            }
 
-                var arg_list = new List<Object> { };
+            var arg_list = new List<Object> { };
 
-                // we are deliberately assuming here that there will only be a single constructor
-                var ctor = t.GetConstructors()[0];
-                var paramsSet = ctor.GetParameters();
+            // we are deliberately assuming here that there will only be a single constructor
+            var ctor = t.GetConstructors()[0];
+            var paramsSet = ctor.GetParameters();
 
-                // walk across our constructor params. check inside the body for a resulting value for each of them
-                foreach (var param in paramsSet)
+            // walk across our constructor params. check inside the body for a resulting value for each of them
+            foreach (var param in paramsSet)
+            {
+                if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                 {
-                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
-                    {
-                        var valueResult = jsonElement.GetString();
+                    var valueResult = jsonElement.GetString();
 
-                        if(string.IsNullOrEmpty(valueResult))
+                    if(string.IsNullOrEmpty(valueResult))
+                    {
+                        if (!acceptableEmptyArgs.Contains(param.Name))
                         {
-                            if (!acceptableEmptyArgs.Contains(param.Name))
-                            {
-                                throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
-                            }
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
                         }
+                    }
                         
-                        arg_list.Add((object)valueResult);
+                    arg_list.Add((object)valueResult);
+                }
+                else
+                {
+                    if (param.IsOptional)
+                    {
+                        arg_list.Add(param.DefaultValue);
                     }
                     else
                     {
-                        if (param.IsOptional)
-                        {
-                            arg_list.Add(param.DefaultValue);
-                        }
-                        else
-                        {
-                            throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
-                        }
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
                     }
                 }
-
-                return Activator.CreateInstance(t, arg_list.ToArray());
             }
-            catch(Exception e)
-            {
-                e.Data.Add("Attempted Type", String.Format("Requested type {0} is not not recognized.", typePrefix + name));
 
-                throw;
-            }
+            return Activator.CreateInstance(t, arg_list.ToArray());
         }
 
 

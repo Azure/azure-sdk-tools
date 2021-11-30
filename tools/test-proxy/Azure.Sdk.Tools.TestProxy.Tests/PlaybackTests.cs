@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var value = httpContext.Response.Headers["x-recording-id"].ToString();
             Assert.NotNull(value);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
         }
 
         [Fact]
@@ -54,6 +55,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
             recordController.Stop();
 
+            // apply same recordingId when starting in-memory session
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
             var playbackController = new Playback(testRecordingHandler)
@@ -67,6 +69,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var value = playbackContext.Response.Headers["x-recording-id"].ToString();
             Assert.NotNull(value);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
+            Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
         }
 
         [Fact]
@@ -130,11 +134,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
             await controller.Start();
-
             var targetRecordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            
             httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-
             controller.Stop();
+
+            Assert.False(testRecordingHandler.PlaybackSessions.ContainsKey(targetRecordingId));
         }
 
         [Fact]

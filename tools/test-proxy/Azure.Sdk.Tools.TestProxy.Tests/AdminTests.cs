@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -170,6 +171,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var result = testRecordingHandler.Matcher;
             Assert.True(result is BodilessMatcher);
+        }
+
+        [Fact]
+        public async Task TestSetCustomMatcher()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"nonDefaultHeaderExclusions\": \"Content-Type,Content-Length\", \"compareBodies\": false }");
+            
+            // content length must be set for the body to be parsed in SetMatcher
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.SetMatcher();
+            var matcher = testRecordingHandler.Matcher;
+            Assert.True(matcher is CustomDefaultMatcher);
+            
+            var compareBodies = (bool) typeof(RecordMatcher).GetField("_compareBodies", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+            Assert.False(compareBodies);
+
+            Assert.Contains("Content-Type", matcher.ExcludeHeaders);
+            Assert.Contains("Content-Length", matcher.ExcludeHeaders);
         }
 
         [Fact]

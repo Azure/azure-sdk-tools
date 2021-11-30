@@ -119,20 +119,33 @@ namespace Azure.Sdk.Tools.TestProxy
             var ctor = t.GetConstructors()[0];
             var paramsSet = ctor.GetParameters();
 
-            // walk across our constructor params. check inside the body for a resulting value for each of them
-            foreach (var param in paramsSet)
-            {
-                if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                // walk across our constructor params. check inside the body for a resulting value for each of them
+                foreach (var param in paramsSet)
                 {
-                    var valueResult = jsonElement.GetString();
-
-                    if(string.IsNullOrEmpty(valueResult))
+                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                     {
-                        if (!acceptableEmptyArgs.Contains(param.Name))
+                        object valueResult = null;
+                        switch (jsonElement.ValueKind)
                         {
-                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                            case JsonValueKind.Null:
+                            case JsonValueKind.String:
+                                valueResult = jsonElement.GetString();
+                                break;
+                            case JsonValueKind.True:
+                            case JsonValueKind.False:
+                                valueResult = jsonElement.GetBoolean();
+                                break;
+                            default:
+                                throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
                         }
-                    }
+
+                        if(valueResult == null || (valueResult is string stringResult && string.IsNullOrEmpty(stringResult)))
+                        {
+                            if (!acceptableEmptyArgs.Contains(param.Name))
+                            {
+                                throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                            }
+                        }
                         
                     arg_list.Add((object)valueResult);
                 }

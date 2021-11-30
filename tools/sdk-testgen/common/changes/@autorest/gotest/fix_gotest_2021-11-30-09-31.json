@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Fix wrong param name for pageable opeation with custom item name.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

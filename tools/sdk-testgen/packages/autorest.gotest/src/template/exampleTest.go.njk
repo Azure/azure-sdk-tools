@@ -54,6 +54,16 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	{%- else %}
 	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+    for res.NextPage(ctx) {
+		if err := res.Err(); err != nil {
+			log.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range res.PageResponse().{{example.pageableItemName}} {
+            log.Printf("Pager result: %#v\n", v)
+		}
+	}
+    {%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
 	log.Printf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
 	{%- endif %}

@@ -51,7 +51,7 @@ export class MockTestDataRender extends BaseDataRender {
         example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
         example.returnInfo = generateReturnsInfo(op, 'op');
         let responseSchema = getSchemaResponse(op as any)?.schema;
-        if (!example.isLRO && example.isPageable) {
+        if (example.isPageable) {
             const valueName = op.extensions['x-ms-pageable'].itemName === undefined ? 'value' : op.extensions['x-ms-pageable'].itemName;
             for (const property of responseSchema['properties']) {
                 if (property.serializedName === valueName) {

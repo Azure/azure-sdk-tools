@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (!InMemorySessions.TryGetValue(sessionId, out session))
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"There is no in-memory session with id {id} available for playback retrieval.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"There is no in-memory session with id {sessionId} available for playback retrieval.");
                 }
                 session.SourceRecordingId = sessionId;
             }

@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         [HttpPost]
         [AllowEmptyBody]
-        public void Stop([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] IDictionary<string, string> variables = null)
+        public void Stop([FromBody()] IDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 

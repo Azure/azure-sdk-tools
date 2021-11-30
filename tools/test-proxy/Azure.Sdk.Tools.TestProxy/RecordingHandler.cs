@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (!File.Exists(path))
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Recording file path {path} does not exist.");
+                    throw new TestRecordingMismatchException($"Recording file path {path} does not exist.");
                 }
 
                 using var stream = System.IO.File.OpenRead(path);

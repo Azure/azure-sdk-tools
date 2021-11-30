@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            var resultingException = await Assert.ThrowsAsync<HttpException>(
+            var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
             Assert.Contains($"{recordingPath} does not exist", resultingException.Message);
@@ -316,7 +316,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingHandler = new RecordingHandler(currentPath);
 
-            var resultingException = await Assert.ThrowsAsync<HttpException>(
+            var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
                async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
             );
             Assert.Contains($"{pathToRecording} does not exist", resultingException.Message);

@@ -271,10 +271,11 @@ export class TestCodeModeler {
     }
 
     private createExampleModel(exampleExtension: ExampleExtension, exampleName, operation: Operation, operationGroup: OperationGroup): ExampleModel {
-        const parametersInExample = Helper.uncapitalizeObjectKeys(exampleExtension.parameters);
+        const allParameters = Helper.allParameters(operation);
+        const parametersInExample = Helper.uncapitalizeObjectKeys(exampleExtension.parameters, allParameters);
         const exampleModel = new ExampleModel(exampleName, operation, operationGroup);
         exampleModel.originalFile = Helper.getExampleRelativePath(exampleExtension['x-ms-original-file']);
-        for (const parameter of Helper.allParameters(operation)) {
+        for (const parameter of allParameters) {
             if (parameter.flattened) {
                 continue;
             }

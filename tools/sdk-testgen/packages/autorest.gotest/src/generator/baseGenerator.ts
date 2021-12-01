@@ -6,7 +6,7 @@
 import * as nunjucks from 'nunjucks';
 import * as path from 'path';
 import { GenerateContext } from './generateContext';
-import { variableDefaults } from '../common/constant';
+import { configDefaults } from '../common/constant';
 export abstract class BaseDataRender {
     public constructor(public context: GenerateContext) {}
 
@@ -48,7 +48,7 @@ export abstract class BaseCodeGenerator {
     }
 
     protected getFilePrefix(configName: string) {
-        let filePrefix = this.context.testConfig.getValue(configName, variableDefaults[configName]);
+        let filePrefix = this.context.testConfig.getValue(configName);
         if (filePrefix.length > 0 && filePrefix[filePrefix.length - 1] !== '_') {
             filePrefix += '_';
         }

@@ -20,7 +20,11 @@ Generate modeler files in [output-foler]/\_\_debuger for debug purpose.
 
 ### --testmodeler.mock.send-example-id
 
-In generated mock test, send swagger example-id to mock service host in each request. This implicitly ask the mock service host to verify request body by swagger example content.
+In generated mock test, send swagger example-id to mock service host in each request. This implicitly ask the mock service host to verify request body by swagger example content. Default true.
+
+### --testmodeler.mock.verify-response
+
+In generated mock test, response value will be verified with the example files. Default true.
 
 ### --testmodeler.mock.disabled-examples
 

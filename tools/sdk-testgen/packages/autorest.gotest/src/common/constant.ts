@@ -1,3 +1,5 @@
+import { configDefaults as baseConfigDefaults } from '@autorest/testmodeler/dist/src/common/constant';
+
 export enum Config {
     exportCodemodel = 'testmodeler.export-codemodel',
     generateMockTest = 'testmodeler.generate-mock-test',
@@ -11,7 +13,13 @@ export enum Config {
     testFilePrefix = 'test-file-prefix',
 }
 
-export const variableDefaults = {
+export const configDefaults = {
+    ...baseConfigDefaults,
+    [Config.exportCodemodel]: false,
+    [Config.generateMockTest]: true,
+    [Config.generateSdkExample]: false,
+    [Config.generateScenarioTest]: false,
+    [Config.filePrefix]: 'zz_generated_',
     [Config.exampleFilePrefix]: 'ze_generated_',
     [Config.testFilePrefix]: 'zt_generated_',
 };

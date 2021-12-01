@@ -510,7 +510,7 @@ Faults can be configured via kubernetes manifests or via the UI (which is a help
 To configure faults via the UI, make sure you can access the chaos dashboard by running the below command, and navigating to `localhost:2333` in your browser.
 
 ```
-kubectl port-forward -n chaos-testing svc/chaos-dashboard 2333:2333
+kubectl port-forward -n stress-infra svc/chaos-dashboard 2333:2333
 ```
 
 From the chaos dashboard, you can click `New Experiment` and choose your fault and parameters from there.

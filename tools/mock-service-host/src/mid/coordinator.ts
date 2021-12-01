@@ -26,7 +26,6 @@ import {
     getPureUrl,
     isManagementUrlLevel,
     logger,
-    queryToObject,
     replacePropertyValue
 } from '../common/utils'
 import { get_locations, get_tenants } from './specials'
@@ -40,7 +39,7 @@ export enum ValidatorStatus {
 
 @injectable()
 export class Coordinator {
-    private liveValidator: oav.LiveValidator
+    public liveValidator: oav.LiveValidator
     private statusValue = ValidatorStatus.NotInitialized
     private resourcePool: ResourcePool
 
@@ -296,7 +295,11 @@ export class Coordinator {
                 res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
                 res.setHeader('Retry-After', 1)
             }
-            if (req.query?.[LRO_CALLBACK] === 'true') {
+            if (
+                req.query?.[LRO_CALLBACK] === 'true' &&
+                typeof ret === 'object' &&
+                !Array.isArray(ret)
+            ) {
                 ret.status = 'Succeeded'
             }
 
@@ -307,23 +310,21 @@ export class Coordinator {
     async findLROGet(req: VirtualServerRequest): Promise<string> {
         const [uri, query] = `${req.url}&${LRO_CALLBACK}=true`.split('?')
         const uriPath = uri.split('/')
-        const objQuery = queryToObject(query)
         let firstloop = true
         while (uriPath.length > 0) {
             if (firstloop || uriPath.length % 2 === 1) {
                 const testingUrl = `${req.protocol}://${req.headers?.host}${uriPath.join(
                     '/'
                 )}?${query}`
-                const liveRequest = {
-                    url: testingUrl,
-                    method: 'GET',
-                    headers: req.headers as any,
-                    query: objQuery,
-                    body: {}
-                }
-                const validateResult = await this.validate(liveRequest)
-                if (validateResult.isSuccessful) {
+                try {
+                    this.liveValidator.parseValidationRequest(
+                        testingUrl,
+                        'GET',
+                        req.headers?.['x-ms-correlation-request-id'] || ''
+                    )
                     return testingUrl
+                } catch (error) {
+                    // don't has 'GET' verb for this url
                 }
             }
             uriPath.splice(-1)

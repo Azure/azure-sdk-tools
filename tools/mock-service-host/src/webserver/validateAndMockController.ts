@@ -110,7 +110,14 @@ export class ValidateAndMockController extends BaseHttpController {
             for (const name in response.headers) {
                 res.setHeader(name, response.headers[name])
             }
-            return res.status(parseInt(response.statusCode)).json(response.body)
+            if (req.headers?.accept?.startsWith('text/')) {
+                return res
+                    .status(parseInt(response.statusCode))
+                    .contentType(req.headers?.accept)
+                    .send(response.body)
+            } else {
+                return res.status(parseInt(response.statusCode)).json(response.body)
+            }
         } catch (err) {
             if (err instanceof OperationalError) {
                 res.status(err.httpCode).json(err.ToAzureResponse())

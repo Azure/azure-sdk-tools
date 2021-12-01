@@ -43,7 +43,7 @@ export function generateReturnsInfo(op: Operation, apiType: 'api' | 'op' | 'hand
                 }
                 break;
             case 'op':
-                returnType = '*azcore.Response';
+                returnType = '*http.Response';
                 break;
         }
     } else if (isPageableOperation(op)) {
@@ -51,7 +51,7 @@ export function generateReturnsInfo(op: Operation, apiType: 'api' | 'op' | 'hand
             case 'api':
             case 'op':
                 // pager operations don't return an error
-                return [(<PagerInfo>op.language.go.pageableType).name];
+                return [`*${(<PagerInfo>op.language.go.pageableType).name}`];
         }
     }
     return [returnType, 'error'];

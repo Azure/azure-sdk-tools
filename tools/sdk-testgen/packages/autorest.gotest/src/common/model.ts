@@ -17,6 +17,7 @@ export class GoExampleModel extends ExampleModel {
     opName: string;
     isLRO: boolean;
     isPageable: boolean;
+    isMultiRespOperation: boolean;
     methodParametersOutput: string;
     methodParametersPlaceholderOutput: string;
     clientParametersOutput: string;
@@ -25,4 +26,5 @@ export class GoExampleModel extends ExampleModel {
     checkResponse: boolean;
     pollerType: string;
     pageableType: string;
+    pageableItemName: string;
 }

@@ -24,7 +24,7 @@ import { GoHelper } from '../util/goHelper';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { elementByValueForParam } from '@autorest/go/dist/generator/helpers';
 import { generateReturnsInfo, getAPIParametersSig, getClientParametersSig, getSchemaResponse } from '../util/codegenBridge';
-import { isLROOperation, isPageableOperation } from '@autorest/go/dist/common/helpers';
+import { isLROOperation, isMultiRespOperation, isPageableOperation } from '@autorest/go/dist/common/helpers';
 export class MockTestDataRender extends BaseDataRender {
     public renderData(): void {
         const mockTest = this.context.codeModel.testModel.mockTest as GoMockTestDefinitionModel;
@@ -51,11 +51,12 @@ export class MockTestDataRender extends BaseDataRender {
         example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
         example.returnInfo = generateReturnsInfo(op, 'op');
         let responseSchema = getSchemaResponse(op as any)?.schema;
-        if (!example.isLRO && example.isPageable) {
+        if (example.isPageable) {
             const valueName = op.extensions['x-ms-pageable'].itemName === undefined ? 'value' : op.extensions['x-ms-pageable'].itemName;
             for (const property of responseSchema['properties']) {
                 if (property.serializedName === valueName) {
                     responseSchema = property.schema.elementType;
+                    example.pageableItemName = property.language.go.name;
                     break;
                 }
             }
@@ -63,6 +64,7 @@ export class MockTestDataRender extends BaseDataRender {
         }
 
         example.checkResponse = responseSchema !== undefined;
+        example.isMultiRespOperation = isMultiRespOperation(op);
     }
 
     // get GO code of all parameters for one operation invoke

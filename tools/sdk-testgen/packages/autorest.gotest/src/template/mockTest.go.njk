@@ -67,15 +67,25 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
             t.Logf("Pager result: %#v\n", v)
 		}
 	}
 	{%- else %}
 	client.{{example.opName}}({{example.methodParametersOutput}})
 	{%- endif %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+    for res.NextPage(ctx) {
+		if err := res.Err(); err != nil {
+			t.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range res.PageResponse().{{example.pageableItemName}} {
+            t.Logf("Pager result: %#v\n", v)
+		}
+	}
+    {%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	t.Logf("Response result: %#v\n", res.{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result)
+	t.Logf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
 	{%- endif %}
 {%- if not loop.last %}
 

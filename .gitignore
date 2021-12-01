@@ -492,3 +492,6 @@ src/swift/SwiftAPIView.xcworkspace/xcuserdata
 tools/oav-traffic-converter/input-example/
 tools/oav-traffic-converter/output-example/
 tools/oav-traffic-converter/build/
+
+# oav report generation
+scripts/node/oav-report-generation/build

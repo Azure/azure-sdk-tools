@@ -306,6 +306,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyKeySanitizerIgnoresNulls()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_null_secrets.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+            var originalBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.connectionString", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Equal(originalBody, newBody);
+        }
+
+        [Fact]
         public void BodyKeySanitizerHandlesNonJSON()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");

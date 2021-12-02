@@ -17,7 +17,7 @@ You can use this command to generate codes, and then run rush update, rush build
 cd azure-sdk-for-js
 hlc-code-gen --use=@autorest/typescript@6.0.0-beta.5 --readme=../azure-rest-api-specs/specification/iotspaces/resource-manager/readme.md
 ```
-hint: you can change the `readme` to yours.
+hint: you can change the `readme` to yours, and get codegen version from [NPM](https://www.npmjs.com/package/@autorest/typescript).
 
 ### Use Track2 Codegen to generate codes in swagger pipeline
 This command is only used in swagger pipeline.
@@ -25,6 +25,7 @@ This command is only used in swagger pipeline.
 cd azure-sdk-for-js
 hlc-code-ge-for-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
 ```
+hint: you can get codegen version from [NPM](https://www.npmjs.com/package/@autorest/typescript).
 
 ### Generate changelog and bump version for Azure Track2 JS SDK
 This tool is used to generate changelog and bump version automatically.

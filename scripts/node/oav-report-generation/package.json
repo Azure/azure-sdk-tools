@@ -1,7 +1,10 @@
 {
   "dependencies": {
+    "@types/mustache": "^4.1.2",
     "@types/node": "^16.11.11",
-    "oav": "file:../../../../oav",
+    "@types/yargs": "^17.0.7",
+    "mustache": "^4.2.0",
+    "oav": "^2.11.3-beta",
     "yargs": "^17.3.0"
   }
 }

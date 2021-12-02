@@ -5,11 +5,14 @@ const path = require('path');
 
 import * as oav from "oav";
 
+import * as Mustache from 'mustache';
+
 interface PayloadEntry {
     message: string;
     level: string;
 }
 
+// probably unnecessary now that we're pulling the results directly in from oav instead of processing a results payload.
 class PayloadObject {
     PayloadLocation: string;
 
@@ -35,6 +38,23 @@ class PayloadObject {
     }
 }
 
+// used to pass data to the template rendering engine
+class CoverageView {
+    constructor(packageName: string, validationResults: Array<oav.TrafficValidationIssue>) {
+        this.package = packageName;
+        this.validationResults = validationResults;
+    }
+
+    getGeneralErrors(): number{
+        return this.validationResults.length;
+    }
+
+    package: string;
+    date: Date;
+    errorArray: Array<PayloadEntry>;
+    validationResults: Array<oav.TrafficValidationIssue>;
+}
+
 
 // functionality start
 require('yargs')
@@ -48,8 +68,18 @@ require('yargs')
         })
     }, async (args: any) => {
         console.log(`Input Payload: ${args.payload}. Input Swagger: ${args.swagger}`)
+        let errors: Array<oav.TrafficValidationIssue> = [];
 
-        console.log(oav)
-        // let obj = new PayloadObject(args.payload);
-        // await obj.getPayload();
+        try {
+            errors = await oav.validateTrafficAgainstSpec(args.swagger, args.payload, {});
+        }
+        catch {}
+        
+        let template = await fs.readFile("template/layout-base.mustache", "utf-8");
+
+        let view = new CoverageView("azure-data-tables", errors);
+        let text = Mustache.render(template, view);
+        debugger;
+
+        let writeResult = await fs.writeFile("report.html", text, "utf-8");
     }).argv;

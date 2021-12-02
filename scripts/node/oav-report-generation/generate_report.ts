@@ -3,6 +3,13 @@ import {Argv} from "yargs";
 const fs = require('fs/promises');
 const path = require('path');
 
+import * as oav from "oav";
+
+interface PayloadEntry {
+    message: string;
+    level: string;
+}
+
 class PayloadObject {
     PayloadLocation: string;
 
@@ -10,11 +17,20 @@ class PayloadObject {
         this.PayloadLocation = payloadLocation;
     }
 
+    getPayloadObjects(content: string): Array<PayloadEntry>{
+        let result = JSON.parse(content);
+        
+
+        console.log(result);
+        return [];
+    }
+
     async getPayload(): Promise<Array<any>> {
         var data = await fs.readFile(this.PayloadLocation)
 
-        console.log(data.toString());
-
+        var allFailures = data.toString();
+        this.getPayloadObjects(allFailures);
+        
         return [];
     }
 }
@@ -33,6 +49,7 @@ require('yargs')
     }, async (args: any) => {
         console.log(`Input Payload: ${args.payload}. Input Swagger: ${args.swagger}`)
 
-        let obj = new PayloadObject(args.payload);
-        await obj.getPayload();
+        console.log(oav)
+        // let obj = new PayloadObject(args.payload);
+        // await obj.getPayload();
     }).argv;

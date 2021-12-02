@@ -4,6 +4,8 @@ param (
     $output = "./oav-output"
 )
 
+$payloadOut = "build/validation.txt"
+
 mkdir -p $output
 
 Write-Host "Recordings folder: $recordingsFolder"
@@ -14,7 +16,7 @@ oavc convert --directory $recordingsFolder --out $output
 
 Write-Host "Recordings Converted, starting validation."
 
-oav validate-traffic $output $swagger -l error > build/validation.txt
+oav validate-traffic $output $swagger -l error > $payloadOut
 
-# do a quick replace to clean up the output into an actual array
-
+# clean up validation.txt. Due to how the code is logged, we can't actually just use it as-is.
+./regenerate_payload.ps1 -inputPayload $payloadOut

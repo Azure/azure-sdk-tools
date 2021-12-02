@@ -64,6 +64,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 {
                     var originalValue = token.Value<string>();
 
+                    // regex replacement does not support null
+                    if (originalValue == null)
+                    {
+                        continue;
+                    }
+
                     var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
 
                     // this sanitizer should only apply to actual values

@@ -29,8 +29,8 @@ $env = & /common/TestResources/New-TestResources.ps1 `
     -Location 'westus2' `
     -DeleteAfterHours 168 `
     -ServiceDirectory '/azure/' `
+    -DevopsLogging = $false `
     -CI `
-    -RedactLogs `
     -Force
 
 #>

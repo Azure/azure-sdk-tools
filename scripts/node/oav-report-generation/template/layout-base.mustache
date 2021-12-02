@@ -37,9 +37,16 @@
         
             table {
                 margin-bottom: 2em;
-                background-color: aliceblue;
                 border: 1px solid lightgrey;
                 padding: 10px;
+            }
+
+            td.highlight {
+                
+            }
+
+            p {
+                padding: .5em;
             }
         
             span {
@@ -57,41 +64,40 @@
             <h3>
                 Generated {{ generatedDate }}.
             </h3>
-            <table>
+            <table width="100%">
                 <tr>
-                    <td>
-                        <h3></h3>
+                    <td class="highlight">
+                        <p>
+                        </p>
                     </td>
-                    <td>
-                        <h3>Generated from <a href="#">604ee4</a></h3>
+                    <td class="highlight">
+                        <p>
+                            Generated from <a href="#">604ee4</a>
+                        </p>
                     </td>
-                    <td>
-                        Small Summary Item
+                    <td class="highlight">
+                        <p>
+                            Another Highlight
+                        </p>
                     </td>
                 </tr>
             </table>
 
             There are {{ getGeneralErrors }} validation results.
         </div>
+
         <div id ="general">
-            
         </div>
+
         <div id ="specific-errors"> 
         </div>
-
-
-        <h1>
-        </h1>
-        <!-- <script id="mp_template" type="text/template">
-        </script> -->
 
         <div id="mypanel"></div>
         <script>
 
             $(document).ready( () => {
-                console.log("Hello AZSDK")
+                console.log("Hello AZSDK. Document.Ready available here.")
             });
-            
         </script>
     </body>
 </html>

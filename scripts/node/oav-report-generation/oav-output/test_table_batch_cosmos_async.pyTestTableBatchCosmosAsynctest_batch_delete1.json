@@ -1,0 +1,56 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablefdad2e16?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "300",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:30 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "1f819ad2-48a0-11ec-91f4-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:30 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "001",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "batch_delete",
+            "RowKey@odata.type": "Edm.String",
+            "test": true,
+            "test2": "value",
+            "test2@odata.type": "Edm.String",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5": "2021-11-19T02:48:30.219109Z",
+            "test5@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablefdad2e16/$metadata#uttablefdad2e16/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A30.2939143Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_delete",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:48:30.2191090Z",
+            "Timestamp": "2021-11-18T18:48:30.2939143Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:48:29 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A48%3A30.2939143Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablefdad2e16(PartitionKey='001',RowKey='batch_delete')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "bd1ff3ee-b6b3-41ab-8296-354e1f3fcea6"
+        }
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablee3762e5e()?%24filter=aaa+bbb+ccc&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:21:57 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "ec4c73d2-480d-11ec-86aa-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:21:57 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"InvalidInput\",\"message\":{\"lang\":\"en-us\",\"value\":\"Request url is invalid.\\r\\nActivityId: 8ebde059-88cb-45d7-8e92-a54dae71a95c, documentdb-dotnet-sdk/2.14.0 Host/64-bit MicrosoftWindowsNT/6.2.9200.0\\nRequestID:8ebde059-88cb-45d7-8e92-a54dae71a95c\\n\"}}}\r\n"
+        ],
+        "statusCode": "400",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:21:55 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "8ebde059-88cb-45d7-8e92-a54dae71a95c"
+        }
+    }
+}

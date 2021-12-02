@@ -1,0 +1,32 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/querytablefbd82c55()?%24filter=PartitionKey+eq+%27foo%27%27+or+RowKey+eq+%27%27bar2%27+and+IsAdmin+eq+%27admin%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:32:40 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "6b5bdf04-480f-11ec-8741-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:32:40 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#querytablefbd82c55"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:32:38 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "14c9e4c2-7c9b-4bab-8a80-42666b59c042"
+        }
+    }
+}

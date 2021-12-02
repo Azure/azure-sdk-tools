@@ -1,0 +1,46 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable40e52f1f?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "149",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:19:59 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a5ee4fae-480d-11ec-aa02-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:19:59 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "PK",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "table@storage.com012345",
+            "RowKey@odata.type": "Edm.String",
+            "Value": 115
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable40e52f1f/$metadata#uttable40e52f1f/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A19%3A58.8311047Z'\"",
+            "PartitionKey": "PK",
+            "RowKey": "table@storage.com012345",
+            "Value": 115,
+            "Timestamp": "2021-11-18T01:19:58.8311047Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:19:57 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A19%3A58.8311047Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable40e52f1f(PartitionKey='PK',RowKey='table@storage.com012345')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "c625c29a-61bd-4efe-813d-9e0ddfa7b3e1"
+        }
+    }
+}

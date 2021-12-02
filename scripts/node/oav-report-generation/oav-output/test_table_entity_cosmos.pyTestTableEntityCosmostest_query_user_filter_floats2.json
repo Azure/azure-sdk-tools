@@ -1,0 +1,79 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablea63a301e?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "678",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:21:00 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "ca0e1ab7-480d-11ec-a8aa-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:21:00 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pka63a301e1",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rka63a301e1",
+            "RowKey@odata.type": "Edm.String",
+            "age": 49,
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "married": false,
+            "deceased": true,
+            "ratio": 5.2,
+            "ratio@odata.type": "Edm.Double",
+            "evenratio": 6,
+            "evenratio@odata.type": "Edm.Double",
+            "large": 39999011,
+            "Birthday": "1993-04-01T00:00:00.000000Z",
+            "Birthday@odata.type": "Edm.DateTime",
+            "birthday": "1990-04-01T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime",
+            "binary": "YmluYXJ5LWJpbmFyeQ==",
+            "binary@odata.type": "Edm.Binary",
+            "other": 40,
+            "clsid": "c8da6455-213e-42d9-9b79-3f9149a57833",
+            "clsid@odata.type": "Edm.Guid"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablea63a301e/$metadata#uttablea63a301e/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A20%3A59.3821703Z'\"",
+            "PartitionKey": "pka63a301e1",
+            "RowKey": "rka63a301e1",
+            "age": 49,
+            "sex": "female",
+            "married": false,
+            "deceased": true,
+            "ratio": 5.2,
+            "evenratio": 6,
+            "large": 39999011,
+            "Birthday@odata.type": "Edm.DateTime",
+            "Birthday": "1993-04-01T00:00:00.0000000Z",
+            "birthday@odata.type": "Edm.DateTime",
+            "birthday": "1990-04-01T00:00:00.0000000Z",
+            "binary@odata.type": "Edm.Binary",
+            "binary": "YmluYXJ5LWJpbmFyeQ==",
+            "other": 40,
+            "clsid@odata.type": "Edm.Guid",
+            "clsid": "c8da6455-213e-42d9-9b79-3f9149a57833",
+            "Timestamp": "2021-11-18T01:20:59.3821703Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:20:58 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A20%3A59.3821703Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablea63a301e(PartitionKey='pka63a301e1',RowKey='rka63a301e1')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "ba2e0940-0182-4000-87e9-8f039a306809"
+        }
+    }
+}

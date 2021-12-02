@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablea3642fe3()?%24top=2&%24filter=PartitionKey+eq+%27pk%27&NextPartitionKey=%5B%7B%22token%22%3A%22%2BRID%3A%7EgaQ%2BAN9Iqm8EAAAAAAAAAA%3D%3D%23RT%3A2%23TRC%3A4%23ISV%3A2%23IEO%3A65567%23QCF%3A4%23FPC%3AAQQAAAAAAAAABgAAAAAAAAA%3D%22%2C%22range%22%3A%7B%22min%22%3A%22%22%2C%22max%22%3A%22FF%22%7D%7D%5D&NextRowKey=NA&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "46ae5e98-480f-11ec-8f38-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A37.4325767Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "101234",
+                    "value": 4,
+                    "Timestamp": "2021-11-18T01:31:37.4325767Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A37.4777351Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "1012345",
+                    "value": 5,
+                    "Timestamp": "2021-11-18T01:31:37.4777351Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttablea3642fe3"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:31:37 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "ceabc125-4b38-42bb-8de9-f9165b2c8422"
+        }
+    }
+}

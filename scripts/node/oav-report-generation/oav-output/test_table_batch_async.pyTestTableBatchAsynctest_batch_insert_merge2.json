@@ -1,0 +1,49 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttableb09b2b40(PartitionKey='001',RowKey='batch_insert_merge')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:44:28 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "8f2ca43d-489f-11ec-8222-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:44:28 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttableb09b2b40/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A44%3A28.0614813Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_insert_merge",
+            "Timestamp": "2021-11-18T18:44:28.0614813Z",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:44:28.03622Z"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 18 Nov 2021 18:44:27 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A44%3A28.0614813Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "8f2ca43d-489f-11ec-8222-c8348e51ab51",
+            "x-ms-request-id": "437593f2-a002-0013-0aac-dcd8c4000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

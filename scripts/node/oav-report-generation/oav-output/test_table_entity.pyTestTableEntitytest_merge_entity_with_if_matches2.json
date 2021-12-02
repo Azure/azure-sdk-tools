@@ -1,0 +1,53 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttableefa52c2f(PartitionKey='pkefa52c2f',RowKey='rkefa52c2f')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "360",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:25:43 GMT",
+            "If-Match": "W/\"datetime'2021-11-11T01%3A25%3A44.3107062Z'\"",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "49f5a325-428e-11ec-a71c-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:25:43 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkefa52c2f",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkefa52c2f",
+            "RowKey@odata.type": "Edm.String",
+            "age": "abc",
+            "age@odata.type": "Edm.String",
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "sign": "aquarius",
+            "sign@odata.type": "Edm.String",
+            "birthday": "1991-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime"
+        },
+        "method": "PATCH"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 11 Nov 2021 01:25:43 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A25%3A44.3443228Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "49f5a325-428e-11ec-a71c-c8348e51ab51",
+            "x-ms-request-id": "792f09aa-6002-002e-2a9b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

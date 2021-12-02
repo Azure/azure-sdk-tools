@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable8fdb28b4(PartitionKey='pk8fdb28b4',RowKey='rk8fdb28b4')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:32:12 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "31b6d7e0-428f-11ec-848b-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:32:12 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable8fdb28b4/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A32%3A13.1255951Z'\"",
+            "PartitionKey": "pk8fdb28b4",
+            "RowKey": "rk8fdb28b4",
+            "Timestamp": "2021-11-11T01:32:13.1255951Z",
+            "ETag": "foo",
+            "etag": "bar",
+            "Etag": "baz"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:32:12 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A32%3A13.1255951Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "31b6d7e0-428f-11ec-848b-c8348e51ab51",
+            "x-ms-request-id": "792f128b-6002-002e-2a9b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

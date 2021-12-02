@@ -1,0 +1,32 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/$batch?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "938",
+            "Content-Type": "multipart/mixed; boundary=batch_00000000-0000-0000-0000-000000000000",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:05 GMT",
+            "MaxDataServiceVersion": "3.0;NetFx",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "10a5f062-48a0-11ec-8279-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:05 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": "LS1iYXRjaF8wMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT1jaGFuZ2VzZXRfZjRiNjdhZTUtYmQzOS00ODY4LTgyMzEtZTlhNDUyOWYzY2Y1DQoNCi0tY2hhbmdlc2V0X2Y0YjY3YWU1LWJkMzktNDg2OC04MjMxLWU5YTQ1MjlmM2NmNQ0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9odHRwDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiaW5hcnkNCkNvbnRlbnQtSUQ6IDANCg0KUFVUIGh0dHBzOi8vZmFrZWVuZHBvaW50LnRhYmxlLmNvc21vcy5henVyZS5jb20vdXR0YWJsZTRjODEzMzQ0KFBhcnRpdGlvbktleT0nQSUyNyUyN2FhYSUyMl9iYmJiMicsUm93S2V5PSclMjJBJTI3JTI3YWFhJTIyX2JiYmIyJykgSFRUUC8xLjENCngtbXMtdmVyc2lvbjogMjAxOS0wMi0wMg0KRGF0YVNlcnZpY2VWZXJzaW9uOiAzLjANCklmLU1hdGNoOiAqDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL2pzb24NCkFjY2VwdDogYXBwbGljYXRpb24vanNvbg0KQ29udGVudC1MZW5ndGg6IDE5OA0KeC1tcy1kYXRlOiBUaHUsIDE4IE5vdiAyMDIxIDE4OjQ4OjA1IEdNVA0KRGF0ZTogVGh1LCAxOCBOb3YgMjAyMSAxODo0ODowNSBHTVQNCg0KeyJQYXJ0aXRpb25LZXkiOiAiQSdhYWFcIl9iYmJiMiIsICJQYXJ0aXRpb25LZXlAb2RhdGEudHlwZSI6ICJFZG0uU3RyaW5nIiwgIlJvd0tleSI6ICJcIkEnYWFhXCJfYmJiYjIiLCAiUm93S2V5QG9kYXRhLnR5cGUiOiAiRWRtLlN0cmluZyIsICJ0ZXN0IjogIlwiQSdhYWFcIl9iYmJiMiIsICJ0ZXN0QG9kYXRhLnR5cGUiOiAiRWRtLlN0cmluZyJ9DQotLWNoYW5nZXNldF9mNGI2N2FlNS1iZDM5LTQ4NjgtODIzMS1lOWE0NTI5ZjNjZjUtLQ0KDQotLWJhdGNoXzAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMC0tDQo=",
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": "LS1iYXRjaHJlc3BvbnNlXzAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PWNoYW5nZXNldHJlc3BvbnNlXzdkY2NmYTc2LWU2YmEtNDU1Yy1iOWQ0LTg3ZGNiMDRmYTg3Zg0KDQotLWNoYW5nZXNldHJlc3BvbnNlXzdkY2NmYTc2LWU2YmEtNDU1Yy1iOWQ0LTg3ZGNiMDRmYTg3ZgpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL2h0dHAKQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmluYXJ5CgpIVFRQLzEuMSAyMDQgTm8gQ29udGVudA0KRVRhZzogVy8iZGF0ZXRpbWUnMjAyMS0xMS0xOFQxOCUzQTQ4JTNBMDUuMzE2NTA2M1onIg0KQ29udGVudC1JRDogMQ0KDQoNCi0tY2hhbmdlc2V0cmVzcG9uc2VfN2RjY2ZhNzYtZTZiYS00NTVjLWI5ZDQtODdkY2IwNGZhODdmLS0KLS1iYXRjaHJlc3BvbnNlXzAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMC0tDQo=",
+        "statusCode": "202",
+        "headers": {
+            "Content-Type": "multipart/mixed; boundary=batchresponse_00000000-0000-0000-0000-000000000000",
+            "Date": "Thu, 18 Nov 2021 18:48:05 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "a4aed83c-4a2d-4556-a229-2187de2afb4c"
+        }
+    }
+}

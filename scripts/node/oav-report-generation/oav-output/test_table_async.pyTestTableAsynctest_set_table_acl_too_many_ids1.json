@@ -1,0 +1,43 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/pytableasync31422a3e?comp=acl&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "372",
+            "Content-Type": "application/xml",
+            "Date": "Thu, 11 Nov 2021 01:06:52 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a81a79a3-428b-11ec-91c2-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:06:52 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": [
+            "<?xml version='1.0' encoding='utf-8'?>\n",
+            "<SignedIdentifiers><SignedIdentifier><Id>id0</Id></SignedIdentifier><SignedIdentifier><Id>id1</Id></SignedIdentifier><SignedIdentifier><Id>id2</Id></SignedIdentifier><SignedIdentifier><Id>id3</Id></SignedIdentifier><SignedIdentifier><Id>id4</Id></SignedIdentifier><SignedIdentifier><Id>id5</Id></SignedIdentifier></SignedIdentifiers>"
+        ],
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": [
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?><m:error xmlns:m=\"http://schemas.microsoft.com/ado/2007/08/dataservices/metadata\"><m:code>InvalidXmlDocument</m:code><m:message xml:lang=\"en-US\">XML specified is not syntactically valid.\n",
+            "RequestId:a43be398-b002-0070-1f98-d6d64d000000\n",
+            "Time:2021-11-11T01:06:53.7995199Z</m:message></m:error>"
+        ],
+        "statusCode": "400",
+        "headers": {
+            "Content-Length": "327",
+            "Content-Type": "application/xml",
+            "Date": "Thu, 11 Nov 2021 01:06:53 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "x-ms-client-request-id": "a81a79a3-428b-11ec-91c2-c8348e51ab51",
+            "x-ms-error-code": "InvalidXmlDocument",
+            "x-ms-request-id": "a43be398-b002-0070-1f98-d6d64d000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

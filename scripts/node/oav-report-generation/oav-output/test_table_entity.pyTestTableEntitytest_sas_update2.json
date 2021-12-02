@@ -1,0 +1,52 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable43624bf(PartitionKey='pk43624bf',RowKey='rk43624bf')?se=end&sp=u&sv=2019-02-02&tn=uttable43624bf&sig=fake_token_value&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+            "Content-Length": "358",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 00:41:06 GMT",
+            "If-Match": "*",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "370a0456-4808-11ec-81a0-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 00:41:06 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk43624bf",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk43624bf",
+            "RowKey@odata.type": "Edm.String",
+            "age": "abc",
+            "age@odata.type": "Edm.String",
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "sign": "aquarius",
+            "sign@odata.type": "Edm.String",
+            "birthday": "1991-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime"
+        },
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 18 Nov 2021 00:41:05 GMT",
+            "ETag": "W/\"datetime'2021-11-18T00%3A41%3A05.2896927Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "370a0456-4808-11ec-81a0-c8348e51ab51",
+            "x-ms-request-id": "214246d4-8002-0014-7914-dcb4a7000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

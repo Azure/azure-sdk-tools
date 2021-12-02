@@ -1,0 +1,37 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/?restype=service&comp=properties&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "251",
+            "Content-Type": "application/xml",
+            "Date": "Wed, 17 Nov 2021 22:26:01 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "58599e32-47f5-11ec-97cb-c8348e51ab51",
+            "x-ms-date": "Wed, 17 Nov 2021 22:26:01 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": [
+            "<?xml version='1.0' encoding='utf-8'?>\n",
+            "<StorageServiceProperties><Logging><Version>1.0</Version><Delete>false</Delete><Read>false</Read><Write>true</Write><RetentionPolicy><Enabled>false</Enabled></RetentionPolicy></Logging></StorageServiceProperties>"
+        ],
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "202",
+        "headers": {
+            "Date": "Wed, 17 Nov 2021 22:26:00 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "x-ms-client-request-id": "58599e32-47f5-11ec-97cb-c8348e51ab51",
+            "x-ms-request-id": "f74d9584-b002-0052-1502-dc8020000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

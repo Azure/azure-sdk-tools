@@ -1,0 +1,56 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable3c3c2ef7()?%24top=2&%24filter=PartitionKey+eq+%27pk%27&NextPartitionKey=1%214%21cGs-&NextRowKey=1%218%21MTAxMg--&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4fadcae3-428f-11ec-86b2-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable3c3c2ef7",
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A02.7656219Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "1012",
+                    "Timestamp": "2021-11-11T01:33:02.7656219Z",
+                    "value": 2
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A02.8435781Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "10123",
+                    "Timestamp": "2021-11-11T01:33:02.8435781Z",
+                    "value": 3
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "4fadcae3-428f-11ec-86b2-c8348e51ab51",
+            "x-ms-continuation-NextPartitionKey": "1!4!cGs-",
+            "x-ms-continuation-NextRowKey": "1!8!MTAxMjM0",
+            "x-ms-request-id": "792f14f8-6002-002e-3b9c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

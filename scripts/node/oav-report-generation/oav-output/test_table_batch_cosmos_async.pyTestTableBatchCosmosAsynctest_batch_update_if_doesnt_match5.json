@@ -1,0 +1,26 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/Tables('uttable24f934ac')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "0",
+            "Date": "Thu, 18 Nov 2021 18:48:26 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "1d0bed6b-48a0-11ec-94ae-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:26 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Date": "Thu, 18 Nov 2021 18:48:26 GMT",
+            "x-ms-request-id": "b667e2de-69b6-44c4-8a55-a18c1eb9572d"
+        }
+    }
+}

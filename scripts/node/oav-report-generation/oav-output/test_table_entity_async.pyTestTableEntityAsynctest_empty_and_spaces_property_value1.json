@@ -1,0 +1,86 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable97df3210?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "913",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:33:00 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4e2b1400-428f-11ec-9c5d-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:33:00 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk97df3210",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk97df3210",
+            "RowKey@odata.type": "Edm.String",
+            "EmptyByte": "",
+            "EmptyByte@odata.type": "Edm.Binary",
+            "EmptyUnicode": "",
+            "EmptyUnicode@odata.type": "Edm.String",
+            "SpacesOnlyByte": "ICAg",
+            "SpacesOnlyByte@odata.type": "Edm.Binary",
+            "SpacesOnlyUnicode": "   ",
+            "SpacesOnlyUnicode@odata.type": "Edm.String",
+            "SpacesBeforeByte": "ICAgVGV4dA==",
+            "SpacesBeforeByte@odata.type": "Edm.Binary",
+            "SpacesBeforeUnicode": "   Text",
+            "SpacesBeforeUnicode@odata.type": "Edm.String",
+            "SpacesAfterByte": "VGV4dCAgIA==",
+            "SpacesAfterByte@odata.type": "Edm.Binary",
+            "SpacesAfterUnicode": "Text   ",
+            "SpacesAfterUnicode@odata.type": "Edm.String",
+            "SpacesBeforeAndAfterByte": "ICAgVGV4dCAgIA==",
+            "SpacesBeforeAndAfterByte@odata.type": "Edm.Binary",
+            "SpacesBeforeAndAfterUnicode": "   Text   ",
+            "SpacesBeforeAndAfterUnicode@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable97df3210/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A00.9006734Z'\"",
+            "PartitionKey": "pk97df3210",
+            "RowKey": "rk97df3210",
+            "Timestamp": "2021-11-11T01:33:00.9006734Z",
+            "EmptyByte@odata.type": "Edm.Binary",
+            "EmptyByte": "",
+            "EmptyUnicode": "",
+            "SpacesOnlyByte@odata.type": "Edm.Binary",
+            "SpacesOnlyByte": "ICAg",
+            "SpacesOnlyUnicode": "   ",
+            "SpacesBeforeByte@odata.type": "Edm.Binary",
+            "SpacesBeforeByte": "ICAgVGV4dA==",
+            "SpacesBeforeUnicode": "   Text",
+            "SpacesAfterByte@odata.type": "Edm.Binary",
+            "SpacesAfterByte": "VGV4dCAgIA==",
+            "SpacesAfterUnicode": "Text   ",
+            "SpacesBeforeAndAfterByte@odata.type": "Edm.Binary",
+            "SpacesBeforeAndAfterByte": "ICAgVGV4dCAgIA==",
+            "SpacesBeforeAndAfterUnicode": "   Text   "
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:33:00 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A33%3A00.9006734Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttable97df3210(PartitionKey='pk97df3210',RowKey='rk97df3210')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "4e2b1400-428f-11ec-9c5d-c8348e51ab51",
+            "x-ms-request-id": "792f14b7-6002-002e-0f9c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

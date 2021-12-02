@@ -1,0 +1,36 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/Tables('uttable8f0c28ac')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "0",
+            "Date": "Thu, 18 Nov 2021 00:40:45 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "2a9cb899-4808-11ec-b6d2-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 00:40:45 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 18 Nov 2021 00:40:44 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "2a9cb899-4808-11ec-b6d2-c8348e51ab51",
+            "x-ms-request-id": "2142436a-8002-0014-5f14-dcb4a7000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

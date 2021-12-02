@@ -1,0 +1,27 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.cosmos.azure.com/Tables('listtable04bee2d30')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "0",
+            "Date": "Wed, 15 Sep 2021 17:14:33 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "654e4e70-1648-11ec-9214-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 17:14:33 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Date": "Wed, 15 Sep 2021 17:14:31 GMT",
+            "x-ms-request-id": "b504817c-89c9-4c47-9a8d-3b19d6bacb12"
+        }
+    }
+}

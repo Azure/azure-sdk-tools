@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttabledca33494?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "215",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:47:07 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "706cc5cd-4811-11ec-95ac-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:47:07 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkdca33494",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkdca33494",
+            "RowKey@odata.type": "Edm.String",
+            "datetime1": "2013-08-22T01:12:06.2608595Z",
+            "datetime1@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttabledca33494/$metadata#uttabledca33494/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A47%3A07.0429191Z'\"",
+            "PartitionKey": "pkdca33494",
+            "RowKey": "rkdca33494",
+            "datetime1@odata.type": "Edm.DateTime",
+            "datetime1": "2013-08-22T01:12:06.2608595Z",
+            "Timestamp": "2021-11-18T01:47:07.0429191Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:47:06 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A47%3A07.0429191Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttabledca33494(PartitionKey='pkdca33494',RowKey='rkdca33494')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "72880815-8ce9-425b-b24c-d3ef7b84cdd2"
+        }
+    }
+}

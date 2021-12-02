@@ -1,0 +1,93 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable1a3c30c5()?%24filter=PartitionKey+eq+%27003%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:46:29 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "d76d8492-489f-11ec-96cf-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:46:29 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A29.2692999Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-2",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:46:28.9505410Z",
+                    "Timestamp": "2021-11-18T18:46:29.2692999Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A29.2700167Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-3",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 100,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:46:28.9505410Z",
+                    "Timestamp": "2021-11-18T18:46:29.2700167Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A29.2719623Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-4",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:46:28.9505410Z",
+                    "Timestamp": "2021-11-18T18:46:29.2719623Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A29.2671495Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:46:28.9505410Z",
+                    "Timestamp": "2021-11-18T18:46:29.2671495Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A29.2728839Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-5",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:46:28.9505410Z",
+                    "Timestamp": "2021-11-18T18:46:29.2728839Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttable1a3c30c5"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:46:29 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "d433a98e-447d-4c01-94af-4bc38ca62bab"
+        }
+    }
+}

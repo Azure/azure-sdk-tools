@@ -1,0 +1,52 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttablefd1526ef(PartitionKey='pkfd1526ef',RowKey='rkfd1526ef')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "360",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:06:48 GMT",
+            "If-Match": "*",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a57458ab-428b-11ec-959c-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:06:48 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkfd1526ef",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkfd1526ef",
+            "RowKey@odata.type": "Edm.String",
+            "age": "abc",
+            "age@odata.type": "Edm.String",
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "sign": "aquarius",
+            "sign@odata.type": "Edm.String",
+            "birthday": "1991-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime"
+        },
+        "method": "PATCH"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 11 Nov 2021 01:06:49 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A06%3A49.3615675Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "a57458ab-428b-11ec-959c-c8348e51ab51",
+            "x-ms-request-id": "a43be33e-b002-0070-5f98-d6d64d000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

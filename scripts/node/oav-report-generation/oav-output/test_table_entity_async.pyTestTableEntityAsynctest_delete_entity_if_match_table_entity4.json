@@ -1,0 +1,44 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable611a337d(PartitionKey='pk611a337d',RowKey='rk611a337d')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:32:51 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "48c49d20-428f-11ec-912f-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:32:51 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.error": {
+                "code": "ResourceNotFound",
+                "message": {
+                    "lang": "en-US",
+                    "value": "The specified resource does not exist.\nRequestId:792f13ed-6002-002e-759c-d63dad000000\nTime:2021-11-11T01:32:51.8427782Z"
+                }
+            }
+        },
+        "statusCode": "404",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:32:51 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "48c49d20-428f-11ec-912f-c8348e51ab51",
+            "x-ms-request-id": "792f13ed-6002-002e-759c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

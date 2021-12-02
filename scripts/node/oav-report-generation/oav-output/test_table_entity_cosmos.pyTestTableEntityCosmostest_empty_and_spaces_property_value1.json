@@ -1,0 +1,79 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable58a32fc?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "911",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:30:40 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "23d1924b-480f-11ec-9216-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:30:40 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk58a32fc",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk58a32fc",
+            "RowKey@odata.type": "Edm.String",
+            "EmptyByte": "",
+            "EmptyByte@odata.type": "Edm.Binary",
+            "EmptyUnicode": "",
+            "EmptyUnicode@odata.type": "Edm.String",
+            "SpacesOnlyByte": "ICAg",
+            "SpacesOnlyByte@odata.type": "Edm.Binary",
+            "SpacesOnlyUnicode": "   ",
+            "SpacesOnlyUnicode@odata.type": "Edm.String",
+            "SpacesBeforeByte": "ICAgVGV4dA==",
+            "SpacesBeforeByte@odata.type": "Edm.Binary",
+            "SpacesBeforeUnicode": "   Text",
+            "SpacesBeforeUnicode@odata.type": "Edm.String",
+            "SpacesAfterByte": "VGV4dCAgIA==",
+            "SpacesAfterByte@odata.type": "Edm.Binary",
+            "SpacesAfterUnicode": "Text   ",
+            "SpacesAfterUnicode@odata.type": "Edm.String",
+            "SpacesBeforeAndAfterByte": "ICAgVGV4dCAgIA==",
+            "SpacesBeforeAndAfterByte@odata.type": "Edm.Binary",
+            "SpacesBeforeAndAfterUnicode": "   Text   ",
+            "SpacesBeforeAndAfterUnicode@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable58a32fc/$metadata#uttable58a32fc/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A30%3A39.5473927Z'\"",
+            "PartitionKey": "pk58a32fc",
+            "RowKey": "rk58a32fc",
+            "EmptyByte@odata.type": "Edm.Binary",
+            "EmptyByte": "",
+            "EmptyUnicode": "",
+            "SpacesOnlyByte@odata.type": "Edm.Binary",
+            "SpacesOnlyByte": "ICAg",
+            "SpacesOnlyUnicode": "   ",
+            "SpacesBeforeByte@odata.type": "Edm.Binary",
+            "SpacesBeforeByte": "ICAgVGV4dA==",
+            "SpacesBeforeUnicode": "   Text",
+            "SpacesAfterByte@odata.type": "Edm.Binary",
+            "SpacesAfterByte": "VGV4dCAgIA==",
+            "SpacesAfterUnicode": "Text   ",
+            "SpacesBeforeAndAfterByte@odata.type": "Edm.Binary",
+            "SpacesBeforeAndAfterByte": "ICAgVGV4dCAgIA==",
+            "SpacesBeforeAndAfterUnicode": "   Text   ",
+            "Timestamp": "2021-11-18T01:30:39.5473927Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:30:38 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A30%3A39.5473927Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable58a32fc(PartitionKey='pk58a32fc',RowKey='rk58a32fc')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "6d5b6d92-8c5e-47d2-ab64-5688ed4d7ee0"
+        }
+    }
+}

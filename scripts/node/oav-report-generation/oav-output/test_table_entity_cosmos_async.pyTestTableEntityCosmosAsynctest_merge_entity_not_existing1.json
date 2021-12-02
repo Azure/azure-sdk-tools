@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable12af34fe(PartitionKey='pk12af34fe',RowKey='rk12af34fe')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "360",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:45:51 GMT",
+            "If-Match": "*",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "X-HTTP-Method": "MERGE",
+            "x-ms-client-request-id": "42f2559c-4811-11ec-8426-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:45:51 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk12af34fe",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk12af34fe",
+            "RowKey@odata.type": "Edm.String",
+            "age": "abc",
+            "age@odata.type": "Edm.String",
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "sign": "aquarius",
+            "sign@odata.type": "Edm.String",
+            "birthday": "1991-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"ResourceNotFound\",\"message\":{\"lang\":\"en-us\",\"value\":\"The specified resource does not exist.\\nRequestID:e437cf0f-84a6-427d-8b23-0ce8fea22811\\n\"}}}\r\n"
+        ],
+        "statusCode": "404",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 01:45:49 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "e437cf0f-84a6-427d-8b23-0ce8fea22811"
+        }
+    }
+}

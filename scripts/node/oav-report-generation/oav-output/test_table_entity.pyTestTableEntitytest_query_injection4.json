@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/querytablec83826ee()?%24filter=PartitionKey+eq+%27foo%27+and+IsAdmin+eq+%27admin%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:29:23 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "cd57096a-428e-11ec-91cd-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:29:23 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#querytablec83826ee",
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A29%3A24.6814547Z'\"",
+                    "PartitionKey": "foo",
+                    "RowKey": "bar1",
+                    "Timestamp": "2021-11-11T01:29:24.6814547Z",
+                    "IsAdmin": "admin"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:29:24 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "cd57096a-428e-11ec-91cd-c8348e51ab51",
+            "x-ms-request-id": "792f0ec1-6002-002e-1e9b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

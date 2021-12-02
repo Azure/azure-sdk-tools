@@ -1,0 +1,76 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/querytable98f92b6c()?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=nometadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:29:02 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "c0d11261-428e-11ec-af45-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:29:02 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "PartitionKey": "pk98f92b6c",
+                    "RowKey": "rk98f92b6c1",
+                    "Timestamp": "2021-11-11T01:29:03.6353156Z",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday": "1973-10-04T00:00:00Z",
+                    "birthday": "1970-10-04T00:00:00Z",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833"
+                },
+                {
+                    "PartitionKey": "pk98f92b6c",
+                    "RowKey": "rk98f92b6c12",
+                    "Timestamp": "2021-11-11T01:29:03.714272Z",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday": "1973-10-04T00:00:00Z",
+                    "birthday": "1970-10-04T00:00:00Z",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=nometadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:29:03 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "c0d11261-428e-11ec-af45-c8348e51ab51",
+            "x-ms-request-id": "792f0e3f-6002-002e-639b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

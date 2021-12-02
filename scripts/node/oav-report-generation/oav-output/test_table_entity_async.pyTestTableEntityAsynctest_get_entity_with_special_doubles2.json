@@ -1,0 +1,49 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable971031f5(PartitionKey='pk971031f5',RowKey='rk971031f5')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:32:52 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "497f9103-428f-11ec-9d96-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:32:52 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable971031f5/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A32%3A53.0311082Z'\"",
+            "PartitionKey": "pk971031f5",
+            "RowKey": "rk971031f5",
+            "Timestamp": "2021-11-11T01:32:53.0311082Z",
+            "inf@odata.type": "Edm.Double",
+            "inf": "Infinity",
+            "negativeinf@odata.type": "Edm.Double",
+            "negativeinf": "-Infinity",
+            "nan@odata.type": "Edm.Double",
+            "nan": "NaN"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:32:52 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A32%3A53.0311082Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "497f9103-428f-11ec-9d96-c8348e51ab51",
+            "x-ms-request-id": "792f140e-6002-002e-0d9c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

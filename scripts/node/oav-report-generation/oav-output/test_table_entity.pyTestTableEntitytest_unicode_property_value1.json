@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttablee9e129dd?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "195",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:27:06 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "7bb05d5a-428e-11ec-8419-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:27:06 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pke9e129dd",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rke9e129dd",
+            "RowKey@odata.type": "Edm.String",
+            "Description": "ꀕ",
+            "Description@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": "{\"odata.metadata\":\"https://fakeendpoint.table.core.windows.net/$metadata#uttablee9e129dd/@Element\",\"odata.etag\":\"W/\\\"datetime'2021-11-11T01%3A27%3A07.7766484Z'\\\"\",\"PartitionKey\":\"pke9e129dd\",\"RowKey\":\"rke9e129dd\",\"Timestamp\":\"2021-11-11T01:27:07.7766484Z\",\"Description\":\"\\ua015\"}",
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:27:06 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A27%3A07.7766484Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttablee9e129dd(PartitionKey='pke9e129dd',RowKey='rke9e129dd')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "7bb05d5a-428e-11ec-8419-c8348e51ab51",
+            "x-ms-request-id": "792f0bbb-6002-002e-379b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

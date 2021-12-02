@@ -1,0 +1,34 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/?restype=service&comp=properties&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "1143",
+            "Content-Type": "application/xml",
+            "Date": "Thu, 18 Nov 2021 02:47:12 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "d4d7fe33-4819-11ec-aed6-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 02:47:12 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": [
+            "<?xml version='1.0' encoding='utf-8'?>\n",
+            "<StorageServiceProperties><Cors><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule><CorsRule><AllowedOrigins>www.xyz.com</AllowedOrigins><AllowedMethods>GET</AllowedMethods><AllowedHeaders /><ExposedHeaders /><MaxAgeInSeconds>0</MaxAgeInSeconds></CorsRule></Cors></StorageServiceProperties>"
+        ],
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"NotImplemented\",\"message\":{\"lang\":\"en-us\",\"value\":\"The requested operation is not supported.\\r\\nActivityId: e70acc88-b3e5-4661-a9e9-1f1bb2842bc3, documentdb-dotnet-sdk/2.14.0 Host/64-bit MicrosoftWindowsNT/6.2.9200.0\\nRequestID:e70acc88-b3e5-4661-a9e9-1f1bb2842bc3\\n\"}}}\r\n"
+        ],
+        "statusCode": "501",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 02:47:11 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "e70acc88-b3e5-4661-a9e9-1f1bb2842bc3"
+        }
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablef1d336c7?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "112",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:45:19 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "2fa8bd71-4811-11ec-9acf-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:45:19 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "RowKey": "rk",
+            "RowKey@odata.type": "Edm.String",
+            "PartitionKey": "",
+            "PartitionKey@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"PropertiesNeedValue\",\"message\":{\"lang\":\"en-us\",\"value\":\"PartitionKey/RowKey cannot be empty\\r\\nActivityId: 9ce5a4a9-7150-4066-b43d-15a38f5977cd, documentdb-dotnet-sdk/2.14.0 Host/64-bit MicrosoftWindowsNT/6.2.9200.0\\nRequestID:9ce5a4a9-7150-4066-b43d-15a38f5977cd\\n\"}}}\r\n"
+        ],
+        "statusCode": "400",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 01:45:17 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "9ce5a4a9-7150-4066-b43d-15a38f5977cd"
+        }
+    }
+}

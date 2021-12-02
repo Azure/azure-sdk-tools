@@ -1,0 +1,30 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/Tables('pytableasyncd7a43a06')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "0",
+            "Date": "Thu, 18 Nov 2021 00:33:19 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "20e37d79-4807-11ec-9deb-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 00:33:19 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"ResourceNotFound\",\"message\":{\"lang\":\"en-us\",\"value\":\"The specified resource does not exist.\\nRequestID:9053c525-fe57-4c15-bf59-b3a66d46015f\\n\"}}}\r\n"
+        ],
+        "statusCode": "404",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 00:33:18 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "9053c525-fe57-4c15-bf59-b3a66d46015f"
+        }
+    }
+}

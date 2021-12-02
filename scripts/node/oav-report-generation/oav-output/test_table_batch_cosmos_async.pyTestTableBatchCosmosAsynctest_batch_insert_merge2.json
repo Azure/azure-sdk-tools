@@ -1,0 +1,41 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable21ae30a7(PartitionKey='001',RowKey='batch_insert_merge')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:28 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "1eb32057-48a0-11ec-856f-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:28 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable21ae30a7/$metadata#uttable21ae30a7/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A28.8527367Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_insert_merge",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:48:28.7959060Z",
+            "Timestamp": "2021-11-18T18:48:28.8527367Z"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:48:28 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A48%3A28.8527367Z'\"",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "d9ae4638-09ed-475e-b4c8-1d60e6250965"
+        }
+    }
+}

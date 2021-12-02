@@ -1,0 +1,49 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "36",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:04:34 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "55911363-428b-11ec-bb95-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:04:34 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "TableName": "pytablesync659525bb"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.error": {
+                "code": "TableAlreadyExists",
+                "message": {
+                    "lang": "en-US",
+                    "value": "The table specified already exists.\nRequestId:a43bdfc6-b002-0070-0198-d6d64d000000\nTime:2021-11-11T01:04:35.3292546Z"
+                }
+            }
+        },
+        "statusCode": "409",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:04:34 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "55911363-428b-11ec-bb95-c8348e51ab51",
+            "x-ms-request-id": "a43bdfc6-b002-0070-0198-d6d64d000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

@@ -1,0 +1,95 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/querytablef30d2c42()?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=fullmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:28:52 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "ba7b0ee5-428e-11ec-a028-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:28:52 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#querytablef30d2c42",
+            "value": [
+                {
+                    "odata.type": "mcpatinotestprim.querytablef30d2c42",
+                    "odata.id": "https://fakeendpoint.table.core.windows.net/querytablef30d2c42(PartitionKey='pkf30d2c42',RowKey='rkf30d2c421')",
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A28%3A52.9943187Z'\"",
+                    "odata.editLink": "querytablef30d2c42(PartitionKey='pkf30d2c42',RowKey='rkf30d2c421')",
+                    "PartitionKey": "pkf30d2c42",
+                    "RowKey": "rkf30d2c421",
+                    "Timestamp@odata.type": "Edm.DateTime",
+                    "Timestamp": "2021-11-11T01:28:52.9943187Z",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday@odata.type": "Edm.DateTime",
+                    "Birthday": "1973-10-04T00:00:00Z",
+                    "birthday@odata.type": "Edm.DateTime",
+                    "birthday": "1970-10-04T00:00:00Z",
+                    "binary@odata.type": "Edm.Binary",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid@odata.type": "Edm.Guid",
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833"
+                },
+                {
+                    "odata.type": "mcpatinotestprim.querytablef30d2c42",
+                    "odata.id": "https://fakeendpoint.table.core.windows.net/querytablef30d2c42(PartitionKey='pkf30d2c42',RowKey='rkf30d2c4212')",
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A28%3A53.0852671Z'\"",
+                    "odata.editLink": "querytablef30d2c42(PartitionKey='pkf30d2c42',RowKey='rkf30d2c4212')",
+                    "PartitionKey": "pkf30d2c42",
+                    "RowKey": "rkf30d2c4212",
+                    "Timestamp@odata.type": "Edm.DateTime",
+                    "Timestamp": "2021-11-11T01:28:53.0852671Z",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday@odata.type": "Edm.DateTime",
+                    "Birthday": "1973-10-04T00:00:00Z",
+                    "birthday@odata.type": "Edm.DateTime",
+                    "birthday": "1970-10-04T00:00:00Z",
+                    "binary@odata.type": "Edm.Binary",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid@odata.type": "Edm.Guid",
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=fullmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:28:52 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "ba7b0ee5-428e-11ec-a028-c8348e51ab51",
+            "x-ms-request-id": "792f0e0b-6002-002e-519b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

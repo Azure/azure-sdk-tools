@@ -1,0 +1,35 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint-secondary.table.core.windows.net/?restype=service&comp=stats&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Date": "Thu, 11 Nov 2021 02:00:03 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "15911573-4293-11ec-bbe6-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 02:00:03 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": "﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><StorageServiceStats><GeoReplication><Status>live</Status><LastSyncTime>Thu, 11 Nov 2021 01:57:00 GMT</LastSyncTime></GeoReplication></StorageServiceStats>",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/xml",
+            "Date": "Thu, 11 Nov 2021 02:00:04 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "Vary": "Origin",
+            "x-ms-client-request-id": "15911573-4293-11ec-bbe6-c8348e51ab51",
+            "x-ms-request-id": "3c6763dc-2002-0029-779f-d6888a000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

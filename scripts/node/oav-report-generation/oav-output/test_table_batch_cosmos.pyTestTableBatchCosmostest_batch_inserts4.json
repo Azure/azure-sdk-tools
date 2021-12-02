@@ -1,0 +1,1033 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable339b2a30()?%24filter=PartitionKey+eq+%27batch_inserts%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:46:15 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "cf499d96-489f-11ec-a0d2-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:46:15 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4924039Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "0",
+                    "Timestamp": "2021-11-18T18:46:15.4924039Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4930183Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "1",
+                    "Timestamp": "2021-11-18T18:46:15.4930183Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4935303Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "2",
+                    "Timestamp": "2021-11-18T18:46:15.4935303Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4940423Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "3",
+                    "Timestamp": "2021-11-18T18:46:15.4940423Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4944519Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "4",
+                    "Timestamp": "2021-11-18T18:46:15.4944519Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4947591Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "5",
+                    "Timestamp": "2021-11-18T18:46:15.4947591Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4951687Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "6",
+                    "Timestamp": "2021-11-18T18:46:15.4951687Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4955783Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "7",
+                    "Timestamp": "2021-11-18T18:46:15.4955783Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4958855Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "8",
+                    "Timestamp": "2021-11-18T18:46:15.4958855Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4962951Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "9",
+                    "Timestamp": "2021-11-18T18:46:15.4962951Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4967047Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "10",
+                    "Timestamp": "2021-11-18T18:46:15.4967047Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4970119Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "11",
+                    "Timestamp": "2021-11-18T18:46:15.4970119Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4974215Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "12",
+                    "Timestamp": "2021-11-18T18:46:15.4974215Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4978311Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "13",
+                    "Timestamp": "2021-11-18T18:46:15.4978311Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4981383Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "14",
+                    "Timestamp": "2021-11-18T18:46:15.4981383Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4985479Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "15",
+                    "Timestamp": "2021-11-18T18:46:15.4985479Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4989575Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "16",
+                    "Timestamp": "2021-11-18T18:46:15.4989575Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4992647Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "17",
+                    "Timestamp": "2021-11-18T18:46:15.4992647Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.4996743Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "18",
+                    "Timestamp": "2021-11-18T18:46:15.4996743Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5000839Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "19",
+                    "Timestamp": "2021-11-18T18:46:15.5000839Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5003911Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "20",
+                    "Timestamp": "2021-11-18T18:46:15.5003911Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5008007Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "21",
+                    "Timestamp": "2021-11-18T18:46:15.5008007Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5012103Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "22",
+                    "Timestamp": "2021-11-18T18:46:15.5012103Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5016199Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "23",
+                    "Timestamp": "2021-11-18T18:46:15.5016199Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5019271Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "24",
+                    "Timestamp": "2021-11-18T18:46:15.5019271Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5023367Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "25",
+                    "Timestamp": "2021-11-18T18:46:15.5023367Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5026439Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "26",
+                    "Timestamp": "2021-11-18T18:46:15.5026439Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5030535Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "27",
+                    "Timestamp": "2021-11-18T18:46:15.5030535Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5034631Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "28",
+                    "Timestamp": "2021-11-18T18:46:15.5034631Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5038727Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "29",
+                    "Timestamp": "2021-11-18T18:46:15.5038727Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5041799Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "30",
+                    "Timestamp": "2021-11-18T18:46:15.5041799Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5045895Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "31",
+                    "Timestamp": "2021-11-18T18:46:15.5045895Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5049991Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "32",
+                    "Timestamp": "2021-11-18T18:46:15.5049991Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5054087Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "33",
+                    "Timestamp": "2021-11-18T18:46:15.5054087Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5057159Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "34",
+                    "Timestamp": "2021-11-18T18:46:15.5057159Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5061255Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "35",
+                    "Timestamp": "2021-11-18T18:46:15.5061255Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5065351Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "36",
+                    "Timestamp": "2021-11-18T18:46:15.5065351Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5069447Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "37",
+                    "Timestamp": "2021-11-18T18:46:15.5069447Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5073543Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "38",
+                    "Timestamp": "2021-11-18T18:46:15.5073543Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5077639Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "39",
+                    "Timestamp": "2021-11-18T18:46:15.5077639Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5081735Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "40",
+                    "Timestamp": "2021-11-18T18:46:15.5081735Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5085831Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "41",
+                    "Timestamp": "2021-11-18T18:46:15.5085831Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5088903Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "42",
+                    "Timestamp": "2021-11-18T18:46:15.5088903Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5092999Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "43",
+                    "Timestamp": "2021-11-18T18:46:15.5092999Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5097095Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "44",
+                    "Timestamp": "2021-11-18T18:46:15.5097095Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5102215Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "45",
+                    "Timestamp": "2021-11-18T18:46:15.5102215Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5107335Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "46",
+                    "Timestamp": "2021-11-18T18:46:15.5107335Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5111431Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "47",
+                    "Timestamp": "2021-11-18T18:46:15.5111431Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5115527Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "48",
+                    "Timestamp": "2021-11-18T18:46:15.5115527Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5119623Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "49",
+                    "Timestamp": "2021-11-18T18:46:15.5119623Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5123719Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "50",
+                    "Timestamp": "2021-11-18T18:46:15.5123719Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5127815Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "51",
+                    "Timestamp": "2021-11-18T18:46:15.5127815Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5130887Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "52",
+                    "Timestamp": "2021-11-18T18:46:15.5130887Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5134983Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "53",
+                    "Timestamp": "2021-11-18T18:46:15.5134983Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5139079Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "54",
+                    "Timestamp": "2021-11-18T18:46:15.5139079Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5142151Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "55",
+                    "Timestamp": "2021-11-18T18:46:15.5142151Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5146247Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "56",
+                    "Timestamp": "2021-11-18T18:46:15.5146247Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5150343Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "57",
+                    "Timestamp": "2021-11-18T18:46:15.5150343Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5153415Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "58",
+                    "Timestamp": "2021-11-18T18:46:15.5153415Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5158535Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "59",
+                    "Timestamp": "2021-11-18T18:46:15.5158535Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5161607Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "60",
+                    "Timestamp": "2021-11-18T18:46:15.5161607Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5165703Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "61",
+                    "Timestamp": "2021-11-18T18:46:15.5165703Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5169799Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "62",
+                    "Timestamp": "2021-11-18T18:46:15.5169799Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5173895Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "63",
+                    "Timestamp": "2021-11-18T18:46:15.5173895Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5176967Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "64",
+                    "Timestamp": "2021-11-18T18:46:15.5176967Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5181063Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "65",
+                    "Timestamp": "2021-11-18T18:46:15.5181063Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5185159Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "66",
+                    "Timestamp": "2021-11-18T18:46:15.5185159Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5188231Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "67",
+                    "Timestamp": "2021-11-18T18:46:15.5188231Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5192327Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "68",
+                    "Timestamp": "2021-11-18T18:46:15.5192327Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5195399Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "69",
+                    "Timestamp": "2021-11-18T18:46:15.5195399Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5199495Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "70",
+                    "Timestamp": "2021-11-18T18:46:15.5199495Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5204615Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "71",
+                    "Timestamp": "2021-11-18T18:46:15.5204615Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5207687Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "72",
+                    "Timestamp": "2021-11-18T18:46:15.5207687Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5211783Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "73",
+                    "Timestamp": "2021-11-18T18:46:15.5211783Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5214855Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "74",
+                    "Timestamp": "2021-11-18T18:46:15.5214855Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5218951Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "75",
+                    "Timestamp": "2021-11-18T18:46:15.5218951Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5223047Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "76",
+                    "Timestamp": "2021-11-18T18:46:15.5223047Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5226119Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "77",
+                    "Timestamp": "2021-11-18T18:46:15.5226119Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5230215Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "78",
+                    "Timestamp": "2021-11-18T18:46:15.5230215Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5233287Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "79",
+                    "Timestamp": "2021-11-18T18:46:15.5233287Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5237383Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "80",
+                    "Timestamp": "2021-11-18T18:46:15.5237383Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5241479Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "81",
+                    "Timestamp": "2021-11-18T18:46:15.5241479Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5245575Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "82",
+                    "Timestamp": "2021-11-18T18:46:15.5245575Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5249671Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "83",
+                    "Timestamp": "2021-11-18T18:46:15.5249671Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5253767Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "84",
+                    "Timestamp": "2021-11-18T18:46:15.5253767Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5256839Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "85",
+                    "Timestamp": "2021-11-18T18:46:15.5256839Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5260935Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "86",
+                    "Timestamp": "2021-11-18T18:46:15.5260935Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5265031Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "87",
+                    "Timestamp": "2021-11-18T18:46:15.5265031Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5269127Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "88",
+                    "Timestamp": "2021-11-18T18:46:15.5269127Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5273223Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "89",
+                    "Timestamp": "2021-11-18T18:46:15.5273223Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5276295Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "90",
+                    "Timestamp": "2021-11-18T18:46:15.5276295Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5281415Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "91",
+                    "Timestamp": "2021-11-18T18:46:15.5281415Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5286535Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "92",
+                    "Timestamp": "2021-11-18T18:46:15.5286535Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5293703Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "93",
+                    "Timestamp": "2021-11-18T18:46:15.5293703Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5297799Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "94",
+                    "Timestamp": "2021-11-18T18:46:15.5297799Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5301895Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "95",
+                    "Timestamp": "2021-11-18T18:46:15.5301895Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5305991Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "96",
+                    "Timestamp": "2021-11-18T18:46:15.5305991Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5309063Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "97",
+                    "Timestamp": "2021-11-18T18:46:15.5309063Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5313159Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "98",
+                    "Timestamp": "2021-11-18T18:46:15.5313159Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A15.5317255Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "99",
+                    "Timestamp": "2021-11-18T18:46:15.5317255Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttable339b2a30"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:46:17 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "1f3af356-fc27-4ad4-8368-f413d24a9620"
+        }
+    }
+}

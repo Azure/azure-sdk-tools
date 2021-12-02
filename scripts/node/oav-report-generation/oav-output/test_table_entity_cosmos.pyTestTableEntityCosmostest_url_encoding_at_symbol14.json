@@ -1,0 +1,60 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:20:00 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a64863b1-480d-11ec-a1bd-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:20:00 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "TableName": "listtable2fd1430d0"
+                },
+                {
+                    "TableName": "listtable0fd1430d0"
+                },
+                {
+                    "TableName": "listtable3fd1430d0"
+                },
+                {
+                    "TableName": "listtable37c22e91"
+                },
+                {
+                    "TableName": "listtable17c22e91"
+                },
+                {
+                    "TableName": "listtable1fd1430d0"
+                },
+                {
+                    "TableName": "listtable07c22e91"
+                },
+                {
+                    "TableName": "listtable27c22e91"
+                },
+                {
+                    "TableName": "uttable40e52f1f"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#Tables"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:19:58 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "74a42bdb-6aca-4f49-ab32-e0612b8e4ace"
+        }
+    }
+}

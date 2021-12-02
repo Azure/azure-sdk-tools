@@ -1,0 +1,60 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable7b062d2f?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "274",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:33:14 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "56d6652b-428f-11ec-938c-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:33:14 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk7b062d2f",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk7b062d2f",
+            "RowKey@odata.type": "Edm.String",
+            "ETag": "foo",
+            "ETag@odata.type": "Edm.String",
+            "etag": "bar",
+            "etag@odata.type": "Edm.String",
+            "Etag": "baz",
+            "Etag@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable7b062d2f/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A15.4444762Z'\"",
+            "PartitionKey": "pk7b062d2f",
+            "RowKey": "rk7b062d2f",
+            "Timestamp": "2021-11-11T01:33:15.4444762Z",
+            "ETag": "foo",
+            "etag": "bar",
+            "Etag": "baz"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:33:14 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A33%3A15.4444762Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttable7b062d2f(PartitionKey='pk7b062d2f',RowKey='rk7b062d2f')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "56d6652b-428f-11ec-938c-c8348e51ab51",
+            "x-ms-request-id": "792f1609-6002-002e-159c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

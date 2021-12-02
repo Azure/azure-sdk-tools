@@ -1,0 +1,49 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablede7e2e1b?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "226",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:35:26 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "ce422e25-480f-11ec-950b-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:35:26 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkde7e2e1b",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkde7e2e1b",
+            "RowKey@odata.type": "Edm.String",
+            "etag": "bar",
+            "etag@odata.type": "Edm.String",
+            "Etag": "baz",
+            "Etag@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablede7e2e1b/$metadata#uttablede7e2e1b/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A35%3A25.4749191Z'\"",
+            "PartitionKey": "pkde7e2e1b",
+            "RowKey": "rkde7e2e1b",
+            "etag": "bar",
+            "Timestamp": "2021-11-18T01:35:25.4749191Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:35:24 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A35%3A25.4749191Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablede7e2e1b(PartitionKey='pkde7e2e1b',RowKey='rkde7e2e1b')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "d01c0f9a-8bea-40bf-bd93-76da13aa371f"
+        }
+    }
+}

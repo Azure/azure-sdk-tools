@@ -1,0 +1,55 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttabledef43499()?%24filter=ratio+lt+4.1&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:46:26 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "57aeb93f-4811-11ec-95de-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:46:26 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A25.3922311Z'\"",
+                    "PartitionKey": "pkdef43499",
+                    "RowKey": "rkdef43499",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday@odata.type": "Edm.DateTime",
+                    "Birthday": "1973-10-04T00:00:00.0000000Z",
+                    "birthday@odata.type": "Edm.DateTime",
+                    "birthday": "1970-10-04T00:00:00.0000000Z",
+                    "binary@odata.type": "Edm.Binary",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid@odata.type": "Edm.Guid",
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833",
+                    "Timestamp": "2021-11-18T01:46:25.3922311Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttabledef43499"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:46:24 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "dd27442f-b5d0-4db1-8768-4d73c4394d9c"
+        }
+    }
+}

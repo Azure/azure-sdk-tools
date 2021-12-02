@@ -1,0 +1,45 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "36",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Wed, 17 Nov 2021 04:03:20 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4d764875-475b-11ec-84e7-c8348e51ab51",
+            "x-ms-date": "Wed, 17 Nov 2021 04:03:20 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "TableName": "pytablesync50841fb0"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#Tables/@Element",
+            "TableName": "pytablesync50841fb0"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Wed, 17 Nov 2021 04:03:20 GMT",
+            "Location": "https://fakeendpoint.table.core.windows.net/Tables('pytablesync50841fb0')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "4d764875-475b-11ec-84e7-c8348e51ab51",
+            "x-ms-request-id": "bc332b6f-2002-001f-1168-db3612000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

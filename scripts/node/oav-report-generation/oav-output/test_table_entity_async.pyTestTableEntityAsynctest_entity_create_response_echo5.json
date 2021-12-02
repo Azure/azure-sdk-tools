@@ -1,0 +1,58 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttableceb2304d?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "197",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:33:15 GMT",
+            "Prefer": "return-content",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "57285f3d-428f-11ec-8e60-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:33:15 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkceb2304d",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkceb2304d",
+            "RowKey@odata.type": "Edm.String",
+            "Value": "foobar",
+            "Value@odata.type": "Edm.String",
+            "Answer": 42
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttableceb2304d/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A15.9851717Z'\"",
+            "PartitionKey": "pkceb2304d",
+            "RowKey": "rkceb2304d",
+            "Timestamp": "2021-11-11T01:33:15.9851717Z",
+            "Value": "foobar",
+            "Answer": 42
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:33:15 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A33%3A15.9851717Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttableceb2304d(PartitionKey='pkceb2304d',RowKey='rkceb2304d')",
+            "Preference-Applied": "return-content",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "57285f3d-428f-11ec-8e60-c8348e51ab51",
+            "x-ms-request-id": "792f1616-6002-002e-209c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

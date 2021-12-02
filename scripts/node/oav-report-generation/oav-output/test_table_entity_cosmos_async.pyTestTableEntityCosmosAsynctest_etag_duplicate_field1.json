@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable55b3296?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "224",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:47:19 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "771f4726-4811-11ec-8bfd-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:47:19 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk55b3296",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk55b3296",
+            "RowKey@odata.type": "Edm.String",
+            "etag": "bar",
+            "etag@odata.type": "Edm.String",
+            "Etag": "baz",
+            "Etag@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable55b3296/$metadata#uttable55b3296/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A47%3A18.2784519Z'\"",
+            "PartitionKey": "pk55b3296",
+            "RowKey": "rk55b3296",
+            "etag": "bar",
+            "Timestamp": "2021-11-18T01:47:18.2784519Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:47:17 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A47%3A18.2784519Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable55b3296(PartitionKey='pk55b3296',RowKey='rk55b3296')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "3bb25575-5a76-4ed5-8bb5-5bf33b4e3399"
+        }
+    }
+}

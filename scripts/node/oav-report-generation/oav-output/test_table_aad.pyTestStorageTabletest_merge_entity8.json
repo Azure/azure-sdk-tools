@@ -1,0 +1,36 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.core.windows.net/Tables('uttablef6142483')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "0",
+            "Date": "Wed, 15 Sep 2021 18:02:47 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "22423a79-164f-11ec-b3ee-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 18:02:47 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Wed, 15 Sep 2021 18:02:44 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "22423a79-164f-11ec-b3ee-5cf37093a909",
+            "x-ms-request-id": "dd1dd719-4002-0085-065b-aab6fe000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablef2ba29d9()?%24filter=PartitionKey+eq+%27pkf2ba29d9%27&st=start&se=end&sp=r&sv=2019-02-02&tn=uttablef2ba29d9&sig=fake_token_value&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:34:16 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a4a85334-480f-11ec-8179-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:34:16 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A34%3A15.4964999Z'\"",
+                    "PartitionKey": "pkf2ba29d9",
+                    "RowKey": "rkf2ba29d9",
+                    "age": 39,
+                    "sex": "male",
+                    "married": true,
+                    "deceased": false,
+                    "ratio": 3.1,
+                    "evenratio": 3,
+                    "double": 5,
+                    "large": 933311100,
+                    "Birthday@odata.type": "Edm.DateTime",
+                    "Birthday": "1973-10-04T00:00:00.0000000Z",
+                    "birthday@odata.type": "Edm.DateTime",
+                    "birthday": "1970-10-04T00:00:00.0000000Z",
+                    "binary@odata.type": "Edm.Binary",
+                    "binary": "YmluYXJ5",
+                    "other": 20,
+                    "clsid@odata.type": "Edm.Guid",
+                    "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833",
+                    "Timestamp": "2021-11-18T01:34:15.4964999Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttablef2ba29d9"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:34:14 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "e5a50210-718e-444d-902b-88dfddd4eaff"
+        }
+    }
+}

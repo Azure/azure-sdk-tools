@@ -1,0 +1,57 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable6f3299b?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "300",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:46:03 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "c84b4490-489f-11ec-a501-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:46:03 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "001",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "batch_delete",
+            "RowKey@odata.type": "Edm.String",
+            "test": true,
+            "test2": "value",
+            "test2@odata.type": "Edm.String",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5": "2021-11-19T02:46:03.901360Z",
+            "test5@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable6f3299b/$metadata#uttable6f3299b/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A46%3A04.0060935Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_delete",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:46:03.9013600Z",
+            "Timestamp": "2021-11-18T18:46:04.0060935Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:46:03 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A46%3A04.0060935Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable6f3299b(PartitionKey='001',RowKey='batch_delete')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "a7f02395-c3fd-45c9-b11c-8bc8ea4aaecd"
+        }
+    }
+}

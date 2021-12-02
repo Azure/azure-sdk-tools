@@ -1,0 +1,55 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable5cd2375c?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "295",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:45:37 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "3a82fe9c-4811-11ec-bd5a-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:45:37 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk5cd2375c",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk5cd2375c",
+            "RowKey@odata.type": "Edm.String",
+            "inf": "Infinity",
+            "inf@odata.type": "Edm.Double",
+            "negativeinf": "-Infinity",
+            "negativeinf@odata.type": "Edm.Double",
+            "nan": "NaN",
+            "nan@odata.type": "Edm.Double"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable5cd2375c/$metadata#uttable5cd2375c/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A45%3A36.6208519Z'\"",
+            "PartitionKey": "pk5cd2375c",
+            "RowKey": "rk5cd2375c",
+            "inf@odata.type": "Edm.Double",
+            "inf": "Infinity",
+            "negativeinf@odata.type": "Edm.Double",
+            "negativeinf": "-Infinity",
+            "nan@odata.type": "Edm.Double",
+            "nan": "NaN",
+            "Timestamp": "2021-11-18T01:45:36.6208519Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:45:35 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A45%3A36.6208519Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable5cd2375c(PartitionKey='pk5cd2375c',RowKey='rk5cd2375c')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "90fea1e6-d16a-43dc-a395-1dffc4327cd2"
+        }
+    }
+}

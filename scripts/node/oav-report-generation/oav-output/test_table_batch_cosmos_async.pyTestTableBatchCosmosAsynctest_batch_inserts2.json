@@ -1,0 +1,132 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable2edf2eab()?%24filter=PartitionKey+eq+%27batch_inserts%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:31 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "208422a7-48a0-11ec-8b67-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:31 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8735367Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "0",
+                    "Timestamp": "2021-11-18T18:48:31.8735367Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8740487Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "1",
+                    "Timestamp": "2021-11-18T18:48:31.8740487Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8744583Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "2",
+                    "Timestamp": "2021-11-18T18:48:31.8744583Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8748679Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "3",
+                    "Timestamp": "2021-11-18T18:48:31.8748679Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8751751Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "4",
+                    "Timestamp": "2021-11-18T18:48:31.8751751Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8755847Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "5",
+                    "Timestamp": "2021-11-18T18:48:31.8755847Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8758919Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "6",
+                    "Timestamp": "2021-11-18T18:48:31.8758919Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8763015Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "7",
+                    "Timestamp": "2021-11-18T18:48:31.8763015Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8766087Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "8",
+                    "Timestamp": "2021-11-18T18:48:31.8766087Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A31.8770183Z'\"",
+                    "PartitionKey": "batch_inserts",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "RowKey": "9",
+                    "Timestamp": "2021-11-18T18:48:31.8770183Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttable2edf2eab"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:48:31 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "0854f30a-7437-435f-addb-55f3bebaeb10"
+        }
+    }
+}

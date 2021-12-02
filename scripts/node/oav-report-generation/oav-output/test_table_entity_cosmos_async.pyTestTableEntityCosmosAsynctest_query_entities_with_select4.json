@@ -1,0 +1,42 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/querytable4b54356c()?%24select=age%2Csex&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:46:59 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "6b303632-4811-11ec-8679-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:46:59 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A58.1175303Z'\"",
+                    "age": 39,
+                    "sex": "male"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A58.1612551Z'\"",
+                    "age": 39,
+                    "sex": "male"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#querytable4b54356c"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:46:57 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "3e734e98-9c86-470d-a26a-a1918f4eb3cd"
+        }
+    }
+}

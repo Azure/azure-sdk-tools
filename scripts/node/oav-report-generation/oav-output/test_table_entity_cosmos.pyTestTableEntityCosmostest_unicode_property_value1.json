@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable43612f44?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "195",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:30:05 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "0ee8438c-480f-11ec-9219-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:30:05 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk43612f44",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk43612f44",
+            "RowKey@odata.type": "Edm.String",
+            "Description": "ꀕ",
+            "Description@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable43612f44/$metadata#uttable43612f44/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A30%3A04.4753927Z'\"",
+            "PartitionKey": "pk43612f44",
+            "RowKey": "rk43612f44",
+            "Description": "ꀕ",
+            "Timestamp": "2021-11-18T01:30:04.4753927Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:30:03 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A30%3A04.4753927Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable43612f44(PartitionKey='pk43612f44',RowKey='rk43612f44')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "bfa16639-f413-40c3-869b-b70ef6900eda"
+        }
+    }
+}

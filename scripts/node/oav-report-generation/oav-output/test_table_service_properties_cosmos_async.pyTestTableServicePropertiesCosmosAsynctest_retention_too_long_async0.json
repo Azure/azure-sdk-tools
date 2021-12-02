@@ -1,0 +1,34 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/?restype=service&comp=properties&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "273",
+            "Content-Type": "application/xml",
+            "Date": "Thu, 18 Nov 2021 02:47:13 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "d53d355f-4819-11ec-949f-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 02:47:13 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": [
+            "<?xml version='1.0' encoding='utf-8'?>\n",
+            "<StorageServiceProperties><MinuteMetrics><Version>1.0</Version><Enabled>true</Enabled><IncludeAPIs>true</IncludeAPIs><RetentionPolicy><Enabled>true</Enabled><Days>366</Days></RetentionPolicy></MinuteMetrics></StorageServiceProperties>"
+        ],
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"NotImplemented\",\"message\":{\"lang\":\"en-us\",\"value\":\"The requested operation is not supported.\\r\\nActivityId: 5a244387-5aff-4c49-b558-7c3cd1cfaea0, documentdb-dotnet-sdk/2.14.0 Host/64-bit MicrosoftWindowsNT/6.2.9200.0\\nRequestID:5a244387-5aff-4c49-b558-7c3cd1cfaea0\\n\"}}}\r\n"
+        ],
+        "statusCode": "501",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 02:47:11 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "5a244387-5aff-4c49-b558-7c3cd1cfaea0"
+        }
+    }
+}

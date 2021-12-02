@@ -1,0 +1,67 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable33df2eee(PartitionKey='pk33df2eee',RowKey='rk33df2eee')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "724",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:22:55 GMT",
+            "If-Match": "*",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "e5889946-428d-11ec-aded-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:22:55 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk33df2eee",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk33df2eee",
+            "RowKey@odata.type": "Edm.String",
+            "age": 39,
+            "sex": "male",
+            "sex@odata.type": "Edm.String",
+            "married": true,
+            "deceased": false,
+            "ratio": 3.1,
+            "ratio@odata.type": "Edm.Double",
+            "evenratio": 3,
+            "evenratio@odata.type": "Edm.Double",
+            "double": 5,
+            "double@odata.type": "Edm.Double",
+            "large": 933311100,
+            "Birthday": "1973-10-04T00:00:00.000000Z",
+            "Birthday@odata.type": "Edm.DateTime",
+            "birthday": "1970-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime",
+            "binary": "YmluYXJ5",
+            "binary@odata.type": "Edm.Binary",
+            "other": 20,
+            "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833",
+            "clsid@odata.type": "Edm.Guid",
+            "value": 10
+        },
+        "method": "PATCH"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 11 Nov 2021 01:22:55 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A22%3A55.8597497Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "e5889946-428d-11ec-aded-c8348e51ab51",
+            "x-ms-request-id": "792f0647-6002-002e-079a-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

@@ -1,0 +1,53 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/pytableasyncd71a242b()?st=start&se=end&sp=r&sv=2019-02-02&ss=t&srt=o&sig=fake_token_value&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "DataServiceVersion": "3.0",
+            "Date": "Wed, 17 Nov 2021 04:06:55 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "cd38075b-475b-11ec-8786-c8348e51ab51",
+            "x-ms-date": "Wed, 17 Nov 2021 04:06:55 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#pytableasyncd71a242b",
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-17T04%3A06%3A54.4357577Z'\"",
+                    "PartitionKey": "test",
+                    "RowKey": "test1",
+                    "Timestamp": "2021-11-17T04:06:54.4357577Z",
+                    "text": "hello"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-17T04%3A06%3A54.4787438Z'\"",
+                    "PartitionKey": "test",
+                    "RowKey": "test2",
+                    "Timestamp": "2021-11-17T04:06:54.4787438Z",
+                    "text": "hello"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Wed, 17 Nov 2021 04:06:53 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "cd38075b-475b-11ec-8786-c8348e51ab51",
+            "x-ms-request-id": "acbd5e30-3002-004f-3f68-db291a000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

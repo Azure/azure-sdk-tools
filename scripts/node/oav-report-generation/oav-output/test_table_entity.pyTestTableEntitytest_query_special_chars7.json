@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/querytable6a32287c()?%24filter=PartitionKey+eq+%27%3A%40%27+and+RowKey+eq+%27%2B%2C%24%27+and+Chars+eq+%27%3F%27%27%2F%21_%5E%23%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:29:34 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "d3bedb3f-428e-11ec-b90c-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:29:34 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#querytable6a32287c",
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-11T01%3A29%3A35.3094735Z'\"",
+                    "PartitionKey": ":@",
+                    "RowKey": "+,$",
+                    "Timestamp": "2021-11-11T01:29:35.3094735Z",
+                    "Chars": "?'/!_^#"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:29:35 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "d3bedb3f-428e-11ec-b90c-c8348e51ab51",
+            "x-ms-request-id": "792f0f07-6002-002e-509b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

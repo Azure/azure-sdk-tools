@@ -1,0 +1,53 @@
+{
+    "liveRequest": {
+        "url": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/v2.0/token?api-version=undefined",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "client-request-id": "16982adf-6b9f-4b26-befa-283f5c6a01d4",
+            "Connection": "keep-alive",
+            "Content-Length": "190",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Cookie": "fpc=AupsApRYPkdPu3bMQwcQtKw; stsservicecookie=estsfd; x-ms-gateway-slice=estsfd",
+            "User-Agent": "azsdk-python-identity/1.6.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-client-cpu": "x64",
+            "x-client-current-telemetry": "4|730,0|",
+            "x-client-last-telemetry": "4|0|||",
+            "x-client-os": "win32",
+            "x-client-sku": "MSAL.Python",
+            "x-client-ver": "1.14.0",
+            "x-ms-lib-capability": "retry-after, h429"
+        },
+        "body": "client_id=e44dee3b-e7da-43fe-9d75-d959fd12aace&grant_type=client_credentials&client_info=1&client_secret=769ea470-236a-4eca-a34f-b78bcd17f2d5&scope=https%3A%2F%2Fstorage.azure.com%2F.default",
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "token_type": "Bearer",
+            "expires_in": 86399,
+            "ext_expires_in": 86399,
+            "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCIsImtpZCI6Imwzc1EtNTBjQ0g0eEJWWkxIVEd3blNSNzY4MCJ9.eyJhdWQiOiJodHRwczovL3N0b3JhZ2UuYXp1cmUuY29tIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3LyIsImlhdCI6MTYzMTcyODYwNCwibmJmIjoxNjMxNzI4NjA0LCJleHAiOjE2MzE4MTUzMDQsImFpbyI6IkUyWmdZR2hZOTl6SjRMdmdDYlA3ZXhocVcyMC9BUUE9IiwiYXBwaWQiOiJlNDRkZWUzYi1lN2RhLTQzZmUtOWQ3NS1kOTU5ZmQxMmFhY2UiLCJhcHBpZGFjciI6IjEiLCJpZHAiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC83MmY5ODhiZi04NmYxLTQxYWYtOTFhYi0yZDdjZDAxMWRiNDcvIiwib2lkIjoiOTFlOWViMmUtMDZjMS00N2QxLWJjNzItYTBiYzgzZjg4ZWRlIiwicmgiOiIwLkFSb0F2NGo1Y3ZHR3IwR1JxeTE4MEJIYlJ6dnVUZVRhNV81RG5YWFpXZjBTcXM0YUFBQS4iLCJzdWIiOiI5MWU5ZWIyZS0wNmMxLTQ3ZDEtYmM3Mi1hMGJjODNmODhlZGUiLCJ0aWQiOiI3MmY5ODhiZi04NmYxLTQxYWYtOTFhYi0yZDdjZDAxMWRiNDciLCJ1dGkiOiJhS0thQ1ZhYmpVeWhqZ2JEaGJNQ0FBIiwidmVyIjoiMS4wIn0.QNKUTk90rvE01YYdgtuayhdISbaTY2XhPevWd_7QU-oIJ3_BnKQW7FXHwTgjidg50i-RS9leW36_eBSWRF74A1CL3dcU0MbZai0AcinD6spJ3GhG7HooUOl-t-ZLJr5S9rga46b9urlOMHNwpYShG6VYgVOE1BJxGdhTSNPUN9X9tgyf2XHIiOkEL094NonUEejJJz5oPbxiZvgD7tIKNT8JF6jVnqcK0P5B3WtvKHhKC9-Zjw9u8d3O4o5S1HA3ug5z4K-n_4ucujwOC6xmt59FMEflGacXyOWo0QHP7wmevV3pxYo28eRS8x1aBnv3gF6B6mb88l_DYUaykOK7Dg"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-store, no-cache",
+            "client-request-id": "16982adf-6b9f-4b26-befa-283f5c6a01d4",
+            "Content-Length": "1318",
+            "Content-Type": "application/json; charset=utf-8",
+            "Date": "Wed, 15 Sep 2021 18:01:43 GMT",
+            "Expires": "-1",
+            "P3P": "CP=\"DSP CUR OTPi IND OTRi ONL FIN\"",
+            "Pragma": "no-cache",
+            "Set-Cookie": [
+                "fpc=AupsApRYPkdPu3bMQwcQtKwV08hTAQAAAAcs1NgOAAAA; expires=Fri, 15-Oct-2021 18:01:44 GMT; path=/; secure; HttpOnly; SameSite=None",
+                "x-ms-gateway-slice=estsfd; path=/; secure; samesite=none; httponly",
+                "stsservicecookie=estsfd; path=/; secure; samesite=none; httponly"
+            ],
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-clitelem": "1,0,0,,",
+            "x-ms-ests-server": "2.1.12025.15 - WUS2 ProdSlices",
+            "x-ms-request-id": "099aa268-9b56-4c8d-a18e-06c385b30200"
+        }
+    }
+}

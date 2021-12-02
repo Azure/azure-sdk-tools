@@ -1,0 +1,38 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.core.windows.net/?restype=service&comp=properties&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "271",
+            "Content-Type": "application/xml",
+            "Date": "Wed, 15 Sep 2021 18:01:50 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "003d4980-164f-11ec-99c4-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 18:01:50 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": [
+            "<?xml version='1.0' encoding='utf-8'?>\n",
+            "<StorageServiceProperties><MinuteMetrics><Version>1.0</Version><Enabled>true</Enabled><IncludeAPIs>true</IncludeAPIs><RetentionPolicy><Enabled>true</Enabled><Days>5</Days></RetentionPolicy></MinuteMetrics></StorageServiceProperties>"
+        ],
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "202",
+        "headers": {
+            "Date": "Wed, 15 Sep 2021 18:01:47 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "x-ms-client-request-id": "003d4980-164f-11ec-99c4-5cf37093a909",
+            "x-ms-request-id": "dd1dbe4f-4002-0085-155b-aab6fe000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

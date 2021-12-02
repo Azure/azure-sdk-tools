@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/querytablefbd82c55?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "168",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:32:40 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "6b423a66-480f-11ec-83b5-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:32:40 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "foo",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "bar2",
+            "RowKey@odata.type": "Edm.String",
+            "IsAdmin": "",
+            "IsAdmin@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/querytablefbd82c55/$metadata#querytablefbd82c55/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A32%3A39.3353223Z'\"",
+            "PartitionKey": "foo",
+            "RowKey": "bar2",
+            "IsAdmin": "",
+            "Timestamp": "2021-11-18T01:32:39.3353223Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:32:38 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A32%3A39.3353223Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/querytablefbd82c55(PartitionKey='foo',RowKey='bar2')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "42e21667-df55-42eb-ac0a-79c643a82100"
+        }
+    }
+}

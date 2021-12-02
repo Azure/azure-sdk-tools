@@ -1,0 +1,36 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.cosmos.azure.com/Tables?%24filter=TableName+eq+%27pytablesync68ca2af5%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Wed, 15 Sep 2021 17:14:20 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "5d4f3ac6-1648-11ec-b820-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 17:14:20 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "TableName": "pytablesync68ca2af5"
+                }
+            ],
+            "odata.metadata": "https://yalltablestestsprim.table.cosmos.azure.com/$metadata#Tables"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Wed, 15 Sep 2021 17:14:17 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "562fd538-690f-4424-8ff3-f96ab9c5c13b"
+        }
+    }
+}

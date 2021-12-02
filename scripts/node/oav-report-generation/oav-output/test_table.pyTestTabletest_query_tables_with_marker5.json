@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/Tables?%24top=2&NextTableName=1%2148%21bGlzdHRhYmxlMWU2NTgyNzY4ATAxZDdkNjk4MmIxZDJhNGY-&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:05:17 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "6f5edc9f-428b-11ec-9456-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:05:17 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#Tables",
+            "value": [
+                {
+                    "TableName": "listtable2200e2529"
+                },
+                {
+                    "TableName": "listtable3200e2529"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:05:17 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "6f5edc9f-428b-11ec-9456-c8348e51ab51",
+            "x-ms-continuation-NextTableName": "1!48!bGlzdHRhYmxlM2U2NTgyNzY4ATAxZDdkNjk4MmIzMDYxNWE-",
+            "x-ms-request-id": "a43be094-b002-0070-6998-d6d64d000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

@@ -1,0 +1,65 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.core.windows.net/uttable5ca32cfa?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "319",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Wed, 15 Sep 2021 18:02:14 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "0e927b32-164f-11ec-876a-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 18:02:14 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "003",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "batch_all_operations_together-1",
+            "RowKey@odata.type": "Edm.String",
+            "test": true,
+            "test2": "value",
+            "test2@odata.type": "Edm.String",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5": "2021-09-16T01:02:14.435102Z",
+            "test5@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://yalltablestestsprim.table.core.windows.net/$metadata#uttable5ca32cfa/@Element",
+            "odata.etag": "W/\"datetime'2021-09-15T18%3A02%3A12.3718412Z'\"",
+            "PartitionKey": "003",
+            "RowKey": "batch_all_operations_together-1",
+            "Timestamp": "2021-09-15T18:02:12.3718412Z",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-09-16T01:02:14.435102Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Wed, 15 Sep 2021 18:02:11 GMT",
+            "ETag": "W/\"datetime'2021-09-15T18%3A02%3A12.3718412Z'\"",
+            "Location": "https://yalltablestestsprim.table.core.windows.net/uttable5ca32cfa(PartitionKey='003',RowKey='batch_all_operations_together-1')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "0e927b32-164f-11ec-876a-5cf37093a909",
+            "x-ms-request-id": "dd1dc8c9-4002-0085-565b-aab6fe000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

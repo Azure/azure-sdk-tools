@@ -1,0 +1,81 @@
+{
+    "liveRequest": {
+        "url": "https://login.microsoftonline.com/common/discovery/instance?api-version=1.1&authorization_endpoint=https://login.microsoftonline.com/common/oauth2/authorize",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+            "Cookie": "fpc=At188a_TAG5EsEP6hxndXrQ; stsservicecookie=estsfd; x-ms-gateway-slice=estsfd",
+            "User-Agent": "azsdk-python-identity/1.7.2 Python/3.10.0 (Windows-10-10.0.22000-SP0)"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "tenant_discovery_endpoint": "https://login.microsoftonline.com/common/.well-known/openid-configuration",
+            "api-version": "1.1",
+            "metadata": [
+                {
+                    "preferred_network": "login.microsoftonline.com",
+                    "preferred_cache": "login.windows.net",
+                    "aliases": [
+                        "login.microsoftonline.com",
+                        "login.windows.net",
+                        "login.microsoft.com",
+                        "sts.windows.net"
+                    ]
+                },
+                {
+                    "preferred_network": "login.partner.microsoftonline.cn",
+                    "preferred_cache": "login.partner.microsoftonline.cn",
+                    "aliases": [
+                        "login.partner.microsoftonline.cn",
+                        "login.chinacloudapi.cn"
+                    ]
+                },
+                {
+                    "preferred_network": "login.microsoftonline.de",
+                    "preferred_cache": "login.microsoftonline.de",
+                    "aliases": [
+                        "login.microsoftonline.de"
+                    ]
+                },
+                {
+                    "preferred_network": "login.microsoftonline.us",
+                    "preferred_cache": "login.microsoftonline.us",
+                    "aliases": [
+                        "login.microsoftonline.us",
+                        "login.usgovcloudapi.net"
+                    ]
+                },
+                {
+                    "preferred_network": "login-us.microsoftonline.com",
+                    "preferred_cache": "login-us.microsoftonline.com",
+                    "aliases": [
+                        "login-us.microsoftonline.com"
+                    ]
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "max-age=86400, private",
+            "Content-Length": "945",
+            "Content-Type": "application/json; charset=utf-8",
+            "Date": "Thu, 18 Nov 2021 18:39:57 GMT",
+            "P3P": "CP=\"DSP CUR OTPi IND OTRi ONL FIN\"",
+            "Set-Cookie": [
+                "fpc=At188a_TAG5EsEP6hxndXrQ; expires=Sat, 18-Dec-2021 18:39:57 GMT; path=/; secure; HttpOnly; SameSite=None",
+                "x-ms-gateway-slice=estsfd; path=/; secure; samesite=none; httponly",
+                "stsservicecookie=estsfd; path=/; secure; samesite=none; httponly"
+            ],
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-ests-server": "2.1.12231.8 - WUS2 ProdSlices",
+            "x-ms-request-id": "b457ae4b-4848-4162-a30f-4395be0e0200"
+        }
+    }
+}

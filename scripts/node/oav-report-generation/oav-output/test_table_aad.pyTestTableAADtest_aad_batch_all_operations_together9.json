@@ -1,0 +1,101 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable913d2aeb()?%24filter=PartitionKey+eq+%27003%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:39:58 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "eebf16ba-489e-11ec-9702-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:39:58 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable913d2aeb",
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A39%3A58.8824983Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together",
+                    "Timestamp": "2021-11-18T18:39:58.8824983Z",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 3,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:39:58.617408Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A39%3A58.8838069Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-2",
+                    "Timestamp": "2021-11-18T18:39:58.8838069Z",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:39:58.617408Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A39%3A58.8838069Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-3",
+                    "Timestamp": "2021-11-18T18:39:58.8838069Z",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 100,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:39:58.617408Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A39%3A58.8838069Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-4",
+                    "Timestamp": "2021-11-18T18:39:58.8838069Z",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:39:58.617408Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T18%3A39%3A58.8838069Z'\"",
+                    "PartitionKey": "003",
+                    "RowKey": "batch_all_operations_together-5",
+                    "Timestamp": "2021-11-18T18:39:58.8838069Z",
+                    "test": true,
+                    "test2": "value",
+                    "test3": 10,
+                    "test4": 1234567890,
+                    "test5@odata.type": "Edm.DateTime",
+                    "test5": "2021-11-19T02:39:58.617408Z"
+                }
+            ]
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 18 Nov 2021 18:39:58 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "eebf16ba-489e-11ec-9702-c8348e51ab51",
+            "x-ms-request-id": "437569cc-a002-0013-0aab-dcd8c4000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

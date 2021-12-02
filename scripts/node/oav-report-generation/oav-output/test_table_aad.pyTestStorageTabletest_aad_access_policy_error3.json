@@ -1,0 +1,39 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.core.windows.net/pytablesynca6c728e6?comp=acl&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Date": "Wed, 15 Sep 2021 18:02:25 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "14e361ad-164f-11ec-b2a5-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 18:02:25 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": [
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?><m:error xmlns:m=\"http://schemas.microsoft.com/ado/2007/08/dataservices/metadata\"><m:code>ResourceNotFound</m:code><m:message xml:lang=\"en-US\">The specified resource does not exist.\n",
+            "RequestId:dd1dcc5f-4002-0085-785b-aab6fe000000\n",
+            "Time:2021-09-15T18:02:23.2865941Z</m:message></m:error>"
+        ],
+        "statusCode": "404",
+        "headers": {
+            "Content-Length": "322",
+            "Content-Type": "application/xml",
+            "Date": "Wed, 15 Sep 2021 18:02:22 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "x-ms-client-request-id": "14e361ad-164f-11ec-b2a5-5cf37093a909",
+            "x-ms-error-code": "ResourceNotFound",
+            "x-ms-request-id": "dd1dcc5f-4002-0085-785b-aab6fe000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

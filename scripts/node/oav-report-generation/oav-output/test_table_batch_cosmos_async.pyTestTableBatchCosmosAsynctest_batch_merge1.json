@@ -1,0 +1,56 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablecf232db3?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "299",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:22 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "1aefaf7d-48a0-11ec-a825-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:22 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "001",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "batch_merge",
+            "RowKey@odata.type": "Edm.String",
+            "test": true,
+            "test2": "value",
+            "test2@odata.type": "Edm.String",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5": "2021-11-19T02:48:22.551307Z",
+            "test5@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablecf232db3/$metadata#uttablecf232db3/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A48%3A22.6269191Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_merge",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:48:22.5513070Z",
+            "Timestamp": "2021-11-18T18:48:22.6269191Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:48:22 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A48%3A22.6269191Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablecf232db3(PartitionKey='001',RowKey='batch_merge')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "ea27de9b-f5ce-4cee-b1fa-3b0d800720cb"
+        }
+    }
+}

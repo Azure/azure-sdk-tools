@@ -1,0 +1,53 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable3c3c2ef7?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "133",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4f70eb9e-428f-11ec-8a3f-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk6",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "10123456",
+            "RowKey@odata.type": "Edm.String",
+            "value": 6
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable3c3c2ef7/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A03.0824435Z'\"",
+            "PartitionKey": "pk6",
+            "RowKey": "10123456",
+            "Timestamp": "2021-11-11T01:33:03.0824435Z",
+            "value": 6
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:33:02 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A33%3A03.0824435Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttable3c3c2ef7(PartitionKey='pk6',RowKey='10123456')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "4f70eb9e-428f-11ec-8a3f-c8348e51ab51",
+            "x-ms-request-id": "792f14ed-6002-002e-339c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

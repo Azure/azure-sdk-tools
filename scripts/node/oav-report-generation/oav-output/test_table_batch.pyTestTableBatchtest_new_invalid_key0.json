@@ -1,0 +1,42 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/$batch?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "1436",
+            "Content-Type": "multipart/mixed; boundary=batch_00000000-0000-0000-0000-000000000000",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 19:24:02 GMT",
+            "MaxDataServiceVersion": "3.0;NetFx",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "1636e6a0-48a5-11ec-b4e2-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 19:24:02 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": "LS1iYXRjaF8wMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT1jaGFuZ2VzZXRfNTExZjQ2ZjQtNTI1Yy00ODllLWE3NTAtNmRkMTU1M2Y4MGYxDQoNCi0tY2hhbmdlc2V0XzUxMWY0NmY0LTUyNWMtNDg5ZS1hNzUwLTZkZDE1NTNmODBmMQ0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9odHRwDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiaW5hcnkNCkNvbnRlbnQtSUQ6IDANCg0KUE9TVCBodHRwczovL2Zha2VlbmRwb2ludC50YWJsZS5jb3JlLndpbmRvd3MubmV0L3V0dGFibGU2NjY3MjU5OCBIVFRQLzEuMQ0KeC1tcy12ZXJzaW9uOiAyMDE5LTAyLTAyDQpEYXRhU2VydmljZVZlcnNpb246IDMuMA0KUHJlZmVyOiByZXR1cm4tbm8tY29udGVudA0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uO29kYXRhPW5vbWV0YWRhdGENCkFjY2VwdDogYXBwbGljYXRpb24vanNvbjtvZGF0YT1taW5pbWFsbWV0YWRhdGENCkNvbnRlbnQtTGVuZ3RoOiA3MTANCngtbXMtZGF0ZTogVGh1LCAxOCBOb3YgMjAyMSAxOToyNDowMiBHTVQNCkRhdGU6IFRodSwgMTggTm92IDIwMjEgMTk6MjQ6MDIgR01UDQoNCnsiUGFydGl0aW9uS2V5IjogIjAwMSIsICJQYXJ0aXRpb25LZXlAb2RhdGEudHlwZSI6ICJFZG0uU3RyaW5nIiwgIlJvd0tleSI6ICJiYXRjaF9uZWdhdGl2ZV8xIiwgIlJvd0tleUBvZGF0YS50eXBlIjogIkVkbS5TdHJpbmciLCAiYWdlIjogMzksICJzZXgiOiAibWFsZSIsICJzZXhAb2RhdGEudHlwZSI6ICJFZG0uU3RyaW5nIiwgIm1hcnJpZWQiOiB0cnVlLCAiZGVjZWFzZWQiOiBmYWxzZSwgInJhdGlvIjogMy4xLCAicmF0aW9Ab2RhdGEudHlwZSI6ICJFZG0uRG91YmxlIiwgImV2ZW5yYXRpbyI6IDMuMCwgImV2ZW5yYXRpb0BvZGF0YS50eXBlIjogIkVkbS5Eb3VibGUiLCAiZG91YmxlIjogNSwgImRvdWJsZUBvZGF0YS50eXBlIjogIkVkbS5Eb3VibGUiLCAibGFyZ2UiOiA5MzMzMTExMDAsICJCaXJ0aGRheSI6ICIxOTczLTEwLTA0VDAwOjAwOjAwLjAwMDAwMFoiLCAiQmlydGhkYXlAb2RhdGEudHlwZSI6ICJFZG0uRGF0ZVRpbWUiLCAiYmlydGhkYXkiOiAiMTk3MC0xMC0wNFQwMDowMDowMC4wMDAwMDBaIiwgImJpcnRoZGF5QG9kYXRhLnR5cGUiOiAiRWRtLkRhdGVUaW1lIiwgImJpbmFyeSI6ICJZbWx1WVhKNSIsICJiaW5hcnlAb2RhdGEudHlwZSI6ICJFZG0uQmluYXJ5IiwgIm90aGVyIjogMjAsICJjbHNpZCI6ICJjOWRhNjQ1NS0yMTNkLTQyYzktOWE3OS0zZTkxNDlhNTc4MzMiLCAiY2xzaWRAb2RhdGEudHlwZSI6ICJFZG0uR3VpZCJ9DQotLWNoYW5nZXNldF81MTFmNDZmNC01MjVjLTQ4OWUtYTc1MC02ZGQxNTUzZjgwZjEtLQ0KDQotLWJhdGNoXzAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMC0tDQo=",
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.error": {
+                "code": "AuthenticationFailed",
+                "message": {
+                    "lang": "en-US",
+                    "value": "Server failed to authenticate the request. Make sure the value of Authorization header is formed correctly including the signature.\nRequestId:2c17fb72-2002-0040-47b1-dcfbf0000000\nTime:2021-11-18T19:24:02.4694671Z"
+                }
+            }
+        },
+        "statusCode": "403",
+        "headers": {
+            "Content-Length": "299",
+            "Content-Type": "application/json",
+            "Date": "Thu, 18 Nov 2021 19:24:02 GMT",
+            "Server": "Microsoft-HTTPAPI/2.0",
+            "x-ms-error-code": "AuthenticationFailed",
+            "x-ms-request-id": "2c17fb72-2002-0040-47b1-dcfbf0000000"
+        }
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable6c292fae(PartitionKey='pk6c292fae',RowKey='rk6c292fae')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:20:50 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "9b566f28-428d-11ec-809b-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:20:50 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable6c292fae/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A20%3A51.3439632Z'\"",
+            "PartitionKey": "pk6c292fae",
+            "RowKey": "rk6c292fae",
+            "Timestamp": "2021-11-11T01:20:51.3439632Z",
+            "large@odata.type": "Edm.Int64",
+            "large": "1125899906842624"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:20:51 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A20%3A51.3439632Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "9b566f28-428d-11ec-809b-c8348e51ab51",
+            "x-ms-request-id": "792f03d2-6002-002e-699a-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

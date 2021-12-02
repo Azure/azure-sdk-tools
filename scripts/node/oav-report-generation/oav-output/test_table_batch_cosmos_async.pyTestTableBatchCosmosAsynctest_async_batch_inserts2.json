@@ -1,0 +1,92 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable54c83128()?%24filter=PartitionKey+eq+%27async_inserts%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 21:33:48 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "376109d4-48b7-11ec-840b-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 21:33:48 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6365703Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "0",
+                    "Timestamp": "2021-11-18T21:33:48.6365703Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6371847Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "1",
+                    "Timestamp": "2021-11-18T21:33:48.6371847Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6377991Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "2",
+                    "Timestamp": "2021-11-18T21:33:48.6377991Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6383111Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "3",
+                    "Timestamp": "2021-11-18T21:33:48.6383111Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6388231Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "4",
+                    "Timestamp": "2021-11-18T21:33:48.6388231Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6394375Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "5",
+                    "Timestamp": "2021-11-18T21:33:48.6394375Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6399495Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "6",
+                    "Timestamp": "2021-11-18T21:33:48.6399495Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6404615Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "7",
+                    "Timestamp": "2021-11-18T21:33:48.6404615Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6409735Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "8",
+                    "Timestamp": "2021-11-18T21:33:48.6409735Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T21%3A33%3A48.6413831Z'\"",
+                    "PartitionKey": "async_inserts",
+                    "RowKey": "9",
+                    "Timestamp": "2021-11-18T21:33:48.6413831Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttable54c83128"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 21:33:47 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "cfc75490-34fb-4d1d-a956-5293f5ae21be"
+        }
+    }
+}

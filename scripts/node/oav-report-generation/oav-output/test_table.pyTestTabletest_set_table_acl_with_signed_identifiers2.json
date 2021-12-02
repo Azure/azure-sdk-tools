@@ -1,0 +1,34 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/pytablesync2a892a48?comp=acl&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/xml",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Date": "Thu, 11 Nov 2021 01:05:29 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "76697fce-428b-11ec-acb0-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:05:29 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": "﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><SignedIdentifiers><SignedIdentifier><Id>testid</Id><AccessPolicy><Start>2021-06-08T02:05:09.0000000Z</Start><Expiry>2021-06-08T03:10:09.0000000Z</Expiry><Permission>r</Permission></AccessPolicy></SignedIdentifier></SignedIdentifiers>",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/xml",
+            "Date": "Thu, 11 Nov 2021 01:05:29 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "x-ms-client-request-id": "76697fce-428b-11ec-acb0-c8348e51ab51",
+            "x-ms-request-id": "a43be10d-b002-0070-2e98-d6d64d000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

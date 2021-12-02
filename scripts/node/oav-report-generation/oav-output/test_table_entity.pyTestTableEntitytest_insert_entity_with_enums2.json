@@ -1,0 +1,47 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable42532ac9(PartitionKey='pk42532ac9',RowKey='rk42532ac9')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:22:03 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "c693a9a4-428d-11ec-9958-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:22:03 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttable42532ac9/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A22%3A03.8870424Z'\"",
+            "PartitionKey": "pk42532ac9",
+            "RowKey": "rk42532ac9",
+            "Timestamp": "2021-11-11T01:22:03.8870424Z",
+            "test1": "Color.YELLOW",
+            "test2": "Color.BLUE",
+            "test3": "Color.RED"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:22:03 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A22%3A03.8870424Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "c693a9a4-428d-11ec-9958-c8348e51ab51",
+            "x-ms-request-id": "792f0540-6002-002e-179a-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

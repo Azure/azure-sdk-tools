@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablec8282968?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "204",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:31:14 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "38233856-480f-11ec-a208-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:31:14 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkc8282968",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkc8282968",
+            "RowKey@odata.type": "Edm.String",
+            "date": "2003-09-27T12:52:43.000000Z",
+            "date@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablec8282968/$metadata#uttablec8282968/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A13.6543751Z'\"",
+            "PartitionKey": "pkc8282968",
+            "RowKey": "rkc8282968",
+            "date@odata.type": "Edm.DateTime",
+            "date": "2003-09-27T12:52:43.0000000Z",
+            "Timestamp": "2021-11-18T01:31:13.6543751Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:31:12 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A31%3A13.6543751Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablec8282968(PartitionKey='pkc8282968',RowKey='rkc8282968')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "9d1c06cf-50d0-4f9a-a174-a189711a4de0"
+        }
+    }
+}

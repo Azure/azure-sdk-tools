@@ -1,0 +1,46 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable3de13343?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "227",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:46:07 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4c6872a0-4811-11ec-81c9-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:46:07 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk3de13343",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "test2",
+            "RowKey@odata.type": "Edm.String",
+            "啊齄丂狛狜": "hello",
+            "啊齄丂狛狜@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable3de13343/$metadata#uttable3de13343/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A06.5654791Z'\"",
+            "PartitionKey": "pk3de13343",
+            "RowKey": "test2",
+            "啊齄丂狛狜": "hello",
+            "Timestamp": "2021-11-18T01:46:06.5654791Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:46:05 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A46%3A06.5654791Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttable3de13343(PartitionKey='pk3de13343',RowKey='test2')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "75c1827c-b231-4691-92ac-1e148583110e"
+        }
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/querytablec83826ee?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "173",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:29:23 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "cd4a6f80-428e-11ec-9e91-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:29:23 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "foo",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "bar1",
+            "RowKey@odata.type": "Edm.String",
+            "IsAdmin": "admin",
+            "IsAdmin@odata.type": "Edm.String"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#querytablec83826ee/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A29%3A24.6814547Z'\"",
+            "PartitionKey": "foo",
+            "RowKey": "bar1",
+            "Timestamp": "2021-11-11T01:29:24.6814547Z",
+            "IsAdmin": "admin"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:29:24 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A29%3A24.6814547Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/querytablec83826ee(PartitionKey='foo',RowKey='bar1')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "cd4a6f80-428e-11ec-9e91-c8348e51ab51",
+            "x-ms-request-id": "792f0ebd-6002-002e-1c9b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

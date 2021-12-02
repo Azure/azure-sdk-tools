@@ -1,0 +1,51 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable58a32fc(PartitionKey='pk58a32fc',RowKey='rk58a32fc')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:30:40 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "23e4d3e3-480f-11ec-b27a-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:30:40 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttable58a32fc/$metadata#uttable58a32fc/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A30%3A39.5473927Z'\"",
+            "PartitionKey": "pk58a32fc",
+            "RowKey": "rk58a32fc",
+            "EmptyByte@odata.type": "Edm.Binary",
+            "EmptyByte": "",
+            "EmptyUnicode": "",
+            "SpacesOnlyByte@odata.type": "Edm.Binary",
+            "SpacesOnlyByte": "ICAg",
+            "SpacesOnlyUnicode": "   ",
+            "SpacesBeforeByte@odata.type": "Edm.Binary",
+            "SpacesBeforeByte": "ICAgVGV4dA==",
+            "SpacesBeforeUnicode": "   Text",
+            "SpacesAfterByte@odata.type": "Edm.Binary",
+            "SpacesAfterByte": "VGV4dCAgIA==",
+            "SpacesAfterUnicode": "Text   ",
+            "SpacesBeforeAndAfterByte@odata.type": "Edm.Binary",
+            "SpacesBeforeAndAfterByte": "ICAgVGV4dCAgIA==",
+            "SpacesBeforeAndAfterUnicode": "   Text   ",
+            "Timestamp": "2021-11-18T01:30:39.5473927Z"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:30:38 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A30%3A39.5473927Z'\"",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "7b52d4e3-1a9e-4dd5-9bf8-7a4ed8f4551a"
+        }
+    }
+}

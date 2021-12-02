@@ -1,0 +1,37 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "32",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:48:50 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "2bb080cf-48a0-11ec-9728-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:48:50 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "TableName": "uttableee413432"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "TableName": "uttableee413432",
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#Tables/@Element"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 18:48:51 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A48%3A51.2530439Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/Tables('uttableee413432')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "c71c729f-ee4d-48a5-834a-eab67c608f05"
+        }
+    }
+}

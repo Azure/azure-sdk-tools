@@ -1,0 +1,56 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttableba592401?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "204",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:28:09 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "a111a720-428e-11ec-bf42-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:28:09 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pkba592401",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rkba592401",
+            "RowKey@odata.type": "Edm.String",
+            "date": "2003-09-27T12:52:43.000000Z",
+            "date@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttableba592401/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A28%3A10.4942717Z'\"",
+            "PartitionKey": "pkba592401",
+            "RowKey": "rkba592401",
+            "Timestamp": "2021-11-11T01:28:10.4942717Z",
+            "date@odata.type": "Edm.DateTime",
+            "date": "2003-09-27T12:52:43Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:28:10 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A28%3A10.4942717Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttableba592401(PartitionKey='pkba592401',RowKey='rkba592401')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "a111a720-428e-11ec-bf42-c8348e51ab51",
+            "x-ms-request-id": "792f0d0a-6002-002e-469b-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

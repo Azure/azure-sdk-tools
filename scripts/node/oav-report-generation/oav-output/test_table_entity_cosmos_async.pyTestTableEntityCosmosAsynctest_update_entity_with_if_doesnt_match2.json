@@ -1,0 +1,46 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable83f3898(PartitionKey='pk83f3898',RowKey='rk83f3898')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "358",
+            "Content-Type": "application/json",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:45:43 GMT",
+            "If-Match": "W/\"datetime'2012-06-15T22%3A51%3A44.9662825Z'\"",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "3dd75634-4811-11ec-ab6e-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:45:43 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk83f3898",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "rk83f3898",
+            "RowKey@odata.type": "Edm.String",
+            "age": "abc",
+            "age@odata.type": "Edm.String",
+            "sex": "female",
+            "sex@odata.type": "Edm.String",
+            "sign": "aquarius",
+            "sign@odata.type": "Edm.String",
+            "birthday": "1991-10-04T00:00:00.000000Z",
+            "birthday@odata.type": "Edm.DateTime"
+        },
+        "method": "PUT"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"UpdateConditionNotSatisfied\",\"message\":{\"lang\":\"en-us\",\"value\":\"The update condition specified in the request was not satisfied.\\nRequestID:7a05c24e-ff96-428b-b6dc-81606017e3da\\n\"}}}\r\n"
+        ],
+        "statusCode": "412",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 01:45:41 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "7a05c24e-ff96-428b-b6dc-81606017e3da"
+        }
+    }
+}

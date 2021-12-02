@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttabled8cc3dd3(PartitionKey='a''''''''b',RowKey='a''''''''b')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:32:59 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "4df918ea-428f-11ec-925d-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:32:59 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttabled8cc3dd3/@Element",
+            "odata.etag": "W/\"datetime'2021-11-11T01%3A33%3A00.541973Z'\"",
+            "PartitionKey": "a''''b",
+            "RowKey": "a''''b",
+            "Timestamp": "2021-11-11T01:33:00.541973Z",
+            "age": "abc",
+            "birthday@odata.type": "Edm.DateTime",
+            "birthday": "1991-10-04T00:00:00Z",
+            "sex": "female",
+            "sign": "aquarius"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 11 Nov 2021 01:32:59 GMT",
+            "ETag": "W/\"datetime'2021-11-11T01%3A33%3A00.541973Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "4df918ea-428f-11ec-925d-c8348e51ab51",
+            "x-ms-request-id": "792f14ae-6002-002e-089c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

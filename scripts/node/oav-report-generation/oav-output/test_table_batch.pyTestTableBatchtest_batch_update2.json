@@ -1,0 +1,52 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttablef2ce2444(PartitionKey='001',RowKey='batch_update')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:40:30 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "01cd5101-489f-11ec-b71d-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:40:30 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttablef2ce2444/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A40%3A30.8791522Z'\"",
+            "PartitionKey": "001",
+            "RowKey": "batch_update",
+            "Timestamp": "2021-11-18T18:40:30.8791522Z",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:40:30.854718Z",
+            "test6@odata.type": "Edm.Int64",
+            "test6": "1099511627776"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 18 Nov 2021 18:40:30 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A40%3A30.8791522Z'\"",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "01cd5101-489f-11ec-b71d-c8348e51ab51",
+            "x-ms-request-id": "43756e6a-a002-0013-77ab-dcd8c4000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

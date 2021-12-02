@@ -1,0 +1,49 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablea3642fe3()?%24top=2&%24filter=PartitionKey+eq+%27pk%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "469f4a20-480f-11ec-b386-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A37.2133383Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "10",
+                    "value": 0,
+                    "Timestamp": "2021-11-18T01:31:37.2133383Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A37.2558343Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "101",
+                    "value": 1,
+                    "Timestamp": "2021-11-18T01:31:37.2558343Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttablea3642fe3"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:31:36 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-continuation-NextPartitionKey": "{\"token\":\"+RID:~gaQ+AN9Iqm8CAAAAAAAAAA==#RT:1#TRC:2#ISV:2#IEO:65567#QCF:4#FPC:AQIAAAAAAAAABgAAAAAAAAA=\",\"range\":{\"min\":\"\",\"max\":\"FF\"}}",
+            "x-ms-continuation-NextRowKey": "NA",
+            "x-ms-request-id": "631741e3-fe2a-4566-9cca-7d2159fec089"
+        }
+    }
+}

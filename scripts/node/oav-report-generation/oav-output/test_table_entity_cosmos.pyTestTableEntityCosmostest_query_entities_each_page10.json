@@ -1,0 +1,46 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablea3642fe3?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "139",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "469197a8-480f-11ec-ad27-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:31:38 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "pk6789",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "10123456789",
+            "RowKey@odata.type": "Edm.String",
+            "value": 9
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablea3642fe3/$metadata#uttablea3642fe3/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A31%3A37.8234375Z'\"",
+            "PartitionKey": "pk6789",
+            "RowKey": "10123456789",
+            "value": 9,
+            "Timestamp": "2021-11-18T01:31:37.8234375Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:31:36 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A31%3A37.8234375Z'\"",
+            "Location": "https://fakeendpoint.table.cosmos.azure.com/uttablea3642fe3(PartitionKey='pk6789',RowKey='10123456789')",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "522ff8e5-fa58-476a-ac7f-80e4029c77a0"
+        }
+    }
+}

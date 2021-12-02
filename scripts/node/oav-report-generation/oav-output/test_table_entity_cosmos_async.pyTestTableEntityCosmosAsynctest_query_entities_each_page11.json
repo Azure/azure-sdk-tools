@@ -1,0 +1,48 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttabledc1e345e()?%24top=2&%24filter=PartitionKey+eq+%27pk%27&api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:46:20 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "53f3cc43-4811-11ec-80db-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:46:20 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A18.6216455Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "10",
+                    "value": 0,
+                    "Timestamp": "2021-11-18T01:46:18.6216455Z"
+                },
+                {
+                    "odata.etag": "W/\"datetime'2021-11-18T01%3A46%3A18.6568711Z'\"",
+                    "PartitionKey": "pk",
+                    "RowKey": "101",
+                    "value": 1,
+                    "Timestamp": "2021-11-18T01:46:18.6568711Z"
+                }
+            ],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#uttabledc1e345e"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:46:18 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-continuation-NextPartitionKey": "{\"token\":\"+RID:~gaQ+AJW0FzQCAAAAAAAAAA==#RT:1#TRC:2#ISV:2#IEO:65567#QCF:4#FPC:AQIAAAAAAAAABgAAAAAAAAA=\",\"range\":{\"min\":\"\",\"max\":\"FF\"}}",
+            "x-ms-continuation-NextRowKey": "NA",
+            "x-ms-request-id": "d050e374-a85d-4c30-980e-777062b456e2"
+        }
+    }
+}

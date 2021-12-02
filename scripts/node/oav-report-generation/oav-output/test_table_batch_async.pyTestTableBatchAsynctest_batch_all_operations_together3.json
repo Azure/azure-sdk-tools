@@ -1,0 +1,64 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttableb0b02fd9?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "319",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 18:44:29 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.1 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "8ffbcea5-489f-11ec-9eb6-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 18:44:29 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "PartitionKey": "003",
+            "PartitionKey@odata.type": "Edm.String",
+            "RowKey": "batch_all_operations_together-3",
+            "RowKey@odata.type": "Edm.String",
+            "test": true,
+            "test2": "value",
+            "test2@odata.type": "Edm.String",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5": "2021-11-19T02:44:29.368269Z",
+            "test5@odata.type": "Edm.DateTime"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.core.windows.net/$metadata#uttableb0b02fd9/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T18%3A44%3A29.4503191Z'\"",
+            "PartitionKey": "003",
+            "RowKey": "batch_all_operations_together-3",
+            "Timestamp": "2021-11-18T18:44:29.4503191Z",
+            "test": true,
+            "test2": "value",
+            "test3": 3,
+            "test4": 1234567890,
+            "test5@odata.type": "Edm.DateTime",
+            "test5": "2021-11-19T02:44:29.368269Z"
+        },
+        "statusCode": "201",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
+            "Date": "Thu, 18 Nov 2021 18:44:28 GMT",
+            "ETag": "W/\"datetime'2021-11-18T18%3A44%3A29.4503191Z'\"",
+            "Location": "https://fakeendpoint.table.core.windows.net/uttableb0b02fd9(PartitionKey='003',RowKey='batch_all_operations_together-3')",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "8ffbcea5-489f-11ec-9eb6-c8348e51ab51",
+            "x-ms-request-id": "43759438-a002-0013-47ac-dcd8c4000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttable3d9d38d0(PartitionKey='pk3d9d38d0',RowKey='rk3d9d38d0')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "0",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:45:30 GMT",
+            "If-Match": "W/\"datetime'2021-11-18T01%3A45%3A29.1957255Z'\"",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "363d0eb2-4811-11ec-9899-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:45:30 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"UpdateConditionNotSatisfied\",\"message\":{\"lang\":\"en-us\",\"value\":\"The update condition specified in the request was not satisfied.\\nRequestID:cb49295f-762f-4c15-85e1-1af9c49c8e33\\n\"}}}\r\n"
+        ],
+        "statusCode": "412",
+        "headers": {
+            "Content-Type": "application/json; odata=fullmetadata",
+            "Date": "Thu, 18 Nov 2021 01:45:28 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "cb49295f-762f-4c15-85e1-1af9c49c8e33"
+        }
+    }
+}

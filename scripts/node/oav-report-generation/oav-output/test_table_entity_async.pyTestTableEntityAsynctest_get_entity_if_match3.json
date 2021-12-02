@@ -1,0 +1,37 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.core.windows.net/uttable4f252ce7(PartitionKey='pk4f252ce7',RowKey='rk4f252ce7')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Content-Length": "0",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 11 Nov 2021 01:32:50 GMT",
+            "If-Match": "W/\"datetime'2021-11-11T01%3A32%3A50.8403428Z'\"",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "48381a7a-428f-11ec-8533-c8348e51ab51",
+            "x-ms-date": "Thu, 11 Nov 2021 01:32:50 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "DELETE"
+    },
+    "liveResponse": {
+        "body": null,
+        "statusCode": "204",
+        "headers": {
+            "Cache-Control": "no-cache",
+            "Content-Length": "0",
+            "Date": "Thu, 11 Nov 2021 01:32:50 GMT",
+            "Server": [
+                "Windows-Azure-Table/1.0",
+                "Microsoft-HTTPAPI/2.0"
+            ],
+            "X-Content-Type-Options": "nosniff",
+            "x-ms-client-request-id": "48381a7a-428f-11ec-8533-c8348e51ab51",
+            "x-ms-request-id": "792f13d4-6002-002e-629c-d63dad000000",
+            "x-ms-version": "2019-02-02"
+        }
+    }
+}

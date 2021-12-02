@@ -1,0 +1,53 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/uttablee2dc2e64(PartitionKey='pke2dc2e64',RowKey='rke2dc2e64')?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 01:24:50 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.2.0 Python/3.10.0 (Windows-10-10.0.22000-SP0)",
+            "x-ms-client-request-id": "532adc7c-480e-11ec-8be2-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 01:24:50 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/uttablee2dc2e64/$metadata#uttablee2dc2e64/@Element",
+            "odata.etag": "W/\"datetime'2021-11-18T01%3A24%3A49.3734919Z'\"",
+            "PartitionKey": "pke2dc2e64",
+            "RowKey": "rke2dc2e64",
+            "age": 39,
+            "sex": "male",
+            "married": true,
+            "deceased": false,
+            "ratio": 3.1,
+            "evenratio": 3,
+            "double": 5,
+            "large": 933311100,
+            "Birthday@odata.type": "Edm.DateTime",
+            "Birthday": "1973-10-04T00:00:00.0000000Z",
+            "birthday@odata.type": "Edm.DateTime",
+            "birthday": "1970-10-04T00:00:00.0000000Z",
+            "binary@odata.type": "Edm.Binary",
+            "binary": "YmluYXJ5",
+            "other": 20,
+            "clsid@odata.type": "Edm.Guid",
+            "clsid": "c9da6455-213d-42c9-9a79-3e9149a57833",
+            "Timestamp": "2021-11-18T01:24:49.3734919Z"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 01:24:48 GMT",
+            "ETag": "W/\"datetime'2021-11-18T01%3A24%3A49.3734919Z'\"",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "0c42add7-698b-4b3f-b5f4-5ef3cc712ffd"
+        }
+    }
+}

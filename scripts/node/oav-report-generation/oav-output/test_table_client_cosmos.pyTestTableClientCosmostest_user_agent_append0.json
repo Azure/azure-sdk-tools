@@ -1,0 +1,32 @@
+{
+    "liveRequest": {
+        "url": "https://fakeendpoint.table.cosmos.azure.com/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "DataServiceVersion": "3.0",
+            "Date": "Thu, 18 Nov 2021 03:31:17 GMT",
+            "User-Agent": "customer_user_agent",
+            "x-ms-client-request-id": "fd707753-481f-11ec-b8cd-c8348e51ab51",
+            "x-ms-date": "Thu, 18 Nov 2021 03:31:17 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": null,
+        "method": "GET"
+    },
+    "liveResponse": {
+        "body": {
+            "value": [],
+            "odata.metadata": "https://fakeendpoint.table.cosmos.azure.com/$metadata#Tables"
+        },
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Thu, 18 Nov 2021 03:31:16 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "529fc8eb-cd51-4543-b430-48c50b969dc5"
+        }
+    }
+}

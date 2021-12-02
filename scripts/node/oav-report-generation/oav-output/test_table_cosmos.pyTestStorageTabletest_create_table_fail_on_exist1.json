@@ -1,0 +1,35 @@
+{
+    "liveRequest": {
+        "url": "https://yalltablestestsprim.table.cosmos.azure.com/Tables?api-version=2019-02-02",
+        "headers": {
+            "Accept": "application/json;odata=minimalmetadata",
+            "Accept-Encoding": "gzip, deflate",
+            "Authorization": "Sanitized",
+            "Connection": "keep-alive",
+            "Content-Length": "36",
+            "Content-Type": "application/json;odata=nometadata",
+            "DataServiceVersion": "3.0",
+            "Date": "Wed, 15 Sep 2021 17:14:04 GMT",
+            "User-Agent": "azsdk-python-data-tables/12.1.1 Python/3.9.2 (Windows-10-10.0.19041-SP0)",
+            "x-ms-client-request-id": "540f1fad-1648-11ec-9dd4-5cf37093a909",
+            "x-ms-date": "Wed, 15 Sep 2021 17:14:04 GMT",
+            "x-ms-version": "2019-02-02"
+        },
+        "body": {
+            "TableName": "pytablesyncb9c42b83"
+        },
+        "method": "POST"
+    },
+    "liveResponse": {
+        "body": [
+            "{\"odata.error\":{\"code\":\"TableAlreadyExists\",\"message\":{\"lang\":\"en-us\",\"value\":\"The specified table already exists.\\nRequestID:6b3c01a8-aa95-4fe3-a87b-2c551c697475\\n\"}}}\r\n"
+        ],
+        "statusCode": "409",
+        "headers": {
+            "Content-Type": "application/json; odata=minimalmetadata",
+            "Date": "Wed, 15 Sep 2021 17:14:01 GMT",
+            "Transfer-Encoding": "chunked",
+            "x-ms-request-id": "6b3c01a8-aa95-4fe3-a87b-2c551c697475"
+        }
+    }
+}

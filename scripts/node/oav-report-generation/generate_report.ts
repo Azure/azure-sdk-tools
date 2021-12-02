@@ -2,9 +2,7 @@
 import {Argv} from "yargs";
 const fs = require('fs/promises');
 const path = require('path');
-
 import * as oav from "oav";
-
 import * as Mustache from 'mustache';
 
 interface PayloadEntry {
@@ -43,6 +41,7 @@ class CoverageView {
     constructor(packageName: string, validationResults: Array<oav.TrafficValidationIssue>) {
         this.package = packageName;
         this.validationResults = validationResults;
+        this.generationDate = new Date();
     }
 
     getGeneralErrors(): number{
@@ -50,7 +49,7 @@ class CoverageView {
     }
 
     package: string;
-    date: Date;
+    generationDate: Date;
     errorArray: Array<PayloadEntry>;
     validationResults: Array<oav.TrafficValidationIssue>;
 }

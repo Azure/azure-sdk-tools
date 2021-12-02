@@ -496,3 +496,4 @@ tools/oav-traffic-converter/build/
 # oav report generation
 scripts/node/oav-report-generation/build
 scripts/node/oav-report-generation/oav-output
+scripts/node/oav-report-generation/report.html

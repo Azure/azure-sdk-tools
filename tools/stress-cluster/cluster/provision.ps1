@@ -45,7 +45,7 @@ function DeployStaticResources([hashtable]$params) {
     $sp = RunOrExitOnFailure az ad sp create-for-rbac `
         -o json `
         -n "stress-provisioner-$($params.groupSuffix)" `
-        --role Contributor `
+        --role Owner `
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
     $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).objectId

@@ -15,7 +15,8 @@ mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
-& /common/TestResources/New-TestResources.ps1 `
+# Capture output so we don't print environment variable secrets
+$env = & /common/TestResources/New-TestResources.ps1 `
     -BaseName $env:RESOURCE_GROUP_NAME `
     -ResourceGroupName $env:RESOURCE_GROUP_NAME `
     -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
@@ -29,6 +30,7 @@ Copy-Item "/mnt/testresources/*" -Destination "/azure/"
     -DeleteAfterHours 168 `
     -ServiceDirectory '/azure/' `
     -CI `
-    -Force 
+    -RedactLogs `
+    -Force
 
 #>

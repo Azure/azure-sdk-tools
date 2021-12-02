@@ -135,7 +135,7 @@ export async function getInputFromCommand(parameter: string): Promise<string> {
         'input-file': `Please input the swagger files. If you have multi input files, please use semicolons to separate: `,
         'package-version': `Please input the package version you want to generate: `,
         'credential-scopes': `Please input credential-scopes of your service: `,
-        'resource-provider': `Which resource provider do you want to store your package in sdk folder? Please input it: `
+        'service-name': `Which service folder do you want to store your package in sdk folder? Please input it: `
     }
     const input = await ask(messages[parameter].yellow);
     return input as string;

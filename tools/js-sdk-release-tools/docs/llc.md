@@ -41,7 +41,7 @@ You need to provide following information. You can refer to [README.md](https://
 
 | parameter | description |
 | ----- | ---- |
-| resource-provider | The folder name under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk). If the resource provider name you provided is not under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk), we will create a new one for you. |
+| service-name | The folder name under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk). If the service name you provided is not under [sdk](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk), we will create a new one for you. |
 | package-name | The package name of the sdk, which should be in format @azure-rest/xxxxx |
 | title | The title of the sdk. |
 | description | The description of the sdk. |

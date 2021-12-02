@@ -36,7 +36,7 @@ async function autoGenerate(options: any) {
         packagePath = findPackageInRepo(packageName, sdkRepo);
         if (!packagePath) {
             logger.logGreen(`${packageName} is first generated, please help input necessary information to create swagger/README.md`);
-            const rp = options['resource-provider']? options['resource-provider'] : await getInputFromCommand('resource-provider');
+            const rp = options['service-name']? options['service-name'] : await getInputFromCommand('service-name');
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp));
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp, getPackageFolderName(packageName)));
             packagePath = path.join(sdkRepo, 'sdk', rp, getPackageFolderName(packageName));
@@ -69,7 +69,7 @@ const optionDefinitions = [
     {name: 'package-version', type: String},
     {name: 'credential-scopes', type: String},
     {name: 'readme', type: String},
-    {name: 'resource-provider', type: String},
+    {name: 'service-name', type: String},
 
 ];
 const commandLineArgs = require('command-line-args');

@@ -25,7 +25,11 @@ export async function processRequest(host: Host): Promise<void> {
     const mockTestDataRender = new MockTestDataRender(context);
     mockTestDataRender.renderData();
 
-    const extraParam = { copyright: await Helper.getCopyright(session) };
+    const extraParam = {
+        copyright: await Helper.getCopyright(session),
+        sendExampleId: config.getValue(Config.sendExampleId),
+        verifyResponse: config.getValue(Config.verifyResponse),
+    };
     if (config.getValue(Config.generateMockTest)) {
         const mockTestCodeGenerator = new MockTestCodeGenerator(context);
         mockTestCodeGenerator.generateCode(extraParam);

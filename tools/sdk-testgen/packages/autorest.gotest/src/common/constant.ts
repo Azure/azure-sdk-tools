@@ -11,6 +11,8 @@ export enum Config {
     filePrefix = 'file-prefix',
     exampleFilePrefix = 'example-file-prefix',
     testFilePrefix = 'test-file-prefix',
+    sendExampleId = 'testmodeler.mock.send-example-id',
+    verifyResponse = 'testmodeler.mock.verify-response',
 }
 
 export const configDefaults = {

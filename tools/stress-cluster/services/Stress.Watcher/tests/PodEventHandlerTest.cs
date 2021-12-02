@@ -61,7 +61,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestShouldStartChaos()
         {
-            var handler = new PodEventHandler(null, null);
+            var handler = new PodEventHandler(null, null, null);
             var pod = CreatePod("testns", "pod-test-instance");
 
             var noStart1 = CreateChaosResource("testnostart1", "test-no-start-1", false);
@@ -77,7 +77,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestShouldStartPodChaos()
         {
-            var handler = new PodEventHandler(null, null);
+            var handler = new PodEventHandler(null, null, null);
             var pod = CreatePod("testns", "pod-test-instance");
 
             pod.Status.Phase = "Pending";
@@ -104,6 +104,142 @@ namespace Stress.Watcher.Tests
             pod = CreatePod("testns", "pod-test-instance");
             pod.Metadata.Labels.Remove("chaos");
             handler.ShouldStartPodChaos(WatchEventType.Modified, pod).Should().BeFalse();
+        }
+
+        private V1Container CreateContainer(string name, List<V1EnvVar> env = null)
+        {
+            return new V1Container()
+            {
+                Name = name,
+                Image = "busybox",
+                Env = env
+            };
+        }
+
+        [Fact]
+        public void TestShouldDeleteResources()
+        {
+            var handler = new PodEventHandler(null, null, null);
+            var pod = CreatePod("testns", "pod-test-instance");
+            pod.Spec = new V1PodSpec();
+
+            pod.Status.Phase = "Succeeded";
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
+
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("non-matching-container-name")
+            };
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
+
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("non-matching-container-name"),
+                CreateContainer("init-azure-deployer")
+            };
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+
+            var env = new List<V1EnvVar> {
+                new V1EnvVar()
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME","")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME", "testrg")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+
+            pod.Status.Phase = "Pending";
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
+            pod.Status.Phase = "Running";
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
+            pod.Status.Phase = "Failed";
+            handler.ShouldDeleteResources(pod).Should().BeTrue();
+            pod.Status.Phase = "Unknown";
+            handler.ShouldDeleteResources(pod).Should().BeFalse();
+        }
+
+        [Fact]
+        public void TestGetResourceGroupName()
+        {
+            var handler = new PodEventHandler(null, null, null);
+            var pod = CreatePod("testns", "pod-test-instance");
+            pod.Spec = new V1PodSpec();
+
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("non-matching-container-name"),
+                CreateContainer("init-azure-deployer")
+            };
+            handler.GetResourceGroupName(pod).Should().BeEmpty();
+
+            var env = new List<V1EnvVar> {
+                new V1EnvVar()
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.GetResourceGroupName(pod).Should().BeEmpty();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME","")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.GetResourceGroupName(pod).Should().BeEmpty();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.GetResourceGroupName(pod).Should().BeEmpty();
+
+            env = new List<V1EnvVar> {
+                new V1EnvVar("RESOURCE_GROUP_NAME", "testrg")
+            };
+            pod.Spec.InitContainers = new List<V1Container>()
+            {
+                CreateContainer("other-init-container"),
+                CreateContainer("init-azure-deployer", env)
+            };
+            handler.GetResourceGroupName(pod).Should().Be("testrg");
         }
     }
 }

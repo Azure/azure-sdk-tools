@@ -63,7 +63,11 @@ class MockApp {
                 // keep origin body value if is not JSON
             }
             logger.info(
-                `[RESPONSE]\n  header: ${JSON.stringify(res._headers, null, 4)}\n  body: ${body}`
+                `[RESPONSE]\n  header: ${JSON.stringify(
+                    res.getHeaders(),
+                    null,
+                    4
+                )}\n  body: ${body}`
             )
             oldEnd.apply(res, chunk)
         }

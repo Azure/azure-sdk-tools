@@ -9,12 +9,11 @@
     - '-NoProfile'
     - '-c'
     - '/scripts/stress-test/deploy-stress-test-resources.ps1'
-    - '-TemplateParametersPath'
-    - '/mnt/testresources/parameters.json'
+
   env:
     - name: ENV_FILE
       value: /mnt/outputs/.env
-    - name: BASE_NAME
+    - name: RESOURCE_GROUP_NAME
       value: '{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"

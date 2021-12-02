@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31702.278
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{55D665BF-A4B3-45EA-A2A0-B33AFB208766}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.RetrieveCodeOwners", "Azure.Sdk.Tools.RetrieveCodeOwners\Azure.Sdk.Tools.RetrieveCodeOwners.csproj", "{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.RetrieveCodeOwners", "Azure.Sdk.Tools.RetrieveCodeOwners\Azure.Sdk.Tools.RetrieveCodeOwners.csproj", "{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.RetrieveCodeOwners.Tests", "Azure.Sdk.Tools.RetrieveCodeOwners.Tests\Azure.Sdk.Tools.RetrieveCodeOwners.Tests.csproj", "{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE65F92D-C71B-4E38-A4B2-3089EA7C5FEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{798B8CAC-68FC-49FD-A0F6-51C0DC4A4D1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

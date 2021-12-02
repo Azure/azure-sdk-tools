@@ -18,7 +18,9 @@ parameters:
   - name: NoWarn
     type: boolean
     default: false
-
+  - name: TestPostSteps
+    type: object
+    default: []
 variables:
   - template: ../variables/globals.yml
   - name: Warn
@@ -73,7 +75,9 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
-
+          
+          - ${{ parameters.TestPostSteps }}
+          
           - task: PublishTestResults@2
             condition: succeededOrFailed()
             inputs:

@@ -18,4 +18,7 @@
     - name: cluster-secrets-{{ .Release.Name }}
       mountPath: "/mnt/secrets/cluster"
       readOnly: true
+    # Force secret initialization from the secret provider CSI
+    - name: debug-file-share-config-{{ .Release.Name }}
+      mountPath: "/mnt/secrets/fileshare"
 {{ end }}

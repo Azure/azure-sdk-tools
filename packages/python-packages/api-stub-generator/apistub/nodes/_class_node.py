@@ -1,8 +1,6 @@
 import logging
 import inspect
-import enum
 from enum import Enum
-import types
 import operator
 
 from ._base_node import NodeEntityBase
@@ -161,9 +159,9 @@ class ClassNode(NodeEntityBase):
         docstring = getattr(self.obj, "__doc__")
         if docstring:
             docstring_parser = DocstringParser(docstring)
-            for var in docstring_parser.find_args("ivar"):
+            for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, var.argname, var.argtype, None, True
+                    self.namespace, self, key, var.argtype, None, True
                 )
                 self.child_nodes.append(ivar_node)
 

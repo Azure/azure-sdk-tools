@@ -22,7 +22,7 @@ There is a walkthrough through the process below in the [how do I use the test p
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --prerelease --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version 1.0.0-dev*
 ```
 
 This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)
@@ -44,18 +44,18 @@ If you've already installed the tool, you can always check the installed version
 The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
 For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
 
 ```powershell
-> docker run -v C:\\repo\\azure-sdk-for-<language>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
-Within the container, recording outputs are written within the directory `/etc/testproxy`.
+Within the container, recording outputs are written within the directory `/srv/testproxy/`.
 
 #### A note about docker caching
 

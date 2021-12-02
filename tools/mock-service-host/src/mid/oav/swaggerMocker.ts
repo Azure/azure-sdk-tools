@@ -80,7 +80,7 @@ export default class SwaggerMocker {
                 }
             }
             // get(list)
-            if (responses[key]?.body?.value?.length) {
+            if (Array.isArray(responses[key]?.body?.value) && responses[key]?.body?.value?.length) {
                 responses[key]?.body?.value?.forEach((item: any) => {
                     if (item.id) {
                         const resourceName = item.name || 'resourceName'
@@ -286,7 +286,8 @@ export default class SwaggerMocker {
         example: any,
         visited: Set<string>,
         isRequest: boolean,
-        discriminatorValue: string | undefined = undefined
+        discriminatorValue: string | undefined = undefined,
+        useCache = false
     ) {
         if (!schema || typeof schema !== 'object') {
             logger.warn(`invalid schema.`)
@@ -297,7 +298,7 @@ export default class SwaggerMocker {
             return undefined
         }
         const cache = this.getCache(schema)
-        if (cache) {
+        if (useCache && cache) {
             return cache
         }
         const definitionSpec = this.getDefSpec(schema, visited)
@@ -369,7 +370,10 @@ export default class SwaggerMocker {
             example = this.mocker.mock(definitionSpec, objName, arrItem)
         } else {
             /** type === number or integer  */
-            example = example ? example : this.mocker.mock(definitionSpec, objName)
+            example =
+                example && typeof example !== 'object'
+                    ? example
+                    : this.mocker.mock(definitionSpec, objName)
         }
         // return value for primary type: string, number, integer, boolean
         // "aaaa"
@@ -397,7 +401,9 @@ export default class SwaggerMocker {
         if (requiredProperties && requiredProperties.length > 0) {
             cacheItem.required = requiredProperties
         }
-        this.mockCache.checkAndCache(schema, cacheItem)
+        if (useCache) {
+            this.mockCache.checkAndCache(schema, cacheItem)
+        }
         return cacheItem
     }
 

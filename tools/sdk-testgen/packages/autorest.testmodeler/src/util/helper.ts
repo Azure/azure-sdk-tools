@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as jp from 'jsonpath';
+import * as lodash from 'lodash';
 import * as path from 'path';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
 import { Host, Session } from '@autorest/extension-base';
@@ -191,5 +192,46 @@ export class Helper {
         } else {
             return src;
         }
+    }
+
+    public static pathIsIncluded(paths: Set<any[]>, path: any[]): boolean {
+        for (const t of paths) {
+            if (t.length > path.length) {
+                continue;
+            }
+            let isDiff = false;
+            for (let i = 0; i < t.length; i++) {
+                if (t[i] !== path[i]) {
+                    isDiff = true;
+                    break;
+                }
+            }
+            if (!isDiff) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static filterPathsByPrefix(paths: Set<string[]>, prefix: string[]): Set<string[]> {
+        return new Set(
+            Array.from(paths)
+                .filter((x) => x.length >= prefix.length && x.slice(0, prefix.length).join(',') === prefix.join(','))
+                .map((x) => x.slice(prefix.length)),
+        );
+    }
+
+    public static uncapitalizeObjectKeys(obj) {
+        if (typeof obj !== 'object' || Array.isArray(obj)) {
+            return obj;
+        }
+
+        return lodash.transform(obj, (result, val, key) => {
+            if (typeof key === 'string') {
+                result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
+            } else {
+                result[key] = val;
+            }
+        });
     }
 }

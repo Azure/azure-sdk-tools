@@ -20,7 +20,7 @@ describe('ExampleValue.createInstance(...)', () => {
     it('create with primitive schema', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = ExampleValue.createInstance(rawValue, MockTool.createSchema(SchemaType.Any), MockTool.createLanguages());
+        const instance = ExampleValue.createInstance(rawValue, new Set(), MockTool.createSchema(SchemaType.Any), MockTool.createLanguages());
         expect(spyCreateInstance).toHaveBeenCalledTimes(1);
         expect(instance).toMatchSnapshot();
     });
@@ -28,7 +28,7 @@ describe('ExampleValue.createInstance(...)', () => {
     it('recursively call on array element schema', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = ExampleValue.createInstance(rawValue, MockTool.createArraySchema(MockTool.createSchema(SchemaType.Integer)), MockTool.createLanguages());
+        const instance = ExampleValue.createInstance(rawValue, new Set(), MockTool.createArraySchema(MockTool.createSchema(SchemaType.Integer)), MockTool.createLanguages());
         expect(spyCreateInstance).toHaveBeenCalledTimes(rawValue.length + 1);
         expect(instance).toMatchSnapshot();
     });
@@ -42,6 +42,7 @@ describe('ExampleValue.createInstance(...)', () => {
         const integerSchema = MockTool.createSchema(SchemaType.Integer);
         const instance = ExampleValue.createInstance(
             rawValue,
+            new Set(),
             MockTool.createSchema(SchemaType.Object, {
                 properties: [MockTool.createProperty('abc', integerSchema), MockTool.createProperty('bcd', integerSchema)],
             }),
@@ -60,6 +61,7 @@ describe('ExampleValue.createInstance(...)', () => {
         const integerSchema = MockTool.createSchema(SchemaType.Integer);
         const instance = ExampleValue.createInstance(
             rawValue,
+            new Set(),
             MockTool.createSchema(SchemaType.Dictionary, {
                 elementType: integerSchema,
             }),

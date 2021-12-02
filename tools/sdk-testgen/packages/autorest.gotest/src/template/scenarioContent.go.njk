@@ -3,9 +3,9 @@
 	// From step {{step.step}}
 	{%- if step.type == "restCall" %}
 		{%- set example = step.exampleModel %}
-		{%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.name + "Client") %}
+		{%- set clientVariable = example.operationGroup.language.go.clientName %}
 		{%- if allVariables.indexOf(clientVariable)<0 %}
-			{{clientVariable}} := {{packageName}}.New{{example.operationGroup.language.go.name}}Client({{example.clientParametersOutput}})
+			{{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput}})
 			{%- set _ = allVariables.push(clientVariable) %}
 		{%- endif %}
 	{%- endif %}
@@ -40,23 +40,25 @@
 			if err := {{pagerVariable}}.Err(); err != nil {
 				t.Fatalf("failed to advance page: %v\n %v", err, string(debug.Stack()))
 			}
-			{%- if example.nonNilReturns.length > 0 %}
-			for _, v := range {{pagerVariable}}.PageResponse().Value {
-				{%- for variable in example.nonNilReturns %}
-				{%- set p = variable.split(".").slice(1).join(".") %}
-				log.Printf("{{variable}}: %s\n", *v.{{p}})
-				{%- endfor %}
+			for _, v := range {{pagerVariable}}.PageResponse().{{example.pageableItemName}} {
+                log.Printf("Pager result: %#v\n", v)
 			}
-			{%- endif %}
 		}
 		{%- else %}
 		{{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
 		{%- endif %}
+        {%- if example.isLRO and example.isPageable and example.checkResponse %}
+        for {{resVariable}}.NextPage(ctx) {
+            if err := {{resVariable}}.Err(); err != nil {
+                t.Fatalf("failed to advance page: %v\n %v", err, string(debug.Stack()))
+            }
+            for _, v := range {{resVariable}}.PageResponse().{{example.pageableItemName}} {
+                t.Logf("Pager result: %#v\n", v)
+            }
+        }
+        {%- endif %}
 		{%- if example.checkResponse and not example.isPageable%}
-		{%- for variable in example.nonNilReturns %}
-		{%- set p = variable.split(".").slice(1).join(".") %}
-		log.Printf("{{variable}}: %s\n", *{{resVariable}}.{{p}})
-		{%- endfor %}
+        log.Printf("Response result: %#v\n", {{resVariable}}.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
 
 		{%- for outputVariableName, variableProperties in step.outputVariables%}
 		{%- if loop.first %}

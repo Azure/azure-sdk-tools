@@ -130,6 +130,7 @@ export class Coordinator {
             directory: path.resolve(this.config.specRetrievalLocalRelativePath),
             isPathCaseSensitive: false
         }
+        logger.info(`validator is initializing with options ${JSON.stringify(options, null, 4)}`)
         this.liveValidator = new oav.LiveValidator(options)
         await this.liveValidator.initialize()
         this.statusValue = ValidatorStatus.Initialized
@@ -275,11 +276,21 @@ export class Coordinator {
             const [code, _ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
 
             let ret = _ret
-            // simplified paging
-            ret = lodash.omit(ret, 'nextLink')
+            if (typeof ret === 'object') {
+                if (!Array.isArray(ret)) {
+                    // simplified paging
+                    ret = lodash.omit(ret, 'nextLink')
+                }
 
-            // simplified LRO
-            ret = replacePropertyValue('provisioningState', 'Succeeded', ret)
+                // simplified LRO
+                ret = replacePropertyValue('provisioningState', 'Succeeded', ret)
+
+                //set name
+                const path = getPath(getPureUrl(req.url))
+                ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
+                    return typeof v === 'string' && v.match(/^a+$/) !== null
+                })
+            }
 
             if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
                 res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
@@ -288,12 +299,6 @@ export class Coordinator {
             if (req.query?.[LRO_CALLBACK] === 'true') {
                 ret.status = 'Succeeded'
             }
-
-            //set name
-            const path = getPath(getPureUrl(req.url))
-            ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                return typeof v === 'string'
-            })
 
             res.set(code, ret)
         }

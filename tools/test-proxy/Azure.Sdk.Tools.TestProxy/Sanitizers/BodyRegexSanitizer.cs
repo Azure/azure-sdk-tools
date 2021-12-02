@@ -1,5 +1,6 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
 using System;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -35,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {
-            return body;
+            return Encoding.UTF8.GetBytes(StringSanitizer.SanitizeValue(Encoding.UTF8.GetString(body), _newValue, _regexValue, _groupForReplace));
         }
     }
 }

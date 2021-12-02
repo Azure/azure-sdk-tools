@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation. Defaults to replacing the entire string.</param>
         /// <param name="groupForReplace">The regex capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".*", string groupForReplace = null)
+        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null)
         {
             _jsonPath = jsonPath;
             _newValue = value;
@@ -35,16 +35,25 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override string SanitizeTextBody(string contentType, string body)
         {
+            bool sanitized = false;
             JToken jsonO;
-            // Prevent default behavior where JSON.NET will convert DateTimeOffset
-            // into a DateTime.
-            if (!LegacyConvertJsonDateTokens)
+
+            try
             {
-                jsonO = JsonConvert.DeserializeObject<JToken>(body, SerializerSettings);
+                // Prevent default behavior where JSON.NET will convert DateTimeOffset
+                // into a DateTime.
+                if (!LegacyConvertJsonDateTokens)
+                {
+                    jsonO = JsonConvert.DeserializeObject<JToken>(body, SerializerSettings);
+                }
+                else
+                {
+                    jsonO = JToken.Parse(body);
+                }
             }
-            else
+            catch(JsonReaderException)
             {
-                jsonO = JToken.Parse(body);
+                return body;
             }
 
             
@@ -53,15 +62,22 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 // HasValues is false for tokens with children. We will not apply sanitization if that is the case.
                 if (!token.HasValues)
                 {
-                    var replacement = StringSanitizer.SanitizeValue(token.Value<string>(), _newValue, _regexValue, _groupForReplace);
+                    var originalValue = token.Value<string>();
+
+                    var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
 
                     // this sanitizer should only apply to actual values
                     // if we attempt to apply a regex update to a jtoken that has a more complex type, throw
                     token.Replace(JToken.FromObject(replacement));
+
+                    if(originalValue != replacement)
+                    {
+                        sanitized = true;
+                    }
                 }
             }
-            
-            return JsonConvert.SerializeObject(jsonO, SerializerSettings);
+
+            return sanitized ? JsonConvert.SerializeObject(jsonO, SerializerSettings) : body;
         }
 
 

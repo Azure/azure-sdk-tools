@@ -6,7 +6,7 @@
 
     <groupId>com.azure</groupId>
     <artifactId>apiview-java-processor</artifactId>
-    <version>1.24.0</version>
+    <version>1.25.0</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>

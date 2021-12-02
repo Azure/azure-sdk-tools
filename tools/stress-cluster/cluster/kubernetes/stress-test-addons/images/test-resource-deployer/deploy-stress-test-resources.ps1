@@ -1,8 +1,3 @@
-param (
-    [Parameter()]
-    [string] $TemplateParametersPath
-)
-
 $secrets = @{}
 $secretsDir = "/mnt/secrets/static/*"
 Get-ChildItem -Path $secretsDir | ForEach-Object {
@@ -16,13 +11,13 @@ Get-ChildItem -Path $secretsDir | ForEach-Object {
     }
 }
 
-$templateParams = Get-Content $TemplateParametersPath | ConvertFrom-json -AsHashTable
 mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
 & /common/TestResources/New-TestResources.ps1 `
-    -BaseName $env:BASE_NAME `
+    -BaseName $env:RESOURCE_GROUP_NAME `
+    -ResourceGroupName $env:RESOURCE_GROUP_NAME `
     -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
     -TenantId $secrets.AZURE_TENANT_ID `
     -ProvisionerApplicationId $secrets.AZURE_CLIENT_ID `
@@ -30,7 +25,6 @@ Copy-Item "/mnt/testresources/*" -Destination "/azure/"
     -TestApplicationId $secrets.AZURE_CLIENT_ID `
     -TestApplicationSecret $secrets.AZURE_CLIENT_SECRET `
     -TestApplicationOid $secrets.AZURE_CLIENT_OID `
-    -ArmTemplateParameters $templateParams `
     -Location 'westus2' `
     -DeleteAfterHours 168 `
     -ServiceDirectory '/azure/' `

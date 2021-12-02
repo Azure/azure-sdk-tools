@@ -1,4 +1,5 @@
 ﻿using OutputColorizer;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -9,16 +10,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public static List<CodeOwnerEntry> ParseFile(string filePathOrUrl)
         {
             string content;
-            Colorizer.Write("Retrieving file content from [Yellow!{0}]... ", filePathOrUrl);
             content = FileHelpers.GetFileContents(filePathOrUrl);
-            Colorizer.WriteLine("[Green!Done]");
 
             return ParseContent(content);
         }
 
         public static List<CodeOwnerEntry> ParseContent(string fileContent)
         {
-            Colorizer.Write("Parsing CODEOWNERS table... ");
             List<CodeOwnerEntry> entries = new List<CodeOwnerEntry>();
             string line;
 
@@ -64,8 +62,29 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
                 }
             }
-            Colorizer.WriteLine("[Green!Done]");
             return entries;
+        }
+
+        public static CodeOwnerEntry ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
+        {
+            var codeOwnerEntries = ParseFile(codeOwnersFilePathOrUrl);
+            // Normalize the start and end of the paths by trimming slash
+            targetPath = targetPath.Trim('/');
+
+            // We want to find the match closest to the bottom of the codeowners file.
+            // CODEOWNERS sorts the paths in order of 'RepoPath', 'ServicePath' and then 'PackagePath'.
+            for (int i = codeOwnerEntries.Count - 1; i >= 0; i--)
+            {
+                string codeOwnerPath = codeOwnerEntries[i].PathExpression.Trim('/');
+                // Note that this only matches on paths without glob patterns which is good enough
+                // for our current scenarios but in the future might need to support globs
+                if (targetPath.StartsWith(codeOwnerPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return codeOwnerEntries[i];
+                }
+            }
+
+            return new CodeOwnerEntry();
         }
 
         private static string NormalizeLine(string line)

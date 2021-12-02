@@ -18,3 +18,11 @@ tsc generate_report.ts --outDir build/
 ```
 node ./build/generate_report.js html -p ./oav-output/ -s <path-to-azure-rest-api-specs-repo>/specification/cosmos-db/data-plane/Microsoft.Tables/preview/2019-02-02/table.json
 ```
+
+## To inspect the objects
+
+- Place a `debugger` in the appropriate place within `generate_report.ts`.
+- chrome://inspect/
+- Click `Open dedicated DevTools for Node`
+- Add `--inspect` to the `node` invocation defined above.
+

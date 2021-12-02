@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Swagger <-> Test Coverage Report -- {{ package }}</title>
+        <title>{{ package }} Swagger Coverage Report</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -9,9 +9,9 @@
         <style type="text/css">
             body {
                 margin: 40px auto;
-                max-width: 800px;
+                max-width: 900px;
                 line-height: 1.6;
-                font-size: 18px;
+                font-size: 14pt;
                 color: #444;
                 padding: 0 10px;
                 font-family: Calibri;
@@ -23,16 +23,24 @@
             }
         
             h1 {
-                border-bottom: 1px solid grey;
+                border-bottom: 1px solid #43425A;
                 width: 100%;
+                background-color: #F6FFFF
             }
         
             h2 {
-                border-bottom: 1px solid #43425A;
+                border-bottom: 1px solid lightgrey;
+                background-color: #F6FFFF;
             }
         
             h3 {
                 color: #707070;
+            }
+
+            h3.datedrop {
+                margin-block-start: .1em;
+                color: lightgrey;
+                font-size: 15px;
             }
         
             table {
@@ -42,7 +50,8 @@
             }
 
             td.highlight {
-                
+                font-size: 16pt;
+                text-align: center;
             }
 
             p {
@@ -57,44 +66,54 @@
 
     <body>
         <div id="summary">
-            <h1>
+            <h1 style="margin-block-end: .1em">
                 Swagger Coverage Report -- {{ package }}
             </h1>
             <!-- TODO: localize the UTC date via JS -->
-            <h3>
+            <h3 class="datedrop">
                 Generated {{ generatedDate }}.
             </h3>
-            <table width="100%">
+            <table style="border: 0px;" width="100%">
                 <tr>
-                    <td class="highlight">
-                        <p>
+                    <td width="33%" class="highlight">
+                        <p style="background-color: #B9FF80">
+                            {{ language }}
                         </p>
                     </td>
-                    <td class="highlight">
-                        <p>
+                    <td width="34%" class="highlight">
+                        <p style="background-color: #7DF9FF">
                             Generated from <a href="#">604ee4</a>
                         </p>
                     </td>
-                    <td class="highlight">
-                        <p>
-                            Another Highlight
+                    <td width="33%" class="highlight">
+                        <p style="background-color: #FF8680">
+                            {{ getTotalErrors }} Total Failures
                         </p>
                     </td>
                 </tr>
             </table>
-
-            There are {{ getGeneralErrors }} validation results.
         </div>
 
         <div id ="general">
+            <h2>
+                General Errors
+            </h2>
+            <p>
+                There are {{ getTotalGeneralErrors }} runtime errors.
+            </p>
         </div>
 
-        <div id ="specific-errors"> 
+        <div id ="runtime-errors"> 
+            <h2>
+                RunTime Errors
+            </h2>
+            <p>
+                There are {{ getTotalRunTimeErrors }} runtime errors.
+            </p>
         </div>
 
         <div id="mypanel"></div>
         <script>
-
             $(document).ready( () => {
                 console.log("Hello AZSDK. Document.Ready available here.")
             });

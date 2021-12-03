@@ -221,13 +221,22 @@ export class Helper {
         );
     }
 
-    public static uncapitalizeObjectKeys(obj) {
+    public static uncapitalizeObjectKeys(obj, allParameter: Parameter[]) {
         if (typeof obj !== 'object' || Array.isArray(obj)) {
             return obj;
         }
 
+        function isBodyParameter(key: string): boolean {
+            for (const parameter of allParameter) {
+                if (key?.toLowerCase() === parameter.language.default.name?.toLowerCase() && parameter.protocol?.http?.in === 'body') {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         return lodash.transform(obj, (result, val, key) => {
-            if (typeof key === 'string') {
+            if (typeof key === 'string' && isBodyParameter(key)) {
                 result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
             } else {
                 result[key] = val;

@@ -2,9 +2,16 @@ import * as _ from 'lodash'
 import * as fs from 'fs'
 import * as path from 'path'
 import { AjvSchemaValidator } from 'oav/dist/lib/swaggerValidator/ajvSchemaValidator'
+import {
+    AzureExtensions,
+    Headers,
+    LRO_CALLBACK,
+    ParameterType,
+    SWAGGER_ENCODING,
+    useREF
+} from '../common/constants'
 import { Config } from '../common/config'
 import { ExampleNotFound, ExampleNotMatch } from '../common/errors'
-import { Headers, ParameterType, SWAGGER_ENCODING, useREF } from '../common/constants'
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { MockerCache, PayloadCache } from 'oav/dist/lib/generator/exampleCache'
@@ -36,6 +43,7 @@ export class ResponseGenerator {
     private payloadCache: PayloadCache
     private swaggerMocker: SwaggerMocker
     public readonly transformContext: TransformContext
+    private lroExamplesMap: Map<string, any> = new Map<string, any>()
 
     constructor() {
         this.jsonLoader = inversifyGetInstance(JsonLoader, {})
@@ -51,8 +59,8 @@ export class ResponseGenerator {
 
     private getSpecItem(spec: any, operationId: string): SpecItem | undefined {
         let paths = spec.paths || {}
-        if (spec['x-ms-paths']) {
-            paths = { ...paths, ...spec['x-ms-paths'] }
+        if (spec[AzureExtensions.XMsPaths]) {
+            paths = { ...paths, ...spec[AzureExtensions.XMsPaths] }
         }
         for (const pathName of Object.keys(paths)) {
             for (const methodName of Object.keys(paths[pathName])) {
@@ -158,7 +166,12 @@ export class ResponseGenerator {
         }
     }
 
-    public async generate(operation: Operation, config: Config, liveRequest: LiveRequest) {
+    public async generate(
+        operation: Operation,
+        config: Config,
+        liveRequest: LiveRequest,
+        lroCallback: string | null
+    ) {
         const specFile = this.getSpecFileByOperation(operation, config)
         const spec = (await (this.jsonLoader.load(specFile) as unknown)) as SwaggerSpec
         applySpecTransformers(spec, this.transformContext)
@@ -176,7 +189,7 @@ export class ResponseGenerator {
 
         const exampleId = liveRequest.headers?.[Headers.ExampleId]
         if (exampleId) {
-            example = this.loadExample(specFile, specItem, exampleId)
+            example = this.loadExample(specFile, specItem, exampleId, liveRequest, lroCallback)
             this.validateRequestByExample(example, liveRequest, specItem)
         } else {
             this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown', liveRequest)
@@ -205,12 +218,32 @@ export class ResponseGenerator {
     }
 
     // The implementation of this function don't use jsonLoader since it removes all 'description' fields in example
-    private loadExample(specFile: string, specItem: SpecItem, exampleId: string): SwaggerExample {
+    private loadExample(
+        specFile: string,
+        specItem: SpecItem,
+        exampleId: string,
+        liveRequest: LiveRequest,
+        lroCallback: string | null
+    ): SwaggerExample {
         const rawSpec = JSON.parse(fs.readFileSync(specFile, SWAGGER_ENCODING))
 
-        const allExamples = rawSpec.paths[specItem.path][specItem.methodName]['x-ms-examples']
+        let allExamples =
+            rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples]
+        if (this.lroExamplesMap.has(liveRequest.url)) {
+            allExamples = { ...this.lroExamplesMap.get(liveRequest.url), ...allExamples }
+        } else {
+            const urlWithCallback = `${liveRequest.url}&${LRO_CALLBACK}=true`
+            if (this.lroExamplesMap.has(urlWithCallback)) {
+                allExamples = { ...this.lroExamplesMap.get(urlWithCallback), ...allExamples }
+            }
+        }
+
         if (!allExamples || !Object.prototype.hasOwnProperty.call(allExamples, exampleId)) {
             throw new ExampleNotFound(exampleId)
+        }
+
+        if (lroCallback) {
+            this.lroExamplesMap.set(lroCallback, allExamples)
         }
 
         const examplePath = allExamples[exampleId][useREF]

@@ -2,6 +2,7 @@ import * as Constants from 'oav/dist/lib/util/constants'
 import * as lodash from 'lodash'
 import * as oav from 'oav'
 import * as path from 'path'
+import { AzureExtensions, LRO_CALLBACK } from '../common/constants'
 import { Config } from '../common/config'
 import {
     HasChildResource,
@@ -14,7 +15,6 @@ import {
     ValidationFail
 } from '../common/errors'
 import { InjectableTypes } from '../lib/injectableTypes'
-import { LRO_CALLBACK } from '../common/constants'
 import { OperationMatch, OperationSearcher } from 'oav/dist/lib/liveValidation/operationSearcher'
 import { ResourcePool } from './resource'
 import { ResponseGenerator } from './responser'
@@ -163,15 +163,21 @@ export class Coordinator {
                 Constants.ErrorCodes.MultipleOperationsFound.name
         ) {
             const result = this.search(this.liveValidator.operationSearcher, validationRequest)
+            const lroCallback = result.operationMatch.operation[
+                AzureExtensions.XMsLongRunningOperation
+            ]
+                ? await this.findLROGet(req)
+                : null
             const example = await this.responseGenerator.generate(
                 result.operationMatch.operation,
                 this.config,
-                liveRequest
+                liveRequest,
+                lroCallback
             )
             if (profile?.alwaysError) {
                 throw new IntentionalError()
             }
-            await this.genStatefulResponse(req, res, example.responses, profile)
+            await this.genStatefulResponse(req, res, example.responses, profile, lroCallback)
         } else {
             const exampleResponse = this.handleSpecials(req, validationRequest)
             if (exampleResponse === undefined) {
@@ -249,7 +255,8 @@ export class Coordinator {
         req: VirtualServerRequest,
         res: VirtualServerResponse,
         exampleResponses: Record<string, any>,
-        profile: Record<string, any>
+        profile: Record<string, any>,
+        lroCallback: string | null = null
     ) {
         if (profile?.stateful) {
             const url: string = getPureUrl(req.url) as string
@@ -292,7 +299,7 @@ export class Coordinator {
             }
 
             if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
-                res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
+                res.setHeader('Azure-AsyncOperation', lroCallback)
                 res.setHeader('Retry-After', 1)
             }
             if (
@@ -320,7 +327,7 @@ export class Coordinator {
                     this.liveValidator.parseValidationRequest(
                         testingUrl,
                         'GET',
-                        req.headers?.['x-ms-correlation-request-id'] || ''
+                        req.headers?.[AzureExtensions.XMsCorrelationRequestId] || ''
                     )
                     return testingUrl
                 } catch (error) {

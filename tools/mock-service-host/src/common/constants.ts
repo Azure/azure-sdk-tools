@@ -12,3 +12,10 @@ export enum ParameterType {
     Query = 'query',
     Header = 'header'
 }
+
+export enum AzureExtensions {
+    XMsLongRunningOperation = 'x-ms-long-running-operation',
+    XMsExamples = 'x-ms-examples',
+    XMsCorrelationRequestId = 'x-ms-correlation-request-id',
+    XMsPaths = 'x-ms-paths'
+}

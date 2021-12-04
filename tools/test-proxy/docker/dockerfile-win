@@ -1,13 +1,17 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0.401-nanoserver-1809 AS build_env
+# we need access to dotnet dev certs tool to properly import the certificate
+# only .NET 5.0 and higher actually has access to --import a specific target certificate
+FROM mcr.microsoft.com/dotnet/sdk:5.0.401-nanoserver-1809 AS dotnet_build_cache
+FROM mcr.microsoft.com/dotnet/aspnet:5.0.10-nanoserver-1809 AS dotnet_runtime_cache
+
+FROM mcr.microsoft.com/dotnet/sdk:3.1-nanoserver-1809 AS build_env
 
 # copy the code
 COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
 
 # publish the package
-RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
+RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f netcoreapp3.1
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0.10-nanoserver-1809 AS build
-
+FROM mcr.microsoft.com/dotnet/aspnet:3.1-nanoserver-1809 AS build
 ENV ProgramFiles="C:\Program Files" \
     # set a fixed location for the Module analysis cache
     PSModuleAnalysisCachePath="C:\Users\Public\AppData\Local\Microsoft\Windows\PowerShell\docker\ModuleAnalysisCache" \
@@ -39,9 +43,12 @@ ADD docker_build/dotnet-devcert.pfx certwork
 
 # we still need to import this certificate to ensure it's available to all users. there is _something_ gnarly going on that purely having the cert 
 # available through the environment variables is causing some inconsistent weirdness.    
-COPY --from=build_env ["C:/Program Files/dotnet/sdk/5.0.401/DotnetTools/dotnet-dev-certs/5.0.10-servicing.21410.22/tools/net5.0/any/", "C:/dotnet-dev-certs/"]
+COPY --from=dotnet_build_cache ["C:/Program Files/dotnet/sdk/5.0.401/DotnetTools/dotnet-dev-certs/5.0.10-servicing.21410.22/tools/net5.0/any/", "C:/dotnet-dev-certs/"]
+COPY --from=dotnet_runtime_cache ["C:/Program Files/dotnet/shared/Microsoft.NETCore.App/", "C:/Program Files/dotnet/shared/Microsoft.NETCore.App/"]
 
-RUN dotnet /dotnet-dev-certs/dotnet-dev-certs.dll https --clean --import /certwork/dotnet-devcert.pfx -p "password"
+RUN dotnet /dotnet-dev-certs/dotnet-dev-certs.dll https --clean --import /certwork/dotnet-devcert.pfx -p "password" \
+    && rmdir "C:/dotnet-dev-certs/" /s /q \
+    && rmdir "C:/Program Files/dotnet/shared/Microsoft.NETCore.App/5.0.10" /s /q
 
 WORKDIR /proxyserver
 ADD host-patcher.cmd .

@@ -2,6 +2,7 @@ import * as Constants from 'oav/dist/lib/util/constants'
 import * as lodash from 'lodash'
 import * as oav from 'oav'
 import * as path from 'path'
+import { AzureExtensions, LRO_CALLBACK } from '../common/constants'
 import { Config } from '../common/config'
 import {
     HasChildResource,
@@ -14,7 +15,6 @@ import {
     ValidationFail
 } from '../common/errors'
 import { InjectableTypes } from '../lib/injectableTypes'
-import { LRO_CALLBACK } from '../common/constants'
 import { OperationMatch, OperationSearcher } from 'oav/dist/lib/liveValidation/operationSearcher'
 import { ResourcePool } from './resource'
 import { ResponseGenerator } from './responser'
@@ -26,7 +26,6 @@ import {
     getPureUrl,
     isManagementUrlLevel,
     logger,
-    queryToObject,
     replacePropertyValue
 } from '../common/utils'
 import { get_locations, get_tenants } from './specials'
@@ -40,7 +39,7 @@ export enum ValidatorStatus {
 
 @injectable()
 export class Coordinator {
-    private liveValidator: oav.LiveValidator
+    public liveValidator: oav.LiveValidator
     private statusValue = ValidatorStatus.NotInitialized
     private resourcePool: ResourcePool
 
@@ -164,15 +163,21 @@ export class Coordinator {
                 Constants.ErrorCodes.MultipleOperationsFound.name
         ) {
             const result = this.search(this.liveValidator.operationSearcher, validationRequest)
+            const lroCallback = result.operationMatch.operation[
+                AzureExtensions.XMsLongRunningOperation
+            ]
+                ? await this.findLROGet(req)
+                : null
             const example = await this.responseGenerator.generate(
                 result.operationMatch.operation,
                 this.config,
-                liveRequest
+                liveRequest,
+                lroCallback
             )
             if (profile?.alwaysError) {
                 throw new IntentionalError()
             }
-            await this.genStatefulResponse(req, res, example.responses, profile)
+            await this.genStatefulResponse(req, res, example.responses, profile, lroCallback)
         } else {
             const exampleResponse = this.handleSpecials(req, validationRequest)
             if (exampleResponse === undefined) {
@@ -250,7 +255,8 @@ export class Coordinator {
         req: VirtualServerRequest,
         res: VirtualServerResponse,
         exampleResponses: Record<string, any>,
-        profile: Record<string, any>
+        profile: Record<string, any>,
+        lroCallback: string | null = null
     ) {
         if (profile?.stateful) {
             const url: string = getPureUrl(req.url) as string
@@ -293,10 +299,14 @@ export class Coordinator {
             }
 
             if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
-                res.setHeader('Azure-AsyncOperation', await this.findLROGet(req))
+                res.setHeader('Azure-AsyncOperation', lroCallback)
                 res.setHeader('Retry-After', 1)
             }
-            if (req.query?.[LRO_CALLBACK] === 'true') {
+            if (
+                req.query?.[LRO_CALLBACK] === 'true' &&
+                typeof ret === 'object' &&
+                !Array.isArray(ret)
+            ) {
                 ret.status = 'Succeeded'
             }
 
@@ -307,23 +317,21 @@ export class Coordinator {
     async findLROGet(req: VirtualServerRequest): Promise<string> {
         const [uri, query] = `${req.url}&${LRO_CALLBACK}=true`.split('?')
         const uriPath = uri.split('/')
-        const objQuery = queryToObject(query)
         let firstloop = true
         while (uriPath.length > 0) {
             if (firstloop || uriPath.length % 2 === 1) {
                 const testingUrl = `${req.protocol}://${req.headers?.host}${uriPath.join(
                     '/'
                 )}?${query}`
-                const liveRequest = {
-                    url: testingUrl,
-                    method: 'GET',
-                    headers: req.headers as any,
-                    query: objQuery,
-                    body: {}
-                }
-                const validateResult = await this.validate(liveRequest)
-                if (validateResult.isSuccessful) {
+                try {
+                    this.liveValidator.parseValidationRequest(
+                        testingUrl,
+                        'GET',
+                        req.headers?.[AzureExtensions.XMsCorrelationRequestId] || ''
+                    )
                     return testingUrl
+                } catch (error) {
+                    // don't has 'GET' verb for this url
                 }
             }
             uriPath.splice(-1)

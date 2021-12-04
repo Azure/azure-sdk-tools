@@ -156,8 +156,12 @@ describe('generateResponse()', () => {
     })
 
     it('findLROGet', async () => {
-        jest.spyOn(coordinator, 'validate').mockImplementation(
-            async (liveRequest: oav.LiveRequest) => {
+        jest.spyOn(coordinator.liveValidator, 'parseValidationRequest').mockImplementation(
+            (
+                requestUrl: string,
+                requestMethod: string | undefined | null,
+                correlationId: string
+            ) => {
                 const getUrls = [
                     'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type',
                     'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType',
@@ -166,10 +170,18 @@ describe('generateResponse()', () => {
                     'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/start',
                     'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/Type3'
                 ]
+                if (getUrls.indexOf(requestUrl.split('?')[0]) < 0) {
+                    throw new Error('No operation')
+                }
                 return {
-                    isSuccessful: getUrls.indexOf(liveRequest.url.split('?')[0]) >= 0,
-                    operationInfo: undefined as any,
-                    errors: []
+                    providerNamespace: '',
+                    resourceType: '',
+                    apiVersion: '',
+                    requestMethod: 'get',
+                    host: '',
+                    pathStr: '',
+                    correlationId: correlationId,
+                    requestUrl: requestUrl
                 }
             }
         )

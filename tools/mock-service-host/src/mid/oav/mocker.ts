@@ -27,6 +27,10 @@ export default class Mocker {
             return new Date().toISOString()
         }
 
+        if (paramSpec.format === 'date-time-rfc1123') {
+            return new Date().toUTCString()
+        }
+
         if ('enum' in paramSpec) {
             if (paramSpec.enum.lengh > 0) {
                 logger.error(`${paramName}'s enum can not be empty`)
@@ -39,13 +43,19 @@ export default class Mocker {
         // If the mocked value fails to meet the constraints, error info will be logged and empty string will return.
         if ('pattern' in paramSpec) {
             const Mock = mockjs
-            return this.mockForPattern(
-                Mock,
-                paramSpec.pattern,
-                paramSpec.minLength,
-                paramSpec.maxLength,
-                paramName
-            )
+            try {
+                return this.mockForPattern(
+                    Mock,
+                    paramSpec.pattern,
+                    paramSpec.minLength,
+                    paramSpec.maxLength,
+                    paramName
+                )
+            } catch (e) {
+                logger.warn(
+                    `pattern ${paramSpec.pattern} is too complex to mock, draw back to normal string mock. Error: ${e}`
+                )
+            }
         }
 
         if (paramName === 'id') {

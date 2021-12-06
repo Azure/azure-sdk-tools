@@ -7,13 +7,20 @@ Do not add third party tools directly in your folder, use it as dependencies.
 
 ## README
 
-Please add README file for every tool to illustrate the purpose of the tool, how to use, test and maintain the tool.
+Please add README file for every tool to illustrate:
+* The purpose of the tool.
+* Prerequsites before use
+* How to use, test and maintain the tool.
 Example: [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 
 
 ## Testing
 
 Please provide certain test cases to cover important workflow, especially the tool using in azure pipelines or running in prod.
 Example: [Test library](https://github.com/Azure/azure-sdk-tools/tree/main/tools/pipeline-witness/Azure.Sdk.Tools.PipelineWitness.Tests) 
+
+
+If there is any bundle script, please provide end-to-end test on script as well.
+Example: [Custom Test on ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/code-owners-parser/ci.yml#L35)
 
 ## Release ci.yml
 

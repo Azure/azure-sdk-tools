@@ -1,30 +1,18 @@
 # Azure SDK Tools Contribution Guidelines
 
-The tools repository is the collection of all sdk development tool libraries.
+This is the repository of tool libraries used by Azure SDK purpose.
+For every developed tool, create a new folder with name of the tool brief description. 
+Please provide single purpose of every tool.
+Do not add third party tool directly in your folder, use it as dependencies.
 
-## Guidelines
+# README
 
-* Every tool library under this folder should work independently for a single purpose.
-* Tool under this repo develop for Azure SDK use
-* **DO NOT** put any third-party tools under this folder, as we are not responsible for the maintainance of third-party tools
+Please add README file for every tool to illustrate the purpose of the tool, how to use the tool, test and maintain the tool.
 
-## Development
+# Testing
 
-* Create a new folder for the new tool library. The name of the folder should briefly describe the usage.
-* Create a ci.yml to kickoff a pipeline for building, testing and releasing.
+Please provide certain test cases to cover important workflow, especially the tool using in azure pipelines.
 
-### DotNet tool development
+# Release ci.yml
 
-
-## Testing
-
-* Please have thorough tests on your tool  
-
-### DotNet tool testing
-
-* Have a test library
-
-## Deployment
-
-## Version
-
+For tool which is to publish to public repository, please provide ci.yml for building, testing and releasing. 

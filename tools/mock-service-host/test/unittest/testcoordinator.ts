@@ -185,6 +185,14 @@ describe('generateResponse()', () => {
                 }
             }
         )
+        jest.spyOn(coordinator.liveValidator.operationSearcher, 'search').mockImplementation(
+            (_) => {
+                return {
+                    operationMatch: 'fake',
+                    apiVersion: 'fake'
+                } as any
+            }
+        )
 
         const liveRequest = {
             protocol: 'https',

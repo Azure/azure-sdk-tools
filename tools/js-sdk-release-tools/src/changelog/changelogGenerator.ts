@@ -20,6 +20,7 @@ export class Changelog {
     public removedOperationGroup: string[] = [];
     public removedOperation: string[] = [];
     public operationSignatureChange: string[] = [];
+    public deletedClass: string[] = [];
     public classSignatureChange: string[] = [];
     public interfaceParamDelete: string[] = [];
     public interfaceParamAddRequired: string[] = [];
@@ -38,6 +39,7 @@ export class Changelog {
         return this.removedOperationGroup.length > 0 ||
             this.removedOperation.length > 0 ||
             this.operationSignatureChange.length > 0 ||
+            this.deletedClass.length > 0 ||
             this.classSignatureChange.length > 0 ||
             this.interfaceParamDelete.length > 0 ||
             this.interfaceParamAddRequired.length > 0 ||
@@ -94,6 +96,7 @@ export class Changelog {
             this.removedOperationGroup
                 .concat(this.removedOperation)
                 .concat(this.operationSignatureChange)
+                .concat(this.deletedClass)
                 .concat(this.classSignatureChange)
                 .concat(this.interfaceParamDelete)
                 .concat(this.interfaceParamAddRequired)
@@ -433,6 +436,16 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
         }
     });
     return operationSignatureChange;
+};
+
+const findDeletedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const deletedClass: string[] = [];
+    Object.keys(metaDataOld.classes).forEach(model => {
+        if (!metaDataNew.classes[model]) {
+            deletedClass.push('Deleted Class ' + model);
+        }
+    });
+    return deletedClass;
 };
 
 const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
@@ -886,6 +899,7 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew);
     changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew);
     changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew);
+    changLog.deletedClass = findDeletedClass(metaDataOld, metadataNew);
     changLog.classSignatureChange = findClassSignatureChange(metaDataOld, metadataNew);
     changLog.interfaceParamDelete = findInterfaceParamDelete(metaDataOld, metadataNew);
     changLog.interfaceParamAddRequired = findInterfaceParamAddRequired(metaDataOld, metadataNew);

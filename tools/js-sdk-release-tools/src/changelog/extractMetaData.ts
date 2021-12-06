@@ -1,6 +1,8 @@
 import * as openapiToolsCommon from "@azure-tools/openapi-tools-common";
 import {TypescriptParser} from "parse-ts-to-ast";
 import {ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration} from "parse-ts-to-ast";
+import {changelogGenerator} from "./changelogGenerator";
+import {logger} from "../utils/logger";
 
 export class TSExportedMetaData {
     public typeAlias = {};
@@ -51,4 +53,13 @@ export const readSourceAndExtractMetaData = async (mdFilePath: string) => {
         await extractMetaData(t, metaData);
     }
     return metaData;
+};
+
+
+export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, mdFilePathNew: string) => {
+    const metaDataOld = await readSourceAndExtractMetaData(mdFilePathOld);
+    const metaDataNew = await readSourceAndExtractMetaData(mdFilePathNew);
+    const changeLog = changelogGenerator(metaDataOld, metaDataNew);
+    logger.log(changeLog.displayChangeLog());
+    return changeLog;
 };

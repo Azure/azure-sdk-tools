@@ -2,7 +2,7 @@
 
 import {logger} from "./utils/logger";
 import {getLastCommitId} from "./utils/git";
-import {generateSdkAutomatically} from "./codegenGenerationCore/codegenCore";
+import {generateSdkAutomatically} from "./hlc/hlcCore";
 
 const shell = require('shelljs');
 

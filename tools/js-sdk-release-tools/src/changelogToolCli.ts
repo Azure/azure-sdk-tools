@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import {generateChangelogAndBumpVersion} from "./changelogGenerationAndVersionBumpCore/automaticGenerateChangeLogAndBumpVersion";
+import {generateChangelogAndBumpVersion} from "./hlc/automaticGenerateChangeLogAndBumpVersion";
 import {logger} from "./utils/logger";
 
-const generateChangelogAndBumpVersionCLI = async (packageFolderPath: string | undefined) => {
+const changelogToolCli = async (packageFolderPath: string | undefined) => {
     if (!packageFolderPath) {
         logger.logError(`invalid package path ${packageFolderPath}`);
     } else {
@@ -13,4 +13,4 @@ const generateChangelogAndBumpVersionCLI = async (packageFolderPath: string | un
 
 const packageFolderPath = process.argv.pop();
 
-generateChangelogAndBumpVersionCLI(packageFolderPath);
+changelogToolCli(packageFolderPath);

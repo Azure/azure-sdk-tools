@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node dist/generateChangelogAndBumpVersionCLI.js",
-    "debug": "node --inspect-brk dist/generateChangelogAndBumpVersionCLI.js",
+    "start": "node dist/changelogToolCli.js",
+    "debug": "node --inspect-brk dist/changelogToolCli.js",
     "build": "tsc",
     "prepack": "npm run build"
   },
   "bin": {
-    "changelog-tool": "./dist/generateChangelogAndBumpVersionCLI.js",
-    "hlc-code-gen": "./dist/generateCodesInLocalCLI.js",
-    "hlc-code-gen-for-pipeline": "./dist/generateCodesInPipelineCLI.js"
+    "changelog-tool": "./dist/changelogToolCli.js",
+    "hlc-code-gen": "./dist/hlcCodeGenCli.js",
+    "hlc-code-gen-for-pipeline": "./dist/hlcCodegenForPipelineCli.js",
+    "rlc-code-gen": "./dist/llcCodegenCli.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

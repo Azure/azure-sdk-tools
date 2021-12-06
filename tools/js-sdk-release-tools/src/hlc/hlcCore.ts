@@ -4,8 +4,10 @@ import { execSync } from "child_process";
 import fs from "fs";
 import * as path from "path";
 import {getChangedPackageDirectory} from "../utils/git";
-import {generateChangelogAndBumpVersion} from "../changelogGenerationAndVersionBumpCore/automaticGenerateChangeLogAndBumpVersion";
-import {Changelog} from "../changelogGenerationAndVersionBumpCore/changelogGenerator";
+import {generateChangelogAndBumpVersion} from "./automaticGenerateChangeLogAndBumpVersion";
+import {Changelog} from "../changelog/changelogGenerator";
+import {changeRushJson} from "../utils/changeRushJson";
+import {modifyOrGenerateCiYaml} from "../utils/changeCiYaml";
 
 const commentJson = require('comment-json');
 const yaml = require('yaml');
@@ -20,103 +22,6 @@ export interface OutputPackageInfo {
     };
     artifacts: string[];
     result: string;
-}
-
-function changeRushJson(azureSDKForJSRepoRoot: string, packageName: any, relativePackageFolderPath: string) {
-    const rushJson = commentJson.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), { encoding: 'utf-8' }));
-    const projects: any[] = rushJson.projects;
-    let exist = false;
-    for (const project of projects) {
-        if (project.packageName === packageName) {
-            exist = true;
-            break;
-        }
-    }
-    if (!exist) {
-        projects.push({
-            packageName: packageName,
-            projectFolder: relativePackageFolderPath,
-            versionPolicyName: "management"
-        });
-        fs.writeFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), commentJson.stringify(rushJson,undefined, 2), {encoding: 'utf-8'});
-    }
-}
-
-function addExcludeBranch(branches: any) {
-    if (branches && branches.include.includes('feature/*')) {
-        if (!branches['exclude']) {
-            branches['exclude'] = [];
-        }
-        if (!branches['exclude'].includes('feature/v4')) {
-            branches['exclude'].push('feature/v4');
-            return true;
-        }
-    }
-    return false;
-}
-
-function addArtifact(artifacts: any, name: string, safeName: string) {
-    if (!artifacts) return false;
-    for (const artifact of artifacts) {
-        if (name === artifact.name) return false;
-    }
-    artifacts.push({
-        name: name,
-        safeName: safeName
-    });
-    return true;
-}
-
-function modifyOrGenerateCiYaml(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, packageName: string) {
-    const relativeRpFolderPathRegexResult = /sdk\/[^\/]*\//.exec(changedPackageDirectory);
-    if (relativeRpFolderPathRegexResult) {
-        const relativeRpFolderPath = relativeRpFolderPathRegexResult[0];
-        const rpFolderName = path.basename(relativeRpFolderPath);
-        const rpFolderPath = path.join(azureSDKForJSRepoRoot, relativeRpFolderPath);
-        const ciYamlPath = path.join(rpFolderPath, 'ci.yml');
-        const name = packageName.replace('@', '').replace('/', '-');
-        const safeName = name.replace(/-/g, '');
-        if (fs.existsSync(ciYamlPath)) {
-            const ciYaml = yaml.parse(fs.readFileSync(ciYamlPath, {encoding: 'utf-8'}));
-            let changed = addExcludeBranch(ciYaml?.trigger?.branches);
-            changed = addExcludeBranch(ciYaml?.pr?.branches) || changed;
-            changed = addArtifact(ciYaml?.extends?.parameters?.Artifacts, name, safeName) || changed;
-            if (changed) {
-                fs.writeFileSync(ciYamlPath, yaml.stringify(ciYaml), {encoding: 'utf-8'});
-            }
-        } else {
-            const ciYaml = `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-trigger:
-  branches:
-    include:
-      - main
-      - release/*
-      - hotfix/*
-  paths:
-    include:
-      - ${relativeRpFolderPath}
-
-pr:
-  branches:
-    include:
-      - main
-      - release/*
-      - hotfix/*
-  paths:
-    include:
-      - ${relativeRpFolderPath}
-
-extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
-  parameters:
-    ServiceDirectory: ${rpFolderName}
-    Artifacts:
-      - name: ${name}
-        safeName: ${safeName}
-        `;
-            fs.writeFileSync(ciYamlPath, ciYaml, {encoding: 'utf-8'});
-        }
-    }
 }
 
 export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, outputJson?: any, swaggerRepoUrl?: string) {
@@ -173,7 +78,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                 if (packageFolderPath) {
                     const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));
 
-                    changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory);
+                    changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
 
                     logger.logGreen(`rush update`);
                     execSync('rush update', { stdio: 'inherit' });

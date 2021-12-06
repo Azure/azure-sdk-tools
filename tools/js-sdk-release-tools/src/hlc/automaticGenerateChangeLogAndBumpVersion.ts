@@ -1,5 +1,5 @@
-import {readSourceAndExtractMetaData} from "./extractMetaData";
-import {Changelog, changelogGenerator} from "./changelogGenerator";
+import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../changelog/extractMetaData";
+import {Changelog, changelogGenerator} from "../changelog/changelogGenerator";
 import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
 import {
     makeChangesForFirstRelease,
@@ -12,14 +12,6 @@ import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 
 const fs = require('fs');
 const path = require('path');
-
-const extractExportAndGenerateChangelog = async (mdFilePathOld: string, mdFilePathNew: string) => {
-    const metaDataOld = await readSourceAndExtractMetaData(mdFilePathOld);
-    const metaDataNew = await readSourceAndExtractMetaData(mdFilePathNew);
-    const changeLog = changelogGenerator(metaDataOld, metaDataNew);
-    logger.log(changeLog.displayChangeLog());
-    return changeLog;
-};
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const shell = require('shelljs');

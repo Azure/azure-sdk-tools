@@ -38,11 +38,8 @@ Example: [Custom Test on ci.yml](https://github.com/Azure/azure-sdk-tools/blob/m
 
 Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/CreateRuleFabricBot/ci.yml)
 
-- To publish the tools, use Azure SDK DevOp feeds:
-Example: [Feeds](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed)
-
 - Pipelines should use common templates from `eng/pipelines/templates`.
 
 The naming convention of the pipelines `tools - <tool-name> - ci` for the public builds and `tools - <tool-name>` for internal builds.
 
-- Use internal builds for releasing steps, and conditioning those steps similar to https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml#L89.
+- Use internal builds for releasing steps, and conditioning those steps similar to https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml#L89. *TODO: Will define release template for tools in other languages*

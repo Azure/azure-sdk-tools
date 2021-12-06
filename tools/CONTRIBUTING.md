@@ -2,7 +2,6 @@
 
 This is the repository used to host tools and libraries used by Azure SDK team engineering system. 
 For every newly developing tool, create a new folder with name of brief description of the tool. 
-Every tool should serve for single purpose.
 Do not add third party tools directly in your folder, use it as dependencies.
 
 ## README

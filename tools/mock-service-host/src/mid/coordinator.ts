@@ -324,11 +324,12 @@ export class Coordinator {
                     '/'
                 )}?${query}`
                 try {
-                    this.liveValidator.parseValidationRequest(
+                    const validationRequest = this.liveValidator.parseValidationRequest(
                         testingUrl,
                         'GET',
                         req.headers?.[AzureExtensions.XMsCorrelationRequestId] || ''
                     )
+                    this.liveValidator.operationSearcher.search(validationRequest)
                     return testingUrl
                 } catch (error) {
                     // don't has 'GET' verb for this url

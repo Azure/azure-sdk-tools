@@ -17,7 +17,8 @@ Add code owner per tool in [CODEOWNER](https://github.com/Azure/azure-sdk-tools/
 Please add README.md file for every tool to illustrate:
 * The purpose of the tool.
 * Prerequisites before use
-* How to use, test and maintain the tool.
+* How to use, test and maintain the tool locally and remotely. 
+* Better to include where the tool is being used.
 
 Example: [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 
 

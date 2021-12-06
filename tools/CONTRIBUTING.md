@@ -6,7 +6,7 @@ Do not add third party tools directly in your folder, use it as dependencies.
 
 ## README
 
-Please add README file for every tool to illustrate:
+Please add README.md file for every tool to illustrate:
 * The purpose of the tool.
 * Prerequsites before use
 * How to use, test and maintain the tool.

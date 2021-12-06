@@ -8,7 +8,7 @@ Do not add third party tools directly in your folder, use it as dependencies.
 
 Please add README.md file for every tool to illustrate:
 * The purpose of the tool.
-* Prerequsites before use
+* Prerequisites before use
 * How to use, test and maintain the tool.
 
 Example: [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 

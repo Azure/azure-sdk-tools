@@ -24,6 +24,14 @@ export interface OutputPackageInfo {
     result: string;
 }
 
+function changeReadmeMd(packageFolderPath: string) {
+    if (fs.existsSync(path.join(packageFolderPath, 'README.md'))) {
+        let content = fs.readFileSync(path.join(packageFolderPath, 'README.md'), {encoding: 'utf-8'});
+        content = content.replace(/\?view=azure-node-preview/, '');
+        fs.writeFileSync(path.join(packageFolderPath, 'README.md'), content, {encoding: 'utf-8'});
+    }
+}
+
 export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, outputJson?: any, swaggerRepoUrl?: string) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${absoluteReadmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
@@ -79,6 +87,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                     const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));
 
                     changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
+                    changeReadmeMd(packageFolderPath);
 
                     logger.logGreen(`rush update`);
                     execSync('rush update', { stdio: 'inherit' });

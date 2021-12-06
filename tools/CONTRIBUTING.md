@@ -5,14 +5,17 @@ For every newly developing tool, create a new folder with name of brief descript
 Every tool should serve for single purpose.
 Do not add third party tools directly in your folder, use it as dependencies.
 
-# README
+## README
 
 Please add README file for every tool to illustrate the purpose of the tool, how to use, test and maintain the tool.
+Example: [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 
 
-# Testing
+## Testing
 
 Please provide certain test cases to cover important workflow, especially the tool using in azure pipelines or running in prod.
+Example: [Test library](https://github.com/Azure/azure-sdk-tools/tree/main/tools/pipeline-witness/Azure.Sdk.Tools.PipelineWitness.Tests) 
 
-# Release ci.yml
+## Release ci.yml
 
 For the tool which is publishing to public repository, please provide ci.yml for building, testing and releasing. 
+Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/CreateRuleFabricBot/ci.yml)

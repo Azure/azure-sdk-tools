@@ -69,7 +69,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> createApiReview(
+        public async Task<ActionResult> CreateApiReview(
             string buildId,
             string artifactName,
             string originalFilePath,

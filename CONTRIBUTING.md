@@ -40,6 +40,6 @@ Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/Creat
 
 - Pipelines should use common templates from `eng/pipelines/templates`.
 
-The naming convention of the pipelines `tools - <tool-name> - ci` for the public builds and `tools - <tool-name>` for internal builds.
+The naming convention of the pipelines: `tools - <tool-name> - ci` for the public builds and `tools - <tool-name>` for internal builds.
 
 - Use internal builds for releasing steps, and conditioning those steps similar to https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml#L89. *TODO: Will define release template for tools in other languages*

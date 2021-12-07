@@ -14,13 +14,16 @@ Add code owner per tool in [CODEOWNER](https://github.com/Azure/azure-sdk-tools/
 
 ## README
 
-Please add README.md file for every tool to illustrate:
+1. Please add README.md file for every tool to illustrate:
 * The purpose of the tool.
 * Prerequisites before use
 * How to use, test and maintain the tool locally and remotely. 
 * Better to include where the tool is being used.
 
-Example: [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 
+Example: [README.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/http-fault-injector/README.md) 
+
+2. Please add tool index of the tool in root [README.md](https://github.com/Azure/azure-sdk-tools/blob/main/README.md).
+
 
 ## Testing
 
@@ -40,6 +43,10 @@ Example: [ci.yml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/Creat
 
 - Pipelines should use common templates from `eng/pipelines/templates`.
 
+<<<<<<< HEAD
+The naming convention of the pipelines `tools - <tool-name> - ci` for the public builds and `tools - <tool-name>` for internal builds.
+=======
 The naming convention of the pipelines: `tools - <tool-name> - ci` for the public builds and `tools - <tool-name>` for internal builds.
+>>>>>>> 773934510a9d4b30526284205d19c0c00ff939d6
 
 - Use internal builds for releasing steps, and conditioning those steps similar to https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml#L89. *TODO: Will define release template for tools in other languages*

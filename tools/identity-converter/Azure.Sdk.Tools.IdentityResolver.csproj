@@ -3,9 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>Azure.Sdk.Tools.IdentityResolver</RootNamespace>
+    <RootNamespace>Azure.Sdk.Tools.IdentityConverter</RootNamespace>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>identity-resolver</ToolCommandName>
+    <ToolCommandName>identity-converter</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>

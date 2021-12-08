@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using OutputColorizer;
 
-namespace Azure.Sdk.Tools.IdentityResolver
+namespace Azure.Sdk.Tools.IdentityConverter
 {
     class Program
     {

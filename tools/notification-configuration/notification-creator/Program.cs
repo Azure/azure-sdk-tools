@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             PipelineSelectionStrategy selectionStrategy = PipelineSelectionStrategy.Scheduled,
             bool dryRun = false)
         {
-            var devOpsToken = Environment.GetEnvironmentVariable(tokenVariableName);
+            var devOpsToken = tokenVariableName;
             var devOpsCreds = new VssBasicCredential("nobody", devOpsToken);
             var devOpsConnection = new VssConnection(new Uri($"https://dev.azure.com/{organization}/"), devOpsCreds);
 

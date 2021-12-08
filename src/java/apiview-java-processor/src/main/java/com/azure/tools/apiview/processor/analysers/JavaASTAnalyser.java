@@ -5,6 +5,8 @@ import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
+import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
@@ -97,6 +99,9 @@ public class JavaASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
+
+    private static final Pattern MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
+    private static final Pattern MAVEN_DESCRIPTION = Pattern.compile("This package contains the Microsoft Azure .* client library");
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
@@ -314,6 +319,22 @@ public class JavaASTAnalyser implements Analyser {
             addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
         }
 
+        // Maven name
+        String nameDefinitionId = tokeniseKeyValue("name", mavenPom.getName(), "");
+        if (!MAVEN_NAME.matcher(mavenPom.getName()).matches()) {
+            apiListing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, "nameDefinitionId",
+                "Maven library name should follow the pattern 'Microsoft Azure client library for <service name>'.",
+                "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-name"));
+        }
+
+        // Maven description
+        String descriptionDefinitionId = tokeniseKeyValue("description", mavenPom.getDescription(), "");
+        if (!MAVEN_DESCRIPTION.matcher(mavenPom.getDescription()).matches()) {
+            apiListing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, "descriptionDefinitionId",
+                "Maven library description should follow the pattern 'This package contains the Microsoft Azure <service> client library'.",
+                "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description"));
+        }
+
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
@@ -364,11 +385,22 @@ public class JavaASTAnalyser implements Analyser {
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
-    private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
+    /**
+     * Tokenizes a key-value pair and returns the definition of the value token.
+     *
+     * @param key Key of the token.
+     * @param value Value of the token.
+     * @param linkPrefix Link prefix.
+     * @return The definition ID of the value token.
+     */
+    private String tokeniseKeyValue(String key, Object value, String linkPrefix) {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
-        addToken(new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value), NEWLINE);
+        Token token = new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value);
+        addToken(token, NEWLINE);
+
+        return token.getDefinitionId();
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {

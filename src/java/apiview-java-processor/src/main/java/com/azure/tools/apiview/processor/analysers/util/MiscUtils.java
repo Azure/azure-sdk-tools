@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 public class MiscUtils {
 
     public static final String LINEBREAK = "\n"; // or "\r\n";
+    private static final Pattern QUOTED_LINEBREAK = Pattern.compile(Pattern.quote(LINEBREAK));
 
     public static String escapeHTML(final String s) {
         final StringBuilder out = new StringBuilder(Math.max(16, s.length()));
@@ -23,7 +24,7 @@ public class MiscUtils {
 
     public static String wrap(final String string, final int lineLength) {
         final StringBuilder b = new StringBuilder();
-        for (final String line : string.split(Pattern.quote(LINEBREAK))) {
+        for (final String line : QUOTED_LINEBREAK.split(string)) {
             b.append(wrapLine(line, lineLength));
         }
         return b.toString();

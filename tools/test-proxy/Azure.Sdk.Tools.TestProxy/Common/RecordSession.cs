@@ -10,6 +10,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RecordSession
     {
+        internal const string DateTimeOffsetNowVariableKey = "DateTimeOffsetNow";
+
         public List<RecordEntry> Entries { get; } = new List<RecordEntry>();
 
         public SortedDictionary<string, string> Variables { get; } = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -129,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             // The DateTimeOffsetNow variable is updated any time it's used so
             // we only care that both sessions use it or both sessions don't.
-            var now = TestRecording.DateTimeOffsetNowVariableKey;
+            var now = DateTimeOffsetNowVariableKey;
             return session.Variables.TryGetValue(now, out string _) == Variables.TryGetValue(now, out string _) &&
                    session.Variables.Where(v => v.Key != now).SequenceEqual(Variables.Where(v => v.Key != now)) &&
                    session.Entries.SequenceEqual(Entries, new EntryEquivalentComparer(matcher));

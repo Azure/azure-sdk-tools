@@ -38,8 +38,8 @@ After doing any setup described in the [general section](#generally), run the
 ~/azure-sdk-for-python> python scripts\devops_tasks\trust_proxy_cert.py
 ```
 
-This will download the [test proxy certificate](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/common/testproxy/dotnet-devcert.crt) and place it under
-`azure-sdk-for-python/.certificate` as a `pem` file.
+This will copy the [test proxy certificate](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/common/testproxy/dotnet-devcert.crt) and place the copy
+under `azure-sdk-for-python/.certificate` as a `pem` file.
 
 The only remaining step is to set two environment variables to point to this certificate. The script will output the environment variables and values that you'll
 need to set once it finishes running. For example:

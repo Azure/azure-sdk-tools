@@ -145,10 +145,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
             playbackContext.Request.Method = "POST";
 
+            // the query parameters are in reversed order from the recording deliberately.
             var queryString = "?uselessUriAddition=hellothere&api-version=2019-05-01";
             var path = "/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability";
-
-            // set URI for the request, deliberately out of order
             playbackContext.Request.Host = new HostString("https://localhost:5001");
             playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
 

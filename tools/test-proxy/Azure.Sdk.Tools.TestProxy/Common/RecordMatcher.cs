@@ -199,7 +199,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             CompareHeaderDictionaries(entry.Request.Headers, otherEntry.Request.Headers, VolatileHeaders) == 0;
 
         private bool AreUrisSame(string entryUri, string otherEntryUri) =>
-                    NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
+            NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
 
         private string NormalizeUri(string uriToNormalize)
         {

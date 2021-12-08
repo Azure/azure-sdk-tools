@@ -55,6 +55,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var body = JsonSerializer.Serialize(bodyObj);
                 await context.Response.WriteAsync(body);
             }
+            catch (Exception e)
+            {
+                var response = context.Response;
+                int unexpectedStatusCode = 500;
+
+                response.Clear();
+                response.StatusCode = unexpectedStatusCode;
+                response.ContentType = "application/json";
+
+                var bodyObj = new
+                {
+                    Message = e.Message,
+                    Status = unexpectedStatusCode.ToString()
+                };
+
+                var body = JsonSerializer.Serialize(bodyObj);
+                await context.Response.WriteAsync(body);
+            }
         }
     }
 }

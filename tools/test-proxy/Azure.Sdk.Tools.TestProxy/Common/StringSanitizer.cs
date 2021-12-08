@@ -12,7 +12,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Quick and easy abstraction for checking regex validity. Passing null explicitly will result in a True return.
         /// </summary>
         /// <param name="regex">A regular expression.</param>
-        /// <returns>True if the regex will successfully compile or if the regex is null. False otherwise.</returns>
         public static void ConfirmValidRegex(string regex)
         {
             try

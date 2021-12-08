@@ -403,7 +403,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "UriRegexSanitizer";
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":[\"sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2023-08-03T16:52:15Z&st=2021-08-03T08:52:15Z&spr=https&sig=randomsigM%3D\"]}");
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":[\"a_regex_goes_here_but_this_test_is_after_another_error\"]}");
             httpContext.Request.ContentLength = 199;
 
             var controller = new Admin(testRecordingHandler)
@@ -421,6 +421,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains("Array parameters are not supported", assertion.Message);
         }
 
         [Fact]
@@ -447,6 +448,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains("Expression of value [ does not successfully compile.", assertion.Message);
         }
 
 

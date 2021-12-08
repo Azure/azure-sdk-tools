@@ -10,6 +10,7 @@ trigger:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/swift
       - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator
@@ -26,6 +27,7 @@ pr:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/swift
       - src/ts/ts-genapi
       - packages/python-packages/api-stub-generator
       - packages/python-packages/protocol-stub-generator

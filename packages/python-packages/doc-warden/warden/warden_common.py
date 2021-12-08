@@ -120,18 +120,18 @@ def get_file_sets(configuration, target_pattern, lambda_check=None):
 
 # gets the set of files in the target directory that have explicitly been omitted in the config settings
 def get_omitted_files(configuration):
-    target_directory = configuration.target_directory
+    repo_root = configuration.repo_root
     omitted_paths = []
     dirs = configuration.omitted_paths or []
 
     # single special case here. if wildcard match at the beginning, do not join, use the pattern as is
     adjusted_dirs = [
-        pattern if pattern.startswith("*") else os.path.join(target_directory, pattern)
+        pattern if pattern.startswith("*") else os.path.join(repo_root, pattern)
         for pattern in dirs
     ]
     omitted_paths.extend(
         walk_directory_for_pattern(
-            target_directory, adjusted_dirs, configuration, None, True
+            repo_root, adjusted_dirs, configuration, None, True
         )
     )
 

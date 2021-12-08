@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task TestRecordAndMatchDifferentUriOrder()
+        public async Task TestPlaybackThrowsOnDifferentUriOrder()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var playbackContext = new DefaultHttpContext();
@@ -151,8 +151,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Host = new HostString("https://localhost:5001");
             playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
 
-            await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response);
-            Assert.Equal("WESTUS:20210909T204819Z:f9a33867-6efc-4748-b322-303b2b933466", playbackContext.Response.Headers["x-ms-routing-request-id"].ToString());
+
+            var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
+               async () => await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response)
+            );
+
+            Assert.Contains("Uri doesn't match:", resultingException.Message);
         }
 
     }

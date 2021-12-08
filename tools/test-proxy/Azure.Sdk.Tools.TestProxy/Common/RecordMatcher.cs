@@ -198,14 +198,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             IsEquivalentUri(entry.RequestUri, otherEntry.RequestUri) &&
             CompareHeaderDictionaries(entry.Request.Headers, otherEntry.Request.Headers, VolatileHeaders) == 0;
 
-        private bool AreUrisSame(string entryUri, string otherEntryUri)
-        {
-            // a = from entries list
-            // b = incoming uri we're matching against
-            var a = NormalizeUri(entryUri);
-            var b = NormalizeUri(otherEntryUri);
-            return a == b;
-        }
+        private bool AreUrisSame(string entryUri, string otherEntryUri) =>
+                    NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
 
         private string NormalizeUri(string uriToNormalize)
         {

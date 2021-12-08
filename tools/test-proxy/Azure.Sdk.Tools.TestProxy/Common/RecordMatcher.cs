@@ -198,8 +198,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             IsEquivalentUri(entry.RequestUri, otherEntry.RequestUri) &&
             CompareHeaderDictionaries(entry.Request.Headers, otherEntry.Request.Headers, VolatileHeaders) == 0;
 
-        private bool AreUrisSame(string entryUri, string otherEntryUri) =>
-            NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
+        private bool AreUrisSame(string entryUri, string otherEntryUri)
+        {
+            // a = from entries list
+            // b = incoming uri we're matching against
+            var a = NormalizeUri(entryUri);
+            var b = NormalizeUri(otherEntryUri);
+            return a == b;
+        }
 
         private string NormalizeUri(string uriToNormalize)
         {
@@ -208,7 +214,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             req.Reset(uri);
             req.Query = "";
             NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
-            foreach (string param in queryParams)
+            foreach (string param in queryParams.AllKeys.OrderBy(x => x))
             {
                 req.AppendQuery(
                     param,

@@ -3,6 +3,7 @@ import { StringMap } from '@azure-tools/openapi-tools-common'
 
 export interface VirtualServerRequest extends LiveRequest {
     protocol: string
+    localPort: number
 }
 
 export class VirtualServerResponse implements LiveResponse {

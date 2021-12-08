@@ -201,7 +201,8 @@ describe('generateResponse()', () => {
             method: 'POST',
             headers: {
                 host: 'localhost'
-            }
+            },
+            localPort: 8443
         }
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),

@@ -36,11 +36,16 @@ export class ValidateAndMockController extends BaseHttpController {
         }
     }
 
-    private getProfileByHost(host: string): Record<string, any> {
+    private getProfileByRequest(req: VirtualServerRequest): Record<string, any> {
+        const host = req.headers?.host
         if (isNullOrUndefined(host)) return {}
-        const arr = host.split(':')
+        const arr = (host as string).split(':')
         let port = this.config.httpPortStateless.toString()
-        if (arr.length > 1) port = arr[1]
+        if (arr.length > 1) {
+            port = arr[1]
+        } else if (!isNullOrUndefined(req.localPort)) {
+            port = req.localPort.toString()
+        }
         if (port === config.httpsPortStateful.toString()) return this.profiles['httpsPortStateful']
         else if (port === config.internalErrorPort.toString())
             return this.profiles['internalErrorPort']
@@ -55,7 +60,8 @@ export class ValidateAndMockController extends BaseHttpController {
             originalUrl: req.originalUrl,
             method: req.method,
             headers: req.headers,
-            body: req.body
+            body: req.body,
+            localPort: req.socket.localPort
         } as VirtualServerRequest
     }
 
@@ -101,10 +107,11 @@ export class ValidateAndMockController extends BaseHttpController {
         const response = this.createDefaultResponse()
 
         try {
+            const virtualServerRequest = this.createRequest(req)
             await this.coordinator.generateResponse(
-                this.createRequest(req),
+                virtualServerRequest,
                 response,
-                this.getProfileByHost(req.headers.host as string)
+                this.getProfileByRequest(virtualServerRequest)
             )
 
             for (const name in response.headers) {

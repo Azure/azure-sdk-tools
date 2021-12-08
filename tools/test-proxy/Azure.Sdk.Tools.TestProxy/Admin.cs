@@ -162,7 +162,18 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            return Activator.CreateInstance(t, arg_list.ToArray());
+            try
+            {
+                return Activator.CreateInstance(t, arg_list.ToArray());
+            }
+            catch(Exception e)
+            {
+                if (e.InnerException is HttpException)
+                {
+                    throw e.InnerException;
+                }
+                else throw;
+            }
         }
 
 

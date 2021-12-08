@@ -26,6 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+
+            StringSanitizer.ConfirmValidRegex(regex);
         }
 
         public override string SanitizeTextBody(string contentType, string body)

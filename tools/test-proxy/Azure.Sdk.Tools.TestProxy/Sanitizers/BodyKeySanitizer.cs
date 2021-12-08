@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Net;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
@@ -31,6 +32,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+
+            StringSanitizer.ConfirmValidRegex(regex);
         }
 
         public override string SanitizeTextBody(string contentType, string body)

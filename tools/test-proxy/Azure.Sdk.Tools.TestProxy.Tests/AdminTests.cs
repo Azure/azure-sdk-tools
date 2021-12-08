@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -394,6 +395,60 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
             assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
+
+
+        [Fact]
+        public async Task GenerateInstanceThrowsOnBadBodyFormat()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "UriRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":[\"sv=2020-08-04&ss=bfqt&srt=sco&sp=rwdlacupitfx&se=2023-08-03T16:52:15Z&st=2021-08-03T08:52:15Z&spr=https&sig=randomsigM%3D\"]}");
+            httpContext.Request.ContentLength = 199;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+            
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+        }
+
+        [Fact]
+        public async Task AddSanitizerThrowsOnAdditionOfBadRegex()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "UriRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":\"[\"}");
+            httpContext.Request.ContentLength = 25;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+        }
+
 
         [Fact]
         public async Task TestAddTransform()

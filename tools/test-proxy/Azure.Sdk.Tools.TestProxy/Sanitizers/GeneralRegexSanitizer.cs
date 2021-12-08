@@ -29,6 +29,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _regexValue = regex;
             _groupForReplace = groupForReplace;
 
+            StringSanitizer.ConfirmValidRegex(regex);
+
             _bodySanitizer = new BodyRegexSanitizer(value, regex, groupForReplace);
             _uriSanitizer = new UriRegexSanitizer(value, regex, groupForReplace);
         }

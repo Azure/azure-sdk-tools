@@ -141,7 +141,13 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = DecompressBody((MemoryStream) await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+
+            byte[] body = new byte[]{};
+
+            // HEAD requests do NOT have a body regardless of the value of the Content-Length header
+            if (incomingRequest.Method.ToUpperInvariant() != "HEAD") {
+                body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+            }
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;

@@ -67,5 +67,28 @@ namespace APIViewWeb.Controllers
 
             throw new Exception("Automatic review is not found for package " + packageName);
         }
+
+        [HttpGet]
+        public async Task<ActionResult> CreateApiReview(
+            string buildId,
+            string artifactName,
+            string originalFilePath,
+            string reviewFilePath,
+            string label,
+            string repoName,
+            string packageName,
+            bool compareAllRevisions
+            )
+        {
+            var reviewRevision = await _reviewManager.CreateApiReview(User, buildId, artifactName, originalFilePath, label, repoName, packageName, reviewFilePath, compareAllRevisions);
+            if (reviewRevision != null)
+            {
+                var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{reviewRevision.Review.ReviewId}";
+                //Return 200 OK if last revision is approved and 201 if revision is not yet approved.
+                return reviewRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+            }
+            // Return internal server error for any unknown error
+            return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 }

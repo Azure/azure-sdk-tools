@@ -26,10 +26,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         };
 
         private bool _compareBodies;
+        private bool _ignoreQueryOrdering;
 
-        public RecordMatcher(bool compareBodies = true)
+        public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
         {
             _compareBodies = compareBodies;
+            _ignoreQueryOrdering = ignoreQueryOrdering;
         }
 
         public HashSet<string> ExcludeHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -201,6 +203,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool AreUrisSame(string entryUri, string otherEntryUri) =>
             NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
 
+        private void AddQueriesToUri(RequestUriBuilder req, IEnumerable<string> accessKeySet, NameValueCollection queryParams)
+        {
+            foreach (string param in accessKeySet)
+            {
+                req.AppendQuery(
+                    param,
+                    VolatileQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
+            }
+        }
+
         private string NormalizeUri(string uriToNormalize)
         {
             var req = new RequestUriBuilder();
@@ -208,12 +220,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             req.Reset(uri);
             req.Query = "";
             NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
-            foreach (string param in queryParams)
+
+            if (_ignoreQueryOrdering)
             {
-                req.AppendQuery(
-                    param,
-                    VolatileQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
+                AddQueriesToUri(req, queryParams.AllKeys.OrderBy(x => x), queryParams);
             }
+            else
+            {
+                AddQueriesToUri(req, queryParams.AllKeys, queryParams);
+            }
+
             return req.ToUri().ToString();
         }
 

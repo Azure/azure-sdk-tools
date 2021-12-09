@@ -204,6 +204,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async Task TestSetCustomMatcherWithQueryOrdering()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"ignoreQueryOrdering\": true }");
+
+            // content length must be set for the body to be parsed in SetMatcher
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.SetMatcher();
+            var matcher = testRecordingHandler.Matcher;
+            Assert.True(matcher is CustomDefaultMatcher);
+
+            var queryOrderingValue = (bool)typeof(RecordMatcher).GetField("_ignoreQueryOrdering", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+            Assert.True(queryOrderingValue);
+        }
+
+
+        [Fact]
         public async void TestSetMatcherIndividualRecording()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

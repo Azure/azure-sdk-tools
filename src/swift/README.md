@@ -21,7 +21,8 @@ You may run the tool directly in Xcode or from the command line.
 Parameters:
   `--source`: May target a folder, which will collect and process all `*.swift`, `*.h` and `*.swiftinterace` files in the folder and its subfolders. Can also target a single file.
   `--dest`:  (Optional) The path and desired JSON filename. If not provided, it will output as `SwiftAPIView.json` inside your Documents directory.
-  `--package-name`: (Optional) The top-level package name to use. If not provided, Swift APIView will attempt to determine the package name. If unsuccessful, supply the value or it will use "Default".
+  `--package-name`: (Optional) The top-level package name to use. If not provided, Swift APIView will attempt to determine the package name. If unsuccessful, you must supply the value.
+  `--package-version`: (Optional) The package version the APIView is being created for. This will affect how the review is listed in APIView (ex: "AzureFoo (version 1.0.0)"). If not provided, Swift APIView will attempt to determine the package version. If unsuccessful, you must supply the value. 
 
 #### Xcode
 
@@ -31,5 +32,5 @@ Edit `SwiftAPIView`'s "Run" scheme. This will allow you to pass command line arg
 
 Navigate to the build artifacts folder from Xcode and then run:
 ```
-./SwiftAPIView --source=<PATH_TO_SOURCE> [--dest=<PATH_TO_DESTINATION_FILE>] [--package-name=<NAME>]`
+./SwiftAPIView --source=<PATH_TO_SOURCE> [--dest=<PATH_TO_DESTINATION_FILE>] [--package-name=<NAME>] [--package-version=<VERSION>]`
 ```

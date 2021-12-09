@@ -23,6 +23,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _regexValue = regex;
             _newValue = value;
             _groupForReplace = groupForReplace;
+
+            StringSanitizer.ConfirmValidRegex(regex);
         }
 
         public override string SanitizeUri(string uri)

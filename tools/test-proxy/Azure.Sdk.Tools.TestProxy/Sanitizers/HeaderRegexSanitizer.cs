@@ -24,12 +24,14 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution or whole new header value, depending on "regex" setting.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>
         /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public HeaderRegexSanitizer(string key, string value = "Sanitized", string regex = null, string groupForReplace = null)
+        public HeaderRegexSanitizer(string key, string value = "Sanitized", string regex = ".+", string groupForReplace = null)
         {
             _targetKey = key;
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+
+            StringSanitizer.ConfirmValidRegex(regex);
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)

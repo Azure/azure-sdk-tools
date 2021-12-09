@@ -61,7 +61,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
@@ -69,7 +69,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/Tests/TestSwiftFile.swift"

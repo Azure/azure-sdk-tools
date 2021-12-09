@@ -62,6 +62,8 @@ class TokenFile: Codable {
     /// Tracks assigned definition IDs so they can be linked where key is the name and value is the definition ID (which could be different)
     private var definitionIds = [String: String]()
 
+    private var lineId = 1
+
     // MARK: Initializers
 
     init(name: String, packageName: String, versionString: String) {
@@ -98,7 +100,7 @@ class TokenFile: Codable {
     func text(_ text: String) {
         checkIndent()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .text)
-        tokens.append(item)
+        add(token: item)
     }
 
     func newLine() {
@@ -107,12 +109,13 @@ class TokenFile: Codable {
             let popped  = tokens.popLast()!
             // lines that consist only of whitespace must be preserved
             if tokens.last?.kind == .newline {
-                tokens.append(popped)
+                add(token: popped)
             }
         }
         checkIndent()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
-        tokens.append(item)
+        add(token: item)
+        lineIdMarker()
         needsIndent = true
     }
 
@@ -121,44 +124,45 @@ class TokenFile: Codable {
         guard tokens.last?.kind != .whitespace else { return }
         let value = String(repeating: " ", count: count)
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
-        tokens.append(item)
+        add(token: item)
     }
 
     func punctuation(_ value: String) {
         checkIndent()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
-        tokens.append(item)
+        add(token: item)
     }
 
     func keyword(value: String) {
         checkIndent()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .keyword)
-        tokens.append(item)
+        add(token: item)
     }
 
-    func lineIdMarker(definitionId: String? = nil) {
+    func lineIdMarker() {
         checkIndent()
-        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
-        tokens.append(item)
+        let item = TokenItem(definitionId: String(lineId), navigateToId: nil, value: nil, kind: .lineIdMarker)
+        lineId += 1
+        add(token: item)
     }
 
     func type(name: String, definitionId: String? = nil) {
         checkIndent()
         let linkId = definitionIds[name]
         let item = TokenItem(definitionId: definitionId, navigateToId: linkId, value: name, kind: .typeName)
-        tokens.append(item)
+        add(token: item)
     }
 
     func member(name: String, definitionId: String? = nil) {
         checkIndent()
         let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
-        tokens.append(item)
+        add(token: item)
     }
 
     func stringLiteral(_ text: String) {
         checkIndent()
         let item = TokenItem(definitionId: nil, navigateToId: nil, value: text, kind: .stringLiteral)
-        tokens.append(item)
+        add(token: item)
     }
 
     func indent(_ indentedCode: () -> Void) {
@@ -173,10 +177,26 @@ class TokenFile: Codable {
         needsIndent = false
     }
 
+    // MARK: Utility Methods
+
+    /// Adds a token to the list
+    internal func add(token: TokenItem) {
+        tokens.append(token)
+    }
+
+    /// Registers a definitionId
+    internal func register(defId: String) {
+        guard self.definitionIds[defId] == nil else {
+            fatalError("Definition ID should be unique")
+        }
+        definitionIds[defId] = defId
+    }
+
     // MARK: Processing Methods
 
     /// This should be the only process method that APIViewManager should be able to call
     internal func process(statements: [Statement]) {
+        lineIdMarker()
         text("package")
         whitespace()
         text(packageName)
@@ -213,11 +233,10 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
 
         // register type as linkable
-        let defId = decl.name.textDescription
-        definitionIds[defId] = defId
+        let defId = "\(decl.name.textDescription)-\(lineId)"
+        register(defId: defId)
 
         handle(attributes: decl.attributes)
-        lineIdMarker(definitionId: defId)
         keyword(value: accessLevel.textDescription)
         whitespace()
         if decl.isFinal {
@@ -248,11 +267,10 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
 
         // register type as linkable
-        let defId = decl.name.textDescription
-        definitionIds[defId] = defId
+        let defId = "\(decl.name.textDescription)-\(lineId)"
+        register(defId: defId)
 
         handle(attributes: decl.attributes)
-        lineIdMarker(definitionId: defId)
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "struct")
@@ -279,15 +297,14 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
 
         // register type as linkable
-        let defId = decl.name.textDescription
-        definitionIds[defId] = defId
+        let defId = "\(decl.name.textDescription)-\(lineId)"
+        register(defId: defId)
 
         handle(attributes: decl.attributes)
         if decl.isIndirect {
             keyword(value: "indirect")
             whitespace()
         }
-        lineIdMarker(definitionId: defId)
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "enum")
@@ -314,11 +331,10 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
 
         // register type as linkable
-        let defId = decl.name.textDescription
-        definitionIds[defId] = defId
+        let defId = "\(decl.name.textDescription)-\(lineId)"
+        register(defId: defId)
 
         handle(attributes: decl.attributes)
-        lineIdMarker(definitionId: defId)
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "protocol")
@@ -344,8 +360,8 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
 
         // register type as linkable
-        let defId = decl.name.textDescription
-        definitionIds[defId] = defId
+        let defId = "\(decl.name.textDescription)-\(lineId)"
+        register(defId: defId)
 
         handle(attributes: decl.attributes)
         keyword(value: accessLevel.textDescription)
@@ -381,8 +397,7 @@ class TokenFile: Codable {
         }
         keyword(value: "extension")
         whitespace()
-        let defId = decl.type.textDescription
-        lineIdMarker(definitionId: defId)
+        let defId = "\(decl.type.textDescription)-\(lineId)"
         type(name: decl.type.textDescription, definitionId: defId)
         whitespace()
         handle(clause: decl.typeInheritanceClause)
@@ -449,7 +464,7 @@ class TokenFile: Codable {
 
     private func process(_ decl: FunctionDeclaration, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        let defId = decl.name.textDescription
+        let defId = "\(decl.name.textDescription)-\(lineId)"
         let name = decl.name.textDescription
         return processFunction(name: name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, signature: decl.signature, genericParam: decl.genericParameterClause, genericWhere: decl.genericWhereClause)
     }
@@ -486,8 +501,8 @@ class TokenFile: Codable {
             whitespace()
 
             // register type name to make linkable
-            let defId = "operator.\(name)"
-            definitionIds[defId] = defId
+            let defId = "operator.\(name)-\(lineId)"
+            register(defId: defId)
 
             type(name: name, definitionId: defId)
         }
@@ -809,7 +824,6 @@ class TokenFile: Codable {
         case let .union(enumCase):
             enumCase.cases.forEach { enumCaseValue in
                 let enumDefId = "\(parentId).\(enumCaseValue.name.textDescription)"
-                lineIdMarker(definitionId: enumDefId)
                 keyword(value: "case")
                 whitespace()
                 self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
@@ -819,7 +833,6 @@ class TokenFile: Codable {
         case let .rawValue(enumCase):
             enumCase.cases.forEach { enumCaseValue in
                 let enumDefId = "\(parentId).\(enumCaseValue.name.textDescription)"
-                lineIdMarker(definitionId: enumDefId)
                 keyword(value: "case")
                 whitespace()
                 self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
@@ -851,7 +864,6 @@ class TokenFile: Codable {
             let name = data.name.textDescription
             keyword(value: "associatedtype")
             whitespace()
-            lineIdMarker(definitionId: "\(parentId).\(name)")
             self.member(name: name)
             if let inheritance = data.typeInheritance {
                 handle(clause: inheritance)
@@ -859,7 +871,7 @@ class TokenFile: Codable {
             newLine()
         case let .method(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = "\(parentId).\(data.textDescription)"
+            let defId = "\(parentId).\(data.textDescription)-\(lineId)"
             let name = data.name.textDescription
             _ = processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
         case let .property(data):
@@ -869,7 +881,6 @@ class TokenFile: Codable {
             handle(modifiers: data.modifiers)
             keyword(value: "var")
             whitespace()
-            lineIdMarker(definitionId: "\(parentId).\(name)")
             self.member(name: name)
             punctuation(":")
             whitespace()
@@ -895,11 +906,11 @@ class TokenFile: Codable {
             newLine()
         case let .initializer(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = "\(parentId).\(data.textDescription)"
+            let defId = "\(parentId).\(data.textDescription)-\(lineId)"
             _ = processInitializer(defId: defId, attributes: data.attributes, modifiers: data.modifiers, kind: data.kind.textDescription, accessLevel: accessLevel,  genericParam: data.genericParameter, throwsKind: data.throwsKind, parameterList: data.parameterList, genericWhere: data.genericWhere)
         case let .subscript(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = "\(parentId).\(data.textDescription)"
+            let defId = "\(parentId).\(data.textDescription)-\(lineId)"
             _ = processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere)
         default:
             SharedLogger.fail("Unsupported protocol member: \(member)")
@@ -923,7 +934,6 @@ class TokenFile: Codable {
         handle(modifiers: modifiers)
         keyword(value: isConst ? "let" : "var")
         whitespace()
-        lineIdMarker(definitionId: name)
         member(name: name)
         punctuation(":")
         whitespace()
@@ -944,7 +954,6 @@ class TokenFile: Codable {
         handle(modifiers: modifiers)
         keyword(value: "init")
         punctuation(kind)
-        lineIdMarker(definitionId: defId)
         handle(clause: genericParam)
         let initSignature = FunctionSignature(parameterList: parameterList, throwsKind: throwsKind, result: nil)
         handle(signature: initSignature)
@@ -958,7 +967,6 @@ class TokenFile: Codable {
         handle(attributes: attributes)
         handle(modifiers: modifiers)
         keyword(value: "subscript")
-        lineIdMarker(definitionId: defId)
         handle(clause: genericParam)
         punctuation("(")
         parameterList.forEach { param in
@@ -977,7 +985,6 @@ class TokenFile: Codable {
         handle(attributes: attributes)
         handle(modifiers: modifiers)
         keyword(value: "func")
-        lineIdMarker(definitionId: defId)
         whitespace()
         member(name: name, definitionId: defId)
         handle(clause: genericParam)

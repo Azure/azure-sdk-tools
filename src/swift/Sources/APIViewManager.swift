@@ -109,6 +109,31 @@ class APIViewManager {
         return String(sourcePath[matchRange])
     }
 
+    func extractPackageVersion(from sourceUrl: URL) -> String? {
+        let fileManager = FileManager.default
+        let rootUrl = sourceUrl.deletingLastPathComponent()
+        guard let enumerator = fileManager.enumerator(
+            at: rootUrl,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return nil
+        }
+        while let element = enumerator.nextObject() as? URL {
+            if element.path.hasSuffix("podspec.json") {
+                do {
+                    let data = try Data(contentsOf: element)
+                    let json = try JSONSerialization.jsonObject(with: data) as? Dictionary<String, AnyObject>
+                    let version = json?["version"] as? String
+                    return version
+                } catch {
+                    return nil
+                }
+            }
+        }
+        return nil
+    }
+
     func collectFilePaths(at url: URL) -> [String] {
         var filePaths = [String]()
         let fileEnumerator = FileManager.default.enumerator(atPath: url.path)
@@ -128,7 +153,8 @@ class APIViewManager {
 
     func buildTokenFile(from sourceUrl: URL) throws {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
-        var packageName: String
+        var packageName: String?
+        var packageVersion: String?
         var isDir: ObjCBool = false
 
         guard FileManager.default.fileExists(atPath: sourceUrl.path, isDirectory: &isDir) else {
@@ -137,10 +163,12 @@ class APIViewManager {
 
         var filePaths = [String]()
         if isDir.boolValue {
-            packageName = args.packageName ?? extractPackageName(from: sourceUrl) ?? "Default"
+            packageName = args.packageName ?? extractPackageName(from: sourceUrl)
+            packageVersion = args.packageVersion ?? extractPackageVersion(from: sourceUrl)
             filePaths = collectFilePaths(at: sourceUrl)
         } else {
             packageName = args.packageName ?? sourceUrl.lastPathComponent
+            packageVersion = args.packageVersion
             filePaths.append(sourceUrl.absoluteString)
         }
         for filePath in filePaths {
@@ -152,7 +180,20 @@ class APIViewManager {
                 SharedLogger.warn(error.localizedDescription)
             }
         }
-        tokenFile = TokenFile(name: packageName, packageName: packageName, versionString: version)
+        // Ensure that package name and version can be resolved
+        var errors = [String]()
+        if packageName == nil {
+            errors.append("Unable to resolve package name. Use --package-name NAME")
+        }
+        if packageVersion == nil {
+            errors.append("Unable to resolve package version. Use --package-version VERSION")
+        }
+        if !errors.isEmpty {
+            let failString = errors.joined(separator: "\n")
+            SharedLogger.fail(failString)
+        }
+        let apiViewName = "\(packageName!) (version \(packageVersion!))"
+        tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: version)
         tokenFile.process(statements: Array(statements.values))
     }
 }

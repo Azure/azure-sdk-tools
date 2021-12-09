@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.TestProxy
             byte[] body = new byte[]{};
 
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
-            if (incomingRequest.Method.ToUpperInvariant() == "HEAD") {
+            if (!incomingRequest.Method.ToUpperInvariant() == "HEAD") {
                 body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 

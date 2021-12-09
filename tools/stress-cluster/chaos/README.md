@@ -530,7 +530,7 @@ See [Chaos Manifest](#chaos-manifest).
 
 There are a few ways to check on the status of your chaos resources, after your stress test pod(s) reach a `Running` state.
 
-From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashbaord), select your stress test pods from the dropdown
+From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
 and verify there are entries in the logs in the **Chaos Daemon Events** table.
 
 On the stress cluster, you can view the status of your chaos resources. For example, to check on all the network chaos

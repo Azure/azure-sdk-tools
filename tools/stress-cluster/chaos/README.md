@@ -604,10 +604,7 @@ Follow the below commands to execute a sample test.
 
 ```
 cd ./examples/network_stress_example
-# This will build the docker images and helm chart dependencies
-./build.sh
-# This will log in to the cluster and container registry, publish the image and the chart
-./deploy.sh <your alias>
+pwsh ../../../../../eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages
 ```
 
 Verify the pods in the job have booted and are running ok (with chaos network failures):
@@ -617,7 +614,7 @@ Verify the pods in the job have booted and are running ok (with chaos network fa
 NAME                               READY   STATUS    RESTARTS   AGE
 network-example-0629200737-bk647   1/1     Running   0          89s
 
-⇉ ⇉ ⇉ kubectl logs -n <YOUR NAMESPACE> network-example-0629200737-bk647 -f
+⇉ ⇉ ⇉ kubectl logs -n <your alias> network-example-0629200737-bk647 -f
 Spider mode enabled. Check if remote file exists.
 --2021-06-09 00:51:52--  http://www.bing.com/
 Resolving www.bing.com (www.bing.com)... 204.79.197.200, 13.107.21.200, 2620:1ec:c11::200

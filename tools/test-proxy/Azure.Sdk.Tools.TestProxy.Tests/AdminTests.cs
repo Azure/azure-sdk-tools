@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"ignoreQueryOrdering\": \"true\" }");
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"ignoreQueryOrdering\": true }");
 
             // content length must be set for the body to be parsed in SetMatcher
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
@@ -225,7 +225,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = testRecordingHandler.Matcher;
             Assert.True(matcher is CustomDefaultMatcher);
 
-            var queryOrderingValue = (bool)typeof(RecordMatcher).GetField("ignoreQueryOrdering", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
+            var queryOrderingValue = (bool)typeof(RecordMatcher).GetField("_ignoreQueryOrdering", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
             Assert.True(queryOrderingValue);
         }
 

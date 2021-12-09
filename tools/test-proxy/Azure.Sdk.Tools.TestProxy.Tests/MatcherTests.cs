@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public async Task CustomMatcherMatchesDifferentUriOrder()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrder: true);
+            testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
             var playbackContext = new DefaultHttpContext();
             var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
             playbackContext.Request.Headers["x-recording-file"] = targetFile;

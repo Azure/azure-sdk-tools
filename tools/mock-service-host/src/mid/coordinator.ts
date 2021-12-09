@@ -322,7 +322,7 @@ export class Coordinator {
         while (uriPath.length > 0) {
             if (firstloop || uriPath.length % 2 === 1) {
                 let hostAndPort = req.headers?.host as string
-                if (hostAndPort.split(':').length > 0) {
+                if (hostAndPort.indexOf(':') < 0) {
                     hostAndPort = `${hostAndPort}:${req.localPort}`
                 }
                 const testingUrl = `${req.protocol}://${hostAndPort}${uriPath.join('/')}?${query}`

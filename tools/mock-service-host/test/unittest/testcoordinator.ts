@@ -206,28 +206,28 @@ describe('generateResponse()', () => {
         }
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/stop?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/new?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =

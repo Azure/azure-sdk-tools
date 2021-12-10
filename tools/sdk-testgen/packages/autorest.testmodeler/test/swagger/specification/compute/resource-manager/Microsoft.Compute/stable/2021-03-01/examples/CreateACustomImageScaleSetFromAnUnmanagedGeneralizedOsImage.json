@@ -5,7 +5,7 @@
     "VmScaleSetName": "{vmss-name}",
     "Api-version": "2021-03-01",
     "Pa-ram_eters": {
-      "sku": {
+      "Sku": {
         "tier": "Standard",
         "capacity": 3,
         "name": "Standard_D1_v2"

@@ -42858,6 +42858,10 @@ operationGroups:
               parameters:
                 Api-version: '2021-03-01'
                 Pa-ram_eters:
+                  Sku:
+                    name: Standard_D1_v2
+                    capacity: 3
+                    tier: Standard
                   location: westus
                   properties:
                     overprovision: true
@@ -42886,10 +42890,6 @@ operationGroups:
                           createOption: FromImage
                           image:
                             uri: http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd
-                  sku:
-                    name: Standard_D1_v2
-                    capacity: 3
-                    tier: Standard
                 ResourceGroupName: myResourceGroup
                 SubscriptionId: '{subscription-id}'
                 VmScaleSetName: '{vmss-name}'

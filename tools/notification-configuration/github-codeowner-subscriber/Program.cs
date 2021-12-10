@@ -119,9 +119,9 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                         // Get contents of CODEOWNERS
                         logger.LogInformation("Fetching CODEOWNERS file");
                         var managementUrl = new Uri(group.Pipeline.Repository.Properties["manageUrl"]);
-                        var codeownersContent = await gitHubService.GetCodeownersFile(managementUrl);
+                        var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
 
-                        if (codeownersContent == default)
+                        if (codeOwnerEntries == default)
                         {
                             logger.LogInformation("CODEOWNERS file not found, skipping sync");
                             continue;
@@ -130,13 +130,13 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                         var process = group.Pipeline.Process as YamlProcess;
 
                         logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-                        var codeOwnerEntries = CodeOwnersFile.ParseContent(codeownersContent);
-                        var contacts = codeOwnerEntries.FindLast(x => x.PathExpression.Trim('/').StartsWith(process.YamlFilename.Trim('/'))).Owners;
+                        var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
+                        codeOwnerEntry.FilterOutNonUserAliases();
 
-                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, contacts.Count);
+                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                         // Get set of team members in the CODEOWNERS file
-                        var contactResolutionTasks = contacts
+                        var contactResolutionTasks = codeOwnerEntry.Owners
                             .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact));
                         var codeownerPrincipals = await Task.WhenAll(contactResolutionTasks);
 

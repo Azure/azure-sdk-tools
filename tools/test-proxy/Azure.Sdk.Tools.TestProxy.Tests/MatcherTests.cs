@@ -132,6 +132,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void CustomMatcherDefaultArgumentsMatch()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
+            var matcher = new CustomDefaultMatcher();
+
+            sessionForRetrieval.Session.Lookup(identicalRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
         public void CustomMatcherDisableBodyMatches()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
@@ -144,7 +154,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void CustomerMatcherSpecifyExcludedHeadersMatches()
+        public void CustomMatcherSpecifyExcludedHeadersMatches()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
             var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
@@ -153,6 +163,52 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = new CustomDefaultMatcher(nonDefaultHeaderExclusions: "Accept-Encoding");
 
             sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredHeadersMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
+
+            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+
+            sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRequestNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers.Remove("Accept-Encoding");
+
+            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+            Assert.Contains("<Accept-Encoding> is absent in request", assertion.Message);
+
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRecordNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            sessionForRetrieval.Session.Entries[0].Request.Headers.Remove("Accept-Encoding");
+            var sameOriginalHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+
+            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+
+            Assert.Contains("<Accept-Encoding> is absent in record", assertion.Message);
         }
 
         [Fact]

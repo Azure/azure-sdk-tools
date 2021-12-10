@@ -5,8 +5,9 @@
 
 #Requires -Version 6.0
 #Requires -PSEdition Core
-#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'}
-#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'}
+#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'; MaximumVersion='2.7.0'}
+#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'; MaximumVersion='4.3.1'}
+#Requires -Modules @{ModuleName='Az'; MaximumVersion='6.4.0'}
 
 [CmdletBinding(DefaultParameterSetName = 'Default', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param (

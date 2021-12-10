@@ -187,7 +187,7 @@ export class Helper {
         let cur = obj;
         while (path.length > i) {
             const realKey =
-                i == 0 ? Object.keys(cur).find((key) => key.replace(/[^A-Za-z\$0-9]/g, '').toLowerCase() === path[i].replace(/[^A-Za-z\$0-9]/g, '').toLowerCase()) : path[i];
+                i === 0 ? Object.keys(cur).find((key) => key.replace(/[^A-Za-z$0-9]/g, '').toLowerCase() === path[i].replace(/[^A-Za-z$0-9]/g, '').toLowerCase()) : path[i];
             if (realKey) {
                 cur = cur[realKey];
             } else {

@@ -58,7 +58,7 @@ stages:
           notification-creator `
             --organization $(Organization) `
             --project $(Project) `
-            --path-prefix \"\\$(PathPrefix)\" `
+            --path-prefix "\$(PathPrefix)" `
             --token-variable-name DEVOPS_TOKEN `
             --selection-strategy Scheduled `
             $(AdditionalParameters)
@@ -73,7 +73,7 @@ stages:
           github-codeowner-subscriber `
             --organization $(Organization) `
             --project $(Project) `
-            --path-prefix \"\\$(PathPrefix)\" `
+            --path-prefix "\$(PathPrefix)" `
             --dev-ops-token-var DEVOPS_TOKEN `
             --aad-app-id-var APP_ID `
             --aad-app-secret-var APP_SECRET `

@@ -38,7 +38,7 @@ export async function generateCodes(packagePath, packageName, sdkRepo) {
         await generateTest(packagePath);
         await generateKarmaConfig(packagePath);
         await generateSample(packagePath);
-        await modifyOrGenerateCiYaml(sdkRepo, packagePath, packageName);
+        await modifyOrGenerateCiYaml(sdkRepo, packagePath, packageName, false);
         await changeRushJson(sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
     } catch (e) {
         logger.logError('Error:');

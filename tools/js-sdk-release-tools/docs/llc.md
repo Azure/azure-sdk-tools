@@ -28,8 +28,9 @@ rlc-code-gen --package-name=<your package name>
 *Note*:
    - *Please replace with your package name, for example: `rlc-code-gen --package-name=@azure-rest/purview-account`. If you don't provide it, the tool will ask you to input it interactively.*
    - *You also can use command `rlc-code-gen --readme=<the path of swagger/README.md>` to generate codes if `swagger/README.md` exists. Then it will skip Step 2 and go to Step 3 directly.*
+   - *If you run command with `--interactive`, then the tool asks to re-check some values in `swagger/README.md` if it exists.*
 ##### Step 2. Generate swagger/README.md
-If your package is first release or doesn't contain `swagger/readme.md`, the tool will ask you to input some necessary information. If not, please skip this step.
+If your package is first release or doesn't contain `swagger/README.md`, the tool will ask you to input some necessary information. If not, please skip this step.
    
 For example:
 

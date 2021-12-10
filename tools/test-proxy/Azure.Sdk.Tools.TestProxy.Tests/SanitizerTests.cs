@@ -360,6 +360,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(originalValue, newValue);
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void BodyKeySanitizerWithRelaxedEncoding(bool forceRelaxedJsonEncoding)
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_double_encoded_characters.json");
+            var targetEntry = session.Session.Entries[0];
+            var originalBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            // the property will not be found
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$..connectionString", forceRelaxedJsonEncoding: forceRelaxedJsonEncoding);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            if (forceRelaxedJsonEncoding)
+            {
+                Assert.NotEqual(originalBody, newBody);
+                Assert.Contains("&", newBody);
+            }
+            else
+            {
+                // since there is no json path match, the body should be unchanged
+                Assert.Equal(originalBody, newBody);
+                Assert.DoesNotContain("&", newBody);
+            }
+        }
+
 
         [Fact]
         public void ContinuationSanitizerSingleReplace()

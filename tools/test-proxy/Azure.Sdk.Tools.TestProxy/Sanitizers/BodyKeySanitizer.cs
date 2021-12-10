@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         private string _newValue;
         private string _regexValue = null;
         private string _groupForReplace = null;
+        private bool _forceRelaxedJsonEncoding;
 
         /// <summary>
         /// This sanitizer offers regex update of a specific JTokenPath. EG: "TableName" within a json response body having its value replaced by
@@ -26,12 +27,15 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation. Defaults to replacing the entire string.</param>
         /// <param name="groupForReplace">The regex capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null)
+        /// <param name="forceRelaxedJsonEncoding">If true, the entire body will be reserialized using relaxed JSON encoding, regardless of whether a match occurred or not.
+        /// By default, the relaxed JSON encoding only happends when there is a match.</param>
+        public BodyKeySanitizer(string jsonPath, string value = "Sanitized", string regex = ".+", string groupForReplace = null, bool forceRelaxedJsonEncoding = false)
         {
             _jsonPath = jsonPath;
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+            _forceRelaxedJsonEncoding = forceRelaxedJsonEncoding;
 
             StringSanitizer.ConfirmValidRegex(regex);
         }
@@ -86,7 +90,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 }
             }
 
-            return sanitized ? JsonConvert.SerializeObject(jsonO, SerializerSettings) : body;
+            return sanitized || _forceRelaxedJsonEncoding ? JsonConvert.SerializeObject(jsonO, SerializerSettings) : body;
         }
 
 

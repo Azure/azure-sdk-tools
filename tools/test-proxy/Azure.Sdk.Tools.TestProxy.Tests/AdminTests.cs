@@ -328,6 +328,37 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async void TestAddSanitizerWithRelaxedEncoding()
+        {
+            // arrange
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            httpContext.Request.Headers["x-abstraction-identifier"] = "BodyKeySanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"jsonPath\": \"$..TableName\" , \"forceRelaxedJsonEncoding\": true }");
+            
+            // content length must be set for the body to be parsed in SetMatcher
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+            httpContext.Request.Headers["Content-Type"] = new string[] { "application/json" };
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var sanitizer = testRecordingHandler.Sanitizers.First();
+            Assert.True(sanitizer is BodyKeySanitizer);
+
+            var relaxedEncoding = (bool)typeof(BodyKeySanitizer).GetField("_forceRelaxedJsonEncoding", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
+            Assert.True(relaxedEncoding);
+        }
+
+        [Fact]
         public async void TestAddSanitizerWrongEmptyValue()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

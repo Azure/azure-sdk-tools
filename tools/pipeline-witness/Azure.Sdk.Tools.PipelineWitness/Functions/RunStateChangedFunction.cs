@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Functions
         private RunProcessor runProcessor;
 
         [FunctionName("RunStateChanged")]
-        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString")]EventData @event)
+        public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString", ConsumerGroup = "%EventHubConsumerGroup%")]EventData @event)
         {
             logger.LogInformation("Processing run-state-changed event.");
             string messageBody = Encoding.UTF8.GetString(@event.Body.Array, @event.Body.Offset, @event.Body.Count);

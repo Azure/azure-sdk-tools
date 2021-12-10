@@ -26,6 +26,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureCloud - Resource Cleanup
+        continueOnError: true
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -36,6 +37,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureCloud-Preview - Resource Cleanup
+        continueOnError: true
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -46,6 +48,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureUSGovernment - Resource Cleanup
+        continueOnError: true
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -56,6 +59,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureChinaCloud - Resource Cleanup
+        continueOnError: true
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -66,6 +70,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: Dogfood ACS - Resource Cleanup
+        continueOnError: true
 
       - template: /eng/common/TestResources/build-test-resource-config.yml
         parameters:
@@ -81,6 +86,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureCloud ACS - Resource Cleanup
+        continueOnError: true
 
       - template: /eng/common/TestResources/build-test-resource-config.yml
         parameters:
@@ -96,6 +102,7 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureCloud Cosmos - Resource Cleanup
+        continueOnError: true
 
       - pwsh: |
           $subscriptionConfiguration = @'
@@ -106,3 +113,4 @@ stages:
           @subscriptionConfiguration `
           -Verbose
         displayName: AzureCloud Playground - Resource Cleanup
+        continueOnError: true

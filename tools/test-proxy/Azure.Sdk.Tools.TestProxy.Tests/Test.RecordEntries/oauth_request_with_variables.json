@@ -1,0 +1,22 @@
+{
+  "Entries": [
+    {
+      "RequestUri": "https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        "User-Agent": "core-http/1.2.5 Node/v12.22.1 OS/ (x64-Linux-5.4.0-1043-azure)",
+        "x-ms-client-request-id": "a4d470c5-b830-11eb-9cc6-10e7c6392c5a"
+      },
+      "RequestBody": "scope=https%3A%2F%2Fvault.azure.net%2F.default%20openid%20profile%20offline_access&client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46&grant_type=device_code&device_code=DEVICE_CODE&client-request-id=client-request-id&client_info=1&x-client-SKU=msal.js.node&x-client-VER=1.0.3&x-client-OS=linux&x-client-CPU=x64&x-ms-lib-capability=retry-after, h429&x-client-current-telemetry=2|671,0|,&x-client-last-telemetry=2|0|||0,0",
+      "StatusCode": 201
+    }
+  ],
+  "Variables": {
+    "key1": "value1",
+    "key2": "value2"
+  }
+}

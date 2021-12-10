@@ -220,7 +220,7 @@
             commentForm = createCommentForm();
             commentsRow =
                 $(`<tr class="comment-row" data-line-id="${id}">`)
-                    .append($("<td colspan=\"2\">")
+                    .append($("<td colspan=\"3\">")
                         .append(commentForm));
 
             commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));

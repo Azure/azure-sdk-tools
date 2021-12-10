@@ -22,6 +22,19 @@ parameters:
     dockerFile: 'tools/test-proxy/docker/dockerfile-win'
     stableTags:
     - 'latest'
+  - name: stress_watcher
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'stress/watcher'
+    dockerFile: 'tools/stress-cluster/services/Stress.Watcher/Dockerfile'
+    stableTags:
+    - 'latest'
+  - name: stress_deploy_test_resources
+    pool: 'ubuntu-20.04'
+    dockerRepo: 'stress/deploy-test-resources'
+    prepareScript: tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/prepare.ps1
+    dockerFile: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile'
+    stableTags:
+    - 'latest'
 
 trigger:
   branches:
@@ -32,8 +45,20 @@ trigger:
     - eng/containers/
     - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
+    - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
 
-pr: none
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - eng/containers/
+    - tools/test-proxy/docker/
+    - tools/keyvault-mock-attestation/Dockerfile
+    - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
 
 variables:
   - name: containerRegistry
@@ -64,6 +89,7 @@ jobs:
 
         - task: Docker@2
           displayName: Push ${{ config.name }}:$(imageTag)
+          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
           inputs:
             containerRegistry: $(containerRegistry)
             repository: ${{ config.dockerRepo }}
@@ -81,6 +107,8 @@ jobs:
 
           - task: Docker@2
             displayName: Push ${{ config.name }}:${{ stableTag }}
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
             inputs:
               containerRegistry: $(containerRegistry)
               repository: ${{ config.dockerRepo }}

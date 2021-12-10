@@ -21,12 +21,18 @@ spec:
         release: {{ .Release.Name }}
         scenario: {{ .Scenario }}
     spec:
+      # In cases where a stress test has higher resource requirements or needs a dedicated node,
+      # a new nodepool can be provisioned and labeled to allow custom scheduling.
+      nodeSelector:
+        sku: 'default'
       restartPolicy: Never
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
         # Volume template for mounting ARM templates
         {{- include "stress-test-addons.deploy-volumes" . | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)
@@ -67,10 +73,13 @@ spec:
         release: {{ .Release.Name }}
         scenario: {{ .Scenario }}
     spec:
+      nodeSelector:
+        sku: 'default'
       restartPolicy: Never
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" . | nindent 8 }}
+        {{- include "stress-test-addons.debug-file-volumes" . | nindent 8 }}
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)

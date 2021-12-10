@@ -1,0 +1,73 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package {{packageName}}_test
+
+import (
+	"context"
+	"log"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+)
+{{imports}}
+
+{%- for exampleGroup in exampleGroups %}
+{%- for example in exampleGroup.examples %}
+{%- if loop.first %}
+// x-ms-original-file: {{example.originalFile}}
+func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf("failed to obtain a credential: %v", err)
+	}
+	ctx := context.Background()
+	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
+
+	{%- if example.returnInfo.length == 2 %}
+	{%- if example.isLRO %}
+	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
+	{%- else %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
+	{%- endif %}
+	if err != nil {
+		log.Fatal(err)
+	}
+	{%- if example.isLRO %}
+	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+	if err != nil {
+		log.Fatal(err)
+	}
+	{%- endif %}
+	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
+	for pager.NextPage(ctx) {
+		if err := pager.Err(); err != nil {
+			log.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
+            log.Printf("Pager result: %#v\n", v)
+		}
+	}
+	{%- else %}
+	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
+	{%- endif %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+    for res.NextPage(ctx) {
+		if err := res.Err(); err != nil {
+			log.Fatalf("failed to advance page: %v", err)
+		}
+		for _, v := range res.PageResponse().{{example.pageableItemName}} {
+            log.Printf("Pager result: %#v\n", v)
+		}
+	}
+    {%- endif %}
+	{%- if example.checkResponse and not example.isPageable%}
+	log.Printf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
+	{%- endif %}
+}
+{% endif %}
+{%- endfor %}
+{%- endfor %}

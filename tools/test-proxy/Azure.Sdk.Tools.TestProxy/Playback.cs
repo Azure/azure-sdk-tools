@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                throw new InvalidOperationException("Either header 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
+                throw new HttpException(HttpStatusCode.BadRequest, "At least one of two headers 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
             }
         }
 

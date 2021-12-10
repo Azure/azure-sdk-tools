@@ -18,9 +18,8 @@ public class FluentSetterReturnTypeDiagnosticRule implements DiagnosticRule {
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
-        cu.getTypes().forEach(type -> {
-            type.getAnnotationByName("Fluent").ifPresent(a -> processFluentType(type, listing));
-        });
+        cu.getTypes().forEach(type ->
+            type.getAnnotationByName("Fluent").ifPresent(a -> processFluentType(type, listing)));
     }
 
     private void processFluentType(final TypeDeclaration<?> type, final APIListing listing) {

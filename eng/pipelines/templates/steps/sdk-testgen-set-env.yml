@@ -1,0 +1,15 @@
+# Template for setup rush env
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "14.x"
+    displayName: "Install Node.js"
+  - task: GoTool@0
+    inputs:
+      version: '1.16.7'
+    displayName: "Install Go"
+  - script: |
+      npm install -g "@microsoft/rush"
+      rush install
+    displayName: "Install dependencies"
+    workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

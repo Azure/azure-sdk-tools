@@ -72,8 +72,11 @@ Currently supports 3 commands. Values: `['scan', 'presence', 'content', `index`]
 `--scan-directory`
 The target directory `warden` should be scanning. **Required.**
 
+`--repo-root`
+The root of the repo. Entries in the config-file should be relative to this directory. **Optional.**
+
 `--scan-language`
-`warden` checks for packages by _convention_, so it needs to understand what language it is looking at. This must be populated either in `.docsettings file` or by parameter. **Required.**
+`warden` checks for packages by _convention_, so it needs to understand what language it is looking at. This must be populated either in `.docsettings file` or by parameter. **Optional.**
 
 `--config-location`
 By default, `warden` looks for the `.docsettings` file in the root of the repository. However, populating this location will override this behavior and instead pull the file from the location in this parameter. **Optional.**

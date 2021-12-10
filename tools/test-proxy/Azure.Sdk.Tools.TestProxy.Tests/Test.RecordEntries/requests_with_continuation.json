@@ -1,0 +1,79 @@
+﻿{
+  "Entries": [
+    {
+      "RequestUri": "http://localhost:3000/request",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "keep-alive"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Connection": "keep-alive",
+        "Content-Length": "0",
+        "Date": "Wed, 20 Oct 2021 22:45:39 GMT",
+        "correlationId": "a34cafcb-ea7f-4d0f-b5ca-83c714761a50"
+      },
+      "ResponseBody": null
+    },
+    {
+      "RequestUri": "http://localhost:3000/send",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "keep-alive",
+        "correlationId": "a34cafcb-ea7f-4d0f-b5ca-83c714761a50"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Connection": "keep-alive",
+        "Content-Length": "13",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Wed, 20 Oct 2021 22:45:39 GMT"
+      },
+      "ResponseBody": {
+        "val": "abc"
+      }
+    },
+    {
+      "RequestUri": "http://localhost:3000/request",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "keep-alive"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Connection": "keep-alive",
+        "Content-Length": "0",
+        "Date": "Wed, 20 Oct 2021 22:45:39 GMT",
+        "correlationId": "b24f75a9-b830-11eb-b949-10e7c6392c5a"
+      },
+      "ResponseBody": null
+    },
+    {
+      "RequestUri": "http://localhost:3000/send",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "keep-alive",
+        "correlationId": "b24f75a9-b830-11eb-b949-10e7c6392c5a"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Connection": "keep-alive",
+        "Content-Length": "13",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Wed, 20 Oct 2021 22:45:39 GMT"
+      },
+      "ResponseBody": {
+        "val": "abc"
+      }
+    }
+  ],
+  "Variables": {}
+}

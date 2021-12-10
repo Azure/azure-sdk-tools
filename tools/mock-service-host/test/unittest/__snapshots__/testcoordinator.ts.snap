@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`generateResponse() special rule of GET locations 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/randomSub/resourceGroups/randomRG",
+    "location": "eastus",
+    "managedBy": null,
+    "name": "randomRG",
+    "properties": Object {
+      "provisioningState": "Succeeded",
+    },
+    "tags": Object {},
+    "type": "Microsoft.Resources/resourceGroups",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() special rule of GET resourceGroup 1`] = `
+VirtualServerResponse {
+  "body": Object {
+    "id": "/subscriptions/randomSub/resourceGroups/randomRG",
+    "location": "eastus",
+    "managedBy": null,
+    "name": "randomRG",
+    "properties": Object {
+      "provisioningState": "Succeeded",
+    },
+    "tags": Object {},
+    "type": "Microsoft.Resources/resourceGroups",
+  },
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;
+
+exports[`generateResponse() validate DELETE input 1`] = `
+VirtualServerResponse {
+  "body": undefined,
+  "headers": Object {},
+  "statusCode": "200",
+}
+`;

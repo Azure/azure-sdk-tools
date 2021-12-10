@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+junit.xml
+cache/
+.env
+!package-lock.json
+!lib
+!.vscode

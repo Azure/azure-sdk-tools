@@ -75,10 +75,13 @@ namespace APIViewWeb
             services.AddSingleton<BlobOriginalsRepository>();
             services.AddSingleton<CosmosReviewRepository>();
             services.AddSingleton<CosmosCommentsRepository>();
+            services.AddSingleton<CosmosPullRequestsRepository>();
+            services.AddSingleton<DevopsArtifactRepository>();
 
             services.AddSingleton<ReviewManager>();
             services.AddSingleton<CommentsManager>();
             services.AddSingleton<NotificationManager>();
+            services.AddSingleton<PullRequestManager>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -184,7 +187,9 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
+            services.AddHostedService<PullRequestBackgroundHostedService>();
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

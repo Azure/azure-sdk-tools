@@ -1,0 +1,36 @@
+{{ $ctx := deepCopy . | merge (dict "Scenario" "watcher" ) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-watcher
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: stress-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stress-watcher
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: stress-watcher
+    spec:
+      nodeSelector:
+        sku: 'default'
+      initContainers:
+        # Init container template for injecting secrets
+        # (e.g. app insights instrumentation key, azure client credentials)
+        {{- include "stress-test-addons.init-env" $ctx | nindent 8 }}
+      containers:
+      - name: stresswatcher
+        imagePullPolicy: Always
+        image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
+        command: ["dotnet", "Stress.Watcher.dll"]
+        {{- include "stress-test-addons.container-env" $ctx | nindent 8 }}
+      volumes:
+        # Volume template for mounting secrets
+        {{- include "stress-test-addons.env-volumes" $ctx | nindent 8 }}
+        # Volume template for mounting azure file share for debugging
+        {{- include "stress-test-addons.debug-file-volumes" $ctx | nindent 8 }}

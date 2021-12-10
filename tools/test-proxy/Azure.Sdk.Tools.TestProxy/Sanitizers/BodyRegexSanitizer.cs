@@ -1,10 +1,11 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
 using System;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// This sanitizer operates on a RecordSession entry and applies itself to the Request and Response bodies contained therein.
+    /// This sanitizer operates on a RecordSession entry and applies itself to the Request and Response bodies contained therein. It ONLY operates on the request/response bodies. Not header or URIs.
     /// </summary>
     public class BodyRegexSanitizer : RecordedTestSanitizer
     {
@@ -25,6 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+
+            StringSanitizer.ConfirmValidRegex(regex);
         }
 
         public override string SanitizeTextBody(string contentType, string body)
@@ -35,7 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         public override byte[] SanitizeBody(string contentType, byte[] body)
         {
-            throw new NotImplementedException("Current concept of sanitization doesn't apply to non-text payloads. If you are encountering this, contact scbedd with the example so as to improve the system.");
+            return Encoding.UTF8.GetBytes(StringSanitizer.SanitizeValue(Encoding.UTF8.GetString(body), _newValue, _regexValue, _groupForReplace));
         }
     }
 }

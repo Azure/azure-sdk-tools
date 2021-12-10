@@ -52,7 +52,7 @@ Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -S
 Select-AzSubscription -Subscription $SubscriptionId
 
 Write-Verbose "Fetching groups"
-$allGroups = Get-AzResourceGroup
+$allGroups = @(Get-AzResourceGroup)
 
 Write-Host "Total Resource Groups: $($allGroups.Count)"
 
@@ -68,7 +68,7 @@ $toDelete = $hasDeleteAfter.Where({ $deleteDate = ($_.Tags.DeleteAfter -as [Date
 Write-Host "Groups to delete: $($toDelete.Count)"
 
 # Get purgeable resources already in a deleted state.
-$purgeableResources = Get-PurgeableResources
+$purgeableResources = @(Get-PurgeableResources)
 
 foreach ($rg in $toDelete)
 {

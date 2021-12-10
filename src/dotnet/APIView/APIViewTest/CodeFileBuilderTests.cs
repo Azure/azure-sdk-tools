@@ -44,6 +44,7 @@ namespace APIViewTest
             var code = streamReader.ReadToEnd();
             code = code.Trim(' ', '\t', '\r', '\n');
             var formatted = _stripRegex.Replace(code, string.Empty);
+            formatted = RemoveEmptyLines(formatted);
             formatted = formatted.Trim(' ', '\t', '\r', '\n');
             await AssertFormattingAsync(code, formatted);
         }
@@ -69,6 +70,16 @@ namespace APIViewTest
             var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);
             Assert.Equal(formatted, formattedString);
+        }
+
+        private string RemoveEmptyLines(string content)
+        {
+            var lines = content
+                .Split(Environment.NewLine)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToArray();
+
+            return String.Join(Environment.NewLine, lines);
         }
 
         public class NameSymbolOrderProvider : ICodeFileBuilderSymbolOrderProvider

@@ -5,7 +5,8 @@ using System.Linq;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// A simple sanitizer that should be used to clean out one or multiple headers by their key.
+    /// A simple sanitizer that should be used to clean out one or multiple headers by their key. As could be determined by the description, this sanitizer only applies to the 
+    /// request/response headers.
     /// </summary>
     public class RemoveHeaderSanitizer : RecordedTestSanitizer
     {
@@ -18,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// between the commas separating each key. They will be ignored.</param>
         public RemoveHeaderSanitizer(string headersForRemoval)
         {
-            _keysForRemoval = headersForRemoval.Split().Select(x => x.Trim()).ToArray();
+            _keysForRemoval = headersForRemoval.Split(",").Select(x => x.Trim()).ToArray();
         }
 
         public override void SanitizeHeaders(IDictionary<string, string[]> headers)

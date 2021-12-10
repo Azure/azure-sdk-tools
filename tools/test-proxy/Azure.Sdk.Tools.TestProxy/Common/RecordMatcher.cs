@@ -26,10 +26,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         };
 
         private bool _compareBodies;
+        private bool _ignoreQueryOrdering;
 
-        public RecordMatcher(bool compareBodies = true)
+        public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
         {
             _compareBodies = compareBodies;
+            _ignoreQueryOrdering = ignoreQueryOrdering;
         }
 
         public HashSet<string> ExcludeHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -38,8 +40,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-date",
             "x-ms-client-request-id",
             "User-Agent",
+            "x-ms-useragent",
+            "x-ms-version",
             "Request-Id",
-            "traceparent"
+            "traceparent",
+            "If-None-Match",
+            "sec-cha-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Referrer",
+            "Origin"
         };
 
         // Headers that don't indicate meaningful changes between updated recordings
@@ -49,6 +59,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-date",
             "x-ms-client-request-id",
             "User-Agent",
+            "x-ms-useragent",
             "Request-Id",
             "If-Match",
             "If-None-Match",
@@ -130,7 +141,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry));
         }
 
-        private int CompareBodies(byte[] requestBody, byte[] responseBody, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] responseBody, StringBuilder descriptionBuilder = null)
         {
             if (!_compareBodies)
             {
@@ -192,6 +203,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool AreUrisSame(string entryUri, string otherEntryUri) =>
             NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
 
+        private void AddQueriesToUri(RequestUriBuilder req, IEnumerable<string> accessKeySet, NameValueCollection queryParams)
+        {
+            foreach (string param in accessKeySet)
+            {
+                req.AppendQuery(
+                    param,
+                    VolatileQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
+            }
+        }
+
         private string NormalizeUri(string uriToNormalize)
         {
             var req = new RequestUriBuilder();
@@ -199,12 +220,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             req.Reset(uri);
             req.Query = "";
             NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
-            foreach (string param in queryParams)
+
+            if (_ignoreQueryOrdering)
             {
-                req.AppendQuery(
-                    param,
-                    VolatileQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
+                AddQueriesToUri(req, queryParams.AllKeys.OrderBy(x => x), queryParams);
             }
+            else
+            {
+                AddQueriesToUri(req, queryParams.AllKeys, queryParams);
+            }
+
             return req.ToUri().ToString();
         }
 
@@ -274,7 +299,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     string.Join("; ", value.Split(';').Select(part => part.Trim())))) };
         }
 
-        private int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, StringBuilder descriptionBuilder = null)
+        public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, StringBuilder descriptionBuilder = null)
         {
             int difference = 0;
             var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);

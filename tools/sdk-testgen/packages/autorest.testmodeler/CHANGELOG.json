@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "1.0.4",
+      "tag": "@autorest/testmodeler_v1.0.4",
+      "date": "Fri, 12 Dec 2021 07:35:05 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Match body parameter case insensivly."
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.3",
       "tag": "@autorest/testmodeler_v1.0.3",
       "date": "Mon, 29 Nov 2021 06:10:09 GMT",

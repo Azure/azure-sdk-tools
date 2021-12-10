@@ -1,10 +1,10 @@
 {
   "parameters": {
-    "subscriptionId": "{subscription-id}",
-    "resourceGroupName": "myResourceGroup",
-    "vmScaleSetName": "{vmss-name}",
-    "api-version": "2021-03-01",
-    "Parameters": {
+    "SubscriptionId": "{subscription-id}",
+    "ResourceGroupName": "myResourceGroup",
+    "VmScaleSetName": "{vmss-name}",
+    "Api-version": "2021-03-01",
+    "Pa-ram_eters": {
       "sku": {
         "tier": "Standard",
         "capacity": 3,

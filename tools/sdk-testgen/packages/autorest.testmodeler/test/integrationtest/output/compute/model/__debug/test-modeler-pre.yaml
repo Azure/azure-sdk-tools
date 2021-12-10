@@ -42856,7 +42856,8 @@ operationGroups:
           x-ms-examples:
             Create a custom-image scale set from an unmanaged generalized os image.:
               parameters:
-                Parameters:
+                Api-version: '2021-03-01'
+                Pa-ram_eters:
                   location: westus
                   properties:
                     overprovision: true
@@ -42889,10 +42890,9 @@ operationGroups:
                     name: Standard_D1_v2
                     capacity: 3
                     tier: Standard
-                api-version: '2021-03-01'
-                resourceGroupName: myResourceGroup
-                subscriptionId: '{subscription-id}'
-                vmScaleSetName: '{vmss-name}'
+                ResourceGroupName: myResourceGroup
+                SubscriptionId: '{subscription-id}'
+                VmScaleSetName: '{vmss-name}'
               x-ms-original-file: >-
                 file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
               responses:

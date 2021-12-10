@@ -27,13 +27,16 @@ function addArtifact(artifacts: any, name: string, safeName: string) {
     return true;
 }
 
-export function modifyOrGenerateCiYaml(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, packageName: string) {
+export function modifyOrGenerateCiYaml(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, packageName: string, isMgmt: boolean) {
     const relativeRpFolderPathRegexResult = /sdk[\/\\][^\/]*[\/\\]/.exec(changedPackageDirectory);
     if (relativeRpFolderPathRegexResult) {
         let relativeRpFolderPath = relativeRpFolderPathRegexResult[0];
         const rpFolderName = path.basename(relativeRpFolderPath);
         const rpFolderPath = path.join(azureSDKForJSRepoRoot, relativeRpFolderPath);
-        const ciYamlPath = path.join(rpFolderPath, 'ci.yml');
+        let ciYamlPath = path.join(rpFolderPath, 'ci.yml');
+        if (isMgmt && fs.existsSync(path.join(rpFolderPath, 'ci.mgmt.yml'))) {
+            ciYamlPath = path.join(rpFolderPath, 'ci.mgmt.yml');
+        }
         const name = packageName.replace('@', '').replace('/', '-');
         const safeName = name.replace(/-/g, '');
         if (fs.existsSync(ciYamlPath)) {

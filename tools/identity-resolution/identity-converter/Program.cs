@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Models;
@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using OutputColorizer;
 
-namespace Azure.Sdk.Tools.IdentityResolver
+namespace Azure.Sdk.Tools.IdentityConverter
 {
     class Program
     {

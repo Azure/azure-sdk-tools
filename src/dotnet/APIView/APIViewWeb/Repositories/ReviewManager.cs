@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -36,6 +37,8 @@ namespace APIViewWeb.Respositories
 
         private readonly NotificationManager _notificationManager;
 
+        private readonly DevopsArtifactRepository _devopsArtifactRepository;
+
         static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         public ReviewManager(
@@ -45,7 +48,8 @@ namespace APIViewWeb.Respositories
             BlobOriginalsRepository originalsRepository,
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
-            NotificationManager notificationManager)
+            NotificationManager notificationManager,
+            DevopsArtifactRepository devopsArtifactRepository)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -54,6 +58,7 @@ namespace APIViewWeb.Respositories
             _commentsRepository = commentsRepository;
             _languageServices = languageServices;
             _notificationManager = notificationManager;
+            _devopsArtifactRepository = devopsArtifactRepository;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
@@ -371,6 +376,11 @@ namespace APIViewWeb.Respositories
             //Generate code file from new uploaded package
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFile(originalName, fileStream, false, memoryStream);
+            return await CreateMasterReviewAsync(user, codeFile, originalName, label, memoryStream, compareAllRevisions);
+        }
+
+        private async Task<ReviewRevisionModel> CreateMasterReviewAsync(ClaimsPrincipal user,  CodeFile codeFile, string originalName, string label, MemoryStream memoryStream, bool compareAllRevisions)
+        { 
             var renderedCodeFile = new RenderedCodeFile(codeFile);
 
             //Get current master review for package and language
@@ -510,6 +520,54 @@ namespace APIViewWeb.Respositories
                     _telemetryClient.StopOperation(operation);
                 }
             }
+        }
+
+        public async Task<CodeFile> GetCodeFile(string repoName, string buildId, string artifactName, string packageName, string originalFileName, string codeFileName, MemoryStream memoryStream)
+        {
+            Stream stream = null;
+            CodeFile codeFile = null;
+            if (string.IsNullOrEmpty(codeFileName))
+            {
+                // backward compatibility until all languages moved to sandboxing of codefile to pipeline
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
+                codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, memoryStream);
+            }
+            else
+            {
+                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, "zip");
+                var archive = new ZipArchive(stream);
+                foreach (var entry in archive.Entries)
+                {
+                    var fileName = Path.GetFileName(entry.Name);
+                    if (fileName == originalFileName)
+                    {
+                        await entry.Open().CopyToAsync(memoryStream);
+                    }
+                    else if (fileName == codeFileName)
+                    {
+                        codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                    }
+                }
+            }
+
+            return codeFile;
+        }
+
+        public async Task<ReviewRevisionModel> CreateApiReview(
+            ClaimsPrincipal user,
+            string buildId,
+            string artifactName,
+            string originalFileName,
+            string label,
+            string repoName,
+            string packageName,
+            string codeFileName,
+            bool compareAllRevisions
+            )
+        {
+            using var memoryStream = new MemoryStream();
+            var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+            return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
     }
 }

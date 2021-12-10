@@ -38,7 +38,27 @@ namespace APIViewWeb.Controllers
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
 
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName, packageName);
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber);
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> CreateApiReview(
+            string buildId,
+            string artifactName,
+            string originalFilePath,
+            string reviewFilePath,
+            string commitSha,
+            string repoName,
+            string packageName,
+            int pullRequestNumber = 0)
+        {
+            if (!ValidateInputParams())
+            {
+                return StatusCode(StatusCodes.Status400BadRequest);
+            }
+
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, originalFilePath, commitSha, repoName, packageName, pullRequestNumber, reviewFilePath);
             return Ok();
         }
 

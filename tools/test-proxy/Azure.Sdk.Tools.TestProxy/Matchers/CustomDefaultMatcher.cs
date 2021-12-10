@@ -16,7 +16,8 @@ namespace Azure.Sdk.Tools.TestProxy.Matchers
         /// </summary>
         /// <param name="compareBodies">Should the body value be compared during lookup operations?</param>
         /// <param name="nonDefaultHeaderExclusions">A comma separated list of additional headers that should be excluded during matching.</param>
-        public CustomDefaultMatcher(bool compareBodies = true, string nonDefaultHeaderExclusions = "") : base(compareBodies: compareBodies)
+        /// <param name="ignoreQueryOrdering">By default, the test-proxy does not sort query params before matching. Setting true will sort query params alphabetically before comparing URI.</param>
+        public CustomDefaultMatcher(bool compareBodies = true, string nonDefaultHeaderExclusions = "", bool ignoreQueryOrdering = false) : base(compareBodies: compareBodies, ignoreQueryOrdering: ignoreQueryOrdering)
         {
             foreach(var exclusion in nonDefaultHeaderExclusions.Split(",").Where(x => !string.IsNullOrEmpty(x.Trim())))
             {

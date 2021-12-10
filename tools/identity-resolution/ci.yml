@@ -8,9 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/notification-configuration
-      - tools/code-owners-parser/CodeOwnersParser
-      - tools/identity-resolution/identity-resolution
+      - tools/identity-resolution
 
 pr:
   branches:
@@ -21,12 +19,10 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/notification-configuration
-      - tools/code-owners-parser/CodeOwnersParser
-      - tools/identity-resolution/identity-resolution
+      - tools/identity-resolution
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/notification-configuration
+    ToolDirectory: tools/identity-resolution
     DotNetCoreVersion: 5.0.301

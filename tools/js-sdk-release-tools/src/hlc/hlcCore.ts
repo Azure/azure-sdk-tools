@@ -123,7 +123,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                         metaInfo['use'] = use;
                     }
                     fs.writeFileSync(path.join(packageFolderPath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
-                    modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name);
+                    modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
                 } else {
                     throw 'find undefined packageFolderPath'
                 }

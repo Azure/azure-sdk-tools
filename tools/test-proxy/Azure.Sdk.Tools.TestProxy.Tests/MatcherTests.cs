@@ -191,7 +191,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             });
 
             Assert.Contains("<Accept-Encoding> is absent in request", assertion.Message);
-
         }
 
         [Fact]
@@ -206,7 +205,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
                 sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
-
 
             Assert.Contains("<Accept-Encoding> is absent in record", assertion.Message);
         }

@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return record;
         }
 
-        public static byte[] DeserializeBody(IDictionary<string, string[]> headers, in JsonElement property)
+        private static byte[] DeserializeBody(IDictionary<string, string[]> headers, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
             {

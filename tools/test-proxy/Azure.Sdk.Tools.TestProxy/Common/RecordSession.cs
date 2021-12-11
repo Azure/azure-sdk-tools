@@ -103,6 +103,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sanitizer.Sanitize(requestEntry);
             }
 
+            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(requestEntry.Request.Body);
+                requestEntry.Request.Body = RecordEntry.DeserializeBody(requestEntry.Request.Headers, doc.RootElement);
+            }
+            catch (JsonException)
+            {
+            }
+
             lock (Entries)
             {
                 RecordEntry entry = matcher.FindMatch(requestEntry, Entries);

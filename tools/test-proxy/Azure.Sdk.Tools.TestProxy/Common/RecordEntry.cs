@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return null;
             }
 
-            if (IsTextContentType(headers, out Encoding _))
+            if (IsTextContentType(headers, out Encoding encoding))
             {
                 using var memoryStream = new MemoryStream();
                 using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         }
                         catch (JsonException)
                         {
-                            return Encoding.UTF8.GetBytes(sb.ToString());
+                            return encoding.GetBytes(sb.ToString());
                         }
                         break;
                     }
@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         }
                         catch (JsonException)
                         {
-                            return Encoding.UTF8.GetBytes(property.GetString());
+                            return encoding.GetBytes(property.GetString());
                         }
 
                         break;

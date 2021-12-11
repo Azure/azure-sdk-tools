@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordSessionTests
     {
+        [Theory]
         [InlineData("{\"json\":\"value\"}", "application/json")]
         [InlineData("{\"json\":\"\\\"value\\\"\"}", "application/json")]
         [InlineData("{\"json\":{\"json\":\"value\"}}", "application/json")]
@@ -30,7 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("multi\n\rline\n", "application/xml")]
         [InlineData("", "")]
         [InlineData("true", "")]
-        [Theory]
         public void CanRoundtripSessionRecord(string body, string contentType)
         {
             byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
@@ -365,6 +365,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("Totally not a SANITIZED", session.Variables["B"]);
         }
 
+        [Theory]
         [InlineData("*", "invalid json", "invalid json")]
         [InlineData("..secret",
                 "[{\"secret\":\"I should be sanitized\"},{\"secret\":\"I should be sanitized\"}]",

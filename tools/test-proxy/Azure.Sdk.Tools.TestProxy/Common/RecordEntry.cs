@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // Requests and responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
         // To enable us to store more responses as JSON instead of string in Recording files use
         // relaxed settings for roundtrip
-        private static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
+        public static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
@@ -106,6 +106,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         {
                             sb.Append(item.GetString());
                         }
+
                         try
                         {
                             using var document = JsonDocument.Parse(sb.ToString());
@@ -118,16 +119,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         break;
                     }
                     default:
+                        string propertyValue = property.GetString();
+                        // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
                         try
                         {
-                            using var document = JsonDocument.Parse(property.GetString());
+                            // in case the string is actually a pre-encoded JSON object, try to parse it
+                            using var document = JsonDocument.Parse(propertyValue);
                             document.RootElement.WriteTo(writer);
                         }
                         catch (JsonException)
                         {
-                            return encoding.GetBytes(property.GetString());
+                            return encoding.GetBytes(propertyValue);
                         }
-
                         break;
                 }
                 writer.Flush();

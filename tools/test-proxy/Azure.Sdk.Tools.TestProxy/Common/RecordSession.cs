@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 
@@ -103,12 +104,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sanitizer.Sanitize(requestEntry);
             }
 
-            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
-
             try
             {
+                // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+
                 using JsonDocument doc = JsonDocument.Parse(requestEntry.Request.Body);
-                requestEntry.Request.Body = RecordEntry.DeserializeBody(requestEntry.Request.Headers, doc.RootElement);
+                using var memoryStream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(memoryStream, RecordEntry.WriterOptions);
+                doc.RootElement.WriteTo(writer);
+                writer.Flush();
+                requestEntry.Request.Body = memoryStream.ToArray();
             }
             catch (JsonException)
             {

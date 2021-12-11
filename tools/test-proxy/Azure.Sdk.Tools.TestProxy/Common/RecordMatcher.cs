@@ -60,6 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "sec-ch-ua-mobile",
             "sec-ch-ua-platform",
             "Referrer",
+            "Referer",
             "Origin"
         };
 

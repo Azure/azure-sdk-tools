@@ -34,7 +34,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             _ignoreQueryOrdering = ignoreQueryOrdering;
         }
 
+        /// <summary>
+        /// Headers that will be entirely ignored during matching. 
+        /// </summary>
         public HashSet<string> ExcludeHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Request-Id",
+            "traceparent",
+        };
+
+
+        /// <summary>
+        /// Headers whose CONTENT will be ignored during matching, but whose PRESENCE will still be checked for on both request and record sides. 
+        /// </summary>
+        public HashSet<string> IgnoredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Date",
             "x-ms-date",
@@ -42,39 +55,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "User-Agent",
             "x-ms-useragent",
             "x-ms-version",
-            "Request-Id",
-            "traceparent",
             "If-None-Match",
             "sec-cha-ua",
             "sec-ch-ua-mobile",
             "sec-ch-ua-platform",
             "Referrer",
+            "Referer",
             "Origin"
-        };
-
-        // Headers that don't indicate meaningful changes between updated recordings
-        public HashSet<string> VolatileHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Date",
-            "x-ms-date",
-            "x-ms-client-request-id",
-            "User-Agent",
-            "x-ms-useragent",
-            "Request-Id",
-            "If-Match",
-            "If-None-Match",
-            "If-Modified-Since",
-            "If-Unmodified-Since"
-        };
-
-        // Headers that don't indicate meaningful changes between updated recordings
-        public HashSet<string> VolatileResponseHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Date",
-            "ETag",
-            "Last-Modified",
-            "x-ms-request-id",
-            "x-ms-correlation-request-id"
         };
 
         /// <summary>
@@ -122,7 +109,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 //we only check Uri + RequestMethod for track1 record
                 if (!entry.IsTrack1Recording)
                 {
-                    score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, ExcludeHeaders);
+                    score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
                     score += CompareBodies(request.Request.Body, entry.Request.Body);
                 }
 
@@ -191,15 +178,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return 0;
         }
 
-        public virtual bool IsEquivalentRecord(RecordEntry entry, RecordEntry otherEntry) =>
-            IsEquivalentRequest(entry, otherEntry) &&
-            IsEquivalentResponse(entry, otherEntry);
-
-        protected virtual bool IsEquivalentRequest(RecordEntry entry, RecordEntry otherEntry) =>
-            entry.RequestMethod == otherEntry.RequestMethod &&
-            IsEquivalentUri(entry.RequestUri, otherEntry.RequestUri) &&
-            CompareHeaderDictionaries(entry.Request.Headers, otherEntry.Request.Headers, VolatileHeaders) == 0;
-
         private bool AreUrisSame(string entryUri, string otherEntryUri) =>
             NormalizeUri(entryUri) == NormalizeUri(otherEntryUri);
 
@@ -233,26 +211,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return req.ToUri().ToString();
         }
 
-        protected virtual bool IsEquivalentUri(string entryUri, string otherEntryUri) =>
-            AreUrisSame(entryUri, otherEntryUri);
-
-        protected virtual bool IsEquivalentResponse(RecordEntry entry, RecordEntry otherEntry)
-        {
-            IEnumerable<KeyValuePair<string, string[]>> entryHeaders = entry.Response.Headers.Where(h => !VolatileResponseHeaders.Contains(h.Key));
-            IEnumerable<KeyValuePair<string, string[]>> otherEntryHeaders = otherEntry.Response.Headers.Where(h => !VolatileResponseHeaders.Contains(h.Key));
-
-            return
-                entry.StatusCode == otherEntry.StatusCode &&
-                entryHeaders.SequenceEqual(otherEntryHeaders, new HeaderComparer()) &&
-                IsBodyEquivalent(entry, otherEntry);
-        }
-
-        protected virtual bool IsBodyEquivalent(RecordEntry record, RecordEntry otherRecord)
-        {
-            return (record.Response.Body ?? Array.Empty<byte>()).AsSpan()
-                .SequenceEqual((otherRecord.Response.Body ?? Array.Empty<byte>()));
-        }
-
         private string GenerateException(RecordEntry request, RecordEntry bestScoreEntry)
         {
             StringBuilder builder = new StringBuilder();
@@ -278,7 +236,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             builder.AppendLine("Header differences:");
 
-            CompareHeaderDictionaries(request.Request.Headers, bestScoreEntry.Request.Headers, ExcludeHeaders, builder);
+            CompareHeaderDictionaries(request.Request.Headers, bestScoreEntry.Request.Headers, IgnoredHeaders, ExcludeHeaders, builder);
 
             builder.AppendLine("Body differences:");
 
@@ -299,7 +257,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     string.Join("; ", value.Split(';').Select(part => part.Trim())))) };
         }
 
-        public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, StringBuilder descriptionBuilder = null)
+        public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)
         {
             int difference = 0;
             var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);
@@ -308,13 +266,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var requestHeaderValues = header.Value;
                 var headerName = header.Key;
 
-                if (ignoredHeaders.Contains(headerName))
+                if (excludedHeaders.Contains(headerName))
                 {
                     continue;
                 }
 
                 if (remaining.TryGetValue(headerName, out string[] entryHeaderValues))
                 {
+                    if (ignoredHeaders.Contains(headerName)) {
+                        remaining.Remove(headerName);
+                        continue;
+                    }
+
                     // Content-Type, Accept headers are normalized by HttpClient, re-normalize them before comparing
                     if (_normalizedHeaders.Contains(headerName))
                     {
@@ -338,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             foreach (KeyValuePair<string, string[]> header in remaining)
             {
-                if (!ignoredHeaders.Contains(header.Key))
+                if (!excludedHeaders.Contains(header.Key))
                 {
                     difference++;
                     descriptionBuilder?.AppendLine($"    <{header.Key}> is absent in request, value <{JoinHeaderValues(header.Value)}>");

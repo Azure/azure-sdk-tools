@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
 
-            var matcher = new CustomDefaultMatcher(nonDefaultHeaderExclusions: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
 
             sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
 
-            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
 
             sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             differentHeadersRequest.Request.Headers.Remove("Accept-Encoding");
 
-            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
 
             var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
                 sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
@@ -200,7 +200,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             sessionForRetrieval.Session.Entries[0].Request.Headers.Remove("Accept-Encoding");
             var sameOriginalHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
 
-            var matcher = new CustomDefaultMatcher(nonDefaultIgnoredHeaders: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
 
             var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
                 sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
             var differentRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
-            var matcher = new CustomDefaultMatcher(nonDefaultHeaderExclusions: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
 
             differentRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
             differentRequest.RequestUri = "https://shouldntmatch.com";

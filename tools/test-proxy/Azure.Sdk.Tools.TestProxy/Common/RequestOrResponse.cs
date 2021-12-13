@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
-    public class RecordEntryMessage
+    public class RequestOrResponse
     {
         public SortedDictionary<string, string[]> Headers { get; set; } = new SortedDictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
 

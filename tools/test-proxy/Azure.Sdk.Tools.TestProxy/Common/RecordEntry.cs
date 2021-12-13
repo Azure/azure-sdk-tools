@@ -14,18 +14,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RecordEntry
     {
-        private static readonly JsonWriterOptions RequestWriterOptions = new JsonWriterOptions();
-        // Responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
+        // Requests and responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
         // To enable us to store more responses as JSON instead of string in Recording files use
         // relaxed settings for roundtrip
-        private static readonly JsonWriterOptions ResponseWriterOptions = new JsonWriterOptions()
+        private static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        public RecordEntryMessage Request { get; set;  } = new RecordEntryMessage();
+        public RequestOrResponse Request { get; set; } = new RequestOrResponse();
 
-        public RecordEntryMessage Response { get; set; } = new RecordEntryMessage();
+        public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
         public string RequestUri { get; set; }
 
@@ -61,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             if (element.TryGetProperty("RequestBody", out property))
             {
-                record.Request.Body = DeserializeBody(record.Request.Headers, property, RequestWriterOptions);
+                DeserializeBody(record.Request, property);
             }
 
             if (element.TryGetProperty(nameof(StatusCode), out property) &&
@@ -77,52 +76,70 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             if (element.TryGetProperty("ResponseBody", out property))
             {
-                record.Response.Body = DeserializeBody(record.Response.Headers, property, ResponseWriterOptions);
+                DeserializeBody(record.Response, property);
             }
 
             return record;
         }
 
-        private static byte[] DeserializeBody(IDictionary<string, string[]> headers, in JsonElement property, JsonWriterOptions writerOptions)
+        private static void DeserializeBody(RequestOrResponse requestOrResponse, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
             {
-                return null;
+                requestOrResponse.Body = null;
             }
-
-            if (IsTextContentType(headers, out Encoding encoding))
+            else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
-                if (property.ValueKind == JsonValueKind.Object)
+                if (property.ValueKind == JsonValueKind.Array)
                 {
-                    using var memoryStream = new MemoryStream();
-                    using var writer = new Utf8JsonWriter(memoryStream, writerOptions);
-                    property.WriteTo(writer);
-                    writer.Flush();
-                    return memoryStream.ToArray();
-                }
-                else if (property.ValueKind == JsonValueKind.Array)
-                {
-                    StringBuilder stringBuilder = new StringBuilder();
-
-                    foreach (JsonElement item in property.EnumerateArray())
                     {
-                        stringBuilder.Append(item.GetString());
-                    }
+                        StringBuilder sb = new StringBuilder();
+                        foreach (JsonElement item in property.EnumerateArray())
+                        {
+                            sb.Append(item.GetString());
+                        }
 
-                    return encoding.GetBytes(stringBuilder.ToString());
+                        requestOrResponse.Body = encoding.GetBytes(sb.ToString());
+                    }
+                }
+                else if (property.ValueKind == JsonValueKind.String)
+                {
+                    requestOrResponse.Body = encoding.GetBytes(property.GetString());
                 }
                 else
                 {
-                    return encoding.GetBytes(property.GetString());
+                    requestOrResponse.Body = encoding.GetBytes(property.GetRawText());
                 }
-            }
 
-            if (property.ValueKind == JsonValueKind.Array)
+                // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
+                NormalizeJsonBody(requestOrResponse);
+            }
+            else if (property.ValueKind == JsonValueKind.Array)
             {
-                return Array.Empty<byte>();
+                requestOrResponse.Body = Array.Empty<byte>();
             }
+            else
+            {
+                requestOrResponse.Body = Convert.FromBase64String(property.GetString());
+            }
+        }
 
-            return Convert.FromBase64String(property.GetString());
+        public static void NormalizeJsonBody(RequestOrResponse requestOrResponse)
+        {
+            try
+            {
+                // in case the bytes are actually a pre-encoded JSON object, try to parse it
+                using var memoryStream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
+                using var document = JsonDocument.Parse(requestOrResponse.Body);
+                document.RootElement.WriteTo(writer);
+                writer.Flush();
+                requestOrResponse.Body = memoryStream.ToArray();
+                RecordedTestSanitizer.UpdateSanitizedContentLength(requestOrResponse);
+            }
+            catch (JsonException)
+            {
+            }
         }
 
         private static void DeserializeHeaders(IDictionary<string, string[]> headers, in JsonElement property)
@@ -156,7 +173,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             SerializeHeaders(jsonWriter, Request.Headers);
             jsonWriter.WriteEndObject();
 
-            SerializeBody(jsonWriter, "RequestBody", Request.Body, Request.Headers, RequestWriterOptions);
+            SerializeBody(jsonWriter, "RequestBody", Request.Body, Request.Headers);
 
             jsonWriter.WriteNumber(nameof(StatusCode), StatusCode);
 
@@ -164,11 +181,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             SerializeHeaders(jsonWriter, Response.Headers);
             jsonWriter.WriteEndObject();
 
-            SerializeBody(jsonWriter, "ResponseBody", Response.Body, Response.Headers, ResponseWriterOptions);
+            SerializeBody(jsonWriter, "ResponseBody", Response.Body, Response.Headers);
             jsonWriter.WriteEndObject();
         }
 
-        private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers, JsonWriterOptions writerOptions)
+        private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {
             if (requestBody == null)
             {
@@ -194,22 +211,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     if (document.RootElement.ValueKind != JsonValueKind.Array &&
                         document.RootElement.ValueKind != JsonValueKind.String)
                     {
-                        // Make sure we can replay JSON is exactly the same as the source
-                        // for the case where service response was pre-formatted
-                        // fallback to generic string writing
                         using var memoryStream = new MemoryStream();
                         // Settings of this writer should be in sync with the one used in deserialization
-                        using (var reformattedWriter = new Utf8JsonWriter(memoryStream, writerOptions))
+                        using (var reformattedWriter = new Utf8JsonWriter(memoryStream, WriterOptions))
                         {
                             document.RootElement.WriteTo(reformattedWriter);
                         }
 
-                        if (memoryStream.ToArray().SequenceEqual(requestBody))
-                        {
-                            jsonWriter.WritePropertyName(name.AsSpan());
-                            document.RootElement.WriteTo(jsonWriter);
-                            return;
-                        }
+                        jsonWriter.WritePropertyName(name.AsSpan());
+                        document.RootElement.WriteTo(jsonWriter);
+                        return;
                     }
                 }
                 catch (Exception)

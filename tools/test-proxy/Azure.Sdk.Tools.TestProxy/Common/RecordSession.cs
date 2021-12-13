@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 
@@ -81,27 +82,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, RecordedTestSanitizer sanitizer, bool remove = true)
-        {
-            sanitizer.Sanitize(requestEntry);
-
-            lock (Entries)
-            {
-                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-                if (remove)
-                {
-                    Entries.Remove(entry);
-                }
-                return entry;
-            }
-        }
-
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
         {
             foreach(RecordedTestSanitizer sanitizer in sanitizers)
             {
                 sanitizer.Sanitize(requestEntry);
             }
+            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+            RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
             lock (Entries)
             {
@@ -110,6 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     Entries.Remove(entry);
                 }
+
                 return entry;
             }
         }

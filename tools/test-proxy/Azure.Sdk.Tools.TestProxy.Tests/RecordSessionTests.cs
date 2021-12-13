@@ -88,8 +88,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{\"json\":\"value\"}", "application/json")]
         [InlineData("{\"json\":\"\\\"value\\\"\"}", "application/json")]
         [InlineData("{\"json\":{\"json\":\"value\"}}", "application/json")]
-        [InlineData("[\"json\",\"value\"]", "application/json")]
-        [InlineData("{\"json\":1.000045}", "application/json")]
+        [InlineData("[\"json\",  \"value\"]", "application/json")]
+        [InlineData("{\"json\":  1.00000000000000345345445}", "application/json")]
         public void BodyNormalizationWorksWhenMatching(string body, string contentType)
         {
             byte[] bodyBytes = Encoding.UTF8.GetBytes(body);

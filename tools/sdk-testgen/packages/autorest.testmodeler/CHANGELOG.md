@@ -1,9 +1,9 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Fri, 10 Dec 2021 07:35:05 GMT and should not be manually modified.
+This log was last generated on Fri, 12 Dec 2021 07:35:05 GMT and should not be manually modified.
 
 ## 1.0.4
-Fri, 10 Dec 2021 07:35:05 GMT
+Fri, 12 Dec 2021 07:35:05 GMT
 
 ### Patches
 

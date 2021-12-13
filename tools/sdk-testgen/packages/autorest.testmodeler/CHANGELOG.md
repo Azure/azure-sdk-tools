@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 29 Nov 2021 06:10:09 GMT and should not be manually modified.
+This log was last generated on Fri, 12 Dec 2021 07:35:05 GMT and should not be manually modified.
+
+## 1.0.4
+Fri, 12 Dec 2021 07:35:05 GMT
+
+### Patches
+
+- Match body parameter case insensivly.
 
 ## 1.0.3
 Mon, 29 Nov 2021 06:10:09 GMT

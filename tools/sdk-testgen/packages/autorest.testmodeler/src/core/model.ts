@@ -272,14 +272,15 @@ export class TestCodeModeler {
 
     private createExampleModel(exampleExtension: ExampleExtension, exampleName, operation: Operation, operationGroup: OperationGroup): ExampleModel {
         const allParameters = Helper.allParameters(operation);
-        const parametersInExample = Helper.uncapitalizeObjectKeys(exampleExtension.parameters, allParameters);
+        const parametersInExample = exampleExtension.parameters;
         const exampleModel = new ExampleModel(exampleName, operation, operationGroup);
         exampleModel.originalFile = Helper.getExampleRelativePath(exampleExtension['x-ms-original-file']);
         for (const parameter of allParameters) {
             if (parameter.flattened) {
                 continue;
             }
-            const paramRawData = Helper.queryByPath(parametersInExample, Helper.getFlattenedNames(parameter));
+            const t = Helper.getFlattenedNames(parameter);
+            const paramRawData = parameter.protocol?.http?.in === 'body' ? Helper.queryBodyParameter(parametersInExample, t) : Helper.queryByPath(parametersInExample, t);
             if (paramRawData.length === 1) {
                 const exampleParameter = new ExampleParameter(parameter, paramRawData[0]);
                 if (parameter.implementation === ImplementationLocation.Method) {

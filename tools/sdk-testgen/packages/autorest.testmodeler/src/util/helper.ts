@@ -1,7 +1,6 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as jp from 'jsonpath';
-import * as lodash from 'lodash';
 import * as path from 'path';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
 import { Host, Session } from '@autorest/extension-base';
@@ -180,8 +179,23 @@ export class Helper {
 
     public static queryByPath(obj: any, path: string[]): any[] {
         const jsonPath = '$' + path.map((x) => `['${x}']`).join('');
-
         return jp.query(obj, jsonPath);
+    }
+
+    public static queryBodyParameter(obj: any, path: string[]): any[] {
+        let i = 0;
+        let cur = obj;
+        while (path.length > i) {
+            const realKey =
+                i === 0 ? Object.keys(cur).find((key) => key.replace(/[^A-Za-z$0-9]/g, '').toLowerCase() === path[i].replace(/[^A-Za-z$0-9]/g, '').toLowerCase()) : path[i];
+            if (realKey) {
+                cur = cur[realKey];
+            } else {
+                return [];
+            }
+            i++;
+        }
+        return [cur];
     }
 
     public static getExampleRelativePath(src: string): string {
@@ -219,28 +233,5 @@ export class Helper {
                 .filter((x) => x.length >= prefix.length && x.slice(0, prefix.length).join(',') === prefix.join(','))
                 .map((x) => x.slice(prefix.length)),
         );
-    }
-
-    public static uncapitalizeObjectKeys(obj, allParameter: Parameter[]) {
-        if (typeof obj !== 'object' || Array.isArray(obj)) {
-            return obj;
-        }
-
-        function isBodyParameter(key: string): boolean {
-            for (const parameter of allParameter) {
-                if (key?.toLowerCase() === parameter.language.default.name?.toLowerCase() && parameter.protocol?.http?.in === 'body') {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        return lodash.transform(obj, (result, val, key) => {
-            if (typeof key === 'string' && isBodyParameter(key)) {
-                result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
-            } else {
-                result[key] = val;
-            }
-        });
     }
 }

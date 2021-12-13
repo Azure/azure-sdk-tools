@@ -442,21 +442,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(expected, response);
         }
 
-        [Fact]
-        public void SavingRecordingSanitizesValues()
-        {
-            var tempFile = Path.GetTempFileName();
-            var sanitizer = new TestSanitizer();
-            TestRecording recording = new TestRecording(RecordedTestMode.Record, tempFile, sanitizer, new RecordMatcher());
-
-            recording.SetVariable("A", "secret");
-            recording.Dispose(true);
-
-            var text = File.ReadAllText(tempFile);
-
-            Assert.DoesNotContain("secret", text);
-        }
-
         [Theory]
         [InlineData("Content-Type")]
         [InlineData("Accept")]
@@ -507,34 +492,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var entry = RecordTransport.CreateEntry(playbackRequest, new MockResponse(200));
 
             Assert.NotNull(matcher.FindMatch(requestEntry, new[] { entry }));
-        }
-
-        [Fact]
-        public void DisableRequestBodyRecordingMakesRequestBodyNull()
-        {
-            var tempFile = Path.GetTempFileName();
-            TestRecording recording = new TestRecording(RecordedTestMode.Record, tempFile, new TestSanitizer(), new RecordMatcher());
-            HttpPipelineTransport transport = recording.CreateTransport(Mock.Of<HttpPipelineTransport>());
-
-            var body = "A nice and long body.";
-
-            var request = new MockRequest();
-            request.Content = RequestContent.Create(Encoding.UTF8.GetBytes(body));
-            request.Headers.Add("Content-Type", "text/json");
-
-            HttpMessage message = new HttpMessage(request, null);
-            message.Response = new MockResponse(200);
-
-            using (recording.DisableRequestBodyRecording())
-            {
-                transport.Process(message);
-            }
-
-            recording.Dispose(true);
-            var text = File.ReadAllText(tempFile);
-
-            Assert.DoesNotContain(body, text);
-            Assert.Contains($"\"RequestBody\": null", text);
         }
 
         [Fact]

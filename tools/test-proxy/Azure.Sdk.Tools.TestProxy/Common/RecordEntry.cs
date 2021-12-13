@@ -90,8 +90,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
-                byte[] bytes = null;
-
                 if (property.ValueKind == JsonValueKind.Array)
                 {
                     {

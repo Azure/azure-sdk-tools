@@ -102,6 +102,13 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                         if (changelog) {
                             outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
                             outputPackageInfo.changelog.content = changelog.displayChangeLog();
+                            const breakingChangeItems = changelog.getBreakingChangeItems();
+                            if (!!breakingChangeItems && breakingChangeItems.length > 0) {
+                                outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                            }
+                            const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));;
+                            const newVersion = newPackageJson['version'];
+                            outputPackageInfo['version'] = newVersion;
                         }
                         outputPackageInfo.path.push(path.dirname(changedPackageDirectory));
                         for (const file of fs.readdirSync(packageFolderPath)) {

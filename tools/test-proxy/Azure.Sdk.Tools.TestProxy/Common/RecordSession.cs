@@ -82,32 +82,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, RecordedTestSanitizer sanitizer, bool remove = true)
-        {
-            sanitizer.Sanitize(requestEntry);
-
-            return LookUpSanitizedRecord(requestEntry, matcher, remove);
-        }
-
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
         {
             foreach(RecordedTestSanitizer sanitizer in sanitizers)
             {
                 sanitizer.Sanitize(requestEntry);
             }
-            return LookUpSanitizedRecord(requestEntry, matcher, remove);
-        }
-
-        private RecordEntry LookUpSanitizedRecord(RecordEntry requestEntry, RecordMatcher matcher, bool remove)
-        {
-            try
-            {
-                // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
-                RecordEntry.NormalizeJsonBody(requestEntry.Request, requestEntry.Request.Body);
-            }
-            catch (JsonException)
-            {
-            }
+            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+            RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
             lock (Entries)
             {

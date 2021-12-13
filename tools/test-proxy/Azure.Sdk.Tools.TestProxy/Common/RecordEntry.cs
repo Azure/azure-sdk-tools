@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // Requests and responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
         // To enable us to store more responses as JSON instead of string in Recording files use
         // relaxed settings for roundtrip
-        public static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
+        private static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
@@ -88,8 +88,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 requestOrResponse.Body = null;
             }
-
-            if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
+            else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
                 byte[] bytes = null;
 
@@ -102,40 +101,39 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             sb.Append(item.GetString());
                         }
 
-                        bytes = encoding.GetBytes(sb.ToString());
+                        requestOrResponse.Body = encoding.GetBytes(sb.ToString());
                     }
                 }
                 else if (property.ValueKind == JsonValueKind.String)
                 {
-                    bytes = encoding.GetBytes(property.GetString());
+                    requestOrResponse.Body = encoding.GetBytes(property.GetString());
                 }
                 else
                 {
-                    bytes = encoding.GetBytes(property.GetRawText());
+                    requestOrResponse.Body = encoding.GetBytes(property.GetRawText());
                 }
 
                 // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
-                NormalizeJsonBody(requestOrResponse, bytes);
+                NormalizeJsonBody(requestOrResponse);
             }
             else if (property.ValueKind == JsonValueKind.Array)
             {
                 requestOrResponse.Body = Array.Empty<byte>();
             }
-
             else
             {
                 requestOrResponse.Body = Convert.FromBase64String(property.GetString());
             }
         }
 
-        public static void NormalizeJsonBody(RequestOrResponse requestOrResponse, byte[] bytes)
+        public static void NormalizeJsonBody(RequestOrResponse requestOrResponse)
         {
             try
             {
                 // in case the bytes are actually a pre-encoded JSON object, try to parse it
                 using var memoryStream = new MemoryStream();
                 using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
-                using var document = JsonDocument.Parse(bytes);
+                using var document = JsonDocument.Parse(requestOrResponse.Body);
                 document.RootElement.WriteTo(writer);
                 writer.Flush();
                 requestOrResponse.Body = memoryStream.ToArray();
@@ -143,7 +141,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             catch (JsonException)
             {
-                requestOrResponse.Body = bytes;
             }
         }
 
@@ -178,7 +175,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             SerializeHeaders(jsonWriter, Request.Headers);
             jsonWriter.WriteEndObject();
 
-            SerializeBody(jsonWriter, "RequestBody", Request.Body, Request.Headers, WriterOptions);
+            SerializeBody(jsonWriter, "RequestBody", Request.Body, Request.Headers);
 
             jsonWriter.WriteNumber(nameof(StatusCode), StatusCode);
 
@@ -186,11 +183,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             SerializeHeaders(jsonWriter, Response.Headers);
             jsonWriter.WriteEndObject();
 
-            SerializeBody(jsonWriter, "ResponseBody", Response.Body, Response.Headers, WriterOptions);
+            SerializeBody(jsonWriter, "ResponseBody", Response.Body, Response.Headers);
             jsonWriter.WriteEndObject();
         }
 
-        private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers, JsonWriterOptions writerOptions)
+        private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {
             if (requestBody == null)
             {
@@ -218,7 +215,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         using var memoryStream = new MemoryStream();
                         // Settings of this writer should be in sync with the one used in deserialization
-                        using (var reformattedWriter = new Utf8JsonWriter(memoryStream, writerOptions))
+                        using (var reformattedWriter = new Utf8JsonWriter(memoryStream, WriterOptions))
                         {
                             document.RootElement.WriteTo(reformattedWriter);
                         }

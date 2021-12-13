@@ -84,6 +84,50 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(bodyBytes, deserializedRecord.Response.Body);
         }
 
+        [Theory]
+        [InlineData("{\"json\":\"value\"}", "application/json")]
+        [InlineData("{\"json\":\"\\\"value\\\"\"}", "application/json")]
+        [InlineData("{\"json\":{\"json\":\"value\"}}", "application/json")]
+        [InlineData("[\"json\",\"value\"]", "application/json")]
+        [InlineData("{\"json\":1.000045}", "application/json")]
+        public void BodyNormalizationWorksWhenMatching(string body, string contentType)
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+
+            var session = new RecordSession();
+            session.Variables["a"] = "value a";
+            session.Variables["b"] = "value b";
+
+            RecordEntry recordEntry = new RecordEntry();
+            recordEntry.Request.Headers.Add("Content-Type", new[] { contentType });
+            recordEntry.Request.Headers.Add("Other-Header", new[] { "multi", "value" });
+            recordEntry.Request.Body = bodyBytes;
+            recordEntry.RequestUri = "http://localhost/";
+            recordEntry.RequestMethod = RequestMethod.Delete;
+
+            recordEntry.Response.Headers.Add("Content-Type", new[] { contentType });
+            recordEntry.Response.Headers.Add("Other-Response-Header", new[] { "multi", "value" });
+
+            recordEntry.Response.Body = bodyBytes;
+            recordEntry.StatusCode = 202;
+
+            session.Entries.Add(recordEntry);
+
+            var arrayBufferWriter = new ArrayBufferWriter<byte>();
+            using var jsonWriter = new Utf8JsonWriter(arrayBufferWriter, new JsonWriterOptions()
+            {
+                Indented = true
+            });
+            session.Serialize(jsonWriter);
+            jsonWriter.Flush();
+            var document = JsonDocument.Parse(arrayBufferWriter.WrittenMemory);
+            var deserializedSession = RecordSession.Deserialize(document.RootElement);
+
+            var matcher = new RecordMatcher();
+            Assert.NotNull(deserializedSession.Lookup(recordEntry, matcher, new[] { new RecordedTestSanitizer() }));
+        }
+
+
         [Fact]
         public void RecordMatcherThrowsExceptionsWithDetails()
         {
@@ -438,7 +482,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.NotNull(matcher.FindMatch(requestEntry, new[] { entry }));
         }
-
+        
         [Theory]
         [InlineData("Content-Type")]
         [InlineData("Accept")]

@@ -22,9 +22,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        public RecordEntryMessage Request { get; set;  } = new RecordEntryMessage();
+        public RequestOrResponse Request { get; set; } = new RequestOrResponse();
 
-        public RecordEntryMessage Response { get; set; } = new RecordEntryMessage();
+        public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
         public string RequestUri { get; set; }
 
@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             if (element.TryGetProperty("RequestBody", out property))
             {
-                record.Request.Body = DeserializeBody(record.Request.Headers, property);
+                DeserializeBody(record.Request, property);
             }
 
             if (element.TryGetProperty(nameof(StatusCode), out property) &&
@@ -76,30 +76,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             if (element.TryGetProperty("ResponseBody", out property))
             {
-                record.Response.Body = DeserializeBody(record.Response.Headers, property);
+                DeserializeBody(record.Response, property);
             }
 
             return record;
         }
 
-        private static byte[] DeserializeBody(IDictionary<string, string[]> headers, in JsonElement property)
+        private static void DeserializeBody(RequestOrResponse requestOrResponse, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
             {
-                return null;
+                requestOrResponse.Body = null;
             }
 
-            if (IsTextContentType(headers, out Encoding encoding))
+            if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
-                using var memoryStream = new MemoryStream();
-                using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
+                byte[] bytes = null;
 
-                switch (property.ValueKind)
+                if (property.ValueKind == JsonValueKind.Array)
                 {
-                    case JsonValueKind.Object:
-                        property.WriteTo(writer);
-                        break;
-                    case JsonValueKind.Array:
                     {
                         StringBuilder sb = new StringBuilder();
                         foreach (JsonElement item in property.EnumerateArray())
@@ -107,42 +102,49 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             sb.Append(item.GetString());
                         }
 
-                        try
-                        {
-                            using var document = JsonDocument.Parse(sb.ToString());
-                            document.RootElement.WriteTo(writer);
-                        }
-                        catch (JsonException)
-                        {
-                            return encoding.GetBytes(sb.ToString());
-                        }
-                        break;
+                        bytes = encoding.GetBytes(sb.ToString());
                     }
-                    default:
-                        string propertyValue = property.GetString();
-                        // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
-                        try
-                        {
-                            // in case the string is actually a pre-encoded JSON object, try to parse it
-                            using var document = JsonDocument.Parse(propertyValue);
-                            document.RootElement.WriteTo(writer);
-                        }
-                        catch (JsonException)
-                        {
-                            return encoding.GetBytes(propertyValue);
-                        }
-                        break;
                 }
-                writer.Flush();
-                return memoryStream.ToArray();
-            }
+                else if (property.ValueKind == JsonValueKind.String)
+                {
+                    bytes = encoding.GetBytes(property.GetString());
+                }
+                else
+                {
+                    bytes = encoding.GetBytes(property.GetRawText());
+                }
 
-            if (property.ValueKind == JsonValueKind.Array)
+                // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
+                NormalizeJsonBody(requestOrResponse, bytes);
+            }
+            else if (property.ValueKind == JsonValueKind.Array)
             {
-                return Array.Empty<byte>();
+                requestOrResponse.Body = Array.Empty<byte>();
             }
 
-            return Convert.FromBase64String(property.GetString());
+            else
+            {
+                requestOrResponse.Body = Convert.FromBase64String(property.GetString());
+            }
+        }
+
+        public static void NormalizeJsonBody(RequestOrResponse requestOrResponse, byte[] bytes)
+        {
+            try
+            {
+                // in case the bytes are actually a pre-encoded JSON object, try to parse it
+                using var memoryStream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
+                using var document = JsonDocument.Parse(bytes);
+                document.RootElement.WriteTo(writer);
+                writer.Flush();
+                requestOrResponse.Body = memoryStream.ToArray();
+                RecordedTestSanitizer.UpdateSanitizedContentLength(requestOrResponse);
+            }
+            catch (JsonException)
+            {
+                requestOrResponse.Body = bytes;
+            }
         }
 
         private static void DeserializeHeaders(IDictionary<string, string[]> headers, in JsonElement property)

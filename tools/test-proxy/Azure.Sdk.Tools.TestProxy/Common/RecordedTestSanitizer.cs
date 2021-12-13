@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
-        public virtual void SanitizeBody(RecordEntryMessage message)
+        public virtual void SanitizeBody(RequestOrResponse message)
         {
             if (message.Body != null)
             {
@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     message.Body = SanitizeBody(contentType, message.Body);
                 }
 
-                UpdateSanitizedContentLength(message.Headers, message.Body?.Length ?? 0);
+                UpdateSanitizedContentLength(message);
             }
         }
 
@@ -143,10 +143,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Content-Length header.  We don't add a Content-Length header if it
         /// wasn't already present.
         /// </summary>
-        /// <param name="headers">The Request or Response headers</param>
-        /// <param name="sanitizedLength">The sanitized Content-Length</param>
-        protected static void UpdateSanitizedContentLength(IDictionary<string, string[]> headers, int sanitizedLength)
+        /// <param name="requestOrResponse">The Request or Response message</param>
+        protected internal static void UpdateSanitizedContentLength(RequestOrResponse requestOrResponse)
         {
+            var headers = requestOrResponse.Headers;
+            int sanitizedLength = requestOrResponse.Body?.Length ?? 0;
             // Only update Content-Length if already present.
             if (headers.ContainsKey("Content-Length"))
             {

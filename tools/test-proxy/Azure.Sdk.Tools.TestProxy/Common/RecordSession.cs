@@ -86,15 +86,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             sanitizer.Sanitize(requestEntry);
 
-            lock (Entries)
-            {
-                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-                if (remove)
-                {
-                    Entries.Remove(entry);
-                }
-                return entry;
-            }
+            return LookUpSanitizedRecord(requestEntry, matcher, remove);
         }
 
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
@@ -103,17 +95,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 sanitizer.Sanitize(requestEntry);
             }
+            return LookUpSanitizedRecord(requestEntry, matcher, remove);
+        }
 
+        private RecordEntry LookUpSanitizedRecord(RecordEntry requestEntry, RecordMatcher matcher, bool remove)
+        {
             try
             {
                 // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
-
-                using JsonDocument doc = JsonDocument.Parse(requestEntry.Request.Body);
-                using var memoryStream = new MemoryStream();
-                using var writer = new Utf8JsonWriter(memoryStream, RecordEntry.WriterOptions);
-                doc.RootElement.WriteTo(writer);
-                writer.Flush();
-                requestEntry.Request.Body = memoryStream.ToArray();
+                RecordEntry.NormalizeJsonBody(requestEntry.Request, requestEntry.Request.Body);
             }
             catch (JsonException)
             {
@@ -126,6 +116,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     Entries.Remove(entry);
                 }
+
                 return entry;
             }
         }

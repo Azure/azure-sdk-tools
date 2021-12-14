@@ -25,4 +25,4 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/test-proxy
-    DotNetCoreVersion: "3.x"
+    DotNetCoreVersion: "6.x"

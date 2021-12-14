@@ -1,4 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Core.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,11 +22,18 @@ namespace APIViewWeb.Repositories
         private readonly IConfiguration _configuration;
 
         private readonly string _devopsAccessToken;
+        private readonly string _organization;
+        private readonly string _hostUrl;
+        private readonly string _project;
 
-        public DevopsArtifactRepository(IConfiguration configuration)
+
+        public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
+            _organization = _configuration["Azure-Devops-Org"];
+            _hostUrl = _configuration["APIVIew-Host-Url"];
+            _project = _configuration["Azure-Devops-Project"];
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
@@ -28,11 +41,15 @@ namespace APIViewWeb.Repositories
             var downloadUrl = await GetDownloadArtifactUrl(repoName, buildId, artifactName, project);
             if (!string.IsNullOrEmpty(downloadUrl))
             {
-                if (!filePath.StartsWith("/"))
+                if(!string.IsNullOrEmpty(filePath))
                 {
-                    filePath = "/" + filePath;
+                    if (!filePath.StartsWith("/"))
+                    {
+                        filePath = "/" + filePath;
+                    }
+                    downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
                 }
-                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
+                
                 SetDevopsClientHeaders();
                 var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
@@ -70,6 +87,34 @@ namespace APIViewWeb.Repositories
                 downloadArtifactRestApi = _configuration["download-artifact-rest-api"];
             }
             return downloadArtifactRestApi;
+        }
+
+        public async Task RunPipeline(string pipelineName, string reviewDetails, string originalStorageUrl)
+        {
+            var credential = new VssBasicCredential("nobody", _devopsAccessToken);
+            var connection = new VssConnection(new Uri(_organization), credential);
+            var buildClient = connection.GetClient<BuildHttpClient>();
+            var projectClient = connection.GetClient<ProjectHttpClient>();
+
+            var project = await projectClient.GetProject(_project);
+            Console.WriteLine(project.Name);
+            var definitions = await buildClient.GetDefinitionsAsync(pipelineName);
+            if(definitions == null || definitions.Count == 0)
+            {
+                throw new InvalidOperationException("Pipeline not found with name " + pipelineName));
+            }
+            var definition = definitions.First();
+            Console.WriteLine(definition.Name);
+
+            var build = new Build()
+            {
+                Definition = definition,
+                Project = project
+            };
+
+            var dict = new Dictionary<string, string> { { "Reviews", reviewDetails }, { "APIViewUrl", _hostUrl }, { "StorageContainerUrl", originalStorageUrl } };
+            build.Parameters = JsonConvert.SerializeObject(dict);
+            buildClient.QueueBuildAsync(build).Wait();
         }
     }
 }

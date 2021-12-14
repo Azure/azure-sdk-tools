@@ -19,6 +19,8 @@ namespace APIViewWeb
         public override string Extension { get; } = ".whl";
         public override string VersionString { get; } = "0.3.2";
 
+        public override bool IsReviewGenByPipeline { get; } = true;
+
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
 

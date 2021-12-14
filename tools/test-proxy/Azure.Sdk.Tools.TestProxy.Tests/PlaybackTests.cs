@@ -177,5 +177,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             testRecordingHandler.InMemorySessions.ContainsKey(targetRecordingId);
         }
+
+        [Fact]
+        public async Task TestPlaybackSetsRetryAfterToZero()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-recording-file"] = "Test.RecordEntries/response_with_retry_after.json";
+
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            Assert.NotNull(recordingId);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
+            var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+            Assert.Equal("0", response.Headers["Retry-After"]);
+        }
     }
 }

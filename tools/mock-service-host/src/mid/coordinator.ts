@@ -15,6 +15,7 @@ import {
     ValidationFail
 } from '../common/errors'
 import { InjectableTypes } from '../lib/injectableTypes'
+import { LiveValidationError } from 'oav/dist/lib/models'
 import { OperationMatch, OperationSearcher } from 'oav/dist/lib/liveValidation/operationSearcher'
 import { ResourcePool } from './resource'
 import { ResponseGenerator } from './responser'
@@ -320,9 +321,11 @@ export class Coordinator {
         let firstloop = true
         while (uriPath.length > 0) {
             if (firstloop || uriPath.length % 2 === 1) {
-                const testingUrl = `${req.protocol}://${req.headers?.host}${uriPath.join(
-                    '/'
-                )}?${query}`
+                let hostAndPort = req.headers?.host as string
+                if (hostAndPort.indexOf(':') < 0) {
+                    hostAndPort = `${hostAndPort}:${req.localPort}`
+                }
+                const testingUrl = `${req.protocol}://${hostAndPort}${uriPath.join('/')}?${query}`
                 try {
                     const validationRequest = this.liveValidator.parseValidationRequest(
                         testingUrl,
@@ -332,7 +335,13 @@ export class Coordinator {
                     this.liveValidator.operationSearcher.search(validationRequest)
                     return testingUrl
                 } catch (error) {
-                    // don't has 'GET' verb for this url
+                    if (
+                        error instanceof LiveValidationError &&
+                        error?.code === Constants.ErrorCodes.MultipleOperationsFound.name
+                    ) {
+                        return testingUrl
+                    }
+                    console.info(error) // don't has 'GET' verb for this url
                 }
             }
             uriPath.splice(-1)

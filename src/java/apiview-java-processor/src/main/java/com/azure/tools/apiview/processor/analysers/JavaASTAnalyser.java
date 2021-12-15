@@ -5,8 +5,6 @@ import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ChildItem;
-import com.azure.tools.apiview.processor.model.Diagnostic;
-import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
@@ -34,7 +32,11 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.Name;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
@@ -99,9 +101,6 @@ public class JavaASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
-
-    private static final Pattern MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
-    private static final Pattern MAVEN_DESCRIPTION = Pattern.compile("This package contains the Microsoft Azure .* client library");
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
@@ -320,20 +319,10 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         // Maven name
-        String nameDefinitionId = tokeniseKeyValue("name", mavenPom.getName(), "");
-        if (!MAVEN_NAME.matcher(mavenPom.getName()).matches()) {
-            apiListing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, "nameDefinitionId",
-                "Maven library name should follow the pattern 'Microsoft Azure client library for <service name>'.",
-                "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-name"));
-        }
+        tokeniseKeyValue("name", mavenPom.getName(), "");
 
         // Maven description
-        String descriptionDefinitionId = tokeniseKeyValue("description", mavenPom.getDescription(), "");
-        if (!MAVEN_DESCRIPTION.matcher(mavenPom.getDescription()).matches()) {
-            apiListing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, "descriptionDefinitionId",
-                "Maven library description should follow the pattern 'This package contains the Microsoft Azure <service> client library'.",
-                "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description"));
-        }
+        tokeniseKeyValue("description", mavenPom.getDescription(), "");
 
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
@@ -385,22 +374,19 @@ public class JavaASTAnalyser implements Analyser {
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
-    /**
-     * Tokenizes a key-value pair and returns the definition of the value token.
+    /*
+     * Tokenizes a key-value pair.
      *
      * @param key Key of the token.
      * @param value Value of the token.
      * @param linkPrefix Link prefix.
-     * @return The definition ID of the value token.
      */
-    private String tokeniseKeyValue(String key, Object value, String linkPrefix) {
+    private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
         Token token = new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value);
         addToken(token, NEWLINE);
-
-        return token.getDefinitionId();
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {

@@ -5,6 +5,7 @@ import com.azure.tools.apiview.processor.diagnostics.rules.FluentSetterReturnTyp
 import com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodNamesDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExportsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavaDocDiagnosticRule;
 import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavadocCodeSnippetsRule;
@@ -56,6 +57,7 @@ public class Diagnostics {
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
         diagnostics.add(new ModuleInfoDiagnosticRule());
         diagnostics.add(new ServiceVersionDiagnosticRule());
+        diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

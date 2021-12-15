@@ -1,0 +1,42 @@
+parameters:
+  ShouldDownloadArtifacts: true
+  ShouldCreateGitTag: true
+  ShouldSignPackages: true
+  ShouldPublishSymbols: true
+  ShouldPublishToDevOpsFeed: true
+  ShouldPublishArtifact: true
+  # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+  DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+
+# Needs Github Release variable group linked.
+# Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
+
+stages:
+- stage: Release
+  jobs:
+  - deployment: Sign_And_Publish
+    environment: net-release
+    pool:
+      vmImage: windows-2019
+
+    variables:
+      ArtifactsPath: $(System.DefaultWorkingDirectory)\_artifacts\packages
+      BuildToolsRepoPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
+      BuildToolsScriptsPath: $(BuildToolsRepoPath)/scripts
+      BuildToolsToolsPath: $(BuildToolsRepoPath)/tools
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - template: pipelines/steps/net-release-to-any.yml@azure-sdk-build-tools
+              parameters:
+                ShouldDownloadArtifacts: ${{ parameters.ShouldDownloadArtifacts }}
+                ShouldCreateGitTag: ${{ parameters.ShouldCreateGitTag }}
+                ShouldSignPackages: ${{ parameters.ShouldSignPackages }}
+                ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
+                ShouldPublishToDevOpsFeed: ${{ parameters.ShouldPublishToDevOpsFeed }}
+                ShouldPublishArtifact: ${{ parameters.ShouldPublishArtifact }}
+                BuildToolsRepoPath: $(BuildToolsRepoPath)
+                ArtifactsPath: $(ArtifactsPath)
+                DevOpsFeedId: ${{ parameters.DevOpsFeedId }}

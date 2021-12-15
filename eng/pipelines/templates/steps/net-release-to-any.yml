@@ -1,13 +1,18 @@
 parameters:
   ShouldDownloadArtifacts: false
   ShouldCreateGitTag: false
+  ShouldCopyFromPartnerDrops: false
   ShouldSignPackages: false
   ShouldPublishSymbols: false
   ShouldPublishToDevOpsFeed: false
   ShouldPublishArtifact: false
+  ShouldPublishToNuget: false
+  ShouldPublishToBlobFeed: false
   BuildToolsRepoPath: ''
   ArtifactsPath: ''
   DevOpsFeedId: ''
+  PartnerDropsBlobPath: ''
+  NugetVersion: ''
 
 steps:
   - ${{ if ne(parameters.BuildToolsRepoPath, '') }}:
@@ -33,6 +38,14 @@ steps:
       env:
         GH_TOKEN: $(azuresdk-github-pat)
 
+  - ${{ if eq(parameters.ShouldCopyFromPartnerDrops, 'true') }}:
+    - task: PowerShell@2
+      displayName: 'Copy from AzureSdkPartnerDrops'
+      inputs:
+        targetType: filePath
+        filePath: '${{ parameters.BuildToolsRepoPath }}/scripts/copy-from-azuresdkpartnerdrops.ps1'
+        arguments: '-downloadDir ${{ parameters.ArtifactsPath }} -blobPath ${{ parameters.PartnerDropsBlobPath }} -blobKey $(azuresdkpartnerdrops-access-key)'
+
   - ${{ if eq(parameters.ShouldSignPackages, 'true') }}:
     - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
       parameters:
@@ -46,6 +59,24 @@ steps:
         solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
         msbuildArguments: '/p:PackagesPath=${{ parameters.ArtifactsPath }} /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat) /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat) /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)'
 
+  - ${{ if ne(parameters.NugetVersion, '') }}:
+    - task: NuGetToolInstaller@1
+      displayName: 'Use NuGet ${{ parameters.NugetVersion }}'
+      inputs:
+        versionSpec: ${{ parameters.NugetVersion }}
+
+  - ${{ if eq(parameters.ShouldPublishToNuget, 'true') }}:
+    - task: NuGetCommand@2
+      displayName: 'Publish to Nuget'
+      inputs:
+        command: push
+        packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+        nuGetFeedType: external
+        publishFeedCredentials: Nuget.org
+      condition: succeeded()
+  
+  - ${{ if eq(parameters.ShouldPublishToBlobFeed, 'true') }}:
+
   - ${{ if eq(parameters.ShouldPublishToDevOpsFeed, 'true') }}:
     - task: NuGetCommand@2
       displayName: 'Publish to DevOps Feed'
@@ -53,6 +84,7 @@ steps:
         command: push
         packagesToPush: '${{ parameters.ArtifactsPath }}/*.nupkg;!${{ parameters.ArtifactsPath }}/*.symbols.nupkg'
         publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+
 
   - ${{ if eq(parameters.ShouldPublishArtifact, 'true') }}:
     - publish: ${{ parameters.ArtifactsPath }}

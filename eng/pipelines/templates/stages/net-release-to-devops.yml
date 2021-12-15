@@ -29,7 +29,7 @@ stages:
       runOnce:
         deploy:
           steps:
-            - template: pipelines/steps/net-release-to-any.yml@azure-sdk-build-tools
+            - template: /eng/pipelines/steps/net-release-to-any.yml
               parameters:
                 ShouldDownloadArtifacts: ${{ parameters.ShouldDownloadArtifacts }}
                 ShouldCreateGitTag: ${{ parameters.ShouldCreateGitTag }}

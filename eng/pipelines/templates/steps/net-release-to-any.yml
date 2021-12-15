@@ -1,0 +1,61 @@
+parameters:
+  ShouldDownloadArtifacts: false
+  ShouldCreateGitTag: false
+  ShouldSignPackages: false
+  ShouldPublishSymbols: false
+  ShouldPublishToDevOpsFeed: false
+  ShouldPublishArtifact: false
+  BuildToolsRepoPath: ''
+  ArtifactsPath: ''
+  DevOpsFeedId: ''
+
+steps:
+  - ${{ if ne(parameters.BuildToolsRepoPath, '') }}:
+    - template: tools/clone-buildtools/clone-buildtools.yml@azure-sdk-build-tools
+      parameters:
+        BuildToolsRepoPath: ${{ parameters.BuildToolsRepoPath }}
+
+  - ${{ if eq(parameters.ShouldDownloadArtifacts, 'true') }}:
+    - download: none # Disable the automatic downloading so that we can download ourselves to the location we want.
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Packages
+      inputs:
+        artifact: packages
+        path: ${{ parameters.ArtifactsPath }}
+
+  - ${{ if eq(parameters.ShouldCreateGitTag, 'true') }}:
+    - task: PowerShell@2
+      displayName: 'Verify Package Tags and Create Git Releases'
+      inputs:
+        targetType: filePath
+        filePath: '/eng/common/scripts/create-tags-and-git-release.ps1'
+        arguments: '-artifactLocation ${{ parameters.ArtifactsPath }} -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
+      env:
+        GH_TOKEN: $(azuresdk-github-pat)
+
+  - ${{ if eq(parameters.ShouldSignPackages, 'true') }}:
+    - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
+      parameters:
+        PackagesPath: ${{ parameters.ArtifactsPath }}
+        BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
+
+  - ${{ if eq(parameters.ShouldPublishSymbols, 'true') }}:
+    - task: MSBuild@1
+      displayName: 'Upload Symbols'
+      inputs:
+        solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
+        msbuildArguments: '/p:PackagesPath=${{ parameters.ArtifactsPath }} /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat) /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat) /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)'
+
+  - ${{ if eq(parameters.ShouldPublishToDevOpsFeed, 'true') }}:
+    - task: NuGetCommand@2
+      displayName: 'Publish to DevOps Feed'
+      inputs:
+        command: push
+        packagesToPush: '${{ parameters.ArtifactsPath }}/*.nupkg;!${{ parameters.ArtifactsPath }}/*.symbols.nupkg'
+        publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+
+  - ${{ if eq(parameters.ShouldPublishArtifact, 'true') }}:
+    - publish: ${{ parameters.ArtifactsPath }}
+      displayName: 'Publish processed files'
+      artifact: processed-files
+      condition: always()

@@ -1,10 +1,10 @@
 parameters:
-  ShouldDownloadArtifacts: true
-  ShouldCreateGitTag: true
-  ShouldSignPackages: true
-  ShouldPublishSymbols: true
-  ShouldPublishToDevOpsFeed: true
-  ShouldPublishArtifact: true
+  DownloadArtifacts: true
+  CreateGitTagAndRelease: true
+  SignPackages: true
+  PublishSymbols: true
+  PublishToDevOpsFeed: true
+  PublishArtifact: true
   # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
   DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
 
@@ -31,12 +31,12 @@ stages:
           steps:
             - template: /eng/pipelines/steps/net-release-to-any.yml
               parameters:
-                ShouldDownloadArtifacts: ${{ parameters.ShouldDownloadArtifacts }}
-                ShouldCreateGitTag: ${{ parameters.ShouldCreateGitTag }}
-                ShouldSignPackages: ${{ parameters.ShouldSignPackages }}
-                ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
-                ShouldPublishToDevOpsFeed: ${{ parameters.ShouldPublishToDevOpsFeed }}
-                ShouldPublishArtifact: ${{ parameters.ShouldPublishArtifact }}
+                DownloadArtifacts: ${{ parameters.DownloadArtifacts }}
+                CreateGitTagAndRelease: ${{ parameters.CreateGitTagAndRelease }}
+                SignPackages: ${{ parameters.SignPackages }}
+                PublishSymbols: ${{ parameters.PublishSymbols }}
+                PublishToDevOpsFeed: ${{ parameters.PublishToDevOpsFeed }}
+                PublishArtifact: ${{ parameters.PublishArtifact }}
                 BuildToolsRepoPath: $(BuildToolsRepoPath)
                 ArtifactsPath: $(ArtifactsPath)
                 DevOpsFeedId: ${{ parameters.DevOpsFeedId }}

@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.2.7 (Unreleased)
+Updated version to regenerate all reviews using Python 3.9
+
 ## Version 0.2.6 (Unreleased)
 Updated type parsing to properly handle cases in which type
   info wraps onto a second line.

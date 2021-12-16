@@ -95,10 +95,16 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
+          # Below 3 steps to package Python 3.9 is temporary work around until we have sandboxing ready
           - task: UsePythonVersion@0
             displayName: 'Use Python 3.9'
             inputs:
               versionSpec: 3.9
+
+          - script: |
+              pip install $(PythonParserPackagePath) $(ProtocolParserPackagePath)
+              pip install virtualenv aiohttp chardet trio
+            displayName: 'Setup Python Environment'
 
           - pwsh: |
               $pythonPath = split-path (get-command python).Path -Parent

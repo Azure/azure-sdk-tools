@@ -101,9 +101,9 @@ stages:
               versionSpec: 3.9
 
           - pwsh: |
-              $path = split-path (get-command python).Path -Parent
-              Write-Host "Python home path $($path)"
-              copy-item -Path $(path) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/Python -Recurse -Force
+              $pythonPath = split-path (get-command python).Path -Parent
+              Write-Host "Python home path $($pythonPath)"
+              copy-item -Path "$pythonPath" -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb/Python" -Recurse -Force
               Write-Host "Packaged Python 3.9"
             displayName: 'Package Python 3.9'
 

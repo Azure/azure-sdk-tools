@@ -11,12 +11,13 @@ const yyyy = todayDate.getFullYear();
 const date = yyyy + '-' + mm + '-' + dd;
 
 export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+    const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
     const content = `# Release History
     
 ## ${newVersion} (${date})
 
-- Initial Release
+The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/js-track2-quickstart).
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);

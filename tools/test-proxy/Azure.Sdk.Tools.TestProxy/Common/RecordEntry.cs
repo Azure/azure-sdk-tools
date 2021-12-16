@@ -126,23 +126,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void NormalizeJsonBody(RequestOrResponse requestOrResponse)
         {
-            if (!requestOrResponse.TryGetContentType(out string contentType) || contentType != "application/json")
+            if (requestOrResponse.TryGetContentType(out string contentType) && contentType.Contains("application/json"))
             {
-                return;
-            }
-            try
-            {
-                // in case the bytes are actually a pre-encoded JSON object, try to parse it
-                using var memoryStream = new MemoryStream();
-                using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
-                using var document = JsonDocument.Parse(requestOrResponse.Body);
-                document.RootElement.WriteTo(writer);
-                writer.Flush();
-                requestOrResponse.Body = memoryStream.ToArray();
-                RecordedTestSanitizer.UpdateSanitizedContentLength(requestOrResponse);
-            }
-            catch (JsonException)
-            {
+                try
+                {
+                    // in case the bytes are actually a pre-encoded JSON object, try to parse it
+                    using var memoryStream = new MemoryStream();
+                    using var writer = new Utf8JsonWriter(memoryStream, WriterOptions);
+                    using var document = JsonDocument.Parse(requestOrResponse.Body);
+                    document.RootElement.WriteTo(writer);
+                    writer.Flush();
+                    requestOrResponse.Body = memoryStream.ToArray();
+                    RecordedTestSanitizer.UpdateSanitizedContentLength(requestOrResponse);
+                }
+                catch (JsonException)
+                {
+                }
             }
         }
 

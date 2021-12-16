@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("<body>data</body>", "application/xml")]
+        [InlineData("<body>data</body>", "text/xml")]
         [InlineData("{\"json\":\"value\"}", "application/json")]
         [InlineData("{\"json\":\"value\"}", "application/json+param=val")]
         [InlineData("missing", null)]

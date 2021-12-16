@@ -130,6 +130,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Theory]
         [InlineData("<body>data</body>", "application/xml")]
         [InlineData("{\"json\":\"value\"}", "application/json")]
+        [InlineData("{\"json\":\"value\"}", "application/json+param=val")]
         [InlineData("missing", null)]
         public void BodyNormalizationRespectsContentType(string body, string contentType)
         {
@@ -149,13 +150,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordEntry.NormalizeJsonBody(recordEntry.Request);
 
             // Intentionally not using Assert.Equals/NotEquals to check for reference equality
-            if (contentType != "application/json")
+            if (contentType?.Contains("application/json") == true)
             {
-                Assert.True(bodyBytes == recordEntry.Request.Body);
+                Assert.False(bodyBytes == recordEntry.Request.Body);
             }
             else
             {
-                Assert.False(bodyBytes == recordEntry.Request.Body);
+                Assert.True(bodyBytes == recordEntry.Request.Body);
             }
         }
 

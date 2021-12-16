@@ -45,7 +45,11 @@ stages:
             inputs:
               ArtifactName: packages
   - ${{ if ne(variables['System.TeamProject'], 'Public') }}:
-    - template: /eng/pipelines/templates/stages/net-release-to-devops.yml
+    - template: /eng/pipelines/templates/stages/net-release-to-any.yml@azure-sdk-for-net
       parameters:
-        ShouldCreateGitTag: false  # Disable tagging for now as github is rate limiting us
-        ShouldSignPackages: false # Disable signing for now because the tools package contains a number files we cannot correctly sign
+        DownloadArtifacts: true
+        PublishSymbols: true
+        PublishToDevOpsFeed: true
+        PublishArtifact: true
+        BuildToolsRepoPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
+        ArtifactsPath: $(System.DefaultWorkingDirectory)\_artifacts\packages

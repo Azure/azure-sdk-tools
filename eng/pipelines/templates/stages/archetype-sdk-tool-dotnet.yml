@@ -1,9 +1,15 @@
 resources:
   repositories:
+    - repository: azure-sdk-for-net
+      type: github
+      name: Azure/azure-sdk-for-net
+      endpoint: azure
+      ref: refs/heads/feature/GenericNetRelease
+
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211209.1
+      ref: refs/tags/azure-sdk-build-tools_20211215.1
 
 parameters:
   - name: ToolDirectory
@@ -85,9 +91,29 @@ stages:
               testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true
-
+  
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - template: /eng/pipelines/templates/stages/net-release-to-devops.yml
-      parameters:
-        # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-        DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+    - stage: Release
+      jobs:
+      - deployment: Sign_And_Publish
+        environment: net-release
+        pool:
+          vmImage: windows-2019
+      
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: azure-sdk-for-net
+                - template: eng/pipelines/templates/steps/net-release-to-any.yml@azure-sdk-for-net
+                  parameters:
+                    DownloadArtifacts: true
+                    CreateGitTagAndRelease: true
+                    SignPackages: true
+                    PublishSymbols: true
+                    PublishToDevOpsFeed: true
+                    PublishArtifact: true
+                    # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+                    DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+                    BuildToolsRepoPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
+                    ArtifactsPath: $(System.DefaultWorkingDirectory)\_artifacts\packages

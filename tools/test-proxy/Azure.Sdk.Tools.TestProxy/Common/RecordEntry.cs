@@ -126,6 +126,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void NormalizeJsonBody(RequestOrResponse requestOrResponse)
         {
+            if (!requestOrResponse.TryGetContentType(out string contentType) || contentType != "application/json")
+            {
+                return;
+            }
             try
             {
                 // in case the bytes are actually a pre-encoded JSON object, try to parse it

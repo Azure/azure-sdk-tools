@@ -127,6 +127,38 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.NotNull(deserializedSession.Lookup(recordEntry, matcher, new[] { new RecordedTestSanitizer() }));
         }
 
+        [Theory]
+        [InlineData("<body>data</body>", "application/xml")]
+        [InlineData("{\"json\":\"value\"}", "application/json")]
+        [InlineData("missing", null)]
+        public void BodyNormalizationRespectsContentType(string body, string contentType)
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+
+            var session = new RecordSession();
+
+            RecordEntry recordEntry = new RecordEntry();
+            if (contentType != null)
+            {
+                recordEntry.Request.Headers.Add("Content-Type", new[] { contentType });
+            }
+
+            recordEntry.Request.Body = bodyBytes;
+            recordEntry.RequestUri = "http://localhost/";
+            recordEntry.RequestMethod = RequestMethod.Delete;
+            RecordEntry.NormalizeJsonBody(recordEntry.Request);
+
+            // Intentionally not using Assert.Equals/NotEquals to check for reference equality
+            if (contentType != "application/json")
+            {
+                Assert.True(bodyBytes == recordEntry.Request.Body);
+            }
+            else
+            {
+                Assert.False(bodyBytes == recordEntry.Request.Body);
+            }
+        }
+
 
         [Fact]
         public void RecordMatcherThrowsExceptionsWithDetails()

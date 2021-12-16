@@ -1,9 +1,10 @@
 resources:
   repositories:
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211209.1
+    - repository: azure-sdk-for-net
+      type: github
+      name: Azure/azure-sdk-for-net
+      endpoint: azure
+      ref: refs/heads/feature/GenericNetRelease
 
 parameters:
   - name: ToolDirectory
@@ -87,7 +88,15 @@ stages:
               mergeTestResults: true
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - template: /eng/pipelines/templates/stages/net-release-to-devops.yml
+    - template: /eng/pipelines/templates/stages/net-release-to-any.yml@azure-sdk-for-net
       parameters:
+        DownloadArtifacts: true
+        CreateGitTagAndRelease: true
+        SignPackages: true
+        PublishSymbols: true
+        PublishToDevOpsFeed: true
+        PublishArtifact: true
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+        BuildToolsRepoPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
+        ArtifactsPath: $(System.DefaultWorkingDirectory)\_artifacts\packages

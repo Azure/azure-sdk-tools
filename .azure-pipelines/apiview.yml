@@ -97,9 +97,6 @@ stages:
 
           # Below 3 steps to package Python 3.9 is temporary work around until we have sandboxing ready
           - task: UsePythonVersion@0
-            displayName: 'Use Python 3.9'
-            inputs:
-              versionSpec: 3.9
 
           - script: |
               pip install $(PythonParserPackagePath) $(ProtocolParserPackagePath)
@@ -110,8 +107,8 @@ stages:
               $pythonPath = split-path (get-command python).Path -Parent
               Write-Host "Python home path $($pythonPath)"
               copy-item -Path "$pythonPath" -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb/Python" -Recurse -Force
-              Write-Host "Packaged Python 3.9"
-            displayName: 'Package Python 3.9'
+              Write-Host "Packaged Python"
+            displayName: 'Package Python'
 
           - pwsh: |
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force

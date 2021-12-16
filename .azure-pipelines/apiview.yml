@@ -95,6 +95,18 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.9'
+            inputs:
+              versionSpec: 3.9
+
+          - pwsh: |
+              $path = split-path (get-command python).Path -Parent
+              Write-Host "Python home path $($path)"
+              copy-item -Path $(path) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/Python -Recurse -Force
+              Write-Host "Packaged Python 3.9"
+            displayName: 'Package Python 3.9'
+
           - pwsh: |
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
               copy-item -Path $(ProtocolParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/protocol-stub-generator -Recurse -Force

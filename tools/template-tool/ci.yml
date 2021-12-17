@@ -22,7 +22,7 @@ pr:
       - tools/template-tool
 
 extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/template-tool
     SkipDotNetInstall: true

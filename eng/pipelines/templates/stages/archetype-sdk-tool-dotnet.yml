@@ -92,7 +92,7 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
   
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: Release
       jobs:
       - deployment: Sign_And_Publish

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <Description>Template package for testing the tools repelase process</Description>
+    <Description>Template package for testing the tools release process</Description>
     <TargetFramework>net5.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>template-tool</ToolCommandName>

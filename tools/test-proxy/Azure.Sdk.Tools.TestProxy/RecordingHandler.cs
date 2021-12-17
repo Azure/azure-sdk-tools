@@ -78,9 +78,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 session.Session.Sanitize(sanitizer);
             }
 
-            if(variables != null)
+            if (variables != null)
             {
-                foreach(var kvp in variables)
+                foreach (var kvp in variables)
                 {
                     session.Session.Variables[kvp.Key] = kvp.Value;
                 }
@@ -142,16 +142,21 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
 
-            byte[] body = new byte[]{};
+            byte[] body = new byte[] { };
 
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
-            if (incomingRequest.Method.ToUpperInvariant() != "HEAD") {
+            if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
+            {
                 body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
-            session.ModifiableSession.Session.Entries.Add(entry);
+
+            lock (session.ModifiableSession.Session.Entries)
+            {
+                session.ModifiableSession.Session.Entries.Add(entry);
+            }
 
             Interlocked.Increment(ref Startup.RequestsRecorded);
 
@@ -312,7 +317,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
                 }
 
-                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);                
+                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
 
                 if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
                 {
@@ -402,17 +407,26 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
             {
-                playbackSession.AdditionalSanitizers.Add(sanitizer);
+                lock (playbackSession.AdditionalSanitizers)
+                {
+                    playbackSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                lock (recordingSession.ModifiableSession)
+                {
+                    recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
             {
-                inMemSession.AdditionalSanitizers.Add(sanitizer);
+                lock (inMemSession.AdditionalSanitizers)
+                {
+                    inMemSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
@@ -517,7 +531,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // to give us some amount of safety, but note that we explicitly disable escaping in that combination.
             var rawTarget = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
             var hostValue = GetHeader(request, "x-recording-upstream-base-uri");
-            
+
             // There is an ongoing issue where some libraries send a URL with two leading // after the hostname.
             // This will just handle the error explicitly rather than letting it slip through and cause random issues during record/playback sessions.
             if (rawTarget.StartsWith("//"))

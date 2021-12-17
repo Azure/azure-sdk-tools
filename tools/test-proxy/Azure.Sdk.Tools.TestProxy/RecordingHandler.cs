@@ -362,7 +362,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
             {
-                transform.ApplyTransform(incomingRequest, outgoingResponse);
+                transform.Transform(incomingRequest, outgoingResponse);
             }
 
             outgoingResponse.Headers.Remove("Transfer-Encoding");

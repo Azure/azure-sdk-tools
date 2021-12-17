@@ -55,7 +55,7 @@
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)
                             {
-                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                                <li><span><code>@arg.Item1</code></span>: @Html.Raw(@arg.Item2)</li>
                             }
                         </ul>
                     }
@@ -101,7 +101,7 @@
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)
                             {
-                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                                <li><span><code>@arg.Item1</code></span>: @Html.Raw(@arg.Item2)</li>
                             }
                         </ul>
                     }
@@ -147,7 +147,7 @@
                         <ul>
                             @foreach (var arg in extension.ConstructorDetails.Arguments)
                             {
-                                <li><span><code>@arg.Item1</code></span>: @arg.Item2</li>
+                                <li><span><code>@arg.Item1</code></span>: @Html.Raw(@arg.Item2)</li>
                             }
                         </ul>
                     }

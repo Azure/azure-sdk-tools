@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -119,35 +121,49 @@ namespace Azure.Sdk.Tools.TestProxy
             var ctor = t.GetConstructors()[0];
             var paramsSet = ctor.GetParameters();
 
-                // walk across our constructor params. check inside the body for a resulting value for each of them
-                foreach (var param in paramsSet)
+            // walk across our constructor params. check inside the body for a resulting value for each of them
+            foreach (var param in paramsSet)
+            {
+                if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                 {
-                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                    object argumentValue = null;
+                    switch (jsonElement.ValueKind)
                     {
-                        object valueResult = null;
-                        switch (jsonElement.ValueKind)
-                        {
-                            case JsonValueKind.Null:
-                            case JsonValueKind.String:
-                                valueResult = jsonElement.GetString();
-                                break;
-                            case JsonValueKind.True:
-                            case JsonValueKind.False:
-                                valueResult = jsonElement.GetBoolean();
-                                break;
-                            default:
-                                throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
-                        }
-
-                        if(valueResult == null || (valueResult is string stringResult && string.IsNullOrEmpty(stringResult)))
-                        {
-                            if (!acceptableEmptyArgs.Contains(param.Name))
+                        case JsonValueKind.Null:
+                        case JsonValueKind.String:
+                            argumentValue = jsonElement.GetString();
+                            break;
+                        case JsonValueKind.True:
+                        case JsonValueKind.False:
+                            argumentValue = jsonElement.GetBoolean();
+                            break;
+                        case JsonValueKind.Object:
+                            try
                             {
-                                throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                                argumentValue = Activator.CreateInstance(param.ParameterType, new List<object> { jsonElement }.ToArray());
                             }
+                            catch (Exception e)
+                            {
+                                if (e.InnerException is HttpException)
+                                {
+                                    throw e.InnerException;
+                                }
+                                else throw;
+                            }
+                            break;
+                        default:
+                            throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
+                    }
+
+                    if(argumentValue == null || (argumentValue is string stringResult && string.IsNullOrEmpty(stringResult)))
+                    {
+                        if (!acceptableEmptyArgs.Contains(param.Name))
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
                         }
+                    }
                         
-                    arg_list.Add((object)valueResult);
+                    arg_list.Add((object)argumentValue);
                 }
                 else
                 {
@@ -181,9 +197,20 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (req.ContentLength > 0)
             {
-                var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
-
-                return result;
+                try
+                {
+                    var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+                    return result;
+                }
+                catch(Exception e)
+                {
+                    req.Body.Position = 0;
+                    using (StreamReader readstream = new StreamReader(req.Body, Encoding.UTF8))
+                    {
+                        string bodyContent = readstream.ReadToEnd();
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The body of this request is invalid JSON. Content: { bodyContent }. Exception detail: {e.Message}");
+                    }
+                }
             }
 
             return null;

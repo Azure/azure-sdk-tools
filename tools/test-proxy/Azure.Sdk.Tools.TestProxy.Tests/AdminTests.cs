@@ -552,5 +552,127 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
             assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
+
+        [Theory]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"uriRegex\": \"Broken Data Structure\"}", "The body of this request is invalid JSON.")]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"UriRegex2\": \"Invalid Key\"}}", "At least one trigger regex must be present.")]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"UriRegex\": \"[\"}}", " Invalid pattern '[' at offset 1")] // [ alone is a bad regex
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {}}", "At least one trigger regex must be present.")] // empty condition keys, but defined condition object
+        public async Task TestAddSanitizerWithInvalidConditionJson(string requestBody, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "GeneralRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+            Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
+            Assert.Empty(testRecordingHandler.Sanitizers);
+            Assert.Contains(errorText, assertion.Message);
+        }
+
+        [Theory]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"uriRegex\": \"CONDITION_REGEX\"}}", "Bad Capitalization, proper name")]
+        [InlineData("{ \"value\": \"hello_there\", \"regex\": \"[a-zA-Z]?\", \"condition\": {\"UriRegex\": \"CONDITION_REGEX\"}}", ".+/Tables")]
+        public async Task TestAddSanitizerWithValidUriRegexCondition(string requestBody, string conditionRegex)
+        {
+            requestBody = requestBody.Replace("CONDITION_REGEX", conditionRegex);
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "GeneralRegexSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var createdSanitizer = testRecordingHandler.Sanitizers.First();
+
+            Assert.Single(testRecordingHandler.Sanitizers);
+            Assert.True(createdSanitizer is GeneralRegexSanitizer);
+            Assert.True(createdSanitizer.Condition != null);
+            Assert.True(createdSanitizer.Condition is ApplyCondition);
+            Assert.Equal(conditionRegex, createdSanitizer.Condition.UriRegex);
+        }
+
+        [Theory]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"uriRegex\": \"CONDITION_REGEX\"}}", "An extra key present in body.")]
+        [InlineData("{ \"condition\": {\"UriRegex\": \"CONDITION_REGEX\"}}", ".+/Tables")]
+        public async Task TestAddTransformWithValidUriRegexCondition(string body, string regex)
+        {
+            var requestBody = body.Replace("CONDITION_REGEX", regex);
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            testRecordingHandler.Transforms.Clear();
+            await controller.AddTransform();
+            var createdTransform = testRecordingHandler.Transforms.First();
+
+            Assert.Single(testRecordingHandler.Transforms);
+            Assert.True(createdTransform is ApiVersionTransform);
+            Assert.True(createdTransform.Condition != null);
+            Assert.True(createdTransform.Condition is ApplyCondition);
+            Assert.Equal(regex, createdTransform.Condition.UriRegex);
+        }
+
+        [Theory]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"uriRegex\": \"Broken Data Structure\"}", "The body of this request is invalid JSON.")]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"UriRegex2\": \"Invalid Key\"}}", "At least one trigger regex must be present.")]
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {\"UriRegex\": \"[\"}}", " Invalid pattern '[' at offset 1")] // [ alone is a bad regex
+        [InlineData("{ \"value\": \"hello_there\", \"condition\": {}}", "At least one trigger regex must be present.")] // empty condition keys, but defined condition object
+        public async Task TestAddTransformWithBadUriRegexCondition(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Transforms.Clear();
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddTransform()
+            );
+            Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
+            Assert.Empty(testRecordingHandler.Transforms);
+            Assert.Contains(errorText, assertion.Message);
+        }
     }
 }

@@ -9,6 +9,11 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
     public class ApiVersionTransform : ResponseTransform
     {
+        public ApiVersionTransform(ApplyCondition condition = null)
+        {
+            Condition = condition;
+        }
+
         /// <summary>
         /// This transform applies during playback mode. It copies the header "api-version" of the request
         /// onto the response before sending the response back to the client.

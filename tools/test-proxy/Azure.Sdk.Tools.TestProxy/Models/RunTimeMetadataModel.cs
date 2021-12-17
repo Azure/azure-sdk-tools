@@ -75,11 +75,32 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             IList<FieldInfo> fields = new List<FieldInfo>(tType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
             var arguments = new List<Tuple<string, string>>();
 
-            foreach (FieldInfo field in fields.Where(x => x.FieldType.Name == "String"))
+            var filteredFields = fields.Where(x => x.FieldType.Name == "String" || x.FieldType.Name == "ApplyCondition");
+            foreach (FieldInfo field in filteredFields)
             {
                 var prop = field.GetValue(target);
-                string propValue = prop == null ? "This argument is unset or null." : "\"" + prop.ToString() + "\"";
+                string propValue;
+                if(prop == null)
+                {
+                    propValue = "This argument is unset or null.";
+                }
+                else
+                {
+                    if(field.FieldType.Name == "ApplyCondition")
+                    {
+                        propValue = prop.ToString();
 
+                        if(propValue == null)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        propValue = "\"" + prop.ToString() + "\"";
+                    }
+                }
+                
                 arguments.Add(new Tuple<string, string>(field.Name, propValue));
             }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -57,7 +58,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static HttpRequest CreateRequestFromEntry(RecordEntry entry)
         {
             var context = new DefaultHttpContext();
-            context.Request.Body = new BinaryData(entry.Request.Body).ToStream();
+            if(entry.Request.Body != null)
+            {
+                context.Request.Body = new BinaryData(entry.Request.Body).ToStream();
+            }
             context.Request.Method = entry.RequestMethod.ToString();
             foreach (var header in entry.Request.Headers)
             {
@@ -70,6 +74,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             context.Request.Host = new HostString(uri.Authority);
             context.Request.QueryString = new QueryString(uri.Query);
             context.Request.Path = uri.AbsolutePath;
+            context.Features.Get<IHttpRequestFeature>().RawTarget = context.Request.Path + context.Request.QueryString;
             return context.Request;
         }
     }

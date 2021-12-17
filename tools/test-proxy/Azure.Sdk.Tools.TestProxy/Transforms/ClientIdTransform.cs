@@ -13,6 +13,11 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
     /// </summary>
     public class ClientIdTransform : ResponseTransform
     {
+        public ClientIdTransform(ApplyCondition condition = null)
+        {
+            Condition = condition;
+        }
+
         public override void ApplyTransform(HttpRequest request, HttpResponse response)
         {
             if (request.Headers.TryGetValue("x-ms-client-id", out var clientId))

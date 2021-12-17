@@ -151,7 +151,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Host = new HostString("https://localhost:5001");
             playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
 
-
             var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
                async () => await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response)
             );

@@ -1,4 +1,5 @@
-﻿using Azure.Sdk.Tools.TestProxy.Sanitizers;
+﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -422,6 +423,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(firstRequest, firstResponse);
             Assert.NotEqual(firstResponse, secondRequest);
             Assert.Equal(secondRequest, secondResponse);
+        }
+
+        [Fact]
+        public void ConditionalSanitizeUriRegexAppliesForRegex()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_xml_body.json");
+            var targetHeader = "x-ms-version";
+
+            var removeHeadersSanitizer = new RemoveHeaderSanitizer(targetHeader, condition: new ApplyCondition() { UriRegex = @".+/Tables.*" });
+            session.Session.Sanitize(removeHeadersSanitizer);
+            var firstEntry = session.Session.Entries[0];
+            // this entry should be untouched by sanitization, it's request URI should not match the regex above
+            var secondEntry = session.Session.Entries[1];
+            var thirdEntry = session.Session.Entries[2];
+
+            Assert.False(firstEntry.Request.Headers.ContainsKey(targetHeader));
+            Assert.True(secondEntry.Request.Headers.ContainsKey(targetHeader));
+            Assert.False(thirdEntry.Request.Headers.ContainsKey(targetHeader));
+        }
+
+        [Fact]
+        public void ConditionalSanitizeUriRegexProperlySkips()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_xml_body.json");
+            var targetHeader = "x-ms-version";
+
+            var removeHeadersSanitizer = new RemoveHeaderSanitizer(targetHeader, condition: new ApplyCondition() { UriRegex = @".+/token" });
+            session.Session.Sanitize(removeHeadersSanitizer);
+            Assert.DoesNotContain<bool>(false, session.Session.Entries.Select(x => x.Request.Headers.ContainsKey(targetHeader)));
         }
     }
 }

@@ -3,17 +3,15 @@
 
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
+import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
-import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.regex.Pattern;
-
-import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 
 /**
  * Diagnostic rule that validates the Maven package name and description match the convention specified in the
@@ -47,7 +45,6 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     }
 
     private static String getId(String key, Object value) {
-        return new Token(TEXT, value == null ? "<default value>" : value.toString(), "-" + key + "-" + value)
-            .getDefinitionId();
+        return MiscUtils.tokeniseKeyValue(key, value).getDefinitionId();
     }
 }

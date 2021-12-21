@@ -73,6 +73,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptT
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
@@ -385,8 +386,7 @@ public class JavaASTAnalyser implements Analyser {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
-        Token token = new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value);
-        addToken(token, NEWLINE);
+        addToken(MiscUtils.tokeniseKeyValue(key, value, linkPrefix), NEWLINE);
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {
@@ -421,7 +421,7 @@ public class JavaASTAnalyser implements Analyser {
             visitJavaDoc(typeDeclaration);
 
             // public custom annotation @interface's annotations
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
 
                 // Annotations on top of AnnotationDeclaration class, for example
@@ -451,7 +451,7 @@ public class JavaASTAnalyser implements Analyser {
             boolean isInterfaceDeclaration = isInterfaceType(typeDeclaration);
 
             // public custom annotation @interface's members
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
                 tokeniseAnnotationMember(annotationDeclaration);
             }

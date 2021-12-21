@@ -30,9 +30,7 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<disk-name>",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),

@@ -9,8 +9,8 @@ import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generato
 import { MockTool } from '../../tools';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
-import { processRequest } from '../../../src/generator/goTester';
 import { configDefaults } from '../../../src/common/constant';
+import { processRequest } from '../../../src/generator/goTester';
 
 describe('processRequest of go-tester', () => {
     let spyExampleRenderData;

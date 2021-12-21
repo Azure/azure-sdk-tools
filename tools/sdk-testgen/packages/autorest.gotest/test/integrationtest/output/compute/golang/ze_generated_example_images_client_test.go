@@ -30,19 +30,13 @@ func ExampleImagesClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<image-name>",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							BlobURI: to.StringPtr("<blob-uri>"),
-							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("<id>"),
-								},
-							},
+						BlobURI: to.StringPtr("<blob-uri>"),
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("<id>"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -73,10 +67,8 @@ func ExampleImagesClient_BeginUpdate() {
 		"<resource-group-name>",
 		"<image-name>",
 		golang.ImageUpdate{
-			UpdateResource: golang.UpdateResource{
-				Tags: map[string]*string{
-					"department": to.StringPtr("HR"),
-				},
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.ImageProperties{
 				HyperVGeneration: golang.HyperVGenerationTypesV1.ToPtr(),

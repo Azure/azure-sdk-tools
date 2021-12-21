@@ -31,9 +31,7 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		"<gallery-name>",
 		"<gallery-image-name>",
 		golang.GalleryImage{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryImageProperties{
 				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{

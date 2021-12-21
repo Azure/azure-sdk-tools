@@ -30,9 +30,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<disk-access-name>",
 		golang.DiskAccess{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 		},
 		nil)
 	if err != nil {

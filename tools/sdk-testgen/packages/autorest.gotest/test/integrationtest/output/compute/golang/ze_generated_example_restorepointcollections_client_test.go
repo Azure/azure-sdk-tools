@@ -28,11 +28,9 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
 		golang.RestorePointCollection{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-				Tags: map[string]*string{
-					"myTag1": to.StringPtr("tagValue1"),
-				},
+			Location: to.StringPtr("<location>"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
 			},
 			Properties: &golang.RestorePointCollectionProperties{
 				Source: &golang.RestorePointCollectionSourceProperties{

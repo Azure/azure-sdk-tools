@@ -32,9 +32,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 		"<instance-id>",
 		"<run-command-name>",
 		golang.VirtualMachineRunCommand{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{

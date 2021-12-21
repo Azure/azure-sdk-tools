@@ -41,26 +41,26 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 					"items": []interface{}{
 						map[string]interface{}{
 							"name": "text - 2",
-							"type": 1,
+							"type": float64(1),
 							"content": map[string]interface{}{
 								"json": "## New workbook\n---\n\nWelcome to your new workbook.  This area will display text formatted as markdown.\n\n\nWe've included a basic analytics query to get you started. Use the `Edit` button below each section to configure it or add more sections.",
 							},
 						},
 						map[string]interface{}{
 							"name": "query - 2",
-							"type": 3,
+							"type": float64(3),
 							"content": map[string]interface{}{
 								"exportToExcelOptions": "visible",
 								"query":                "union withsource=TableName *\n| summarize Count=count() by TableName\n| render barchart",
-								"queryType":            0,
+								"queryType":            float64(0),
 								"resourceType":         "microsoft.operationalinsights/workspaces",
-								"size":                 1,
+								"size":                 float64(1),
 								"version":              "KqlItem/1.0",
 							},
 						},
 					},
 					"styleSettings": map[string]interface{}{},
-					"test":          1,
+					"test":          float64(1),
 				},
 				TypeHandlerVersion: to.StringPtr("<type-handler-version>"),
 			},

@@ -16,6 +16,8 @@ import (
 	"runtime/debug"
 	"testing"
 
+	"encoding/json"
+	"reflect"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -40,6 +42,9 @@ func TestOperations_List(t *testing.T) {
 
 func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 	// From example Create an availability set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create an availability set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -50,11 +55,9 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myAvailabilitySet",
 		golang.AvailabilitySet{
+			Location: to.StringPtr("westus"),
 			AdditionalProperties: map[string]*string{
 				"anyProperty": to.StringPtr("fakeValue"),
-			},
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
 			},
 			Properties: &golang.AvailabilitySetProperties{
 				PlatformFaultDomainCount:  to.Int32Ptr(2),
@@ -65,7 +68,28 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.AvailabilitySetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.AvailabilitySet{
+			Name:     to.StringPtr("myAvailabilitySet"),
+			Type:     to.StringPtr("Microsoft.Compute/availabilitySets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/myAvailabilitySet"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.AvailabilitySetProperties{
+				PlatformFaultDomainCount:  to.Int32Ptr(2),
+				PlatformUpdateDomainCount: to.Int32Ptr(20),
+			},
+			SKU: &golang.SKU{
+				Name: to.StringPtr("Classic"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.AvailabilitySet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.AvailabilitySet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestAvailabilitySets_Update(t *testing.T) {
@@ -82,6 +106,9 @@ func TestAvailabilitySets_Get(t *testing.T) {
 
 func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 	// From example List availability sets in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List availability sets in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -93,8 +120,84 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.AvailabilitySetListResult{
+				Value: []*golang.AvailabilitySet{
+					{
+						Name:     to.StringPtr("{availabilitySetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/availabilitySets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+						Location: to.StringPtr("australiasoutheast"),
+						Properties: &golang.AvailabilitySetProperties{
+							PlatformFaultDomainCount:  to.Int32Ptr(3),
+							PlatformUpdateDomainCount: to.Int32Ptr(5),
+							VirtualMachines: []*golang.SubResource{
+								{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}"),
+								}},
+						},
+						SKU: &golang.SKU{
+							Name: to.StringPtr("Classic"),
+						},
+					},
+					{
+						Name:     to.StringPtr("{availabilitySetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/availabilitySets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+						Location: to.StringPtr("australiasoutheast"),
+						Properties: &golang.AvailabilitySetProperties{
+							PlatformFaultDomainCount:  to.Int32Ptr(3),
+							PlatformUpdateDomainCount: to.Int32Ptr(5),
+							VirtualMachines: []*golang.SubResource{
+								{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}"),
+								}},
+						},
+						SKU: &golang.SKU{
+							Name: to.StringPtr("Classic"),
+						},
+					},
+					{
+						Name:     to.StringPtr("{availabilitySetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/availabilitySets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+						Location: to.StringPtr("westcentralus"),
+						Tags: map[string]*string{
+							"{tagName}": to.StringPtr("{tagValue}"),
+						},
+						Properties: &golang.AvailabilitySetProperties{
+							PlatformFaultDomainCount:  to.Int32Ptr(3),
+							PlatformUpdateDomainCount: to.Int32Ptr(5),
+							VirtualMachines:           []*golang.SubResource{},
+						},
+						SKU: &golang.SKU{
+							Name: to.StringPtr("Classic"),
+						},
+					},
+					{
+						Name:     to.StringPtr("{availabilitySetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/availabilitySets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+						Location: to.StringPtr("westcentralus"),
+						Tags: map[string]*string{
+							"{tagName}": to.StringPtr("{tagValue}"),
+						},
+						Properties: &golang.AvailabilitySetProperties{
+							PlatformFaultDomainCount:  to.Int32Ptr(3),
+							PlatformUpdateDomainCount: to.Int32Ptr(5),
+							VirtualMachines:           []*golang.SubResource{},
+						},
+						SKU: &golang.SKU{
+							Name: to.StringPtr("Classic"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().AvailabilitySetListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().AvailabilitySetListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
@@ -109,6 +212,9 @@ func TestAvailabilitySets_ListAvailableSizes(t *testing.T) {
 
 func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 	// From example Create or Update a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or Update a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -119,9 +225,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"$(resourceName)",
 		golang.ProximityPlacementGroup{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.ProximityPlacementGroupProperties{
 				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
@@ -130,11 +234,31 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.ProximityPlacementGroup{
+			Name:     to.StringPtr("myProximityPlacementGroup"),
+			Type:     to.StringPtr("Microsoft.Compute/proximityPlacementGroups"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ProximityPlacementGroupProperties{
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestProximityPlacementGroups_Update(t *testing.T) {
 	// From example Create a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -145,21 +269,39 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 		"myResourceGroup",
 		"myProximityPlacementGroup",
 		golang.ProximityPlacementGroupUpdate{
-			UpdateResource: golang.UpdateResource{
-				Tags: map[string]*string{
-					"additionalProp1": to.StringPtr("string"),
-				},
+			Tags: map[string]*string{
+				"additionalProp1": to.StringPtr("string"),
 			},
 		},
 		nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.ProximityPlacementGroup{
+			Name:     to.StringPtr("myProximityPlacementGroup"),
+			Type:     to.StringPtr("Microsoft.Compute/proximityPlacementGroups"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ProximityPlacementGroupProperties{
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestProximityPlacementGroups_Delete(t *testing.T) {
 	// From example Create a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -177,6 +319,9 @@ func TestProximityPlacementGroups_Delete(t *testing.T) {
 
 func TestProximityPlacementGroups_Get(t *testing.T) {
 	// From example Create a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -190,11 +335,43 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ProximityPlacementGroupsGetResult)
+	// Response check
+	{
+		exampleRes := golang.ProximityPlacementGroup{
+			Name:     to.StringPtr("myProximityPlacementGroup"),
+			Type:     to.StringPtr("Microsoft.Compute/proximityPlacementGroups"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ProximityPlacementGroupProperties{
+				AvailabilitySets: []*golang.SubResourceWithColocationStatus{
+					{
+						ID: to.StringPtr("string"),
+					}},
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
+					{
+						ID: to.StringPtr("string"),
+					}},
+				VirtualMachines: []*golang.SubResourceWithColocationStatus{
+					{
+						ID: to.StringPtr("string"),
+					}},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 	// From example Create a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -206,14 +383,46 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ProximityPlacementGroupListResult{
+				Value: []*golang.ProximityPlacementGroup{
+					{
+						Name:     to.StringPtr("myProximityPlacementGroup"),
+						Type:     to.StringPtr("Microsoft.Compute/proximityPlacementGroups"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
+						Location: to.StringPtr("westus"),
+						Properties: &golang.ProximityPlacementGroupProperties{
+							AvailabilitySets: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+							ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+							VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+							VirtualMachines: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ProximityPlacementGroupListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 	// From example Create a proximity placement group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a proximity placement group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -226,14 +435,46 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ProximityPlacementGroupListResult{
+				Value: []*golang.ProximityPlacementGroup{
+					{
+						Name:     to.StringPtr("myProximityPlacementGroup"),
+						Type:     to.StringPtr("Microsoft.Compute/proximityPlacementGroups"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
+						Location: to.StringPtr("westus"),
+						Properties: &golang.ProximityPlacementGroupProperties{
+							AvailabilitySets: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+							ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+							VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+							VirtualMachines: []*golang.SubResourceWithColocationStatus{
+								{
+									ID: to.StringPtr("string"),
+								}},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ProximityPlacementGroupListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a dedicated host group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a dedicated host group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -244,11 +485,9 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myDedicatedHostGroup",
 		golang.DedicatedHostGroup{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-				Tags: map[string]*string{
-					"department": to.StringPtr("finance"),
-				},
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("finance"),
 			},
 			Properties: &golang.DedicatedHostGroupProperties{
 				PlatformFaultDomainCount:  to.Int32Ptr(3),
@@ -261,7 +500,30 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DedicatedHostGroupsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DedicatedHostGroup{
+			Name:     to.StringPtr("myDedicatedHostGroup"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/HostGroups/myDedicatedHostGroup"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("finance"),
+				"owner":      to.StringPtr("myCompany"),
+			},
+			Properties: &golang.DedicatedHostGroupProperties{
+				PlatformFaultDomainCount:  to.Int32Ptr(3),
+				SupportAutomaticPlacement: to.BoolPtr(true),
+			},
+			Zones: []*string{
+				to.StringPtr("1")},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDedicatedHostGroups_Update(t *testing.T) {
@@ -274,6 +536,9 @@ func TestDedicatedHostGroups_Delete(t *testing.T) {
 
 func TestDedicatedHostGroups_Get(t *testing.T) {
 	// From example Create a dedicated host group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a dedicated host group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -287,7 +552,82 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DedicatedHostGroupsGetResult)
+	// Response check
+	{
+		exampleRes := golang.DedicatedHostGroup{
+			Name:     to.StringPtr("myDedicatedHostGroup"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"{tagName}": to.StringPtr("{tagValue}"),
+			},
+			Properties: &golang.DedicatedHostGroupProperties{
+				Hosts: []*golang.SubResourceReadOnly{
+					{
+						ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myDedicatedHostGroup/myHostGroup/Hosts/myHost1"),
+					},
+					{
+						ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myDedicatedHostGroup/myHostGroup/Hosts/myHost2"),
+					}},
+				InstanceView: &golang.DedicatedHostGroupInstanceView{
+					Hosts: []*golang.DedicatedHostInstanceViewWithName{
+						{
+							AssetID: to.StringPtr("eb3f58b8-b4e8-4882-b69f-301a01812407"),
+							AvailableCapacity: &golang.DedicatedHostAvailableCapacity{
+								AllocatableVMs: []*golang.DedicatedHostAllocatableVM{
+									{
+										Count:  to.Float64Ptr(10),
+										VMSize: to.StringPtr("Standard_A1"),
+									}},
+							},
+							Statuses: []*golang.InstanceViewStatus{
+								{
+									Code:          to.StringPtr("ProvisioningState/succeeded"),
+									DisplayStatus: to.StringPtr("Provisioning succeeded"),
+									Level:         golang.StatusLevelTypesInfo.ToPtr(),
+								},
+								{
+									Code:          to.StringPtr("HealthState/available"),
+									DisplayStatus: to.StringPtr("Host available"),
+									Level:         golang.StatusLevelTypesInfo.ToPtr(),
+								}},
+							Name: to.StringPtr("myHost1"),
+						},
+						{
+							AssetID: to.StringPtr("f293d4ac-5eea-4be2-b0c0-0fcaa09aebf8"),
+							AvailableCapacity: &golang.DedicatedHostAvailableCapacity{
+								AllocatableVMs: []*golang.DedicatedHostAllocatableVM{
+									{
+										Count:  to.Float64Ptr(10),
+										VMSize: to.StringPtr("Standard_A1"),
+									}},
+							},
+							Statuses: []*golang.InstanceViewStatus{
+								{
+									Code:          to.StringPtr("ProvisioningState/succeeded"),
+									DisplayStatus: to.StringPtr("Provisioning succeeded"),
+									Level:         golang.StatusLevelTypesInfo.ToPtr(),
+								},
+								{
+									Code:          to.StringPtr("HealthState/available"),
+									DisplayStatus: to.StringPtr("Host available"),
+									Level:         golang.StatusLevelTypesInfo.ToPtr(),
+								}},
+							Name: to.StringPtr("myHost2"),
+						}},
+				},
+				PlatformFaultDomainCount:  to.Int32Ptr(3),
+				SupportAutomaticPlacement: to.BoolPtr(true),
+			},
+			Zones: []*string{
+				to.StringPtr("3")},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDedicatedHostGroups_ListByResourceGroup(t *testing.T) {
@@ -300,6 +640,9 @@ func TestDedicatedHostGroups_ListBySubscription(t *testing.T) {
 
 func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a dedicated host .
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a dedicated host ."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -311,11 +654,9 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 		"myDedicatedHostGroup",
 		"myDedicatedHost",
 		golang.DedicatedHost{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-				Tags: map[string]*string{
-					"department": to.StringPtr("HR"),
-				},
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.DedicatedHostProperties{
 				PlatformFaultDomain: to.Int32Ptr(1),
@@ -332,7 +673,32 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DedicatedHostsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DedicatedHost{
+			Name:     to.StringPtr("myDedicatedHost"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/HostGroups/myDedicatedHostGroup/hosts/myDedicatedHost"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
+			},
+			Properties: &golang.DedicatedHostProperties{
+				AutoReplaceOnFailure: to.BoolPtr(false),
+				HostID:               to.StringPtr("{GUID}"),
+				LicenseType:          golang.DedicatedHostLicenseTypesWindowsServerHybrid.ToPtr(),
+				PlatformFaultDomain:  to.Int32Ptr(1),
+			},
+			SKU: &golang.SKU{
+				Name: to.StringPtr("DSv3-Type1"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DedicatedHost)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDedicatedHosts_Update(t *testing.T) {
@@ -345,6 +711,9 @@ func TestDedicatedHosts_Delete(t *testing.T) {
 
 func TestDedicatedHosts_Get(t *testing.T) {
 	// From example Get a dedicated host.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a dedicated host."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -359,7 +728,57 @@ func TestDedicatedHosts_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DedicatedHostsGetResult)
+	// Response check
+	{
+		exampleRes := golang.DedicatedHost{
+			Name:     to.StringPtr("myHost"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
+			},
+			Properties: &golang.DedicatedHostProperties{
+				AutoReplaceOnFailure: to.BoolPtr(true),
+				HostID:               to.StringPtr("{GUID}"),
+				InstanceView: &golang.DedicatedHostInstanceView{
+					AssetID: to.StringPtr("eb3f58b8-b4e8-4882-b69f-301a01812407"),
+					AvailableCapacity: &golang.DedicatedHostAvailableCapacity{
+						AllocatableVMs: []*golang.DedicatedHostAllocatableVM{
+							{
+								Count:  to.Float64Ptr(10),
+								VMSize: to.StringPtr("Standard_A1"),
+							}},
+					},
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						},
+						{
+							Code:          to.StringPtr("HealthState/available"),
+							DisplayStatus: to.StringPtr("Host available"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						}},
+				},
+				PlatformFaultDomain: to.Int32Ptr(1),
+				ProvisioningState:   to.StringPtr("Succeeded"),
+				ProvisioningTime:    to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-27T01:02:38.3138469+00:00"); return t }()),
+				VirtualMachines: []*golang.SubResourceReadOnly{
+					{
+						ID: to.StringPtr("/subscriptions/subId/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/vm1"),
+					}},
+			},
+			SKU: &golang.SKU{
+				Name: to.StringPtr("DSv3-Type1"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DedicatedHost)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDedicatedHosts_ListByHostGroup(t *testing.T) {
@@ -376,6 +795,9 @@ func TestSSHPublicKeys_ListByResourceGroup(t *testing.T) {
 
 func TestSSHPublicKeys_Create(t *testing.T) {
 	// From example Create a new SSH public key resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a new SSH public key resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -386,9 +808,7 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 		"myResourceGroup",
 		"mySshPublicKeyName",
 		golang.SSHPublicKeyResource{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.SSHPublicKeyResourceProperties{
 				PublicKey: to.StringPtr("{ssh-rsa public key}"),
 			},
@@ -397,7 +817,23 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SSHPublicKeysCreateResult)
+	// Response check
+	{
+		exampleRes := golang.SSHPublicKeyResource{
+			Name:     to.StringPtr("mySshPublicKeyName"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/sshPublicKeys/mySshPublicKeyName"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.SSHPublicKeyResourceProperties{
+				PublicKey: to.StringPtr("{ssh-rsa public key}"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSSHPublicKeys_Update(t *testing.T) {
@@ -410,6 +846,9 @@ func TestSSHPublicKeys_Delete(t *testing.T) {
 
 func TestSSHPublicKeys_Get(t *testing.T) {
 	// From example Get an ssh public key.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get an ssh public key."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -423,11 +862,33 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SSHPublicKeysGetResult)
+	// Response check
+	{
+		exampleRes := golang.SSHPublicKeyResource{
+			Name:     to.StringPtr("mySshPublicKeyName"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/SshPublicKeys/mySshPublicKeyName"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"{tagName}": to.StringPtr("{tagValue}"),
+			},
+			Properties: &golang.SSHPublicKeyResourceProperties{
+				PublicKey: to.StringPtr("{ssh-rsa public key}"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	// From example Generate an SSH key pair.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Generate an SSH key pair."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -441,7 +902,20 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SSHPublicKeysGenerateKeyPairResult)
+	// Response check
+	{
+		exampleRes := golang.SSHPublicKeyGenerateKeyPairResult{
+			ID:         to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/SshPublicKeys/mySshPublicKeyName"),
+			PrivateKey: to.StringPtr("{ssh private key}"),
+			PublicKey:  to.StringPtr("{ssh-rsa public key}"),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyGenerateKeyPairResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SSHPublicKeyGenerateKeyPairResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineExtensionImages_Get(t *testing.T) {
@@ -492,10 +966,6 @@ func TestVirtualMachineImages_ListPublishers(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImages_ListSKUs(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
-}
-
 func TestVirtualMachineImagesEdgeZone_Get(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
@@ -512,16 +982,15 @@ func TestVirtualMachineImagesEdgeZone_ListPublishers(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
-func TestVirtualMachineImagesEdgeZone_ListSKUs(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
-}
-
 func TestUsage_List(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
 func TestVirtualMachines_ListByLocation(t *testing.T) {
 	// From example Lists all the virtual machines under the specified subscription for the specified location.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Lists all the virtual machines under the specified subscription for the specified location."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -534,8 +1003,126 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.VirtualMachineListResult{
+				Value: []*golang.VirtualMachine{
+					{
+						Name:     to.StringPtr("{virtualMachineName}"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{virtualMachineName}"),
+						Location: to.StringPtr("eastus"),
+						Tags: map[string]*string{
+							"RG":      to.StringPtr("rg"),
+							"testTag": to.StringPtr("1"),
+						},
+						Properties: &golang.VirtualMachineProperties{
+							AvailabilitySet: &golang.SubResource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+							},
+							HardwareProfile: &golang.HardwareProfile{
+								VMSize: golang.VirtualMachineSizeTypesStandardA0.ToPtr(),
+							},
+							NetworkProfile: &golang.NetworkProfile{
+								NetworkInterfaces: []*golang.NetworkInterfaceReference{
+									{
+										ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"),
+									}},
+							},
+							OSProfile: &golang.OSProfile{
+								AdminUsername:            to.StringPtr("Foo12"),
+								AllowExtensionOperations: to.BoolPtr(true),
+								ComputerName:             to.StringPtr("Test"),
+								Secrets:                  []*golang.VaultSecretGroup{},
+								WindowsConfiguration: &golang.WindowsConfiguration{
+									EnableAutomaticUpdates: to.BoolPtr(true),
+									ProvisionVMAgent:       to.BoolPtr(true),
+								},
+							},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							StorageProfile: &golang.StorageProfile{
+								DataDisks: []*golang.DataDisk{},
+								ImageReference: &golang.ImageReference{
+									Offer:     to.StringPtr("WindowsServer"),
+									Publisher: to.StringPtr("MicrosoftWindowsServer"),
+									SKU:       to.StringPtr("2012-R2-Datacenter"),
+									Version:   to.StringPtr("4.127.20170406"),
+								},
+								OSDisk: &golang.OSDisk{
+									Name:         to.StringPtr("test"),
+									Caching:      golang.CachingTypesNone.ToPtr(),
+									CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+									DiskSizeGB:   to.Int32Ptr(127),
+									OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
+									Vhd: &golang.VirtualHardDisk{
+										URI: to.StringPtr("https://{storageAccountName}.blob.core.windows.net/{containerName}/{vhdName}.vhd"),
+									},
+								},
+							},
+							VMID: to.StringPtr("{vmId}"),
+						},
+					},
+					{
+						Name:     to.StringPtr("{virtualMachineName}"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{virtualMachineName}"),
+						Location: to.StringPtr("eastus"),
+						Tags: map[string]*string{
+							"RG":      to.StringPtr("rg"),
+							"testTag": to.StringPtr("1"),
+						},
+						Properties: &golang.VirtualMachineProperties{
+							AvailabilitySet: &golang.SubResource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
+							},
+							HardwareProfile: &golang.HardwareProfile{
+								VMSize: golang.VirtualMachineSizeTypesStandardA0.ToPtr(),
+							},
+							NetworkProfile: &golang.NetworkProfile{
+								NetworkInterfaces: []*golang.NetworkInterfaceReference{
+									{
+										ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkInterfaces/{networkInterfaceName}"),
+									}},
+							},
+							OSProfile: &golang.OSProfile{
+								AdminUsername:            to.StringPtr("Foo12"),
+								AllowExtensionOperations: to.BoolPtr(true),
+								ComputerName:             to.StringPtr("Test"),
+								Secrets:                  []*golang.VaultSecretGroup{},
+								WindowsConfiguration: &golang.WindowsConfiguration{
+									EnableAutomaticUpdates: to.BoolPtr(true),
+									ProvisionVMAgent:       to.BoolPtr(true),
+								},
+							},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							StorageProfile: &golang.StorageProfile{
+								DataDisks: []*golang.DataDisk{},
+								ImageReference: &golang.ImageReference{
+									Offer:     to.StringPtr("WindowsServer"),
+									Publisher: to.StringPtr("MicrosoftWindowsServer"),
+									SKU:       to.StringPtr("2012-R2-Datacenter"),
+									Version:   to.StringPtr("4.127.20170406"),
+								},
+								OSDisk: &golang.OSDisk{
+									Name:         to.StringPtr("test"),
+									Caching:      golang.CachingTypesNone.ToPtr(),
+									CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+									DiskSizeGB:   to.Int32Ptr(127),
+									OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
+									Vhd: &golang.VirtualHardDisk{
+										URI: to.StringPtr("https://{storageAccountName}.blob.core.windows.net/{containerName}/{vhdName}.vhd"),
+									},
+								},
+							},
+							VMID: to.StringPtr("{vmId}"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
@@ -546,6 +1133,9 @@ func TestVirtualMachines_Capture(t *testing.T) {
 
 func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	// From example Create a Linux vm with a patch setting assessmentMode of ImageDefault.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Linux vm with a patch setting assessmentMode of ImageDefault."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -556,9 +1146,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
@@ -566,9 +1154,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -611,16 +1197,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a Linux vm with a patch setting patchMode of ImageDefault.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
@@ -628,9 +1211,70 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						PatchSettings: &golang.LinuxPatchSettings{
+							AssessmentMode: golang.LinuxPatchAssessmentModeImageDefault.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("UbuntuServer"),
+						Publisher: to.StringPtr("Canonical"),
+						SKU:       to.StringPtr("16.04-LTS"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a Linux vm with a patch setting patchMode of ImageDefault.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Linux vm with a patch setting patchMode of ImageDefault."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -673,16 +1317,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
@@ -690,9 +1331,70 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						PatchSettings: &golang.LinuxPatchSettings{
+							PatchMode: golang.LinuxVMGuestPatchModeImageDefault.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("UbuntuServer"),
+						Publisher: to.StringPtr("Canonical"),
+						SKU:       to.StringPtr("16.04-LTS"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -736,16 +1438,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a VM with Uefi Settings of secureBoot and vTPM.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
@@ -753,9 +1452,71 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						PatchSettings: &golang.LinuxPatchSettings{
+							AssessmentMode: golang.LinuxPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      golang.LinuxVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("UbuntuServer"),
+						Publisher: to.StringPtr("Canonical"),
+						SKU:       to.StringPtr("16.04-LTS"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a VM with Uefi Settings of secureBoot and vTPM.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a VM with Uefi Settings of secureBoot and vTPM."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -799,16 +1560,81 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				SecurityProfile: &golang.SecurityProfile{
+					SecurityType: to.StringPtr("TrustedLaunch"),
+					UefiSettings: &golang.UefiSettings{
+						SecureBootEnabled: to.BoolPtr(true),
+						VTpmEnabled:       to.BoolPtr(true),
+					},
+				},
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("windowsserver-gen2preview-preview"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("windows10-tvm"),
+						Version:   to.StringPtr("18363.592.2001092016"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadOnly.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a VM with UserData
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a VM with UserData"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				DiagnosticsProfile: &golang.DiagnosticsProfile{
 					BootDiagnostics: &golang.BootDiagnostics{
@@ -822,9 +1648,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -862,16 +1686,80 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("{vm-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/{vm-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled:    to.BoolPtr(true),
+						StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+					},
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("{vm-name}"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("vmOSdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a VM with network interface configuration
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a VM with network interface configuration"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -936,16 +1824,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a Windows vm with a patch setting assessmentMode of ImageDefault.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -953,9 +1838,68 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/toBeCreatedNetworkInterface"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("b7a098cc-b0b8-46e8-a205-62f301a62a8f"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a Windows vm with a patch setting assessmentMode of ImageDefault.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Windows vm with a patch setting assessmentMode of ImageDefault."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -999,16 +1943,77 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						PatchSettings: &golang.PatchSettings{
+							AssessmentMode: golang.WindowsPatchAssessmentModeImageDefault.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a Windows vm with a patch setting patchMode of AutomaticByOS.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByOS."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1016,9 +2021,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1062,16 +2065,77 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						PatchSettings: &golang.PatchSettings{
+							PatchMode: golang.WindowsVMGuestPatchModeAutomaticByOS.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1079,9 +2143,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1126,16 +2188,78 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						PatchSettings: &golang.PatchSettings{
+							EnableHotpatching: to.BoolPtr(true),
+							PatchMode:         golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a Windows vm with a patch setting patchMode of Manual.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Windows vm with a patch setting patchMode of Manual."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1143,9 +2267,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1189,16 +2311,77 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						PatchSettings: &golang.PatchSettings{
+							PatchMode: golang.WindowsVMGuestPatchModeManual.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1206,9 +2389,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1253,16 +2434,78 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						PatchSettings: &golang.PatchSettings{
+							AssessmentMode: golang.WindowsPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+						},
+						ProvisionVMAgent: to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a custom-image vm from an unmanaged generalized os image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a custom-image vm from an unmanaged generalized os image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1270,9 +2513,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1307,16 +2548,71 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						Image: &golang.VirtualHardDisk{
+							URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+						Vhd: &golang.VirtualHardDisk{
+							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk.vhd"),
+						},
+					},
+				},
+				VMID: to.StringPtr("926cd555-a07c-4ff5-b214-4aa4dd09d79b"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a platform-image vm with unmanaged os and data disks.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a platform-image vm with unmanaged os and data disks."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
@@ -1324,9 +2620,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1380,16 +2674,94 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Name:         to.StringPtr("dataDisk0"),
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(0),
+							Vhd: &golang.VirtualHardDisk{
+								URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk0.vhd"),
+							},
+						},
+						{
+							Name:         to.StringPtr("dataDisk1"),
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(1),
+							Vhd: &golang.VirtualHardDisk{
+								URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk1.vhd"),
+							},
+						}},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
+						Vhd: &golang.VirtualHardDisk{
+							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk.vhd"),
+						},
+					},
+				},
+				VMID: to.StringPtr("5230a749-2f68-4830-900b-702182d32e63"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm from a custom image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm from a custom image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1397,9 +2769,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1412,9 +2782,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					ImageReference: &golang.ImageReference{
-						SubResource: golang.SubResource{
-							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
-						},
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
 					},
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
@@ -1435,16 +2803,71 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						DisablePasswordAuthentication: to.BoolPtr(false),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/nsgcustom"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm from a generalized shared image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm from a generalized shared image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1452,9 +2875,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1467,9 +2888,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					ImageReference: &golang.ImageReference{
-						SubResource: golang.SubResource{
-							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
-						},
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
 					},
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
@@ -1490,16 +2909,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a vm from a specialized shared image.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1507,9 +2923,65 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						DisablePasswordAuthentication: to.BoolPtr(false),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a vm from a specialized shared image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm from a specialized shared image."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1517,9 +2989,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				StorageProfile: &golang.StorageProfile{
 					ImageReference: &golang.ImageReference{
-						SubResource: golang.SubResource{
-							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
-						},
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
 					},
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
@@ -1540,16 +3010,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1557,9 +3024,57 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1600,16 +3115,78 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				PlatformFaultDomain: to.Int32Ptr(1),
+				ProvisioningState:   to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VirtualMachineScaleSet: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myExistingFlexVmss"),
+				},
+				VMID: to.StringPtr("7cce54f2-ecd3-4ddd-a8d9-50984faa3918"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm in an availability set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm in an availability set."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				AvailabilitySet: &golang.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/{existing-availability-set-name}"),
@@ -1620,9 +3197,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1659,16 +3234,77 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				AvailabilitySet: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/NSGEXISTINGAS"),
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("b7a098cc-b0b8-46e8-a205-62f301a62a8f"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with DiskEncryptionSet resource id in the os disk and data disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with DiskEncryptionSet resource id in the os disk and data disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -1676,9 +3312,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1698,9 +3332,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-									SubResource: golang.SubResource{
-										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-									},
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
 								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 							},
@@ -1711,21 +3343,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/{existing-managed-disk-name}"),
-								},
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/{existing-managed-disk-name}"),
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-									SubResource: golang.SubResource{
-										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-									},
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
 								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						}},
 					ImageReference: &golang.ImageReference{
-						SubResource: golang.SubResource{
-							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
-						},
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
 					},
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
@@ -1733,9 +3359,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-								},
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 							},
 							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 						},
@@ -1751,16 +3375,99 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						DisablePasswordAuthentication: to.BoolPtr(false),
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(0),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+								},
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+						{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/{existing-managed-disk-name}"),
+								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+								},
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						}},
+					ImageReference: &golang.ImageReference{
+						ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/nsgcustom"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskencryptionset-name}"),
+							},
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with Host Encryption using encryptionAtHost property.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with Host Encryption using encryptionAtHost property."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("$(fakeStepVar)"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -1773,9 +3480,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1815,16 +3520,82 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				SecurityProfile: &golang.SecurityProfile{
+					EncryptionAtHost: to.BoolPtr(true),
+				},
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("standard-data-science-vm"),
+						Publisher: to.StringPtr("microsoft-ads"),
+						SKU:       to.StringPtr("standard-data-science-vm"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadOnly.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with Scheduled Events Profile
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with Scheduled Events Profile"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				DiagnosticsProfile: &golang.DiagnosticsProfile{
 					BootDiagnostics: &golang.BootDiagnostics{
@@ -1838,9 +3609,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1883,16 +3652,86 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled:    to.BoolPtr(true),
+						StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+					},
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				ScheduledEventsProfile: &golang.ScheduledEventsProfile{
+					TerminateNotificationProfile: &golang.TerminateNotificationProfile{
+						Enable:           to.BoolPtr(true),
+						NotBeforeTimeout: to.StringPtr("PT10M"),
+					},
+				},
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with a marketplace image plan.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with a marketplace image plan."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -1905,9 +3744,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -1944,16 +3781,79 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("standard-data-science-vm"),
+						Publisher: to.StringPtr("microsoft-ads"),
+						SKU:       to.StringPtr("standard-data-science-vm"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with an extensions time budget.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with an extensions time budget."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				DiagnosticsProfile: &golang.DiagnosticsProfile{
 					BootDiagnostics: &golang.BootDiagnostics{
@@ -1968,9 +3868,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2007,16 +3905,81 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled:    to.BoolPtr(true),
+						StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+					},
+				},
+				ExtensionsTimeBudget: to.StringPtr("PT30M"),
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with boot diagnostics.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with boot diagnostics."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				DiagnosticsProfile: &golang.DiagnosticsProfile{
 					BootDiagnostics: &golang.BootDiagnostics{
@@ -2030,9 +3993,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2069,16 +4030,80 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled:    to.BoolPtr(true),
+						StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+					},
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with empty data disks.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with empty data disks."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
@@ -2086,9 +4111,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2136,16 +4159,92 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(0),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						}},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with ephemeral os disk provisioning in Cache disk using placement property.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with ephemeral os disk provisioning in Cache disk using placement property."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -2158,9 +4257,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2201,16 +4298,83 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("standard-data-science-vm"),
+						Publisher: to.StringPtr("microsoft-ads"),
+						SKU:       to.StringPtr("standard-data-science-vm"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadOnly.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiffDiskSettings: &golang.DiffDiskSettings{
+							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
+							Placement: golang.DiffDiskPlacementCacheDisk.ToPtr(),
+						},
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with ephemeral os disk provisioning in Resource disk using placement property.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with ephemeral os disk provisioning in Resource disk using placement property."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -2223,9 +4387,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2266,16 +4428,83 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("standard-data-science-vm"),
+						Publisher: to.StringPtr("microsoft-ads"),
+						SKU:       to.StringPtr("standard-data-science-vm"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadOnly.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiffDiskSettings: &golang.DiffDiskSettings{
+							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
+							Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+						},
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with ephemeral os disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with ephemeral os disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -2288,9 +4517,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2330,16 +4557,82 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("standard-data-science-vm"),
+						Publisher: to.StringPtr("microsoft-ads"),
+						SKU:       to.StringPtr("standard-data-science-vm"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadOnly.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiffDiskSettings: &golang.DiffDiskSettings{
+							Option: golang.DiffDiskOptionsLocal.ToPtr(),
+						},
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with managed boot diagnostics.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with managed boot diagnostics."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				DiagnosticsProfile: &golang.DiagnosticsProfile{
 					BootDiagnostics: &golang.BootDiagnostics{
@@ -2352,9 +4645,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2391,16 +4682,79 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled: to.BoolPtr(true),
+					},
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with password authentication.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with password authentication."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -2408,9 +4762,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2447,16 +4799,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
-
-	// From example Create a vm with premium storage.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myVM",
-		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -2464,9 +4813,68 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
 							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("b248db33-62ba-4d2d-b791-811e075ee0f5"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a vm with premium storage.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with premium storage."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myVM",
+		golang.VirtualMachine{
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2503,16 +4911,74 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a vm with ssh authentication.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a vm with ssh authentication."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
@@ -2520,9 +4986,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2568,11 +5032,77 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					LinuxConfiguration: &golang.LinuxConfiguration{
+						DisablePasswordAuthentication: to.BoolPtr(true),
+						SSH: &golang.SSHConfiguration{
+							PublicKeys: []*golang.SSHPublicKey{
+								{
+									Path:    to.StringPtr("/home/{your-username}/.ssh/authorized_keys"),
+									KeyData: to.StringPtr("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCeClRAk2ipUs/l5voIsDC5q9RI+YSRd1Bvd/O+axgY4WiBzG+4FwJWZm/mLLe5DoOdHQwmU2FrKXZSW4w2sYE70KeWnrFViCOX5MTVvJgPE8ClugNl8RWth/tU849DvM9sT7vFgfVSHcAS2yDRyDlueii+8nF2ym8XWAPltFVCyLHRsyBp5YPqK8JFYIa1eybKsY3hEAxRCA+/7bq8et+Gj3coOsuRmrehav7rE6N12Pb80I6ofa6SM5XNYq4Xk0iYNx7R3kdz0Jj9XgZYWjAHjJmT0gTRoOnt6upOuxK7xI/ykWrllgpXrCPu3Ymz+c+ujaqcxDopnAl2lmf69/J1"),
+								}},
+						},
+					},
+					Secrets: []*golang.VaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("UbuntuServer"),
+						Publisher: to.StringPtr("Canonical"),
+						SKU:       to.StringPtr("16.04-LTS"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("e0de9b84-a506-4b95-9623-00a425d05c90"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_Update(t *testing.T) {
 	// From example Update a VM by detaching data disk
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a VM by detaching data disk"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2590,9 +5120,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2642,9 +5170,89 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(0),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+							ToBeDetached: to.BoolPtr(true),
+						},
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+							ToBeDetached: to.BoolPtr(false),
+						}},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a VM by force-detaching data disk
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a VM by force-detaching data disk"},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2656,9 +5264,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -2709,11 +5315,92 @@ func TestVirtualMachines_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nsgExistingNic"),
+							Properties: &golang.NetworkInterfaceReferenceProperties{
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("{your-username}"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DetachOption: golang.DiskDetachOptionTypesForceDetach.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(0),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+							ToBeDetached: to.BoolPtr(true),
+						},
+						{
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(1023),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+							ToBeDetached: to.BoolPtr(false),
+						}},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myVMosdisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_Delete(t *testing.T) {
 	// From example Force delete a VM
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Force delete a VM"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2735,6 +5422,9 @@ func TestVirtualMachines_Delete(t *testing.T) {
 
 func TestVirtualMachines_Get(t *testing.T) {
 	// From example Get a Virtual Machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a Virtual Machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2748,9 +5438,125 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				AvailabilitySet: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/my-AvailabilitySet"),
+				},
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled:    to.BoolPtr(true),
+						StorageURI: to.StringPtr("http://{myStorageAccount}.blob.core.windows.net"),
+					},
+				},
+				ExtensionsTimeBudget: to.StringPtr("PT50M"),
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardDS3V2.ToPtr(),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{myNIC}"),
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("admin"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(false),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				ProximityPlacementGroup: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/my-ppg01"),
+				},
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Name:         to.StringPtr("myDataDisk0"),
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(30),
+							Lun:          to.Int32Ptr(0),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk0"),
+								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							},
+						},
+						{
+							Name:         to.StringPtr("myDataDisk1"),
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(100),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk1"),
+								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							},
+						}},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myOsDisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				UserData: to.StringPtr("RXhhbXBsZSBVc2VyRGF0YQ=="),
+				VMID:     to.StringPtr("0f47b100-583c-48e3-a4c0-aefc2c9bbcc1"),
+			},
+			Resources: []*golang.VirtualMachineExtension{
+				{
+					Name:     to.StringPtr("CustomScriptExtension-DSC"),
+					Type:     to.StringPtr("Microsoft.Compute/virtualMachines/extensions"),
+					ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/extensions/CustomScriptExtension-DSC"),
+					Location: to.StringPtr("west us"),
+					Tags: map[string]*string{
+						"displayName": to.StringPtr("CustomScriptExtension-DSC"),
+					},
+					Properties: &golang.VirtualMachineExtensionProperties{
+						Type:                    to.StringPtr("CustomScriptExtension"),
+						AutoUpgradeMinorVersion: to.BoolPtr(true),
+						ProvisioningState:       to.StringPtr("Succeeded"),
+						Publisher:               to.StringPtr("Microsoft.Compute"),
+						Settings:                map[string]interface{}{},
+						TypeHandlerVersion:      to.StringPtr("1.9"),
+					},
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a virtual machine placed on a dedicated host group through automatic placement
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a virtual machine placed on a dedicated host group through automatic placement"},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2758,11 +5564,76 @@ func TestVirtualMachines_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachine{
+			Name:     to.StringPtr("myVM"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.VirtualMachineProperties{
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+				},
+				HostGroup: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup"),
+				},
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkInterfaces/{myNIC}"),
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername: to.StringPtr("admin"),
+					ComputerName:  to.StringPtr("myVM"),
+					Secrets:       []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(false),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{},
+					ImageReference: &golang.ImageReference{
+						Offer:     to.StringPtr("WindowsServer"),
+						Publisher: to.StringPtr("MicrosoftWindowsServer"),
+						SKU:       to.StringPtr("2016-Datacenter"),
+						Version:   to.StringPtr("latest"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("myOsDisk"),
+						Caching:      golang.CachingTypesReadWrite.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(30),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
+							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("0f47b100-583c-48e3-a4c0-aefc2c9bbcc1"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachine)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_InstanceView(t *testing.T) {
 	// From example Get Virtual Machine Instance View.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Virtual Machine Instance View."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2776,9 +5647,141 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineInstanceView{
+			BootDiagnostics: &golang.BootDiagnosticsInstanceView{
+				ConsoleScreenshotBlobURI: to.StringPtr("https://{myStorageAccount}.blob.core.windows.net/bootdiagnostics-myOsDisk/myOsDisk.screenshot.bmp"),
+				SerialConsoleLogBlobURI:  to.StringPtr("https://{myStorageAccount}.blob.core.windows.net/bootdiagnostics-myOsDisk/myOsDisk.serialconsole.log"),
+			},
+			ComputerName: to.StringPtr("myVM"),
+			Disks: []*golang.DiskInstanceView{
+				{
+					Name: to.StringPtr("myOsDisk"),
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T21:29:47.477089+00:00"); return t }()),
+						}},
+				},
+				{
+					Name: to.StringPtr("myDataDisk0"),
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T21:29:47.461517+00:00"); return t }()),
+						}},
+				}},
+			HyperVGeneration: golang.HyperVGenerationTypeV1.ToPtr(),
+			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
+			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
+			PatchStatus: &golang.VirtualMachinePatchStatus{
+				AvailablePatchSummary: &golang.AvailablePatchSummary{
+					AssessmentActivityID:          to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
+					CriticalAndSecurityPatchCount: to.Int32Ptr(1),
+					LastModifiedTime:              to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					OtherPatchCount:               to.Int32Ptr(2),
+					RebootPending:                 to.BoolPtr(true),
+					StartTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					Status:                        golang.PatchOperationStatusSucceeded.ToPtr(),
+				},
+				ConfigurationStatuses: []*golang.InstanceViewStatus{
+					{
+						Code:          to.StringPtr("PatchModeConfigurationState/Ready"),
+						DisplayStatus: to.StringPtr("Status_PatchModeConfigurationState_Ready"),
+						Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					},
+					{
+						Code:          to.StringPtr("PatchModeConfigurationState/Pending"),
+						DisplayStatus: to.StringPtr("Status_PatchModeConfigurationState_Pending"),
+						Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					},
+					{
+						Code:          to.StringPtr("AssessmentModeConfigurationState/Pending"),
+						DisplayStatus: to.StringPtr("Status_AssessmentModeConfigurationState_Pending"),
+						Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					}},
+				LastPatchInstallationSummary: &golang.LastPatchInstallationSummary{
+					ExcludedPatchCount:        to.Int32Ptr(1),
+					FailedPatchCount:          to.Int32Ptr(1),
+					InstallationActivityID:    to.StringPtr("68f8b292-dfc2-4646-9981-33cc88631968"),
+					InstalledPatchCount:       to.Int32Ptr(1),
+					LastModifiedTime:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					MaintenanceWindowExceeded: to.BoolPtr(false),
+					NotSelectedPatchCount:     to.Int32Ptr(1),
+					PendingPatchCount:         to.Int32Ptr(1),
+					StartTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+					Status:                    golang.PatchOperationStatusSucceeded.ToPtr(),
+				},
+			},
+			PlatformFaultDomain:  to.Int32Ptr(1),
+			PlatformUpdateDomain: to.Int32Ptr(1),
+			Statuses: []*golang.InstanceViewStatus{
+				{
+					Code:          to.StringPtr("ProvisioningState/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T21:30:12.8051917+00:00"); return t }()),
+				},
+				{
+					Code:          to.StringPtr("PowerState/running"),
+					DisplayStatus: to.StringPtr("VM running"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+				}},
+			VMAgent: &golang.VirtualMachineAgentInstanceView{
+				ExtensionHandlers: []*golang.VirtualMachineExtensionHandlerInstanceView{
+					{
+						Type: to.StringPtr("Microsoft.Azure.Security.IaaSAntimalware"),
+						Status: &golang.InstanceViewStatus{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Ready"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						},
+						TypeHandlerVersion: to.StringPtr("1.5.5.9"),
+					}},
+				Statuses: []*golang.InstanceViewStatus{
+					{
+						Code:          to.StringPtr("ProvisioningState/succeeded"),
+						DisplayStatus: to.StringPtr("Ready"),
+						Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						Message:       to.StringPtr("GuestAgent is running and accepting new configurations."),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T23:11:22+00:00"); return t }()),
+					}},
+				VMAgentVersion: to.StringPtr("2.7.41491.949"),
+			},
+			Extensions: []*golang.VirtualMachineExtensionInstanceView{
+				{
+					Name: to.StringPtr("IaaSAntiMalware-ext0"),
+					Type: to.StringPtr("Microsoft.Azure.Security.IaaSAntimalware"),
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+							Message:       to.StringPtr("Microsoft Antimalware enabled"),
+						}},
+					TypeHandlerVersion: to.StringPtr("1.5.5.9"),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get instance view of a virtual machine placed on a dedicated host group through automatic placement.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get instance view of a virtual machine placed on a dedicated host group through automatic placement."},
+	})
 	res, err = client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2786,7 +5789,56 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineInstanceView{
+			AssignedHost: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup/hosts/myHost"),
+			ComputerName: to.StringPtr("myVM"),
+			Disks: []*golang.DiskInstanceView{
+				{
+					Name: to.StringPtr("myOsDisk"),
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T21:29:47.477089+00:00"); return t }()),
+						}},
+				}},
+			HyperVGeneration: golang.HyperVGenerationTypeV1.ToPtr(),
+			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
+			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
+			Statuses: []*golang.InstanceViewStatus{
+				{
+					Code:          to.StringPtr("ProvisioningState/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T21:30:12.8051917+00:00"); return t }()),
+				},
+				{
+					Code:          to.StringPtr("PowerState/running"),
+					DisplayStatus: to.StringPtr("VM running"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+				}},
+			VMAgent: &golang.VirtualMachineAgentInstanceView{
+				Statuses: []*golang.InstanceViewStatus{
+					{
+						Code:          to.StringPtr("ProvisioningState/succeeded"),
+						DisplayStatus: to.StringPtr("Ready"),
+						Level:         golang.StatusLevelTypesInfo.ToPtr(),
+						Message:       to.StringPtr("GuestAgent is running and accepting new configurations."),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T23:11:22+00:00"); return t }()),
+					}},
+				VMAgentVersion: to.StringPtr("2.7.41491.949"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_ConvertToManagedDisks(t *testing.T) {
@@ -2799,6 +5851,9 @@ func TestVirtualMachines_Deallocate(t *testing.T) {
 
 func TestVirtualMachines_Generalize(t *testing.T) {
 	// From example Generalize a Virtual Machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Generalize a Virtual Machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2824,6 +5879,9 @@ func TestVirtualMachines_ListAll(t *testing.T) {
 
 func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 	// From example Lists all available virtual machine sizes to which the specified virtual machine can be resized
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Lists all available virtual machine sizes to which the specified virtual machine can be resized"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2837,7 +5895,34 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesListAvailableSizesResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineSizeListResult{
+			Value: []*golang.VirtualMachineSize{
+				{
+					Name:                 to.StringPtr("Standard_A1_V2"),
+					MaxDataDiskCount:     to.Int32Ptr(2),
+					MemoryInMB:           to.Int32Ptr(2048),
+					NumberOfCores:        to.Int32Ptr(1),
+					OSDiskSizeInMB:       to.Int32Ptr(1047552),
+					ResourceDiskSizeInMB: to.Int32Ptr(10240),
+				},
+				{
+					Name:                 to.StringPtr("Standard_A2_V2"),
+					MaxDataDiskCount:     to.Int32Ptr(4),
+					MemoryInMB:           to.Int32Ptr(4096),
+					NumberOfCores:        to.Int32Ptr(2),
+					OSDiskSizeInMB:       to.Int32Ptr(1047552),
+					ResourceDiskSizeInMB: to.Int32Ptr(20480),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineSizeListResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineSizeListResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_PowerOff(t *testing.T) {
@@ -2846,6 +5931,9 @@ func TestVirtualMachines_PowerOff(t *testing.T) {
 
 func TestVirtualMachines_Reapply(t *testing.T) {
 	// From example Reapply the state of a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Reapply the state of a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2879,6 +5967,9 @@ func TestVirtualMachines_Redeploy(t *testing.T) {
 
 func TestVirtualMachines_Reimage(t *testing.T) {
 	// From example Reimage a Virtual Machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Reimage a Virtual Machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2903,6 +5994,9 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 
 func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 	// From example RetrieveBootDiagnosticsData of a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2916,7 +6010,19 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesRetrieveBootDiagnosticsDataResult)
+	// Response check
+	{
+		exampleRes := golang.RetrieveBootDiagnosticsDataResult{
+			ConsoleScreenshotBlobURI: to.StringPtr("https://storageuri/vm.screenshot.bmp?{sasKey}"),
+			SerialConsoleLogBlobURI:  to.StringPtr("https://storageuri/vm.serialconsole.log?{sasKey}"),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_PerformMaintenance(t *testing.T) {
@@ -2925,6 +6031,9 @@ func TestVirtualMachines_PerformMaintenance(t *testing.T) {
 
 func TestVirtualMachines_SimulateEviction(t *testing.T) {
 	// From example Simulate Eviction a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Simulate Eviction a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2942,6 +6051,9 @@ func TestVirtualMachines_SimulateEviction(t *testing.T) {
 
 func TestVirtualMachines_AssessPatches(t *testing.T) {
 	// From example Assess patch state of a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Assess patch state of a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2959,11 +6071,57 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesAssessPatchesResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineAssessPatchesResult{
+			AssessmentActivityID: to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
+			AvailablePatches: []*golang.VirtualMachineSoftwarePatchProperties{
+				{
+					Name:            to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
+					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
+					AssessmentState: golang.PatchAssessmentStateAvailable.ToPtr(),
+					Classifications: []*string{
+						to.StringPtr("Definition Updates")},
+					KbID:                 to.StringPtr("2267602"),
+					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
+					PatchID:              to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
+					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
+					RebootBehavior:       golang.VMGuestPatchRebootBehaviorNeverReboots.ToPtr(),
+					Version:              to.StringPtr(""),
+				},
+				{
+					Name:            to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
+					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
+					AssessmentState: golang.PatchAssessmentStateAvailable.ToPtr(),
+					Classifications: []*string{
+						to.StringPtr("Update Rollups")},
+					KbID:                 to.StringPtr("890830"),
+					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
+					PatchID:              to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
+					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
+					RebootBehavior:       golang.VMGuestPatchRebootBehaviorCanRequestReboot.ToPtr(),
+					Version:              to.StringPtr(""),
+				}},
+			CriticalAndSecurityPatchCount: to.Int32Ptr(1),
+			OtherPatchCount:               to.Int32Ptr(2),
+			RebootPending:                 to.BoolPtr(true),
+			StartDateTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+			Status:                        golang.PatchOperationStatusSucceeded.ToPtr(),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineAssessPatchesResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_InstallPatches(t *testing.T) {
 	// From example Install patch state of a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Install patch state of a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -2991,11 +6149,53 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesInstallPatchesResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineInstallPatchesResult{
+			ExcludedPatchCount:        to.Int32Ptr(0),
+			FailedPatchCount:          to.Int32Ptr(0),
+			InstallationActivityID:    to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
+			InstalledPatchCount:       to.Int32Ptr(3),
+			MaintenanceWindowExceeded: to.BoolPtr(false),
+			NotSelectedPatchCount:     to.Int32Ptr(0),
+			Patches: []*golang.PatchInstallationDetail{
+				{
+					Name: to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
+					Classifications: []*string{
+						to.StringPtr("Definition Updates")},
+					InstallationState: golang.PatchInstallationStateInstalled.ToPtr(),
+					KbID:              to.StringPtr("2267602"),
+					PatchID:           to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
+					Version:           to.StringPtr(""),
+				},
+				{
+					Name: to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
+					Classifications: []*string{
+						to.StringPtr("Update Rollups")},
+					InstallationState: golang.PatchInstallationStatePending.ToPtr(),
+					KbID:              to.StringPtr("890830"),
+					PatchID:           to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
+					Version:           to.StringPtr(""),
+				}},
+			PendingPatchCount: to.Int32Ptr(2),
+			RebootStatus:      golang.VMGuestPatchRebootStatusCompleted.ToPtr(),
+			StartDateTime:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
+			Status:            golang.PatchOperationStatusSucceeded.ToPtr(),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineInstallPatchesResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachines_RunCommand(t *testing.T) {
 	// From example VirtualMachineRunCommand
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"VirtualMachineRunCommand"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -3016,11 +6216,37 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachinesRunCommandResult)
+	// Response check
+	{
+		exampleRes := golang.RunCommandResult{
+			Value: []*golang.InstanceViewStatus{
+				{
+					Code:          to.StringPtr("ComponentStatus/StdOut/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Message:       to.StringPtr("This is a sample script with parameters value1 value2"),
+				},
+				{
+					Code:          to.StringPtr("ComponentStatus/StdErr/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Message:       to.StringPtr(""),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RunCommandResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 	// From example Lists all the VM scale sets under the specified subscription for the specified location.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Lists all the VM scale sets under the specified subscription for the specified location."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -3033,14 +6259,175 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.VirtualMachineScaleSetListResult{
+				Value: []*golang.VirtualMachineScaleSet{
+					{
+						Name:     to.StringPtr("{virtualMachineScaleSetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{virtualMachineScaleSetName}"),
+						Location: to.StringPtr("eastus"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue1"),
+						},
+						Properties: &golang.VirtualMachineScaleSetProperties{
+							DoNotRunExtensionsOnOverprovisionedVMs: to.BoolPtr(false),
+							Overprovision:                          to.BoolPtr(false),
+							PlatformFaultDomainCount:               to.Int32Ptr(1),
+							ProvisioningState:                      to.StringPtr("Succeeded"),
+							SinglePlacementGroup:                   to.BoolPtr(false),
+							UpgradePolicy: &golang.UpgradePolicy{
+								AutomaticOSUpgradePolicy: &golang.AutomaticOSUpgradePolicy{
+									EnableAutomaticOSUpgrade: to.BoolPtr(false),
+								},
+								Mode: golang.UpgradeModeAutomatic.ToPtr(),
+							},
+							VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+								NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+									NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+										{
+											Name: to.StringPtr("myNic"),
+											Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+												IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+													{
+														Name: to.StringPtr("myIPConfig"),
+														Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+															Primary: to.BoolPtr(true),
+															Subnet: &golang.APIEntityReference{
+																ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/myVNet/subnets/mySubnet"),
+															},
+														},
+													}},
+												NetworkSecurityGroup: &golang.SubResource{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/myNetworkSecurityGroup"),
+												},
+												Primary: to.BoolPtr(true),
+											},
+										}},
+								},
+								OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+									AdminUsername:      to.StringPtr("admin"),
+									ComputerNamePrefix: to.StringPtr("{virtualMachineScaleSetName}"),
+									LinuxConfiguration: &golang.LinuxConfiguration{
+										DisablePasswordAuthentication: to.BoolPtr(false),
+									},
+								},
+								StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+									DataDisks: []*golang.VirtualMachineScaleSetDataDisk{},
+									ImageReference: &golang.ImageReference{
+										Offer:     to.StringPtr("databricks"),
+										Publisher: to.StringPtr("azuredatabricks"),
+										SKU:       to.StringPtr("databricksworker"),
+										Version:   to.StringPtr("3.15.2"),
+									},
+									OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+										Caching:      golang.CachingTypesReadWrite.ToPtr(),
+										CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+										DiskSizeGB:   to.Int32Ptr(30),
+										ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+											StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+										},
+									},
+								},
+							},
+						},
+						SKU: &golang.SKU{
+							Name:     to.StringPtr("Standard_D2s_v3"),
+							Capacity: to.Int64Ptr(4),
+							Tier:     to.StringPtr("Standard"),
+						},
+					},
+					{
+						Name:     to.StringPtr("{virtualMachineScaleSetName}"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{virtualMachineScaleSetName}1"),
+						Location: to.StringPtr("eastus"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue2"),
+						},
+						Properties: &golang.VirtualMachineScaleSetProperties{
+							DoNotRunExtensionsOnOverprovisionedVMs: to.BoolPtr(false),
+							Overprovision:                          to.BoolPtr(false),
+							PlatformFaultDomainCount:               to.Int32Ptr(1),
+							ProvisioningState:                      to.StringPtr("Succeeded"),
+							SinglePlacementGroup:                   to.BoolPtr(false),
+							UpgradePolicy: &golang.UpgradePolicy{
+								AutomaticOSUpgradePolicy: &golang.AutomaticOSUpgradePolicy{
+									EnableAutomaticOSUpgrade: to.BoolPtr(false),
+								},
+								Mode: golang.UpgradeModeAutomatic.ToPtr(),
+							},
+							VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+								NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+									NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+										{
+											Name: to.StringPtr("myNic1"),
+											Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+												IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+													{
+														Name: to.StringPtr("myIPConfig"),
+														Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+															Primary: to.BoolPtr(true),
+															Subnet: &golang.APIEntityReference{
+																ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/virtualNetworks/myVNet/subnets/mySubnet"),
+															},
+														},
+													}},
+												NetworkSecurityGroup: &golang.SubResource{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/networkSecurityGroups/myNetworkSecurityGroup"),
+												},
+												Primary: to.BoolPtr(true),
+											},
+										}},
+								},
+								OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+									AdminUsername:      to.StringPtr("admin"),
+									ComputerNamePrefix: to.StringPtr("{virtualMachineScaleSetName}"),
+									LinuxConfiguration: &golang.LinuxConfiguration{
+										DisablePasswordAuthentication: to.BoolPtr(false),
+									},
+								},
+								StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+									DataDisks: []*golang.VirtualMachineScaleSetDataDisk{},
+									ImageReference: &golang.ImageReference{
+										Offer:     to.StringPtr("databricks"),
+										Publisher: to.StringPtr("azuredatabricks"),
+										SKU:       to.StringPtr("databricksworker"),
+										Version:   to.StringPtr("3.15.2"),
+									},
+									OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+										Caching:      golang.CachingTypesReadWrite.ToPtr(),
+										CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+										DiskSizeGB:   to.Int32Ptr(30),
+										ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+											StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+										},
+									},
+								},
+							},
+						},
+						SKU: &golang.SKU{
+							Name:     to.StringPtr("Standard_D2s_v3"),
+							Capacity: to.Int64Ptr(4),
+							Tier:     to.StringPtr("Standard"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineScaleSetListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineScaleSetListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	// From example Create a custom-image scale set from an unmanaged generalized os image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a custom-image scale set from an unmanaged generalized os image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -3051,9 +6438,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3110,16 +6495,91 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d6e9ab29-f8c9-4792-978c-ae2c07b98f17"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Name:         to.StringPtr("osDisk"),
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							Image: &golang.VirtualHardDisk{
+								URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
+							},
+							OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a platform-image scale set with unmanaged os disks.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a platform-image scale set with unmanaged os disks."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3185,16 +6645,95 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("77b7df9a-32fe-45e3-8911-60ac9c9b9c64"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Name:         to.StringPtr("osDisk"),
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							VhdContainers: []*string{
+								to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds")},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set from a custom image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set from a custom image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3227,9 +6766,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						ImageReference: &golang.ImageReference{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
@@ -3255,16 +6792,91 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("afa2afa8-9e49-48fb-9d18-c86323b5d064"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+						Secrets: []*golang.VaultSecretGroup{},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/nsgcustom"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set from a generalized shared image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set from a generalized shared image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3297,9 +6909,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						ImageReference: &golang.ImageReference{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
@@ -3325,16 +6935,91 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("afa2afa8-9e49-48fb-9d18-c86323b5d064"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+						Secrets: []*golang.VaultSecretGroup{},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set from a specialized shared image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set from a specialized shared image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3362,9 +7047,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						ImageReference: &golang.ImageReference{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
@@ -3390,16 +7073,83 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("afa2afa8-9e49-48fb-9d18-c86323b5d064"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/mySharedGallery/images/mySharedImage"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with DiskEncryptionSet resource in os disk and data disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with DiskEncryptionSet resource in os disk and data disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3439,26 +7189,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 									DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-										SubResource: golang.SubResource{
-											ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-										},
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 									},
 									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							}},
 						ImageReference: &golang.ImageReference{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
 							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-									SubResource: golang.SubResource{
-										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-									},
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
 								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
 							},
@@ -3480,16 +7224,107 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("afa2afa8-9e49-48fb-9d18-c86323b5d064"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+						Secrets: []*golang.VaultSecretGroup{},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
+							{
+								Caching:      golang.CachingTypesReadWrite.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								DiskSizeGB:   to.Int32Ptr(1023),
+								Lun:          to.Int32Ptr(0),
+								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+									DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+									},
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								},
+							}},
+						ImageReference: &golang.ImageReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/nsgcustom"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+								},
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with Fpga Network Interfaces.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with Fpga Network Interfaces."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3542,9 +7377,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						ImageReference: &golang.ImageReference{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
-							},
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/{existing-custom-image-name}"),
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
@@ -3570,16 +7403,113 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("afa2afa8-9e49-48fb-9d18-c86323b5d064"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							},
+							{
+								Name: to.StringPtr("{fpgaNic-Name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableFpga:                  to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{fpgaNic-Name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												Primary:                 to.BoolPtr(true),
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-fpga-subnet-name}"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(false),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+						Secrets: []*golang.VaultSecretGroup{},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/nsgcustom"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with Host Encryption using encryptionAtHost property.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with Host Encryption using encryptionAtHost property."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -3649,16 +7579,103 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("b9e23088-6ffc-46e0-9e02-b0a6eeef47db"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					SecurityProfile: &golang.SecurityProfile{
+						EncryptionAtHost: to.BoolPtr(true),
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("standard-data-science-vm"),
+							Publisher: to.StringPtr("microsoft-ads"),
+							SKU:       to.StringPtr("standard-data-science-vm"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadOnly.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_DS1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with Uefi Settings of secureBoot and vTPM.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with Uefi Settings of secureBoot and vTPM."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3727,16 +7744,102 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("b9e23088-6ffc-46e0-9e02-b0a6eeef47db"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					SecurityProfile: &golang.SecurityProfile{
+						SecurityType: to.StringPtr("TrustedLaunch"),
+						UefiSettings: &golang.UefiSettings{
+							SecureBootEnabled: to.BoolPtr(true),
+							VTpmEnabled:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("windowsserver-gen2preview-preview"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("windows10-tvm"),
+							Version:   to.StringPtr("18363.592.2001092016"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadOnly.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D2s_v3"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with a marketplace image plan.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with a marketplace image plan."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -3803,16 +7906,100 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("b9e23088-6ffc-46e0-9e02-b0a6eeef47db"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("standard-data-science-vm"),
+							Publisher: to.StringPtr("microsoft-ads"),
+							SKU:       to.StringPtr("standard-data-science-vm"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with an azure application gateway.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with an azure application gateway."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3878,16 +8065,99 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("a0134477-b9d9-484b-b0e3-205c1c089ffa"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												ApplicationGatewayBackendAddressPools: []*golang.SubResource{
+													{
+														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationGateways/nsgExistingAppGw/backendAddressPools/appGatewayBackendPool"),
+													}},
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with an azure load balancer.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with an azure load balancer."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -3963,16 +8233,103 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("ec0b21ca-51ec-414b-9323-f236ffc21479"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												LoadBalancerBackendAddressPools: []*golang.SubResource{
+													{
+														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/myLb/backendAddressPools/lbBackendPool"),
+													}},
+												LoadBalancerInboundNatPools: []*golang.SubResource{
+													{
+														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/myLb/inboundNatPools/lbNatPool"),
+													}},
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with automatic repairs enabled
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with automatic repairs enabled"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				AutomaticRepairsPolicy: &golang.AutomaticRepairsPolicy{
 					Enabled:     to.BoolPtr(true),
@@ -4038,16 +8395,99 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				AutomaticRepairsPolicy: &golang.AutomaticRepairsPolicy{
+					Enabled:     to.BoolPtr(true),
+					GracePeriod: to.StringPtr("PT30M"),
+				},
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with boot diagnostics.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with boot diagnostics."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4115,16 +8555,101 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					DiagnosticsProfile: &golang.DiagnosticsProfile{
+						BootDiagnostics: &golang.BootDiagnostics{
+							Enabled:    to.BoolPtr(true),
+							StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+						},
+					},
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with empty data disks on each vm.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with empty data disks on each vm."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4198,16 +8723,115 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("8042c376-4690-4c47-9fa2-fbdad70e32fa"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
+							{
+								Caching:      golang.CachingTypesNone.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								DiskSizeGB:   to.Int32Ptr(1023),
+								Lun:          to.Int32Ptr(0),
+								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								},
+							},
+							{
+								Caching:      golang.CachingTypesNone.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								DiskSizeGB:   to.Int32Ptr(1023),
+								Lun:          to.Int32Ptr(1),
+								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								},
+							}},
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(512),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D2_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with ephemeral os disks using placement property.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with ephemeral os disks using placement property."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -4278,16 +8902,104 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("b9e23088-6ffc-46e0-9e02-b0a6eeef47db"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("standard-data-science-vm"),
+							Publisher: to.StringPtr("microsoft-ads"),
+							SKU:       to.StringPtr("standard-data-science-vm"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadOnly.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiffDiskSettings: &golang.DiffDiskSettings{
+								Option:    golang.DiffDiskOptionsLocal.ToPtr(),
+								Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+							},
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_DS1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with ephemeral os disks.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with ephemeral os disks."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Plan: &golang.Plan{
 				Name:      to.StringPtr("windows2016"),
 				Product:   to.StringPtr("windows-data-science-vm"),
@@ -4353,16 +9065,103 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Plan: &golang.Plan{
+				Name:      to.StringPtr("standard-data-science-vm"),
+				Product:   to.StringPtr("standard-data-science-vm"),
+				Publisher: to.StringPtr("microsoft-ads"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("b9e23088-6ffc-46e0-9e02-b0a6eeef47db"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("standard-data-science-vm"),
+							Publisher: to.StringPtr("microsoft-ads"),
+							SKU:       to.StringPtr("standard-data-science-vm"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadOnly.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiffDiskSettings: &golang.DiffDiskSettings{
+								Option: golang.DiffDiskOptionsLocal.ToPtr(),
+							},
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_DS1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with extension time budget.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with extension time budget."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4444,16 +9243,115 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					DiagnosticsProfile: &golang.DiagnosticsProfile{
+						BootDiagnostics: &golang.BootDiagnostics{
+							Enabled:    to.BoolPtr(true),
+							StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+						},
+					},
+					ExtensionProfile: &golang.VirtualMachineScaleSetExtensionProfile{
+						ExtensionsTimeBudget: to.StringPtr("PT1H20M"),
+						Extensions: []*golang.VirtualMachineScaleSetExtension{
+							{
+								Name: to.StringPtr("{extension-name}"),
+								Properties: &golang.VirtualMachineScaleSetExtensionProperties{
+									Type:                    to.StringPtr("{extension-Type}"),
+									AutoUpgradeMinorVersion: to.BoolPtr(false),
+									Publisher:               to.StringPtr("{extension-Publisher}"),
+									Settings:                map[string]interface{}{},
+									TypeHandlerVersion:      to.StringPtr("{handler-version}"),
+								},
+							}},
+					},
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with managed boot diagnostics.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with managed boot diagnostics."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4520,16 +9418,100 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					DiagnosticsProfile: &golang.DiagnosticsProfile{
+						BootDiagnostics: &golang.BootDiagnostics{
+							Enabled: to.BoolPtr(true),
+						},
+					},
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with password authentication.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with password authentication."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4591,16 +9573,95 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("ffb27c5c-39a5-4d4e-b307-b32598689813"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with premium storage.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with premium storage."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4662,16 +9723,95 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("19fd38a2-f50a-42c6-9dc7-3f9cf3791225"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_DS1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with ssh authentication.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with ssh authentication."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4742,16 +9882,101 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("fb73af19-0090-467c-9ced-b00bceab1c45"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(true),
+							SSH: &golang.SSHConfiguration{
+								PublicKeys: []*golang.SSHPublicKey{
+									{
+										Path:    to.StringPtr("/home/{your-username}/.ssh/authorized_keys"),
+										KeyData: to.StringPtr("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCeClRAk2ipUs/l5voIsDC5q9RI+YSRd1Bvd/O+axgY4WiBzG+4FwJWZm/mLLe5DoOdHQwmU2FrKXZSW4w2sYE70KeWnrFViCOX5MTVvJgPE8ClugNl8RWth/tU849DvM9sT7vFgfVSHcAS2yDRyDlueii+8nF2ym8XWAPltFVCyLHRsyBp5YPqK8JFYIa1eybKsY3hEAxRCA+/7bq8et+Gj3coOsuRmrehav7rE6N12Pb80I6ofa6SM5XNYq4Xk0iYNx7R3kdz0Jj9XgZYWjAHjJmT0gTRoOnt6upOuxK7xI/ykWrllgpXrCPu3Ymz+c+ujaqcxDopnAl2lmf69/J1"),
+									}},
+							},
+						},
+						Secrets: []*golang.VaultSecretGroup{},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("UbuntuServer"),
+							Publisher: to.StringPtr("Canonical"),
+							SKU:       to.StringPtr("16.04-LTS"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with terminate scheduled events enabled.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with terminate scheduled events enabled."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4819,16 +10044,101 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					ScheduledEventsProfile: &golang.ScheduledEventsProfile{
+						TerminateNotificationProfile: &golang.TerminateNotificationProfile{
+							Enable:           to.BoolPtr(true),
+							NotBeforeTimeout: to.StringPtr("PT5M"),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with userData.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with userData."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("westus"),
-			},
+			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4891,16 +10201,101 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(true),
+				UniqueID:             to.StringPtr("d053ec5a-8da6-495f-ab13-38216503c6d7"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeManual.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					DiagnosticsProfile: &golang.DiagnosticsProfile{
+						BootDiagnostics: &golang.BootDiagnostics{
+							Enabled:    to.BoolPtr(true),
+							StorageURI: to.StringPtr("http://nsgdiagnostic.blob.core.windows.net"),
+						},
+					},
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(3),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a scale set with virtual machines in different zones.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a scale set with virtual machines in different zones."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("centralus"),
-			},
+			Location: to.StringPtr("centralus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -4977,7 +10372,109 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("{vmss-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}"),
+			Location: to.StringPtr("centralus"),
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				Overprovision:        to.BoolPtr(true),
+				ProvisioningState:    to.StringPtr("Succeeded"),
+				SinglePlacementGroup: to.BoolPtr(false),
+				UniqueID:             to.StringPtr("8042c376-4690-4c47-9fa2-fbdad70e32fa"),
+				UpgradePolicy: &golang.UpgradePolicy{
+					Mode: golang.UpgradeModeAutomatic.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("{vmss-name}"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+										DNSServers: []*string{},
+									},
+									EnableAcceleratedNetworking: to.BoolPtr(false),
+									EnableIPForwarding:          to.BoolPtr(true),
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("{vmss-name}"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
+												},
+											},
+										}},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("{your-username}"),
+						ComputerNamePrefix: to.StringPtr("{vmss-name}"),
+						Secrets:            []*golang.VaultSecretGroup{},
+						WindowsConfiguration: &golang.WindowsConfiguration{
+							EnableAutomaticUpdates: to.BoolPtr(true),
+							ProvisionVMAgent:       to.BoolPtr(true),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
+							{
+								Caching:      golang.CachingTypesNone.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								DiskSizeGB:   to.Int32Ptr(1023),
+								Lun:          to.Int32Ptr(0),
+								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								},
+							},
+							{
+								Caching:      golang.CachingTypesNone.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								DiskSizeGB:   to.Int32Ptr(1023),
+								Lun:          to.Int32Ptr(1),
+								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								},
+							}},
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("WindowsServer"),
+							Publisher: to.StringPtr("MicrosoftWindowsServer"),
+							SKU:       to.StringPtr("2016-Datacenter"),
+							Version:   to.StringPtr("latest"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(512),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						},
+					},
+				},
+				ZoneBalance: to.BoolPtr(false),
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_A1_v2"),
+				Capacity: to.Int64Ptr(2),
+				Tier:     to.StringPtr("Standard"),
+			},
+			Zones: []*string{
+				to.StringPtr("1"),
+				to.StringPtr("3")},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSets_Update(t *testing.T) {
@@ -4986,6 +10483,9 @@ func TestVirtualMachineScaleSets_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 	// From example Force Delete a VM scale set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Force Delete a VM scale set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5007,6 +10507,9 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	// From example Get a virtual machine scale set placed on a dedicated host group through automatic placement.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a virtual machine scale set placed on a dedicated host group through automatic placement."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5020,9 +10523,98 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("myVirtualMachineScaleSet"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myVirtualMachineScaleSet"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				DoNotRunExtensionsOnOverprovisionedVMs: to.BoolPtr(false),
+				HostGroup: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup"),
+				},
+				Overprovision:            to.BoolPtr(false),
+				PlatformFaultDomainCount: to.Int32Ptr(1),
+				ProvisioningState:        to.StringPtr("Succeeded"),
+				SinglePlacementGroup:     to.BoolPtr(false),
+				UpgradePolicy: &golang.UpgradePolicy{
+					AutomaticOSUpgradePolicy: &golang.AutomaticOSUpgradePolicy{
+						EnableAutomaticOSUpgrade: to.BoolPtr(false),
+					},
+					Mode: golang.UpgradeModeAutomatic.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("myNic"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("myIPConfig"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												Primary: to.BoolPtr(true),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVNet/subnets/mySubnet"),
+												},
+											},
+										}},
+									NetworkSecurityGroup: &golang.SubResource{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/myNetworkSecurityGroup"),
+									},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("admin"),
+						ComputerNamePrefix: to.StringPtr("myVirtualMachineScaleSet"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{},
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("databricks"),
+							Publisher: to.StringPtr("azuredatabricks"),
+							SKU:       to.StringPtr("databricksworker"),
+							Version:   to.StringPtr("3.15.2"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(30),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							},
+						},
+					},
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D2s_v3"),
+				Capacity: to.Int64Ptr(4),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a virtual machine scale set with UserData
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a virtual machine scale set with UserData"},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -5030,7 +10622,94 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSet{
+			Name:     to.StringPtr("myVirtualMachineScaleSet"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myVirtualMachineScaleSet"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.VirtualMachineScaleSetProperties{
+				DoNotRunExtensionsOnOverprovisionedVMs: to.BoolPtr(false),
+				HostGroup: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup"),
+				},
+				Overprovision:            to.BoolPtr(false),
+				PlatformFaultDomainCount: to.Int32Ptr(1),
+				ProvisioningState:        to.StringPtr("Succeeded"),
+				SinglePlacementGroup:     to.BoolPtr(false),
+				UpgradePolicy: &golang.UpgradePolicy{
+					AutomaticOSUpgradePolicy: &golang.AutomaticOSUpgradePolicy{
+						EnableAutomaticOSUpgrade: to.BoolPtr(false),
+					},
+					Mode: golang.UpgradeModeAutomatic.ToPtr(),
+				},
+				VirtualMachineProfile: &golang.VirtualMachineScaleSetVMProfile{
+					NetworkProfile: &golang.VirtualMachineScaleSetNetworkProfile{
+						NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+							{
+								Name: to.StringPtr("myNic"),
+								Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+									IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+										{
+											Name: to.StringPtr("myIPConfig"),
+											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+												Primary: to.BoolPtr(true),
+												Subnet: &golang.APIEntityReference{
+													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVNet/subnets/mySubnet"),
+												},
+											},
+										}},
+									NetworkSecurityGroup: &golang.SubResource{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/myNetworkSecurityGroup"),
+									},
+									Primary: to.BoolPtr(true),
+								},
+							}},
+					},
+					OSProfile: &golang.VirtualMachineScaleSetOSProfile{
+						AdminUsername:      to.StringPtr("admin"),
+						ComputerNamePrefix: to.StringPtr("myVirtualMachineScaleSet"),
+						LinuxConfiguration: &golang.LinuxConfiguration{
+							DisablePasswordAuthentication: to.BoolPtr(false),
+						},
+					},
+					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
+						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{},
+						ImageReference: &golang.ImageReference{
+							Offer:     to.StringPtr("databricks"),
+							Publisher: to.StringPtr("azuredatabricks"),
+							SKU:       to.StringPtr("databricksworker"),
+							Version:   to.StringPtr("3.15.2"),
+						},
+						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
+							Caching:      golang.CachingTypesReadWrite.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(30),
+							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
+								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							},
+						},
+					},
+					UserData: to.StringPtr("RXhhbXBsZSBVc2VyRGF0YQ=="),
+				},
+			},
+			SKU: &golang.SKU{
+				Name:     to.StringPtr("Standard_D2s_v3"),
+				Capacity: to.Int64Ptr(4),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSets_Deallocate(t *testing.T) {
@@ -5050,10 +10729,6 @@ func TestVirtualMachineScaleSets_List(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSets_ListAll(t *testing.T) {
-	t.Skip("Warning: No test steps for this operation!")
-}
-
-func TestVirtualMachineScaleSets_ListSKUs(t *testing.T) {
 	t.Skip("Warning: No test steps for this operation!")
 }
 
@@ -5111,6 +10786,9 @@ func TestVirtualMachineSizes_List(t *testing.T) {
 
 func TestImages_CreateOrUpdate(t *testing.T) {
 	// From example Create a virtual machine image from a blob with DiskEncryptionSet resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a blob with DiskEncryptionSet resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5121,19 +10799,13 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
-							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-								},
-							},
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5149,22 +10821,50 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from a blob.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a blob."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
-						},
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -5180,28 +10880,52 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(true),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from a managed disk with DiskEncryptionSet resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a managed disk with DiskEncryptionSet resource."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-								},
-							},
-							ManagedDisk: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
-							},
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+						},
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5217,23 +10941,53 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+						},
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from a managed disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a managed disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							ManagedDisk: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
-							},
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5250,28 +11004,54 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(true),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from a snapshot with DiskEncryptionSet resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a snapshot with DiskEncryptionSet resource."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
-								},
-							},
-							Snapshot: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
-							},
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+						},
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5287,23 +11067,53 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+						},
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from a snapshot.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from a snapshot."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							Snapshot: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
-							},
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5320,16 +11130,46 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(false),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image from an existing virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image from an existing virtual machine."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				SourceVirtualMachine: &golang.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
@@ -5344,29 +11184,58 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				SourceVirtualMachine: &golang.SubResource{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+				},
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myVM_OsDisk_1_6dc293b7d811433196903acf92665022"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(false),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image that includes a data disk from a blob.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image that includes a data disk from a blob."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
 						{
-							ImageDisk: golang.ImageDisk{
-								BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
-							},
-							Lun: to.Int32Ptr(1),
+							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+							Lun:     to.Int32Ptr(1),
 						}},
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
-						},
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -5382,32 +11251,60 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{
+						{
+							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+							Lun:     to.Int32Ptr(1),
+						}},
+					OSDisk: &golang.ImageOSDisk{
+						BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(false),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a virtual machine image that includes a data disk from a managed disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image that includes a data disk from a managed disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
 		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.ImageProperties{
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
 						{
-							ImageDisk: golang.ImageDisk{
-								ManagedDisk: &golang.SubResource{
-									ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
-								},
+							ManagedDisk: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
 							},
 							Lun: to.Int32Ptr(1),
 						}},
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
-							ManagedDisk: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
-							},
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5424,32 +11321,64 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
-
-	// From example Create a virtual machine image that includes a data disk from a snapshot.
-	poller, err = client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"myImage",
-		golang.Image{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
 			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
 				StorageProfile: &golang.ImageStorageProfile{
 					DataDisks: []*golang.ImageDataDisk{
 						{
-							ImageDisk: golang.ImageDisk{
-								Snapshot: &golang.SubResource{
-									ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
-								},
+							ManagedDisk: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
 							},
 							Lun: to.Int32Ptr(1),
 						}},
 					OSDisk: &golang.ImageOSDisk{
-						ImageDisk: golang.ImageDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(false),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+
+	// From example Create a virtual machine image that includes a data disk from a snapshot.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a virtual machine image that includes a data disk from a snapshot."},
+	})
+	poller, err = client.BeginCreateOrUpdate(ctx,
+		"myResourceGroup",
+		"myImage",
+		golang.Image{
+			Location: to.StringPtr("West US"),
+			Properties: &golang.ImageProperties{
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{
+						{
 							Snapshot: &golang.SubResource{
-								ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDisk: &golang.ImageOSDisk{
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 						},
 						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
@@ -5466,11 +11395,49 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/disk/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{
+						{
+							Snapshot: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDisk: &golang.ImageOSDisk{
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+						},
+						OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:  golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(true),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestImages_Update(t *testing.T) {
 	// From example Updates tags of an Image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Updates tags of an Image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5481,10 +11448,8 @@ func TestImages_Update(t *testing.T) {
 		"myResourceGroup",
 		"myImage",
 		golang.ImageUpdate{
-			UpdateResource: golang.UpdateResource{
-				Tags: map[string]*string{
-					"department": to.StringPtr("HR"),
-				},
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.ImageProperties{
 				HyperVGeneration: golang.HyperVGenerationTypesV1.ToPtr(),
@@ -5501,7 +11466,55 @@ func TestImages_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
+			},
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{
+						{
+							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+							ManagedDisk: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
+							},
+							Snapshot: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+							},
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							Lun:                to.Int32Ptr(1),
+						}},
+					OSDisk: &golang.ImageOSDisk{
+						BlobURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						DiskSizeGB: to.Int32Ptr(20),
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+						},
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+						},
+						StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(true),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestImages_Delete(t *testing.T) {
@@ -5510,6 +11523,9 @@ func TestImages_Delete(t *testing.T) {
 
 func TestImages_Get(t *testing.T) {
 	// From example Get information about a virtual machine image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a virtual machine image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5523,11 +11539,59 @@ func TestImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.ImagesGetResult)
+	// Response check
+	{
+		exampleRes := golang.Image{
+			Name:     to.StringPtr("myImage"),
+			Type:     to.StringPtr("Microsoft.Compute/images"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.ImageProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.ImageStorageProfile{
+					DataDisks: []*golang.ImageDataDisk{
+						{
+							BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+							ManagedDisk: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
+							},
+							Snapshot: &golang.SubResource{
+								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+							},
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							Lun:                to.Int32Ptr(1),
+						}},
+					OSDisk: &golang.ImageOSDisk{
+						BlobURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+						DiskSizeGB: to.Int32Ptr(20),
+						ManagedDisk: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+						},
+						Snapshot: &golang.SubResource{
+							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+						},
+						StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+						OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					ZoneResilient: to.BoolPtr(true),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Image) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Image)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestImages_ListByResourceGroup(t *testing.T) {
 	// From example List all virtual machine images in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all virtual machine images in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5540,14 +11604,60 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ImageListResult{
+				Value: []*golang.Image{
+					{
+						Name:     to.StringPtr("myImage"),
+						Type:     to.StringPtr("Microsoft.Compute/images"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.ImageProperties{
+							ProvisioningState: to.StringPtr("Succeeded"),
+							StorageProfile: &golang.ImageStorageProfile{
+								DataDisks: []*golang.ImageDataDisk{
+									{
+										BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+										ManagedDisk: &golang.SubResource{
+											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
+										},
+										Snapshot: &golang.SubResource{
+											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+										},
+										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										Lun:                to.Int32Ptr(1),
+									}},
+								OSDisk: &golang.ImageOSDisk{
+									BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+									ManagedDisk: &golang.SubResource{
+										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+									},
+									Snapshot: &golang.SubResource{
+										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+									},
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+									OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
+								},
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ImageListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestImages_List(t *testing.T) {
 	// From example List all virtual machine images in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all virtual machine images in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5559,14 +11669,60 @@ func TestImages_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ImageListResult{
+				Value: []*golang.Image{
+					{
+						Name:     to.StringPtr("myImage"),
+						Type:     to.StringPtr("Microsoft.Compute/images"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.ImageProperties{
+							ProvisioningState: to.StringPtr("Succeeded"),
+							StorageProfile: &golang.ImageStorageProfile{
+								DataDisks: []*golang.ImageDataDisk{
+									{
+										BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/dataimages/dataimage.vhd"),
+										ManagedDisk: &golang.SubResource{
+											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
+										},
+										Snapshot: &golang.SubResource{
+											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+										},
+										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										Lun:                to.Int32Ptr(1),
+									}},
+								OSDisk: &golang.ImageOSDisk{
+									BlobURI: to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+									ManagedDisk: &golang.SubResource{
+										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+									},
+									Snapshot: &golang.SubResource{
+										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+									},
+									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+									OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
+								},
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ImageListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a restore point collection.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a restore point collection."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5577,11 +11733,9 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myRpc",
 		golang.RestorePointCollection{
-			Resource: golang.Resource{
-				Location: to.StringPtr("norwayeast"),
-				Tags: map[string]*string{
-					"myTag1": to.StringPtr("tagValue1"),
-				},
+			Location: to.StringPtr("norwayeast"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
 			},
 			Properties: &golang.RestorePointCollectionProperties{
 				Source: &golang.RestorePointCollectionSourceProperties{
@@ -5593,7 +11747,32 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.RestorePointCollectionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.RestorePointCollection{
+			Name:     to.StringPtr("myRpc"),
+			Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/myRpc"),
+			Location: to.StringPtr("norwayeast"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.RestorePointCollectionProperties{
+				ProvisioningState:        to.StringPtr("Succeeded"),
+				RestorePointCollectionID: to.StringPtr("638f052b-a7c2-450c-89e7-6a3b8f1d6a7c"),
+				Source: &golang.RestorePointCollectionSourceProperties{
+					ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+					Location: to.StringPtr("eastus"),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RestorePointCollection)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestRestorePointCollections_Update(t *testing.T) {
@@ -5606,6 +11785,9 @@ func TestRestorePointCollections_Delete(t *testing.T) {
 
 func TestRestorePointCollections_Get(t *testing.T) {
 	// From example Get a restore point collection (but not the restore points contained in the restore point collection)
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a restore point collection (but not the restore points contained in the restore point collection)"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5619,9 +11801,37 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.RestorePointCollection{
+			Name:     to.StringPtr("myRpc"),
+			Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/myRpc"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.RestorePointCollectionProperties{
+				ProvisioningState:        to.StringPtr("Succeeded"),
+				RestorePointCollectionID: to.StringPtr("59f04a5d-f783-4200-a1bd-d3f464e8c4b4"),
+				Source: &golang.RestorePointCollectionSourceProperties{
+					ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/myRpc"),
+					Location: to.StringPtr("eastus"),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RestorePointCollection)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a restore point collection, including the restore points contained in the restore point collection
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a restore point collection, including the restore points contained in the restore point collection"},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
@@ -5629,11 +11839,105 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.RestorePointCollection{
+			Name:     to.StringPtr("rpcName"),
+			Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.RestorePointCollectionProperties{
+				ProvisioningState:        to.StringPtr("Succeeded"),
+				RestorePointCollectionID: to.StringPtr("59f04a5d-f783-4200-a1bd-d3f464e8c4b4"),
+				RestorePoints: []*golang.RestorePoint{
+					{
+						Name:            to.StringPtr("restorePointName"),
+						ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/restorePointName"),
+						ConsistencyMode: golang.ConsistencyModeTypesApplicationConsistent.ToPtr(),
+						ExcludeDisks: []*golang.APIEntityReference{
+							{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
+							}},
+						ProvisioningDetails: &golang.RestorePointProvisioningDetails{
+							CreationTime:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-01-27T20:35:05.8401519+00:00"); return t }()),
+							StatusCode:           to.Int32Ptr(0),
+							StatusMessage:        to.StringPtr("{\"jobMessage\":\"\",\"messageStr\":\"1/27/2021 8:35:56 PM , snapshotCreator=guestExtension, hostStatusCodePreSnapshot=200, Plugin enable Succeeded (command: Snapshot) Snapshot command completed \",\"snapshotConsistency\":2}"),
+							TotalUsedSizeInBytes: to.Int64Ptr(10835349504),
+						},
+						ProvisioningState: to.StringPtr("Succeeded"),
+						SourceMetadata: &golang.RestorePointSourceMetadata{
+							DiagnosticsProfile: &golang.DiagnosticsProfile{
+								BootDiagnostics: &golang.BootDiagnostics{
+									Enabled: to.BoolPtr(true),
+								},
+							},
+							HardwareProfile: &golang.HardwareProfile{
+								VMSize: golang.VirtualMachineSizeTypesStandardB1S.ToPtr(),
+							},
+							OSProfile: &golang.OSProfile{
+								AdminUsername:               to.StringPtr("admin"),
+								AllowExtensionOperations:    to.BoolPtr(true),
+								ComputerName:                to.StringPtr("computerName"),
+								RequireGuestProvisionSignal: to.BoolPtr(true),
+								Secrets:                     []*golang.VaultSecretGroup{},
+								WindowsConfiguration: &golang.WindowsConfiguration{
+									EnableAutomaticUpdates: to.BoolPtr(true),
+									ProvisionVMAgent:       to.BoolPtr(true),
+								},
+							},
+							StorageProfile: &golang.RestorePointSourceVMStorageProfile{
+								DataDisks: []*golang.RestorePointSourceVMDataDisk{
+									{
+										Name:    to.StringPtr("testingexcludedisk_DataDisk_1"),
+										Caching: golang.CachingTypesNone.ToPtr(),
+										DiskRestorePoint: &golang.APIEntityReference{
+											ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/restorePointName/diskRestorePoints/testingexcludedisk_DataDisk_1_68785190-1acb-4d5e-a8ae-705b45f3dca5"),
+										},
+										Lun: to.Int32Ptr(1),
+										ManagedDisk: &golang.ManagedDiskParameters{
+											ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
+											StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										},
+									}},
+								OSDisk: &golang.RestorePointSourceVMOSDisk{
+									Name:    to.StringPtr("testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
+									Caching: golang.CachingTypesReadWrite.ToPtr(),
+									DiskRestorePoint: &golang.APIEntityReference{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/restorePointName/diskRestorePoints/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f_22b4bdfe-6c54-4f72-84d8-85d8860f0c57"),
+									},
+									ManagedDisk: &golang.ManagedDiskParameters{
+										ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
+										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									},
+									OSType: golang.OperatingSystemTypeWindows.ToPtr(),
+								},
+							},
+							VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
+						},
+					}},
+				Source: &golang.RestorePointCollectionSourceProperties{
+					ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
+					Location: to.StringPtr("eastus"),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RestorePointCollection)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestRestorePointCollections_List(t *testing.T) {
 	// From example Gets the list of restore point collections in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Gets the list of restore point collections in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5646,14 +11950,59 @@ func TestRestorePointCollections_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.RestorePointCollectionListResult{
+				Value: []*golang.RestorePointCollection{
+					{
+						Name:     to.StringPtr("restorePointCollection1"),
+						Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/restorePointCollection1"),
+						Location: to.StringPtr("West US"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue1"),
+						},
+						Properties: &golang.RestorePointCollectionProperties{
+							ProvisioningState:        to.StringPtr("Succeeded"),
+							RestorePointCollectionID: to.StringPtr("59f04a5d-f783-4200-a1bd-d3f464e8c4b4"),
+							Source: &golang.RestorePointCollectionSourceProperties{
+								ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/restorePointCollection1"),
+								Location: to.StringPtr("West US"),
+							},
+						},
+					},
+					{
+						Name:     to.StringPtr("restorePointCollection2"),
+						Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/restorePointCollection2"),
+						Location: to.StringPtr("West US"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue1"),
+						},
+						Properties: &golang.RestorePointCollectionProperties{
+							ProvisioningState:        to.StringPtr("Succeeded"),
+							RestorePointCollectionID: to.StringPtr("2875c590-e337-4102-9668-4f5b7e3f98a4"),
+							Source: &golang.RestorePointCollectionSourceProperties{
+								ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/restorePointCollection2"),
+								Location: to.StringPtr("West US"),
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RestorePointCollectionListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestRestorePointCollections_ListAll(t *testing.T) {
 	// From example Gets the list of restore point collections in a subscription
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Gets the list of restore point collections in a subscription"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5665,14 +12014,59 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.RestorePointCollectionListResult{
+				Value: []*golang.RestorePointCollection{
+					{
+						Name:     to.StringPtr("restorePointCollection1"),
+						Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/resourceGroup1/providers/Microsoft.Compute/restorePointCollections/restorePointCollection1"),
+						Location: to.StringPtr("West US"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue1"),
+						},
+						Properties: &golang.RestorePointCollectionProperties{
+							ProvisioningState:        to.StringPtr("Succeeded"),
+							RestorePointCollectionID: to.StringPtr("59f04a5d-f783-4200-a1bd-d3f464e8c4b4"),
+							Source: &golang.RestorePointCollectionSourceProperties{
+								ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/VM_Test"),
+								Location: to.StringPtr("West US"),
+							},
+						},
+					},
+					{
+						Name:     to.StringPtr("restorePointCollection2"),
+						Type:     to.StringPtr("Microsoft.Compute/restorePointCollections"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/resourceGroup2/providers/Microsoft.Compute/restorePointCollections/restorePointCollection2"),
+						Location: to.StringPtr("West US"),
+						Tags: map[string]*string{
+							"myTag1": to.StringPtr("tagValue1"),
+						},
+						Properties: &golang.RestorePointCollectionProperties{
+							ProvisioningState:        to.StringPtr("Succeeded"),
+							RestorePointCollectionID: to.StringPtr("2875c590-e337-4102-9668-4f5b7e3f98a4"),
+							Source: &golang.RestorePointCollectionSourceProperties{
+								ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/VM_Prod"),
+								Location: to.StringPtr("West US"),
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RestorePointCollectionListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestRestorePoints_Create(t *testing.T) {
 	// From example Create a restore point
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a restore point"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5693,11 +12087,10 @@ func TestRestorePoints_Create(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.RestorePointsCreateResult)
 }
 
 func TestRestorePoints_Delete(t *testing.T) {
@@ -5706,6 +12099,9 @@ func TestRestorePoints_Delete(t *testing.T) {
 
 func TestRestorePoints_Get(t *testing.T) {
 	// From example Get a restore point
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a restore point"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5720,7 +12116,80 @@ func TestRestorePoints_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.RestorePointsGetResult)
+	// Response check
+	{
+		exampleRes := golang.RestorePoint{
+			Name:            to.StringPtr("rpName"),
+			ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/rpName"),
+			ConsistencyMode: golang.ConsistencyModeTypesApplicationConsistent.ToPtr(),
+			ExcludeDisks: []*golang.APIEntityReference{
+				{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
+				}},
+			ProvisioningDetails: &golang.RestorePointProvisioningDetails{
+				CreationTime:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-01-27T20:35:05.8401519+00:00"); return t }()),
+				StatusCode:           to.Int32Ptr(0),
+				StatusMessage:        to.StringPtr("{\"jobMessage\":\"\",\"messageStr\":\"1/27/2021 8:35:56 PM , snapshotCreator=guestExtension, hostStatusCodePreSnapshot=200, Plugin enable Succeeded (command: Snapshot) Snapshot command completed \",\"snapshotConsistency\":2}"),
+				TotalUsedSizeInBytes: to.Int64Ptr(10835349504),
+			},
+			ProvisioningState: to.StringPtr("Succeeded"),
+			SourceMetadata: &golang.RestorePointSourceMetadata{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled: to.BoolPtr(true),
+					},
+				},
+				HardwareProfile: &golang.HardwareProfile{
+					VMSize: golang.VirtualMachineSizeTypesStandardB1S.ToPtr(),
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername:               to.StringPtr("admin"),
+					AllowExtensionOperations:    to.BoolPtr(true),
+					ComputerName:                to.StringPtr("computerName"),
+					RequireGuestProvisionSignal: to.BoolPtr(true),
+					Secrets:                     []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				StorageProfile: &golang.RestorePointSourceVMStorageProfile{
+					DataDisks: []*golang.RestorePointSourceVMDataDisk{
+						{
+							Name:    to.StringPtr("testingexcludedisk_DataDisk_1"),
+							Caching: golang.CachingTypesNone.ToPtr(),
+							DiskRestorePoint: &golang.APIEntityReference{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/userdata/providers/Microsoft.Compute/restorePointCollections/mynewrpc/restorePoints/restorepointtwo/diskRestorePoints/testingexcludedisk_DataDisk_1_68785190-1acb-4d5e-a8ae-705b45f3dca5"),
+							},
+							Lun: to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/userdata/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+						}},
+					OSDisk: &golang.RestorePointSourceVMOSDisk{
+						Name:    to.StringPtr("testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
+						Caching: golang.CachingTypesReadWrite.ToPtr(),
+						DiskRestorePoint: &golang.APIEntityReference{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/rpName/diskRestorePoints/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f_22b4bdfe-6c54-4f72-84d8-85d8860f0c57"),
+						},
+						ManagedDisk: &golang.ManagedDiskParameters{
+							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypeWindows.ToPtr(),
+					},
+				},
+				VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RestorePoint) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RestorePoint)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetExtensions_CreateOrUpdate(t *testing.T) {
@@ -5753,6 +12222,9 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartOSUpgrade(t *testing.T) {
 
 func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.T) {
 	// From example Start an extension rolling upgrade.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Start an extension rolling upgrade."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5778,6 +12250,9 @@ func TestVirtualMachineScaleSetRollingUpgrades_GetLatest(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 	// From example Create VirtualMachineScaleSet VM extension.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create VirtualMachineScaleSet VM extension."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5799,26 +12274,26 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 					"items": []interface{}{
 						map[string]interface{}{
 							"name": "text - 2",
-							"type": 1,
+							"type": float64(1),
 							"content": map[string]interface{}{
 								"json": "## New workbook\n---\n\nWelcome to your new workbook.  This area will display text formatted as markdown.\n\n\nWe've included a basic analytics query to get you started. Use the `Edit` button below each section to configure it or add more sections.",
 							},
 						},
 						map[string]interface{}{
 							"name": "query - 2",
-							"type": 3,
+							"type": float64(3),
 							"content": map[string]interface{}{
 								"exportToExcelOptions": "visible",
 								"query":                "union withsource=TableName *\n| summarize Count=count() by TableName\n| render barchart",
-								"queryType":            0,
+								"queryType":            float64(0),
 								"resourceType":         "microsoft.operationalinsights/workspaces",
-								"size":                 1,
+								"size":                 float64(1),
 								"version":              "KqlItem/1.0",
 							},
 						},
 					},
 					"styleSettings": map[string]interface{}{},
-					"test":          1,
+					"test":          float64(1),
 				},
 				TypeHandlerVersion: to.StringPtr("1.2"),
 			},
@@ -5831,11 +12306,37 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVMExtension{
+			ID:   to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
+			Name: to.StringPtr("myVMExtension"),
+			Type: to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/extensions"),
+			Properties: &golang.VirtualMachineExtensionProperties{
+				Type:                    to.StringPtr("extType"),
+				AutoUpgradeMinorVersion: to.BoolPtr(true),
+				ProvisioningState:       to.StringPtr("Succeeded"),
+				Publisher:               to.StringPtr("extPublisher"),
+				Settings: map[string]interface{}{
+					"UserName": "xyz@microsoft.com",
+				},
+				TypeHandlerVersion: to.StringPtr("1.2"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 	// From example Update VirtualMachineScaleSet VM extension.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update VirtualMachineScaleSet VM extension."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5866,11 +12367,37 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVMExtension{
+			ID:   to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
+			Name: to.StringPtr("myVMExtension"),
+			Type: to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/extensions"),
+			Properties: &golang.VirtualMachineExtensionProperties{
+				Type:                    to.StringPtr("extType"),
+				AutoUpgradeMinorVersion: to.BoolPtr(true),
+				ProvisioningState:       to.StringPtr("Succeeded"),
+				Publisher:               to.StringPtr("extPublisher"),
+				Settings: map[string]interface{}{
+					"UserName": "xyz@microsoft.com",
+				},
+				TypeHandlerVersion: to.StringPtr("1.2"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 	// From example Delete VirtualMachineScaleSet VM extension.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete VirtualMachineScaleSet VM extension."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5894,6 +12421,9 @@ func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 	// From example Get VirtualMachineScaleSet VM extension.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get VirtualMachineScaleSet VM extension."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5909,11 +12439,37 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVMExtension{
+			ID:   to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
+			Name: to.StringPtr("myVMExtension"),
+			Type: to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/extensions"),
+			Properties: &golang.VirtualMachineExtensionProperties{
+				Type:                    to.StringPtr("extType"),
+				AutoUpgradeMinorVersion: to.BoolPtr(true),
+				ProvisioningState:       to.StringPtr("Succeeded"),
+				Publisher:               to.StringPtr("extPublisher"),
+				Settings: map[string]interface{}{
+					"UserName": "xyz@microsoft.com",
+				},
+				TypeHandlerVersion: to.StringPtr("1.2"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 	// From example List extensions in Vmss instance.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List extensions in Vmss instance."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5928,7 +12484,48 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsListResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVMExtensionsListResult{
+			Value: []*golang.VirtualMachineScaleSetVMExtension{
+				{
+					ID:   to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension"),
+					Name: to.StringPtr("myVMExtension"),
+					Type: to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/extensions"),
+					Properties: &golang.VirtualMachineExtensionProperties{
+						Type:                    to.StringPtr("extType"),
+						AutoUpgradeMinorVersion: to.BoolPtr(true),
+						ProvisioningState:       to.StringPtr("Succeeded"),
+						Publisher:               to.StringPtr("extPublisher"),
+						Settings: map[string]interface{}{
+							"UserName": "xyz@microsoft.com",
+						},
+						TypeHandlerVersion: to.StringPtr("1.2"),
+					},
+				},
+				{
+					ID:   to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/extensions/myVMExtension1"),
+					Name: to.StringPtr("myVMExtension1"),
+					Type: to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/extensions"),
+					Properties: &golang.VirtualMachineExtensionProperties{
+						Type:                    to.StringPtr("extType1"),
+						AutoUpgradeMinorVersion: to.BoolPtr(true),
+						ProvisioningState:       to.StringPtr("Succeeded"),
+						Publisher:               to.StringPtr("extPublisher1"),
+						Settings: map[string]interface{}{
+							"UserName": "xyz@microsoft.com",
+						},
+						TypeHandlerVersion: to.StringPtr("1.0"),
+					},
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtensionsListResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtensionsListResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMs_Reimage(t *testing.T) {
@@ -5949,6 +12546,9 @@ func TestVirtualMachineScaleSetVMs_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 	// From example Force Delete a virtual machine from a VM scale set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Force Delete a virtual machine from a VM scale set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5971,6 +12571,9 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 	// From example Get VM scale set VM with UserData
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get VM scale set VM with UserData"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -5985,11 +12588,136 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVM{
+			Name:     to.StringPtr("{vmss-vm-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}/virtualMachines/0"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"myTag1": to.StringPtr("tagValue1"),
+			},
+			Properties: &golang.VirtualMachineScaleSetVMProperties{
+				DiagnosticsProfile: &golang.DiagnosticsProfile{
+					BootDiagnostics: &golang.BootDiagnostics{
+						Enabled: to.BoolPtr(true),
+					},
+				},
+				HardwareProfile:        &golang.HardwareProfile{},
+				LatestModelApplied:     to.BoolPtr(true),
+				ModelDefinitionApplied: to.StringPtr("VirtualMachineScaleSet"),
+				NetworkProfile: &golang.NetworkProfile{
+					NetworkInterfaces: []*golang.NetworkInterfaceReference{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/{vmss-name}/virtualMachines/0/networkInterfaces/vmsstestnetconfig5415"),
+						}},
+				},
+				NetworkProfileConfiguration: &golang.VirtualMachineScaleSetVMNetworkProfileConfiguration{
+					NetworkInterfaceConfigurations: []*golang.VirtualMachineScaleSetNetworkConfiguration{
+						{
+							Name: to.StringPtr("vmsstestnetconfig5415"),
+							Properties: &golang.VirtualMachineScaleSetNetworkConfigurationProperties{
+								DNSSettings: &golang.VirtualMachineScaleSetNetworkConfigurationDNSSettings{
+									DNSServers: []*string{},
+								},
+								EnableAcceleratedNetworking: to.BoolPtr(false),
+								EnableIPForwarding:          to.BoolPtr(false),
+								IPConfigurations: []*golang.VirtualMachineScaleSetIPConfiguration{
+									{
+										Name: to.StringPtr("vmsstestnetconfig9693"),
+										Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
+											PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+											Subnet: &golang.APIEntityReference{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vn4071/subnets/sn5503"),
+											},
+										},
+									}},
+								Primary: to.BoolPtr(true),
+							},
+						}},
+				},
+				OSProfile: &golang.OSProfile{
+					AdminUsername:               to.StringPtr("Foo12"),
+					AllowExtensionOperations:    to.BoolPtr(true),
+					ComputerName:                to.StringPtr("test000000"),
+					RequireGuestProvisionSignal: to.BoolPtr(true),
+					Secrets:                     []*golang.VaultSecretGroup{},
+					WindowsConfiguration: &golang.WindowsConfiguration{
+						EnableAutomaticUpdates: to.BoolPtr(true),
+						ProvisionVMAgent:       to.BoolPtr(true),
+					},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				StorageProfile: &golang.StorageProfile{
+					DataDisks: []*golang.DataDisk{
+						{
+							Name:         to.StringPtr("vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
+							Caching:      golang.CachingTypesNone.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							DiskSizeGB:   to.Int32Ptr(128),
+							Lun:          to.Int32Ptr(1),
+							ManagedDisk: &golang.ManagedDiskParameters{
+								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
+								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							},
+							ToBeDetached: to.BoolPtr(false),
+						}},
+					ImageReference: &golang.ImageReference{
+						ExactVersion: to.StringPtr("4.127.20180315"),
+						Offer:        to.StringPtr("WindowsServer"),
+						Publisher:    to.StringPtr("MicrosoftWindowsServer"),
+						SKU:          to.StringPtr("2012-R2-Datacenter"),
+						Version:      to.StringPtr("4.127.20180315"),
+					},
+					OSDisk: &golang.OSDisk{
+						Name:         to.StringPtr("vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
+						Caching:      golang.CachingTypesNone.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						DiskSizeGB:   to.Int32Ptr(127),
+						ManagedDisk: &golang.ManagedDiskParameters{
+							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
+							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						},
+						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+				},
+				UserData: to.StringPtr("RXhhbXBsZSBVc2VyRGF0YQ=="),
+				VMID:     to.StringPtr("42af9fdf-b906-4ad7-9905-8316209ff619"),
+			},
+			Resources: []*golang.VirtualMachineExtension{
+				{
+					Name:     to.StringPtr("CustomScriptExtension-DSC"),
+					Type:     to.StringPtr("Microsoft.Compute/virtualMachines/extensions"),
+					ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/extensions/CustomScriptExtension-DSC"),
+					Location: to.StringPtr("west us"),
+					Tags: map[string]*string{
+						"displayName": to.StringPtr("CustomScriptExtension-DSC"),
+					},
+					Properties: &golang.VirtualMachineExtensionProperties{
+						Type:                    to.StringPtr("CustomScriptExtension"),
+						AutoUpgradeMinorVersion: to.BoolPtr(true),
+						ProvisioningState:       to.StringPtr("Succeeded"),
+						Publisher:               to.StringPtr("Microsoft.Compute"),
+						Settings:                map[string]interface{}{},
+						TypeHandlerVersion:      to.StringPtr("1.9"),
+					},
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVM) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVM)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 	// From example Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6004,7 +12732,54 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetInstanceViewResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineScaleSetVMInstanceView{
+			AssignedHost: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup/hosts/myHost"),
+			Disks: []*golang.DiskInstanceView{
+				{
+					Name: to.StringPtr("myOSDisk"),
+					Statuses: []*golang.InstanceViewStatus{
+						{
+							Code:          to.StringPtr("ProvisioningState/succeeded"),
+							DisplayStatus: to.StringPtr("Provisioning succeeded"),
+							Level:         golang.StatusLevelTypesInfo.ToPtr(),
+							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T04:58:58.0882815+00:00"); return t }()),
+						}},
+				}},
+			PlatformFaultDomain:  to.Int32Ptr(0),
+			PlatformUpdateDomain: to.Int32Ptr(0),
+			Statuses: []*golang.InstanceViewStatus{
+				{
+					Code:          to.StringPtr("ProvisioningState/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-06-05T04:59:58.1852966+00:00"); return t }()),
+				},
+				{
+					Code:          to.StringPtr("PowerState/running"),
+					DisplayStatus: to.StringPtr("VM running"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+				}},
+			VMAgent: &golang.VirtualMachineAgentInstanceView{
+				Statuses: []*golang.InstanceViewStatus{
+					{
+						Code:          to.StringPtr("ProvisioningState/Unavailable"),
+						DisplayStatus: to.StringPtr("Not Ready"),
+						Level:         golang.StatusLevelTypesWarning.ToPtr(),
+						Message:       to.StringPtr("VM status blob is found but not yet populated."),
+						Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T05:00:32+00:00"); return t }()),
+					}},
+				VMAgentVersion: to.StringPtr("Unknown"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMInstanceView) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMInstanceView)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMs_List(t *testing.T) {
@@ -6029,6 +12804,9 @@ func TestVirtualMachineScaleSetVMs_Redeploy(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 	// From example RetrieveBootDiagnosticsData of a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6043,7 +12821,19 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataResult)
+	// Response check
+	{
+		exampleRes := golang.RetrieveBootDiagnosticsDataResult{
+			ConsoleScreenshotBlobURI: to.StringPtr("https://storageuri/myvmScaleSetinstance.screenshot.bmp?{saskey}"),
+			SerialConsoleLogBlobURI:  to.StringPtr("https://storageuri/myvmScaleSetinstance.serialconsole.log?{saskey}"),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
@@ -6052,6 +12842,9 @@ func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 	// From example Simulate Eviction a virtual machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Simulate Eviction a virtual machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6070,6 +12863,9 @@ func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 	// From example VirtualMachineScaleSetVMs_RunCommand
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"VirtualMachineScaleSetVMs_RunCommand"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6093,11 +12889,37 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRunCommandResult)
+	// Response check
+	{
+		exampleRes := golang.RunCommandResult{
+			Value: []*golang.InstanceViewStatus{
+				{
+					Code:          to.StringPtr("ComponentStatus/StdOut/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Message:       to.StringPtr("Hello World!"),
+				},
+				{
+					Code:          to.StringPtr("ComponentStatus/StdErr/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Message:       to.StringPtr(""),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RunCommandResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	// From example Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6107,13 +12929,11 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	poller, err := client.BeginExportRequestRateByInterval(ctx,
 		"westus",
 		golang.RequestRateByIntervalInput{
-			LogAnalyticsInputBase: golang.LogAnalyticsInputBase{
-				BlobContainerSasURI: to.StringPtr("https://somesasuri"),
-				FromTime:            to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
-				GroupByResourceName: to.BoolPtr(true),
-				ToTime:              to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
-			},
-			IntervalLength: golang.IntervalInMinsFiveMins.ToPtr(),
+			BlobContainerSasURI: to.StringPtr("https://somesasuri"),
+			FromTime:            to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
+			GroupByResourceName: to.BoolPtr(true),
+			ToTime:              to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
+			IntervalLength:      golang.IntervalInMinsFiveMins.ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -6123,11 +12943,27 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.LogAnalyticsExportRequestRateByIntervalResult)
+	// Response check
+	{
+		exampleRes := golang.LogAnalyticsOperationResult{
+			Properties: &golang.LogAnalyticsOutput{
+				Output: to.StringPtr("https://crptestar4227.blob.core.windows.net:443/sascontainer/RequestRateByInterval_20180121-0154_20180123-0154.csv"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	// From example Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6137,15 +12973,13 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	poller, err := client.BeginExportThrottledRequests(ctx,
 		"westus",
 		golang.ThrottledRequestsInput{
-			LogAnalyticsInputBase: golang.LogAnalyticsInputBase{
-				BlobContainerSasURI:        to.StringPtr("https://somesasuri"),
-				FromTime:                   to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
-				GroupByClientApplicationID: to.BoolPtr(false),
-				GroupByOperationName:       to.BoolPtr(true),
-				GroupByResourceName:        to.BoolPtr(false),
-				GroupByUserAgent:           to.BoolPtr(false),
-				ToTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
-			},
+			BlobContainerSasURI:        to.StringPtr("https://somesasuri"),
+			FromTime:                   to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
+			GroupByClientApplicationID: to.BoolPtr(false),
+			GroupByOperationName:       to.BoolPtr(true),
+			GroupByResourceName:        to.BoolPtr(false),
+			GroupByUserAgent:           to.BoolPtr(false),
+			ToTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 		},
 		nil)
 	if err != nil {
@@ -6155,11 +12989,27 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.LogAnalyticsExportThrottledRequestsResult)
+	// Response check
+	{
+		exampleRes := golang.LogAnalyticsOperationResult{
+			Properties: &golang.LogAnalyticsOutput{
+				Output: to.StringPtr("https://crptestar4227.blob.core.windows.net:443/sascontainer/ThrottledRequests_20180121-0154_20180123-0154.csv"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineRunCommands_List(t *testing.T) {
 	// From example VirtualMachineRunCommandList
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"VirtualMachineRunCommandList"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6172,14 +13022,95 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.RunCommandListResult{
+				Value: []*golang.RunCommandDocumentBase{
+					{
+						Description: to.StringPtr("Configure the machine to enable remote PowerShell."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("EnableRemotePS"),
+						Label:       to.StringPtr("Enable remote PowerShell"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Shows detailed information for the IP address, subnet mask and default gateway for each adapter bound to TCP/IP."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("IPConfig"),
+						Label:       to.StringPtr("List IP configuration"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Custom multiline PowerShell script should be defined in script property. Optional parameters can be set in parameters property."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("RunPowerShellScript"),
+						Label:       to.StringPtr("Executes a PowerShell script"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Custom multiline shell script should be defined in script property. Optional parameters can be set in parameters property."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("RunShellScript"),
+						Label:       to.StringPtr("Executes a Linux shell script"),
+						OSType:      golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Get the configuration of all network interfaces."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("ifconfig"),
+						Label:       to.StringPtr("List network configuration"),
+						OSType:      golang.OperatingSystemTypesLinux.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Checks if the local Administrator account is disabled, and if so enables it."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("EnableAdminAccount"),
+						Label:       to.StringPtr("Enable administrator account"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Reset built-in Administrator account password."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("ResetAccountPassword"),
+						Label:       to.StringPtr("Reset built-in Administrator account password"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Checks registry settings and domain policy settings. Suggests policy actions if machine is part of a domain or modifies the settings to default values."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("RDPSettings"),
+						Label:       to.StringPtr("Verify RDP Listener Settings"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Sets the default or user specified port number for Remote Desktop connections. Enables firewall rule for inbound access to the port."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("SetRDPPort"),
+						Label:       to.StringPtr("Set Remote Desktop port"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					},
+					{
+						Description: to.StringPtr("Removes the SSL certificate tied to the RDP listener and restores the RDP listerner security to default. Use this script if you see any issues with the certificate."),
+						Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+						ID:          to.StringPtr("ResetRDPCert"),
+						Label:       to.StringPtr("Restore RDP Authentication mode to defaults"),
+						OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RunCommandListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().RunCommandListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_Get(t *testing.T) {
 	// From example VirtualMachineRunCommandGet
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"VirtualMachineRunCommandGet"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6193,11 +13124,46 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsGetResult)
+	// Response check
+	{
+		exampleRes := golang.RunCommandDocument{
+			Description: to.StringPtr("Custom multiline PowerShell script should be defined in script property. Optional parameters can be set in parameters property."),
+			Schema:      to.StringPtr("http://schema.management.azure.com/schemas/2016-11-17/runcommands.json"),
+			ID:          to.StringPtr("RunPowerShellScript"),
+			Label:       to.StringPtr("Executes a PowerShell script"),
+			OSType:      golang.OperatingSystemTypesWindows.ToPtr(),
+			Parameters: []*golang.RunCommandParameterDefinition{
+				{
+					Name:         to.StringPtr("arg1"),
+					Type:         to.StringPtr("string"),
+					DefaultValue: to.StringPtr("value1"),
+				},
+				{
+					Name:         to.StringPtr("arg2"),
+					Type:         to.StringPtr("string"),
+					DefaultValue: to.StringPtr("value2"),
+				}},
+			Script: []*string{
+				to.StringPtr("param("),
+				to.StringPtr("    [string]$arg1,"),
+				to.StringPtr("    [string]$arg2"),
+				to.StringPtr(")"),
+				to.StringPtr("Write-Host This is a sample script with parameters $arg1 $arg2")},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RunCommandDocument) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RunCommandDocument)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6209,9 +13175,7 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 		"myVM",
 		"myRunCommand",
 		golang.VirtualMachineRunCommand{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
@@ -6239,11 +13203,50 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"tag1": to.StringPtr("value1"),
+				"tag2": to.StringPtr("value2"),
+			},
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Hello World!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineRunCommands_Update(t *testing.T) {
 	// From example Update a run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6269,11 +13272,50 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"tag1": to.StringPtr("value1"),
+				"tag2": to.StringPtr("value2"),
+			},
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Script Source Updated!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 	// From example Delete a run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6296,6 +13338,9 @@ func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 
 func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 	// From example Get a run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6310,11 +13355,50 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineRunCommandsGetByVirtualMachineResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"tag1": to.StringPtr("value1"),
+				"tag2": to.StringPtr("value2"),
+			},
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Hello World!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 	// From example List run commands in a Virtual Machine.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List run commands in a Virtual Machine."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6328,14 +13412,53 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.VirtualMachineRunCommandsListResult{
+				Value: []*golang.VirtualMachineRunCommand{
+					{
+						Name:     to.StringPtr("myRunCommand"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachines/runCommands"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM/runCommands/myRunCommand"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"tag1": to.StringPtr("value1"),
+							"tag2": to.StringPtr("value2"),
+						},
+						Properties: &golang.VirtualMachineRunCommandProperties{
+							AsyncExecution: to.BoolPtr(false),
+							Parameters: []*golang.RunCommandInputParameter{
+								{
+									Name:  to.StringPtr("param1"),
+									Value: to.StringPtr("value1"),
+								},
+								{
+									Name:  to.StringPtr("param2"),
+									Value: to.StringPtr("value2"),
+								}},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							RunAsUser:         to.StringPtr("user1"),
+							Source: &golang.VirtualMachineRunCommandScriptSource{
+								Script: to.StringPtr("Write-Host Hello World!"),
+							},
+							TimeoutInSeconds: to.Int32Ptr(0),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineRunCommandsListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 	// From example Create VirtualMachineScaleSet VM run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create VirtualMachineScaleSet VM run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6348,9 +13471,7 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 		"0",
 		"myRunCommand",
 		golang.VirtualMachineRunCommand{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.BoolPtr(false),
 				Parameters: []*golang.RunCommandInputParameter{
@@ -6378,11 +13499,46 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Hello World!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 	// From example Update VirtualMachineScaleSet VM run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update VirtualMachineScaleSet VM run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6409,11 +13565,50 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"tag1": to.StringPtr("value1"),
+				"tag2": to.StringPtr("value2"),
+			},
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Script Source Updated!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 	// From example Delete VirtualMachineScaleSet VM run command.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete VirtualMachineScaleSet VM run command."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6437,6 +13632,9 @@ func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 	// From example Get VirtualMachineScaleSet VM run commands.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get VirtualMachineScaleSet VM run commands."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6452,11 +13650,50 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsGetResult)
+	// Response check
+	{
+		exampleRes := golang.VirtualMachineRunCommand{
+			Name:     to.StringPtr("myRunCommand"),
+			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/runCommands"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/runCommands/myRunCommand"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"tag1": to.StringPtr("value1"),
+				"tag2": to.StringPtr("value2"),
+			},
+			Properties: &golang.VirtualMachineRunCommandProperties{
+				AsyncExecution: to.BoolPtr(false),
+				Parameters: []*golang.RunCommandInputParameter{
+					{
+						Name:  to.StringPtr("param1"),
+						Value: to.StringPtr("value1"),
+					},
+					{
+						Name:  to.StringPtr("param2"),
+						Value: to.StringPtr("value2"),
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RunAsUser:         to.StringPtr("user1"),
+				Source: &golang.VirtualMachineRunCommandScriptSource{
+					Script: to.StringPtr("Write-Host Hello World!"),
+				},
+				TimeoutInSeconds: to.Int32Ptr(3600),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 	// From example List run commands in Vmss instance.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List run commands in Vmss instance."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6471,14 +13708,49 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.VirtualMachineRunCommandsListResult{
+				Value: []*golang.VirtualMachineRunCommand{
+					{
+						Name:     to.StringPtr("myRunCommand"),
+						Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets/virtualMachines/runCommands"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myvmScaleSet/virtualMachines/0/runCommands/myRunCommand"),
+						Location: to.StringPtr("westus"),
+						Properties: &golang.VirtualMachineRunCommandProperties{
+							AsyncExecution: to.BoolPtr(false),
+							Parameters: []*golang.RunCommandInputParameter{
+								{
+									Name:  to.StringPtr("param1"),
+									Value: to.StringPtr("value1"),
+								},
+								{
+									Name:  to.StringPtr("param2"),
+									Value: to.StringPtr("value2"),
+								}},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							RunAsUser:         to.StringPtr("user1"),
+							Source: &golang.VirtualMachineRunCommandScriptSource{
+								Script: to.StringPtr("Write-Host Hello World!"),
+							},
+							TimeoutInSeconds: to.Int32Ptr(0),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineRunCommandsListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestResourceSKUs_List(t *testing.T) {
 	// From example Lists all available Resource SKUs
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Lists all available Resource SKUs"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6490,25 +13762,377 @@ func TestResourceSKUs_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ResourceSKUsResult{
+				Value: []*golang.ResourceSKU{
+					{
+						Name: to.StringPtr("Standard_A0"),
+						Capabilities: []*golang.ResourceSKUCapabilities{
+							{
+								Name:  to.StringPtr("MaxResourceVolumeMB"),
+								Value: to.StringPtr("20480"),
+							},
+							{
+								Name:  to.StringPtr("OSVhdSizeMB"),
+								Value: to.StringPtr("1047552"),
+							},
+							{
+								Name:  to.StringPtr("vCPUs"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("HyperVGenerations"),
+								Value: to.StringPtr("V1"),
+							},
+							{
+								Name:  to.StringPtr("MemoryGB"),
+								Value: to.StringPtr("0.75"),
+							},
+							{
+								Name:  to.StringPtr("MaxDataDiskCount"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("LowPriorityCapable"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("PremiumIO"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsAvailable"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("ACUs"),
+								Value: to.StringPtr("50"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsPerCore"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("EphemeralOSDiskSupported"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("AcceleratedNetworkingEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("RdmaEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("MaxNetworkInterfaces"),
+								Value: to.StringPtr("2"),
+							}},
+						Family: to.StringPtr("standardA0_A7Family"),
+						LocationInfo: []*golang.ResourceSKULocationInfo{
+							{
+								Location: to.StringPtr("westus"),
+								ZoneDetails: []*golang.ResourceSKUZoneDetails{
+									{
+										Name: []*string{
+											to.StringPtr("2")},
+										Capabilities: []*golang.ResourceSKUCapabilities{
+											{
+												Name:  to.StringPtr("UltraSSDAvailable"),
+												Value: to.StringPtr("True"),
+											}},
+									}},
+								Zones: []*string{
+									to.StringPtr("2"),
+									to.StringPtr("1")},
+							}},
+						Locations: []*string{
+							to.StringPtr("westus")},
+						ResourceType: to.StringPtr("virtualMachines"),
+						Size:         to.StringPtr("A0"),
+						Tier:         to.StringPtr("Standard"),
+					},
+					{
+						Name: to.StringPtr("Standard_A1"),
+						Capabilities: []*golang.ResourceSKUCapabilities{
+							{
+								Name:  to.StringPtr("MaxResourceVolumeMB"),
+								Value: to.StringPtr("71680"),
+							},
+							{
+								Name:  to.StringPtr("OSVhdSizeMB"),
+								Value: to.StringPtr("1047552"),
+							},
+							{
+								Name:  to.StringPtr("vCPUs"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("HyperVGenerations"),
+								Value: to.StringPtr("V1"),
+							},
+							{
+								Name:  to.StringPtr("MemoryGB"),
+								Value: to.StringPtr("1.75"),
+							},
+							{
+								Name:  to.StringPtr("MaxDataDiskCount"),
+								Value: to.StringPtr("2"),
+							},
+							{
+								Name:  to.StringPtr("LowPriorityCapable"),
+								Value: to.StringPtr("True"),
+							},
+							{
+								Name:  to.StringPtr("PremiumIO"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsAvailable"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("ACUs"),
+								Value: to.StringPtr("100"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsPerCore"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("EphemeralOSDiskSupported"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("AcceleratedNetworkingEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("RdmaEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("MaxNetworkInterfaces"),
+								Value: to.StringPtr("2"),
+							}},
+						Family: to.StringPtr("standardA0_A7Family"),
+						LocationInfo: []*golang.ResourceSKULocationInfo{
+							{
+								Location: to.StringPtr("westus"),
+								Zones: []*string{
+									to.StringPtr("1"),
+									to.StringPtr("2"),
+									to.StringPtr("3")},
+							}},
+						Locations: []*string{
+							to.StringPtr("westus")},
+						ResourceType: to.StringPtr("virtualMachines"),
+						Size:         to.StringPtr("A1"),
+						Tier:         to.StringPtr("Standard"),
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceSKUsResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 
 	// From example Lists all available Resource SKUs for the specified region
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Lists all available Resource SKUs for the specified region"},
+	})
 	pager = client.List(&golang.ResourceSKUsListOptions{Filter: to.StringPtr("location eq 'westus'")})
 	for pager.NextPage(ctx) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ResourceSKUsResult{
+				Value: []*golang.ResourceSKU{
+					{
+						Name: to.StringPtr("Standard_A0"),
+						Capabilities: []*golang.ResourceSKUCapabilities{
+							{
+								Name:  to.StringPtr("MaxResourceVolumeMB"),
+								Value: to.StringPtr("20480"),
+							},
+							{
+								Name:  to.StringPtr("OSVhdSizeMB"),
+								Value: to.StringPtr("1047552"),
+							},
+							{
+								Name:  to.StringPtr("vCPUs"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("HyperVGenerations"),
+								Value: to.StringPtr("V1"),
+							},
+							{
+								Name:  to.StringPtr("MemoryGB"),
+								Value: to.StringPtr("0.75"),
+							},
+							{
+								Name:  to.StringPtr("MaxDataDiskCount"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("LowPriorityCapable"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("PremiumIO"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsAvailable"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("ACUs"),
+								Value: to.StringPtr("50"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsPerCore"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("EphemeralOSDiskSupported"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("AcceleratedNetworkingEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("RdmaEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("MaxNetworkInterfaces"),
+								Value: to.StringPtr("2"),
+							}},
+						Family: to.StringPtr("standardA0_A7Family"),
+						LocationInfo: []*golang.ResourceSKULocationInfo{
+							{
+								Location: to.StringPtr("westus"),
+								ZoneDetails: []*golang.ResourceSKUZoneDetails{
+									{
+										Name: []*string{
+											to.StringPtr("2")},
+										Capabilities: []*golang.ResourceSKUCapabilities{
+											{
+												Name:  to.StringPtr("UltraSSDAvailable"),
+												Value: to.StringPtr("True"),
+											}},
+									}},
+								Zones: []*string{
+									to.StringPtr("2"),
+									to.StringPtr("1")},
+							}},
+						Locations: []*string{
+							to.StringPtr("westus")},
+						ResourceType: to.StringPtr("virtualMachines"),
+						Size:         to.StringPtr("A0"),
+						Tier:         to.StringPtr("Standard"),
+					},
+					{
+						Name: to.StringPtr("Standard_A1"),
+						Capabilities: []*golang.ResourceSKUCapabilities{
+							{
+								Name:  to.StringPtr("MaxResourceVolumeMB"),
+								Value: to.StringPtr("71680"),
+							},
+							{
+								Name:  to.StringPtr("OSVhdSizeMB"),
+								Value: to.StringPtr("1047552"),
+							},
+							{
+								Name:  to.StringPtr("vCPUs"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("HyperVGenerations"),
+								Value: to.StringPtr("V1"),
+							},
+							{
+								Name:  to.StringPtr("MemoryGB"),
+								Value: to.StringPtr("1.75"),
+							},
+							{
+								Name:  to.StringPtr("MaxDataDiskCount"),
+								Value: to.StringPtr("2"),
+							},
+							{
+								Name:  to.StringPtr("LowPriorityCapable"),
+								Value: to.StringPtr("True"),
+							},
+							{
+								Name:  to.StringPtr("PremiumIO"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsAvailable"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("ACUs"),
+								Value: to.StringPtr("100"),
+							},
+							{
+								Name:  to.StringPtr("vCPUsPerCore"),
+								Value: to.StringPtr("1"),
+							},
+							{
+								Name:  to.StringPtr("EphemeralOSDiskSupported"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("AcceleratedNetworkingEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("RdmaEnabled"),
+								Value: to.StringPtr("False"),
+							},
+							{
+								Name:  to.StringPtr("MaxNetworkInterfaces"),
+								Value: to.StringPtr("2"),
+							}},
+						Family: to.StringPtr("standardA0_A7Family"),
+						LocationInfo: []*golang.ResourceSKULocationInfo{
+							{
+								Location: to.StringPtr("westus"),
+								Zones: []*string{
+									to.StringPtr("1"),
+									to.StringPtr("2"),
+									to.StringPtr("3")},
+							}},
+						Locations: []*string{
+							to.StringPtr("westus")},
+						ResourceType: to.StringPtr("virtualMachines"),
+						Size:         to.StringPtr("A1"),
+						Tier:         to.StringPtr("Standard"),
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceSKUsResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDisks_CreateOrUpdate(t *testing.T) {
 	// From example Create a managed disk and associate with disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk and associate with disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6519,9 +14143,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
@@ -6539,16 +14161,38 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskAccessID:        to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
+				DiskSizeGB:          to.Int32Ptr(200),
+				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowPrivate.ToPtr(),
+				ProvisioningState:   to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk and associate with disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk and associate with disk encryption set."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
@@ -6567,16 +14211,39 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB: to.Int32Ptr(200),
+				Encryption: &golang.Encryption{
+					DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk by copying a snapshot.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk by copying a snapshot."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
@@ -6592,16 +14259,36 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk by importing an unmanaged blob from a different subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk by importing an unmanaged blob from a different subscription."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
@@ -6618,16 +14305,37 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+					StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk by importing an unmanaged blob from the same subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk by importing an unmanaged blob from the same subscription."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
@@ -6643,16 +14351,36 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk from a platform image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk from a platform image."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
@@ -6671,16 +14399,45 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					ImageReference: &golang.ImageDiskReference{
+						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/westus/Publishers/{publisher}/ArtifactTypes/VMImage/Offers/{offer}/Skus/{sku}/Versions/1.0.0"),
+					},
+				},
+				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				PurchasePlan: &golang.DiskPurchasePlan{
+					Name:      to.StringPtr("{sku}"),
+					Product:   to.StringPtr("{offer}"),
+					Publisher: to.StringPtr("{publisher}"),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk from an existing managed disk in the same or different subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk from an existing managed disk in the same or different subscription."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk2",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
@@ -6696,16 +14453,36 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk2"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk1"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk with security profile
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk with security profile"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("North Central US"),
-			},
+			Location: to.StringPtr("North Central US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
@@ -6727,16 +14504,42 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("North Central US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					ImageReference: &golang.ImageDiskReference{
+						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
+					},
+				},
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				SecurityProfile: &golang.DiskSecurityProfile{
+					SecurityType: golang.DiskSecurityTypesTrustedLaunch.ToPtr(),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed disk with ssd zrs account type.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed disk with ssd zrs account type."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
@@ -6755,16 +14558,40 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB:        to.Int32Ptr(200),
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+			SKU: &golang.DiskSKU{
+				Name: golang.DiskStorageAccountTypesPremiumZRS.ToPtr(),
+				Tier: to.StringPtr("Premium"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a managed upload disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a managed upload disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:    golang.DiskCreateOptionUpload.ToPtr(),
@@ -6780,16 +14607,36 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:    golang.DiskCreateOptionUpload.ToPtr(),
+					UploadSizeBytes: to.Int64Ptr(10737418752),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create an empty managed disk in extended location.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create an empty managed disk in extended location."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			ExtendedLocation: &golang.ExtendedLocation{
 				Name: to.StringPtr("{edge-zone-id}"),
 				Type: golang.ExtendedLocationTypesEdgeZone.ToPtr(),
@@ -6809,16 +14656,40 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			ExtendedLocation: &golang.ExtendedLocation{
+				Name: to.StringPtr("{edge-zone-id}"),
+				Type: golang.ExtendedLocationTypesEdgeZone.ToPtr(),
+			},
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB:        to.Int32Ptr(200),
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create an empty managed disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create an empty managed disk."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
@@ -6834,16 +14705,36 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB:        to.Int32Ptr(200),
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create an ultra managed disk with logicalSectorSize 512E
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create an ultra managed disk with logicalSectorSize 512E"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:      golang.DiskCreateOptionEmpty.ToPtr(),
@@ -6863,11 +14754,38 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:      golang.DiskCreateOptionEmpty.ToPtr(),
+					LogicalSectorSize: to.Int32Ptr(512),
+				},
+				DiskSizeGB:        to.Int32Ptr(200),
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+			SKU: &golang.DiskSKU{
+				Name: golang.DiskStorageAccountTypesUltraSSDLRS.ToPtr(),
+				Tier: to.StringPtr("Ultra"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDisks_Update(t *testing.T) {
 	// From example Create or update a bursting enabled managed disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a bursting enabled managed disk."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -6891,9 +14809,32 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				BurstingEnabled: to.BoolPtr(true),
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB:        to.Int32Ptr(1024),
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a managed disk to add purchase plan.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a managed disk to add purchase plan."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -6915,9 +14856,46 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					ImageReference: &golang.ImageDiskReference{
+						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
+					},
+				},
+				DiskSizeGB:        to.Int32Ptr(127),
+				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				PurchasePlan: &golang.DiskPurchasePlan{
+					Name:          to.StringPtr("myPurchasePlanName"),
+					Product:       to.StringPtr("myPurchasePlanProduct"),
+					PromotionCode: to.StringPtr("myPurchasePlanPromotionCode"),
+					Publisher:     to.StringPtr("myPurchasePlanPublisher"),
+				},
+			},
+			SKU: &golang.DiskSKU{
+				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+				Tier: to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a managed disk to add supportsHibernation.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a managed disk to add supportsHibernation."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -6934,9 +14912,39 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+				},
+				DiskSizeGB:          to.Int32Ptr(127),
+				HyperVGeneration:    golang.HyperVGenerationV1.ToPtr(),
+				OSType:              golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState:   to.StringPtr("Succeeded"),
+				SupportsHibernation: to.BoolPtr(true),
+			},
+			SKU: &golang.DiskSKU{
+				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+				Tier: to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a managed disk to change tier.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a managed disk to change tier."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -6953,9 +14961,31 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				Tier:              to.StringPtr("P30"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a managed disk to disable bursting.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a managed disk to disable bursting."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -6972,9 +15002,30 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update managed disk to remove disk access resource association.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update managed disk to remove disk access resource association."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -6991,11 +15042,34 @@ func TestDisks_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myDisk"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+				},
+				DiskSizeGB:          to.Int32Ptr(200),
+				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowAll.ToPtr(),
+				ProvisioningState:   to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDisks_Get(t *testing.T) {
 	// From example Get information about a managed disk.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a managed disk."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7009,7 +15083,72 @@ func TestDisks_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DisksGetResult)
+	// Response check
+	{
+		exampleRes := golang.Disk{
+			Name:     to.StringPtr("myManagedDisk"),
+			Type:     to.StringPtr("Microsoft.Compute/disks"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("ManagedDisks"),
+			},
+			ManagedBy: to.StringPtr("/subscriptions/123caaa-123v-v211-a49f-f88ccac5bf88/resourceGroups/ResourceGroupName/providers/Microsoft.Compute/virtualMachines/TestVM414689371c88843d65ec"),
+			Properties: &golang.DiskProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					ImageReference: &golang.ImageDiskReference{
+						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
+					},
+				},
+				DiskSizeGB: to.Int32Ptr(10),
+				Encryption: &golang.Encryption{
+					Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+				},
+				EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+					Enabled: to.BoolPtr(true),
+					EncryptionSettings: []*golang.EncryptionSettingsElement{
+						{
+							DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+								SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+							KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+						}},
+				},
+				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				PurchasePlan: &golang.DiskPurchasePlan{
+					Name:      to.StringPtr("test_sku"),
+					Product:   to.StringPtr("marketplace_vm_test"),
+					Publisher: to.StringPtr("test_test_pmc2pc1"),
+				},
+				SecurityProfile: &golang.DiskSecurityProfile{
+					SecurityType: golang.DiskSecurityTypesTrustedLaunch.ToPtr(),
+				},
+				SupportsHibernation: to.BoolPtr(true),
+				TimeCreated:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.079872+00:00"); return t }()),
+			},
+			SKU: &golang.DiskSKU{
+				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Disk) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Disk)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDisks_Delete(t *testing.T) {
@@ -7018,6 +15157,9 @@ func TestDisks_Delete(t *testing.T) {
 
 func TestDisks_ListByResourceGroup(t *testing.T) {
 	// From example List all managed disks in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all managed disks in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7030,14 +15172,127 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskList{
+				Value: []*golang.Disk{
+					{
+						Name:     to.StringPtr("myManagedDisk1"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("ManagedDisks"),
+						},
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.9278721+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myManagedDisk2"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						Location: to.StringPtr("westus"),
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+							},
+							DiskSizeGB: to.Int32Ptr(10),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:36.872242+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myManagedDisk3"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("ManagedDisks"),
+						},
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+								ImageReference: &golang.ImageDiskReference{
+									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
+								},
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:36.3973934+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDisks_List(t *testing.T) {
 	// From example List all managed disks in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all managed disks in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7049,8 +15304,118 @@ func TestDisks_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskList{
+				Value: []*golang.Disk{
+					{
+						Name:     to.StringPtr("myManagedDisk1"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("ManagedDisks"),
+						},
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.9278721+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myManagedDisk2"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk2"),
+						Location: to.StringPtr("westus"),
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+							},
+							DiskSizeGB: to.Int32Ptr(10),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:36.872242+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myManagedDisk3"),
+						Type:     to.StringPtr("Microsoft.Compute/disks"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk3"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("ManagedDisks"),
+						},
+						Properties: &golang.DiskProperties{
+							CreationData: &golang.CreationData{
+								CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+								ImageReference: &golang.ImageDiskReference{
+									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
+								},
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:36.3973934+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
@@ -7065,6 +15430,9 @@ func TestDisks_RevokeAccess(t *testing.T) {
 
 func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	// From example Create a snapshot by importing an unmanaged blob from a different subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a snapshot by importing an unmanaged blob from a different subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7075,9 +15443,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"mySnapshot1",
 		golang.Snapshot{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
@@ -7094,16 +15460,37 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Snapshot{
+			Name:     to.StringPtr("mySnapshot1"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.SnapshotProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+					StorageAccountID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Snapshot)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a snapshot by importing an unmanaged blob from the same subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a snapshot by importing an unmanaged blob from the same subscription."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot1",
 		golang.Snapshot{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
 					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
@@ -7119,16 +15506,36 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Snapshot{
+			Name:     to.StringPtr("mySnapshot1"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.SnapshotProperties{
+				CreationData: &golang.CreationData{
+					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Snapshot)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a snapshot from an existing snapshot in the same or a different subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a snapshot from an existing snapshot in the same or a different subscription."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot2",
 		golang.Snapshot{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
@@ -7144,7 +15551,26 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Snapshot{
+			Name:     to.StringPtr("mySnapshot2"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.SnapshotProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Snapshot)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSnapshots_Update(t *testing.T) {
@@ -7153,6 +15579,9 @@ func TestSnapshots_Update(t *testing.T) {
 
 func TestSnapshots_Get(t *testing.T) {
 	// From example Get information about a snapshot.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a snapshot."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7166,7 +15595,64 @@ func TestSnapshots_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SnapshotsGetResult)
+	// Response check
+	{
+		exampleRes := golang.Snapshot{
+			Name:     to.StringPtr("mySnapshot"),
+			Type:     to.StringPtr("Microsoft.Compute/snapshots"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("Snapshots"),
+			},
+			Properties: &golang.SnapshotProperties{
+				CreationData: &golang.CreationData{
+					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					SourceResourceID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"),
+					SourceUniqueID:   to.StringPtr("d633885d-d102-4481-901e-5b2413d1a7be"),
+				},
+				DiskSizeGB: to.Int32Ptr(100),
+				Encryption: &golang.Encryption{
+					Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+				},
+				EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+					Enabled: to.BoolPtr(true),
+					EncryptionSettings: []*golang.EncryptionSettingsElement{
+						{
+							DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+								SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+							KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+						}},
+				},
+				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				PurchasePlan: &golang.DiskPurchasePlan{
+					Name:      to.StringPtr("test_sku"),
+					Product:   to.StringPtr("marketplace_vm_test"),
+					Publisher: to.StringPtr("test_test_pmc2pc1"),
+				},
+				SupportsHibernation: to.BoolPtr(true),
+				TimeCreated:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.079872+00:00"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Snapshot)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSnapshots_Delete(t *testing.T) {
@@ -7175,6 +15661,9 @@ func TestSnapshots_Delete(t *testing.T) {
 
 func TestSnapshots_ListByResourceGroup(t *testing.T) {
 	// From example List all snapshots in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all snapshots in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7187,14 +15676,66 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.SnapshotList{
+				Value: []*golang.Snapshot{
+					{
+						Name:     to.StringPtr("mySnapshot"),
+						Type:     to.StringPtr("Microsoft.Compute/snapshots"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Snapshots"),
+						},
+						Properties: &golang.SnapshotProperties{
+							CreationData: &golang.CreationData{
+								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.9278721+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SnapshotList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestSnapshots_List(t *testing.T) {
 	// From example List all snapshots in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all snapshots in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7206,8 +15747,99 @@ func TestSnapshots_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.SnapshotList{
+				Value: []*golang.Snapshot{
+					{
+						Name:     to.StringPtr("mySnapshot1"),
+						Type:     to.StringPtr("Microsoft.Compute/snapshots"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Snapshots"),
+						},
+						Properties: &golang.SnapshotProperties{
+							CreationData: &golang.CreationData{
+								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:47:30.6630569+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("mySnapshot2"),
+						Type:     to.StringPtr("Microsoft.Compute/snapshots"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Snapshots"),
+						},
+						Properties: &golang.SnapshotProperties{
+							CreationData: &golang.CreationData{
+								CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+								SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+								StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
+							},
+							DiskSizeGB: to.Int32Ptr(200),
+							Encryption: &golang.Encryption{
+								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+							},
+							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
+								Enabled: to.BoolPtr(true),
+								EncryptionSettings: []*golang.EncryptionSettingsElement{
+									{
+										DiskEncryptionKey: &golang.KeyVaultAndSecretReference{
+											SecretURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/secrets/{secret}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+										KeyEncryptionKey: &golang.KeyVaultAndKeyReference{
+											KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+											SourceVault: &golang.SourceVault{
+												ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+											},
+										},
+									}},
+							},
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:47:30.3247198+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SnapshotList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
@@ -7222,6 +15854,9 @@ func TestSnapshots_RevokeAccess(t *testing.T) {
 
 func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	// From example Create a disk encryption set with key vault from a different subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a disk encryption set with key vault from a different subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7232,9 +15867,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myDiskEncryptionSet",
 		golang.DiskEncryptionSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
 				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
@@ -7253,16 +15886,39 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Location: to.StringPtr("West US"),
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
+				},
+				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create a disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a disk encryption set."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
 		golang.DiskEncryptionSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
 				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
@@ -7284,11 +15940,39 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Location: to.StringPtr("West US"),
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+					SourceVault: &golang.SourceVault{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+					},
+				},
+				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskEncryptionSets_Update(t *testing.T) {
 	// From example Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7318,9 +16002,38 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
+			Location: to.StringPtr("West US"),
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/KeyVersion2"),
+				},
+				EncryptionType:                    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				LastKeyRotationTimestamp:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
+				ProvisioningState:                 to.StringPtr("Succeeded"),
+				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating"},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7344,9 +16057,42 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
+			Location: to.StringPtr("West US"),
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion2"),
+				},
+				EncryptionType:           golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
+				PreviousKeys: []*golang.KeyForDiskEncryptionSet{
+					{
+						KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
+					}},
+				ProvisioningState:                 to.StringPtr("Succeeded"),
+				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a disk encryption set."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -7373,11 +16119,44 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("Encryption"),
+			},
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/keyName/keyVersion"),
+					SourceVault: &golang.SourceVault{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+					},
+				},
+				EncryptionType:           golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
+				PreviousKeys:             []*golang.KeyForDiskEncryptionSet{},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskEncryptionSets_Get(t *testing.T) {
 	// From example Get information about a disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a disk encryption set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7391,11 +16170,46 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskEncryptionSetsGetResult)
+	// Response check
+	{
+		exampleRes := golang.DiskEncryptionSet{
+			Name:     to.StringPtr("myDiskEncryptionSet"),
+			Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("Encryption"),
+			},
+			Identity: &golang.EncryptionSetIdentity{
+				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+			},
+			Properties: &golang.EncryptionSetProperties{
+				ActiveKey: &golang.KeyForDiskEncryptionSet{
+					KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+					SourceVault: &golang.SourceVault{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+					},
+				},
+				EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
+				ProvisioningState: to.StringPtr("Succeeded"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskEncryptionSets_Delete(t *testing.T) {
 	// From example Delete a disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a disk encryption set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7417,6 +16231,9 @@ func TestDiskEncryptionSets_Delete(t *testing.T) {
 
 func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 	// From example List all disk encryption sets in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all disk encryption sets in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7429,14 +16246,73 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskEncryptionSetList{
+				Value: []*golang.DiskEncryptionSet{
+					{
+						Name:     to.StringPtr("myDiskEncryptionSet"),
+						Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Encryption"),
+						},
+						Identity: &golang.EncryptionSetIdentity{
+							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+						},
+						Properties: &golang.EncryptionSetProperties{
+							ActiveKey: &golang.KeyForDiskEncryptionSet{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
+							ProvisioningState: to.StringPtr("Succeeded"),
+						},
+					},
+					{
+						Name:     to.StringPtr("myDiskEncryptionSet2"),
+						Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet2"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Encryption"),
+						},
+						Identity: &golang.EncryptionSetIdentity{
+							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+						},
+						Properties: &golang.EncryptionSetProperties{
+							ActiveKey: &golang.KeyForDiskEncryptionSet{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
+								},
+							},
+							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
+							ProvisioningState: to.StringPtr("Succeeded"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskEncryptionSetList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskEncryptionSets_List(t *testing.T) {
 	// From example List all disk encryption sets in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all disk encryption sets in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7448,14 +16324,73 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskEncryptionSetList{
+				Value: []*golang.DiskEncryptionSet{
+					{
+						Name:     to.StringPtr("myDiskEncryptionSet"),
+						Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Encryption"),
+						},
+						Identity: &golang.EncryptionSetIdentity{
+							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+						},
+						Properties: &golang.EncryptionSetProperties{
+							ActiveKey: &golang.KeyForDiskEncryptionSet{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
+								},
+							},
+							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
+							ProvisioningState: to.StringPtr("Succeeded"),
+						},
+					},
+					{
+						Name:     to.StringPtr("myDiskEncryptionSet2"),
+						Type:     to.StringPtr("Microsoft.Compute/diskEncryptionSets"),
+						ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/mySecondResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet2"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("Encryption"),
+						},
+						Identity: &golang.EncryptionSetIdentity{
+							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+						},
+						Properties: &golang.EncryptionSetProperties{
+							ActiveKey: &golang.KeyForDiskEncryptionSet{
+								KeyURL: to.StringPtr("https://myvmvault.vault-int.azure-int.net/keys/{key}"),
+								SourceVault: &golang.SourceVault{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/mySecondResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
+								},
+							},
+							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
+							ProvisioningState: to.StringPtr("Succeeded"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskEncryptionSetList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 	// From example List all resources that are encrypted with this disk encryption set.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all resources that are encrypted with this disk encryption set."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7469,14 +16404,27 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.ResourceURIList{
+				Value: []*string{
+					to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
+					to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot")},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceURIList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceURIList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 	// From example Create a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7487,9 +16435,7 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myDiskAccess",
 		golang.DiskAccess{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 		},
 		nil)
 	if err != nil {
@@ -7499,11 +16445,32 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskAccess{
+			Name:     to.StringPtr("myDiskAccess"),
+			Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourcegroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.DiskAccessProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskAccess)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_Update(t *testing.T) {
 	// From example Update a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7527,11 +16494,32 @@ func TestDiskAccesses_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.DiskAccess{
+			Name:     to.StringPtr("myDiskAccess"),
+			Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourcegroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+			Location: to.StringPtr("West US"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("PrivateEndpoints"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskAccess)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_Get(t *testing.T) {
 	// From example Get information about a disk access resource with private endpoints.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a disk access resource with private endpoints."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7545,9 +16533,51 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesGetResult)
+	// Response check
+	{
+		exampleRes := golang.DiskAccess{
+			Name:     to.StringPtr("myDiskAccess"),
+			Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("PrivateEndpoints"),
+			},
+			Properties: &golang.DiskAccessProperties{
+				PrivateEndpointConnections: []*golang.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("myDiskAccess.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+						Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess/privateEndpoinConnections/myDiskAccess.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+						Properties: &golang.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &golang.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+								Description:     to.StringPtr("Auto-Approved"),
+								ActionsRequired: to.StringPtr("None"),
+								Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+						},
+					}},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskAccess)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get information about a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a disk access resource."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -7555,11 +16585,36 @@ func TestDiskAccesses_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesGetResult)
+	// Response check
+	{
+		exampleRes := golang.DiskAccess{
+			Name:     to.StringPtr("myDiskAccess"),
+			Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+			Location: to.StringPtr("westus"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("Development"),
+				"project":    to.StringPtr("PrivateEndpoints"),
+			},
+			Properties: &golang.DiskAccessProperties{
+				ProvisioningState: to.StringPtr("Succeeded"),
+				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskAccess)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_Delete(t *testing.T) {
 	// From example Delete a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7581,6 +16636,9 @@ func TestDiskAccesses_Delete(t *testing.T) {
 
 func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 	// From example List all disk access resources in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all disk access resources in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7593,14 +16651,70 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskAccessList{
+				Value: []*golang.DiskAccess{
+					{
+						Name:     to.StringPtr("myDiskAccess"),
+						Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("PrivateEndpoints"),
+						},
+						Properties: &golang.DiskAccessProperties{
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myDiskAccess2"),
+						Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess2"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("PrivateEndpoints"),
+						},
+						Properties: &golang.DiskAccessProperties{
+							PrivateEndpointConnections: []*golang.PrivateEndpointConnection{
+								{
+									Name: to.StringPtr("myDiskAccess.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+									Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+									ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess2/privateEndpoinConnections/myDiskAccess2.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+									Properties: &golang.PrivateEndpointConnectionProperties{
+										PrivateEndpoint: &golang.PrivateEndpoint{
+											ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint2"),
+										},
+										PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+											Description:     to.StringPtr("Auto-Approved"),
+											ActionsRequired: to.StringPtr("None"),
+											Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+										},
+										ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+									},
+								}},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskAccessList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskAccesses_List(t *testing.T) {
 	// From example List all disk access resources in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all disk access resources in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7612,14 +16726,70 @@ func TestDiskAccesses_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskAccessList{
+				Value: []*golang.DiskAccess{
+					{
+						Name:     to.StringPtr("myDiskAccess"),
+						Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("PrivateEndpoints"),
+						},
+						Properties: &golang.DiskAccessProperties{
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+						},
+					},
+					{
+						Name:     to.StringPtr("myDiskAccess2"),
+						Type:     to.StringPtr("Microsoft.Compute/diskAccesses"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/mySecondResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess2"),
+						Location: to.StringPtr("westus"),
+						Tags: map[string]*string{
+							"department": to.StringPtr("Development"),
+							"project":    to.StringPtr("PrivateEndpoints"),
+						},
+						Properties: &golang.DiskAccessProperties{
+							PrivateEndpointConnections: []*golang.PrivateEndpointConnection{
+								{
+									Name: to.StringPtr("myDiskAccess.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+									Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+									ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/mySecondResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess2/privateEndpoinConnections/myDiskAccess2.d4914cfa-6bc2-4049-a57c-3d1f622d8eef"),
+									Properties: &golang.PrivateEndpointConnectionProperties{
+										PrivateEndpoint: &golang.PrivateEndpoint{
+											ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/mySecondResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint2"),
+										},
+										PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+											Description:     to.StringPtr("Auto-Approved"),
+											ActionsRequired: to.StringPtr("None"),
+											Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+										},
+										ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+									},
+								}},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskAccessList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 	// From example List all possible private link resources under disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List all possible private link resources under disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7633,11 +16803,37 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesGetPrivateLinkResourcesResult)
+	// Response check
+	{
+		exampleRes := golang.PrivateLinkResourceListResult{
+			Value: []*golang.PrivateLinkResource{
+				{
+					Name: to.StringPtr("disks"),
+					Type: to.StringPtr("Microsoft.Compute/diskAccesses/privateLinkResources"),
+					ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess/privateLinkResources/disks"),
+					Properties: &golang.PrivateLinkResourceProperties{
+						GroupID: to.StringPtr("disks"),
+						RequiredMembers: []*string{
+							to.StringPtr("diskAccess_1")},
+						RequiredZoneNames: []*string{
+							to.StringPtr("privatelink.blob.core.windows.net")},
+					},
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.PrivateLinkResourceListResult) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.PrivateLinkResourceListResult)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 	// From example Approve a Private Endpoint Connection under a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Approve a Private Endpoint Connection under a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7664,11 +16860,38 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesUpdateAPrivateEndpointConnectionResult)
+	// Response check
+	{
+		exampleRes := golang.PrivateEndpointConnection{
+			Name: to.StringPtr("myPrivateEndpointConnectionName"),
+			Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess/privateEndpoinConnections/myPrivateEndpointConnectionName"),
+			Properties: &golang.PrivateEndpointConnectionProperties{
+				PrivateEndpoint: &golang.PrivateEndpoint{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+				},
+				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+					Description:     to.StringPtr("Approving myPrivateEndpointConnection"),
+					ActionsRequired: to.StringPtr("None"),
+					Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+				},
+				ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 	// From example Get information about a private endpoint connection under a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7683,11 +16906,38 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskAccessesGetAPrivateEndpointConnectionResult)
+	// Response check
+	{
+		exampleRes := golang.PrivateEndpointConnection{
+			Name: to.StringPtr("myPrivateEndpointConnection"),
+			Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess/privateEndpoinConnections/myPrivateEndpointConnection"),
+			Properties: &golang.PrivateEndpointConnectionProperties{
+				PrivateEndpoint: &golang.PrivateEndpoint{
+					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+				},
+				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+					Description:     to.StringPtr("Auto-Approved"),
+					ActionsRequired: to.StringPtr("None"),
+					Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+				},
+				ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 	// From example Delete a private endpoint connection under a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a private endpoint connection under a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7710,6 +16960,9 @@ func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 
 func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 	// From example Get information about a private endpoint connection under a disk access resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7723,14 +16976,41 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.PrivateEndpointConnectionListResult{
+				Value: []*golang.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("myPrivateEndpointConnection"),
+						Type: to.StringPtr("Microsoft.Compute/diskAccesses/PrivateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/myDiskAccess/privateEndpoinConnections/myPrivateEndpointConnection"),
+						Properties: &golang.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &golang.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
+								Description:     to.StringPtr("Auto-Approved"),
+								ActionsRequired: to.StringPtr("None"),
+								Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().PrivateEndpointConnectionListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().PrivateEndpointConnectionListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestDiskRestorePoint_Get(t *testing.T) {
 	// From example Get an incremental disk restorePoint resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get an incremental disk restorePoint resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7746,11 +17026,34 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.DiskRestorePointGetResult)
+	// Response check
+	{
+		exampleRes := golang.DiskRestorePoint{
+			Name: to.StringPtr("TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
+			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
+			Properties: &golang.DiskRestorePointProperties{
+				FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
+				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				OSType:           golang.OperatingSystemTypesWindows.ToPtr(),
+				SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
+				SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
+				TimeCreated:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-09-16T04:41:35.079872+00:00"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.DiskRestorePoint) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.DiskRestorePoint)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 	// From example Get an incremental disk restorePoint resource.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get an incremental disk restorePoint resource."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7765,14 +17068,37 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.DiskRestorePointList{
+				Value: []*golang.DiskRestorePoint{
+					{
+						Name: to.StringPtr("TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
+						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
+						Properties: &golang.DiskRestorePointProperties{
+							FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
+							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							OSType:           golang.OperatingSystemTypesWindows.ToPtr(),
+							SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
+							SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
+							TimeCreated:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-09-16T04:41:35.079872+00:00"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskRestorePointList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().DiskRestorePointList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleries_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a simple gallery with sharing profile.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple gallery with sharing profile."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7783,9 +17109,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 		"myResourceGroup",
 		"myGalleryName",
 		golang.Gallery{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryProperties{
 				Description: to.StringPtr("This is the gallery description."),
 				SharingProfile: &golang.SharingProfile{
@@ -7801,16 +17125,39 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleriesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Gallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryProperties{
+				Description: to.StringPtr("This is the gallery description."),
+				Identifier: &golang.GalleryIdentifier{
+					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+				},
+				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+				SharingProfile: &golang.SharingProfile{
+					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Gallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Gallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple gallery."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		golang.Gallery{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryProperties{
 				Description: to.StringPtr("This is the gallery description."),
 			},
@@ -7823,11 +17170,33 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleriesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Gallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryProperties{
+				Description: to.StringPtr("This is the gallery description."),
+				Identifier: &golang.GalleryIdentifier{
+					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+				},
+				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Gallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Gallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleries_Update(t *testing.T) {
 	// From example Update a simple gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7850,11 +17219,33 @@ func TestGalleries_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleriesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.Gallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryProperties{
+				Description: to.StringPtr("This is the gallery description."),
+				Identifier: &golang.GalleryIdentifier{
+					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+				},
+				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Gallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Gallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleries_Get(t *testing.T) {
 	// From example Get a gallery with select permissions.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery with select permissions."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7868,9 +17259,41 @@ func TestGalleries_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleriesGetResult)
+	// Response check
+	{
+		exampleRes := golang.Gallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryProperties{
+				SharingProfile: &golang.SharingProfile{
+					Groups: []*golang.SharingProfileGroup{
+						{
+							Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+							IDs: []*string{
+								to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
+								to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
+						},
+						{
+							Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+							IDs: []*string{
+								to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
+						}},
+					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Gallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Gallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -7878,11 +17301,33 @@ func TestGalleries_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleriesGetResult)
+	// Response check
+	{
+		exampleRes := golang.Gallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryProperties{
+				Description: to.StringPtr("This is the gallery description."),
+				Identifier: &golang.GalleryIdentifier{
+					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+				},
+				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.Gallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.Gallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleries_Delete(t *testing.T) {
 	// From example Delete a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7904,6 +17349,9 @@ func TestGalleries_Delete(t *testing.T) {
 
 func TestGalleries_ListByResourceGroup(t *testing.T) {
 	// From example List galleries in a resource group.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List galleries in a resource group."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7916,14 +17364,37 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryList{
+				Value: []*golang.Gallery{
+					{
+						Name:     to.StringPtr("myGalleryName"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalleryName"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryProperties{
+							Description: to.StringPtr("This is the gallery description."),
+							Identifier: &golang.GalleryIdentifier{
+								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+							},
+							ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleries_List(t *testing.T) {
 	// From example List galleries in a subscription.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List galleries in a subscription."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7935,14 +17406,37 @@ func TestGalleries_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryList{
+				Value: []*golang.Gallery{
+					{
+						Name:     to.StringPtr("myGalleryName"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalleryName"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryProperties{
+							Description: to.StringPtr("This is the gallery description."),
+							Identifier: &golang.GalleryIdentifier{
+								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
+							},
+							ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a simple gallery image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple gallery image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -7954,9 +17448,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		golang.GalleryImage{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageProperties{
 				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
@@ -7976,11 +17468,37 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImagesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImage{
+			Name:     to.StringPtr("myGalleryImageName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageProperties{
+				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				Identifier: &golang.GalleryImageIdentifier{
+					Offer:     to.StringPtr("myOfferName"),
+					Publisher: to.StringPtr("myPublisherName"),
+					SKU:       to.StringPtr("mySkuName"),
+				},
+				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImage)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImages_Update(t *testing.T) {
 	// From example Update a simple gallery image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple gallery image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8011,11 +17529,37 @@ func TestGalleryImages_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImagesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImage{
+			Name:     to.StringPtr("myGalleryImageName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageProperties{
+				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				Identifier: &golang.GalleryImageIdentifier{
+					Offer:     to.StringPtr("myOfferName"),
+					Publisher: to.StringPtr("myPublisherName"),
+					SKU:       to.StringPtr("mySkuName"),
+				},
+				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImage)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImages_Get(t *testing.T) {
 	// From example Get a gallery image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8030,11 +17574,37 @@ func TestGalleryImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImagesGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImage{
+			Name:     to.StringPtr("myGalleryImageName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageProperties{
+				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				Identifier: &golang.GalleryImageIdentifier{
+					Offer:     to.StringPtr("myOfferName"),
+					Publisher: to.StringPtr("myPublisherName"),
+					SKU:       to.StringPtr("mySkuName"),
+				},
+				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImage)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImages_Delete(t *testing.T) {
 	// From example Delete a gallery image.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a gallery image."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8057,6 +17627,9 @@ func TestGalleryImages_Delete(t *testing.T) {
 
 func TestGalleryImages_ListByGallery(t *testing.T) {
 	// From example List gallery images in a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List gallery images in a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8070,14 +17643,40 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryImageList{
+				Value: []*golang.GalleryImage{
+					{
+						Name:     to.StringPtr("myGalleryImageName"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryImageProperties{
+							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							Identifier: &golang.GalleryImageIdentifier{
+								Offer:     to.StringPtr("myOfferName"),
+								Publisher: to.StringPtr("myPublisherName"),
+								SKU:       to.StringPtr("mySkuName"),
+							},
+							OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
+							ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryImageList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a simple Gallery Image Version using VM as source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using VM as source."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8090,63 +17689,47 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-										},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("East US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-										},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{
@@ -8163,72 +17746,133 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/virtualMachines/{vmName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple Gallery Image Version using managed image as source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using managed image as source."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-										},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("East US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-										},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{
@@ -8245,78 +17889,139 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple Gallery Image Version using mix of disks and snapshots as a source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using mix of disks and snapshots as a source."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-										},
-									},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("East US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-										},
-									},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
 						{
-							GalleryDiskImage: golang.GalleryDiskImage{
-								HostCaching: golang.HostCachingNone.ToPtr(),
-								Source: &golang.GalleryArtifactVersionSource{
-									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
-								},
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
 							},
 							Lun: to.Int32Ptr(1),
 						}},
 					OSDiskImage: &golang.GalleryOSDiskImage{
-						GalleryDiskImage: golang.GalleryDiskImage{
-							HostCaching: golang.HostCachingReadOnly.ToPtr(),
-							Source: &golang.GalleryArtifactVersionSource{
-								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
-							},
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
 						},
 					},
 				},
@@ -8330,72 +18035,128 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
+							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
+						},
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple Gallery Image Version using shared image as source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using shared image as source."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-										},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("East US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-										},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{
@@ -8412,78 +18173,139 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/galleries/{galleryName}/images/{imageDefinitionName}/versions/{versionName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple Gallery Image Version using snapshots as a source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using snapshots as a source."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
-										},
-									},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("East US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
-										},
-									},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
 						{
-							GalleryDiskImage: golang.GalleryDiskImage{
-								HostCaching: golang.HostCachingNone.ToPtr(),
-								Source: &golang.GalleryArtifactVersionSource{
-									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
-								},
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
 							},
 							Lun: to.Int32Ptr(1),
 						}},
 					OSDiskImage: &golang.GalleryOSDiskImage{
-						GalleryDiskImage: golang.GalleryDiskImage{
-							HostCaching: golang.HostCachingReadOnly.ToPtr(),
-							Source: &golang.GalleryArtifactVersionSource{
-								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
-							},
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
 						},
 					},
 				},
@@ -8497,66 +18319,126 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myWestUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name: to.StringPtr("East US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myEastUSDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/disks/{dataDiskName}"),
+							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/snapshots/{osSnapshotName}"),
+						},
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create or update a simple Gallery Image Version using vhd as a source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple Gallery Image Version using vhd as a source."},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("West US"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
-										},
-									},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name:                 to.StringPtr("East US"),
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					DataDiskImages: []*golang.GalleryDataDiskImage{
 						{
-							GalleryDiskImage: golang.GalleryDiskImage{
-								HostCaching: golang.HostCachingNone.ToPtr(),
-								Source: &golang.GalleryArtifactVersionSource{
-									ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
-									URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
-								},
-							},
-							Lun: to.Int32Ptr(1),
-						}},
-					OSDiskImage: &golang.GalleryOSDiskImage{
-						GalleryDiskImage: golang.GalleryDiskImage{
-							HostCaching: golang.HostCachingReadOnly.ToPtr(),
+							HostCaching: golang.HostCachingNone.ToPtr(),
 							Source: &golang.GalleryArtifactVersionSource{
 								ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
 								URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
 							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
+							URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
 						},
 					},
 				},
@@ -8570,11 +18452,73 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
+								URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
+							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
+							URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
+						},
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImageVersions_Update(t *testing.T) {
 	// From example Update a simple Gallery Image Version (Managed Image as source).
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple Gallery Image Version (Managed Image as source)."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8589,18 +18533,16 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		golang.GalleryImageVersionUpdate{
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("West US"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-							},
-							{
-								Name:                 to.StringPtr("East US"),
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{
@@ -8617,9 +18559,68 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Update a simple Gallery Image Version without source id.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple Gallery Image Version without source id."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8628,18 +18629,16 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		golang.GalleryImageVersionUpdate{
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("West US"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-							},
-							{
-								Name:                 to.StringPtr("East US"),
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{},
 			},
@@ -8652,11 +18651,70 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImageVersions_Get(t *testing.T) {
 	// From example Get a gallery image version with replication status.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery image version with replication status."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8672,9 +18730,88 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+				},
+				ReplicationStatus: &golang.ReplicationStatus{
+					AggregatedState: golang.AggregatedReplicationStateCompleted.ToPtr(),
+					Summary: []*golang.RegionalReplicationStatus{
+						{
+							Progress: to.Int32Ptr(100),
+							Region:   to.StringPtr("West US"),
+							State:    golang.ReplicationStateCompleted.ToPtr(),
+							Details:  to.StringPtr(""),
+						},
+						{
+							Progress: to.Int32Ptr(100),
+							Region:   to.StringPtr("East US"),
+							State:    golang.ReplicationStateCompleted.ToPtr(),
+							Details:  to.StringPtr(""),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a gallery image version with snapshots as a source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery image version with snapshots as a source."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8684,9 +18821,67 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Source:      &golang.GalleryArtifactVersionSource{},
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+						Source:      &golang.GalleryArtifactVersionSource{},
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a gallery image version with vhd as a source.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery image version with vhd as a source."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8696,9 +18891,71 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							Source: &golang.GalleryArtifactVersionSource{
+								ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
+								URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
+							},
+							Lun: to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						Source: &golang.GalleryArtifactVersionSource{
+							ID:  to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/{storageAccount}"),
+							URI: to.StringPtr("https://gallerysourcencus.blob.core.windows.net/myvhds/Windows-Server-2012-R2-20171216-en.us-128GB.vhd"),
+						},
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a gallery image version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery image version."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -8708,11 +18965,74 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryImageVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryImageVersionProperties{
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("West US"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						},
+						{
+							Name:                 to.StringPtr("East US"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &golang.GalleryImageVersionStorageProfile{
+					DataDiskImages: []*golang.GalleryDataDiskImage{
+						{
+							HostCaching: golang.HostCachingNone.ToPtr(),
+							SizeInGB:    to.Int32Ptr(10),
+							Lun:         to.Int32Ptr(1),
+						}},
+					OSDiskImage: &golang.GalleryOSDiskImage{
+						HostCaching: golang.HostCachingReadOnly.ToPtr(),
+						SizeInGB:    to.Int32Ptr(10),
+					},
+					Source: &golang.GalleryArtifactVersionSource{
+						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryImageVersions_Delete(t *testing.T) {
 	// From example Delete a gallery image version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a gallery image version."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8736,6 +19056,9 @@ func TestGalleryImageVersions_Delete(t *testing.T) {
 
 func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 	// From example List gallery image versions in a gallery image definition.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List gallery image versions in a gallery image definition."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8750,14 +19073,77 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryImageVersionList{
+				Value: []*golang.GalleryImageVersion{
+					{
+						Name:     to.StringPtr("1.0.0"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryImageVersionProperties{
+							ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+							PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
+								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
+								ReplicaCount:       to.Int32Ptr(1),
+								StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+								TargetRegions: []*golang.TargetRegion{
+									{
+										Name: to.StringPtr("West US"),
+										Encryption: &golang.EncryptionImages{
+											DataDiskImages: []*golang.DataDiskImageEncryption{
+												{
+													DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myOtherDiskEncryptionSet"),
+													Lun:                 to.Int32Ptr(0),
+												},
+												{
+													DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+													Lun:                 to.Int32Ptr(1),
+												}},
+											OSDiskImage: &golang.OSDiskImageEncryption{
+												DiskEncryptionSetID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSet/myDiskEncryptionSet"),
+											},
+										},
+										RegionalReplicaCount: to.Int32Ptr(1),
+										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+									},
+									{
+										Name:                 to.StringPtr("East US"),
+										RegionalReplicaCount: to.Int32Ptr(2),
+										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+									}},
+							},
+							StorageProfile: &golang.GalleryImageVersionStorageProfile{
+								DataDiskImages: []*golang.GalleryDataDiskImage{
+									{
+										HostCaching: golang.HostCachingNone.ToPtr(),
+										SizeInGB:    to.Int32Ptr(10),
+										Lun:         to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.GalleryOSDiskImage{
+									HostCaching: golang.HostCachingReadOnly.ToPtr(),
+									SizeInGB:    to.Int32Ptr(10),
+								},
+								Source: &golang.GalleryArtifactVersionSource{
+									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}"),
+								},
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryImageVersionList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageVersionList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a simple gallery Application.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple gallery Application."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8769,9 +19155,7 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		golang.GalleryApplication{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationProperties{
 				Description:         to.StringPtr("This is the gallery application description."),
 				Eula:                to.StringPtr("This is the gallery application EULA."),
@@ -8788,11 +19172,35 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplication{
+			Name:     to.StringPtr("myGalleryApplicationName"),
+			Type:     to.StringPtr("Microsoft.Compute/galleries"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalleryName/applications/myGalleryApplicationName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationProperties{
+				Description:         to.StringPtr("This is the gallery application description."),
+				Eula:                to.StringPtr("This is the gallery application EULA."),
+				PrivacyStatementURI: to.StringPtr("myPrivacyStatementUri}"),
+				ReleaseNoteURI:      to.StringPtr("myReleaseNoteUri"),
+				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplication)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplications_Update(t *testing.T) {
 	// From example Update a simple gallery Application.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple gallery Application."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8820,11 +19228,35 @@ func TestGalleryApplications_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplication{
+			Name:     to.StringPtr("myGalleryApplicationName"),
+			Type:     to.StringPtr("Microsoft.Compute/galleries"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalleryName/applications/myGalleryApplicationName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationProperties{
+				Description:         to.StringPtr("This is the gallery application description."),
+				Eula:                to.StringPtr("This is the gallery application EULA."),
+				PrivacyStatementURI: to.StringPtr("myPrivacyStatementUri}"),
+				ReleaseNoteURI:      to.StringPtr("myReleaseNoteUri"),
+				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplication)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplications_Get(t *testing.T) {
 	// From example Get a gallery Application.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery Application."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8839,11 +19271,33 @@ func TestGalleryApplications_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplication{
+			Name:     to.StringPtr("myGalleryApplicationName"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationProperties{
+				Description:         to.StringPtr("This is the gallery application description."),
+				Eula:                to.StringPtr("This is the gallery application EULA."),
+				PrivacyStatementURI: to.StringPtr("myPrivacyStatementUri}"),
+				ReleaseNoteURI:      to.StringPtr("myReleaseNoteUri"),
+				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplication)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplications_Delete(t *testing.T) {
 	// From example Delete a gallery Application.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a gallery Application."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8866,6 +19320,9 @@ func TestGalleryApplications_Delete(t *testing.T) {
 
 func TestGalleryApplications_ListByGallery(t *testing.T) {
 	// From example List gallery Applications in a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List gallery Applications in a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8879,14 +19336,36 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryApplicationList{
+				Value: []*golang.GalleryApplication{
+					{
+						Name:     to.StringPtr("myGalleryApplicationName"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryApplicationProperties{
+							Description:         to.StringPtr("This is the gallery application description."),
+							Eula:                to.StringPtr("This is the gallery application EULA."),
+							PrivacyStatementURI: to.StringPtr("myPrivacyStatementUri}"),
+							ReleaseNoteURI:      to.StringPtr("myReleaseNoteUri"),
+							SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryApplicationList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 	// From example Create or update a simple gallery Application Version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create or update a simple gallery Application Version."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8899,22 +19378,18 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 		"myGalleryApplicationName",
 		"1.0.0",
 		golang.GalleryApplicationVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("West US"),
-			},
+			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationVersionProperties{
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-						ReplicaCount:       to.Int32Ptr(1),
-						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("West US"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
-							}},
-					},
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
 						Remove:  to.StringPtr("del C:\\package "),
@@ -8933,11 +19408,52 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplicationVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Type:     to.StringPtr("Microsoft.Compute/galleries/applications/versions"),
+			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationVersionProperties{
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
+					ExcludeFromLatest:  to.BoolPtr(false),
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					EnableHealthCheck: to.BoolPtr(false),
+					ManageActions: &golang.UserArtifactManage{
+						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.StringPtr("del C:\\package "),
+					},
+					Source: &golang.UserArtifactSource{
+						MediaLink: to.StringPtr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplicationVersions_Update(t *testing.T) {
 	// From example Update a simple gallery Application Version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update a simple gallery Application Version."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -8952,17 +19468,15 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 		golang.GalleryApplicationVersionUpdate{
 			Properties: &golang.GalleryApplicationVersionProperties{
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-						ReplicaCount:       to.Int32Ptr(1),
-						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("West US"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
-							}},
-					},
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
 						Remove:  to.StringPtr("del C:\\package "),
@@ -8981,11 +19495,52 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplicationVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Type:     to.StringPtr("Microsoft.Compute/galleries/applications/versions"),
+			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationVersionProperties{
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
+					ExcludeFromLatest:  to.BoolPtr(false),
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					EnableHealthCheck: to.BoolPtr(false),
+					ManageActions: &golang.UserArtifactManage{
+						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.StringPtr("del C:\\package "),
+					},
+					Source: &golang.UserArtifactSource{
+						MediaLink: to.StringPtr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplicationVersions_Get(t *testing.T) {
 	// From example Get a gallery Application Version with replication status.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery Application Version with replication status."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9001,9 +19556,58 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplicationVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationVersionProperties{
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
+					ExcludeFromLatest:  to.BoolPtr(false),
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					EnableHealthCheck: to.BoolPtr(false),
+					ManageActions: &golang.UserArtifactManage{
+						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.StringPtr("del C:\\package "),
+					},
+					Source: &golang.UserArtifactSource{
+						MediaLink: to.StringPtr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
+					},
+				},
+				ReplicationStatus: &golang.ReplicationStatus{
+					AggregatedState: golang.AggregatedReplicationStateCompleted.ToPtr(),
+					Summary: []*golang.RegionalReplicationStatus{
+						{
+							Progress: to.Int32Ptr(100),
+							Region:   to.StringPtr("West US"),
+							State:    golang.ReplicationStateCompleted.ToPtr(),
+							Details:  to.StringPtr(""),
+						}},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Get a gallery Application Version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery Application Version."},
+	})
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9013,11 +19617,52 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GalleryApplicationVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.GalleryApplicationVersion{
+			Name:     to.StringPtr("1.0.0"),
+			Type:     to.StringPtr("Microsoft.Compute/galleries/applications/versions"),
+			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
+			Location: to.StringPtr("West US"),
+			Properties: &golang.GalleryApplicationVersionProperties{
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
+					ExcludeFromLatest:  to.BoolPtr(false),
+					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("West US"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					EnableHealthCheck: to.BoolPtr(false),
+					ManageActions: &golang.UserArtifactManage{
+						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+						Remove:  to.StringPtr("del C:\\package "),
+					},
+					Source: &golang.UserArtifactSource{
+						MediaLink: to.StringPtr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
+					},
+				},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestGalleryApplicationVersions_Delete(t *testing.T) {
 	// From example Delete a gallery Application Version.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete a gallery Application Version."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9041,6 +19686,9 @@ func TestGalleryApplicationVersions_Delete(t *testing.T) {
 
 func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 	// From example List gallery Application Versions in a gallery Application Definition.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List gallery Application Versions in a gallery Application Definition."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9055,14 +19703,55 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.GalleryApplicationVersionList{
+				Value: []*golang.GalleryApplicationVersion{
+					{
+						Name:     to.StringPtr("1.0.0"),
+						Type:     to.StringPtr("Microsoft.Compute/galleries/applications/versions"),
+						ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
+						Location: to.StringPtr("West US"),
+						Properties: &golang.GalleryApplicationVersionProperties{
+							ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+							PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
+								EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
+								ExcludeFromLatest:  to.BoolPtr(false),
+								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
+								ReplicaCount:       to.Int32Ptr(1),
+								StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+								TargetRegions: []*golang.TargetRegion{
+									{
+										Name:                 to.StringPtr("West US"),
+										RegionalReplicaCount: to.Int32Ptr(1),
+										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+									}},
+								EnableHealthCheck: to.BoolPtr(false),
+								ManageActions: &golang.UserArtifactManage{
+									Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
+									Remove:  to.StringPtr("del C:\\package "),
+								},
+								Source: &golang.UserArtifactSource{
+									MediaLink: to.StringPtr("https://mystorageaccount.blob.core.windows.net/mycontainer/package.zip?{sasKey}"),
+								},
+							},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryApplicationVersionList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationVersionList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestGallerySharingProfile_Update(t *testing.T) {
 	// From example Add sharing id to the sharing profile of a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Add sharing id to the sharing profile of a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9095,9 +19784,35 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GallerySharingProfileUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.SharingUpdate{
+			Groups: []*golang.SharingProfileGroup{
+				{
+					Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+					IDs: []*string{
+						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
+						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
+				},
+				{
+					Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+					IDs: []*string{
+						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
+				}},
+			OperationType: golang.SharingUpdateOperationTypesAdd.ToPtr(),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharingUpdate)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example reset sharing profile of a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"reset sharing profile of a gallery."},
+	})
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -9112,11 +19827,25 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.GallerySharingProfileUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.SharingUpdate{
+			OperationType: golang.SharingUpdateOperationTypesReset.ToPtr(),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharingUpdate)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSharedGalleries_List(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9129,14 +19858,32 @@ func TestSharedGalleries_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.SharedGalleryList{
+				Value: []*golang.SharedGallery{
+					{
+						Name:     to.StringPtr("galleryUniqueName"),
+						Location: to.StringPtr("myLocation"),
+						Identifier: &golang.SharedGalleryIdentifier{
+							UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestSharedGalleries_Get(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9150,11 +19897,29 @@ func TestSharedGalleries_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SharedGalleriesGetResult)
+	// Response check
+	{
+		exampleRes := golang.SharedGallery{
+			Name:     to.StringPtr("myGalleryName"),
+			Location: to.StringPtr("myLocation"),
+			Identifier: &golang.SharedGalleryIdentifier{
+				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SharedGallery) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharedGallery)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSharedGalleryImages_List(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9168,14 +19933,42 @@ func TestSharedGalleryImages_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.SharedGalleryImageList{
+				Value: []*golang.SharedGalleryImage{
+					{
+						Name:     to.StringPtr("myGalleryImageName"),
+						Location: to.StringPtr("myLocation"),
+						Identifier: &golang.SharedGalleryIdentifier{
+							UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
+						},
+						Properties: &golang.SharedGalleryImageProperties{
+							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							Identifier: &golang.GalleryImageIdentifier{
+								Offer:     to.StringPtr("myOfferName"),
+								Publisher: to.StringPtr("myPublisherName"),
+								SKU:       to.StringPtr("mySkuName"),
+							},
+							OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+							OSType:  golang.OperatingSystemTypesWindows.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryImageList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestSharedGalleryImages_Get(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9190,11 +19983,39 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SharedGalleryImagesGetResult)
+	// Response check
+	{
+		exampleRes := golang.SharedGalleryImage{
+			Name:     to.StringPtr("myGalleryImageName"),
+			Location: to.StringPtr("myLocation"),
+			Identifier: &golang.SharedGalleryIdentifier{
+				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
+			},
+			Properties: &golang.SharedGalleryImageProperties{
+				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				Identifier: &golang.GalleryImageIdentifier{
+					Offer:     to.StringPtr("myOfferName"),
+					Publisher: to.StringPtr("myPublisherName"),
+					SKU:       to.StringPtr("mySkuName"),
+				},
+				OSState: golang.OperatingSystemStateTypesGeneralized.ToPtr(),
+				OSType:  golang.OperatingSystemTypesWindows.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImage) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharedGalleryImage)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestSharedGalleryImageVersions_List(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9209,14 +20030,36 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.SharedGalleryImageVersionList{
+				Value: []*golang.SharedGalleryImageVersion{
+					{
+						Name:     to.StringPtr("myGalleryImageVersionName"),
+						Location: to.StringPtr("myLocation"),
+						Identifier: &golang.SharedGalleryIdentifier{
+							UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName/Versions/myGalleryImageVersionName"),
+						},
+						Properties: &golang.SharedGalleryImageVersionProperties{
+							EndOfLifeDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2022-03-20T09:12:28Z"); return t }()),
+							PublishedDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-20T09:12:28Z"); return t }()),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryImageVersionList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageVersionList)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestSharedGalleryImageVersions_Get(t *testing.T) {
 	// From example Get a gallery.
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get a gallery."},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9232,11 +20075,33 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.SharedGalleryImageVersionsGetResult)
+	// Response check
+	{
+		exampleRes := golang.SharedGalleryImageVersion{
+			Name:     to.StringPtr("myGalleryImageVersionName"),
+			Location: to.StringPtr("myLocation"),
+			Identifier: &golang.SharedGalleryIdentifier{
+				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName/Versions/myGalleryImageVersionName"),
+			},
+			Properties: &golang.SharedGalleryImageVersionProperties{
+				EndOfLifeDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2022-03-20T09:12:28Z"); return t }()),
+				PublishedDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-20T09:12:28Z"); return t }()),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImageVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharedGalleryImageVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 	// From example Delete Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9259,6 +20124,9 @@ func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Get(t *testing.T) {
 	// From example Get Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9273,11 +20141,40 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServiceRoleInstancesGetResult)
+	// Response check
+	{
+		exampleRes := golang.RoleInstance{
+			Name:     to.StringPtr("{roleInstance-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices/roleInstances"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/{roleInstance-name}"),
+			Location: to.StringPtr("eastus2euap"),
+			Properties: &golang.RoleInstanceProperties{
+				NetworkProfile: &golang.RoleInstanceNetworkProfile{
+					NetworkInterfaces: []*golang.SubResource{
+						{
+							ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/{roleInstance-name}/networkInterfaces/nic1"),
+						}},
+				},
+			},
+			SKU: &golang.InstanceSKU{
+				Name: to.StringPtr("Standard_D1_v2"),
+				Tier: to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RoleInstance) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RoleInstance)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 	// From example Get Instance View of Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Instance View of Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9292,11 +20189,34 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServiceRoleInstancesGetInstanceViewResult)
+	// Response check
+	{
+		exampleRes := golang.RoleInstanceView{
+			PlatformFaultDomain:  to.Int32Ptr(0),
+			PlatformUpdateDomain: to.Int32Ptr(0),
+			PrivateID:            to.StringPtr("3491bc0c-1f6c-444f-b1d0-ec0751a74e3e"),
+			Statuses: []*golang.ResourceInstanceViewStatus{
+				{
+					Code:          to.StringPtr("RoleState/RoleStateStarted"),
+					DisplayStatus: to.StringPtr("RoleStateStarted"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Message:       to.StringPtr(""),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.RoleInstanceView) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.RoleInstanceView)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceRoleInstances_List(t *testing.T) {
 	// From example List Role Instances in a Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Role Instances in a Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9310,14 +20230,97 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.RoleInstanceListResult{
+				Value: []*golang.RoleInstance{
+					{
+						Name:     to.StringPtr("ContosoFrontend_IN_0"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roleInstances"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoFrontend_IN_0"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.RoleInstanceProperties{
+							NetworkProfile: &golang.RoleInstanceNetworkProfile{
+								NetworkInterfaces: []*golang.SubResource{
+									{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoFrontend_IN_0/networkInterfaces/nic1"),
+									}},
+							},
+						},
+						SKU: &golang.InstanceSKU{
+							Name: to.StringPtr("Standard_D1_v2"),
+							Tier: to.StringPtr("Standard"),
+						},
+					},
+					{
+						Name:     to.StringPtr("ContosoFrontend_IN_1"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roleInstances"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoFrontend_IN_1"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.RoleInstanceProperties{
+							NetworkProfile: &golang.RoleInstanceNetworkProfile{
+								NetworkInterfaces: []*golang.SubResource{
+									{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoFrontend_IN_1/networkInterfaces/nic1"),
+									}},
+							},
+						},
+						SKU: &golang.InstanceSKU{
+							Name: to.StringPtr("Standard_D1_v2"),
+							Tier: to.StringPtr("Standard"),
+						},
+					},
+					{
+						Name:     to.StringPtr("ContosoBackend_IN_0"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roleInstances"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoBackend_IN_0"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.RoleInstanceProperties{
+							NetworkProfile: &golang.RoleInstanceNetworkProfile{
+								NetworkInterfaces: []*golang.SubResource{
+									{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoBackend_IN_0/networkInterfaces/nic1"),
+									}},
+							},
+						},
+						SKU: &golang.InstanceSKU{
+							Name: to.StringPtr("Standard_D1_v2"),
+							Tier: to.StringPtr("Standard"),
+						},
+					},
+					{
+						Name:     to.StringPtr("ContosoBackend_IN_1"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roleInstances"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoBackend_IN_1"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.RoleInstanceProperties{
+							NetworkProfile: &golang.RoleInstanceNetworkProfile{
+								NetworkInterfaces: []*golang.SubResource{
+									{
+										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roleInstances/ContosoBackend_IN_1/networkInterfaces/nic1"),
+									}},
+							},
+						},
+						SKU: &golang.InstanceSKU{
+							Name: to.StringPtr("Standard_D1_v2"),
+							Tier: to.StringPtr("Standard"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RoleInstanceListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().RoleInstanceListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 	// From example Restart Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Restart Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9340,6 +20343,9 @@ func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 	// From example Reimage Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Reimage Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9362,6 +20368,9 @@ func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
 	// From example Rebuild Cloud Service Role Instance
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Rebuild Cloud Service Role Instance"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9388,6 +20397,9 @@ func TestCloudServiceRoleInstances_GetRemoteDesktopFile(t *testing.T) {
 
 func TestCloudServiceRoles_Get(t *testing.T) {
 	// From example Get Cloud Service Role
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service Role"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9402,11 +20414,36 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServiceRolesGetResult)
+	// Response check
+	{
+		exampleRes := golang.CloudServiceRole{
+			Name:     to.StringPtr("{role-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices/roles"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roles/{role-name}"),
+			Location: to.StringPtr("eastus2euap"),
+			Properties: &golang.CloudServiceRoleProperties{
+				UniqueID: to.StringPtr("b03bc269-766b-4921-b91a-7dffaae4d03b:{role-name}"),
+			},
+			SKU: &golang.CloudServiceRoleSKU{
+				Name:     to.StringPtr("Standard_D1_v2"),
+				Capacity: to.Int64Ptr(2),
+				Tier:     to.StringPtr("Standard"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudServiceRole) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudServiceRole)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceRoles_List(t *testing.T) {
 	// From example List Roles in a Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Roles in a Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9420,14 +20457,53 @@ func TestCloudServiceRoles_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.CloudServiceRoleListResult{
+				Value: []*golang.CloudServiceRole{
+					{
+						Name:     to.StringPtr("ContosoFrontend"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roles"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roles/ContosoFrontend"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.CloudServiceRoleProperties{
+							UniqueID: to.StringPtr("b03bc269-766b-4921-b91a-7dffaae4d03b:ContosoFrontend"),
+						},
+						SKU: &golang.CloudServiceRoleSKU{
+							Name:     to.StringPtr("Standard_D1_v2"),
+							Capacity: to.Int64Ptr(2),
+							Tier:     to.StringPtr("Standard"),
+						},
+					},
+					{
+						Name:     to.StringPtr("ContosoBackend"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices/roles"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/roles/ContosoBackend"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.CloudServiceRoleProperties{
+							UniqueID: to.StringPtr("b03bc269-766b-4921-b91a-7dffaae4d03b:ContosoBackend"),
+						},
+						SKU: &golang.CloudServiceRoleSKU{
+							Name:     to.StringPtr("Standard_D1_v2"),
+							Capacity: to.Int64Ptr(2),
+							Tier:     to.StringPtr("Standard"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceRoleListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceRoleListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	// From example Create New Cloud Service with Multiple Roles
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create New Cloud Service with Multiple Roles"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9489,9 +20565,72 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("contosolb"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("contosofe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{},
+				},
+				PackageURL:        to.StringPtr("{PackageUrl}"),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("Standard"),
+							},
+						},
+						{
+							Name: to.StringPtr("ContosoBackend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("7f3edf91-cb34-4a3e-971a-177dc3dd43cb"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create New Cloud Service with Single Role
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create New Cloud Service with Single Role"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -9539,9 +20678,64 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/5393f919-a68a-43d0-9063-4b2bda6bffdf/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("myLoadBalancer"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("myfe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/myPublicIP"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{},
+				},
+				PackageURL:        to.StringPtr("{PackageUrl}"),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("14d10b45-ced7-42ef-a406-50a3df2cea7d"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create New Cloud Service with Single Role and Certificate from Key Vault
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create New Cloud Service with Single Role and Certificate from Key Vault"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -9601,9 +20795,73 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("contosolb"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("contosofe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{
+						{
+							SourceVault: &golang.SubResource{
+								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.KeyVault/vaults/{keyvault-name}"),
+							},
+							VaultCertificates: []*golang.CloudServiceVaultCertificate{
+								{
+									CertificateURL: to.StringPtr("https://{keyvault-name}.vault.azure.net:443/secrets/ContosoCertificate/{secret-id}"),
+								}},
+						}},
+				},
+				PackageURL:        to.StringPtr("{PackageUrl}"),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("60b6cd59-600b-4e02-b717-521b07aa94bf"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 
 	// From example Create New Cloud Service with Single Role and RDP Extension
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Create New Cloud Service with Single Role and RDP Extension"},
+	})
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -9665,11 +20923,82 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("westus"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				ExtensionProfile: &golang.CloudServiceExtensionProfile{
+					Extensions: []*golang.Extension{
+						{
+							Name: to.StringPtr("RDPExtension"),
+							Properties: &golang.CloudServiceExtensionProperties{
+								Type:                    to.StringPtr("RDP"),
+								AutoUpgradeMinorVersion: to.BoolPtr(false),
+								ProvisioningState:       to.StringPtr("Succeeded"),
+								Publisher:               to.StringPtr("Microsoft.Windows.Azure.Extensions"),
+								RolesAppliedTo: []*string{
+									to.StringPtr("*")},
+								Settings:           to.StringPtr("<PublicConfig><UserName>UserAzure</UserName><Expiration>10/22/2021 15:05:45</Expiration></PublicConfig>"),
+								TypeHandlerVersion: to.StringPtr("1.2.1"),
+							},
+						}},
+				},
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("contosolb"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("contosofe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{},
+				},
+				PackageURL:        to.StringPtr("{PackageUrl}"),
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("c948cccb-bbfa-4516-a250-c28abc4d0c15"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServices_Update(t *testing.T) {
 	// From example Update existing Cloud Service to add tags
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update existing Cloud Service to add tags"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9692,11 +21021,76 @@ func TestCloudServices_Update(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesUpdateResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("eastus2euap"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("contosolb"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("contosofe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(2),
+								Tier:     to.StringPtr("Standard"),
+							},
+						},
+						{
+							Name: to.StringPtr("ContosoBackend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(2),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+			Tags: map[string]*string{
+				"Documentation": to.StringPtr("RestAPI"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServices_Delete(t *testing.T) {
 	// From example Delete Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9718,6 +21112,9 @@ func TestCloudServices_Delete(t *testing.T) {
 
 func TestCloudServices_Get(t *testing.T) {
 	// From example Get Cloud Service with Multiple Roles and RDP Extension
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service with Multiple Roles and RDP Extension"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9731,11 +21128,89 @@ func TestCloudServices_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesGetResult)
+	// Response check
+	{
+		exampleRes := golang.CloudService{
+			Name:     to.StringPtr("{cs-name}"),
+			Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+			Location: to.StringPtr("eastus2euap"),
+			Properties: &golang.CloudServiceProperties{
+				Configuration: to.StringPtr("{ServiceConfiguration}"),
+				ExtensionProfile: &golang.CloudServiceExtensionProfile{
+					Extensions: []*golang.Extension{
+						{
+							Name: to.StringPtr("RDPExtension"),
+							Properties: &golang.CloudServiceExtensionProperties{
+								Type:                    to.StringPtr("RDP"),
+								AutoUpgradeMinorVersion: to.BoolPtr(false),
+								ProvisioningState:       to.StringPtr("Succeeded"),
+								Publisher:               to.StringPtr("Microsoft.Windows.Azure.Extensions"),
+								RolesAppliedTo: []*string{
+									to.StringPtr("*")},
+								Settings:           to.StringPtr("<PublicConfig><UserName>userazure</UserName><Expiration>01/12/2022 16:29:02</Expiration></PublicConfig>"),
+								TypeHandlerVersion: to.StringPtr("1.2.1"),
+							},
+						}},
+				},
+				NetworkProfile: &golang.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("contosolb"),
+							Properties: &golang.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("contosofe"),
+										Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &golang.SubResource{
+												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				OSProfile: &golang.CloudServiceOsProfile{
+					Secrets: []*golang.CloudServiceVaultSecretGroup{},
+				},
+				ProvisioningState: to.StringPtr("Succeeded"),
+				RoleProfile: &golang.CloudServiceRoleProfile{
+					Roles: []*golang.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("ContosoFrontend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(2),
+								Tier:     to.StringPtr("Standard"),
+							},
+						},
+						{
+							Name: to.StringPtr("ContosoBackend"),
+							SKU: &golang.CloudServiceRoleSKU{
+								Name:     to.StringPtr("Standard_D1_v2"),
+								Capacity: to.Int64Ptr(2),
+								Tier:     to.StringPtr("Standard"),
+							},
+						}},
+				},
+				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
+				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudService) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudService)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServices_GetInstanceView(t *testing.T) {
 	// From example Get Cloud Service Instance View with Multiple Roles
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service Instance View with Multiple Roles"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9749,11 +21224,65 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesGetInstanceViewResult)
+	// Response check
+	{
+		exampleRes := golang.CloudServiceInstanceView{
+			PrivateIDs: []*string{
+				to.StringPtr("3491bc0c-1f6c-444f-b1d0-ec0751a74e3e")},
+			RoleInstance: &golang.InstanceViewStatusesSummary{
+				StatusesSummary: []*golang.StatusCodeCount{
+					{
+						Code:  to.StringPtr("ProvisioningState/succeeded"),
+						Count: to.Int32Ptr(4),
+					},
+					{
+						Code:  to.StringPtr("PowerState/started"),
+						Count: to.Int32Ptr(4),
+					},
+					{
+						Code:  to.StringPtr("RoleState/RoleStateStarted"),
+						Count: to.Int32Ptr(4),
+					}},
+			},
+			SdkVersion: to.StringPtr("2.9.6496.3"),
+			Statuses: []*golang.ResourceInstanceViewStatus{
+				{
+					Code:          to.StringPtr("ProvisioningState/succeeded"),
+					DisplayStatus: to.StringPtr("Provisioning succeeded"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-01-12T16:50:07.0953535+05:30"); return t }()),
+				},
+				{
+					Code:          to.StringPtr("PowerState/started"),
+					DisplayStatus: to.StringPtr("Started"),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+					Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-01-12T16:50:07.0953535+05:30"); return t }()),
+				},
+				{
+					Code:          to.StringPtr("CurrentUpgradeDomain/-1"),
+					DisplayStatus: to.StringPtr("Current Upgrade Domain of cloud service is -1."),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+				},
+				{
+					Code:          to.StringPtr("MaxUpgradeDomain/1"),
+					DisplayStatus: to.StringPtr("Max Upgrade Domain of cloud service is 1."),
+					Level:         golang.StatusLevelTypesInfo.ToPtr(),
+				}},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.CloudServiceInstanceView) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.CloudServiceInstanceView)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServices_ListAll(t *testing.T) {
 	// From example List Cloud Services in a Subscription
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Cloud Services in a Subscription"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9765,14 +21294,92 @@ func TestCloudServices_ListAll(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.CloudServiceListResult{
+				Value: []*golang.CloudService{
+					{
+						Name:     to.StringPtr("{cs-name}"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.CloudServiceProperties{
+							Configuration: to.StringPtr("{ServiceConfiguration}"),
+							ExtensionProfile: &golang.CloudServiceExtensionProfile{
+								Extensions: []*golang.Extension{
+									{
+										Name: to.StringPtr("RDPExtension"),
+										Properties: &golang.CloudServiceExtensionProperties{
+											Type:                    to.StringPtr("RDP"),
+											AutoUpgradeMinorVersion: to.BoolPtr(false),
+											ProvisioningState:       to.StringPtr("Succeeded"),
+											Publisher:               to.StringPtr("Microsoft.Windows.Azure.Extensions"),
+											RolesAppliedTo: []*string{
+												to.StringPtr("*")},
+											Settings:           to.StringPtr("<PublicConfig><UserName>userazure</UserName><Expiration>01/12/2022 16:29:02</Expiration></PublicConfig>"),
+											TypeHandlerVersion: to.StringPtr("1.2.1"),
+										},
+									}},
+							},
+							NetworkProfile: &golang.CloudServiceNetworkProfile{
+								LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+									{
+										Name: to.StringPtr("contosolb"),
+										Properties: &golang.LoadBalancerConfigurationProperties{
+											FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+												{
+													Name: to.StringPtr("contosofe"),
+													Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+														PublicIPAddress: &golang.SubResource{
+															ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+														},
+													},
+												}},
+										},
+									}},
+							},
+							OSProfile: &golang.CloudServiceOsProfile{
+								Secrets: []*golang.CloudServiceVaultSecretGroup{},
+							},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							RoleProfile: &golang.CloudServiceRoleProfile{
+								Roles: []*golang.CloudServiceRoleProfileProperties{
+									{
+										Name: to.StringPtr("ContosoFrontend"),
+										SKU: &golang.CloudServiceRoleSKU{
+											Name:     to.StringPtr("Standard_D1_v2"),
+											Capacity: to.Int64Ptr(2),
+											Tier:     to.StringPtr("Standard"),
+										},
+									},
+									{
+										Name: to.StringPtr("ContosoBackend"),
+										SKU: &golang.CloudServiceRoleSKU{
+											Name:     to.StringPtr("Standard_D1_v2"),
+											Capacity: to.Int64Ptr(2),
+											Tier:     to.StringPtr("Standard"),
+										},
+									}},
+							},
+							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
+							UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServices_List(t *testing.T) {
 	// From example List Cloud Services in a Resource Group
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Cloud Services in a Resource Group"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9785,14 +21392,92 @@ func TestCloudServices_List(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.CloudServiceListResult{
+				Value: []*golang.CloudService{
+					{
+						Name:     to.StringPtr("{cs-name}"),
+						Type:     to.StringPtr("Microsoft.Compute/cloudServices"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}"),
+						Location: to.StringPtr("eastus2euap"),
+						Properties: &golang.CloudServiceProperties{
+							Configuration: to.StringPtr("{ServiceConfiguration}"),
+							ExtensionProfile: &golang.CloudServiceExtensionProfile{
+								Extensions: []*golang.Extension{
+									{
+										Name: to.StringPtr("RDPExtension"),
+										Properties: &golang.CloudServiceExtensionProperties{
+											Type:                    to.StringPtr("RDP"),
+											AutoUpgradeMinorVersion: to.BoolPtr(false),
+											ProvisioningState:       to.StringPtr("Succeeded"),
+											Publisher:               to.StringPtr("Microsoft.Windows.Azure.Extensions"),
+											RolesAppliedTo: []*string{
+												to.StringPtr("*")},
+											Settings:           to.StringPtr("<PublicConfig><UserName>userazure</UserName><Expiration>01/12/2022 16:29:02</Expiration></PublicConfig>"),
+											TypeHandlerVersion: to.StringPtr("1.2.1"),
+										},
+									}},
+							},
+							NetworkProfile: &golang.CloudServiceNetworkProfile{
+								LoadBalancerConfigurations: []*golang.LoadBalancerConfiguration{
+									{
+										Name: to.StringPtr("contosolb"),
+										Properties: &golang.LoadBalancerConfigurationProperties{
+											FrontendIPConfigurations: []*golang.LoadBalancerFrontendIPConfiguration{
+												{
+													Name: to.StringPtr("contosofe"),
+													Properties: &golang.LoadBalancerFrontendIPConfigurationProperties{
+														PublicIPAddress: &golang.SubResource{
+															ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Network/publicIPAddresses/contosopublicip"),
+														},
+													},
+												}},
+										},
+									}},
+							},
+							OSProfile: &golang.CloudServiceOsProfile{
+								Secrets: []*golang.CloudServiceVaultSecretGroup{},
+							},
+							ProvisioningState: to.StringPtr("Succeeded"),
+							RoleProfile: &golang.CloudServiceRoleProfile{
+								Roles: []*golang.CloudServiceRoleProfileProperties{
+									{
+										Name: to.StringPtr("ContosoFrontend"),
+										SKU: &golang.CloudServiceRoleSKU{
+											Name:     to.StringPtr("Standard_D1_v2"),
+											Capacity: to.Int64Ptr(2),
+											Tier:     to.StringPtr("Standard"),
+										},
+									},
+									{
+										Name: to.StringPtr("ContosoBackend"),
+										SKU: &golang.CloudServiceRoleSKU{
+											Name:     to.StringPtr("Standard_D1_v2"),
+											Capacity: to.Int64Ptr(2),
+											Tier:     to.StringPtr("Standard"),
+										},
+									}},
+							},
+							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
+							UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServices_Start(t *testing.T) {
 	// From example Start Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Start Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9814,6 +21499,9 @@ func TestCloudServices_Start(t *testing.T) {
 
 func TestCloudServices_PowerOff(t *testing.T) {
 	// From example Stop or PowerOff Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Stop or PowerOff Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9835,6 +21523,9 @@ func TestCloudServices_PowerOff(t *testing.T) {
 
 func TestCloudServices_Restart(t *testing.T) {
 	// From example Restart Cloud Service Role Instances
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Restart Cloud Service Role Instances"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9861,6 +21552,9 @@ func TestCloudServices_Restart(t *testing.T) {
 
 func TestCloudServices_Reimage(t *testing.T) {
 	// From example Reimage Cloud Service Role Instances
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Reimage Cloud Service Role Instances"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9887,6 +21581,9 @@ func TestCloudServices_Reimage(t *testing.T) {
 
 func TestCloudServices_Rebuild(t *testing.T) {
 	// From example Rebuild Cloud Service Role Instances
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Rebuild Cloud Service Role Instances"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9913,6 +21610,9 @@ func TestCloudServices_Rebuild(t *testing.T) {
 
 func TestCloudServices_DeleteInstances(t *testing.T) {
 	// From example Delete Cloud Service Role Instances
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Delete Cloud Service Role Instances"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9939,6 +21639,9 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 
 func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 	// From example Update Cloud Service to specified Domain
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Update Cloud Service to specified Domain"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9961,6 +21664,9 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 
 func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 	// From example Get Cloud Service Update Domain
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service Update Domain"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9975,11 +21681,26 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServicesUpdateDomainGetUpdateDomainResult)
+	// Response check
+	{
+		exampleRes := golang.UpdateDomain{
+			Name: to.StringPtr("1"),
+			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/updateDomains/1"),
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.UpdateDomain) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.UpdateDomain)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 	// From example List Update Domains in Cloud Service
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Update Domains in Cloud Service"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -9993,14 +21714,33 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.UpdateDomainListResult{
+				Value: []*golang.UpdateDomain{
+					{
+						Name: to.StringPtr("0"),
+						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/updateDomains/0"),
+					},
+					{
+						Name: to.StringPtr("1"),
+						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/updateDomains/1"),
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().UpdateDomainListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().UpdateDomainListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 	// From example Get Cloud Service OS Version
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service OS Version"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -10014,11 +21754,36 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSVersionResult)
+	// Response check
+	{
+		exampleRes := golang.OSVersion{
+			Name:     to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+			Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsVersions"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSVersions/WA-GUEST-OS-3.90_202010-02"),
+			Location: to.StringPtr("westus2"),
+			Properties: &golang.OSVersionProperties{
+				Family:      to.StringPtr("3"),
+				FamilyLabel: to.StringPtr("Windows Server 2012"),
+				IsActive:    to.BoolPtr(true),
+				IsDefault:   to.BoolPtr(true),
+				Label:       to.StringPtr("Windows Azure Guest OS 3.90 (Release 202010-02)"),
+				Version:     to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.OSVersion) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.OSVersion)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 	// From example List Cloud Service OS Versions in a subscription
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Cloud Service OS Versions in a subscription"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -10031,14 +21796,53 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.OSVersionListResult{
+				Value: []*golang.OSVersion{
+					{
+						Name:     to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+						Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsVersions"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSVersions/WA-GUEST-OS-3.90_202010-02"),
+						Location: to.StringPtr("westus2"),
+						Properties: &golang.OSVersionProperties{
+							Family:      to.StringPtr("3"),
+							FamilyLabel: to.StringPtr("Windows Server 2012"),
+							IsActive:    to.BoolPtr(true),
+							IsDefault:   to.BoolPtr(true),
+							Label:       to.StringPtr("Windows Azure Guest OS 3.90 (Release 202010-02)"),
+							Version:     to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+						},
+					},
+					{
+						Name:     to.StringPtr("WA-GUEST-OS-4.83_202010-02"),
+						Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsVersions"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSVersions/WA-GUEST-OS-4.83_202010-02"),
+						Location: to.StringPtr("westus2"),
+						Properties: &golang.OSVersionProperties{
+							Family:      to.StringPtr("4"),
+							FamilyLabel: to.StringPtr("Windows Server 2012 R2"),
+							IsActive:    to.BoolPtr(true),
+							IsDefault:   to.BoolPtr(true),
+							Label:       to.StringPtr("Windows Azure Guest OS 4.83 (Release 202010-02)"),
+							Version:     to.StringPtr("WA-GUEST-OS-4.83_202010-02"),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().OSVersionListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().OSVersionListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }
 
 func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 	// From example Get Cloud Service OS Family
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"Get Cloud Service OS Family"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -10052,11 +21856,39 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSFamilyResult)
+	// Response check
+	{
+		exampleRes := golang.OSFamily{
+			Name:     to.StringPtr("3"),
+			Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsFamilies"),
+			ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSFamilies/3"),
+			Location: to.StringPtr("westus2"),
+			Properties: &golang.OSFamilyProperties{
+				Name:  to.StringPtr("3"),
+				Label: to.StringPtr("Windows Server 2012"),
+				Versions: []*golang.OSVersionPropertiesBase{
+					{
+						IsActive:  to.BoolPtr(true),
+						IsDefault: to.BoolPtr(true),
+						Label:     to.StringPtr("Windows Azure Guest OS 3.90 (Release 202010-02)"),
+						Version:   to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+					}},
+			},
+		}
+
+		if !reflect.DeepEqual(exampleRes, res.OSFamily) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.OSFamily)
+			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
 }
 
 func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 	// From example List Cloud Service OS Families in a subscription
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"List Cloud Service OS Families in a subscription"},
+	})
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
@@ -10069,8 +21901,50 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
-		for _, v := range pager.PageResponse().Value {
-			t.Logf("Pager result: %#v\n", v)
+		// Response check
+		{
+			pagerExampleRes := golang.OSFamilyListResult{
+				Value: []*golang.OSFamily{
+					{
+						Name:     to.StringPtr("3"),
+						Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsFamilies"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSFamilies/3"),
+						Location: to.StringPtr("westus2"),
+						Properties: &golang.OSFamilyProperties{
+							Name:  to.StringPtr("3"),
+							Label: to.StringPtr("Windows Server 2012"),
+							Versions: []*golang.OSVersionPropertiesBase{
+								{
+									IsActive:  to.BoolPtr(true),
+									IsDefault: to.BoolPtr(true),
+									Label:     to.StringPtr("Windows Azure Guest OS 3.90 (Release 202010-02)"),
+									Version:   to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
+								}},
+						},
+					},
+					{
+						Name:     to.StringPtr("4"),
+						Type:     to.StringPtr("Microsoft.Compute/locations/cloudServiceOsFamilies"),
+						ID:       to.StringPtr("/subscriptions/{subscription-id}/providers/Microsoft.Compute/locations/westus2/cloudServiceOSFamilies/4"),
+						Location: to.StringPtr("westus2"),
+						Properties: &golang.OSFamilyProperties{
+							Name:  to.StringPtr("4"),
+							Label: to.StringPtr("Windows Server 2012 R2"),
+							Versions: []*golang.OSVersionPropertiesBase{
+								{
+									IsActive:  to.BoolPtr(true),
+									IsDefault: to.BoolPtr(true),
+									Label:     to.StringPtr("Windows Azure Guest OS 4.83 (Release 202010-02)"),
+									Version:   to.StringPtr("WA-GUEST-OS-4.83_202010-02"),
+								}},
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().OSFamilyListResult) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().OSFamilyListResult)
+				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
 		}
 	}
 }

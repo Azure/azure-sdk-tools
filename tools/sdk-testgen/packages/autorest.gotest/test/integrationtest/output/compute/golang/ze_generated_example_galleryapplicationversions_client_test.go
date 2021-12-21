@@ -32,22 +32,18 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 		"<gallery-application-name>",
 		"<gallery-application-version-name>",
 		golang.GalleryApplicationVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryApplicationVersionProperties{
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-						ReplicaCount:       to.Int32Ptr(1),
-						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("<name>"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
-							}},
-					},
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("<install>"),
 						Remove:  to.StringPtr("<remove>"),
@@ -85,17 +81,15 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		golang.GalleryApplicationVersionUpdate{
 			Properties: &golang.GalleryApplicationVersionProperties{
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-						ReplicaCount:       to.Int32Ptr(1),
-						StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("<name>"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-								StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
-							}},
-					},
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("<install>"),
 						Remove:  to.StringPtr("<remove>"),

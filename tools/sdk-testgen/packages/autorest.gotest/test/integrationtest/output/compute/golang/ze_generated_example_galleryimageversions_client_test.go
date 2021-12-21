@@ -32,63 +32,47 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 		"<gallery-image-name>",
 		"<gallery-image-version-name>",
 		golang.GalleryImageVersion{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name: to.StringPtr("<name>"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-										},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name: to.StringPtr("<name>"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(1),
 							},
-							{
-								Name: to.StringPtr("<name>"),
-								Encryption: &golang.EncryptionImages{
-									DataDiskImages: []*golang.DataDiskImageEncryption{
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-											},
-											Lun: to.Int32Ptr(0),
-										},
-										{
-											DiskImageEncryption: golang.DiskImageEncryption{
-												DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-											},
-											Lun: to.Int32Ptr(1),
-										}},
-									OSDiskImage: &golang.OSDiskImageEncryption{
-										DiskImageEncryption: golang.DiskImageEncryption{
-											DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-										},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("<name>"),
+							Encryption: &golang.EncryptionImages{
+								DataDiskImages: []*golang.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(0),
 									},
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &golang.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
 								},
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{
@@ -124,18 +108,16 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 		golang.GalleryImageVersionUpdate{
 			Properties: &golang.GalleryImageVersionProperties{
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
-					GalleryArtifactPublishingProfileBase: golang.GalleryArtifactPublishingProfileBase{
-						TargetRegions: []*golang.TargetRegion{
-							{
-								Name:                 to.StringPtr("<name>"),
-								RegionalReplicaCount: to.Int32Ptr(1),
-							},
-							{
-								Name:                 to.StringPtr("<name>"),
-								RegionalReplicaCount: to.Int32Ptr(2),
-								StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
-							}},
-					},
+					TargetRegions: []*golang.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
 					Source: &golang.GalleryArtifactVersionSource{

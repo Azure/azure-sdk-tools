@@ -30,9 +30,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<snapshot-name>",
 		golang.Snapshot{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
 					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),

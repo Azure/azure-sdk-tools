@@ -4,17 +4,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as _ from 'lodash';
+import { AutorestExtensionHost } from '@autorest/extension-base';
 import { Config, configDefaults } from '../common/constant';
 import { ExampleCodeGenerator, ExampleDataRender } from './exampleGenerator';
 import { GenerateContext } from './generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
-import { Host } from '@autorest/extension-base';
 import { MockTestCodeGenerator, MockTestDataRender } from './mockTestGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from './scenarioTestGenerator';
 import { TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
 
-export async function processRequest(host: Host): Promise<void> {
+export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     const session = await TestCodeModeler.getSessionFromHost(host);
     const config = new TestConfig(await session.getValue(''), configDefaults);
     if (config.getValue(Config.exportCodemodel)) {

@@ -28,9 +28,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
 		golang.ProximityPlacementGroup{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.ProximityPlacementGroupProperties{
 				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
@@ -54,10 +52,8 @@ func ExampleProximityPlacementGroupsClient_Update() {
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
 		golang.ProximityPlacementGroupUpdate{
-			UpdateResource: golang.UpdateResource{
-				Tags: map[string]*string{
-					"additionalProp1": to.StringPtr("string"),
-				},
+			Tags: map[string]*string{
+				"additionalProp1": to.StringPtr("string"),
 			},
 		},
 		nil)

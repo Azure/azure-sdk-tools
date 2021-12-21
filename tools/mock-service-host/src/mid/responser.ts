@@ -21,7 +21,7 @@ import { applyGlobalTransformers, applySpecTransformers } from 'oav/dist/lib/tra
 import { discriminatorTransformer } from 'oav/dist/lib/transform/discriminatorTransformer'
 import { injectable } from 'inversify'
 import { inversifyGetInstance } from 'oav/dist/lib/inversifyUtils'
-import { isNullOrUndefined } from '../common/utils'
+import { isNullOrUndefined, removeNullValueKey } from '../common/utils'
 import { resolveNestedDefinitionTransformer } from 'oav/dist/lib/transform/resolveNestedDefinitionTransformer'
 import SwaggerMocker from './oav/swaggerMocker'
 
@@ -131,6 +131,16 @@ export class ResponseGenerator {
                     Object.prototype.hasOwnProperty.call(liveRequest.query, paramSpec.name)
                 ) {
                     parameters[paramSpec.name] = liveRequest.query[paramSpec.name]
+                    if (typeof parameters[paramSpec.name] === 'string') {
+                        parameters[paramSpec.name] = escape(parameters[paramSpec.name])
+                    } else if (Array.isArray(parameters[paramSpec.name])) {
+                        parameters[paramSpec.name] = parameters[paramSpec.name].map((x: any) => {
+                            if (typeof x === 'string') {
+                                return escape(x)
+                            }
+                            return x
+                        })
+                    }
                     types[paramSpec.name] = ParameterType.Query
                 }
             } else if (paramSpec.in === ParameterType.Header.toString()) {
@@ -156,7 +166,10 @@ export class ResponseGenerator {
         const exampleParameters = example.parameters
 
         for (const [k, v] of Object.entries(requestParameters)) {
-            if (exampleParameters[k] && !_.isEqual(exampleParameters[k], v)) {
+            if (
+                exampleParameters[k] &&
+                !_.isEqual(removeNullValueKey(exampleParameters[k]), removeNullValueKey(v))
+            ) {
                 throw new ExampleNotMatch(
                     `${receivedExampleParameters.parameterTypes[k]} parameter ${k}=${JSON.stringify(
                         v
@@ -227,8 +240,10 @@ export class ResponseGenerator {
     ): SwaggerExample {
         const rawSpec = JSON.parse(fs.readFileSync(specFile, SWAGGER_ENCODING))
 
-        let allExamples =
-            rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples]
+        let allExamples = _.mapKeys(
+            rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples],
+            (_, k) => k.trim()
+        )
         if (this.lroExamplesMap.has(liveRequest.url)) {
             allExamples = { ...this.lroExamplesMap.get(liveRequest.url), ...allExamples }
         } else {

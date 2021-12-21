@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as _ from 'lodash';
+import { AutorestExtensionHost } from '@autorest/extension-base';
 import { Config, configDefaults } from '../common/constant';
 import { Helper } from '../util/helper';
-import { Host } from '@autorest/extension-base';
 import { TestCodeModeler } from './model';
 import { TestConfig } from '../common/testConfig';
 
-export async function processRequest(host: Host): Promise<void> {
+export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     //const session = await startSession<TestCodeModel>(host, {}, codeModelSchema)
     const session = await TestCodeModeler.getSessionFromHost(host);
     const config = new TestConfig(await session.getValue(''), configDefaults);

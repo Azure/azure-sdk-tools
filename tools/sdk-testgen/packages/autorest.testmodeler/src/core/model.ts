@@ -18,9 +18,9 @@ import {
     SchemaType,
     codeModelSchema,
 } from '@autorest/codemodel';
+import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
-import { Host, startSession } from '@autorest/extension-base';
 import { TestConfig } from '../common/testConfig';
 import { TestDefinitionFile, TestScenario, TestStep, TestStepArmTemplateDeployment, TestStepRestCall } from 'oav/dist/lib/testScenario/testResourceTypes';
 import { TestResourceLoader } from 'oav/dist/lib/testScenario/testResourceLoader';
@@ -332,7 +332,7 @@ export class TestCodeModeler {
         });
     }
 
-    public static async getSessionFromHost(host: Host) {
+    public static async getSessionFromHost(host: AutorestExtensionHost) {
         return await startSession<TestCodeModel>(host, {}, codeModelSchema);
     }
 

@@ -30173,7 +30173,6 @@ operationGroups:
                     platformUpdateDomainCount: 20
                 resourceGroupName: myResourceGroup
                 subscriptionId: 1
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
               responses:
                 '200':
                   body:
@@ -30548,8 +30547,6 @@ operationGroups:
                 $expand: 'Faked for test: +ge+2020, %3E2012'
                 api-version: '2021-03-01'
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
               responses:
                 '200':
                   body:
@@ -30906,8 +30903,6 @@ operationGroups:
                 proximityPlacementGroupName: $(resourceName)
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
               responses:
                 '200':
                   body:
@@ -31038,7 +31033,6 @@ operationGroups:
                 proximityPlacementGroupName: myProximityPlacementGroup
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
               responses:
                 '200':
                   body:
@@ -31125,7 +31119,6 @@ operationGroups:
                 proximityPlacementGroupName: $(resourceName)
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
               responses:
                 '200': {}
         language:
@@ -31235,7 +31228,6 @@ operationGroups:
                 proximityPlacementGroupName: myProximityPlacementGroup
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
               responses:
                 '200':
                   body:
@@ -31318,8 +31310,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 parameters: {}
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
               responses:
                 '200':
                   body:
@@ -31422,8 +31412,6 @@ operationGroups:
                 parameters: {}
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -31583,8 +31571,6 @@ operationGroups:
                     - '1'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -31896,7 +31882,6 @@ operationGroups:
                 hostGroupName: myDedicatedHostGroup
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -32234,7 +32219,6 @@ operationGroups:
                     department: HR
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json
               responses:
                 '200':
                   body:
@@ -32600,7 +32584,6 @@ operationGroups:
                 hostName: myHost
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
               responses:
                 '200':
                   body:
@@ -32998,7 +32981,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 sshPublicKeyName: mySshPublicKeyName
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
               responses:
                 '200':
                   body:
@@ -33286,7 +33268,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 sshPublicKeyName: mySshPublicKeyName
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
               responses:
                 '200':
                   body:
@@ -33391,7 +33372,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 sshPublicKeyName: mySshPublicKeyName
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
               responses:
                 '200':
                   body:
@@ -35679,8 +35659,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 location: eastus
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
               responses:
                 '200':
                   body:
@@ -36035,8 +36013,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json
               responses:
                 '200':
                   body:
@@ -36150,8 +36126,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json
               responses:
                 '200':
                   body:
@@ -36266,8 +36240,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json
               responses:
                 '200':
                   body:
@@ -36384,7 +36356,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json
               responses:
                 '200':
                   body:
@@ -36507,7 +36478,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: '{vm-name}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json
               responses:
                 '200':
                   body:
@@ -36637,8 +36607,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json
               responses:
                 '200':
                   body:
@@ -36751,8 +36719,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json
               responses:
                 '200':
                   body:
@@ -36869,8 +36835,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json
               responses:
                 '200':
                   body:
@@ -36988,8 +36952,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json
               responses:
                 '200':
                   body:
@@ -37108,8 +37070,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json
               responses:
                 '200':
                   body:
@@ -37227,8 +37187,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json
               responses:
                 '200':
                   body:
@@ -37340,8 +37298,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: '{vm-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json
               responses:
                 '200':
                   body:
@@ -37454,8 +37410,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: '{vm-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json
               responses:
                 '200':
                   body:
@@ -37588,7 +37542,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json
               responses:
                 '200':
                   body:
@@ -37687,8 +37640,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json
               responses:
                 '200':
                   body:
@@ -37783,8 +37734,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json
               responses:
                 '200':
                   body:
@@ -37877,8 +37826,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json
               responses:
                 '200':
                   body:
@@ -37994,7 +37941,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json
               responses:
                 '200':
                   body:
@@ -38123,8 +38069,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json
               responses:
                 '200':
                   body:
@@ -38268,7 +38212,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json
               responses:
                 '200':
                   body:
@@ -38396,8 +38339,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json
               responses:
                 '200':
                   body:
@@ -38525,8 +38466,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json
               responses:
                 '200':
                   body:
@@ -38647,8 +38586,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json
               responses:
                 '200':
                   body:
@@ -38770,7 +38707,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json
               responses:
                 '200':
                   body:
@@ -38893,7 +38829,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json
               responses:
                 '200':
                   body:
@@ -39034,8 +38969,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json
               responses:
                 '200':
                   body:
@@ -39164,8 +39097,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json
               responses:
                 '200':
                   body:
@@ -39293,7 +39224,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json
               responses:
                 '200':
                   body:
@@ -39416,8 +39346,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json
               responses:
                 '200':
                   body:
@@ -39531,8 +39459,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json
               responses:
                 '200':
                   body:
@@ -39640,7 +39566,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json
               responses:
                 '200':
                   body:
@@ -39755,7 +39680,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json
               responses:
                 '200':
                   body:
@@ -39986,8 +39910,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
               responses:
                 '200':
                   body:
@@ -40081,7 +40003,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json
               responses:
                 '200':
                   body:
@@ -40241,7 +40162,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
               responses:
                 '200': {}
                 '202': {}
@@ -40356,7 +40276,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json
               responses:
                 '200':
                   body:
@@ -40443,8 +40362,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -40581,7 +40498,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
               responses:
                 '200':
                   body:
@@ -40680,8 +40596,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -40945,7 +40859,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
               responses:
                 '200': {}
         language:
@@ -41200,8 +41113,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVmName
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
               responses:
                 '200':
                   body:
@@ -41423,7 +41334,6 @@ operationGroups:
                 resourceGroupName: ResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: VMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
               responses:
                 '200': {}
                 '202': {}
@@ -41766,7 +41676,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json
               responses:
                 '200': {}
                 '202': {}
@@ -41891,8 +41800,6 @@ operationGroups:
                 sasUriExpirationTimeInMinutes: 60
                 subscriptionId: '{subscription-id}'
                 vmName: VMName
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json
               responses:
                 '200':
                   body:
@@ -42053,7 +41960,6 @@ operationGroups:
                 resourceGroupName: ResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: VMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
               responses:
                 '204': {}
           x-ms-long-running-operation: false
@@ -42172,7 +42078,6 @@ operationGroups:
                 resourceGroupName: myResourceGroupName
                 subscriptionId: '{subscription-id}'
                 vmName: myVMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json
               responses:
                 '200':
                   body:
@@ -42349,7 +42254,6 @@ operationGroups:
                 resourceGroupName: myResourceGroupName
                 subscriptionId: '{subscription-id}'
                 vmName: myVMName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
               responses:
                 '200':
                   body:
@@ -42507,7 +42411,6 @@ operationGroups:
                 resourceGroupName: crptestar98131
                 subscriptionId: 24fb23e3-6ba3-41f0-9b6e-e41131d5d61e
                 vmName: vm3036
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
               responses:
                 '200':
                   body:
@@ -42624,8 +42527,6 @@ operationGroups:
                 api-version: '2020-06-01'
                 location: eastus
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
               responses:
                 '200':
                   body:
@@ -42893,8 +42794,6 @@ operationGroups:
                 ResourceGroupName: myResourceGroup
                 SubscriptionId: '{subscription-id}'
                 VmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
               responses:
                 '200':
                   body:
@@ -43040,8 +42939,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json
               responses:
                 '200':
                   body:
@@ -43187,8 +43084,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json
               responses:
                 '200':
                   body:
@@ -43324,8 +43219,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json
               responses:
                 '200':
                   body:
@@ -43457,8 +43350,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json
               responses:
                 '200':
                   body:
@@ -43593,8 +43484,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json
               responses:
                 '200':
                   body:
@@ -43765,8 +43654,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json
               responses:
                 '200':
                   body:
@@ -43939,8 +43826,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json
               responses:
                 '200':
                   body:
@@ -44104,8 +43989,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json
               responses:
                 '200':
                   body:
@@ -44266,8 +44149,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json
               responses:
                 '200':
                   body:
@@ -44425,8 +44306,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json
               responses:
                 '200':
                   body:
@@ -44585,8 +44464,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json
               responses:
                 '200':
                   body:
@@ -44744,8 +44621,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json
               responses:
                 '200':
                   body:
@@ -44902,8 +44777,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json
               responses:
                 '200':
                   body:
@@ -45066,8 +44939,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json
               responses:
                 '200':
                   body:
@@ -45249,8 +45120,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json
               responses:
                 '200':
                   body:
@@ -45414,7 +45283,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json
               responses:
                 '200':
                   body:
@@ -45587,8 +45455,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json
               responses:
                 '200':
                   body:
@@ -45766,8 +45632,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json
               responses:
                 '200':
                   body:
@@ -45920,8 +45784,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json
               responses:
                 '200':
                   body:
@@ -46068,8 +45930,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json
               responses:
                 '200':
                   body:
@@ -46223,8 +46083,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json
               responses:
                 '200':
                   body:
@@ -46385,8 +46243,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json
               responses:
                 '200':
                   body:
@@ -46542,8 +46398,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json
               responses:
                 '200':
                   body:
@@ -46709,8 +46563,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json
               responses:
                 '200':
                   body:
@@ -47060,8 +46912,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
               responses:
                 '200': {}
                 '202': {}
@@ -47173,8 +47023,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myVirtualMachineScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -47239,8 +47087,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myVirtualMachineScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json
               responses:
                 '200':
                   body:
@@ -49203,8 +49049,6 @@ operationGroups:
                         osType: Linux
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -49255,7 +49099,6 @@ operationGroups:
                       zoneResilient: true
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json
               responses:
                 '200':
                   body:
@@ -49306,8 +49149,6 @@ operationGroups:
                         osType: Linux
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -49361,7 +49202,6 @@ operationGroups:
                       zoneResilient: true
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json
               responses:
                 '200':
                   body:
@@ -49414,8 +49254,6 @@ operationGroups:
                           id: subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -49469,7 +49307,6 @@ operationGroups:
                       zoneResilient: false
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json
               responses:
                 '200':
                   body:
@@ -49516,7 +49353,6 @@ operationGroups:
                       id: /subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json
               responses:
                 '200':
                   body:
@@ -49574,8 +49410,6 @@ operationGroups:
                       zoneResilient: false
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json
               responses:
                 '200':
                   body:
@@ -49633,8 +49467,6 @@ operationGroups:
                       zoneResilient: false
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json
               responses:
                 '200':
                   body:
@@ -49696,8 +49528,6 @@ operationGroups:
                       zoneResilient: true
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json
               responses:
                 '200':
                   body:
@@ -49869,7 +49699,6 @@ operationGroups:
                     department: HR
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json
               responses:
                 '200':
                   body:
@@ -50124,7 +49953,6 @@ operationGroups:
                 imageName: myImage
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json
               responses:
                 '200':
                   body:
@@ -50234,7 +50062,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -50333,7 +50160,6 @@ operationGroups:
               parameters:
                 api-version: '2021-03-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json
               responses:
                 '200':
                   body:
@@ -50515,8 +50341,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 restorePointCollectionName: myRpc
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json
               responses:
                 '200':
                   body:
@@ -50893,7 +50717,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 restorePointCollectionName: myRpc
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
               responses:
                 '200':
                   body:
@@ -50916,8 +50739,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 restorePointCollectionName: rpcName
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json
               responses:
                 '200':
                   body:
@@ -51077,8 +50898,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -51190,8 +51009,6 @@ operationGroups:
               parameters:
                 api-version: '2021-03-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json
               responses:
                 '200':
                   body:
@@ -51374,7 +51191,6 @@ operationGroups:
                 restorePointName: rpName
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json
               responses:
                 '201':
                   body:
@@ -51674,7 +51490,6 @@ operationGroups:
                 restorePointCollectionName: rpcName
                 restorePointName: rpName
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json
               responses:
                 '200':
                   body:
@@ -52539,8 +52354,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
               responses:
                 '200': {}
                 '202': {}
@@ -52835,8 +52648,6 @@ operationGroups:
                 subscriptionId: '{subscription-id}'
                 vmExtensionName: myVMExtension
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
               responses:
                 '200':
                   body:
@@ -53024,8 +52835,6 @@ operationGroups:
                 subscriptionId: '{subscription-id}'
                 vmExtensionName: myVMExtension
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
               responses:
                 '200':
                   body:
@@ -53188,8 +52997,6 @@ operationGroups:
                 subscriptionId: '{subscription-id}'
                 vmExtensionName: myVMExtension
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
               responses:
                 '200': {}
                 '202': {}
@@ -53342,8 +53149,6 @@ operationGroups:
                 subscriptionId: '{subscription-id}'
                 vmExtensionName: myVMExtension
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
               responses:
                 '200':
                   body:
@@ -53491,8 +53296,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
               responses:
                 '200':
                   body:
@@ -54065,8 +53868,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
               responses:
                 '200': {}
                 '202': {}
@@ -54193,8 +53994,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: '{vmss-name}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
               responses:
                 '200':
                   body:
@@ -54389,8 +54188,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myVirtualMachineScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
               responses:
                 '200':
                   body:
@@ -55067,8 +54864,6 @@ operationGroups:
                 sasUriExpirationTimeInMinutes: 60
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
               responses:
                 '200':
                   body:
@@ -55256,7 +55051,6 @@ operationGroups:
                 resourceGroupName: ResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: VmScaleSetName
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
               responses:
                 '204': {}
           x-ms-long-running-operation: false
@@ -55398,7 +55192,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myVirtualMachineScaleSet
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
               responses:
                 '200':
                   body:
@@ -55532,8 +55325,6 @@ operationGroups:
                   intervalLength: FiveMins
                   toTime: '2018-01-23T01:54:06.862601Z'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json
               responses:
                 '200':
                   body:
@@ -55655,7 +55446,6 @@ operationGroups:
                   groupByUserAgent: false
                   toTime: '2018-01-23T01:54:06.862601Z'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json
               responses:
                 '200':
                   body:
@@ -55753,7 +55543,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 location: SoutheastAsia
                 subscriptionId: subid
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
               responses:
                 '200':
                   body:
@@ -55907,7 +55696,6 @@ operationGroups:
                 commandId: RunPowerShellScript
                 location: SoutheastAsia
                 subscriptionId: 24fb23e3-6ba3-41f0-9b6e-e41131d5d61e
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
               responses:
                 '200':
                   body:
@@ -56096,7 +55884,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
               responses:
                 '200':
                   body:
@@ -56285,7 +56072,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
               responses:
                 '200':
                   body:
@@ -56443,7 +56229,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
               responses:
                 '200': {}
                 '202': {}
@@ -56584,7 +56369,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
               responses:
                 '200':
                   body:
@@ -56728,7 +56512,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmName: myVM
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
               responses:
                 '200':
                   body:
@@ -56944,8 +56727,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json
               responses:
                 '200':
                   body:
@@ -57142,8 +56923,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
               responses:
                 '200':
                   body:
@@ -57315,8 +57094,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
               responses:
                 '200': {}
                 '202': {}
@@ -57471,8 +57248,6 @@ operationGroups:
                 runCommandName: myRunCommand
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json
               responses:
                 '200':
                   body:
@@ -57630,8 +57405,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
                 vmScaleSetName: myvmScaleSet
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
               responses:
                 '200':
                   body:
@@ -57741,7 +57514,6 @@ operationGroups:
               parameters:
                 api-version: '2019-04-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json
               responses:
                 '200':
                   body:
@@ -57845,8 +57617,6 @@ operationGroups:
                 $filter: location eq 'westus'
                 api-version: '2019-04-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json
               responses:
                 '200':
                   body:
@@ -58086,8 +57856,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
               responses:
                 '200':
                   body:
@@ -58123,8 +57891,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -58158,8 +57924,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json
               responses:
                 '200':
                   body:
@@ -58192,8 +57956,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json
               responses:
                 '200':
                   body:
@@ -58227,8 +57989,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json
               responses:
                 '200':
                   body:
@@ -58262,8 +58022,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscriptionId}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json
               responses:
                 '200':
                   body:
@@ -58309,8 +58067,6 @@ operationGroups:
                 diskName: myDisk2
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json
               responses:
                 '200':
                   body:
@@ -58346,8 +58102,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json
               responses:
                 '200':
                   body:
@@ -58389,8 +58143,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json
               responses:
                 '200':
                   body:
@@ -58428,7 +58180,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json
               responses:
                 '200':
                   body:
@@ -58463,8 +58214,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json
               responses:
                 '200':
                   body:
@@ -58502,7 +58251,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json
               responses:
                 '200':
                   body:
@@ -58537,8 +58285,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json
               responses:
                 '200':
                   body:
@@ -58693,8 +58439,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
               responses:
                 '200':
                   body:
@@ -58728,8 +58472,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json
               responses:
                 '200':
                   body:
@@ -58782,8 +58524,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json
               responses:
                 '200':
                   body:
@@ -58826,7 +58566,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json
               responses:
                 '200':
                   body:
@@ -58857,8 +58596,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json
               responses:
                 '200':
                   body:
@@ -58885,8 +58622,6 @@ operationGroups:
                 diskName: myDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json
               responses:
                 '200':
                   body:
@@ -59003,8 +58738,6 @@ operationGroups:
                 diskName: myManagedDisk
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
               responses:
                 '200':
                   body:
@@ -59214,8 +58947,6 @@ operationGroups:
                 api-version: '2020-12-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -59361,8 +59092,6 @@ operationGroups:
               parameters:
                 api-version: '2020-12-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
               responses:
                 '200':
                   body:
@@ -59772,8 +59501,6 @@ operationGroups:
                       storageAccountId: subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount
                 snapshotName: mySnapshot1
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json
               responses:
                 '200':
                   body:
@@ -59807,8 +59534,6 @@ operationGroups:
                       sourceUri: https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd
                 snapshotName: mySnapshot1
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json
               responses:
                 '200':
                   body:
@@ -59840,8 +59565,6 @@ operationGroups:
                       sourceResourceId: subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1
                 snapshotName: mySnapshot2
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json
               responses:
                 '200':
                   body:
@@ -60072,7 +59795,6 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 snapshotName: mySnapshot
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
               responses:
                 '200':
                   body:
@@ -60277,7 +59999,6 @@ operationGroups:
                 api-version: '2020-12-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -60380,7 +60101,6 @@ operationGroups:
               parameters:
                 api-version: '2020-12-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json
               responses:
                 '200':
                   body:
@@ -60792,8 +60512,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
               responses:
                 '200':
                   body:
@@ -60833,7 +60551,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -61007,8 +60724,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
               responses:
                 '200':
                   body:
@@ -61052,8 +60767,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json
               responses:
                 '200':
                   body:
@@ -61101,7 +60814,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -61246,8 +60958,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
               responses:
                 '200':
                   body:
@@ -61389,7 +61099,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
               responses:
                 '200': {}
                 '202': {}
@@ -61488,8 +61197,6 @@ operationGroups:
                 api-version: '2020-12-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -61612,8 +61319,6 @@ operationGroups:
               parameters:
                 api-version: '2020-12-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
               responses:
                 '200':
                   body:
@@ -61766,8 +61471,6 @@ operationGroups:
                 diskEncryptionSetName: myDiskEncryptionSet
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
               responses:
                 '200':
                   body:
@@ -61925,7 +61628,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
               responses:
                 '200':
                   body:
@@ -62083,7 +61785,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
               responses:
                 '200':
                   body:
@@ -62213,8 +61914,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
               responses:
                 '200':
                   body:
@@ -62246,7 +61945,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json
               responses:
                 '200':
                   body:
@@ -62381,7 +62079,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
               responses:
                 '200': {}
                 '202': {}
@@ -62480,8 +62177,6 @@ operationGroups:
                 api-version: '2020-12-01'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -62602,8 +62297,6 @@ operationGroups:
               parameters:
                 api-version: '2020-12-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
               responses:
                 '200':
                   body:
@@ -62741,8 +62434,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
               responses:
                 '200':
                   body:
@@ -62912,8 +62603,6 @@ operationGroups:
                 privateEndpointConnectionName: myPrivateEndpointConnection
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
               responses:
                 '200':
                   body:
@@ -63064,8 +62753,6 @@ operationGroups:
                 privateEndpointConnectionName: myPrivateEndpointConnection
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
               responses:
                 '200':
                   body:
@@ -63215,8 +62902,6 @@ operationGroups:
                 privateEndpointConnectionName: myPrivateEndpointConnection
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
               responses:
                 '200': {}
                 '202': {}
@@ -63331,8 +63016,6 @@ operationGroups:
                 diskAccessName: myDiskAccess
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
               responses:
                 '200':
                   body:
@@ -63495,7 +63178,6 @@ operationGroups:
                 restorePointCollectionName: rpc
                 subscriptionId: '{subscription-id}'
                 vmRestorePointName: vmrp
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
               responses:
                 '200':
                   body:
@@ -63630,8 +63312,6 @@ operationGroups:
                 restorePointCollectionName: rpc
                 subscriptionId: '{subscription-id}'
                 vmRestorePointName: vmrp
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
               responses:
                 '200':
                   body:
@@ -63810,8 +63490,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json
               responses:
                 '200':
                   body:
@@ -63856,7 +63534,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json
               responses:
                 '200':
                   body:
@@ -64012,7 +63689,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json
               responses:
                 '200':
                   body:
@@ -64144,8 +63820,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json
               responses:
                 '200':
                   body:
@@ -64168,7 +63842,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json
               responses:
                 '200':
                   body:
@@ -64298,7 +63971,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json
               responses:
                 '200': {}
                 '202': {}
@@ -64397,7 +64069,6 @@ operationGroups:
                 api-version: '2020-09-30'
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json
               responses:
                 '200':
                   body:
@@ -64495,7 +64166,6 @@ operationGroups:
               parameters:
                 api-version: '2020-09-30'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json
               responses:
                 '200':
                   body:
@@ -64691,8 +64361,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json
               responses:
                 '200':
                   body:
@@ -64880,7 +64548,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
               responses:
                 '200':
                   body:
@@ -65017,7 +64684,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
               responses:
                 '200':
                   body:
@@ -65165,7 +64831,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
               responses:
                 '200': {}
                 '202': {}
@@ -65278,7 +64943,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json
               responses:
                 '200':
                   body:
@@ -65513,8 +65177,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json
               responses:
                 '200':
                   body:
@@ -65682,8 +65344,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json
               responses:
                 '200':
                   body:
@@ -65854,8 +65514,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
               responses:
                 '200':
                   body:
@@ -66017,8 +65675,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json
               responses:
                 '200':
                   body:
@@ -66189,8 +65845,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
               responses:
                 '200':
                   body:
@@ -66351,8 +66005,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json
               responses:
                 '200':
                   body:
@@ -66625,8 +66277,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
               responses:
                 '200':
                   body:
@@ -66679,8 +66329,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json
               responses:
                 '200':
                   body:
@@ -66864,8 +66512,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
               responses:
                 '200':
                   body:
@@ -66921,8 +66567,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json
               responses:
                 '200':
                   body:
@@ -66965,8 +66609,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json
               responses:
                 '200':
                   body:
@@ -67011,7 +66653,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json
               responses:
                 '200':
                   body:
@@ -67195,7 +66836,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json
               responses:
                 '200': {}
                 '202': {}
@@ -67322,8 +66962,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json
               responses:
                 '200':
                   body:
@@ -67543,8 +67181,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json
               responses:
                 '200':
                   body:
@@ -67727,8 +67363,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
               responses:
                 '200':
                   body:
@@ -67864,7 +67498,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
               responses:
                 '200':
                   body:
@@ -68009,7 +67642,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
               responses:
                 '200': {}
                 '202': {}
@@ -68122,8 +67754,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json
               responses:
                 '200':
                   body:
@@ -68342,8 +67972,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
               responses:
                 '200':
                   body:
@@ -68586,8 +68214,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
               responses:
                 '200':
                   body:
@@ -68762,8 +68388,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
               responses:
                 '200':
                   body:
@@ -68802,7 +68426,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json
               responses:
                 '200':
                   body:
@@ -68975,8 +68598,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
               responses:
                 '200': {}
                 '202': {}
@@ -69103,8 +68724,6 @@ operationGroups:
                 galleryName: myGalleryName
                 resourceGroupName: myResourceGroup
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
               responses:
                 '200':
                   body:
@@ -69289,7 +68908,6 @@ operationGroups:
                         - c24c76aa-8897-4027-9b03-8f7928b54ff6
                   operationType: Add
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json
               responses:
                 '200':
                   body:
@@ -69321,7 +68939,6 @@ operationGroups:
                 sharingUpdate:
                   operationType: Reset
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json
               responses:
                 '200':
                   body:
@@ -69442,7 +69059,6 @@ operationGroups:
                 api-version: '2020-09-30'
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json
               responses:
                 '200':
                   body:
@@ -69563,7 +69179,6 @@ operationGroups:
                 galleryUniqueName: galleryUniqueName
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json
               responses:
                 '200':
                   body:
@@ -69697,7 +69312,6 @@ operationGroups:
                 galleryUniqueName: galleryUniqueName
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json
               responses:
                 '200':
                   body:
@@ -69841,7 +69455,6 @@ operationGroups:
                 galleryUniqueName: galleryUniqueName
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json
               responses:
                 '200':
                   body:
@@ -69997,7 +69610,6 @@ operationGroups:
                 galleryUniqueName: galleryUniqueName
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json
               responses:
                 '200':
                   body:
@@ -70152,7 +69764,6 @@ operationGroups:
                 galleryUniqueName: galleryUniqueName
                 location: myLocation
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json
               responses:
                 '200':
                   body:
@@ -70303,7 +69914,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
               responses:
                 '200': {}
                 '202': {}
@@ -70442,7 +70052,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
               responses:
                 '200':
                   body:
@@ -70578,8 +70187,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
               responses:
                 '200':
                   body:
@@ -70710,7 +70317,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
               responses:
                 '200':
                   body:
@@ -70888,8 +70494,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
               responses:
                 '200': {}
                 '202': {}
@@ -71019,8 +70623,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
               responses:
                 '200': {}
                 '202': {}
@@ -71150,8 +70752,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleInstanceName: '{roleInstance-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
               responses:
                 '200': {}
                 '202': {}
@@ -71394,7 +70994,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 roleName: '{role-name}'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json
               responses:
                 '200':
                   body:
@@ -71515,7 +71114,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
               responses:
                 '200':
                   body:
@@ -71713,8 +71311,6 @@ operationGroups:
                     upgradeMode: Auto
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json
               responses:
                 '200':
                   body:
@@ -71814,8 +71410,6 @@ operationGroups:
                     upgradeMode: Auto
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json
               responses:
                 '200':
                   body:
@@ -71911,8 +71505,6 @@ operationGroups:
                     upgradeMode: Auto
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json
               responses:
                 '200':
                   body:
@@ -72020,8 +71612,6 @@ operationGroups:
                     upgradeMode: Auto
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json
               responses:
                 '200':
                   body:
@@ -72234,8 +71824,6 @@ operationGroups:
                     Documentation: RestAPI
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
               responses:
                 '200':
                   body:
@@ -72393,7 +71981,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
               responses:
                 '200': {}
                 '202': {}
@@ -72506,8 +72093,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json
               responses:
                 '200':
                   body:
@@ -72662,8 +72247,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
               responses:
                 '200':
                   body:
@@ -72772,8 +72355,6 @@ operationGroups:
               parameters:
                 api-version: '2021-03-01'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
               responses:
                 '200':
                   body:
@@ -72921,8 +72502,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json
               responses:
                 '200':
                   body:
@@ -73086,7 +72665,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json
               responses:
                 '200': {}
                 '202': {}
@@ -73202,7 +72780,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json
               responses:
                 '200': {}
                 '202': {}
@@ -73338,8 +72915,6 @@ operationGroups:
                     - ContosoBackend_IN_1
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json
               responses:
                 '200': {}
                 '202': {}
@@ -73475,8 +73050,6 @@ operationGroups:
                     - ContosoBackend_IN_1
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json
               responses:
                 '200': {}
                 '202': {}
@@ -73612,8 +73185,6 @@ operationGroups:
                     - ContosoBackend_IN_1
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json
               responses:
                 '200': {}
                 '202': {}
@@ -73751,8 +73322,6 @@ operationGroups:
                     - ContosoBackend_IN_1
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: >-
-                file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json
               responses:
                 '200': {}
                 '202': {}
@@ -73905,7 +73474,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
                 updateDomain: 1
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
               responses:
                 '200': {}
                 '202': {}
@@ -74031,7 +73599,6 @@ operationGroups:
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
                 updateDomain: 1
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
               responses:
                 '200':
                   body:
@@ -74144,7 +73711,6 @@ operationGroups:
                 cloudServiceName: '{cs-name}'
                 resourceGroupName: ConstosoRG
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
               responses:
                 '200':
                   body:
@@ -74271,7 +73837,6 @@ operationGroups:
                 location: westus2
                 osVersionName: WA-GUEST-OS-3.90_202010-02
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
               responses:
                 '200':
                   body:
@@ -74379,7 +73944,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 location: westus2
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
               responses:
                 '200':
                   body:
@@ -74519,7 +74083,6 @@ operationGroups:
                 location: westus2
                 osFamilyName: '3'
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
               responses:
                 '200':
                   body:
@@ -74628,7 +74191,6 @@ operationGroups:
                 api-version: '2021-03-01'
                 location: westus2
                 subscriptionId: '{subscription-id}'
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/packages/autorest.testmodeler/test/swagger/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
               responses:
                 '200':
                   body:

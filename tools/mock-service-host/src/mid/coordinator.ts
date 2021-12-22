@@ -66,13 +66,7 @@ export class Coordinator {
                 nearest = parseInt(code)
             }
         }
-        if (nearest)
-            return [
-                nearest,
-                responses[nearest.toString()].body === undefined
-                    ? {}
-                    : responses[nearest.toString()].body
-            ]
+        if (nearest) return [nearest, responses[nearest.toString()].body]
         throw new NoResponse(status.toString())
     }
 

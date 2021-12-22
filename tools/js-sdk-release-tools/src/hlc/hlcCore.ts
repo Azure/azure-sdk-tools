@@ -8,6 +8,7 @@ import {generateChangelogAndBumpVersion} from "./automaticGenerateChangeLogAndBu
 import {Changelog} from "../changelog/changelogGenerator";
 import {changeRushJson} from "../utils/changeRushJson";
 import {modifyOrGenerateCiYaml} from "../utils/changeCiYaml";
+import {isBetaVersion} from "../utils/version";
 
 const commentJson = require('comment-json');
 const yaml = require('yaml');
@@ -25,11 +26,23 @@ export interface OutputPackageInfo {
 }
 
 function changeReadmeMd(packageFolderPath: string) {
+    let isPreview = false;
+    if (fs.existsSync(path.join(packageFolderPath, 'package.json'))) {
+        const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'}));
+        isPreview = isBetaVersion(packageJson.version)
+    }
     if (fs.existsSync(path.join(packageFolderPath, 'README.md'))) {
         let content = fs.readFileSync(path.join(packageFolderPath, 'README.md'), {encoding: 'utf-8'});
         content = content.replace(/\?view=azure-node-preview/, '');
+        if (isPreview) {
+            const match = /API reference documentation[^ )]*/.exec(content);
+            if (!!match) {
+                content = content.replace(match[0], `${match[0]}?view=azure-node-preview`)
+            }
+        }
         fs.writeFileSync(path.join(packageFolderPath, 'README.md'), content, {encoding: 'utf-8'});
     }
+
 }
 
 export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, outputJson?: any, swaggerRepoUrl?: string) {
@@ -87,7 +100,6 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                     const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));
 
                     changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
-                    changeReadmeMd(packageFolderPath);
 
                     logger.logGreen(`rush update`);
                     execSync('rush update', { stdio: 'inherit' });
@@ -131,6 +143,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                     }
                     fs.writeFileSync(path.join(packageFolderPath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
                     modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
+                    changeReadmeMd(packageFolderPath);
                 } else {
                     throw 'find undefined packageFolderPath'
                 }

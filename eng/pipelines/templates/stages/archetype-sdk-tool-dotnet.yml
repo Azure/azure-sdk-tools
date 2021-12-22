@@ -104,7 +104,16 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: azure-sdk-for-net
+                - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+                  parameters:
+                    SkipDefaultCheckout: false
+                    Paths:
+                      - eng
+                    Repositories:
+                      - Name: "Azure/azure-sdk-for-net"
+                        Commitish: "feature/GenericNetRelease"
+                        WorkingDirectory: $(System.DefaultWorkingDirectory)\azure-sdk-for-net
+
                 - template: eng/pipelines/templates/steps/net-release-to-any.yml@azure-sdk-for-net
                   parameters:
                     DownloadArtifacts: true
@@ -117,3 +126,4 @@ stages:
                     DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
                     BuildToolsRepoPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
                     ArtifactsPath: $(System.DefaultWorkingDirectory)\_artifacts\packages
+                    CheckoutDirectory: $(System.DefaultWorkingDirectory)\azure-sdk-for-net

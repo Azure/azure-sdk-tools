@@ -30,9 +30,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<disk-encryption-set-name>",
 		golang.DiskEncryptionSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Identity: &golang.EncryptionSetIdentity{
 				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},

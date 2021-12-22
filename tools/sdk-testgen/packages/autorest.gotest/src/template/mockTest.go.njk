@@ -30,11 +30,12 @@ var (
 )
 
 {% for exampleGroup in exampleGroups %}
+{% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
 {%- for example in exampleGroup.examples %}
     // From example {{example.name}}
-	{%- if config.testmodeler.mock['send-example-id'] %}
-	ctx = azcore.WithHTTPHeader(ctx, map[string][]string{
+	{%- if sendExampleId %}
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
         "example-id": {"{{example.name}}"},
     })
 	{%- endif %}
@@ -47,54 +48,84 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
 	{%- endif %}
 	{%- if example.returnInfo.length == 2 %}
-	{%- if example.isLRO %}
-	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-	{%- else %}
-	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-	{%- endif %}
-	if err != nil {
-		t.Fatal(err)
-	}
-	{%- if example.isLRO %}
-	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	{%- endif %}
-	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
-		}
-		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
-            t.Logf("Pager result: %#v\n", v)
-		}
-	}
-	{%- else %}
-	client.{{example.opName}}({{example.methodParametersOutput}})
-	{%- endif %}
-    {%- if example.isLRO and example.isPageable and example.checkResponse %}
-    for res.NextPage(ctx) {
-		if err := res.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
-		}
-		for _, v := range res.PageResponse().{{example.pageableItemName}} {
-            t.Logf("Pager result: %#v\n", v)
-		}
-	}
+        {%- if example.isLRO %}
+            poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- else %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- endif %}
+        if err != nil {
+            t.Fatal(err)
+        }
+        {%- if example.isLRO %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+            if err != nil {
+                t.Fatal(err)
+            }
+        {%- endif %}
+    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+        pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf("failed to advance page: %v", err)
+            }
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            {
+                pagerExampleRes := {{example.responseOutput}}
+                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}}) {
+                    exampleResJson, _ := json.Marshal(pagerExampleRes)
+                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}})
+                    t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                }
+            }
+            {%- endif %}
+        }
+    {%- else %}
+        client.{{example.opName}}({{example.methodParametersOutput}})
     {%- endif %}
-	{%- if example.checkResponse and not example.isPageable%}
-	t.Logf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.name}}{{example.operation.language.go.name}}Result{% endif %})
-	{%- endif %}
-{%- if not loop.last %}
 
-{% endif %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+        for res.NextPage(ctx) {
+            if err := res.Err(); err != nil {
+                t.Fatalf("failed to advance page: %v", err)
+            }
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            {
+                pagerExampleRes := {{example.responseOutput}}
+                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}}) {
+                    exampleResJson, _ := json.Marshal(pagerExampleRes)
+                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}})
+                    t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                }
+            }
+            {%- endif %}
+        }
+    {%- endif %}
+        
+    {%- if example.checkResponse and not example.isPageable and verifyResponse%}
+        // Response check
+        {
+            exampleRes := {{example.responseOutput}}
+            {% if example.responseHasLROState %}
+            exampleRes.Properties.ProvisioningState = {{packageName}}.ProvisioningStateSucceeded.ToPtr()
+            {% endif %}
+            if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
+                exampleResJson, _ := json.Marshal(exampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})
+                t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+            }
+        }
+    {%- endif %}
+    {%- if not loop.last %}
+
+    {% endif %}
 {%- endfor %}
 {%- if exampleGroup.examples|length <=0 %}
 	t.Skip("Warning: No test steps for this operation!")
 {%- endif %}
 }
+{%- endif %}
 {% endfor %}
 
 // TestMain will exec each test

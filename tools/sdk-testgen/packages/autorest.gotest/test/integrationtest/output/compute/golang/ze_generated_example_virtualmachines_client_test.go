@@ -50,9 +50,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<vm-name>",
 		golang.VirtualMachine{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
 					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
@@ -60,9 +58,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("<id>"),
-							},
+							ID: to.StringPtr("<id>"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},
@@ -127,9 +123,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
 						{
-							SubResource: golang.SubResource{
-								ID: to.StringPtr("<id>"),
-							},
+							ID: to.StringPtr("<id>"),
 							Properties: &golang.NetworkInterfaceReferenceProperties{
 								Primary: to.BoolPtr(true),
 							},

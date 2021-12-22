@@ -28,11 +28,9 @@ func ExampleDedicatedHostGroupsClient_CreateOrUpdate() {
 		"<resource-group-name>",
 		"<host-group-name>",
 		golang.DedicatedHostGroup{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-				Tags: map[string]*string{
-					"department": to.StringPtr("finance"),
-				},
+			Location: to.StringPtr("<location>"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("finance"),
 			},
 			Properties: &golang.DedicatedHostGroupProperties{
 				PlatformFaultDomainCount:  to.Int32Ptr(3),

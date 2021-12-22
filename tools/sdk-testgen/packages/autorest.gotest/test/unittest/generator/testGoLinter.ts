@@ -21,7 +21,7 @@ describe('processRequest of go-linter', () => {
                 });
             },
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            ListInputs: async (_) => {
+            listInputs: async (_) => {
                 return Promise.resolve(files);
             },
         } as any);

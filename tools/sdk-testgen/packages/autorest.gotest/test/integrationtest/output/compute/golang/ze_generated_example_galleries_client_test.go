@@ -30,9 +30,7 @@ func ExampleGalleriesClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<gallery-name>",
 		golang.Gallery{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryProperties{
 				Description: to.StringPtr("<description>"),
 				SharingProfile: &golang.SharingProfile{

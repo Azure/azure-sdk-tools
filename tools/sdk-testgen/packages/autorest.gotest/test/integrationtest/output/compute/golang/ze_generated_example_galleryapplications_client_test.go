@@ -31,9 +31,7 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 		"<gallery-name>",
 		"<gallery-application-name>",
 		golang.GalleryApplication{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryApplicationProperties{
 				Description:         to.StringPtr("<description>"),
 				Eula:                to.StringPtr("<eula>"),

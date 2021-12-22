@@ -31,11 +31,9 @@ func ExampleDedicatedHostsClient_BeginCreateOrUpdate() {
 		"<host-group-name>",
 		"<host-name>",
 		golang.DedicatedHost{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-				Tags: map[string]*string{
-					"department": to.StringPtr("HR"),
-				},
+			Location: to.StringPtr("<location>"),
+			Tags: map[string]*string{
+				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.DedicatedHostProperties{
 				PlatformFaultDomain: to.Int32Ptr(1),

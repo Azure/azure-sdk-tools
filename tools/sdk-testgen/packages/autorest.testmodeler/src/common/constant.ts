@@ -7,7 +7,17 @@ export enum Config {
     test = 'test',
     splitParentsValue = 'testmodeler.split-parents-value',
     disabledExamples = 'testmodeler.mock.disabled-examples',
+    sendExampleId = 'testmodeler.mock.send-example-id',
+    verifyResponse = 'testmodeler.mock.verify-response',
 }
+
+export const configDefaults = {
+    [Config.exportCodemodel]: false,
+    [Config.testResources]: [],
+    [Config.splitParentsValue]: false,
+    [Config.sendExampleId]: true,
+    [Config.verifyResponse]: true,
+};
 
 export enum TestScenarioVariableNames {
     subscriptionId = 'subscriptionId',
@@ -15,7 +25,7 @@ export enum TestScenarioVariableNames {
     resourceGroupName = 'resourceGroupName',
 }
 
-export const variableDefaults = {
+export const testScenarioVariableDefault = {
     [TestScenarioVariableNames.subscriptionId]: '00000000-00000000-00000000-00000000',
     [TestScenarioVariableNames.location]: 'westus',
     [TestScenarioVariableNames.resourceGroupName]: 'scenarioTestTempGroup',

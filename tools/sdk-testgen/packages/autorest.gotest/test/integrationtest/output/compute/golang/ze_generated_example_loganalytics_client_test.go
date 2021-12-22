@@ -29,13 +29,11 @@ func ExampleLogAnalyticsClient_BeginExportRequestRateByInterval() {
 	poller, err := client.BeginExportRequestRateByInterval(ctx,
 		"<location>",
 		golang.RequestRateByIntervalInput{
-			LogAnalyticsInputBase: golang.LogAnalyticsInputBase{
-				BlobContainerSasURI: to.StringPtr("<blob-container-sas-uri>"),
-				FromTime:            to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
-				GroupByResourceName: to.BoolPtr(true),
-				ToTime:              to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
-			},
-			IntervalLength: golang.IntervalInMinsFiveMins.ToPtr(),
+			BlobContainerSasURI: to.StringPtr("<blob-container-sas-uri>"),
+			FromTime:            to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
+			GroupByResourceName: to.BoolPtr(true),
+			ToTime:              to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
+			IntervalLength:      golang.IntervalInMinsFiveMins.ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -59,15 +57,13 @@ func ExampleLogAnalyticsClient_BeginExportThrottledRequests() {
 	poller, err := client.BeginExportThrottledRequests(ctx,
 		"<location>",
 		golang.ThrottledRequestsInput{
-			LogAnalyticsInputBase: golang.LogAnalyticsInputBase{
-				BlobContainerSasURI:        to.StringPtr("<blob-container-sas-uri>"),
-				FromTime:                   to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
-				GroupByClientApplicationID: to.BoolPtr(false),
-				GroupByOperationName:       to.BoolPtr(true),
-				GroupByResourceName:        to.BoolPtr(false),
-				GroupByUserAgent:           to.BoolPtr(false),
-				ToTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
-			},
+			BlobContainerSasURI:        to.StringPtr("<blob-container-sas-uri>"),
+			FromTime:                   to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-21T01:54:06.862601Z"); return t }()),
+			GroupByClientApplicationID: to.BoolPtr(false),
+			GroupByOperationName:       to.BoolPtr(true),
+			GroupByResourceName:        to.BoolPtr(false),
+			GroupByUserAgent:           to.BoolPtr(false),
+			ToTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 		},
 		nil)
 	if err != nil {

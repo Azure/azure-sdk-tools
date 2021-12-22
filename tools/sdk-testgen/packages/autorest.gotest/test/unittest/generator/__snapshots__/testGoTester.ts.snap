@@ -17,9 +17,13 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
+
 
 
 // x-ms-original-file: 
@@ -30,7 +34,7 @@ func ExampleExtensionsClient_Create() {
 	}
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
-	res, err := client.Create(ctx,
+	_, err = client.Create(ctx,
 \\"<extension-id>\\",
 \\"<farm-beats-resource-name>\\",
 \\"<resource-group-name>\\",
@@ -38,8 +42,9 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsCreateResult)
 }
+
+
 
 // x-ms-original-file: 
 func ExampleExtensionsClient_Get() {
@@ -60,6 +65,8 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsGetResult)
 }
 
+
+
 // x-ms-original-file: 
 func ExampleExtensionsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -79,6 +86,8 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsUpdateResult)
 }
 
+
+
 // x-ms-original-file: 
 func ExampleExtensionsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -96,6 +105,8 @@ nil)
 		log.Fatal(err)
 	}
 }
+
+
 
 // x-ms-original-file: 
 func ExampleExtensionsClient_ListByFarmBeats() {
@@ -122,6 +133,7 @@ SkipToken: nil,
 	}
 }
 
+
 ",
   "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.16
 // +build go1.16
@@ -138,9 +150,13 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
+
 
 
 // x-ms-original-file: 
@@ -167,6 +183,8 @@ MaxPageSize: nil,
 	}
 }
 
+
+
 // x-ms-original-file: 
 func ExampleFarmBeatsExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -184,6 +202,7 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsGetResult)
 }
 
+
 ",
   "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.16
 // +build go1.16
@@ -200,9 +219,13 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
+
 
 
 // x-ms-original-file: 
@@ -223,6 +246,8 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsGetResult)
 }
 
+
+
 // x-ms-original-file: 
 func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -235,13 +260,11 @@ func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
 \\"<farm-beats-resource-name>\\",
 \\"<resource-group-name>\\",
 armagfood.FarmBeats{
-TrackedResource: armagfood.TrackedResource{
 Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 \\"key2\\": to.StringPtr(\\"value2\\"),
 },
 Location: to.StringPtr(\\"<location>\\"),
-},
 },
 nil)
 	if err != nil {
@@ -249,6 +272,8 @@ nil)
 	}
 	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsCreateOrUpdateResult)
 }
+
+
 
 // x-ms-original-file: 
 func ExampleFarmBeatsModelsClient_Update() {
@@ -274,6 +299,8 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsUpdateResult)
 }
 
+
+
 // x-ms-original-file: 
 func ExampleFarmBeatsModelsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -290,6 +317,8 @@ nil)
 		log.Fatal(err)
 	}
 }
+
+
 
 // x-ms-original-file: 
 func ExampleFarmBeatsModelsClient_ListBySubscription() {
@@ -311,6 +340,8 @@ SkipToken: nil,
 		}
 	}
 }
+
+
 
 // x-ms-original-file: 
 func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
@@ -334,6 +365,7 @@ SkipToken: nil,
 	}
 }
 
+
 ",
   "ze_generated_example_locations_client_test.go": "//go:build go1.16
 // +build go1.16
@@ -350,9 +382,13 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
+
 
 
 // x-ms-original-file: 
@@ -375,6 +411,7 @@ nil)
 	log.Printf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
 }
 
+
 ",
   "ze_generated_example_operations_client_test.go": "//go:build go1.16
 // +build go1.16
@@ -391,9 +428,13 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
+
 
 
 // x-ms-original-file: 
@@ -414,6 +455,7 @@ func ExampleOperationsClient_List() {
 		}
 	}
 }
+
 
 ",
   "zt_generated_mock_test.go": "//go:build go1.16
@@ -438,8 +480,11 @@ import (
 	\\"golang.org/x/net/http2\\"
 )
 import (
+	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/agfood/armagfood\\"
+	\\"reflect\\"
+	\\"time\\"
 )
 
 
@@ -453,6 +498,7 @@ var (
 )
 
 
+
 func TestExtensions_Create(t *testing.T) {
     // From example Extensions_Create
 	defer func() {
@@ -461,16 +507,16 @@ func TestExtensions_Create(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.Create(ctx,
+            _, err := client.Create(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsCreateResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestExtensions_Get(t *testing.T) {
     // From example Extensions_Get
@@ -480,16 +526,16 @@ func TestExtensions_Get(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.Get(ctx,
+            res, err := client.Get(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsGetResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestExtensions_Update(t *testing.T) {
     // From example Extensions_Update
@@ -499,16 +545,16 @@ func TestExtensions_Update(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.Update(ctx,
+            res, err := client.Update(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.ExtensionsUpdateResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestExtensions_Delete(t *testing.T) {
     // From example Extensions_Delete
@@ -518,15 +564,16 @@ func TestExtensions_Delete(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	_, err := client.Delete(ctx,
+            _, err := client.Delete(ctx,
 \\"provider.extension\\",
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestExtensions_ListByFarmBeats(t *testing.T) {
     // From example Extensions_ListByFarmBeats
@@ -536,22 +583,20 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	pager := client.ListByFarmBeats(\\"examples-rg\\",
+        pager := client.ListByFarmBeats(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
 &armagfood.ExtensionsListByFarmBeatsOptions{ExtensionIDs: []string{},
 ExtensionCategories: []string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range pager.PageResponse().Value {
-            t.Logf(\\"Pager result: %#v\\\\n\\", v)
-		}
-	}
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+        }
 }
+
 
 func TestFarmBeatsExtensions_List(t *testing.T) {
     // From example FarmBeatsExtensions_List
@@ -561,21 +606,19 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
-	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []string{},
+        pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []string{},
 FarmBeatsExtensionNames: []string{},
 ExtensionCategories: []string{},
 PublisherIDs: []string{},
 MaxPageSize: nil,
 })
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range pager.PageResponse().Value {
-            t.Logf(\\"Pager result: %#v\\\\n\\", v)
-		}
-	}
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+        }
 }
+
 
 func TestFarmBeatsExtensions_Get(t *testing.T) {
     // From example FarmBeatsExtensions_Get
@@ -585,14 +628,14 @@ func TestFarmBeatsExtensions_Get(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, &options)
-	res, err := client.Get(ctx,
+            res, err := client.Get(ctx,
 \\"DTN.ContentServices\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsGetResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestFarmBeatsModels_Get(t *testing.T) {
     // From example FarmBeatsModels_Get
@@ -602,15 +645,15 @@ func TestFarmBeatsModels_Get(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.Get(ctx,
+            res, err := client.Get(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsGetResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
     // From example FarmBeatsModels_CreateOrUpdate
@@ -620,24 +663,22 @@ func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.CreateOrUpdate(ctx,
+            res, err := client.CreateOrUpdate(ctx,
 \\"examples-farmbeatsResourceName\\",
 \\"examples-rg\\",
 armagfood.FarmBeats{
-TrackedResource: armagfood.TrackedResource{
 Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 \\"key2\\": to.StringPtr(\\"value2\\"),
 },
 Location: to.StringPtr(\\"eastus2\\"),
 },
-},
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsCreateOrUpdateResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestFarmBeatsModels_Update(t *testing.T) {
     // From example FarmBeatsModels_Update
@@ -647,7 +688,7 @@ func TestFarmBeatsModels_Update(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.Update(ctx,
+            res, err := client.Update(ctx,
 \\"examples-farmBeatsResourceName\\",
 \\"examples-rg\\",
 armagfood.FarmBeatsUpdateRequestModel{
@@ -657,11 +698,11 @@ Tags: map[string]*string{
 },
 },
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsUpdateResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestFarmBeatsModels_Delete(t *testing.T) {
     // From example FarmBeatsModels_Delete
@@ -671,14 +712,15 @@ func TestFarmBeatsModels_Delete(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	_, err := client.Delete(ctx,
+            _, err := client.Delete(ctx,
 \\"examples-rg\\",
 \\"examples-farmBeatsResourceName\\",
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
     // From example FarmBeatsModels_ListBySubscription
@@ -688,18 +730,16 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
+        pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range pager.PageResponse().Value {
-            t.Logf(\\"Pager result: %#v\\\\n\\", v)
-		}
-	}
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+        }
 }
+
 
 func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
     // From example FarmBeatsModels_ListByResourceGroup
@@ -709,19 +749,17 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	pager := client.ListByResourceGroup(\\"examples-rg\\",
+        pager := client.ListByResourceGroup(\\"examples-rg\\",
 &armagfood.FarmBeatsModelsListByResourceGroupOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range pager.PageResponse().Value {
-            t.Logf(\\"Pager result: %#v\\\\n\\", v)
-		}
-	}
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+        }
 }
+
 
 func TestLocations_CheckNameAvailability(t *testing.T) {
     // From example Locations_CheckNameAvailability_AlreadyExists
@@ -731,30 +769,29 @@ func TestLocations_CheckNameAvailability(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
-	res, err := client.CheckNameAvailability(ctx,
+            res, err := client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"existingaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 
-
+    
     // From example Locations_CheckNameAvailability_Available
-	res, err = client.CheckNameAvailability(ctx,
+            res, err = client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"newaccountname\\"),
 Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
 nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
+        if err != nil {
+            t.Fatal(err)
+        }
 }
+
 
 func TestOperations_List(t *testing.T) {
     // From example Operations_List
@@ -764,15 +801,12 @@ func TestOperations_List(t *testing.T) {
 		}
 	}()
 	client := armagfood.NewOperationsClient(cred, &options)
-	pager := client.List(nil)
-	for pager.NextPage(ctx) {
-		if err := pager.Err(); err != nil {
-			t.Fatalf(\\"failed to advance page: %v\\", err)
-		}
-		for _, v := range pager.PageResponse().Value {
-            t.Logf(\\"Pager result: %#v\\\\n\\", v)
-		}
-	}
+        pager := client.List(nil)
+        for pager.NextPage(ctx) {
+            if err := pager.Err(); err != nil {
+                t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+        }
 }
 
 
@@ -859,6 +893,7 @@ import (
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
+	\\"reflect\\"
 	\\"time\\"
 )
 
@@ -911,11 +946,9 @@ Name: to.StringPtr(\\"my-signalr-service\\"),
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
-TrackedResource: armsignalr.TrackedResource{
 Location: to.StringPtr(location),
 Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
-},
 },
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
@@ -923,7 +956,6 @@ Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
 Capacity: to.Int32Ptr(1),
 },
 Properties: &armsignalr.SignalRProperties{
-SignalRCreateOrUpdateProperties: armsignalr.SignalRCreateOrUpdateProperties{
 Features: []*armsignalr.SignalRFeature{
 {
 Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
@@ -968,18 +1000,13 @@ DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
 armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
-Deny: nil,
 },
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
-NetworkACL: armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
 armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
-Deny: nil,
-},
 Name: to.StringPtr(\\"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
-},
 },
 TLS: &armsignalr.SignalRTLSSettings{
 ClientCertEnabled: to.BoolPtr(false),

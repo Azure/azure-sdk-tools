@@ -61,9 +61,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			resourceGroupName,
 			resourceName,
 			golang.ProximityPlacementGroup{
-				Resource: golang.Resource{
-					Location: to.StringPtr(location),
-				},
+				Location: to.StringPtr(location),
 				Properties: &golang.ProximityPlacementGroupProperties{
 					ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
 				},
@@ -114,9 +112,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			resourceGroupName,
 			"myVM",
 			golang.VirtualMachine{
-				Resource: golang.Resource{
-					Location: to.StringPtr(location),
-				},
+				Location: to.StringPtr(location),
 				Plan: &golang.Plan{
 					Name:      to.StringPtr(fakeStepVar),
 					Product:   to.StringPtr("windows-data-science-vm"),
@@ -129,9 +125,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 					NetworkProfile: &golang.NetworkProfile{
 						NetworkInterfaces: []*golang.NetworkInterfaceReference{
 							{
-								SubResource: golang.SubResource{
-									ID: to.StringPtr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
-								},
+								ID: to.StringPtr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 								Properties: &golang.NetworkInterfaceReferenceProperties{
 									Primary: to.BoolPtr(true),
 								},

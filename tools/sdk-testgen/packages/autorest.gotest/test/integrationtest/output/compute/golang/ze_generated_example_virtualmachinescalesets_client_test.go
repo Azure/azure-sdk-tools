@@ -50,9 +50,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{

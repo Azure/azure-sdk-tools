@@ -2,16 +2,24 @@ import { ExampleParameter, ExampleValue, TestCodeModel, TestCodeModeler } from '
 import { Helper } from '../../../src/util/helper';
 import { MockTool } from '../../tools';
 import { SchemaType } from '@autorest/codemodel';
+import { TestConfig } from '../../../src/common/testConfig';
+import { configDefaults } from '../../../src/common/constant';
 import { serialize } from '@azure-tools/codegen';
 
 describe('ExampleValue.createInstance(...)', () => {
     const codeModel = MockTool.createCodeModel();
     beforeAll(() => {
-        TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-            testmodeler: {
-                'split-parents-value': true,
-            },
-        });
+        TestCodeModeler.createInstance(
+            codeModel as TestCodeModel,
+            new TestConfig(
+                {
+                    testmodeler: {
+                        'split-parents-value': true,
+                    },
+                },
+                configDefaults,
+            ),
+        );
     });
     afterEach(() => {
         jest.restoreAllMocks();
@@ -96,11 +104,17 @@ describe('TestCodeModel functions', () => {
 
     describe('genMockTests', () => {
         it('genMockTests', async () => {
-            const testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-                testmodeler: {
-                    'split-parents-value': true,
-                },
-            });
+            const testCodeModel = TestCodeModeler.createInstance(
+                codeModel as TestCodeModel,
+                new TestConfig(
+                    {
+                        testmodeler: {
+                            'split-parents-value': true,
+                        },
+                    },
+                    configDefaults,
+                ),
+            );
             testCodeModel.genMockTests();
             expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
         });
@@ -108,14 +122,20 @@ describe('TestCodeModel functions', () => {
 
     describe('genMockTests with some example disabled', () => {
         it('genMockTests', async () => {
-            const testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-                testmodeler: {
-                    mock: {
-                        ['disabled-examples']: ['Extensions_Get', 'Extensions_Delete'],
+            const testCodeModel = TestCodeModeler.createInstance(
+                codeModel as TestCodeModel,
+                new TestConfig(
+                    {
+                        testmodeler: {
+                            mock: {
+                                ['disabled-examples']: ['Extensions_Get', 'Extensions_Delete'],
+                            },
+                            'split-parents-value': true,
+                        },
                     },
-                    'split-parents-value': true,
-                },
-            });
+                    configDefaults,
+                ),
+            );
             testCodeModel.genMockTests();
             expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
         });

@@ -18,9 +18,9 @@ import {
     SchemaType,
     codeModelSchema,
 } from '@autorest/codemodel';
-import { Config, OavStepType, TestScenarioVariableNames, variableDefaults } from '../common/constant';
+import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
+import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
-import { Host, startSession } from '@autorest/extension-base';
 import { TestConfig } from '../common/testConfig';
 import { TestDefinitionFile, TestScenario, TestStep, TestStepArmTemplateDeployment, TestStepRestCall } from 'oav/dist/lib/testScenario/testResourceTypes';
 import { TestResourceLoader } from 'oav/dist/lib/testScenario/testResourceLoader';
@@ -137,7 +137,7 @@ export class ExampleValue {
             instance.schema = childSchema;
 
             instance.properties = {};
-            const splitParentsValue = TestCodeModeler.instance.testConfig.getValue(Config.splitParentsValue, false);
+            const splitParentsValue = TestCodeModeler.instance.testConfig.getValue(Config.splitParentsValue);
             for (const property of Helper.getAllProperties(childSchema, !splitParentsValue)) {
                 if (property.flattenedNames) {
                     if (!Helper.pathIsIncluded(usedProperties, property.flattenedNames)) {
@@ -249,22 +249,14 @@ export class ExampleModel {
 export class TestCodeModeler {
     public static instance: TestCodeModeler;
     public testConfig: TestConfig;
-    private constructor(public codeModel: TestCodeModel, testConfig: TestConfig | Record<string, any>) {
-        this.createTestConfig(testConfig);
+    private constructor(public codeModel: TestCodeModel, testConfig: TestConfig) {
+        this.testConfig = testConfig;
     }
 
-    private createTestConfig(testConfig: TestConfig | Record<string, any>) {
-        if (!(testConfig instanceof TestConfig)) {
-            this.testConfig = new TestConfig(testConfig);
-        } else {
-            this.testConfig = testConfig;
-        }
-    }
-
-    public static createInstance(codeModel: TestCodeModel, testConfig: TestConfig | Record<string, any>): TestCodeModeler {
+    public static createInstance(codeModel: TestCodeModel, testConfig: TestConfig): TestCodeModeler {
         if (TestCodeModeler.instance) {
             TestCodeModeler.instance.codeModel = codeModel;
-            TestCodeModeler.instance.createTestConfig(testConfig);
+            TestCodeModeler.instance.testConfig = testConfig;
         }
         TestCodeModeler.instance = new TestCodeModeler(codeModel, testConfig);
         return TestCodeModeler.instance;
@@ -340,7 +332,7 @@ export class TestCodeModeler {
         });
     }
 
-    public static async getSessionFromHost(host: Host) {
+    public static async getSessionFromHost(host: AutorestExtensionHost) {
         return await startSession<TestCodeModel>(host, {}, codeModelSchema);
     }
 
@@ -376,14 +368,14 @@ export class TestCodeModeler {
                 scope.requiredVariablesDefault = {};
             }
             const defaults = {
-                ...variableDefaults,
+                ...testScenarioVariableDefault,
                 ...this.testConfig.getValue(Config.scenarioVariableDefaults),
             };
             for (const variable of scope.requiredVariables) {
                 scope.requiredVariablesDefault[variable] = _.get(defaults, variable, '');
             }
             if (scope['scope'] && (scope['scope'] as string).toLocaleLowerCase() === 'resourcegroup') {
-                scope.requiredVariablesDefault[TestScenarioVariableNames.resourceGroupName] = _.get(defaults, TestScenarioVariableNames.resourceGroupName, '');
+                scope.requiredVariablesDefault['resourceGroupName'] = _.get(defaults, 'resourceGroupName', '');
             }
         }
 
@@ -482,7 +474,7 @@ export class TestCodeModeler {
                 swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
             });
 
-            for (const testResource of this.testConfig.getValue(Config.testResources) || []) {
+            for (const testResource of this.testConfig.getValue(Config.testResources)) {
                 if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
                     try {
                         const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;

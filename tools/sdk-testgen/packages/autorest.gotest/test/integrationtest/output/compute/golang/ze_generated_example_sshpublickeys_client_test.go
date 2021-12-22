@@ -28,9 +28,7 @@ func ExampleSSHPublicKeysClient_Create() {
 		"<resource-group-name>",
 		"<ssh-public-key-name>",
 		golang.SSHPublicKeyResource{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.SSHPublicKeyResourceProperties{
 				PublicKey: to.StringPtr("<public-key>"),
 			},

@@ -15,6 +15,7 @@ import (
 {{imports}}
 
 {%- for exampleGroup in exampleGroups %}
+{% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
 // x-ms-original-file: {{example.originalFile}}
@@ -70,4 +71,5 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 }
 {% endif %}
 {%- endfor %}
+{% endif %}
 {%- endfor %}

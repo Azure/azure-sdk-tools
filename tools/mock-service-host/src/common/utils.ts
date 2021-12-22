@@ -47,6 +47,22 @@ export function replacePropertyValue(
     return newObject
 }
 
+export function removeNullValueKey(object: any): any {
+    if (typeof object !== 'object') return object
+
+    const newObject = lodash.clone(object)
+
+    lodash.each(object, (val, key) => {
+        if (val === null) {
+            delete newObject[key]
+        } else if (typeof val === 'object') {
+            newObject[key] = removeNullValueKey(val)
+        }
+    })
+
+    return newObject
+}
+
 export function getPureUrl(url: string): string {
     return url?.split('?')[0]
 }

@@ -31,11 +31,19 @@ function changeReadmeMd(packageFolderPath: string) {
         const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'}));
         isPreview = isBetaVersion(packageJson.version)
     }
-    if (!isPreview && fs.existsSync(path.join(packageFolderPath, 'README.md'))) {
+    if (fs.existsSync(path.join(packageFolderPath, 'README.md'))) {
         let content = fs.readFileSync(path.join(packageFolderPath, 'README.md'), {encoding: 'utf-8'});
-        content = content.replace(/\?view=azure-node-preview/, '');
+        if (!isPreview) {
+            content = content.replace(/\?view=azure-node-preview/, '');
+        } else {
+            const match = /API reference documentation[^ )]*/.exec(content);
+            if (!!match) {
+                content = content.replace(match[0], `${match}?view=azure-node-preview`)
+            }
+        }
         fs.writeFileSync(path.join(packageFolderPath, 'README.md'), content, {encoding: 'utf-8'});
     }
+
 }
 
 export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, outputJson?: any, swaggerRepoUrl?: string) {

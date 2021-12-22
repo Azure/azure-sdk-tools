@@ -33,9 +33,8 @@ function changeReadmeMd(packageFolderPath: string) {
     }
     if (fs.existsSync(path.join(packageFolderPath, 'README.md'))) {
         let content = fs.readFileSync(path.join(packageFolderPath, 'README.md'), {encoding: 'utf-8'});
-        if (!isPreview) {
-            content = content.replace(/\?view=azure-node-preview/, '');
-        } else {
+        content = content.replace(/\?view=azure-node-preview/, '');
+        if (isPreview) {
             const match = /API reference documentation[^ )]*/.exec(content);
             if (!!match) {
                 content = content.replace(match[0], `${match}?view=azure-node-preview`)

@@ -9,34 +9,12 @@ param (
   [switch]$Test  #Run test functions against the script logic
 )
 
-function Get-CodeOwnersTool()
-{
-  $command = Join-Path $ToolPath "retrieve-codeowners"
-  # Check if the retrieve-codeowners tool exsits or not.
-  if (Get-Command $command -errorAction SilentlyContinue) {
-    return $command
-  }
-  if (!(Test-Path $ToolPath)) {
-    New-Item -ItemType Directory -Path $ToolPath | Out-Null
-  }
-  Write-Host "Installing the retrieve-codeowners tool under $ToolPath... "
-
-  # Run command under tool path to avoid dotnet tool install command checking .csproj files. 
-  # This is a bug for dotnet tool command. Issue: https://github.com/dotnet/sdk/issues/9623
-  Push-Location $ToolPath
-  dotnet tool install --tool-path $ToolPath --add-source $DevOpsFeed --version $ToolVersion "Azure.Sdk.Tools.RetrieveCodeOwners" | Out-Null
-  Pop-Location
-  # Test to see if the tool properly installed.
-  if (!(Get-Command $command -errorAction SilentlyContinue)) {
-    Write-Error "The retrieve-codeowners tool is not properly installed. Please check your tool path. $ToolPath"
-    return 
-  }
-  return $command
-}
+. (Join-Path $PSScriptRoot Helpers DotnetTool-Helpers.ps1)
 
 function Get-CodeOwners ([string]$targetDirectory, [string]$codeOwnerFileLocation, [bool]$includeNonUserAliases = $false)
 {
-  $command = Get-CodeOwnersTool
+  $command = Get-CodeOwnersTool -toolPath $ToolPath -toolName "Azure.Sdk.Tools.RetrieveCodeOwners" -toolVersion $ToolVersion `
+  -feedUrl $DevOpsFeed -toolCommandName "retrieve-codeowners"
   # Filter out the non user alias from code owner list.
   if($includeNonUserAliases) {
     $codeOwnersString = & $command --target-directory $targetDirectory --code-owner-file-path $codeOwnerFileLocation 2>&1

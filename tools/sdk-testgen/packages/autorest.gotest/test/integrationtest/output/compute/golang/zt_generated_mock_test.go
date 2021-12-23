@@ -227,7 +227,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 		golang.ProximityPlacementGroup{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		},
 		nil)
@@ -242,7 +242,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
 			Location: to.StringPtr("westus"),
 			Properties: &golang.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		}
 
@@ -285,7 +285,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
 			Location: to.StringPtr("westus"),
 			Properties: &golang.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		}
 
@@ -347,7 +347,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 					{
 						ID: to.StringPtr("string"),
 					}},
-				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 				VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
 					{
 						ID: to.StringPtr("string"),
@@ -397,7 +397,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 								{
 									ID: to.StringPtr("string"),
 								}},
-							ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+							ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 							VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
 								{
 									ID: to.StringPtr("string"),
@@ -449,7 +449,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 								{
 									ID: to.StringPtr("string"),
 								}},
-							ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+							ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 							VirtualMachineScaleSets: []*golang.SubResourceWithColocationStatus{
 								{
 									ID: to.StringPtr("string"),
@@ -1021,7 +1021,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
 							},
 							HardwareProfile: &golang.HardwareProfile{
-								VMSize: golang.VirtualMachineSizeTypesStandardA0.ToPtr(),
+								VMSize: golang.VirtualMachineSizeTypes("Standard_A0").ToPtr(),
 							},
 							NetworkProfile: &golang.NetworkProfile{
 								NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1051,7 +1051,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								OSDisk: &golang.OSDisk{
 									Name:         to.StringPtr("test"),
 									Caching:      golang.CachingTypesNone.ToPtr(),
-									CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+									CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 									DiskSizeGB:   to.Int32Ptr(127),
 									OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
 									Vhd: &golang.VirtualHardDisk{
@@ -1076,7 +1076,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
 							},
 							HardwareProfile: &golang.HardwareProfile{
-								VMSize: golang.VirtualMachineSizeTypesStandardA0.ToPtr(),
+								VMSize: golang.VirtualMachineSizeTypes("Standard_A0").ToPtr(),
 							},
 							NetworkProfile: &golang.NetworkProfile{
 								NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1106,7 +1106,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								OSDisk: &golang.OSDisk{
 									Name:         to.StringPtr("test"),
 									Caching:      golang.CachingTypesNone.ToPtr(),
-									CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+									CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 									DiskSizeGB:   to.Int32Ptr(127),
 									OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
 									Vhd: &golang.VirtualHardDisk{
@@ -1149,7 +1149,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1166,7 +1166,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							AssessmentMode: golang.LinuxPatchAssessmentModeImageDefault.ToPtr(),
+							AssessmentMode: golang.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1181,9 +1181,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1206,7 +1206,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1222,7 +1222,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							AssessmentMode: golang.LinuxPatchAssessmentModeImageDefault.ToPtr(),
+							AssessmentMode: golang.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1240,9 +1240,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1269,7 +1269,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1286,7 +1286,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							PatchMode: golang.LinuxVMGuestPatchModeImageDefault.ToPtr(),
+							PatchMode: golang.LinuxVMGuestPatchMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1301,9 +1301,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1326,7 +1326,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1342,7 +1342,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							PatchMode: golang.LinuxVMGuestPatchModeImageDefault.ToPtr(),
+							PatchMode: golang.LinuxVMGuestPatchMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1360,9 +1360,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1389,7 +1389,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1406,8 +1406,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							AssessmentMode: golang.LinuxPatchAssessmentModeAutomaticByPlatform.ToPtr(),
-							PatchMode:      golang.LinuxVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							AssessmentMode: golang.LinuxPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:      golang.LinuxVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1422,9 +1422,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1447,7 +1447,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1463,8 +1463,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							AssessmentMode: golang.LinuxPatchAssessmentModeAutomaticByPlatform.ToPtr(),
-							PatchMode:      golang.LinuxVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							AssessmentMode: golang.LinuxPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:      golang.LinuxVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1482,9 +1482,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1511,7 +1511,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1544,9 +1544,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1569,7 +1569,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1608,9 +1608,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1643,7 +1643,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1669,9 +1669,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("vmOSdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1701,7 +1701,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1733,9 +1733,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("vmOSdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1762,15 +1762,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
-					NetworkAPIVersion: golang.NetworkAPIVersionTwoThousandTwenty1101.ToPtr(),
+					NetworkAPIVersion: golang.NetworkAPIVersion("2020-11-01").ToPtr(),
 					NetworkInterfaceConfigurations: []*golang.VirtualMachineNetworkInterfaceConfiguration{
 						{
 							Name: to.StringPtr("{nic-config-name}"),
 							Properties: &golang.VirtualMachineNetworkInterfaceConfigurationProperties{
-								DeleteOption: golang.DeleteOptionsDelete.ToPtr(),
+								DeleteOption: golang.DeleteOptions("Delete").ToPtr(),
 								IPConfigurations: []*golang.VirtualMachineNetworkInterfaceIPConfiguration{
 									{
 										Name: to.StringPtr("{ip-config-name}"),
@@ -1779,12 +1779,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 											PublicIPAddressConfiguration: &golang.VirtualMachinePublicIPAddressConfiguration{
 												Name: to.StringPtr("{publicIP-config-name}"),
 												Properties: &golang.VirtualMachinePublicIPAddressConfigurationProperties{
-													DeleteOption:             golang.DeleteOptionsDetach.ToPtr(),
-													PublicIPAllocationMethod: golang.PublicIPAllocationMethodStatic.ToPtr(),
+													DeleteOption:             golang.DeleteOptions("Detach").ToPtr(),
+													PublicIPAllocationMethod: golang.PublicIPAllocationMethod("Static").ToPtr(),
 												},
 												SKU: &golang.PublicIPAddressSKU{
-													PublicIPAddressSKUName: golang.PublicIPAddressSKUNameBasic.ToPtr(),
-													PublicIPAddressSKUTier: golang.PublicIPAddressSKUTierGlobal.ToPtr(),
+													PublicIPAddressSKUName: golang.PublicIPAddressSKUName("Basic").ToPtr(),
+													PublicIPAddressSKUTier: golang.PublicIPAddressSKUTier("Global").ToPtr(),
 												},
 											},
 										},
@@ -1808,9 +1808,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1833,7 +1833,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1865,9 +1865,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1894,7 +1894,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1912,7 +1912,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							AssessmentMode: golang.WindowsPatchAssessmentModeImageDefault.ToPtr(),
+							AssessmentMode: golang.WindowsPatchAssessmentMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1927,9 +1927,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -1952,7 +1952,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -1970,7 +1970,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							AssessmentMode: golang.WindowsPatchAssessmentModeImageDefault.ToPtr(),
+							AssessmentMode: golang.WindowsPatchAssessmentMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1987,9 +1987,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2016,7 +2016,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2034,7 +2034,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							PatchMode: golang.WindowsVMGuestPatchModeAutomaticByOS.ToPtr(),
+							PatchMode: golang.WindowsVMGuestPatchMode("AutomaticByOS").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2049,9 +2049,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2074,7 +2074,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2092,7 +2092,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							PatchMode: golang.WindowsVMGuestPatchModeAutomaticByOS.ToPtr(),
+							PatchMode: golang.WindowsVMGuestPatchMode("AutomaticByOS").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2109,9 +2109,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2138,7 +2138,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2157,7 +2157,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
 							EnableHotpatching: to.BoolPtr(true),
-							PatchMode:         golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							PatchMode:         golang.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2172,9 +2172,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2197,7 +2197,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2216,7 +2216,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
 							EnableHotpatching: to.BoolPtr(true),
-							PatchMode:         golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							PatchMode:         golang.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2233,9 +2233,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2262,7 +2262,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2280,7 +2280,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							PatchMode: golang.WindowsVMGuestPatchModeManual.ToPtr(),
+							PatchMode: golang.WindowsVMGuestPatchMode("Manual").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2295,9 +2295,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2320,7 +2320,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2338,7 +2338,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							PatchMode: golang.WindowsVMGuestPatchModeManual.ToPtr(),
+							PatchMode: golang.WindowsVMGuestPatchMode("Manual").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2355,9 +2355,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2384,7 +2384,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2402,8 +2402,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							AssessmentMode: golang.WindowsPatchAssessmentModeAutomaticByPlatform.ToPtr(),
-							PatchMode:      golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							AssessmentMode: golang.WindowsPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:      golang.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2418,9 +2418,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2443,7 +2443,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2461,8 +2461,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &golang.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &golang.PatchSettings{
-							AssessmentMode: golang.WindowsPatchAssessmentModeAutomaticByPlatform.ToPtr(),
-							PatchMode:      golang.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
+							AssessmentMode: golang.WindowsPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:      golang.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2479,9 +2479,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2508,7 +2508,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2528,7 +2528,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						Image: &golang.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd"),
 						},
@@ -2557,7 +2557,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2583,7 +2583,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						Image: &golang.VirtualHardDisk{
 							URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
 						},
@@ -2615,7 +2615,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2634,7 +2634,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							Vhd: &golang.VirtualHardDisk{
@@ -2642,7 +2642,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 							},
 						},
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							Vhd: &golang.VirtualHardDisk{
@@ -2658,7 +2658,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						Vhd: &golang.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/myDisk.vhd"),
 						},
@@ -2683,7 +2683,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2709,7 +2709,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						{
 							Name:         to.StringPtr("dataDisk0"),
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							Vhd: &golang.VirtualHardDisk{
@@ -2719,7 +2719,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						{
 							Name:         to.StringPtr("dataDisk1"),
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							Vhd: &golang.VirtualHardDisk{
@@ -2735,7 +2735,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						OSType:       golang.OperatingSystemTypesWindows.ToPtr(),
 						Vhd: &golang.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk.vhd"),
@@ -2764,7 +2764,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2787,9 +2787,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2812,7 +2812,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2840,10 +2840,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -2870,7 +2870,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2893,9 +2893,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -2918,7 +2918,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2946,10 +2946,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -2976,7 +2976,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -2994,9 +2994,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3019,7 +3019,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3039,10 +3039,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -3069,7 +3069,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3096,9 +3096,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3124,7 +3124,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3157,9 +3157,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3192,7 +3192,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/{existing-availability-set-name}"),
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3218,9 +3218,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3246,7 +3246,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/NSGEXISTINGAS"),
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3278,9 +3278,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3307,7 +3307,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3327,19 +3327,19 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*golang.DataDisk{
 						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Attach").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
@@ -3347,7 +3347,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						}},
 					ImageReference: &golang.ImageReference{
@@ -3356,12 +3356,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 							},
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3384,7 +3384,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3408,19 +3408,19 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*golang.DataDisk{
 						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 						{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Attach").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
@@ -3428,7 +3428,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						}},
 					ImageReference: &golang.ImageReference{
@@ -3437,13 +3437,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskencryptionset-name}"),
 							},
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -3475,7 +3475,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3504,9 +3504,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3534,7 +3534,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3569,9 +3569,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3604,7 +3604,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3636,9 +3636,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3667,7 +3667,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3705,9 +3705,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3739,7 +3739,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3765,9 +3765,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3795,7 +3795,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3827,9 +3827,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3863,7 +3863,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT30M"),
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3889,9 +3889,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -3921,7 +3921,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT30M"),
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -3953,9 +3953,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3988,7 +3988,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4014,9 +4014,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4045,7 +4045,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4077,9 +4077,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4106,7 +4106,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4125,12 +4125,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 						},
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 						}},
@@ -4143,9 +4143,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4168,7 +4168,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4193,20 +4193,20 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*golang.DataDisk{
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						}},
 					ImageReference: &golang.ImageReference{
@@ -4218,9 +4218,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4252,7 +4252,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4278,13 +4278,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-							Placement: golang.DiffDiskPlacementCacheDisk.ToPtr(),
+							Option:    golang.DiffDiskOptions("Local").ToPtr(),
+							Placement: golang.DiffDiskPlacement("CacheDisk").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4312,7 +4312,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4344,13 +4344,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-							Placement: golang.DiffDiskPlacementCacheDisk.ToPtr(),
+							Option:    golang.DiffDiskOptions("Local").ToPtr(),
+							Placement: golang.DiffDiskPlacement("CacheDisk").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4382,7 +4382,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4408,13 +4408,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-							Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+							Option:    golang.DiffDiskOptions("Local").ToPtr(),
+							Placement: golang.DiffDiskPlacement("ResourceDisk").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4442,7 +4442,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4474,13 +4474,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-							Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+							Option:    golang.DiffDiskOptions("Local").ToPtr(),
+							Placement: golang.DiffDiskPlacement("ResourceDisk").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4512,7 +4512,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4538,12 +4538,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option: golang.DiffDiskOptionsLocal.ToPtr(),
+							Option: golang.DiffDiskOptions("Local").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4571,7 +4571,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4603,12 +4603,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadOnly.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiffDiskSettings: &golang.DiffDiskSettings{
-							Option: golang.DiffDiskOptionsLocal.ToPtr(),
+							Option: golang.DiffDiskOptions("Local").ToPtr(),
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4640,7 +4640,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4666,9 +4666,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4696,7 +4696,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4728,9 +4728,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4757,7 +4757,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4783,9 +4783,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4808,7 +4808,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4840,9 +4840,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4869,7 +4869,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4895,9 +4895,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -4920,7 +4920,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -4952,9 +4952,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4981,7 +4981,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5016,9 +5016,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -5041,7 +5041,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5079,9 +5079,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -5115,7 +5115,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 		golang.VirtualMachineUpdate{
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5134,13 +5134,13 @@ func TestVirtualMachines_Update(t *testing.T) {
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -5154,9 +5154,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -5179,7 +5179,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5204,21 +5204,21 @@ func TestVirtualMachines_Update(t *testing.T) {
 					DataDisks: []*golang.DataDisk{
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -5231,9 +5231,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5259,7 +5259,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 		golang.VirtualMachineUpdate{
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5278,14 +5278,14 @@ func TestVirtualMachines_Update(t *testing.T) {
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
-							DetachOption: golang.DiskDetachOptionTypesForceDetach.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
+							DetachOption: golang.DiskDetachOptionTypes("ForceDetach").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -5299,9 +5299,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -5324,7 +5324,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5349,22 +5349,22 @@ func TestVirtualMachines_Update(t *testing.T) {
 					DataDisks: []*golang.DataDisk{
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
-							DetachOption: golang.DiskDetachOptionTypesForceDetach.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
+							DetachOption: golang.DiskDetachOptionTypes("ForceDetach").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -5377,9 +5377,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5460,7 +5460,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT50M"),
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardDS3V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_DS3_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -5486,23 +5486,23 @@ func TestVirtualMachines_Get(t *testing.T) {
 						{
 							Name:         to.StringPtr("myDataDisk0"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk0"),
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						},
 						{
 							Name:         to.StringPtr("myDataDisk1"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesAttach.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Attach").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(100),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk1"),
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						}},
 					ImageReference: &golang.ImageReference{
@@ -5514,11 +5514,11 @@ func TestVirtualMachines_Get(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myOsDisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5576,7 +5576,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 			},
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				HostGroup: &golang.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup"),
@@ -5608,11 +5608,11 @@ func TestVirtualMachines_Get(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("myOsDisk"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5676,7 +5676,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T21:29:47.461517+00:00"); return t }()),
 						}},
 				}},
-			HyperVGeneration: golang.HyperVGenerationTypeV1.ToPtr(),
+			HyperVGeneration: golang.HyperVGenerationType("V1").ToPtr(),
 			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
 			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
 			PatchStatus: &golang.VirtualMachinePatchStatus{
@@ -5687,7 +5687,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 					OtherPatchCount:               to.Int32Ptr(2),
 					RebootPending:                 to.BoolPtr(true),
 					StartTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-					Status:                        golang.PatchOperationStatusSucceeded.ToPtr(),
+					Status:                        golang.PatchOperationStatus("Succeeded").ToPtr(),
 				},
 				ConfigurationStatuses: []*golang.InstanceViewStatus{
 					{
@@ -5718,7 +5718,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 					NotSelectedPatchCount:     to.Int32Ptr(1),
 					PendingPatchCount:         to.Int32Ptr(1),
 					StartTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-					Status:                    golang.PatchOperationStatusSucceeded.ToPtr(),
+					Status:                    golang.PatchOperationStatus("Succeeded").ToPtr(),
 				},
 			},
 			PlatformFaultDomain:  to.Int32Ptr(1),
@@ -5805,7 +5805,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T21:29:47.477089+00:00"); return t }()),
 						}},
 				}},
-			HyperVGeneration: golang.HyperVGenerationTypeV1.ToPtr(),
+			HyperVGeneration: golang.HyperVGenerationType("V1").ToPtr(),
 			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
 			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
 			Statuses: []*golang.InstanceViewStatus{
@@ -6079,34 +6079,34 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 				{
 					Name:            to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
 					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
-					AssessmentState: golang.PatchAssessmentStateAvailable.ToPtr(),
+					AssessmentState: golang.PatchAssessmentState("Available").ToPtr(),
 					Classifications: []*string{
 						to.StringPtr("Definition Updates")},
 					KbID:                 to.StringPtr("2267602"),
 					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
 					PatchID:              to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
 					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
-					RebootBehavior:       golang.VMGuestPatchRebootBehaviorNeverReboots.ToPtr(),
+					RebootBehavior:       golang.VMGuestPatchRebootBehavior("NeverReboots").ToPtr(),
 					Version:              to.StringPtr(""),
 				},
 				{
 					Name:            to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
 					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
-					AssessmentState: golang.PatchAssessmentStateAvailable.ToPtr(),
+					AssessmentState: golang.PatchAssessmentState("Available").ToPtr(),
 					Classifications: []*string{
 						to.StringPtr("Update Rollups")},
 					KbID:                 to.StringPtr("890830"),
 					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
 					PatchID:              to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
 					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
-					RebootBehavior:       golang.VMGuestPatchRebootBehaviorCanRequestReboot.ToPtr(),
+					RebootBehavior:       golang.VMGuestPatchRebootBehavior("CanRequestReboot").ToPtr(),
 					Version:              to.StringPtr(""),
 				}},
 			CriticalAndSecurityPatchCount: to.Int32Ptr(1),
 			OtherPatchCount:               to.Int32Ptr(2),
 			RebootPending:                 to.BoolPtr(true),
 			StartDateTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-			Status:                        golang.PatchOperationStatusSucceeded.ToPtr(),
+			Status:                        golang.PatchOperationStatus("Succeeded").ToPtr(),
 		}
 
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
@@ -6133,11 +6133,11 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 		"myVMName",
 		golang.VirtualMachineInstallPatchesParameters{
 			MaximumDuration: to.StringPtr("PT4H"),
-			RebootSetting:   golang.VMGuestPatchRebootSettingIfRequired.ToPtr(),
+			RebootSetting:   golang.VMGuestPatchRebootSetting("IfRequired").ToPtr(),
 			WindowsParameters: &golang.WindowsParameters{
 				ClassificationsToInclude: []*golang.VMGuestPatchClassificationWindows{
-					golang.VMGuestPatchClassificationWindowsCritical.ToPtr(),
-					golang.VMGuestPatchClassificationWindowsSecurity.ToPtr()},
+					golang.VMGuestPatchClassificationWindows("Critical").ToPtr(),
+					golang.VMGuestPatchClassificationWindows("Security").ToPtr()},
 				MaxPatchPublishDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
@@ -6163,7 +6163,7 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 					Name: to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
 					Classifications: []*string{
 						to.StringPtr("Definition Updates")},
-					InstallationState: golang.PatchInstallationStateInstalled.ToPtr(),
+					InstallationState: golang.PatchInstallationState("Installed").ToPtr(),
 					KbID:              to.StringPtr("2267602"),
 					PatchID:           to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
 					Version:           to.StringPtr(""),
@@ -6172,15 +6172,15 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 					Name: to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
 					Classifications: []*string{
 						to.StringPtr("Update Rollups")},
-					InstallationState: golang.PatchInstallationStatePending.ToPtr(),
+					InstallationState: golang.PatchInstallationState("Pending").ToPtr(),
 					KbID:              to.StringPtr("890830"),
 					PatchID:           to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
 					Version:           to.StringPtr(""),
 				}},
 			PendingPatchCount: to.Int32Ptr(2),
-			RebootStatus:      golang.VMGuestPatchRebootStatusCompleted.ToPtr(),
+			RebootStatus:      golang.VMGuestPatchRebootStatus("Completed").ToPtr(),
 			StartDateTime:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-			Status:            golang.PatchOperationStatusSucceeded.ToPtr(),
+			Status:            golang.PatchOperationStatus("Succeeded").ToPtr(),
 		}
 
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
@@ -6323,10 +6323,10 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 									},
 									OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 										Caching:      golang.CachingTypesReadWrite.ToPtr(),
-										CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+										CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 										DiskSizeGB:   to.Int32Ptr(30),
 										ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-											StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+											StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 										},
 									},
 								},
@@ -6398,10 +6398,10 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 									},
 									OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 										Caching:      golang.CachingTypesReadWrite.ToPtr(),
-										CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+										CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 										DiskSizeGB:   to.Int32Ptr(30),
 										ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-											StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+											StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 										},
 									},
 								},
@@ -6473,7 +6473,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							Image: &golang.VirtualHardDisk{
 								URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd"),
 							},
@@ -6525,7 +6525,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6548,7 +6548,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							Image: &golang.VirtualHardDisk{
 								URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
 							},
@@ -6620,7 +6620,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							VhdContainers: []*string{
 								to.StringPtr("http://{existing-storage-account-name-0}.blob.core.windows.net/vhdContainer"),
 								to.StringPtr("http://{existing-storage-account-name-1}.blob.core.windows.net/vhdContainer"),
@@ -6675,7 +6675,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6704,7 +6704,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							VhdContainers: []*string{
 								to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds")},
 						},
@@ -6770,9 +6770,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -6822,7 +6822,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6846,9 +6846,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -6913,9 +6913,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -6965,7 +6965,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6989,9 +6989,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7051,9 +7051,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7103,7 +7103,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7119,9 +7119,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7184,14 +7184,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      golang.CachingTypesReadWrite.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 									DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 									},
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							}},
 						ImageReference: &golang.ImageReference{
@@ -7199,12 +7199,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7254,7 +7254,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7276,14 +7276,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      golang.CachingTypesReadWrite.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 									DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 									},
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							}},
 						ImageReference: &golang.ImageReference{
@@ -7291,12 +7291,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
 								DiskEncryptionSet: &golang.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7360,7 +7360,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 											Name: to.StringPtr("{fpgaNic-Name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Primary:                 to.BoolPtr(true),
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-fpga-subnet-name}"),
 												},
@@ -7381,9 +7381,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7433,7 +7433,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7455,7 +7455,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 											Name: to.StringPtr("{fpgaNic-Name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
 												Primary:                 to.BoolPtr(true),
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-fpga-subnet-name}"),
 												},
@@ -7479,9 +7479,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7557,9 +7557,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7614,7 +7614,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7645,9 +7645,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7722,9 +7722,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7774,7 +7774,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7809,9 +7809,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardSSDLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7884,9 +7884,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -7941,7 +7941,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7969,9 +7969,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8043,9 +8043,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8099,7 +8099,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationGateways/nsgExistingAppGw/backendAddressPools/appGatewayBackendPool"),
 													}},
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8127,9 +8127,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8185,7 +8185,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 												PublicIPAddressConfiguration: &golang.VirtualMachineScaleSetPublicIPAddressConfiguration{
 													Name: to.StringPtr("{vmss-name}"),
 													Properties: &golang.VirtualMachineScaleSetPublicIPAddressConfigurationProperties{
-														PublicIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+														PublicIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 													},
 												},
 												Subnet: &golang.APIEntityReference{
@@ -8211,9 +8211,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8271,7 +8271,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/myLb/inboundNatPools/lbNatPool"),
 													}},
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8299,9 +8299,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8373,9 +8373,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8429,7 +8429,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8457,9 +8457,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8533,9 +8533,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8591,7 +8591,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8619,9 +8619,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8683,12 +8683,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
 							{
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 							}},
@@ -8700,10 +8700,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8753,7 +8753,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8776,20 +8776,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      golang.CachingTypesNone.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							},
 							{
 								Caching:      golang.CachingTypesNone.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							}},
 						ImageReference: &golang.ImageReference{
@@ -8800,10 +8800,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8876,13 +8876,13 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiffDiskSettings: &golang.DiffDiskSettings{
-								Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-								Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+								Option:    golang.DiffDiskOptions("Local").ToPtr(),
+								Placement: golang.DiffDiskPlacement("ResourceDisk").ToPtr(),
 							},
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -8937,7 +8937,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8965,13 +8965,13 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiffDiskSettings: &golang.DiffDiskSettings{
-								Option:    golang.DiffDiskOptionsLocal.ToPtr(),
-								Placement: golang.DiffDiskPlacementResourceDisk.ToPtr(),
+								Option:    golang.DiffDiskOptions("Local").ToPtr(),
+								Placement: golang.DiffDiskPlacement("ResourceDisk").ToPtr(),
 							},
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9044,12 +9044,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiffDiskSettings: &golang.DiffDiskSettings{
-								Option: golang.DiffDiskOptionsLocal.ToPtr(),
+								Option: golang.DiffDiskOptions("Local").ToPtr(),
 							},
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9100,7 +9100,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9128,12 +9128,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiffDiskSettings: &golang.DiffDiskSettings{
-								Option: golang.DiffDiskOptionsLocal.ToPtr(),
+								Option: golang.DiffDiskOptions("Local").ToPtr(),
 							},
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9221,9 +9221,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9293,7 +9293,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9321,9 +9321,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9396,9 +9396,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9453,7 +9453,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9481,9 +9481,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9551,9 +9551,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9603,7 +9603,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9631,9 +9631,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9701,9 +9701,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9753,7 +9753,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9781,9 +9781,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9860,9 +9860,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -9912,7 +9912,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9946,9 +9946,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10022,9 +10022,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10074,7 +10074,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10108,9 +10108,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10178,9 +10178,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10237,7 +10237,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10265,9 +10265,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10329,12 +10329,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					StorageProfile: &golang.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
 							{
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 							}},
@@ -10346,10 +10346,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10402,7 +10402,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+												PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 												Subnet: &golang.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10425,20 +10425,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*golang.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      golang.CachingTypesNone.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							},
 							{
 								Caching:      golang.CachingTypesNone.ToPtr(),
-								CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 								ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 								},
 							}},
 						ImageReference: &golang.ImageReference{
@@ -10449,10 +10449,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10588,10 +10588,10 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						},
 					},
@@ -10687,10 +10687,10 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 						},
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							ManagedDisk: &golang.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 							},
 						},
 					},
@@ -11452,7 +11452,7 @@ func TestImages_Update(t *testing.T) {
 				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.ImageProperties{
-				HyperVGeneration: golang.HyperVGenerationTypesV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGenerationTypes("V1").ToPtr(),
 				SourceVirtualMachine: &golang.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
 				},
@@ -11488,7 +11488,7 @@ func TestImages_Update(t *testing.T) {
 							Snapshot: &golang.SubResource{
 								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 							},
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							Lun:                to.Int32Ptr(1),
 						}},
 					OSDisk: &golang.ImageOSDisk{
@@ -11500,7 +11500,7 @@ func TestImages_Update(t *testing.T) {
 						Snapshot: &golang.SubResource{
 							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 						},
-						StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -11558,7 +11558,7 @@ func TestImages_Get(t *testing.T) {
 							Snapshot: &golang.SubResource{
 								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 							},
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							Lun:                to.Int32Ptr(1),
 						}},
 					OSDisk: &golang.ImageOSDisk{
@@ -11570,7 +11570,7 @@ func TestImages_Get(t *testing.T) {
 						Snapshot: &golang.SubResource{
 							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 						},
-						StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+						StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -11625,7 +11625,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 										Snapshot: &golang.SubResource{
 											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 										},
-										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 										Lun:                to.Int32Ptr(1),
 									}},
 								OSDisk: &golang.ImageOSDisk{
@@ -11636,7 +11636,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 									Snapshot: &golang.SubResource{
 										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 									},
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 									OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 									OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
 								},
@@ -11690,7 +11690,7 @@ func TestImages_List(t *testing.T) {
 										Snapshot: &golang.SubResource{
 											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 										},
-										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 										Lun:                to.Int32Ptr(1),
 									}},
 								OSDisk: &golang.ImageOSDisk{
@@ -11701,7 +11701,7 @@ func TestImages_List(t *testing.T) {
 									Snapshot: &golang.SubResource{
 										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 									},
-									StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+									StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 									OSState:            golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 									OSType:             golang.OperatingSystemTypesWindows.ToPtr(),
 								},
@@ -11856,7 +11856,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 					{
 						Name:            to.StringPtr("restorePointName"),
 						ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/restorePointName"),
-						ConsistencyMode: golang.ConsistencyModeTypesApplicationConsistent.ToPtr(),
+						ConsistencyMode: golang.ConsistencyModeTypes("ApplicationConsistent").ToPtr(),
 						ExcludeDisks: []*golang.APIEntityReference{
 							{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
@@ -11875,7 +11875,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 								},
 							},
 							HardwareProfile: &golang.HardwareProfile{
-								VMSize: golang.VirtualMachineSizeTypesStandardB1S.ToPtr(),
+								VMSize: golang.VirtualMachineSizeTypes("Standard_B1s").ToPtr(),
 							},
 							OSProfile: &golang.OSProfile{
 								AdminUsername:               to.StringPtr("admin"),
@@ -11899,7 +11899,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 										Lun: to.Int32Ptr(1),
 										ManagedDisk: &golang.ManagedDiskParameters{
 											ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
-											StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+											StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 										},
 									}},
 								OSDisk: &golang.RestorePointSourceVMOSDisk{
@@ -11910,9 +11910,9 @@ func TestRestorePointCollections_Get(t *testing.T) {
 									},
 									ManagedDisk: &golang.ManagedDiskParameters{
 										ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
-										StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+										StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 									},
-									OSType: golang.OperatingSystemTypeWindows.ToPtr(),
+									OSType: golang.OperatingSystemType("Windows").ToPtr(),
 								},
 							},
 							VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
@@ -12121,7 +12121,7 @@ func TestRestorePoints_Get(t *testing.T) {
 		exampleRes := golang.RestorePoint{
 			Name:            to.StringPtr("rpName"),
 			ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/rpName"),
-			ConsistencyMode: golang.ConsistencyModeTypesApplicationConsistent.ToPtr(),
+			ConsistencyMode: golang.ConsistencyModeTypes("ApplicationConsistent").ToPtr(),
 			ExcludeDisks: []*golang.APIEntityReference{
 				{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
@@ -12140,7 +12140,7 @@ func TestRestorePoints_Get(t *testing.T) {
 					},
 				},
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardB1S.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_B1s").ToPtr(),
 				},
 				OSProfile: &golang.OSProfile{
 					AdminUsername:               to.StringPtr("admin"),
@@ -12164,7 +12164,7 @@ func TestRestorePoints_Get(t *testing.T) {
 							Lun: to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/userdata/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						}},
 					OSDisk: &golang.RestorePointSourceVMOSDisk{
@@ -12175,9 +12175,9 @@ func TestRestorePoints_Get(t *testing.T) {
 						},
 						ManagedDisk: &golang.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
-						OSType: golang.OperatingSystemTypeWindows.ToPtr(),
+						OSType: golang.OperatingSystemType("Windows").ToPtr(),
 					},
 				},
 				VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
@@ -12627,7 +12627,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 									{
 										Name: to.StringPtr("vmsstestnetconfig9693"),
 										Properties: &golang.VirtualMachineScaleSetIPConfigurationProperties{
-											PrivateIPAddressVersion: golang.IPVersionIPv4.ToPtr(),
+											PrivateIPAddressVersion: golang.IPVersion("IPv4").ToPtr(),
 											Subnet: &golang.APIEntityReference{
 												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vn4071/subnets/sn5503"),
 											},
@@ -12654,12 +12654,12 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 						{
 							Name:         to.StringPtr("vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
 							Caching:      golang.CachingTypesNone.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(128),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &golang.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -12673,11 +12673,11 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
 						Caching:      golang.CachingTypesNone.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(127),
 						ManagedDisk: &golang.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 						OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -14146,11 +14146,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowPrivate.ToPtr(),
+				NetworkAccessPolicy: golang.NetworkAccessPolicy("AllowPrivate").ToPtr(),
 			},
 		},
 		nil)
@@ -14168,11 +14168,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowPrivate.ToPtr(),
+				NetworkAccessPolicy: golang.NetworkAccessPolicy("AllowPrivate").ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
@@ -14195,7 +14195,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 				Encryption: &golang.Encryption{
@@ -14218,7 +14218,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 				Encryption: &golang.Encryption{
@@ -14246,7 +14246,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 				},
 			},
@@ -14266,7 +14266,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14291,7 +14291,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -14312,7 +14312,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -14338,7 +14338,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 			},
@@ -14358,7 +14358,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14383,7 +14383,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/westus/Publishers/{publisher}/ArtifactTypes/VMImage/Offers/{offer}/Skus/{sku}/Versions/1.0.0"),
 					},
@@ -14406,12 +14406,12 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/westus/Publishers/{publisher}/ArtifactTypes/VMImage/Offers/{offer}/Skus/{sku}/Versions/1.0.0"),
 					},
 				},
-				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration:  golang.HyperVGeneration("V1").ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &golang.DiskPurchasePlan{
@@ -14440,7 +14440,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk1"),
 				},
 			},
@@ -14460,7 +14460,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk1"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14485,14 +14485,14 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("North Central US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 					},
 				},
 				OSType: golang.OperatingSystemTypesWindows.ToPtr(),
 				SecurityProfile: &golang.DiskSecurityProfile{
-					SecurityType: golang.DiskSecurityTypesTrustedLaunch.ToPtr(),
+					SecurityType: golang.DiskSecurityTypes("TrustedLaunch").ToPtr(),
 				},
 			},
 		},
@@ -14511,7 +14511,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("North Central US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 					},
@@ -14519,7 +14519,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				SecurityProfile: &golang.DiskSecurityProfile{
-					SecurityType: golang.DiskSecurityTypesTrustedLaunch.ToPtr(),
+					SecurityType: golang.DiskSecurityTypes("TrustedLaunch").ToPtr(),
 				},
 			},
 		}
@@ -14542,12 +14542,12 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesPremiumZRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("Premium_ZRS").ToPtr(),
 			},
 		},
 		nil)
@@ -14565,13 +14565,13 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesPremiumZRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("Premium_ZRS").ToPtr(),
 				Tier: to.StringPtr("Premium"),
 			},
 		}
@@ -14594,7 +14594,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:    golang.DiskCreateOptionUpload.ToPtr(),
+					CreateOption:    golang.DiskCreateOption("Upload").ToPtr(),
 					UploadSizeBytes: to.Int64Ptr(10737418752),
 				},
 			},
@@ -14614,7 +14614,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:    golang.DiskCreateOptionUpload.ToPtr(),
+					CreateOption:    golang.DiskCreateOption("Upload").ToPtr(),
 					UploadSizeBytes: to.Int64Ptr(10737418752),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14639,11 +14639,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			ExtendedLocation: &golang.ExtendedLocation{
 				Name: to.StringPtr("{edge-zone-id}"),
-				Type: golang.ExtendedLocationTypesEdgeZone.ToPtr(),
+				Type: golang.ExtendedLocationTypes("EdgeZone").ToPtr(),
 			},
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
@@ -14663,11 +14663,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			ExtendedLocation: &golang.ExtendedLocation{
 				Name: to.StringPtr("{edge-zone-id}"),
-				Type: golang.ExtendedLocationTypesEdgeZone.ToPtr(),
+				Type: golang.ExtendedLocationTypes("EdgeZone").ToPtr(),
 			},
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14692,7 +14692,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
@@ -14712,7 +14712,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14737,13 +14737,13 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:      golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption:      golang.DiskCreateOption("Empty").ToPtr(),
 					LogicalSectorSize: to.Int32Ptr(512),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesUltraSSDLRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("UltraSSD_LRS").ToPtr(),
 			},
 		},
 		nil)
@@ -14761,14 +14761,14 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:      golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption:      golang.DiskCreateOption("Empty").ToPtr(),
 					LogicalSectorSize: to.Int32Ptr(512),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesUltraSSDLRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("UltraSSD_LRS").ToPtr(),
 				Tier: to.StringPtr("Ultra"),
 			},
 		}
@@ -14817,7 +14817,7 @@ func TestDisks_Update(t *testing.T) {
 			Properties: &golang.DiskProperties{
 				BurstingEnabled: to.BoolPtr(true),
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(1024),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14863,13 +14863,13 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
 					},
 				},
 				DiskSizeGB:        to.Int32Ptr(127),
-				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration:  golang.HyperVGeneration("V1").ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &golang.DiskPurchasePlan{
@@ -14880,7 +14880,7 @@ func TestDisks_Update(t *testing.T) {
 				},
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
 				Tier: to.StringPtr("Standard"),
 			},
 		}
@@ -14919,17 +14919,17 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				DiskSizeGB:          to.Int32Ptr(127),
-				HyperVGeneration:    golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration:    golang.HyperVGeneration("V1").ToPtr(),
 				OSType:              golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 				SupportsHibernation: to.BoolPtr(true),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
 				Tier: to.StringPtr("Standard"),
 			},
 		}
@@ -14968,7 +14968,7 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
 				Tier:              to.StringPtr("P30"),
@@ -15009,7 +15009,7 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
@@ -15031,7 +15031,7 @@ func TestDisks_Update(t *testing.T) {
 		"myDisk",
 		golang.DiskUpdate{
 			Properties: &golang.DiskUpdateProperties{
-				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowAll.ToPtr(),
+				NetworkAccessPolicy: golang.NetworkAccessPolicy("AllowAll").ToPtr(),
 			},
 		},
 		nil)
@@ -15049,10 +15049,10 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowAll.ToPtr(),
+				NetworkAccessPolicy: golang.NetworkAccessPolicy("AllowAll").ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
@@ -15097,14 +15097,14 @@ func TestDisks_Get(t *testing.T) {
 			ManagedBy: to.StringPtr("/subscriptions/123caaa-123v-v211-a49f-f88ccac5bf88/resourceGroups/ResourceGroupName/providers/Microsoft.Compute/virtualMachines/TestVM414689371c88843d65ec"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+					CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 					ImageReference: &golang.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
 					},
 				},
 				DiskSizeGB: to.Int32Ptr(10),
 				Encryption: &golang.Encryption{
-					Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+					Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 				},
 				EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 					Enabled: to.BoolPtr(true),
@@ -15124,7 +15124,7 @@ func TestDisks_Get(t *testing.T) {
 							},
 						}},
 				},
-				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration:  golang.HyperVGeneration("V1").ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &golang.DiskPurchasePlan{
@@ -15133,13 +15133,13 @@ func TestDisks_Get(t *testing.T) {
 					Publisher: to.StringPtr("test_test_pmc2pc1"),
 				},
 				SecurityProfile: &golang.DiskSecurityProfile{
-					SecurityType: golang.DiskSecurityTypesTrustedLaunch.ToPtr(),
+					SecurityType: golang.DiskSecurityTypes("TrustedLaunch").ToPtr(),
 				},
 				SupportsHibernation: to.BoolPtr(true),
 				TimeCreated:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.079872+00:00"); return t }()),
 			},
 			SKU: &golang.DiskSKU{
-				Name: golang.DiskStorageAccountTypesStandardLRS.ToPtr(),
+				Name: golang.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
 			},
 		}
 
@@ -15187,12 +15187,12 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15224,11 +15224,11 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						Location: to.StringPtr("westus"),
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 							},
 							DiskSizeGB: to.Int32Ptr(10),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -15246,14 +15246,14 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+								CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 								ImageReference: &golang.ImageDiskReference{
 									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 								},
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15319,12 +15319,12 @@ func TestDisks_List(t *testing.T) {
 						},
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15356,11 +15356,11 @@ func TestDisks_List(t *testing.T) {
 						Location: to.StringPtr("westus"),
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+								CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 							},
 							DiskSizeGB: to.Int32Ptr(10),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -15378,14 +15378,14 @@ func TestDisks_List(t *testing.T) {
 						},
 						Properties: &golang.DiskProperties{
 							CreationData: &golang.CreationData{
-								CreateOption: golang.DiskCreateOptionFromImage.ToPtr(),
+								CreateOption: golang.DiskCreateOption("FromImage").ToPtr(),
 								ImageReference: &golang.ImageDiskReference{
 									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 								},
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15446,7 +15446,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -15467,7 +15467,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -15493,7 +15493,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 			},
@@ -15513,7 +15513,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -15538,7 +15538,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 				},
 			},
@@ -15558,7 +15558,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -15608,13 +15608,13 @@ func TestSnapshots_Get(t *testing.T) {
 			},
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 					SourceResourceID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"),
 					SourceUniqueID:   to.StringPtr("d633885d-d102-4481-901e-5b2413d1a7be"),
 				},
 				DiskSizeGB: to.Int32Ptr(100),
 				Encryption: &golang.Encryption{
-					Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+					Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 				},
 				EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 					Enabled: to.BoolPtr(true),
@@ -15634,7 +15634,7 @@ func TestSnapshots_Get(t *testing.T) {
 							},
 						}},
 				},
-				HyperVGeneration:  golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration:  golang.HyperVGeneration("V1").ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &golang.DiskPurchasePlan{
@@ -15691,12 +15691,12 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &golang.SnapshotProperties{
 							CreationData: &golang.CreationData{
-								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15762,12 +15762,12 @@ func TestSnapshots_List(t *testing.T) {
 						},
 						Properties: &golang.SnapshotProperties{
 							CreationData: &golang.CreationData{
-								CreateOption:     golang.DiskCreateOptionCopy.ToPtr(),
+								CreateOption:     golang.DiskCreateOption("Copy").ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15803,13 +15803,13 @@ func TestSnapshots_List(t *testing.T) {
 						},
 						Properties: &golang.SnapshotProperties{
 							CreationData: &golang.CreationData{
-								CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+								CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 								SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 								StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &golang.Encryption{
-								Type: golang.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
+								Type: golang.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
 							},
 							EncryptionSettingsCollection: &golang.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15869,13 +15869,13 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		golang.DiskEncryptionSet{
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 			},
 		},
 		nil)
@@ -15892,13 +15892,13 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
 			},
 		}
@@ -15920,7 +15920,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		golang.DiskEncryptionSet{
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -15929,7 +15929,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 			},
 		},
 		nil)
@@ -15946,7 +15946,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -15955,7 +15955,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
 			},
 		}
@@ -15984,13 +15984,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		"myDiskEncryptionSet",
 		golang.DiskEncryptionSetUpdate{
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
 				},
-				EncryptionType:                    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:                    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},
@@ -16010,13 +16010,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/KeyVersion2"),
 				},
-				EncryptionType:                    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:                    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				LastKeyRotationTimestamp:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				ProvisioningState:                 to.StringPtr("Succeeded"),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
@@ -16039,13 +16039,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		"myDiskEncryptionSet",
 		golang.DiskEncryptionSetUpdate{
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
 				},
-				EncryptionType:                    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:                    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},
@@ -16065,13 +16065,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion2"),
 				},
-				EncryptionType:           golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:           golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				PreviousKeys: []*golang.KeyForDiskEncryptionSet{
 					{
@@ -16104,7 +16104,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 			},
 			Tags: map[string]*string{
 				"department": to.StringPtr("Development"),
@@ -16129,7 +16129,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				"project":    to.StringPtr("Encryption"),
 			},
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16138,7 +16138,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType:           golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:           golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				PreviousKeys:             []*golang.KeyForDiskEncryptionSet{},
 			},
@@ -16182,7 +16182,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 				"project":    to.StringPtr("Encryption"),
 			},
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16191,7 +16191,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
@@ -16260,7 +16260,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &golang.EncryptionSetIdentity{
-							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+							Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 						},
 						Properties: &golang.EncryptionSetProperties{
 							ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16269,7 +16269,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 								},
 							},
-							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							EncryptionType:    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16284,7 +16284,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &golang.EncryptionSetIdentity{
-							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+							Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 						},
 						Properties: &golang.EncryptionSetProperties{
 							ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16293,7 +16293,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
 								},
 							},
-							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							EncryptionType:    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16338,7 +16338,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &golang.EncryptionSetIdentity{
-							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+							Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 						},
 						Properties: &golang.EncryptionSetProperties{
 							ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16347,7 +16347,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 								},
 							},
-							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							EncryptionType:    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16362,7 +16362,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &golang.EncryptionSetIdentity{
-							Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+							Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 						},
 						Properties: &golang.EncryptionSetProperties{
 							ActiveKey: &golang.KeyForDiskEncryptionSet{
@@ -16371,7 +16371,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/mySecondResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
 								},
 							},
-							EncryptionType:    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+							EncryptionType:    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 							PreviousKeys:      []*golang.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16557,9 +16557,9 @@ func TestDiskAccesses_Get(t *testing.T) {
 							PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 								Description:     to.StringPtr("Auto-Approved"),
 								ActionsRequired: to.StringPtr("None"),
-								Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+								Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 							},
-							ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 						},
 					}},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -16691,9 +16691,9 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 										PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 											Description:     to.StringPtr("Auto-Approved"),
 											ActionsRequired: to.StringPtr("None"),
-											Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+											Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 										},
-										ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+										ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 									},
 								}},
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -16766,9 +16766,9 @@ func TestDiskAccesses_List(t *testing.T) {
 										PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 											Description:     to.StringPtr("Auto-Approved"),
 											ActionsRequired: to.StringPtr("None"),
-											Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+											Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 										},
-										ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+										ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 									},
 								}},
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -16848,7 +16848,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 			Properties: &golang.PrivateEndpointConnectionProperties{
 				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 					Description: to.StringPtr("Approving myPrivateEndpointConnection"),
-					Status:      golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+					Status:      golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 				},
 			},
 		},
@@ -16873,9 +16873,9 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 					Description:     to.StringPtr("Approving myPrivateEndpointConnection"),
 					ActionsRequired: to.StringPtr("None"),
-					Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+					Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 				},
-				ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -16919,9 +16919,9 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 					Description:     to.StringPtr("Auto-Approved"),
 					ActionsRequired: to.StringPtr("None"),
-					Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+					Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 				},
-				ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -16991,9 +16991,9 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 							PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 								Description:     to.StringPtr("Auto-Approved"),
 								ActionsRequired: to.StringPtr("None"),
-								Status:          golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+								Status:          golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 							},
-							ProvisioningState: golang.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 						},
 					}},
 			}
@@ -17033,7 +17033,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
 			Properties: &golang.DiskRestorePointProperties{
 				FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				OSType:           golang.OperatingSystemTypesWindows.ToPtr(),
 				SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
 				SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
@@ -17077,7 +17077,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
 						Properties: &golang.DiskRestorePointProperties{
 							FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
-							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 							OSType:           golang.OperatingSystemTypesWindows.ToPtr(),
 							SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
 							SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
@@ -17113,7 +17113,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 			Properties: &golang.GalleryProperties{
 				Description: to.StringPtr("This is the gallery description."),
 				SharingProfile: &golang.SharingProfile{
-					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+					Permissions: golang.GallerySharingPermissionTypes("Groups").ToPtr(),
 				},
 			},
 		},
@@ -17135,9 +17135,9 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Identifier: &golang.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 				SharingProfile: &golang.SharingProfile{
-					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+					Permissions: golang.GallerySharingPermissionTypes("Groups").ToPtr(),
 				},
 			},
 		}
@@ -17180,7 +17180,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Identifier: &golang.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17229,7 +17229,7 @@ func TestGalleries_Update(t *testing.T) {
 				Identifier: &golang.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17255,7 +17255,7 @@ func TestGalleries_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&golang.GalleriesGetOptions{Select: golang.SelectPermissionsPermissions.ToPtr()})
+		&golang.GalleriesGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17268,17 +17268,17 @@ func TestGalleries_Get(t *testing.T) {
 				SharingProfile: &golang.SharingProfile{
 					Groups: []*golang.SharingProfileGroup{
 						{
-							Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+							Type: golang.SharingProfileGroupTypes("Subscriptions").ToPtr(),
 							IDs: []*string{
 								to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 								to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 						},
 						{
-							Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+							Type: golang.SharingProfileGroupTypes("AADTenants").ToPtr(),
 							IDs: []*string{
 								to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 						}},
-					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+					Permissions: golang.GallerySharingPermissionTypes("Groups").ToPtr(),
 				},
 			},
 		}
@@ -17311,7 +17311,7 @@ func TestGalleries_Get(t *testing.T) {
 				Identifier: &golang.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17377,7 +17377,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 							Identifier: &golang.GalleryIdentifier{
 								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 							},
-							ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 						},
 					}},
 			}
@@ -17419,7 +17419,7 @@ func TestGalleries_List(t *testing.T) {
 							Identifier: &golang.GalleryIdentifier{
 								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 							},
-							ProvisioningState: golang.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 						},
 					}},
 			}
@@ -17450,7 +17450,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 		golang.GalleryImage{
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17474,7 +17474,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17482,7 +17482,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 				},
 				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17511,7 +17511,7 @@ func TestGalleryImages_Update(t *testing.T) {
 		"myGalleryImageName",
 		golang.GalleryImageUpdate{
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17535,7 +17535,7 @@ func TestGalleryImages_Update(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17543,7 +17543,7 @@ func TestGalleryImages_Update(t *testing.T) {
 				},
 				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17580,7 +17580,7 @@ func TestGalleryImages_Get(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17588,7 +17588,7 @@ func TestGalleryImages_Get(t *testing.T) {
 				},
 				OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
 
@@ -17651,7 +17651,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 						Name:     to.StringPtr("myGalleryImageName"),
 						Location: to.StringPtr("West US"),
 						Properties: &golang.GalleryImageProperties{
-							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 							Identifier: &golang.GalleryImageIdentifier{
 								Offer:     to.StringPtr("myOfferName"),
 								Publisher: to.StringPtr("myPublisherName"),
@@ -17659,7 +17659,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 							},
 							OSState:           golang.OperatingSystemStateTypesGeneralized.ToPtr(),
 							OSType:            golang.OperatingSystemTypesWindows.ToPtr(),
-							ProvisioningState: golang.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 						},
 					}},
 			}
@@ -17728,7 +17728,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -17752,11 +17752,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -17775,7 +17775,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -17794,7 +17794,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -17871,7 +17871,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -17895,11 +17895,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -17918,7 +17918,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -17937,7 +17937,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18006,7 +18006,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18041,11 +18041,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18060,7 +18060,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18075,7 +18075,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18155,7 +18155,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18179,11 +18179,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18202,7 +18202,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18221,7 +18221,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18290,7 +18290,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18325,11 +18325,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18344,7 +18344,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18359,7 +18359,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18421,7 +18421,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18458,11 +18458,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18477,12 +18477,12 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18541,7 +18541,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18565,11 +18565,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18584,12 +18584,12 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18637,7 +18637,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{},
@@ -18657,11 +18657,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18676,12 +18676,12 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18726,7 +18726,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypesReplicationStatus.ToPtr()})
+		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -18736,11 +18736,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18759,27 +18759,27 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 				},
 				ReplicationStatus: &golang.ReplicationStatus{
-					AggregatedState: golang.AggregatedReplicationStateCompleted.ToPtr(),
+					AggregatedState: golang.AggregatedReplicationState("Completed").ToPtr(),
 					Summary: []*golang.RegionalReplicationStatus{
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("West US"),
-							State:    golang.ReplicationStateCompleted.ToPtr(),
+							State:    golang.ReplicationState("Completed").ToPtr(),
 							Details:  to.StringPtr(""),
 						},
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("East US"),
-							State:    golang.ReplicationStateCompleted.ToPtr(),
+							State:    golang.ReplicationState("Completed").ToPtr(),
 							Details:  to.StringPtr(""),
 						}},
 				},
@@ -18827,11 +18827,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18846,12 +18846,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18897,11 +18897,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18916,12 +18916,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -18971,11 +18971,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryImageVersionProperties{
-				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18994,12 +18994,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -19081,11 +19081,11 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 						Name:     to.StringPtr("1.0.0"),
 						Location: to.StringPtr("West US"),
 						Properties: &golang.GalleryImageVersionProperties{
-							ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 							PublishingProfile: &golang.GalleryImageVersionPublishingProfile{
 								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 								ReplicaCount:       to.Int32Ptr(1),
-								StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 								TargetRegions: []*golang.TargetRegion{
 									{
 										Name: to.StringPtr("West US"),
@@ -19104,12 +19104,12 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 											},
 										},
 										RegionalReplicaCount: to.Int32Ptr(1),
-										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+										StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 									},
 									{
 										Name:                 to.StringPtr("East US"),
 										RegionalReplicaCount: to.Int32Ptr(2),
-										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+										StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 									}},
 							},
 							StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -19383,12 +19383,12 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
@@ -19416,18 +19416,18 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationVersionProperties{
-				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &golang.UserArtifactManage{
@@ -19470,12 +19470,12 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					ManageActions: &golang.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
@@ -19503,18 +19503,18 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationVersionProperties{
-				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &golang.UserArtifactManage{
@@ -19552,7 +19552,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&golang.GalleryApplicationVersionsGetOptions{Expand: golang.ReplicationStatusTypesReplicationStatus.ToPtr()})
+		&golang.GalleryApplicationVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19562,18 +19562,18 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationVersionProperties{
-				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &golang.UserArtifactManage{
@@ -19585,12 +19585,12 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 					},
 				},
 				ReplicationStatus: &golang.ReplicationStatus{
-					AggregatedState: golang.AggregatedReplicationStateCompleted.ToPtr(),
+					AggregatedState: golang.AggregatedReplicationState("Completed").ToPtr(),
 					Summary: []*golang.RegionalReplicationStatus{
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("West US"),
-							State:    golang.ReplicationStateCompleted.ToPtr(),
+							State:    golang.ReplicationState("Completed").ToPtr(),
 							Details:  to.StringPtr(""),
 						}},
 				},
@@ -19625,18 +19625,18 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &golang.GalleryApplicationVersionProperties{
-				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+				ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 				PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+					StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 					TargetRegions: []*golang.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &golang.UserArtifactManage{
@@ -19713,18 +19713,18 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 						ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 						Location: to.StringPtr("West US"),
 						Properties: &golang.GalleryApplicationVersionProperties{
-							ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
+							ProvisioningState: golang.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
 							PublishingProfile: &golang.GalleryApplicationVersionPublishingProfile{
 								EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 								ExcludeFromLatest:  to.BoolPtr(false),
 								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 								ReplicaCount:       to.Int32Ptr(1),
-								StorageAccountType: golang.StorageAccountTypeStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountType("Standard_LRS").ToPtr(),
 								TargetRegions: []*golang.TargetRegion{
 									{
 										Name:                 to.StringPtr("West US"),
 										RegionalReplicaCount: to.Int32Ptr(1),
-										StorageAccountType:   golang.StorageAccountTypeStandardLRS.ToPtr(),
+										StorageAccountType:   golang.StorageAccountType("Standard_LRS").ToPtr(),
 									}},
 								EnableHealthCheck: to.BoolPtr(false),
 								ManageActions: &golang.UserArtifactManage{
@@ -19764,17 +19764,17 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		golang.SharingUpdate{
 			Groups: []*golang.SharingProfileGroup{
 				{
-					Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("Subscriptions").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("AADTenants").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: golang.SharingUpdateOperationTypesAdd.ToPtr(),
+			OperationType: golang.SharingUpdateOperationTypes("Add").ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -19789,17 +19789,17 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		exampleRes := golang.SharingUpdate{
 			Groups: []*golang.SharingProfileGroup{
 				{
-					Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("Subscriptions").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("AADTenants").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: golang.SharingUpdateOperationTypesAdd.ToPtr(),
+			OperationType: golang.SharingUpdateOperationTypes("Add").ToPtr(),
 		}
 
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
@@ -19817,7 +19817,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		"myResourceGroup",
 		"myGalleryName",
 		golang.SharingUpdate{
-			OperationType: golang.SharingUpdateOperationTypesReset.ToPtr(),
+			OperationType: golang.SharingUpdateOperationTypes("Reset").ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -19830,7 +19830,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	// Response check
 	{
 		exampleRes := golang.SharingUpdate{
-			OperationType: golang.SharingUpdateOperationTypesReset.ToPtr(),
+			OperationType: golang.SharingUpdateOperationTypes("Reset").ToPtr(),
 		}
 
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
@@ -19944,7 +19944,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 							UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
 						},
 						Properties: &golang.SharedGalleryImageProperties{
-							HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+							HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 							Identifier: &golang.GalleryImageIdentifier{
 								Offer:     to.StringPtr("myOfferName"),
 								Publisher: to.StringPtr("myPublisherName"),
@@ -19992,7 +19992,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
 			},
 			Properties: &golang.SharedGalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -20554,7 +20554,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		},
 		})
@@ -20616,7 +20616,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("7f3edf91-cb34-4a3e-971a-177dc3dd43cb"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
 
@@ -20667,7 +20667,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		},
 		})
@@ -20721,7 +20721,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("14d10b45-ced7-42ef-a406-50a3df2cea7d"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
 
@@ -20784,7 +20784,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		},
 		})
@@ -20847,7 +20847,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("60b6cd59-600b-4e02-b717-521b07aa94bf"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
 
@@ -20912,7 +20912,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		},
 		})
@@ -20982,7 +20982,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("c948cccb-bbfa-4516-a250-c28abc4d0c15"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
 
@@ -21071,7 +21071,7 @@ func TestCloudServices_Update(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 			Tags: map[string]*string{
 				"Documentation": to.StringPtr("RestAPI"),
@@ -21194,7 +21194,7 @@ func TestCloudServices_Get(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
 
@@ -21362,7 +21362,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 									}},
 							},
 							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-							UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+							UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 						},
 					}},
 			}
@@ -21460,7 +21460,7 @@ func TestCloudServices_List(t *testing.T) {
 									}},
 							},
 							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-							UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+							UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 						},
 					}},
 			}

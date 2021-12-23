@@ -34,7 +34,7 @@ func ExampleGalleriesClient_BeginCreateOrUpdate() {
 			Properties: &golang.GalleryProperties{
 				Description: to.StringPtr("<description>"),
 				SharingProfile: &golang.SharingProfile{
-					Permissions: golang.GallerySharingPermissionTypesGroups.ToPtr(),
+					Permissions: golang.GallerySharingPermissionTypes("Groups").ToPtr(),
 				},
 			},
 		},
@@ -87,7 +87,7 @@ func ExampleGalleriesClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
-		&golang.GalleriesGetOptions{Select: golang.SelectPermissionsPermissions.ToPtr()})
+		&golang.GalleriesGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}

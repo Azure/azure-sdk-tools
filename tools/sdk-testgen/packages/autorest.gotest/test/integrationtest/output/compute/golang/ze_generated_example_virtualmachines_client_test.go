@@ -53,7 +53,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 			Location: to.StringPtr("<location>"),
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -70,7 +70,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 					ComputerName:  to.StringPtr("<computer-name>"),
 					LinuxConfiguration: &golang.LinuxConfiguration{
 						PatchSettings: &golang.LinuxPatchSettings{
-							AssessmentMode: golang.LinuxPatchAssessmentModeImageDefault.ToPtr(),
+							AssessmentMode: golang.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -85,9 +85,9 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("<name>"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesPremiumLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Premium_LRS").ToPtr(),
 						},
 					},
 				},
@@ -118,7 +118,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 		golang.VirtualMachineUpdate{
 			Properties: &golang.VirtualMachineProperties{
 				HardwareProfile: &golang.HardwareProfile{
-					VMSize: golang.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
+					VMSize: golang.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
 				},
 				NetworkProfile: &golang.NetworkProfile{
 					NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -137,13 +137,13 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				StorageProfile: &golang.StorageProfile{
 					DataDisks: []*golang.DataDisk{
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: golang.DiskCreateOptionTypesEmpty.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("Empty").ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -157,9 +157,9 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 					OSDisk: &golang.OSDisk{
 						Name:         to.StringPtr("<name>"),
 						Caching:      golang.CachingTypesReadWrite.ToPtr(),
-						CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+						CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 						ManagedDisk: &golang.ManagedDiskParameters{
-							StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 						},
 					},
 				},
@@ -383,11 +383,11 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 		"<vm-name>",
 		golang.VirtualMachineInstallPatchesParameters{
 			MaximumDuration: to.StringPtr("<maximum-duration>"),
-			RebootSetting:   golang.VMGuestPatchRebootSettingIfRequired.ToPtr(),
+			RebootSetting:   golang.VMGuestPatchRebootSetting("IfRequired").ToPtr(),
 			WindowsParameters: &golang.WindowsParameters{
 				ClassificationsToInclude: []*golang.VMGuestPatchClassificationWindows{
-					golang.VMGuestPatchClassificationWindowsCritical.ToPtr(),
-					golang.VMGuestPatchClassificationWindowsSecurity.ToPtr()},
+					golang.VMGuestPatchClassificationWindows("Critical").ToPtr(),
+					golang.VMGuestPatchClassificationWindows("Security").ToPtr()},
 				MaxPatchPublishDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},

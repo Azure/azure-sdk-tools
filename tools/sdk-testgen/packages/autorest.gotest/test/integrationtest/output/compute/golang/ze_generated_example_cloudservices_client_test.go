@@ -70,7 +70,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 							},
 						}},
 				},
-				UpgradeMode: golang.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		},
 		})

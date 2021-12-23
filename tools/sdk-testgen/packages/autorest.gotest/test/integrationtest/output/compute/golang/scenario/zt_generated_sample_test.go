@@ -63,7 +63,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			golang.ProximityPlacementGroup{
 				Location: to.StringPtr(location),
 				Properties: &golang.ProximityPlacementGroupProperties{
-					ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+					ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 				},
 			},
 			nil)
@@ -120,7 +120,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 				},
 				Properties: &golang.VirtualMachineProperties{
 					HardwareProfile: &golang.HardwareProfile{
-						VMSize: golang.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+						VMSize: golang.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
 					},
 					NetworkProfile: &golang.NetworkProfile{
 						NetworkInterfaces: []*golang.NetworkInterfaceReference{
@@ -149,9 +149,9 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 						OSDisk: &golang.OSDisk{
 							Name:         to.StringPtr("myVMosdisk"),
 							Caching:      golang.CachingTypesReadOnly.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							ManagedDisk: &golang.ManagedDiskParameters{
-								StorageAccountType: golang.StorageAccountTypesStandardLRS.ToPtr(),
+								StorageAccountType: golang.StorageAccountTypes("Standard_LRS").ToPtr(),
 							},
 						},
 					},

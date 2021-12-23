@@ -71,7 +71,7 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -116,7 +116,7 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 						{
 							Name:                 to.StringPtr("<name>"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   golang.StorageAccountTypeStandardZRS.ToPtr(),
+							StorageAccountType:   golang.StorageAccountType("Standard_ZRS").ToPtr(),
 						}},
 				},
 				StorageProfile: &golang.GalleryImageVersionStorageProfile{
@@ -150,7 +150,7 @@ func ExampleGalleryImageVersionsClient_Get() {
 		"<gallery-name>",
 		"<gallery-image-name>",
 		"<gallery-image-version-name>",
-		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypesReplicationStatus.ToPtr()})
+		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}

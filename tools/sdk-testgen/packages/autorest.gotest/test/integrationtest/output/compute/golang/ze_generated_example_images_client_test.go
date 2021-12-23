@@ -71,7 +71,7 @@ func ExampleImagesClient_BeginUpdate() {
 				"department": to.StringPtr("HR"),
 			},
 			Properties: &golang.ImageProperties{
-				HyperVGeneration: golang.HyperVGenerationTypesV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGenerationTypes("V1").ToPtr(),
 				SourceVirtualMachine: &golang.SubResource{
 					ID: to.StringPtr("<id>"),
 				},

@@ -183,7 +183,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 			Properties: &golang.PrivateEndpointConnectionProperties{
 				PrivateLinkServiceConnectionState: &golang.PrivateLinkServiceConnectionState{
 					Description: to.StringPtr("<description>"),
-					Status:      golang.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
+					Status:      golang.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
 				},
 			},
 		},

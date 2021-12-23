@@ -85,7 +85,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("<name>"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							Image: &golang.VirtualHardDisk{
 								URI: to.StringPtr("<uri>"),
 							},

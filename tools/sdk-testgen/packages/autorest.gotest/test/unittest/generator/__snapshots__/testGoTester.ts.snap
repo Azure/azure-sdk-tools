@@ -952,25 +952,25 @@ Tags: map[string]*string{
 },
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
-Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
+Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
 Capacity: to.Int32Ptr(1),
 },
 Properties: &armsignalr.SignalRProperties{
 Features: []*armsignalr.SignalRFeature{
 {
-Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
+Flag: armsignalr.FeatureFlags(\\"ServiceMode\\").ToPtr(),
 Value: to.StringPtr(\\"Serverless\\"),
 Properties: map[string]*string{
 },
 },
 {
-Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+Flag: armsignalr.FeatureFlags(\\"EnableConnectivityLogs\\").ToPtr(),
 Value: to.StringPtr(\\"True\\"),
 Properties: map[string]*string{
 },
 },
 {
-Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
+Flag: armsignalr.FeatureFlags(\\"EnableMessagingLogs\\").ToPtr(),
 Value: to.StringPtr(\\"False\\"),
 Properties: map[string]*string{
 },
@@ -988,7 +988,7 @@ EventPattern: to.StringPtr(\\"connect,disconnect\\"),
 CategoryPattern: to.StringPtr(\\"*\\"),
 URLTemplate: to.StringPtr(\\"https://example.com/chat/api/connect\\"),
 Auth: &armsignalr.UpstreamAuthSettings{
-Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
+Type: armsignalr.UpstreamAuthType(\\"ManagedIdentity\\").ToPtr(),
 ManagedIdentity: &armsignalr.ManagedIdentitySettings{
 Resource: to.StringPtr(\\"api://example\\"),
 },
@@ -996,15 +996,15 @@ Resource: to.StringPtr(\\"api://example\\"),
 }},
 },
 NetworkACLs: &armsignalr.SignalRNetworkACLs{
-DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
+DefaultAction: armsignalr.ACLAction(\\"Deny\\").ToPtr(),
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
+armsignalr.SignalRRequestType(\\"ClientConnection\\").ToPtr()},
 },
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
+armsignalr.SignalRRequestType(\\"ServerConnection\\").ToPtr()},
 Name: to.StringPtr(\\"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
 },
@@ -1012,9 +1012,9 @@ TLS: &armsignalr.SignalRTLSSettings{
 ClientCertEnabled: to.BoolPtr(false),
 },
 },
-Kind: armsignalr.ServiceKindSignalR.ToPtr(),
+Kind: armsignalr.ServiceKind(\\"SignalR\\").ToPtr(),
 Identity: &armsignalr.ManagedIdentity{
-Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
+Type: armsignalr.ManagedIdentityType(\\"SystemAssigned\\").ToPtr(),
 },
 },
 })

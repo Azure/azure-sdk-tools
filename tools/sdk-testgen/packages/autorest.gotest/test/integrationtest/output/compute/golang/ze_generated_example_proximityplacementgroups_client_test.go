@@ -30,7 +30,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 		golang.ProximityPlacementGroup{
 			Location: to.StringPtr("<location>"),
 			Properties: &golang.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: golang.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		},
 		nil)

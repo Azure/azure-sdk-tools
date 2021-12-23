@@ -343,7 +343,9 @@ export class MockTestDataRender extends BaseDataRender {
     protected rawValueToString(rawValue: any, schema: Schema, isPtr: boolean): string {
         let ret = JSON.stringify(rawValue);
         const goType = this.getLanguageName(schema);
-        if ([SchemaType.Choice, SchemaType.SealedChoice].indexOf(schema.type) >= 0) {
+        if (schema.type === SchemaType.Choice) {
+            ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+        } else if (schema.type === SchemaType.SealedChoice) {
             const choiceValue = Helper.findChoiceValue(schema as ChoiceSchema, rawValue);
             ret = this.context.packageName + '.' + this.getLanguageName(choiceValue);
         } else if (goType === 'string') {

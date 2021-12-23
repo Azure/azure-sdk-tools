@@ -32,13 +32,13 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 		golang.DiskEncryptionSet{
 			Location: to.StringPtr("<location>"),
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.EncryptionSetProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("<key-url>"),
 				},
-				EncryptionType: golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType: golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 			},
 		},
 		nil)
@@ -65,13 +65,13 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 		"<disk-encryption-set-name>",
 		golang.DiskEncryptionSetUpdate{
 			Identity: &golang.EncryptionSetIdentity{
-				Type: golang.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
+				Type: golang.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
 			},
 			Properties: &golang.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &golang.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("<key-url>"),
 				},
-				EncryptionType:                    golang.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
+				EncryptionType:                    golang.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},

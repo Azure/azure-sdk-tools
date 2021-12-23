@@ -33,7 +33,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 			Location: to.StringPtr("<location>"),
 			Properties: &golang.SnapshotProperties{
 				CreationData: &golang.CreationData{
-					CreateOption:     golang.DiskCreateOptionImport.ToPtr(),
+					CreateOption:     golang.DiskCreateOption("Import").ToPtr(),
 					SourceURI:        to.StringPtr("<source-uri>"),
 					StorageAccountID: to.StringPtr("<storage-account-id>"),
 				},

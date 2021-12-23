@@ -99,29 +99,45 @@ export class ResponseGenerator {
         parameterTypes: Record<string, ParameterType>
     } {
         const parameters: Record<string, any> = {}
-        const specPathItems: string[] = specItem.path.split('/')
-        const url = liveRequest.url.split('?')[0]
-        const requestPathItems: string[] = url
-            .substr(url.indexOf(':/') + 2)
-            .split('/')
-            .slice(1)
+        // replace all the param placeholder in path with regex group annotation
+        const specPathRegex = new RegExp(
+            specItem.path
+                .split('/')
+                .map((v: string) => {
+                    if (v.startsWith('{') && v.endsWith('}')) {
+                        return `(?<${v.slice(1, -1)}>.*)`
+                    } else {
+                        return v
+                    }
+                })
+                .join('\\/')
+        )
+        // remove request url query string, http:// and host:port
+        let url = liveRequest.url.split('?')[0]
+        url =
+            '/' +
+            url
+                .substr(url.indexOf(':/') + 3)
+                .split('/')
+                .slice(1)
+                .join('/')
+        // exec regex to pair all the path param with value
+        const urlMappingResult = specPathRegex.exec(url)
         const types: Record<string, ParameterType> = {}
         for (let paramSpec of specItem?.content?.parameters || []) {
             if (Object.prototype.hasOwnProperty.call(paramSpec, useREF)) {
                 paramSpec = this.jsonLoader.resolveRefObj(paramSpec)
             }
             if (paramSpec.in === ParameterType.Path.toString()) {
-                for (let i = 0; i < specPathItems.length; i++) {
-                    const item = specPathItems[i]
-                    if (
-                        item.startsWith('{') &&
-                        item.endsWith('}') &&
-                        item.slice(1, -1) === paramSpec.name
-                    ) {
-                        parameters[paramSpec.name] = decodeURI(requestPathItems[i])
-                    }
+                // use regex group to get path param value
+                if (
+                    urlMappingResult !== null &&
+                    urlMappingResult.groups &&
+                    urlMappingResult.groups[paramSpec.name]
+                ) {
+                    parameters[paramSpec.name] = decodeURI(urlMappingResult.groups[paramSpec.name])
+                    types[paramSpec.name] = ParameterType.Path
                 }
-                types[paramSpec.name] = ParameterType.Path
             } else if (paramSpec.in === ParameterType.Body.toString()) {
                 parameters[paramSpec.name] = liveRequest.body
                 types[paramSpec.name] = ParameterType.Body
@@ -131,6 +147,7 @@ export class ResponseGenerator {
                     Object.prototype.hasOwnProperty.call(liveRequest.query, paramSpec.name)
                 ) {
                     parameters[paramSpec.name] = liveRequest.query[paramSpec.name]
+                    // query value should be escape as example value use escaped string
                     if (typeof parameters[paramSpec.name] === 'string') {
                         parameters[paramSpec.name] = escape(parameters[paramSpec.name])
                     } else if (Array.isArray(parameters[paramSpec.name])) {

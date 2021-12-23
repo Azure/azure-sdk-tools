@@ -19,12 +19,14 @@ You must provide one of the parameters.
 param(
     [string]$IdentityName,
     [string]$IdentityEmail,
-    [string]$ToolVersion="1.0.0-dev.20211221.1",
-    [string]$DevOpsFeed = "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
+    [string]$TargetDevOpsVariable,
+    [string]$ToolVersion,
+    [string]$ToolPath = (Join-Path ([System.IO.Path]::GetTempPath()) "identity-converter-tool-path"),
+    [string]$DevOpsFeed
 )
 
 . (Join-Path $PSScriptRoot common.ps1)
-. (Join-Path $PSScriptRoot Helpers DotnetTool-Helpers.ps1))
+. (Join-Path $PSScriptRoot Helpers DotnetTool-Helpers.ps1)
 
 if (!$IdentityName -and !$IdentityEmail)
 {
@@ -35,20 +37,33 @@ if (!$IdentityName -and !$IdentityEmail)
 $command = Get-CodeOwnersTool -toolPath $ToolPath -toolName "Azure.Sdk.Tools.IdentityConverter" -toolVersion $ToolVersion `
 -feedUrl $DevOpsFeed -toolCommandName "identity-converter"
 
-$gitHubUserDetails = $command `
-    --aad-app-id-var APP_ID `
-    --aad-app-secret-var APP_SECRET `
-    --aad-tenant-var AAD_TENANT `
-    --kusto-url-var KUSTO_URL `
-    --kusto-database-var KUSTO_DB `
-    --kusto-table-var KUSTO_TABLE `
-    --identity-name $IdentityName `
-    --identity-email $IdentityEmail
+$arguments = @("--aad-app-id-var=APP_ID",
+    "--aad-app-secret-var=APP_SECRET",
+    "--aad-tenant-var=AAD_TENANT",
+    "--kusto-url-var=KUSTO_URL",
+    "--kusto-database-var=KUSTO_DB",
+    "--kusto-table-var=KUSTO_TABLE")
 
-if ($LASTEXITCODE -ne 0) {
-    LogError "Filed to retrieve Github Username using $IdentityName and/or $IdentityEmail"
-    return null
+if ($IdentityName)
+{
+    $arguments += "--identity-name=$IdentityName"
 }
 
-$gitHubUserDetailsJson = $gitHubUserDetails | ConvertFrom-Json
-return $gitHubUserDetailsJson.GithubUserName
+if ($IdentityEmail)
+{
+    $arguments += "--identity-email=$IdentityEmail"
+}
+
+if ($TargetDevOpsVariable)
+{
+    $arguments += "--target-var=$TargetDevOpsVariable"
+}
+
+$gitHubUserDetails = &$command $arguments
+
+if ($LASTEXITCODE -ne 0) {
+    LogError "Failed to retrieve Github Username using $IdentityName and/or $IdentityEmail"
+    return $null
+}
+
+Write-Host $gitHubUserDetails

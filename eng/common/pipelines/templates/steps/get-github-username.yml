@@ -1,0 +1,27 @@
+parameters:
+  IdentityName: ''
+  IdentityEmail: ''
+  TargetDevOpsVariable: 'QueuingGitHubUser'
+  ToolVersion: '1.0.0-dev.20211221.1'
+  DevOpsFeed: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
+
+steps:
+- task: PowerShell@2
+  displayName: 'Get GitHub UserName'
+  inputs:
+    pwsh: true
+    targetType: filePath
+    filePath: '$(Build.SourcesDirectory)/eng/common/scripts/Get-GitHubUserName.ps1'
+    arguments: >
+      -IdentityName ${{ parameters.IdentityName }}
+      -IdentityEmail ${{ parameters.IdentityEmail }}
+      -TargetDevOpsVariable ${{ parameters.TargetDevOpsVariable }}
+      -ToolVersion ${{ parameters.ToolVersion }}
+      -DevOpsFeed ${{ parameters.DevOpsFeed }}
+  env:
+    APP_ID: $(notification-aad-app-id)
+    APP_SECRET: $(notification-aad-secret)
+    AAD_TENANT: $(notification-aad-tenant)
+    KUSTO_URL: $(notification-kusto-url)
+    KUSTO_DB: $(notification-kusto-db)
+    KUSTO_TABLE: $(notification-kusto-table)

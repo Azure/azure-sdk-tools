@@ -97,8 +97,7 @@ export function getConfigFromReadmeMd(readmePath: string) {
     const readme = fs.readFileSync(readmePath, {encoding: 'utf-8'});
     const match = /```yaml((.|\n)*)```/.exec(readme);
     if (!match || match.length !== 3) {
-        logger.logError(`Cannot find valid package name from ${readmePath}`);
-        process.exit(1);
+        throw new Error(`Cannot find valid package name from ${readmePath}`);
     }
     const yaml = require('js-yaml');
     return yaml.load(match[1]);
@@ -106,8 +105,7 @@ export function getConfigFromReadmeMd(readmePath: string) {
 
 export function getPackageNameFromReadmeMd(readme: any) {
     if (!readme['package-name'] || !(/@azure-rest\/[a-zA-Z-]+/.exec(readme['package-name']))) {
-        logger.logError(`Cannot find valid package name from existing README.md`);
-        process.exit(1);
+        throw new Error(`Cannot find valid package name from existing README.md`);
     }
     return readme['package-name'];
 }
@@ -157,4 +155,29 @@ export async function getInputFromCommandWithDefaultValue(parameter: string, def
     } else {
         return input as string;
     }
+}
+
+export function getServicePrintName(packageName: string) {
+    packageName = packageName.replace('azure-rest/', '');
+    const parts = packageName.split(/[^a-zA-z]/);
+    for (let i = 0; i < parts.length; i++) {
+        parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
+    }
+    return parts.join(' ');
+}
+
+export function getServiceNameFromPackagePath(packagePath: string) {
+    const match = /.*[\/\\]sdk[\/\\]([a-zA-Z0-9-]+)[\/\\]/.exec(packagePath);
+    if (!match || match.length !== 2) {
+        throw new Error(`Cannot find service name from packagePath ${packagePath}`);
+    }
+    return match[1];
+}
+
+export function getClientName(packagePath: string) {
+    if (fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
+        const readme = getConfigFromReadmeMd(path.join(packagePath, 'swagger', 'README.md'));
+        return readme?.title;
+    }
+    return undefined;
 }

@@ -58,7 +58,7 @@ async function autoGenerate(options: any) {
         process.exit(1);
     }
 
-    await generateCodes(packagePath, packageName, sdkRepo);
+    await generateCodes(sdkRepo, packagePath, packageName);
     await buildGeneratedCodes(sdkRepo, packagePath, packageName);
     logger.logGreen(``);
     logger.logGreen(`----------------------------------------------------------------`);

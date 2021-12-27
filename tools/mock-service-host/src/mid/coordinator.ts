@@ -127,6 +127,7 @@ export class Coordinator {
                 shouldClone: false
             },
             swaggerPathsPattern: this.config.validationPathsPattern,
+            excludedSwaggerPathsPattern: this.config.excludedValidationPathsPattern,
             directory: path.resolve(this.config.specRetrievalLocalRelativePath),
             isPathCaseSensitive: false
         }

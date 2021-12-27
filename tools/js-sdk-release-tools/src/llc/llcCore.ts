@@ -15,10 +15,11 @@ import {hackByModifyConfig, ModifyModel} from "./hackByModifyConfig";
 import {generateKarmaConfig} from "./generateKarmaConfig";
 import {changeRushJson} from "../utils/changeRushJson";
 import {modifyOrGenerateCiYaml} from "../utils/changeCiYaml";
+import {generateReadmeMd} from "./generateReadmeMd";
 
 const shell = require('shelljs')
 
-export async function generateCodes(packagePath, packageName, sdkRepo) {
+export async function generateCodes(sdkRepo: string, packagePath: string, packageName: string) {
     let cmd = `autorest  --typescript README.md`;
     try {
         shell.cd(path.join(packagePath, 'swagger'));
@@ -35,6 +36,7 @@ export async function generateCodes(packagePath, packageName, sdkRepo) {
         await generateApiExtractorConfig(packagePath, packageName);
         await generateLinterConfig(packagePath);
         await generateLicense(packagePath);
+        await generateReadmeMd(packagePath, packageName)
         await generateTest(packagePath);
         await generateKarmaConfig(packagePath);
         await generateSample(packagePath);

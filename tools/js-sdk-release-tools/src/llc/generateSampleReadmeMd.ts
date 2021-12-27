@@ -1,9 +1,42 @@
 import * as fs from "fs";
 import * as path from "path";
-import { getInputFromCommand, getLatestCodegen} from "./utils";
+import {getConfigFromReadmeMd, getInputFromCommand, getInputFromCommandWithDefaultValue, getLatestCodegen} from "./utils";
 import {logger} from "../utils/logger";
 
-export async function generateSampleReadmeMd(packageName, packagePath, options: any) {
+async function writeReadmeMd(packageName: string, packagePath: string, options: any) {
+    const sampleReadme = `# Azure Sample Readme for RLC
+
+> see https://aka.ms/autorest
+
+## Configuration
+
+\`\`\`yaml
+package-name: "${packageName}"
+title: ${options.title}
+description: ${options.description}
+generate-metadata: false
+license-header: MICROSOFT_MIT_NO_VERSION
+output-folder: ../
+source-code-folder-path: ./src
+input-file: ${options.inputFile}
+package-version: ${options.packageVersion}
+rest-level-client: true
+add-credentials: true
+credential-scopes: "${options.credentialScopes}"
+use-extension:
+  "@autorest/typescript": "${await getLatestCodegen(packagePath)}"
+\`\`\`
+`;
+    if (!fs.existsSync(path.join(packagePath, 'swagger'))) {
+        fs.mkdirSync(path.join(packagePath, 'swagger'));
+    }
+    fs.writeFileSync(path.join(packagePath, 'swagger', 'README.md'), sampleReadme, {encoding: 'utf-8'});
+    logger.log('');
+    logger.logGreen('-------------------------------------------------------------');
+    logger.log('');
+}
+
+export async function generateSampleReadmeMd(packageName: string, packagePath: string, options: any) {
     const title = options.title? options.title : await getInputFromCommand('title');
     const description = options.description? options.description : await getInputFromCommand('description');
     let inputFile = options['input-file']? options['input-file'] : await getInputFromCommand('input-file');
@@ -16,39 +49,45 @@ export async function generateSampleReadmeMd(packageName, packagePath, options: 
     }
     const packageVersion = options['package-version']? options['package-version'] : await getInputFromCommand('package-version');
     const credentialScopes = options['credential-scopes']? options['credential-scopes'] : await getInputFromCommand('credential-scopes');
+    await writeReadmeMd(packageName, packagePath, {
+        title: title,
+        description: description,
+        inputFile: inputFile,
+        packageVersion: packageVersion,
+        credentialScopes: credentialScopes
+    });
 
-    const sampleReadme = `# Azure Sample Readme for RLC
+}
 
-> see https://aka.ms/autorest
-
-## Configuration
-
-\`\`\`yaml
-package-name: "${packageName}"
-title: ${title}
-description: ${description}
-generate-metadata: false
-license-header: MICROSOFT_MIT_NO_VERSION
-output-folder: ../
-source-code-folder-path: ./src
-input-file: ${inputFile}
-package-version: ${packageVersion}
-rest-level-client: true
-add-credentials: true
-credential-scopes: "${credentialScopes}"
-use-extension:
-  "@autorest/typescript": "${await getLatestCodegen(packagePath)}"
-\`\`\`
-`;
-    if (!fs.existsSync(path.join(packagePath, 'swagger'))) {
-        fs.mkdirSync(path.join(packagePath, 'swagger'));
+export async function modifyExistingReadmeMd(packageName: string, packagePath: string) {
+    logger.logGreen(`${packageName} is found in ${packagePath}, please confirm whether the value is expected?
+If yes, please input Enter directly. If not, please enter a new value.`);
+    const readme = await getConfigFromReadmeMd(path.join(packagePath, 'swagger', 'README.md'));
+    const title = await getInputFromCommandWithDefaultValue('title', readme['title']);
+    const description = await getInputFromCommandWithDefaultValue('description', readme['description']);
+    let existingInputArray;
+    if (Array.isArray(readme['input-file'])) {
+        existingInputArray = readme['input-file'].join(';');
+    } else {
+        existingInputArray = readme['input-file'];
     }
-    fs.writeFileSync(path.join(packagePath, 'swagger', 'README.md'), sampleReadme, {encoding: 'utf-8'});
-    logger.log('');
-    logger.logGreen('-------------------------------------------------------------');
-    logger.logGreen(`${path.join(packagePath, 'swagger', 'README.md')} is generated.`);
-    logger.log('');
-    logger.logGreen(`You can refer to https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/purview/purview-scanning-rest/swagger/README.md`)
-    logger.logGreen('-------------------------------------------------------------');
-    logger.log('');
+    let inputFile = await getInputFromCommandWithDefaultValue('input-file', existingInputArray);
+    if (inputFile.includes(';')) {
+        const inputFileArray = inputFile.split(';');
+        inputFile = '';
+        for (const i of inputFileArray) {
+            inputFile = inputFile + '\n  -' + i;
+        }
+    }
+
+    const packageVersion = await getInputFromCommandWithDefaultValue('package-version', readme['package-version']);
+    const credentialScopes = await getInputFromCommandWithDefaultValue('credential-scopes', readme['credential-scopes']);
+
+    await writeReadmeMd(packageName, packagePath, {
+        title: title,
+        description: description,
+        inputFile: inputFile,
+        packageVersion: packageVersion,
+        credentialScopes: credentialScopes
+    });
 }

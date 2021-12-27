@@ -93,16 +93,22 @@ export function createFolderIfNotExist(path: string) {
     }
 }
 
-export function getPackageNameFromReadmeMd(readmePath) {
+export function getConfigFromReadmeMd(readmePath: string) {
     const readme = fs.readFileSync(readmePath, {encoding: 'utf-8'});
-    const match = /package-name: "*(@azure-rest\/[a-zA-Z-]+)/.exec(readme);
-    if (!match || match.length !== 2) {
-        logger.logError(`Cannot find invalid package name from ${readmePath}`);
-        process.exit(1);
+    const match = /```yaml((.|\n)*)```/.exec(readme);
+    if (!match || match.length !== 3) {
+        throw new Error(`Cannot find valid package name from ${readmePath}`);
     }
-    return match[1];
+    const yaml = require('js-yaml');
+    return yaml.load(match[1]);
 }
 
+export function getPackageNameFromReadmeMd(readme: any) {
+    if (!readme['package-name'] || !(/@azure-rest\/[a-zA-Z-]+/.exec(readme['package-name']))) {
+        throw new Error(`Cannot find valid package name from existing README.md`);
+    }
+    return readme['package-name'];
+}
 
 export async function getPackageNameFromCommand(): Promise<string> {
     while (true) {
@@ -127,16 +133,51 @@ function ask(query: string) {
     }))
 }
 
+const messages = {
+    'package-name': 'Please input packageName which should be in format @azure-rest/xxxxx: ',
+    title: 'Please input the title of sdk: ',
+    description: `Please input the description of sdk: `,
+    'input-file': `Please input the swagger files. If you have multi input files, please use semicolons to separate: `,
+    'package-version': `Please input the package version you want to generate: `,
+    'credential-scopes': `Please input credential-scopes of your service: `,
+    'service-name': `Which service folder do you want to store your package in sdk folder? Please input it: `
+}
+
 export async function getInputFromCommand(parameter: string): Promise<string> {
-    const messages = {
-        'package-name': 'Please input packageName which should be in format @azure-rest/xxxxx: ',
-        title: 'Please input the title of sdk: ',
-        description: `Please input the description of sdk: `,
-        'input-file': `Please input the swagger files. If you have multi input files, please use semicolons to separate: `,
-        'package-version': `Please input the package version you want to generate: `,
-        'credential-scopes': `Please input credential-scopes of your service: `,
-        'service-name': `Which service folder do you want to store your package in sdk folder? Please input it: `
-    }
     const input = await ask(messages[parameter].yellow);
     return input as string;
+}
+
+export async function getInputFromCommandWithDefaultValue(parameter: string, defaultValue: string): Promise<string> {
+    const input = await ask(`${messages[parameter]}[default: ${defaultValue}]: `.yellow);
+    if ((input as string).trim() === '') {
+        return defaultValue;
+    } else {
+        return input as string;
+    }
+}
+
+export function getServicePrintName(packageName: string) {
+    packageName = packageName.replace('azure-rest/', '');
+    const parts = packageName.split(/[^a-zA-z]/);
+    for (let i = 0; i < parts.length; i++) {
+        parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
+    }
+    return parts.join(' ');
+}
+
+export function getServiceNameFromPackagePath(packagePath: string) {
+    const match = /.*[\/\\]sdk[\/\\]([a-zA-Z0-9-]+)[\/\\]/.exec(packagePath);
+    if (!match || match.length !== 2) {
+        throw new Error(`Cannot find service name from packagePath ${packagePath}`);
+    }
+    return match[1];
+}
+
+export function getClientName(packagePath: string) {
+    if (fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
+        const readme = getConfigFromReadmeMd(path.join(packagePath, 'swagger', 'README.md'));
+        return readme?.title;
+    }
+    return undefined;
 }

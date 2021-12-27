@@ -22,8 +22,8 @@ import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
 import { TestConfig } from '../common/testConfig';
-import { TestDefinitionFile, TestScenario, TestStep, TestStepArmTemplateDeployment, TestStepRestCall } from 'oav/dist/lib/testScenario/testResourceTypes';
-import { TestResourceLoader } from 'oav/dist/lib/testScenario/testResourceLoader';
+import { ScenarioDefinition, Scenario, Step, StepArmTemplate, StepRestCall } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
+import { ApiScenarioLoader } from 'oav/dist/lib/apiScenario/apiScenarioLoader';
 
 export enum ExtensionName {
     xMsExamples = 'x-ms-examples',
@@ -42,9 +42,9 @@ export type TestStepModel = {
     outputVariableNames: string[];
 };
 
-export type TestStepArmTemplateDeploymentModel = TestStepArmTemplateDeployment & TestStepModel;
+export type StepArmTemplateModel = StepArmTemplate & TestStepModel;
 
-export type TestStepRestCallModel = TestStepRestCall & TestStepModel & { exampleModel: ExampleModel };
+export type StepRestCallModel = StepRestCall & TestStepModel & { exampleModel: ExampleModel };
 
 /**
  * Generally a test group should be generated into one test source file.
@@ -82,11 +82,11 @@ export interface TestCodeModel extends CodeModel {
     testModel?: TestModel;
 }
 
-export type TestScenarioModel = TestScenario & {
+export type TestScenarioModel = Scenario & {
     requiredVariablesDefault?: { [variable: string]: string };
 };
 
-export type TestDefinitionModel = TestDefinitionFile & {
+export type TestDefinitionModel = ScenarioDefinition & {
     useArmTemplate: boolean;
     requiredVariablesDefault: { [variable: string]: string };
     outputVariableNames: string[];
@@ -390,12 +390,7 @@ export class TestCodeModeler {
         }
     }
 
-    public initiateArmTemplate(testDef: TestDefinitionModel, stepModel: TestStepArmTemplateDeploymentModel) {
-        if (!stepModel.armTemplateParametersPayload) {
-            stepModel.armTemplateParametersPayload = {
-                parameters: {},
-            };
-        }
+    public initiateArmTemplate(testDef: TestDefinitionModel, stepModel: StepArmTemplateModel) {
         stepModel.outputVariableNames = [];
         for (const templateOutput of Object.keys(stepModel.armTemplatePayload.outputs || {})) {
             if (_.has(testDef.variables, templateOutput) || _.has(stepModel.variables, templateOutput)) {
@@ -408,23 +403,23 @@ export class TestCodeModeler {
         }
     }
 
-    public initiateRestCall(testDef: TestDefinitionModel, step: TestStepRestCall) {
+    public initiateRestCall(testDef: TestDefinitionModel, step: StepRestCall) {
         const operationInfo = this.findOperationByOperationId(step.operationId);
         if (!operationInfo) {
-            throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleId}] in codeModel!`);
+            throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
         }
         const { operation, operationGroup } = operationInfo;
-        (step as TestStepRestCallModel).exampleModel = this.createExampleModel(
+        (step as StepRestCallModel).exampleModel = this.createExampleModel(
             {
                 parameters: step.requestParameters,
                 responses: {
                     [step.statusCode]: {
-                        body: step.responseExpected,
+                        body: step.expectedResponse,
                         headers: {},
                     },
                 },
             },
-            step.exampleId,
+            step.exampleName,
             operation,
             operationGroup,
         );
@@ -447,8 +442,8 @@ export class TestCodeModeler {
         testDef.useArmTemplate = false;
         testDef.outputVariableNames = [];
 
-        const allSteps: TestStep[] = [...testDef.prepareSteps];
-        for (const scenario of testDef.testScenarios as TestScenarioModel[]) {
+        const allSteps: Step[] = [...testDef.prepareSteps];
+        for (const scenario of testDef.scenarios as TestScenarioModel[]) {
             allSteps.push(...scenario.steps);
             this.initiateOavVariables(scenario);
         }
@@ -459,7 +454,7 @@ export class TestCodeModeler {
                 this.initiateRestCall(testDef, step);
             } else if (step.type === OavStepType.armTemplate) {
                 testDef.useArmTemplate = true;
-                this.initiateArmTemplate(testDef, step as TestStepArmTemplateDeploymentModel);
+                this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
             }
         }
     }
@@ -467,7 +462,7 @@ export class TestCodeModeler {
     public async loadTestResources() {
         try {
             const fileRoot = this.testConfig.getSwaggerFolder();
-            const loader = TestResourceLoader.create({
+            const loader = ApiScenarioLoader.create({
                 useJsonParser: false,
                 checkUnderFileRoot: false,
                 fileRoot: fileRoot,

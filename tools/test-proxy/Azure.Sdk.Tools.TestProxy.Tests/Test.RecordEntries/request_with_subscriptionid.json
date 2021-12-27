@@ -1,7 +1,7 @@
 ﻿{
   "Entries": [
     {
-      "RequestUri": "https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability?api-version=2019-05-01",
+      "RequestUri": "https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability?api-version=2019-05-01&uselessUriAddition=hellothere",
       "RequestMethod": "POST",
       "RequestHeaders": {
         ":authority": "localhost:5001",

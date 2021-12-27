@@ -1,12 +1,12 @@
-﻿using Azure.Core;
-using Azure.Sdk.Tools.TestProxy.Common;
+﻿using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
-using System;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -132,6 +132,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void CustomMatcherDefaultArgumentsMatch()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
+            var matcher = new CustomDefaultMatcher();
+
+            sessionForRetrieval.Session.Lookup(identicalRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
         public void CustomMatcherDisableBodyMatches()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
@@ -144,15 +154,59 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void CustomerMatcherSpecifyExcludedHeadersMatches()
+        public void CustomMatcherSpecifyExcludedHeadersMatches()
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
             var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
             differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
 
-            var matcher = new CustomDefaultMatcher(nonDefaultHeaderExclusions: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
 
             sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredHeadersMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRequestNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers.Remove("Accept-Encoding");
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+            Assert.Contains("<Accept-Encoding> is absent in request", assertion.Message);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRecordNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            sessionForRetrieval.Session.Entries[0].Request.Headers.Remove("Accept-Encoding");
+            var sameOriginalHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+            Assert.Contains("<Accept-Encoding> is absent in record", assertion.Message);
         }
 
         [Fact]
@@ -170,7 +224,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
             var differentRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
-            var matcher = new CustomDefaultMatcher(nonDefaultHeaderExclusions: "Accept-Encoding");
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
 
             differentRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
             differentRequest.RequestUri = "https://shouldntmatch.com";
@@ -178,6 +232,54 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Throws<TestRecordingMismatchException>(() => {
                 sessionForRetrieval.Session.Lookup(differentRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
+        }
+
+        [Fact]
+        public async Task CustomMatcherMatchesDifferentUriOrder()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
+            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            // prepare recording context
+            playbackContext.Request.Headers.Clear();
+            playbackContext.Response.Headers.Clear();
+            var requestHeaders = new Dictionary<string, string>(){
+                { ":authority", "localhost:5001" },
+                { ":method", "POST" },
+                { ":path", "/" },
+                { ":scheme", "https" },
+                { "Accept-Encoding", "gzip" },
+                { "Content-Length", "0" },
+                { "User-Agent", "Go-http-client/2.0" },
+                { "x-recording-id", recordingId },
+                { "x-recording-upstream-base-uri", "https://management.azure.com/" }
+            };
+            foreach (var kvp in requestHeaders)
+            {
+                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+            }
+            playbackContext.Request.Method = "POST";
+
+            // the query parameters are in reversed order from the recording deliberately.
+            var queryString = "?uselessUriAddition=hellothere&api-version=2019-05-01";
+            var path = "/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability";
+            playbackContext.Request.Host = new HostString("https://localhost:5001");
+            playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response);
+            Assert.Equal("WESTUS:20210909T204819Z:f9a33867-6efc-4748-b322-303b2b933466", playbackContext.Response.Headers["x-ms-routing-request-id"].ToString());
         }
     }
 }

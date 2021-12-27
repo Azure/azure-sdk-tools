@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -59,8 +60,9 @@ namespace APIViewWeb.Repositories
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
 
+
         // API change detection for PR will pull artifact from devops artifact
-        public async Task DetectApiChanges(string buildId, string artifactName, string filePath, int prNumber, string commitSha, string repoName, string packageName)
+        public async Task DetectApiChanges(string buildId, string artifactName, string originalFileName, string commitSha, string repoName, string packageName, int prNumber, string codeFileName = "")
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -75,7 +77,7 @@ namespace APIViewWeb.Repositories
                     {
                         RepoName = repoName,
                         PullRequestNumber = prNumber,
-                        FilePath = filePath,
+                        FilePath = originalFileName,
                         Author = issue.User.Login,
                         PackageName = packageName
                     };
@@ -91,13 +93,11 @@ namespace APIViewWeb.Repositories
                 pullRequestModel.Commits.Add(commitSha);
                 await AssertPullRequestCreatorPermission(pullRequestModel);
 
-                using var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, filePath);
-                if (stream != null)
+                using var memoryStream = new MemoryStream();
+                var codeFile = await _reviewManager.GetCodeFile(repoName,buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+                if (codeFile != null)
                 {
-                    using var memoryStream = new MemoryStream();
-                    var fileName = Path.GetFileName(filePath);
-                    var codeFile = await _reviewManager.CreateCodeFile(fileName, stream, false, memoryStream);
-                    var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, fileName, memoryStream, pullRequestModel);
+                    var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel);
                     if (apiDiff != "")
                     {
                         await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);

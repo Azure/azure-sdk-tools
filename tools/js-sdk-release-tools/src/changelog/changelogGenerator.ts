@@ -68,6 +68,32 @@ export class Changelog {
             this.addedEnumValue.length > 0;
     }
 
+    public getBreakingChangeItems(): string[] {
+        let items: string[] = [];
+        if (this.hasBreakingChange) {
+            this.removedOperationGroup
+                .concat(this.removedOperation)
+                .concat(this.operationSignatureChange)
+                .concat(this.deletedClass)
+                .concat(this.classSignatureChange)
+                .concat(this.interfaceParamDelete)
+                .concat(this.interfaceParamAddRequired)
+                .concat(this.interfaceParamChangeRequired)
+                .concat(this.classParamDelete)
+                .concat(this.classParamChangeRequired)
+                .concat(this.typeAliasDeleteInherit)
+                .concat(this.typeAliasParamDelete)
+                .concat(this.typeAliasAddRequiredParam)
+                .concat(this.typeAliasParamChangeRequired)
+                .concat(this.removedEnum)
+                .concat(this.removedEnumValue)
+                .forEach(e => {
+                    items.push(e);
+                });
+        }
+        return items;
+    }
+
     public displayChangeLog(): string {
         const display: string[] = [];
         if (this.hasFeature) {

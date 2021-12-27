@@ -68,6 +68,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public static CodeOwnerEntry ParseAndFindOwnersForClosestMatch(string codeOwnersFilePathOrUrl, string targetPath)
         {
             var codeOwnerEntries = ParseFile(codeOwnersFilePathOrUrl);
+            return FindOwnersForClosestMatch(codeOwnerEntries, targetPath);
+        }
+
+        public static CodeOwnerEntry FindOwnersForClosestMatch(List<CodeOwnerEntry> codeOwnerEntries, string targetPath)
+        {
             // Normalize the start and end of the paths by trimming slash
             targetPath = targetPath.Trim('/');
 

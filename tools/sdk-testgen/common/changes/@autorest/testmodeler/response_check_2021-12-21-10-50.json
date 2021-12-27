@@ -2,8 +2,8 @@
   "changes": [
     {
       "packageName": "@autorest/testmodeler",
-      "comment": "Uncapitalize body parameter only in example.",
-      "type": "patch"
+      "comment": "Refactor config get set method.",
+      "type": "minor"
     }
   ],
   "packageName": "@autorest/testmodeler"

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Upgrade to latest autorest/core.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

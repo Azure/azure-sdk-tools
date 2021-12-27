@@ -28,11 +28,9 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 		"<resource-group-name>",
 		"<availability-set-name>",
 		golang.AvailabilitySet{
+			Location: to.StringPtr("<location>"),
 			AdditionalProperties: map[string]*string{
 				"anyProperty": to.StringPtr("fakeValue"),
-			},
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
 			},
 			Properties: &golang.AvailabilitySetProperties{
 				PlatformFaultDomainCount:  to.Int32Ptr(2),

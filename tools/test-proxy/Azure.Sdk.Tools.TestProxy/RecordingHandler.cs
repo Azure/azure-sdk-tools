@@ -141,7 +141,13 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
-            var body = DecompressBody((MemoryStream) await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+
+            byte[] body = new byte[]{};
+
+            // HEAD requests do NOT have a body regardless of the value of the Content-Length header
+            if (incomingRequest.Method.ToUpperInvariant() != "HEAD") {
+                body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
+            }
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
@@ -343,12 +349,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             foreach (var header in match.Response.Headers)
             {
-                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+                if (header.Key == "Retry-After")
+                {
+                    // in Playback, we change Retry-After header to 0 to prevent unnecessary waiting
+                    outgoingResponse.Headers.Add(header.Key, "0");
+                }
+                else
+                {
+                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+                }
             }
 
             foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
             {
-                transform.ApplyTransform(incomingRequest, outgoingResponse);
+                transform.Transform(incomingRequest, outgoingResponse);
             }
 
             outgoingResponse.Headers.Remove("Transfer-Encoding");

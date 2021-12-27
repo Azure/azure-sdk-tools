@@ -31,11 +31,9 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		"<gallery-name>",
 		"<gallery-image-name>",
 		golang.GalleryImage{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("<offer>"),
 					Publisher: to.StringPtr("<publisher>"),
@@ -70,7 +68,7 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 		"<gallery-image-name>",
 		golang.GalleryImageUpdate{
 			Properties: &golang.GalleryImageProperties{
-				HyperVGeneration: golang.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: golang.HyperVGeneration("V1").ToPtr(),
 				Identifier: &golang.GalleryImageIdentifier{
 					Offer:     to.StringPtr("<offer>"),
 					Publisher: to.StringPtr("<publisher>"),

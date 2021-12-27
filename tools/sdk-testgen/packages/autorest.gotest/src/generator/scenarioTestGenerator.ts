@@ -134,7 +134,7 @@ export class ScenarioTestCodeGenerator extends BaseCodeGenerator {
                         //   1) VirtualMachineResponse  --> virtualMachineResponse
                         //   2) armCompute.VirtualMachineResponse  --> virtualMachineResponse   // remove package name
                         //   3) *VirtualMachineResponse  --> virtualMachineResponse  // remove char of pointer.
-                        return Helper.uncapitalize(typeName.split('.').join('*').split('*').last);
+                        return Helper.uncapitalize(typeName.split('.').join('*').split('*').pop());
                     },
                 },
             );

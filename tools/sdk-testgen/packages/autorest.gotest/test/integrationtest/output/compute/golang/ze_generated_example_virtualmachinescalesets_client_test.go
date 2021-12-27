@@ -50,9 +50,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		golang.VirtualMachineScaleSet{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
 				Overprovision: to.BoolPtr(true),
 				UpgradePolicy: &golang.UpgradePolicy{
@@ -87,7 +85,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 						OSDisk: &golang.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("<name>"),
 							Caching:      golang.CachingTypesReadWrite.ToPtr(),
-							CreateOption: golang.DiskCreateOptionTypesFromImage.ToPtr(),
+							CreateOption: golang.DiskCreateOptionTypes("FromImage").ToPtr(),
 							Image: &golang.VirtualHardDisk{
 								URI: to.StringPtr("<uri>"),
 							},

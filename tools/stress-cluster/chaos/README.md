@@ -9,6 +9,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Quick Testing with no Dependencies](#quick-testing-with-no-dependencies)
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
+     * [Stress Test Metadata](#stress-test-metadata)
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
@@ -16,13 +17,13 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
-     * [Node size requirements](#node-size-requirements)
+     * [Node Size Requirements](#node-size-requirements)
   * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
      * [Faults via Config](#faults-via-config)
-  * [Running the example test with a network fault](#running-the-example-test-with-a-network-fault)
-     * [Configure Faults via Dashboard](#configure-faults-via-dashboard)
+     * [Debugging chaos resources and events](#debugging-chaos-resources-and-events)
+     * [Running the example test with a network fault](#running-the-example-test-with-a-network-fault)
 
 
 Technologies used:
@@ -507,6 +508,8 @@ Faults can be configured via kubernetes manifests or via the UI (which is a help
 
 ### Faults via Dashboard
 
+NOTE: The chaos mesh dashboard is just a helper for generating manifest under the hood. You can create and submit these directly as well. See the [docs](https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/).
+
 To configure faults via the UI, make sure you can access the chaos dashboard by running the below command, and navigating to `localhost:2333` in your browser.
 
 ```
@@ -523,16 +526,85 @@ a label like `job-name: <your job name>` in the drop down.
 
 See [Chaos Manifest](#chaos-manifest).
 
-## Running the example test with a network fault
+### Debugging chaos resources and events
+
+There are a few ways to check on the status of your chaos resources, after your stress test pod(s) reach a `Running` state.
+
+From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
+and verify there are entries in the logs in the **Chaos Daemon Events** table.
+
+On the stress cluster, you can view the status of your chaos resources. For example, to check on all the network chaos
+resources you have deployed:
+
+```
+kubectl get networkchaos -n <your alias>
+```
+
+Pick the one relevant to your test and print the detailed view:
+
+```
+kubectl get networkchaos -n <your alias> <networkchaos resource name> -o yaml
+```
+
+The yaml output should show a success or failure:
+
+**Example Success**
+
+```
+  status:
+    experiment:
+      duration: 10.000411955s
+      endTime: "2021-12-09T01:20:57Z"
+      phase: Waiting
+      podRecords:
+      - action: loss
+        hostIP: 10.240.0.7
+        message: This is a source pod.network traffic control action duration 10s
+        name: stress-python-eventhubs-stress-test-1-m2hhh
+        namespace: yuling
+        podIP: 10.244.1.40
+      startTime: "2021-12-09T01:20:47Z"
+    scheduler:
+      nextRecover: "2021-12-09T01:21:27Z"
+      nextStart: "2021-12-09T01:21:17Z"
+```
+
+**Example Failure**
+
+```
+status:
+  experiment:
+    phase: Failed
+  failedMessage: 'lookup some-bad-host.foobar.net;:
+    no such host'
+  scheduler: {}
+```
+
+For chaos resource types other than network chaos, you can also query these by their `kind`. To list those available:
+
+```
+⇉ ⇉ ⇉ kubectl api-resources | grep chaos-mesh.org
+awschaos                                       chaos-mesh.org/v1alpha1                true         AwsChaos
+dnschaos                                       chaos-mesh.org/v1alpha1                true         DNSChaos
+httpchaos                                      chaos-mesh.org/v1alpha1                true         HTTPChaos
+iochaos                                        chaos-mesh.org/v1alpha1                true         IoChaos
+jvmchaos                                       chaos-mesh.org/v1alpha1                true         JVMChaos
+kernelchaos                                    chaos-mesh.org/v1alpha1                true         KernelChaos
+networkchaos                                   chaos-mesh.org/v1alpha1                true         NetworkChaos
+podchaos                                       chaos-mesh.org/v1alpha1                true         PodChaos
+podiochaos                                     chaos-mesh.org/v1alpha1                true         PodIoChaos
+podnetworkchaos                                chaos-mesh.org/v1alpha1                true         PodNetworkChaos
+stresschaos                                    chaos-mesh.org/v1alpha1                true         StressChaos
+timechaos                                      chaos-mesh.org/v1alpha1                true         TimeChaos
+```
+
+### Running the example test with a network fault
 
 Follow the below commands to execute a sample test.
 
 ```
 cd ./examples/network_stress_example
-# This will build the docker images and helm chart dependencies
-./build.sh
-# This will log in to the cluster and container registry, publish the image and the chart
-./deploy.sh <your alias>
+pwsh ../../../../../eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages
 ```
 
 Verify the pods in the job have booted and are running ok (with chaos network failures):
@@ -542,7 +614,7 @@ Verify the pods in the job have booted and are running ok (with chaos network fa
 NAME                               READY   STATUS    RESTARTS   AGE
 network-example-0629200737-bk647   1/1     Running   0          89s
 
-⇉ ⇉ ⇉ kubectl logs -n <YOUR NAMESPACE> network-example-0629200737-bk647 -f
+⇉ ⇉ ⇉ kubectl logs -n <your alias> network-example-0629200737-bk647 -f
 Spider mode enabled. Check if remote file exists.
 --2021-06-09 00:51:52--  http://www.bing.com/
 Resolving www.bing.com (www.bing.com)... 204.79.197.200, 13.107.21.200, 2620:1ec:c11::200
@@ -551,17 +623,3 @@ Connecting to www.bing.com (www.bing.com)|13.107.21.200|:80... failed: Connectio
 Connecting to www.bing.com (www.bing.com)|2620:1ec:c11::200|:80... failed: Cannot assign requested address.
 Giving up.
 ```
-
-### Configure Faults via Dashboard
-
-Navigate to the chaos dashboard at `localhost:2333`
-
-NOTE: The chaos mesh dashbaord is just a helper for generating manifest under the hood. You can create and submit these directly as well. See the [docs](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment).
-
-1. From the UI, click `New Experiment`
-1. Select `Network Attack` and then select `LOSS`
-1. In the `Loss` textbox, enter `100`
-1. Scroll down to `Scope`. Enter your namespace in the `Namespace Selectors` field, and find a Label Selector that matches your test (e.g. `testInstance: network-example-<your alias>`).
-1. Enter a name for experiment like `<YOUR NAME>-<chaos type>`.
-1. Enable `Run Continuously`
-1. Click through the multiple `Submit` buttons.

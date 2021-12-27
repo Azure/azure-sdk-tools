@@ -32,17 +32,17 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 		golang.SharingUpdate{
 			Groups: []*golang.SharingProfileGroup{
 				{
-					Type: golang.SharingProfileGroupTypesSubscriptions.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("Subscriptions").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: golang.SharingProfileGroupTypesAADTenants.ToPtr(),
+					Type: golang.SharingProfileGroupTypes("AADTenants").ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: golang.SharingUpdateOperationTypesAdd.ToPtr(),
+			OperationType: golang.SharingUpdateOperationTypes("Add").ToPtr(),
 		},
 		nil)
 	if err != nil {

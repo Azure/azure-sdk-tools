@@ -17,6 +17,8 @@ export class GoHelper {
                 ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
             } else if (value === null) {
                 ret += `"${key}": nil,\n`;
+            } else if (_.isNumber(value)) {
+                ret += `"${key}": float64(${value}),\n`;
             } else {
                 ret += `"${key}": ${value},\n`;
             }

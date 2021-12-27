@@ -30,16 +30,14 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 		"<resource-group-name>",
 		"<disk-name>",
 		golang.Disk{
-			Resource: golang.Resource{
-				Location: to.StringPtr("<location>"),
-			},
+			Location: to.StringPtr("<location>"),
 			Properties: &golang.DiskProperties{
 				CreationData: &golang.CreationData{
-					CreateOption: golang.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: golang.DiskCreateOption("Empty").ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("<disk-access-id>"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: golang.NetworkAccessPolicyAllowPrivate.ToPtr(),
+				NetworkAccessPolicy: golang.NetworkAccessPolicy("AllowPrivate").ToPtr(),
 			},
 		},
 		nil)

@@ -23,7 +23,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.6.2 --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --use=' +
+        ' --version=3.7.3 --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --use=' +
         path.join(`${__dirname}`, '..', '..', '..', 'autorest.testmodeler') +
         ' --use=' +
         path.join(`${__dirname}`, '..', '..') +
@@ -48,7 +48,7 @@ async function runAutorest(readmePath: string, extraOption: string[]) {
 function getExtraOption(outputFolder: string, lang: string) {
     let ret = [`--output-folder=${outputFolder}`];
     if (lang === 'golang') {
-        ret = ret.concat(['--use=@autorest/go@4.0.0-preview.31', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0']);
+        ret = ret.concat(['--use=@autorest/go@4.0.0-preview.34', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0']);
     }
     return ret;
 }

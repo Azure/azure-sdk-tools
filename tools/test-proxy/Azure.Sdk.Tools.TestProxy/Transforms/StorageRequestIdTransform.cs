@@ -10,6 +10,11 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
     /// </summary>
     public class StorageRequestIdTransform : ResponseTransform
     {
+        public StorageRequestIdTransform(ApplyCondition condition = null)
+        {
+            Condition = condition;
+        }
+
         public override void ApplyTransform(HttpRequest request, HttpResponse response)
         {
             // Storage Blobs requires "x-ms-client-request-id" header in request and response to match

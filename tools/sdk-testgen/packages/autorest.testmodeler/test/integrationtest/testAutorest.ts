@@ -23,7 +23,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.6.2 --use=' +
+        ' --version=3.7.3 --use=' +
         path.join(`${__dirname}`, '..', '..') +
         ' ' +
         readmePath +

@@ -67,7 +67,7 @@ Use the returned token credential to authenticate the client:
 \`\`\`typescript
 import ${clientName} from "${packageName}";
 import { DefaultAzureCredential } from "@azure/identity";
-const client = (
+const client = ${clientName}(
   "<my-endpoint>",
   new DefaultAzureCredential()
 );

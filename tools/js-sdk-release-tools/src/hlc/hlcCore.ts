@@ -45,7 +45,7 @@ function changeReadmeMd(packageFolderPath: string) {
 
 }
 
-export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, outputJson?: any, swaggerRepoUrl?: string) {
+export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, additionalArgs?: string, outputJson?: any, swaggerRepoUrl?: string) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${absoluteReadmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
     let cmd = `autorest --version=3.1.3 --typescript --modelerfour.lenient-model-deduplication --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${azureSDKForJSRepoRoot} ${absoluteReadmeMd}`;
@@ -65,6 +65,10 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
 
     if (useDebugger) {
         cmd += ` --typescript.debugger`;
+    }
+
+    if (additionalArgs) {
+        cmd += ` ${additionalArgs}`;
     }
 
     try {

@@ -17,7 +17,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
         packages: packages
     };
     for (const readmeMd of readmeFiles) {
-        await generateSdkAutomatically(String(shell.pwd()), path.join(specFolder, readmeMd), readmeMd, gitCommitId, undefined, use, useDebugger, outputJson, repoHttpsUrl);
+        await generateSdkAutomatically(String(shell.pwd()), path.join(specFolder, readmeMd), readmeMd, gitCommitId, undefined, use, useDebugger, undefined, outputJson, repoHttpsUrl);
     }
 
     fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, undefined, '  '), {encoding: 'utf-8'})

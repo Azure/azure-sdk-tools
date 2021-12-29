@@ -20,7 +20,7 @@ hlc-code-gen --use=@autorest/typescript@6.0.0-beta.5 --readme=../azure-rest-api-
 If you want to add more parameters to autorest command, use can use parameter `additionalArgs`. For example:
 ```shell script
 cd azure-sdk-for-js
-hlc-code-gen --use=@autorest/typescript@6.0.0-beta.5 --readme=../azure-rest-api-specs/specification/iotspaces/resource-manager/readme.md --additionalArgs="--package-name=@azure/arm-sample"
+hlc-code-gen --use=@autorest/typescript@6.0.0-beta.5 --readme=../azure-rest-api-specs/specification/iotspaces/resource-manager/readme.md --additional-args="--package-name=@azure/arm-sample"
 ```
 hint: you can change the `readme` to yours, and get codegen version from [NPM](https://www.npmjs.com/package/@autorest/typescript).
 

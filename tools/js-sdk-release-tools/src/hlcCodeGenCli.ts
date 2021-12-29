@@ -23,8 +23,8 @@ const optionDefinitions = [
     { name: 'tag', type: String },
     { name: 'readme', type: String },
     { name: 'useDebugger', type: String},
-    { name: 'additionalArgs', type: String },
+    { name: 'additional-args', type: String },
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerate(options.readme, options.tag, options.use, options.useDebugger? true : false, options.additionalArgs);
+automationGenerate(options.readme, options.tag, options.use, options.useDebugger? true : false, options['additional-args']);

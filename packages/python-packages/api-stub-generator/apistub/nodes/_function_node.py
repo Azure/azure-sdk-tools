@@ -123,16 +123,16 @@ class FunctionNode(NodeEntityBase):
         # Add all keyword only args here temporarily until docstring is parsed
         # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
-        for argname in params:
-            arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
+        for argname, argvalues in params.items():
+            arg = ArgType(argname, get_qualified_name(argvalues.annotation, self.namespace), "", self)
             # set default value if available
-            if params[argname].default != Parameter.empty:
-                arg.default = str(params[argname].default)
+            if argvalues.default != Parameter.empty:
+                arg.default = str(argvalues.default)
             # Store handle to kwarg object to replace it later
-            if params[argname].kind == Parameter.VAR_KEYWORD:
+            if argvalues.kind == Parameter.VAR_KEYWORD:
                 arg.argname = f"**{argname}"
 
-            if params[argname].kind == Parameter.KEYWORD_ONLY:
+            if argvalues.kind == Parameter.KEYWORD_ONLY:
                 self.kw_args[arg.argname] = arg
             else:
                 self.args[arg.argname] = arg

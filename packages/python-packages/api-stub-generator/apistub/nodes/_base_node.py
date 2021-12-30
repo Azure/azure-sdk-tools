@@ -52,9 +52,9 @@ def get_qualified_name(obj, namespace):
         return None
 
     name = str(obj)
-    if hasattr(obj, "__name__"):
+    if hasattr(obj, "__name__") and not name:
         name = getattr(obj, "__name__")
-    elif hasattr(obj, "__qualname__"):
+    elif hasattr(obj, "__qualname__") and not name:
         name = getattr(obj, "__qualname__")
 
     module_name = ""

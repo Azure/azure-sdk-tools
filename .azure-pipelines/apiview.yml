@@ -38,7 +38,7 @@ variables:
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
-  NodeVersion: '12.x'
+  NodeVersion: '16.x'
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
   ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'

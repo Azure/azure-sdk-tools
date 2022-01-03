@@ -270,7 +270,7 @@ class FunctionNode(NodeEntityBase):
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
-                error_message = "Return type in type hint is not matching return type in docstring"
+                error_message = "The return type is described in both a type hint and docstring, but they do not match."
                 self.add_error(error_message)
 
 

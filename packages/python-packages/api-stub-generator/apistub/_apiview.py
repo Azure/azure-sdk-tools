@@ -19,7 +19,6 @@ TYPE_OR_SEPERATOR = " or "
 
 # Lint warnings
 SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
-RETURN_TYPE_MISMATCH = "Return type in type hint is not matching return type in docstring"
 
 
 class ApiView:

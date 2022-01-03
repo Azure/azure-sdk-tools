@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "@microsoft/api-extractor-model": "^7.8.13",
+    "@microsoft/api-extractor-model": "^7.15.2",
     "js-tokens": "^6.0.0"
   },
   "devDependencies": {

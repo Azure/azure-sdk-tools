@@ -128,12 +128,18 @@ class FunctionNode(NodeEntityBase):
             # set default value if available
             if argvalues.default != Parameter.empty:
                 arg.default = str(argvalues.default)
+
             # Store handle to kwarg object to replace it later
             if argvalues.kind == Parameter.VAR_KEYWORD:
                 arg.argname = f"**{argname}"
 
             if argvalues.kind == Parameter.KEYWORD_ONLY:
                 self.kw_args[arg.argname] = arg
+            elif argvalues.kind == Parameter.VAR_POSITIONAL:
+                # to work with docstring parsing, the key must
+                # not have the * in it.
+                arg.argname = f"*{argname}"
+                self.args[argname] = arg
             else:
                 self.args[arg.argname] = arg
 

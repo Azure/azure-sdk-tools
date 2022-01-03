@@ -6,7 +6,7 @@
 
 from apistub.nodes import ClassNode, FunctionNode
 
-from typing import Optional
+from typing import Optional, Any
 
 class TestClass:
     """ Function parsing tests."""
@@ -20,6 +20,17 @@ class TestClass:
         :paramtype description: str
         """
         self.description = description
+
+    def with_variadic_python3_typehint(self, *vars: str, **kwargs: "Any") -> None:
+        return None
+
+    def with_variadic_python2_typehint(self, *vars, **kwargs):
+        # type: (*str, **Any) -> None
+        """ With docstring
+        :param vars: Variadic argument
+        :type vars: str
+        """
+        return None
 
 
 class TestFunctionParsing:
@@ -35,3 +46,17 @@ class TestFunctionParsing:
         arg = func_node.args["description"]
         assert arg.argtype == "str"
         assert arg.default == "..."
+
+    def test_variadic_typehints(self):
+        func_node = FunctionNode("test", None, TestClass.with_variadic_python3_typehint, "test")
+        arg = func_node.args["vars"]
+        assert arg.argname == "*vars"
+        assert arg.argtype == "str"
+        assert arg.default == ""
+
+        func_node = FunctionNode("test", None, TestClass.with_variadic_python2_typehint, "test")
+        arg = func_node.args["vars"]
+        assert arg.argname == "*vars"
+        # the type annotation comes ONLY from the docstring. The Python2 type hint is not used!
+        assert arg.argtype == "str"
+        assert arg.default == ""

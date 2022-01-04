@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-      "preserveConstEnums ": true
+      "preserveConstEnums": true
     }
-  }
+}
   

@@ -462,7 +462,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     new StorageRequestIdTransform(),
                     new ClientIdTransform(),
-                    new HeaderTransform("retry-after", "0")
+                    new HeaderTransform("Retry-After", "0")
                 };
 
                 Matcher = new RecordMatcher();

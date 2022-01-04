@@ -103,7 +103,7 @@ class DocstringParser:
             # also wrap the type in Optional[] so it aligns with
             # optionals identified in type hints.
             arg.default = "..."
-            if arg.argtype and not arg.argtype.startswith("Optional"):
+            if arg.argtype and not arg.argtype.startswith("Optional["):
                 arg.argtype = f"Optional[{arg.argtype}]"
             self.kw_args[arg.argname] = arg
         else:

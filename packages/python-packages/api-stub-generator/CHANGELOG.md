@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.2.8 (Unreleased)
+Kwargs that were previously displayed as "type = ..." will not
+  be displayed as "Optional[type] = ..." to align with syntax
+  from Python type hints.
+Fixed issue where variadic arguments appeared a singular argument.
+
 ## Version 0.2.7 (Unreleased)
 Updated version to regenerate all reviews using Python 3.9
 

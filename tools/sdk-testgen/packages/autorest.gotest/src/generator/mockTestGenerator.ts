@@ -262,6 +262,9 @@ export class MockTestDataRender extends BaseDataRender {
                 return result;
             }
         } else if (exampleValue.schema?.type === SchemaType.Object) {
+            if (exampleValue.rawValue === null) {
+                return 'nil';
+            }
             let output: string;
             if (inArray) {
                 output = `{\n`;

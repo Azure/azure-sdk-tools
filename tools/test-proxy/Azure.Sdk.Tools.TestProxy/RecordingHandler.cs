@@ -343,6 +343,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
+            foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
+            {
+                transform.Transform(match);
+            }
+
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
             outgoingResponse.StatusCode = match.StatusCode;
@@ -350,11 +355,6 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach (var header in match.Response.Headers)
             {
                 outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
-            }
-
-            foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
-            {
-                transform.Transform(incomingRequest, outgoingResponse);
             }
 
             outgoingResponse.Headers.Remove("Transfer-Encoding");

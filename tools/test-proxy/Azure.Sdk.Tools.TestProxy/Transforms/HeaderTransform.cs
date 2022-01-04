@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Linq;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
 
@@ -29,24 +30,25 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         {
             _key = key;
             _replacement = replacement;
+            // consider moving this into ApplyCondition if we have another use case where we need to filter based on a header key
             _valueRegex = valueRegex;
             Condition = condition;
         }
 
-        public override void ApplyTransform(HttpRequest request, HttpResponse response)
+        public override void ApplyTransform(RecordEntry entry)
         {
-            if (response.Headers.ContainsKey(_key))
+            if (entry.Response.Headers.ContainsKey(_key))
             {
                 if (_valueRegex != null)
                 {
                     var regex = new Regex(_valueRegex);
-                    if (!regex.Match(response.Headers[_key]).Success)
+                    if (!regex.Match(entry.Response.Headers[_key].First()).Success)
                     {
                         return;
                     }
                 }
 
-                response.Headers[_key] = _replacement;
+                entry.Response.Headers[_key] = new string[] { _replacement };
             }
         }
     }

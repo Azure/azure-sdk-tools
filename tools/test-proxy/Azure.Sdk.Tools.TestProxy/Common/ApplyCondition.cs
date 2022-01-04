@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -11,22 +12,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class ApplyCondition
     {
-        private Regex _regex;
-        public string UriRegex { 
-            get
-            {
-                return _regex.ToString();
-            }
-            set
-            {
-                _regex = new Regex(value);
-            }
-        }
+        public string UriRegex { get; set; }
+
+        public HeaderCondition ResponseHeaderCondition { get; set; }
 
         private JsonProperty GetProp(string name, JsonElement jsonElement)
         {
             return jsonElement.EnumerateObject()
-                        .FirstOrDefault(p => string.Compare(p.Name, "UriRegex", StringComparison.OrdinalIgnoreCase) == 0);
+                        .FirstOrDefault(p => string.Compare(p.Name, name, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         public ApplyCondition() { }
@@ -43,15 +36,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var conditionDefined = false;
             try
             {
+                // URI condition
                 var uriProp = GetProp("UriRegex", jsonElement);
 
                 if(uriProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
                     UriRegex = uriProp.Value.GetString();
+                    StringSanitizer.ConfirmValidRegex(UriRegex);
                     conditionDefined = true;
                 }
 
-                // ... body/header condition support goes here.
+                // Response header condition
+                var headerProp = GetProp("ResponseHeaderCondition", jsonElement);
+                if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
+                {
+                    ResponseHeaderCondition = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    StringSanitizer.ConfirmValidRegex(ResponseHeaderCondition.ValueRegex);
+                    if (ResponseHeaderCondition.Key == null)
+                    {
+                        throw new ArgumentException("Key is required for response header conditions.");
+                    }
+                    conditionDefined = true;
+                }
+
+
+                // ... body condition support goes here.
             }
             catch(Exception e)
             {
@@ -60,7 +69,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     $"An unexpected error occured during parse of condition body. Condition Definition: {jsonElement.GetRawText()}. Exception detail: {e.Message}."
                 );
             }
-            
+
             if (!conditionDefined)
             {
                 throw new HttpException(
@@ -70,21 +79,28 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        // sanitizers run against RecordEntries
         public bool IsApplicable(RecordEntry entry)
         {
-            var result = _regex.Match(entry.RequestUri);
-            return result.Success;
-        }
+            if (UriRegex != null)
+            {
+                if (!Regex.IsMatch(entry.RequestUri, UriRegex))
+                {
+                    return false;
+                }
+            }
 
-        // transforms are used directly on the request
-        public bool IsApplicable(HttpRequest request)
-        {
-            var requestString = request.HttpContext.Features.Get<IHttpRequestFeature>().RawTarget;
-            var requestUri = request.Scheme + "://" + request.Host + requestString;
+            if (ResponseHeaderCondition != null && entry.Response.Headers.ContainsKey(ResponseHeaderCondition.Key))
+            {
+                if (ResponseHeaderCondition.ValueRegex != null)
+                {
+                    if (!Regex.IsMatch(entry.Response.Headers[ResponseHeaderCondition.Key].First(), ResponseHeaderCondition.ValueRegex))
+                    {
+                        return false;
+                    }
+                }
+            }
 
-            var result = _regex.Match(requestUri);
-            return result.Success;
+            return true;
         }
 
         public override string ToString()

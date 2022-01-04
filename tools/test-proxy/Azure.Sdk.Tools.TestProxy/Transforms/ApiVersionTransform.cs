@@ -20,11 +20,11 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         /// </summary>
         /// <param name="request"></param>
         /// <param name="response"></param>
-        public override void ApplyTransform(HttpRequest request, HttpResponse response)
+        public override void ApplyTransform(RecordEntry entry)
         {
-            if (request.Headers.TryGetValue("api-version", out var clientId))
+            if (entry.Request.Headers.TryGetValue("api-version", out var clientId))
             {
-                response.Headers.Add("api-version", clientId);
+                entry.Response.Headers.Add("api-version", clientId);
             }
         }
     }

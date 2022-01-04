@@ -185,7 +185,11 @@ export class ResponseGenerator {
         for (const [k, v] of Object.entries(requestParameters)) {
             if (
                 exampleParameters[k] &&
-                !_.isEqual(removeNullValueKey(exampleParameters[k]), removeNullValueKey(v))
+                !_.isEqualWith(
+                    removeNullValueKey(exampleParameters[k]),
+                    removeNullValueKey(v),
+                    this.customizerIsEqual
+                )
             ) {
                 throw new ExampleNotMatch(
                     `${receivedExampleParameters.parameterTypes[k]} parameter ${k}=${JSON.stringify(
@@ -193,6 +197,19 @@ export class ResponseGenerator {
                     )} don't match example value ${JSON.stringify(exampleParameters[k])}`
                 )
             }
+        }
+    }
+
+    private customizerIsEqual(objValue: any, othValue: any): boolean | undefined {
+        // rfc3339 timestamp comparison
+        const rfc3339Regex = /^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[+-]\d{2}:\d{2})?)$/g
+        if (
+            _.isString(objValue) &&
+            objValue.match(rfc3339Regex) &&
+            _.isString(othValue) &&
+            othValue.match(rfc3339Regex)
+        ) {
+            return Date.parse(objValue) === Date.parse(othValue)
         }
     }
 

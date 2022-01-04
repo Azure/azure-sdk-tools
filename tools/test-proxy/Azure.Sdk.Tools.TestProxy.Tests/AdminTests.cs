@@ -532,9 +532,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var key = (string) typeof(HeaderTransform).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
             var replacement = (string) typeof(HeaderTransform).GetField("_replacement", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
             var regex = (string) typeof(HeaderTransform).GetField("_valueRegex", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
-            Assert.Equal(key, "Location");
-            Assert.Equal(replacement, "https://fakeazsdktestaccount.table.core.windows.net/Tables");
-            Assert.Equal(regex, ".*/value");
+            Assert.Equal("Location", key);
+            Assert.Equal("https://fakeazsdktestaccount.table.core.windows.net/Tables", replacement);
+            Assert.Equal(".*/value", regex);
             Assert.Equal(".*/token", result.Condition.UriRegex);
 
         }

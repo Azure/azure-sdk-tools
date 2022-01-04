@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/mock-service-host",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Azure Mock Service Host",
   "main": "index.js",
   "scripts": {

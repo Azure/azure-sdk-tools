@@ -44,10 +44,14 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	{%- endif %}
 	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
 	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
             log.Printf("Pager result: %#v\n", v)
 		}
@@ -56,10 +60,14 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
     {%- if example.isLRO and example.isPageable and example.checkResponse %}
-    for res.NextPage(ctx) {
+    for {
+        nextResult := res.NextPage(ctx)
 		if err := res.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range res.PageResponse().{{example.pageableItemName}} {
             log.Printf("Pager result: %#v\n", v)
 		}

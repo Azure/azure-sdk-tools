@@ -256,11 +256,20 @@ export class ResponseGenerator {
         lroCallback: string | null
     ): SwaggerExample {
         const rawSpec = JSON.parse(fs.readFileSync(specFile, SWAGGER_ENCODING))
-
-        let allExamples = _.mapKeys(
-            rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples],
-            (_, k) => k.trim()
-        )
+        let allExamples
+        if (rawSpec.paths[specItem.path]) {
+            allExamples = _.mapKeys(
+                rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples],
+                (_, k) => k.trim()
+            )
+        } else {
+            allExamples = _.mapKeys(
+                rawSpec['x-ms-paths'][specItem.path][specItem.methodName][
+                    AzureExtensions.XMsExamples
+                ],
+                (_, k) => k.trim()
+            )
+        }
         if (this.lroExamplesMap.has(liveRequest.url)) {
             allExamples = { ...this.lroExamplesMap.get(liveRequest.url), ...allExamples }
         } else {

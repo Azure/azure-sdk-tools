@@ -509,8 +509,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            var apiVersion = "2016-03-21";
-            httpContext.Request.Headers["x-api-version"] = apiVersion;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(
                 "{ \"key\": \"Location\", \"replacement\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"valueRegex\": \".*/value\", \"condition\": { \"uriRegex\": \".*/token\" } }");

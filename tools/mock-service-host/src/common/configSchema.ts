@@ -116,7 +116,14 @@ export const configSchema = convict<Config>({
     excludedValidationPathsPattern: {
         doc: 'The pattern which excluded from the validationPathsPattern',
         format: Array,
-        default: [],
+        default: [
+            '**/examples/**/*',
+            '**/quickstart-templates/**/*',
+            '**/schema/**/*',
+            '**/live/**/*',
+            '**/wire-format/**/*',
+            '**/resource-manager/*/*/*/scenarios/**'
+        ],
         env: 'excludedValidationPathsPattern'
     },
     enableExampleGeneration: {

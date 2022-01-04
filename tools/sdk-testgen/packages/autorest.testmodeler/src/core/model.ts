@@ -403,41 +403,40 @@ export class TestCodeModeler {
         }
     }
 
-    public initiateRestCall(testDef: TestDefinitionModel, step: StepRestCall) {
+    public initiateRestCall(testDef: TestDefinitionModel, step: StepRestCallModel) {
         const operationInfo = this.findOperationByOperationId(step.operationId);
-        if (!operationInfo) {
-            throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
-        }
-        const { operation, operationGroup } = operationInfo;
-        (step as StepRestCallModel).exampleModel = this.createExampleModel(
-            {
-                parameters: step.requestParameters,
-                responses: {
-                    [step.statusCode]: {
-                        body: step.expectedResponse,
-                        headers: {},
+        if (operationInfo) {
+            const { operation, operationGroup } = operationInfo;
+            step.exampleModel = this.createExampleModel(
+                {
+                    parameters: step.requestParameters,
+                    responses: {
+                        [step.statusCode]: {
+                            body: step.expectedResponse,
+                            headers: {},
+                        },
                     },
                 },
-            },
-            step.exampleName,
-            operation,
-            operationGroup,
-        );
+                step.exampleName,
+                operation,
+                operationGroup,
+            );
 
-        for (const outputVariableName of Object.keys(step.outputVariables || {})) {
-            if (testDef.outputVariableNames.indexOf(outputVariableName) < 0) {
-                testDef.outputVariableNames.push(outputVariableName);
+            for (const outputVariableName of Object.keys(step.outputVariables || {})) {
+                if (testDef.outputVariableNames.indexOf(outputVariableName) < 0) {
+                    testDef.outputVariableNames.push(outputVariableName);
+                }
             }
-        }
 
-        // Remove oav operation to save size of codeModel.
-        // Don't do this if oav operation is used in future.
-        if (Object.prototype.hasOwnProperty.call(step, 'operation')) {
-            (step as any).operation = undefined;
+            // Remove oav operation to save size of codeModel.
+            // Don't do this if oav operation is used in future.
+            if (Object.prototype.hasOwnProperty.call(step, 'operation')) {
+                step.operation = undefined;
+            }
         }
     }
 
-    public initiateTestDefinition(testDef: TestDefinitionModel) {
+    public initiateTestDefinition(testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
         this.initiateOavVariables(testDef);
         testDef.useArmTemplate = false;
         testDef.outputVariableNames = [];
@@ -451,7 +450,11 @@ export class TestCodeModeler {
         for (const step of allSteps) {
             this.initiateOavVariables(step);
             if (step.type === OavStepType.restCall) {
-                this.initiateRestCall(testDef, step);
+                const stepModel = step as StepRestCallModel;
+                this.initiateRestCall(testDef, stepModel);
+                if (codeModelRestcallOnly && !stepModel.exampleModel) {
+                    throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
+                }
             } else if (step.type === OavStepType.armTemplate) {
                 testDef.useArmTemplate = true;
                 this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
@@ -469,22 +472,52 @@ export class TestCodeModeler {
                 swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
             });
 
-            for (const testResource of this.testConfig.getValue(Config.testResources)) {
-                if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
-                    try {
-                        const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
-                        this.initiateTestDefinition(testDef);
-                        this.codeModel.testModel.scenarioTests.push(testDef);
-                    } catch (error) {
-                        console.warn(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`);
-                    }
-                } else {
-                    console.warn(`Unexisted test resource scenario file: ${testResource[Config.test]}`);
-                }
+            if (Array.isArray(this.testConfig.config[Config.testResources])) {
+                await this.loadTestResourcesFromConfig(fileRoot, loader);
+            } else {
+                await this.loadAvailableTestResources(fileRoot, loader);
             }
         } catch (error) {
             console.warn('Exception occured when load test resource scenario!');
             console.warn(`${__filename} - FAILURE  ${JSON.stringify(error)} ${error.stack}`);
+        }
+    }
+
+    public async loadTestResourcesFromConfig(fileRoot: string, loader: ApiScenarioLoader) {
+        for (const testResource of this.testConfig.getValue(Config.testResources)) {
+            if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
+                try {
+                    const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
+                    this.initiateTestDefinition(testDef);
+                    this.codeModel.testModel.scenarioTests.push(testDef);
+                } catch (error) {
+                    console.warn(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`);
+                }
+            } else {
+                console.warn(`Unexisted test resource scenario file: ${testResource[Config.test]}`);
+            }
+        }
+    }
+
+    public async loadAvailableTestResources(fileRoot: string, loader: ApiScenarioLoader) {
+        const SCENARIO_FOLDER = 'scenarios';
+        const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
+        for (const apiFolder of this.testConfig.getInputFileFolders()) {
+            const scenarioFolder = path.join(fileRoot, apiFolder, SCENARIO_FOLDER);
+            if (fs.existsSync(scenarioFolder) && fs.lstatSync(scenarioFolder).isDirectory()) {
+                for (const scenarioFile of fs.readdirSync(scenarioFolder)) {
+                    if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) continue;
+                    const scenarioPathName = path.join(apiFolder, SCENARIO_FOLDER, scenarioFile);
+                    try {
+                        const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
+
+                        this.initiateTestDefinition(testDef, codemodelRestCallOnly);
+                        this.codeModel.testModel.scenarioTests.push(testDef);
+                    } catch {
+                        console.warn(`${scenarioPathName} is not a valid api scenario`);
+                    }
+                }
+            }
         }
     }
 }

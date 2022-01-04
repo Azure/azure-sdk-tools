@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as path from 'path';
 import { Config } from './constant';
 export class TestConfig {
     constructor(public readonly config: Record<string, any>, public readonly defaultValues: unknown) {}
@@ -23,6 +24,15 @@ export class TestConfig {
             }
         }
         return undefined;
+    }
+
+    public getInputFileFolders(): string[] {
+        const inputFiles: string[] = this.getValue(Config.inputFile, []);
+        const allFolders = new Set<string>();
+        for (const file of inputFiles) {
+            allFolders.add(path.dirname(file));
+        }
+        return [...allFolders];
     }
 
     public isDisabledExample(exampleName: string): boolean {

@@ -27,7 +27,7 @@ specifiers:
   lodash: ~4.17.21
   node-yaml: ^3.2.0
   nunjucks: ^3.2.3
-  oav: ~2.11.3
+  oav: 2.11.3
   prettier: ^2.2.1
   reflect-metadata: ~0.1.13
   ts-jest: ^26.5.5
@@ -2394,7 +2394,7 @@ packages:
 
   /core-js/2.6.12:
     resolution: {integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==}
-    deprecated: core-js@<3.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Please, upgrade your dependencies to the actual version of core-js.
+    deprecated: core-js@<3.4 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Please, upgrade your dependencies to the actual version of core-js.
     requiresBuild: true
     dev: false
 
@@ -8239,7 +8239,7 @@ packages:
     dev: false
 
   file:projects/gotest.tgz:
-    resolution: {integrity: sha512-z332LPNqxCKUdMe9scCUyG8O2R7RWyA+0m7hvu4DzShPRKoalCWBO2cSzu+s8e9CnjA+PXw5zB5V926JEF/7vg==, tarball: file:projects/gotest.tgz}
+    resolution: {integrity: sha512-30N5gA/bp+0BKZwJpWJhib8ZdCDlrSsKvsgUWC58lq0+eHxxLIhIkL8CusSJvB1qi3Lp+9THqXoAKIsujd2gLg==, tarball: file:projects/gotest.tgz}
     name: '@rush-temp/gotest'
     version: 0.0.0
     dependencies:
@@ -8284,7 +8284,7 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-GB6Ocp1jMQx5m5BTysYWZcLwFmMu50x7msYiPj/SEsijLGO207iDfu1wqdOb6+lyQ9Ohe3QZcr9PaTYBF2sgFg==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-8sLYdpf23QisCdz4mUvZqTakE3zO28pDH6GXiL2GMAA44PXm5qyIteq2r4p2ahjZyzrBiBKq4o2Dx4f043WVTw==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:

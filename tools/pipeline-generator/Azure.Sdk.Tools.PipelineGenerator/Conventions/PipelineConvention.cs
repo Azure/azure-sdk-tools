@@ -313,7 +313,7 @@ namespace PipelineGenerator.Conventions
             return Task.FromResult(hasChanges);
         }
 
-        protected bool EnsureDefautPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
+        protected bool EnsureDefaultPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
         {
             bool hasChanges = false;
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
@@ -377,7 +377,7 @@ namespace PipelineGenerator.Conventions
                         trigger.Forks.Enabled = true;
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
-   
+
                         hasChanges = true;
                     }
                 }
@@ -390,7 +390,7 @@ namespace PipelineGenerator.Conventions
             bool hasChanges = false;
             var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
 
-            // Only add the schedule trigger if one doesn't exist. 
+            // Only add the schedule trigger if one doesn't exist.
             if (scheduleTriggers == default || !scheduleTriggers.Any())
             {
                 var computedSchedule = CreateScheduleFromDefinition(definition);

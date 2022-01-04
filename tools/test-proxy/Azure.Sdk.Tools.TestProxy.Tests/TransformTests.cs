@@ -55,7 +55,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task CanApplyHeaderTransform()
         {
-            var headerTransform = new HeaderTransform("Location", "http://localhost", valueRegex: @".*/Tables\(.*");
+            var headerTransform = new HeaderTransform(
+                "Location",
+                "http://localhost",
+                condition: new ApplyCondition
+                {
+                    ResponseHeaderCondition = new HeaderCondition
+                    {
+                        Key = "Location", ValueRegex = @".*/Tables\(.*"
+                    }
+                });
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             testRecordingHandler.Transforms.Clear();
             testRecordingHandler.Transforms.Add(headerTransform);

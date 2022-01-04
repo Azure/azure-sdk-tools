@@ -511,7 +511,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(
-                "{ \"key\": \"Location\", \"replacement\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"valueRegex\": \".*/value\", \"condition\": { \"uriRegex\": \".*/token\" } }");
+                "{ \"key\": \"Location\", \"replacement\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeaderCondition\": { \"key\": \"Location\", \"valueRegex\": \".*/value\" } }}");
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
             var controller = new Admin(testRecordingHandler)
@@ -529,7 +529,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(result is HeaderTransform);
             var key = (string) typeof(HeaderTransform).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
             var replacement = (string) typeof(HeaderTransform).GetField("_replacement", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
-            var regex = (string) typeof(HeaderTransform).GetField("_valueRegex", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            var regex = result.Condition.ResponseHeaderCondition.ValueRegex;
             Assert.Equal("Location", key);
             Assert.Equal("https://fakeazsdktestaccount.table.core.windows.net/Tables", replacement);
             Assert.Equal(".*/value", regex);

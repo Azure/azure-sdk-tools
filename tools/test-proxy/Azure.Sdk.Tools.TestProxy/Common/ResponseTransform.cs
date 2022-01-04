@@ -22,8 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Base class used to describe transforming a played back response with necessary 
         /// changes directly from a request.
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="response"></param>
+        /// <param name="entry">The entry to transform.</param>
         public abstract void ApplyTransform(RecordEntry entry);
     }
 }

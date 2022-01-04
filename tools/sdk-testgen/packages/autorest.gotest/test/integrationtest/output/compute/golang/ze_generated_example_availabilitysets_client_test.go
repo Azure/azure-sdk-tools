@@ -53,9 +53,13 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 	ctx := context.Background()
 	client := golang.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
 	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("<expand>")})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

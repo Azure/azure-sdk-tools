@@ -45,9 +45,13 @@ func ExampleCloudServiceRolesClient_List() {
 	pager := client.List("<resource-group-name>",
 		"<cloud-service-name>",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

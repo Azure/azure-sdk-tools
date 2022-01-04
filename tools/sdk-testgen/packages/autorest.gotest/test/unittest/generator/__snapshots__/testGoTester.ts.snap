@@ -123,10 +123,14 @@ ExtensionCategories: []string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().Value {
             log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
@@ -173,10 +177,14 @@ ExtensionCategories: []string{},
 PublisherIDs: []string{},
 MaxPageSize: nil,
 })
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().Value {
             log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
@@ -331,10 +339,14 @@ func ExampleFarmBeatsModelsClient_ListBySubscription() {
 	pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().Value {
             log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
@@ -355,10 +367,14 @@ func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
 &armagfood.FarmBeatsModelsListByResourceGroupOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().Value {
             log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
@@ -446,10 +462,14 @@ func ExampleOperationsClient_List() {
 	ctx := context.Background()
 	client := armagfood.NewOperationsClient(cred, nil)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+        nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
 		}
+        if !nextResult {
+            break
+        }
 		for _, v := range pager.PageResponse().Value {
             log.Printf(\\"Pager result: %#v\\\\n\\", v)
 		}
@@ -590,9 +610,13 @@ ExtensionCategories: []string{},
 MaxPageSize: nil,
 SkipToken: nil,
 })
-        for pager.NextPage(ctx) {
+        for {
+            nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+            if !nextResult {
+                break
             }
         }
 }
@@ -612,9 +636,13 @@ ExtensionCategories: []string{},
 PublisherIDs: []string{},
 MaxPageSize: nil,
 })
-        for pager.NextPage(ctx) {
+        for {
+            nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+            if !nextResult {
+                break
             }
         }
 }
@@ -733,9 +761,13 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
         pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-        for pager.NextPage(ctx) {
+        for {
+            nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+            if !nextResult {
+                break
             }
         }
 }
@@ -753,9 +785,13 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 &armagfood.FarmBeatsModelsListByResourceGroupOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
-        for pager.NextPage(ctx) {
+        for {
+            nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+            if !nextResult {
+                break
             }
         }
 }
@@ -781,6 +817,7 @@ nil)
 
     
     // From example Locations_CheckNameAvailability_Available
+    client = armagfood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
             res, err = client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
 Name: to.StringPtr(\\"newaccountname\\"),
@@ -802,9 +839,13 @@ func TestOperations_List(t *testing.T) {
 	}()
 	client := armagfood.NewOperationsClient(cred, &options)
         pager := client.List(nil)
-        for pager.NextPage(ctx) {
+        for {
+            nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf(\\"failed to advance page: %v\\", err)
+            }
+            if !nextResult {
+                break
             }
         }
 }

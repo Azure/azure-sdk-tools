@@ -120,9 +120,13 @@ func ExampleDiskAccessesClient_ListByResourceGroup() {
 	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)
@@ -139,9 +143,13 @@ func ExampleDiskAccessesClient_List() {
 	ctx := context.Background()
 	client := golang.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)
@@ -250,9 +258,13 @@ func ExampleDiskAccessesClient_ListPrivateEndpointConnections() {
 	pager := client.ListPrivateEndpointConnections("<resource-group-name>",
 		"<disk-access-name>",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

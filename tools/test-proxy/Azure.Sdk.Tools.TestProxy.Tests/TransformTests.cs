@@ -53,5 +53,45 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(originalRequestHeader, nonTransformedresponse.Headers["x-ms-client-request-id"].ToString());
         }
+
+        [Fact]
+        public async Task CanApplyHeaderTransform()
+        {
+            var headerTransform = new HeaderTransform("Location", "http://localhost", valueRegex: @".*/Tables\(.*");
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Transforms.Clear();
+            testRecordingHandler.Transforms.Add(headerTransform);
+
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/response_with_header_to_transform.json";
+            var transformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[0];
+            var untransformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[1];
+
+            // start playback
+            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            // transform should apply only to first request
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(transformedEntry);
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+            Assert.Equal("http://localhost", response.Headers["Location"]);
+
+            // this one should keep the original Location value
+            request = TestHelpers.CreateRequestFromEntry(untransformedEntry);
+            response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+            var originalLocation = untransformedEntry.Response.Headers["Location"];
+
+            Assert.Equal(originalLocation, response.Headers["Location"]);
+        }
     }
 }

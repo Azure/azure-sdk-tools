@@ -505,6 +505,41 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async Task TestAddHeaderTransform()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var apiVersion = "2016-03-21";
+            httpContext.Request.Headers["x-api-version"] = apiVersion;
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(
+                "{ \"key\": \"Location\", \"replacement\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"valueRegex\": \".*/value\", \"condition\": { \"uriRegex\": \".*/token\" } }");
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Transforms.Clear();
+            await controller.AddTransform();
+            var result = testRecordingHandler.Transforms.First();
+
+            Assert.True(result is HeaderTransform);
+            var key = (string) typeof(HeaderTransform).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            var replacement = (string) typeof(HeaderTransform).GetField("_replacement", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            var regex = (string) typeof(HeaderTransform).GetField("_valueRegex", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            Assert.Equal(key, "Location");
+            Assert.Equal(replacement, "https://fakeazsdktestaccount.table.core.windows.net/Tables");
+            Assert.Equal(regex, ".*/value");
+            Assert.Equal(".*/token", result.Condition.UriRegex);
+
+        }
+
+        [Fact]
         public async void TestAddTransformIndividualRecording()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

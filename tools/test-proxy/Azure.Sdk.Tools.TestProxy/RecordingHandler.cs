@@ -349,15 +349,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             foreach (var header in match.Response.Headers)
             {
-                if (header.Key == "Retry-After")
-                {
-                    // in Playback, we change Retry-After header to 0 to prevent unnecessary waiting
-                    outgoingResponse.Headers.Add(header.Key, "0");
-                }
-                else
-                {
-                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
-                }
+                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
             foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
@@ -469,7 +461,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 Transforms = new List<ResponseTransform>
                 {
                     new StorageRequestIdTransform(),
-                    new ClientIdTransform()
+                    new ClientIdTransform(),
+                    new HeaderTransform("retry-after", "0")
                 };
 
                 Matcher = new RecordMatcher();

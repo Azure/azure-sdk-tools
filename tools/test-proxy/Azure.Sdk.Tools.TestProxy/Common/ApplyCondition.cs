@@ -89,8 +89,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-            if (ResponseHeaderCondition != null && entry.Response.Headers.ContainsKey(ResponseHeaderCondition.Key))
+            if (ResponseHeaderCondition != null)
             {
+                if (!entry.Response.Headers.ContainsKey(ResponseHeaderCondition.Key))
+                {
+                    return false;
+                }
+
                 if (ResponseHeaderCondition.ValueRegex != null)
                 {
                     if (!Regex.IsMatch(entry.Response.Headers[ResponseHeaderCondition.Key].First(), ResponseHeaderCondition.ValueRegex))

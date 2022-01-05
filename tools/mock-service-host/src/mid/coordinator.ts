@@ -288,6 +288,8 @@ export class Coordinator {
                 if (!Array.isArray(ret)) {
                     // simplified paging
                     ret = lodash.omit(ret, 'nextLink')
+                } else {
+                    ret = replacePropertyValue('nextLink', null, ret)
                 }
 
                 // simplified LRO

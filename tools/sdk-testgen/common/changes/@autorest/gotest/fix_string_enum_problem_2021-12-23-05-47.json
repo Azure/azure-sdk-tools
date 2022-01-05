@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Different conversion for choice and sealedchoice.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

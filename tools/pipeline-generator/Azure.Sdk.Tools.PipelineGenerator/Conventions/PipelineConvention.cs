@@ -350,11 +350,16 @@ namespace PipelineGenerator.Conventions
                     if (overrideYaml)
                     {
                         // Override what is in the yaml file and use what is in the pipeline definition
-                        trigger.SettingsSourceType = 1;
+                        if (trigger.SettingsSourceType != 1)
+                        {
+                            trigger.SettingsSourceType = 1;
+                            hasChanges = true;
+                        }
 
                         if (!trigger.BranchFilters.Contains("+*"))
                         {
                             trigger.BranchFilters.Add("+*");
+                            hasChanges = true;
                         }
                     }
                     else if (trigger.SettingsSourceType != 2)

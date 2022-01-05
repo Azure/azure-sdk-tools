@@ -172,16 +172,7 @@ func setUp() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 	
-    cred, err = azidentity.NewEnvironmentCredential(
-		&azidentity.EnvironmentCredentialOptions{
-			AuthorityHost: azidentity.AuthorityHost(mockHost), 
-			ClientOptions: azcore.ClientOptions{
-				Transport: client,
-			},
-		})
-	if err != nil {
-		panic(err)
-	}
+    cred = &MockCredential{}
 
 	options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -190,10 +181,17 @@ func setUp() {
 			},
 			Transport: client,
 		},
-		Host: arm.Endpoint(mockHost),
+		Endpoint: arm.Endpoint(mockHost),
 	}
 }
 
 func tearDown() {
 
+}
+
+type MockCredential struct {
+}
+
+func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

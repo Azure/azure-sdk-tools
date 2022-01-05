@@ -377,16 +377,18 @@ namespace APIViewWeb.Respositories
             var review = await _reviewsRepository.GetMasterReviewForPackageAsync(codeFile.Language, codeFile.PackageName);
             bool createNewRevision = true;
             ReviewRevisionModel reviewRevision = null;
-            var deletedRevisionIds = new HashSet<String>();
             if (review != null)
             {
-                // Delete pending revisions if it is not in approved state before adding new revision
+                // Delete pending revisions if it is not in approved state and if it doesn't have any comments before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
                 var lastRevision = review.Revisions.LastOrDefault();
-                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1 && !await IsReviewSame(lastRevision, renderedCodeFile))
+                var comments = await _commentsRepository.GetCommentsAsync(review.ReviewId);
+                while (lastRevision.Approvers.Count == 0 &&
+                       review.Revisions.Count > 1 &&
+                       !await IsReviewSame(lastRevision, renderedCodeFile) &&
+                       !comments.Any(c => lastRevision.RevisionId == c.RevisionId))
                 {
                     review.Revisions.Remove(lastRevision);
-                    deletedRevisionIds.Add(lastRevision.RevisionId);
                     lastRevision = review.Revisions.LastOrDefault();
                 }
                 // We should compare against only latest revision when calling this API from scheduled CI runs
@@ -451,19 +453,6 @@ namespace APIViewWeb.Respositories
                 }
             }
             await _reviewsRepository.UpsertReviewAsync(review);
-
-            //Update comments to relink them to last revision if it's linked to deleted revsions. 
-            if (deletedRevisionIds.Any())
-            {
-                var comments = await _commentsRepository.GetCommentsAsync(review.ReviewId);
-                var lastRevisionId = review.Revisions.Last().RevisionId;
-                comments = comments.Where(c => deletedRevisionIds.Contains(c.RevisionId));
-                foreach (var comment in comments)
-                {
-                    comment.RevisionId = lastRevisionId;
-                    await _commentsRepository.UpsertCommentAsync(comment);
-                }
-            }
             return reviewRevision;
         }
 

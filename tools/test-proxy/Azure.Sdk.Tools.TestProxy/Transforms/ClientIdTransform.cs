@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         {
             if (entry.Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
             {
-                entry.Request.Headers.Add("x-ms-client-id", clientId);
+                entry.Response.Headers.Add("x-ms-client-id", clientId);
             }
         }
     }

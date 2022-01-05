@@ -196,6 +196,9 @@ class TokenFile: Codable {
 
     /// This should be the only process method that APIViewManager should be able to call
     internal func process(statements: [Statement]) {
+        text("Package parsed using Swift APIView (version \(APIViewManager.version))")
+        newLine()
+        newLine()
         lineIdMarker()
         text("package")
         whitespace()

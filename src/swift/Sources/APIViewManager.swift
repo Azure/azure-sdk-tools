@@ -35,6 +35,8 @@ import SourceKittenFramework
 class APIViewManager {
     // MARK: Properties
 
+    static var version = "0.1.0"
+
     static var shared = APIViewManager()
     let args = CommandLineArguments()
     var tokenFile: TokenFile!
@@ -193,7 +195,7 @@ class APIViewManager {
             SharedLogger.fail(failString)
         }
         let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: version)
+        tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: packageVersion!)
         tokenFile.process(statements: Array(statements.values))
     }
 }

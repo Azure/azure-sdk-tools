@@ -14,7 +14,7 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        protected override string GetDefinitionName(SdkComponent component)
+        public override string GetDefinitionName(SdkComponent component)
         {
             return component.Variant == null ? $"{Context.Prefix} - {component.Name}" : $"{Context.Prefix} - {component.Name} - {component.Variant}";
         }

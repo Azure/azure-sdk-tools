@@ -9,7 +9,7 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        protected override string GetDefinitionName(SdkComponent component)
+        public override string GetDefinitionName(SdkComponent component)
         {
             var definitionName = $"{Context.Prefix} - {component.Name} - tests-weekly";
             if (component.Variant != null) {

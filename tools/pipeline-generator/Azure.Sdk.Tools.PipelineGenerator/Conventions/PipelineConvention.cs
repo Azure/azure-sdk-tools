@@ -26,7 +26,7 @@ namespace PipelineGenerator.Conventions
 
         public abstract string SearchPattern { get; }
 
-        protected abstract string GetDefinitionName(SdkComponent component);
+        public abstract string GetDefinitionName(SdkComponent component);
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {

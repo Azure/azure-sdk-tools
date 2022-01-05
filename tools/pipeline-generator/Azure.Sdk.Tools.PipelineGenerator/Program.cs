@@ -184,6 +184,12 @@ namespace PipelineGenerator
                 }
 
                 logger.LogInformation("Found {0} components", components.Count());
+
+                if (HasPipelineDefinitionNameDuplicates(pipelineConvention, components))
+                {
+                    return ExitCondition.DuplicateComponentsFound;
+                }
+
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -239,6 +245,37 @@ namespace PipelineGenerator
             var scanDirectory = new DirectoryInfo(path);
             var components = scanner.Scan(scanDirectory, searchPattern);
             return components;
+        }
+
+        private bool HasPipelineDefinitionNameDuplicates(PipelineConvention convention, IEnumerable<SdkComponent> components)
+        {
+            var pipelineNames = new Dictionary<string, SdkComponent>();
+            var duplicates = new HashSet<SdkComponent>();
+
+            foreach (var component in components)
+            {
+                var definitionName = convention.GetDefinitionName(component);
+                if (pipelineNames.TryGetValue(definitionName, out var duplicate))
+                {
+                    duplicates.Add(duplicate);
+                    duplicates.Add(component);
+                }
+                else
+                {
+                    pipelineNames.Add(definitionName, component);
+                }
+            }
+
+            if (duplicates.Count > 0) {
+                logger.LogError("Found multiple pipeline definitions that will result in name collisions. This can happen when nested directory names are the same.");
+                logger.LogError("Suggested fix: add a 'variant' to the yaml filename, e.g. 'sdk/keyvault/internal/ci.yml' => 'sdk/keyvault/internal/ci.keyvault.yml'");
+                var paths = duplicates.Select(d => $"'{d.RelativeYamlPath}'");
+                logger.LogError($"Pipeline definitions affected: {String.Join(", ", paths)}");
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -504,6 +504,7 @@ export class TestCodeModeler {
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
             const scenarioFolder = path.join(fileRoot, apiFolder, SCENARIO_FOLDER);
+            // currently loadAvailableTestResources only support scenario scanning from local file system
             if (fs.existsSync(scenarioFolder) && fs.lstatSync(scenarioFolder).isDirectory()) {
                 for (const scenarioFile of fs.readdirSync(scenarioFolder)) {
                     if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) continue;

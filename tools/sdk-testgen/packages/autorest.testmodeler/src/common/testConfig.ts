@@ -16,11 +16,15 @@ export class TestConfig {
         const parentsOptions = this.getValue(Config.parents);
         for (const k of Object.keys(parentsOptions || {})) {
             const v: string = parentsOptions[k];
-            if (k.endsWith('.json') && typeof v === 'string' && v.startsWith('file:///')) {
-                if (process.platform.toLowerCase().startsWith('win')) {
-                    return v.slice('file:///'.length);
+            if (k.endsWith('.json') && typeof v === 'string') {
+                if (v.startsWith('file:///')) {
+                    if (process.platform.toLowerCase().startsWith('win')) {
+                        return v.slice('file:///'.length);
+                    }
+                    return v.slice('file:///'.length - 1);
+                } else if (v.startsWith('https://') || v.startsWith('http://')) {
+                    return v;
                 }
-                return v.slice('file:///'.length - 1);
             }
         }
         return undefined;

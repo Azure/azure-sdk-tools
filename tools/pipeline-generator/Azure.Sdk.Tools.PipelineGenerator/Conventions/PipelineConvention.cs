@@ -80,7 +80,7 @@ namespace PipelineGenerator.Conventions
             Logger.LogDebug("Applying convention to '{0}' definition.", definitionName);
             var hasChanges = await ApplyConventionAsync(definition, component);
 
-            if (hasChanges)
+            if (hasChanges || Context.OverwriteTriggers)
             {
                 if (!Context.WhatIf)
                 {
@@ -391,10 +391,11 @@ namespace PipelineGenerator.Conventions
             var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
 
             // Only add the schedule trigger if one doesn't exist.
-            if (scheduleTriggers == default || !scheduleTriggers.Any())
+            if (scheduleTriggers == default || !scheduleTriggers.Any() || Context.OverwriteTriggers)
             {
                 var computedSchedule = CreateScheduleFromDefinition(definition);
 
+                definition.Triggers.RemoveAll(e => e is ScheduleTrigger);
                 definition.Triggers.Add(new ScheduleTrigger
                 {
                     Schedules = new List<Schedule> { computedSchedule }
@@ -409,8 +410,9 @@ namespace PipelineGenerator.Conventions
         {
             bool hasChanges = false;
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-            if (ciTrigger == null)
+            if (ciTrigger == null || Context.OverwriteTriggers)
             {
+                definition.Triggers.RemoveAll(e => e is ContinuousIntegrationTrigger);
                 definition.Triggers.Add(new ContinuousIntegrationTrigger()
                 {
                     SettingsSourceType = 2 // Get CI trigger data from yaml file

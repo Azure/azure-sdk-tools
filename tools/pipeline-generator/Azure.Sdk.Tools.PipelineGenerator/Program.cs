@@ -61,6 +61,7 @@ namespace PipelineGenerator
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
             var debugOption = app.Option("--debug", "Turn on debug level logging.", CommandOptionType.NoValue);
             var noScheduleOption = app.Option("--no-schedule", "Don't create any scheduled triggers.", CommandOptionType.NoValue);
+            var overwriteTriggersOption = app.Option("--overwrite-triggers", "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution).", CommandOptionType.NoValue);
 
             app.OnExecute(() =>
             {
@@ -83,6 +84,7 @@ namespace PipelineGenerator
                     openOption.HasValue(),
                     destroyOption.HasValue(),
                     noScheduleOption.HasValue(),
+                    overwriteTriggersOption.HasValue(),
                     cancellationTokenSource.Token
                     ).Result;
 
@@ -146,6 +148,7 @@ namespace PipelineGenerator
             bool open,
             bool destroy,
             bool noSchedule,
+            bool overwriteTriggers,
             CancellationToken cancellationToken)
         {
             try
@@ -167,7 +170,8 @@ namespace PipelineGenerator
                     devOpsPathValue,
                     prefix,
                     whatIf,
-                    noSchedule
+                    noSchedule,
+                    overwriteTriggers
                     );
 
                 var pipelineConvention = GetPipelineConvention(convention, context);

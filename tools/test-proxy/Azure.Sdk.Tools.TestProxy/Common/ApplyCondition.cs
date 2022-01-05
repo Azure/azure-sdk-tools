@@ -12,7 +12,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class ApplyCondition
     {
-        public string UriRegex { get; set; }
+        public string UriRegex
+        {
+            get => _uriRegex;
+            set
+            {
+                StringSanitizer.ConfirmValidRegex(value);
+                _uriRegex = value;
+            }
+        }
+
+        private string _uriRegex;
 
         public HeaderCondition ResponseHeaderCondition { get; set; }
 
@@ -42,7 +52,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(uriProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
                     UriRegex = uriProp.Value.GetString();
-                    StringSanitizer.ConfirmValidRegex(UriRegex);
                     conditionDefined = true;
                 }
 
@@ -51,7 +60,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
                     ResponseHeaderCondition = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    StringSanitizer.ConfirmValidRegex(ResponseHeaderCondition.ValueRegex);
                     if (ResponseHeaderCondition.Key == null)
                     {
                         throw new ArgumentException("Key is required for response header conditions.");

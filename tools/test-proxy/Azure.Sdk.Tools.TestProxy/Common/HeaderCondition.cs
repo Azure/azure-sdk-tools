@@ -4,6 +4,16 @@
     {
         public string Key { get; set; }
 
-        public string ValueRegex { get; set; }
+        public string ValueRegex
+        {
+            get => _valueRegex;
+            set
+            {
+                StringSanitizer.ConfirmValidRegex(value);
+                _valueRegex = value;
+            }
+        }
+
+        private string _valueRegex;
     }
 }

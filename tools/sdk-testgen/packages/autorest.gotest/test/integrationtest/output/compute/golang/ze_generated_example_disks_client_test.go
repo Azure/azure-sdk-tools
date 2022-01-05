@@ -107,9 +107,13 @@ func ExampleDisksClient_ListByResourceGroup() {
 	client := golang.NewDisksClient("<subscription-id>", cred, nil)
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)
@@ -126,9 +130,13 @@ func ExampleDisksClient_List() {
 	ctx := context.Background()
 	client := golang.NewDisksClient("<subscription-id>", cred, nil)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

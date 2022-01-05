@@ -25,9 +25,13 @@ func ExampleSharedGalleriesClient_List() {
 	client := golang.NewSharedGalleriesClient("<subscription-id>", cred, nil)
 	pager := client.List("<location>",
 		&golang.SharedGalleriesListOptions{SharedTo: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

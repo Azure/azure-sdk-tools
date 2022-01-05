@@ -28,9 +28,13 @@ func ExampleVirtualMachineRunCommandsClient_List() {
 	client := golang.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
 	pager := client.List("<location>",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)
@@ -182,9 +186,13 @@ func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 	pager := client.ListByVirtualMachine("<resource-group-name>",
 		"<vm-name>",
 		&golang.VirtualMachineRunCommandsListByVirtualMachineOptions{Expand: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
 		}
 		for _, v := range pager.PageResponse().Value {
 			log.Printf("Pager result: %#v\n", v)

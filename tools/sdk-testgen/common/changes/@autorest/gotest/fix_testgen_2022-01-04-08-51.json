@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Fix wrong generation of null value for object.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

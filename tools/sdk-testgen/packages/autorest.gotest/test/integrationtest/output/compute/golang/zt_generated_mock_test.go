@@ -116,12 +116,13 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 	}()
 	client := golang.NewAvailabilitySetsClient("{subscriptionId}", cred, &options)
 	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("virtualMachines\\$ref")})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.AvailabilitySetListResult{
 				Value: []*golang.AvailabilitySet{
 					{
@@ -198,6 +199,9 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().AvailabilitySetListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -379,12 +383,13 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 	}()
 	client := golang.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	pager := client.ListBySubscription(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ProximityPlacementGroupListResult{
 				Value: []*golang.ProximityPlacementGroup{
 					{
@@ -414,6 +419,9 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -431,12 +439,13 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 	client := golang.NewProximityPlacementGroupsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ProximityPlacementGroupListResult{
 				Value: []*golang.ProximityPlacementGroup{
 					{
@@ -466,6 +475,9 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -999,12 +1011,13 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 	client := golang.NewVirtualMachinesClient("{subscriptionId}", cred, &options)
 	pager := client.ListByLocation("eastus",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.VirtualMachineListResult{
 				Value: []*golang.VirtualMachine{
 					{
@@ -1123,6 +1136,9 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -1262,6 +1278,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting patchMode of ImageDefault."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1382,6 +1399,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1504,6 +1522,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with Uefi Settings of secureBoot and vTPM."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1630,6 +1649,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with UserData"},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -1755,6 +1775,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with network interface configuration"},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -1887,6 +1908,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting assessmentMode of ImageDefault."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2009,6 +2031,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByOS."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2131,6 +2154,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2255,6 +2279,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of Manual."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2377,6 +2402,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2501,6 +2527,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image vm from an unmanaged generalized os image."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -2608,6 +2635,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image vm with unmanaged os and data disks."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vm-name}",
@@ -2757,6 +2785,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a custom image."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2863,6 +2892,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a generalized shared image."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -2969,6 +2999,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a specialized shared image."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3062,6 +3093,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3182,6 +3214,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in an availability set."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3300,6 +3333,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with DiskEncryptionSet resource id in the os disk and data disk."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3463,6 +3497,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Host Encryption using encryptionAtHost property."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3591,6 +3626,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Scheduled Events Profile"},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3727,6 +3763,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with a marketplace image plan."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3849,6 +3886,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with an extensions time budget."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -3975,6 +4013,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with boot diagnostics."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4099,6 +4138,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with empty data disks."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4240,6 +4280,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Cache disk using placement property."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4370,6 +4411,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Resource disk using placement property."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4500,6 +4542,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4628,6 +4671,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with managed boot diagnostics."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4750,6 +4794,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with password authentication."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4862,6 +4907,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with premium storage."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -4974,6 +5020,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ssh authentication."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5253,6 +5300,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by force-detaching data disk"},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5557,6 +5605,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine placed on a dedicated host group through automatic placement"},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -5782,6 +5831,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine placed on a dedicated host group through automatic placement."},
 	})
+	client = golang.NewVirtualMachinesClient("{subscription-id}", cred, &options)
 	res, err = client.InstanceView(ctx,
 		"myResourceGroup",
 		"myVM",
@@ -6255,12 +6305,13 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 	client := golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	pager := client.ListByLocation("eastus",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.VirtualMachineScaleSetListResult{
 				Value: []*golang.VirtualMachineScaleSet{
 					{
@@ -6419,6 +6470,9 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineScaleSetListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -6575,6 +6629,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image scale set with unmanaged os disks."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6729,6 +6784,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a custom image."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -6872,6 +6928,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a generalized shared image."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7015,6 +7072,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a specialized shared image."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7145,6 +7203,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with DiskEncryptionSet resource in os disk and data disk."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7320,6 +7379,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Fpga Network Interfaces."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7505,6 +7565,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Host Encryption using encryptionAtHost property."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7671,6 +7732,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Uefi Settings of secureBoot and vTPM."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7835,6 +7897,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with a marketplace image plan."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -7995,6 +8058,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure application gateway."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8153,6 +8217,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure load balancer."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8325,6 +8390,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with automatic repairs enabled"},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8483,6 +8549,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with boot diagnostics."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8645,6 +8712,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with empty data disks on each vm."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8827,6 +8895,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks using placement property."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -8995,6 +9064,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9157,6 +9227,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with extension time budget."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9347,6 +9418,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with managed boot diagnostics."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9507,6 +9579,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with password authentication."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9657,6 +9730,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with premium storage."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9807,6 +9881,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ssh authentication."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -9972,6 +10047,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with terminate scheduled events enabled."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10134,6 +10210,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with userData."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10291,6 +10368,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with virtual machines in different zones."},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
@@ -10615,6 +10693,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set with UserData"},
 	})
+	client = golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
@@ -10856,6 +10935,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -10913,6 +10993,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk with DiskEncryptionSet resource."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -10978,6 +11059,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11039,6 +11121,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot with DiskEncryptionSet resource."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11104,6 +11187,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11165,6 +11249,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from an existing virtual machine."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11222,6 +11307,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a blob."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11288,6 +11374,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a managed disk."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11362,6 +11449,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a snapshot."},
 	})
+	client = golang.NewImagesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myImage",
@@ -11600,12 +11688,13 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 	client := golang.NewImagesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ImageListResult{
 				Value: []*golang.Image{
 					{
@@ -11649,6 +11738,9 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -11665,12 +11757,13 @@ func TestImages_List(t *testing.T) {
 	}()
 	client := golang.NewImagesClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ImageListResult{
 				Value: []*golang.Image{
 					{
@@ -11714,6 +11807,9 @@ func TestImages_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -11832,6 +11928,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection, including the restore points contained in the restore point collection"},
 	})
+	client = golang.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
@@ -11946,12 +12043,13 @@ func TestRestorePointCollections_List(t *testing.T) {
 	client := golang.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	pager := client.List("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.RestorePointCollectionListResult{
 				Value: []*golang.RestorePointCollection{
 					{
@@ -11994,6 +12092,9 @@ func TestRestorePointCollections_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -12010,12 +12111,13 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 	}()
 	client := golang.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
 	pager := client.ListAll(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.RestorePointCollectionListResult{
 				Value: []*golang.RestorePointCollection{
 					{
@@ -12058,6 +12160,9 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -13018,12 +13123,13 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 	client := golang.NewVirtualMachineRunCommandsClient("subid", cred, &options)
 	pager := client.List("SoutheastAsia",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.RunCommandListResult{
 				Value: []*golang.RunCommandDocumentBase{
 					{
@@ -13102,6 +13208,9 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().RunCommandListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -13408,12 +13517,13 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 	pager := client.ListByVirtualMachine("myResourceGroup",
 		"myVM",
 		&golang.VirtualMachineRunCommandsListByVirtualMachineOptions{Expand: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.VirtualMachineRunCommandsListResult{
 				Value: []*golang.VirtualMachineRunCommand{
 					{
@@ -13450,6 +13560,9 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -13704,12 +13817,13 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 		"myvmScaleSet",
 		"0",
 		&golang.VirtualMachineScaleSetVMRunCommandsListOptions{Expand: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.VirtualMachineRunCommandsListResult{
 				Value: []*golang.VirtualMachineRunCommand{
 					{
@@ -13742,6 +13856,9 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -13758,12 +13875,13 @@ func TestResourceSKUs_List(t *testing.T) {
 	}()
 	client := golang.NewResourceSKUsClient("{subscription-id}", cred, &options)
 	pager := client.List(&golang.ResourceSKUsListOptions{Filter: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ResourceSKUsResult{
 				Value: []*golang.ResourceSKU{
 					{
@@ -13937,6 +14055,9 @@ func TestResourceSKUs_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 
@@ -13944,13 +14065,15 @@ func TestResourceSKUs_List(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs for the specified region"},
 	})
+	client = golang.NewResourceSKUsClient("{subscription-id}", cred, &options)
 	pager = client.List(&golang.ResourceSKUsListOptions{Filter: to.StringPtr("location eq 'westus'")})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ResourceSKUsResult{
 				Value: []*golang.ResourceSKU{
 					{
@@ -14124,6 +14247,9 @@ func TestResourceSKUs_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -14188,6 +14314,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk encryption set."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14239,6 +14366,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by copying a snapshot."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14284,6 +14412,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from a different subscription."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14331,6 +14460,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from the same subscription."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14376,6 +14506,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from a platform image."},
 	})
+	client = golang.NewDisksClient("{subscriptionId}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14433,6 +14564,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from an existing managed disk in the same or different subscription."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk2",
@@ -14478,6 +14610,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with security profile"},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14535,6 +14668,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with ssd zrs account type."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14587,6 +14721,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed upload disk."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14632,6 +14767,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk in extended location."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14685,6 +14821,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14730,6 +14867,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an ultra managed disk with logicalSectorSize 512E"},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14835,6 +14973,7 @@ func TestDisks_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add purchase plan."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14896,6 +15035,7 @@ func TestDisks_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add supportsHibernation."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14945,6 +15085,7 @@ func TestDisks_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to change tier."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -14986,6 +15127,7 @@ func TestDisks_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to disable bursting."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -15026,6 +15168,7 @@ func TestDisks_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update managed disk to remove disk access resource association."},
 	})
+	client = golang.NewDisksClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDisk",
@@ -15168,12 +15311,13 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 	client := golang.NewDisksClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskList{
 				Value: []*golang.Disk{
 					{
@@ -15284,6 +15428,9 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -15300,12 +15447,13 @@ func TestDisks_List(t *testing.T) {
 	}()
 	client := golang.NewDisksClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskList{
 				Value: []*golang.Disk{
 					{
@@ -15416,6 +15564,9 @@ func TestDisks_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -15486,6 +15637,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from the same subscription."},
 	})
+	client = golang.NewSnapshotsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot1",
@@ -15531,6 +15683,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot from an existing snapshot in the same or a different subscription."},
 	})
+	client = golang.NewSnapshotsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"mySnapshot2",
@@ -15672,12 +15825,13 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 	client := golang.NewSnapshotsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.SnapshotList{
 				Value: []*golang.Snapshot{
 					{
@@ -15727,6 +15881,9 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -15743,12 +15900,13 @@ func TestSnapshots_List(t *testing.T) {
 	}()
 	client := golang.NewSnapshotsClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.SnapshotList{
 				Value: []*golang.Snapshot{
 					{
@@ -15840,6 +15998,9 @@ func TestSnapshots_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -15914,6 +16075,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set."},
 	})
+	client = golang.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -16034,6 +16196,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating"},
 	})
+	client = golang.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -16093,6 +16256,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set."},
 	})
+	client = golang.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
@@ -16242,12 +16406,13 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 	client := golang.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskEncryptionSetList{
 				Value: []*golang.DiskEncryptionSet{
 					{
@@ -16304,6 +16469,9 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -16320,12 +16488,13 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 	}()
 	client := golang.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskEncryptionSetList{
 				Value: []*golang.DiskEncryptionSet{
 					{
@@ -16382,6 +16551,9 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -16400,12 +16572,13 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 	pager := client.ListAssociatedResources("myResourceGroup",
 		"myDiskEncryptionSet",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.ResourceURIList{
 				Value: []*string{
 					to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
@@ -16416,6 +16589,9 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceURIList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -16578,6 +16754,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource."},
 	})
+	client = golang.NewDiskAccessesClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
@@ -16647,12 +16824,13 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 	client := golang.NewDiskAccessesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskAccessList{
 				Value: []*golang.DiskAccess{
 					{
@@ -16706,6 +16884,9 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -16722,12 +16903,13 @@ func TestDiskAccesses_List(t *testing.T) {
 	}()
 	client := golang.NewDiskAccessesClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskAccessList{
 				Value: []*golang.DiskAccess{
 					{
@@ -16781,6 +16963,9 @@ func TestDiskAccesses_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -16972,12 +17157,13 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 	pager := client.ListPrivateEndpointConnections("myResourceGroup",
 		"myDiskAccess",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.PrivateEndpointConnectionListResult{
 				Value: []*golang.PrivateEndpointConnection{
 					{
@@ -17002,6 +17188,9 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().PrivateEndpointConnectionListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -17064,12 +17253,13 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 		"rpc",
 		"vmrp",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.DiskRestorePointList{
 				Value: []*golang.DiskRestorePoint{
 					{
@@ -17090,6 +17280,9 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskRestorePointList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -17153,6 +17346,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery."},
 	})
+	client = golang.NewGalleriesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17294,6 +17488,7 @@ func TestGalleries_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
+	client = golang.NewGalleriesClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17360,12 +17555,13 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 	client := golang.NewGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.ListByResourceGroup("myResourceGroup",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryList{
 				Value: []*golang.Gallery{
 					{
@@ -17386,6 +17582,9 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -17402,12 +17601,13 @@ func TestGalleries_List(t *testing.T) {
 	}()
 	client := golang.NewGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.List(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryList{
 				Value: []*golang.Gallery{
 					{
@@ -17428,6 +17628,9 @@ func TestGalleries_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -17639,12 +17842,13 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 	pager := client.ListByGallery("myResourceGroup",
 		"myGalleryName",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryImageList{
 				Value: []*golang.GalleryImage{
 					{
@@ -17668,6 +17872,9 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -17826,6 +18033,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using managed image as source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -17969,6 +18177,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using mix of disks and snapshots as a source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18110,6 +18319,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using shared image as source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18253,6 +18463,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using snapshots as a source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18394,6 +18605,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using vhd as a source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18621,6 +18833,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version without source id."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18812,6 +19025,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with snapshots as a source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18882,6 +19096,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with vhd as a source."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -18956,6 +19171,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version."},
 	})
+	client = golang.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19069,12 +19285,13 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryImageVersionList{
 				Value: []*golang.GalleryImageVersion{
 					{
@@ -19135,6 +19352,9 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageVersionList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -19332,12 +19552,13 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 	pager := client.ListByGallery("myResourceGroup",
 		"myGalleryName",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryApplicationList{
 				Value: []*golang.GalleryApplication{
 					{
@@ -19357,6 +19578,9 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -19608,6 +19832,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version."},
 	})
+	client = golang.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19699,12 +19924,13 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.GalleryApplicationVersionList{
 				Value: []*golang.GalleryApplicationVersion{
 					{
@@ -19743,6 +19969,9 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationVersionList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -19813,6 +20042,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"reset sharing profile of a gallery."},
 	})
+	client = golang.NewGallerySharingProfileClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"myGalleryName",
@@ -19854,12 +20084,13 @@ func TestSharedGalleries_List(t *testing.T) {
 	client := golang.NewSharedGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
 		&golang.SharedGalleriesListOptions{SharedTo: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.SharedGalleryList{
 				Value: []*golang.SharedGallery{
 					{
@@ -19875,6 +20106,9 @@ func TestSharedGalleries_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -19929,12 +20163,13 @@ func TestSharedGalleryImages_List(t *testing.T) {
 	pager := client.List("myLocation",
 		"galleryUniqueName",
 		&golang.SharedGalleryImagesListOptions{SharedTo: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.SharedGalleryImageList{
 				Value: []*golang.SharedGalleryImage{
 					{
@@ -19960,6 +20195,9 @@ func TestSharedGalleryImages_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -20026,12 +20264,13 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 		"galleryUniqueName",
 		"myGalleryImageName",
 		&golang.SharedGalleryImageVersionsListOptions{SharedTo: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.SharedGalleryImageVersionList{
 				Value: []*golang.SharedGalleryImageVersion{
 					{
@@ -20051,6 +20290,9 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageVersionList)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -20226,12 +20468,13 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 	pager := client.List("ConstosoRG",
 		"{cs-name}",
 		&golang.CloudServiceRoleInstancesListOptions{Expand: nil})
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.RoleInstanceListResult{
 				Value: []*golang.RoleInstance{
 					{
@@ -20312,6 +20555,9 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().RoleInstanceListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -20453,12 +20699,13 @@ func TestCloudServiceRoles_List(t *testing.T) {
 	pager := client.List("ConstosoRG",
 		"{cs-name}",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.CloudServiceRoleListResult{
 				Value: []*golang.CloudServiceRole{
 					{
@@ -20495,6 +20742,9 @@ func TestCloudServiceRoles_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceRoleListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -20631,6 +20881,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role"},
 	})
+	client = golang.NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20736,6 +20987,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and Certificate from Key Vault"},
 	})
+	client = golang.NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -20862,6 +21114,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and RDP Extension"},
 	})
+	client = golang.NewCloudServicesClient("{subscription-id}", cred, &options)
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
@@ -21290,12 +21543,13 @@ func TestCloudServices_ListAll(t *testing.T) {
 	}()
 	client := golang.NewCloudServicesClient("{subscription-id}", cred, &options)
 	pager := client.ListAll(nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.CloudServiceListResult{
 				Value: []*golang.CloudService{
 					{
@@ -21371,6 +21625,9 @@ func TestCloudServices_ListAll(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -21388,12 +21645,13 @@ func TestCloudServices_List(t *testing.T) {
 	client := golang.NewCloudServicesClient("{subscription-id}", cred, &options)
 	pager := client.List("ConstosoRG",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.CloudServiceListResult{
 				Value: []*golang.CloudService{
 					{
@@ -21469,6 +21727,9 @@ func TestCloudServices_List(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -21710,12 +21971,13 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 	pager := client.ListUpdateDomains("ConstosoRG",
 		"{cs-name}",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.UpdateDomainListResult{
 				Value: []*golang.UpdateDomain{
 					{
@@ -21732,6 +21994,9 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().UpdateDomainListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -21792,12 +22057,13 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 	client := golang.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	pager := client.ListOSVersions("westus2",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.OSVersionListResult{
 				Value: []*golang.OSVersion{
 					{
@@ -21834,6 +22100,9 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().OSVersionListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }
@@ -21897,12 +22166,13 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 	client := golang.NewCloudServiceOperatingSystemsClient("{subscription-id}", cred, &options)
 	pager := client.ListOSFamilies("westus2",
 		nil)
-	for pager.NextPage(ctx) {
+	for {
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			t.Fatalf("failed to advance page: %v", err)
 		}
 		// Response check
-		{
+		if nextResult {
 			pagerExampleRes := golang.OSFamilyListResult{
 				Value: []*golang.OSFamily{
 					{
@@ -21945,6 +22215,9 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 				mockResJson, _ := json.Marshal(pager.PageResponse().OSFamilyListResult)
 				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
+		} else {
+			t.Logf("Page end.")
+			break
 		}
 	}
 }

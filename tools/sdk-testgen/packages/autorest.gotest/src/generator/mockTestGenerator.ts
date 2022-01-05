@@ -118,17 +118,24 @@ export class MockTestDataRender extends BaseDataRender {
                 if (isLROOperation(op)) {
                     responseEnv = op.language.go.finalResponseEnv;
                 }
+
                 if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.serialization?.xml?.name) {
                     example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.byValue;
                     example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.name;
                     if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.isDiscriminator === true) {
-                        example.responseType = `Get${example.responseType}()`;
+                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
+                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                            &${example.responseOutput},
+                        }`;
                     }
                 } else {
                     example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.byValue;
                     example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.name;
                     if (responseEnv.language.go?.resultEnv.language.go?.resultField.isDiscriminator === true) {
-                        example.responseType = `Get${example.responseType}()`;
+                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
+                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                            &${example.responseOutput},
+                        }`;
                     }
                 }
             }
@@ -255,6 +262,9 @@ export class MockTestDataRender extends BaseDataRender {
                 return result;
             }
         } else if (exampleValue.schema?.type === SchemaType.Object) {
+            if (exampleValue.rawValue === null) {
+                return 'nil';
+            }
             let output: string;
             if (inArray) {
                 output = `{\n`;
@@ -344,7 +354,11 @@ export class MockTestDataRender extends BaseDataRender {
         let ret = JSON.stringify(rawValue);
         const goType = this.getLanguageName(schema);
         if (schema.type === SchemaType.Choice) {
-            ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+            if ((schema as ChoiceSchema).choiceType.type === SchemaType.String) {
+                ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+            } else {
+                ret = `${this.context.packageName}.${this.getLanguageName(schema)}(${rawValue})`;
+            }
         } else if (schema.type === SchemaType.SealedChoice) {
             const choiceValue = Helper.findChoiceValue(schema as ChoiceSchema, rawValue);
             ret = this.context.packageName + '.' + this.getLanguageName(choiceValue);

@@ -349,23 +349,19 @@ namespace PipelineGenerator.Conventions
                 {
                     if (overrideYaml)
                     {
-                        if (trigger.SettingsSourceType != 1 ||
-                            trigger.BranchFilters.Contains("+*"))
+                        // Override what is in the yaml file and use what is in the pipeline definition
+                        trigger.SettingsSourceType = 1;
+
+                        if (!trigger.BranchFilters.Contains("+*"))
                         {
-                            // Override what is in the yaml file and use what is in the pipeline definition
-                            trigger.SettingsSourceType = 1;
                             trigger.BranchFilters.Add("+*");
                         }
                     }
-                    else
+                    else if (trigger.SettingsSourceType != 2)
                     {
-                        if (trigger.SettingsSourceType != 2)
-                        {
-                            // Pull settings from yaml
-                            trigger.SettingsSourceType = 2;
-                            hasChanges = true;
-                        }
-
+                        // Pull settings from yaml
+                        trigger.SettingsSourceType = 2;
+                        hasChanges = true;
                     }
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
                        trigger.Forks.AllowSecrets != securePipeline ||

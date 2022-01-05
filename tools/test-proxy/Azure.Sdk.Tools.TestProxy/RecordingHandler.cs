@@ -343,7 +343,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
-            foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
+            foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
                 transform.Transform(match);
             }

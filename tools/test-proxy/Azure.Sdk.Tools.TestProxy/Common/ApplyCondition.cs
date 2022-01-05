@@ -98,10 +98,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 if (ResponseHeaderCondition.ValueRegex != null)
                 {
-                    if (!Regex.IsMatch(entry.Response.Headers[ResponseHeaderCondition.Key].First(), ResponseHeaderCondition.ValueRegex))
+                    foreach (string header in entry.Response.Headers[ResponseHeaderCondition.Key])
                     {
-                        return false;
+                        // if at least one header value matches, then the condition passes
+                        if (Regex.IsMatch(header, ResponseHeaderCondition.ValueRegex))
+                        {
+                            return true;
+                        }
                     }
+
+                    return false;
                 }
             }
 

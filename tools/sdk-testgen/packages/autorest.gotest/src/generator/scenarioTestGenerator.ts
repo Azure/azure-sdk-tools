@@ -11,8 +11,9 @@ import { GoExampleModel } from '../common/model';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { TestDefinitionModel, TestScenarioModel, StepArmTemplateModel, StepRestCallModel } from '@autorest/testmodeler/dist/src/core/model';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
+import { StepArmTemplateModel, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+
 export class ScenarioTestDataRender extends MockTestDataRender {
     definedVariables: Record<string, string> = {};
     referencedVariables: Set<string> = new Set<string>();
@@ -47,7 +48,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 };
                 this.genRenderDataForStep(testDef, step);
             }
-            for (var v in scenario.variables) {
+            for (const v in scenario.variables) {
                 if (!this.referencedVariables.has(v)) {
                     delete scenario.variables[v];
                 }

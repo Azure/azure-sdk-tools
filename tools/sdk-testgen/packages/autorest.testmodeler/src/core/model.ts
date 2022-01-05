@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import * as _ from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ApiScenarioLoader } from 'oav/dist/lib/apiScenario/apiScenarioLoader';
 import {
     ArraySchema,
     CodeModel,
@@ -21,9 +22,8 @@ import {
 import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
+import { Scenario, ScenarioDefinition, Step, StepArmTemplate, StepRestCall } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 import { TestConfig } from '../common/testConfig';
-import { ScenarioDefinition, Scenario, Step, StepArmTemplate, StepRestCall } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
-import { ApiScenarioLoader } from 'oav/dist/lib/apiScenario/apiScenarioLoader';
 
 export enum ExtensionName {
     xMsExamples = 'x-ms-examples',
@@ -500,15 +500,17 @@ export class TestCodeModeler {
     }
 
     public async loadAvailableTestResources(fileRoot: string, loader: ApiScenarioLoader) {
-        const SCENARIO_FOLDER = 'scenarios';
+        const scenariosFolder = 'scenarios';
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
-            const scenarioFolder = path.join(fileRoot, apiFolder, SCENARIO_FOLDER);
+            const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
             // currently loadAvailableTestResources only support scenario scanning from local file system
-            if (fs.existsSync(scenarioFolder) && fs.lstatSync(scenarioFolder).isDirectory()) {
-                for (const scenarioFile of fs.readdirSync(scenarioFolder)) {
-                    if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) continue;
-                    const scenarioPathName = path.join(apiFolder, SCENARIO_FOLDER, scenarioFile);
+            if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
+                for (const scenarioFile of fs.readdirSync(scenarioPath)) {
+                    if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
+                        continue;
+                    }
+                    const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                     try {
                         const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 

@@ -389,10 +389,14 @@ namespace APIViewWeb.Respositories
             ReviewRevisionModel reviewRevision = null;
             if (review != null)
             {
-                // Delete pending revisions if it is not in approved state before adding new revision
+                // Delete pending revisions if it is not in approved state and if it doesn't have any comments before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
                 var lastRevision = review.Revisions.LastOrDefault();
-                while (lastRevision.Approvers.Count == 0 && review.Revisions.Count > 1 && !await IsReviewSame(lastRevision, renderedCodeFile))
+                var comments = await _commentsRepository.GetCommentsAsync(review.ReviewId);
+                while (lastRevision.Approvers.Count == 0 &&
+                       review.Revisions.Count > 1 &&
+                       !await IsReviewSame(lastRevision, renderedCodeFile) &&
+                       !comments.Any(c => lastRevision.RevisionId == c.RevisionId))
                 {
                     review.Revisions.Remove(lastRevision);
                     lastRevision = review.Revisions.LastOrDefault();

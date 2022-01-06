@@ -26,7 +26,7 @@ namespace PipelineGenerator.Conventions
 
         public abstract string SearchPattern { get; }
 
-        protected abstract string GetDefinitionName(SdkComponent component);
+        public abstract string GetDefinitionName(SdkComponent component);
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {
@@ -80,7 +80,7 @@ namespace PipelineGenerator.Conventions
             Logger.LogDebug("Applying convention to '{0}' definition.", definitionName);
             var hasChanges = await ApplyConventionAsync(definition, component);
 
-            if (hasChanges)
+            if (hasChanges || Context.OverwriteTriggers)
             {
                 if (!Context.WhatIf)
                 {
@@ -313,7 +313,7 @@ namespace PipelineGenerator.Conventions
             return Task.FromResult(hasChanges);
         }
 
-        protected bool EnsureDefautPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
+        protected bool EnsureDefaultPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
         {
             bool hasChanges = false;
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
@@ -349,23 +349,24 @@ namespace PipelineGenerator.Conventions
                 {
                     if (overrideYaml)
                     {
-                        if (trigger.SettingsSourceType != 1 ||
-                            trigger.BranchFilters.Contains("+*"))
+                        // Override what is in the yaml file and use what is in the pipeline definition
+                        if (trigger.SettingsSourceType != 1)
                         {
-                            // Override what is in the yaml file and use what is in the pipeline definition
                             trigger.SettingsSourceType = 1;
-                            trigger.BranchFilters.Add("+*");
-                        }
-                    }
-                    else
-                    {
-                        if (trigger.SettingsSourceType != 2)
-                        {
-                            // Pull settings from yaml
-                            trigger.SettingsSourceType = 2;
                             hasChanges = true;
                         }
 
+                        if (!trigger.BranchFilters.Contains("+*"))
+                        {
+                            trigger.BranchFilters.Add("+*");
+                            hasChanges = true;
+                        }
+                    }
+                    else if (trigger.SettingsSourceType != 2)
+                    {
+                        // Pull settings from yaml
+                        trigger.SettingsSourceType = 2;
+                        hasChanges = true;
                     }
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
                        trigger.Forks.AllowSecrets != securePipeline ||
@@ -377,7 +378,7 @@ namespace PipelineGenerator.Conventions
                         trigger.Forks.Enabled = true;
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
-   
+
                         hasChanges = true;
                     }
                 }
@@ -390,11 +391,12 @@ namespace PipelineGenerator.Conventions
             bool hasChanges = false;
             var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
 
-            // Only add the schedule trigger if one doesn't exist. 
-            if (scheduleTriggers == default || !scheduleTriggers.Any())
+            // Only add the schedule trigger if one doesn't exist.
+            if (scheduleTriggers == default || !scheduleTriggers.Any() || Context.OverwriteTriggers)
             {
                 var computedSchedule = CreateScheduleFromDefinition(definition);
 
+                definition.Triggers.RemoveAll(e => e is ScheduleTrigger);
                 definition.Triggers.Add(new ScheduleTrigger
                 {
                     Schedules = new List<Schedule> { computedSchedule }
@@ -409,8 +411,9 @@ namespace PipelineGenerator.Conventions
         {
             bool hasChanges = false;
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
-            if (ciTrigger == null)
+            if (ciTrigger == null || Context.OverwriteTriggers)
             {
+                definition.Triggers.RemoveAll(e => e is ContinuousIntegrationTrigger);
                 definition.Triggers.Add(new ContinuousIntegrationTrigger()
                 {
                     SettingsSourceType = 2 // Get CI trigger data from yaml file

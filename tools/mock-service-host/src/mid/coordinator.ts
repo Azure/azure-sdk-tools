@@ -2,7 +2,7 @@ import * as Constants from 'oav/dist/lib/util/constants'
 import * as lodash from 'lodash'
 import * as oav from 'oav'
 import * as path from 'path'
-import { AzureExtensions, LRO_CALLBACK } from '../common/constants'
+import { AzureExtensions, Headers, LRO_CALLBACK } from '../common/constants'
 import { Config } from '../common/config'
 import {
     HasChildResource,
@@ -26,6 +26,7 @@ import {
     getPath,
     getPureUrl,
     isManagementUrlLevel,
+    isNullOrUndefined,
     logger,
     replacePropertyValue
 } from '../common/utils'
@@ -283,6 +284,7 @@ export class Coordinator {
         } else {
             const [code, _ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
 
+            const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
             let ret = _ret
             if (typeof ret === 'object') {
                 if (!Array.isArray(ret)) {
@@ -297,9 +299,11 @@ export class Coordinator {
 
                 //set name
                 const path = getPath(getPureUrl(req.url))
-                ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                    return typeof v === 'string' && v.match(/^a+$/) !== null
-                })
+                if (!isExampleResponse) {
+                    ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
+                        return typeof v === 'string' && v.match(/^a+$/) !== null
+                    })
+                }
             }
 
             if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {

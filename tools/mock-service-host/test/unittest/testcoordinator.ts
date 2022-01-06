@@ -541,6 +541,13 @@ describe('Example Validation', () => {
         const request = mockRequest(pair.liveRequest)
         await coordinator.generateResponse(request, response, statelessProfile)
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
+        expect(response.body?.name).toMatch('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+
+        // verify behaviour when don't set example-id
+        request.headers = {}
+        await coordinator.generateResponse(request, response, statelessProfile)
+        assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
+        expect(response.body?.name).toMatch('randomUsers')
     })
 
     it('will fail if send wrong example-id', async () => {

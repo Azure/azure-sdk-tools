@@ -51,9 +51,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.False(nonTransformedresponse.Headers.ContainsKey(targetHeaderKey));
         }
-
+        
         [Fact]
         public async Task CanApplyHeaderTransform()
+        {
+            var headerTransform = new HeaderTransform(
+                "someNewHeader",
+                "value");
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Transforms.Clear();
+            testRecordingHandler.Transforms.Add(headerTransform);
+
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/response_with_header_to_transform.json";
+            var transformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[0];
+
+            // start playback
+            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            // transform should apply
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(transformedEntry);
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+            Assert.Equal("value", response.Headers["someNewHeader"]);
+        }
+
+        [Fact]
+        public async Task CanApplyHeaderTransformWithCondition()
         {
             var headerTransform = new HeaderTransform(
                 "Location",

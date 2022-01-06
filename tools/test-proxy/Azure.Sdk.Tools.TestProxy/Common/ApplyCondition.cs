@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
                     ResponseHeader = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (ResponseHeader.Key == null)
+                    if (string.IsNullOrWhiteSpace(ResponseHeader.Key))
                     {
                         throw new ArgumentException("Key is required for response header conditions.");
                     }

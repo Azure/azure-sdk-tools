@@ -534,7 +534,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("https://fakeazsdktestaccount.table.core.windows.net/Tables", replacement);
             Assert.Equal(".*/value", regex);
             Assert.Equal(".*/token", result.Condition.UriRegex);
+        }
 
+        [Theory]
+        [InlineData("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"valueRegex\": \".*/value\" } }}")]
+        [InlineData("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"key\": \"\", \"valueRegex\": \".*/value\" } }}")]
+        public async Task TestAddHeaderTransformThrowsWhenMissingOrEmptyResponseHeaderKey(string body)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Transforms.Clear();
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
         }
 
         [Fact]

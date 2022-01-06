@@ -244,6 +244,13 @@ describe('GoTestGenerator from RP signalR', () => {
                 configDefaults,
             ),
         );
+        if (!process.platform.toLowerCase().startsWith('win')) {
+            for (const scenarios of testCodeModel.codeModel.testModel.scenarioTests || []) {
+                if (scenarios._filePath) {
+                    scenarios._filePath = scenarios._filePath.split('\\').join('/');
+                }
+            }
+        }
     });
 
     afterEach(() => {

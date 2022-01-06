@@ -401,6 +401,17 @@ export class TestCodeModeler {
                 testDef.outputVariableNames.push(templateOutput);
             }
         }
+
+        const scriptContentKey = 'scriptContent';
+        for (const resource of stepModel.armTemplatePayload?.resources || []) {
+            const scriptContentValue = resource.properties?.[scriptContentKey];
+            if (scriptContentValue && typeof scriptContentValue === 'string') {
+                if (process.platform.toLowerCase().startsWith('win')) {
+                    // align new line character for scriptContent across win/os/linux
+                    resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
+                }
+            }
+        }
     }
 
     public initiateRestCall(testDef: TestDefinitionModel, step: StepRestCallModel) {
@@ -446,6 +457,7 @@ export class TestCodeModeler {
             allSteps.push(...scenario.steps);
             this.initiateOavVariables(scenario);
         }
+        allSteps.push(...testDef.cleanUpSteps);
 
         for (const step of allSteps) {
             this.initiateOavVariables(step);

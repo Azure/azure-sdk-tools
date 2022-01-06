@@ -21900,11 +21900,22 @@ testModel:
                       value: $(customDomainName)
                   forceUpdateTag: '[parameters(''utcValue'')]'
                   retentionInterval: P1D
-                  scriptContent: "$resourceGroupName = ${Env:resourceGroupName}\r\n$dnsCNAME = ${Env:dnsCname}\r\n$dnsZoneName = ${Env:dnsZoneName}\r\n\r\nConnect-AzAccount -Identity\r\n\r\n$RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName $dnsZoneName\r\n$Result = Remove-AzDnsRecordSet -RecordSet $RecordSet\r\n$Result"
+                  scriptContent: |-
+                    $resourceGroupName = ${Env:resourceGroupName}
+                    $dnsCNAME = ${Env:dnsCname}
+                    $dnsZoneName = ${Env:dnsZoneName}
+
+                    Connect-AzAccount -Identity
+
+                    $RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName $dnsZoneName
+                    $Result = Remove-AzDnsRecordSet -RecordSet $RecordSet
+                    $Result
                   timeout: PT1H
           isCleanUpStep: true
+          outputVariableNames: []
           outputVariables: {}
           requiredVariables: []
+          requiredVariablesDefault: {}
           secretVariables: []
           step: delete_cname_record
           variables:
@@ -22015,7 +22026,19 @@ testModel:
                       value: $(serviceName).azuremicroservices.io
                   forceUpdateTag: '[parameters(''utcValue'')]'
                   retentionInterval: P1D
-                  scriptContent: "# Copyright (c) 2021 Microsoft Corporation\r\n# \r\n# This software is released under the MIT License.\r\n# https://opensource.org/licenses/MIT\r\n$resourceGroupName = ${Env:resourceGroupName}\r\n$dnsCname = ${Env:dnsCname}\r\n$dnsZoneName = ${Env:dnsZoneName}\r\n$dnsCnameAlias = ${Env:dnsCnameAlias}\r\nConnect-AzAccount -Identity\r\nNew-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ZoneName $dnsZoneName -ResourceGroupName $resourceGroupName -Ttl 3600 -DnsRecords (New-AzDnsRecordConfig -Cname $dnsCnameAlias) -Overwrite\r\n$RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName $dnsZoneName\r\n$RecordSet"
+                  scriptContent: |-
+                    # Copyright (c) 2021 Microsoft Corporation
+                    # 
+                    # This software is released under the MIT License.
+                    # https://opensource.org/licenses/MIT
+                    $resourceGroupName = ${Env:resourceGroupName}
+                    $dnsCname = ${Env:dnsCname}
+                    $dnsZoneName = ${Env:dnsZoneName}
+                    $dnsCnameAlias = ${Env:dnsCnameAlias}
+                    Connect-AzAccount -Identity
+                    New-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ZoneName $dnsZoneName -ResourceGroupName $resourceGroupName -Ttl 3600 -DnsRecords (New-AzDnsRecordConfig -Cname $dnsCnameAlias) -Overwrite
+                    $RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName $dnsZoneName
+                    $RecordSet
                   timeout: PT1H
           isPrepareStep: true
           outputVariableNames: []
@@ -27742,7 +27765,7 @@ testModel:
                           secureValue: $(blobUrl)
                       forceUpdateTag: '[parameters(''utcValue'')]'
                       retentionInterval: P1D
-                      scriptContent: "$uploadUri = ${Env:uploadUrl}\r\n$blobUri = ${Env:blobUrl}\r\n$localFilePath = '/tmp/temp.file'\r\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\r\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\r\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\r\n\t$DownLoadTask\r\n}\r\n\r\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\r\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\r\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\r\n\t$UploadTask\r\n}\r\n\r\nConnect-AzAccount -Identity\r\nDownloadJarFromBlob $blobUri $localFilePath\r\nUploadToFileShare $uploadUri $localFilePath"
+                      scriptContent: "$uploadUri = ${Env:uploadUrl}\n$blobUri = ${Env:blobUrl}\n$localFilePath = '/tmp/temp.file'\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\n\t$DownLoadTask\n}\n\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\n\t$UploadTask\n}\n\nConnect-AzAccount -Identity\nDownloadJarFromBlob $blobUri $localFilePath\nUploadToFileShare $uploadUri $localFilePath"
                       timeout: PT1H
               outputVariableNames: []
               outputVariables: {}

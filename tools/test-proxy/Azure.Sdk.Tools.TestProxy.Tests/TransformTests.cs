@@ -60,9 +60,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "http://localhost",
                 condition: new ApplyCondition
                 {
-                    ResponseHeaderCondition = new HeaderCondition
+                    ResponseHeader = new HeaderCondition
                     {
-                        Key = "Location", ValueRegex = @".*/Tables\(.*"
+                        Key = "Location",
+                        ValueRegex = @".*/Tables\(.*"
                     }
                 });
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

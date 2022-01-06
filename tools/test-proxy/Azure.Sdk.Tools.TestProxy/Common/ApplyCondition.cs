@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private string _uriRegex;
 
-        public HeaderCondition ResponseHeaderCondition { get; set; }
+        public HeaderCondition ResponseHeader { get; set; }
 
         private JsonProperty GetProp(string name, JsonElement jsonElement)
         {
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             try
             {
                 // URI condition
-                var uriProp = GetProp("UriRegex", jsonElement);
+                var uriProp = GetProp(nameof(UriRegex), jsonElement);
 
                 if(uriProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
@@ -56,11 +56,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 // Response header condition
-                var headerProp = GetProp("ResponseHeaderCondition", jsonElement);
+                var headerProp = GetProp(nameof(ResponseHeader), jsonElement);
                 if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
-                    ResponseHeaderCondition = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (ResponseHeaderCondition.Key == null)
+                    ResponseHeader = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (ResponseHeader.Key == null)
                     {
                         throw new ArgumentException("Key is required for response header conditions.");
                     }
@@ -97,19 +97,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-            if (ResponseHeaderCondition != null)
+            if (ResponseHeader != null)
             {
-                if (!entry.Response.Headers.ContainsKey(ResponseHeaderCondition.Key))
+                if (!entry.Response.Headers.ContainsKey(ResponseHeader.Key))
                 {
                     return false;
                 }
 
-                if (ResponseHeaderCondition.ValueRegex != null)
+                if (ResponseHeader.ValueRegex != null)
                 {
-                    foreach (string header in entry.Response.Headers[ResponseHeaderCondition.Key])
+                    foreach (string header in entry.Response.Headers[ResponseHeader.Key])
                     {
                         // if at least one header value matches, then the condition passes
-                        if (Regex.IsMatch(header, ResponseHeaderCondition.ValueRegex))
+                        if (Regex.IsMatch(header, ResponseHeader.ValueRegex))
                         {
                             return true;
                         }

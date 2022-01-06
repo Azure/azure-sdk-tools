@@ -3,8 +3,7 @@
 namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
     /// <summary>
-    /// Sets a header in a response. If the header should only be set if the key is already
-    /// present in the response, use a Condition populated with a ResponseHeader.
+    /// Sets a header in a response.
     /// </summary>
     public class HeaderTransform : ResponseTransform
     {
@@ -21,6 +20,12 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'.
         /// Defaults to "apply always."
         /// </param>
+        /// <remarks>
+        /// By default, the header will be set in the response whether or not the header key is already
+        /// present.
+        /// If the header should only be set if the header key is already present in the response,
+        /// include a Condition populated with a ResponseHeader in the HeaderTransform JSON.
+        /// </remarks>
         public HeaderTransform(string key, string value, ApplyCondition condition = null)
         {
             _key = key;

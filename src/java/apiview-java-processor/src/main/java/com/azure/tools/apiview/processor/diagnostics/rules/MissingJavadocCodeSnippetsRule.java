@@ -5,7 +5,9 @@ import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 
-import java.util.regex.Pattern;import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
+import java.util.regex.Pattern;
+
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedMethods;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;

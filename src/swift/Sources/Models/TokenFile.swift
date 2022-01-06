@@ -64,6 +64,10 @@ class TokenFile: Codable {
 
     private var lineId = 1
 
+    var text: String {
+        return tokens.map { $0.text }.joined()
+    }
+
     // MARK: Initializers
 
     init(name: String, packageName: String, versionString: String) {

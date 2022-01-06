@@ -75,4 +75,15 @@ struct TokenItem: Codable {
         try container.encode(value, forKey: .value)
         try container.encode(kind, forKey: .kind)
     }
+
+    var text: String {
+        switch kind {
+        case .lineIdMarker:
+            return ""
+        case .newline:
+            return "\n"
+        default:
+            return value!
+        }
+    }
 }

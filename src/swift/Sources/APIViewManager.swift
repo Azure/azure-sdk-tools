@@ -38,9 +38,15 @@ class APIViewManager {
     static var version = "0.1.0"
 
     static var shared = APIViewManager()
-    let args = CommandLineArguments()
+    let args: CommandLineArguments
     var tokenFile: TokenFile!
     var statements = OrderedDictionary<Int, Statement>()
+
+    // MARK: Initializers
+
+    init(withArgs args: CommandLineArguments? = nil) {
+        self.args = args ?? CommandLineArguments()
+    }
 
     // MARK: Methods
 

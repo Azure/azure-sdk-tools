@@ -3,7 +3,8 @@
 namespace Azure.Sdk.Tools.TestProxy.Transforms
 {
     /// <summary>
-    /// Sets a header in a response.
+    /// Sets a header in a response. If the header should only be set if the key is already
+    /// present in the response, use a Condition populated with a ResponseHeader.
     /// </summary>
     public class HeaderTransform : ResponseTransform
     {
@@ -11,8 +12,7 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         private readonly string _value;
 
         /// <summary>
-        /// Constructs a new HeaderTransform instance. If the header should only be overwritten if already
-        /// present in the response, use a Condition populated with a ResponseHeader.
+        /// Constructs a new HeaderTransform instance.
         /// </summary>
         /// <param name="key">The header key for the header.</param>
         /// <param name="value">The value for the header.</param>

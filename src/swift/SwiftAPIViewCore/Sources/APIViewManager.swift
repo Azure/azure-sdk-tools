@@ -32,14 +32,18 @@ import Source
 import SourceKittenFramework
 
 /// Handles the generation of APIView JSON files.
-class APIViewManager {
+public class APIViewManager {
+
     // MARK: Properties
 
-    static var version = "0.1.0"
+//    public static var version = "0.1.0"
 
-    static var shared = APIViewManager()
+    public static var shared = APIViewManager()
+
     let args: CommandLineArguments
+
     var tokenFile: TokenFile!
+
     var statements = OrderedDictionary<Int, Statement>()
 
     // MARK: Initializers
@@ -50,7 +54,7 @@ class APIViewManager {
 
     // MARK: Methods
 
-    func run() throws {
+    public func run() throws {
         guard let sourcePath = args.source else {
             SharedLogger.fail("usage error: SwiftAPIView --source PATH")
         }

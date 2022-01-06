@@ -25,9 +25,10 @@
 // --------------------------------------------------------------------------
 
 import XCTest
-@testable import SwiftTokenizer
+@testable import SwiftAPIViewCore
 
-class SwiftTokenizerTests: XCTestCase {
+class SwiftAPIViewCoreTests: XCTestCase {
+
     func testParse() throws {
         let args = CommandLineArguments(source: "", dest: "", packageName: "", packageVersion: "")
         let manager = APIViewManager(withArgs: args)

@@ -25,8 +25,7 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-
-let version = "1.0.0"
+import SwiftAPIViewCore
 
 // Should be set to `.warning` normally
 let logLevel = LogLevel.warning

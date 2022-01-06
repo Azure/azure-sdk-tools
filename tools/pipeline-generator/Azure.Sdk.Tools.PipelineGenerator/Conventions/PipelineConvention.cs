@@ -356,8 +356,15 @@ namespace PipelineGenerator.Conventions
                             hasChanges = true;
                         }
 
-                        if (!trigger.BranchFilters.Contains("+*"))
+                        // If any branch filters exist then overwrite them to the most generous filter.
+                        // The filter should support all branches because PR triggers with a yaml override
+                        // like this are expected to be manually invoked by `/azp run` comments, and these PRs
+                        // may be targeting development branches.
+                        if (!trigger.BranchFilters.SequenceEqual(new List<string>{"+*"}))
                         {
+                            var filters = trigger.BranchFilters.Select(f => $"'{f}'");
+                            Logger.LogInformation($"Overwriting branch filters ({String.Join(", ", filters)}) for PR trigger with '+*'");
+                            trigger.BranchFilters.Clear();
                             trigger.BranchFilters.Add("+*");
                             hasChanges = true;
                         }

@@ -33,7 +33,7 @@ var (
 {% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
 {%- for example in exampleGroup.examples %}
-    // From example {{example.name}}
+    // From example {{example.originalFile}}
 	{%- if sendExampleId %}
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
         "example-id": {"{{example.name}}"},

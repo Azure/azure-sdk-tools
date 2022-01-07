@@ -67,15 +67,15 @@ public final class SnippetReplacer {
      *
      * A "bad snippet call" is simply calling for a snippet whose Id has no definition.
      *
-     * See {@link #updateCodesnippets(Path, String, Path, String, boolean, Path, boolean, int, boolean, Log)} for
-     * details on actually defining and calling snippets.
+     * See {@link #updateCodesnippets(Path, String, Path, String, boolean, Path, String, boolean, int, boolean, Log)}
+     * for details on actually defining and calling snippets.
      */
     public static void verifyCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob,
-        Path sourcesRootDirectory, String sourcesGlob, boolean includeSources, Path readmePath, boolean includeReadme,
-        int maxLineLength, boolean failOnError, Log logger)
+        Path sourcesRootDirectory, String sourcesGlob, boolean includeSources, Path readmeRootDirectory,
+        String readmeGlob, boolean includeReadme, int maxLineLength, boolean failOnError, Log logger)
         throws IOException, MojoExecutionException, MojoFailureException {
         runCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory, sourcesGlob, includeSources,
-            readmePath, includeReadme, maxLineLength, failOnError, ExecutionMode.VERIFY, logger);
+            readmeRootDirectory, readmeGlob, includeReadme, maxLineLength, failOnError, ExecutionMode.VERIFY, logger);
     }
 
     static List<CodesnippetError> verifyReadmeCodesnippets(Path file, Map<String, Codesnippet> snippetMap)
@@ -120,17 +120,18 @@ public final class SnippetReplacer {
      * After finishing update operations, this function will throw a MojoExecutionException after reporting all snippet
      * CALLS that have no DEFINITION.
      */
-    public static void updateCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob, Path sourcesRootDirectory,
-        String sourcesGlob, boolean includeSources, Path readmePath, boolean includeReadme, int maxLineLength,
-        boolean failOnError, Log logger) throws IOException, MojoExecutionException, MojoFailureException {
+    public static void updateCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob,
+        Path sourcesRootDirectory, String sourcesGlob, boolean includeSources, Path readmeRootDirectory,
+        String readmeGlob, boolean includeReadme, int maxLineLength, boolean failOnError, Log logger)
+            throws IOException, MojoExecutionException, MojoFailureException {
         runCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory, sourcesGlob, includeSources,
-            readmePath, includeReadme, maxLineLength, failOnError, ExecutionMode.UPDATE, logger);
+            readmeRootDirectory, readmeGlob, includeReadme, maxLineLength, failOnError, ExecutionMode.UPDATE, logger);
     }
 
     private static void runCodesnippets(Path codesnippetRootDirectory, String codesnippetGlob,
-        Path sourcesRootDirectory, String sourcesGlob, boolean includeSources, Path readmePath, boolean includeReadme,
-        int maxLineLength, boolean failOnError, ExecutionMode mode, Log logger)
-        throws IOException, MojoExecutionException, MojoFailureException {
+        Path sourcesRootDirectory, String sourcesGlob, boolean includeSources, Path readmeRootDirectory,
+        String readmeGlob, boolean includeReadme, int maxLineLength, boolean failOnError, ExecutionMode mode,
+        Log logger) throws IOException, MojoExecutionException, MojoFailureException {
         // Neither sources nor README is included in the update, there is no work to be done.
         if (!includeSources && !includeReadme) {
             logger.debug("Neither sources or README were included. No codesnippet updating will be done.");
@@ -166,10 +167,12 @@ public final class SnippetReplacer {
         // now find folderToVerify/README.md
         // run Update ReadmeSnippets on that
         if (includeReadme) {
-            if (mode == ExecutionMode.UPDATE) {
-                errors.addAll(updateReadmeCodesnippets(readmePath, foundSnippets));
-            } else {
-                errors.addAll(verifyReadmeCodesnippets(readmePath, foundSnippets));
+            for (Path readmeFile : globFiles(readmeRootDirectory, readmeGlob, true)) {
+                if (mode == ExecutionMode.UPDATE) {
+                    errors.addAll(updateReadmeCodesnippets(readmeFile, foundSnippets));
+                } else {
+                    errors.addAll(verifyReadmeCodesnippets(readmeFile, foundSnippets));
+                }
             }
         }
 
@@ -457,8 +460,9 @@ public final class SnippetReplacer {
         }
 
         if (minWhitespace != null) {
+            Pattern minWhitespacePattern = Pattern.compile(minWhitespace);
             for (String snippetLine : snippetText) {
-                modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
+                modifiedStrings.add(minWhitespacePattern.matcher(snippetLine).replaceFirst(""));
             }
         }
 

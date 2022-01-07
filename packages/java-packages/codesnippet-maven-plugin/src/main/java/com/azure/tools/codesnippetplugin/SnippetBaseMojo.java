@@ -32,6 +32,11 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     public static final String DEFAULT_SOURCE_GLOB = "**/src/main/java/**/*.java";
 
     /**
+    * Default glob to match README files.
+    */
+    public static final String DEFAULT_README_GLOB = "**/README.md";
+
+    /**
      * Glob for the files that contain codesnippet definitions.
      * <p>
      * Default value is {@link #DEFAULT_CODESNIPPET_GLOB}.
@@ -73,12 +78,20 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     private boolean includeSource;
 
     /**
-     * Path of the README file.
-     * <p>
-     * Default value is {@code ${project.basedir}/README.md}.
-     */
-    @Parameter(property = PROPERTY_PREFIX + "readmePath", defaultValue = "${project.basedir}/README.md")
-    private File readmePath;
+    * Glob for the README files to inject codesnippets.
+    * <p>
+    * Default value is {@link #DEFAULT_README_GLOB}.
+    */
+    @Parameter(property = PROPERTY_PREFIX + "readmeGlob", defaultValue = DEFAULT_README_GLOB)
+    private String readmeGlob;
+
+    /**
+    * Root directory to begin searching for README files.
+    * <p>
+    * Default value is {@code ${project.basedir}}.
+    */
+    @Parameter(property = PROPERTY_PREFIX + "readmeRootDirectory", defaultValue = "${project.basedir}")
+    private File readmeRootDirectory;
 
     /**
      * Flag indicating if README files should be targeted for codesnippet injection or validation.
@@ -158,12 +171,21 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     }
 
     /**
-     * Gets the path of the README file.
+     * Gets the glob for the README files to inject codesnippets.
      *
-     * @return The path of the README file.
+     * @return The glob for the README files to inject codesnippets.
      */
-    protected File getReadmePath() {
-        return readmePath;
+    protected String getReadmeGlob() {
+        return readmeGlob;
+    }
+
+    /**
+     * Gets the root directory to begin searching for README files.
+     *
+     * @return The root directory to begin searching for README files.
+     */
+    protected File getReadmeRootDirectory() {
+        return readmeRootDirectory;
     }
 
     /**
@@ -227,7 +249,9 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
 
         boolean includeSource = getAndLogConfiguration("Is source included? %b", this::isIncludeSource, log);
 
-        Path readmePath = getAndLogConfiguration("Using README path: %s", () -> getReadmePath().toPath(), log);
+        Path readmeRootDirectory = getAndLogConfiguration("Using README root directory: %s",
+            () -> getReadmeRootDirectory().toPath(), log);
+        String readmeGlob = getAndLogConfiguration("Using README glob: %s", this::getReadmeGlob, log);
         boolean includeReadme = getAndLogConfiguration("Is README included? %b", this::isIncludeReadme, log);
 
         int maxLineLength = getAndLogConfiguration("Using max line length: %d", this::getMaxLineLength, log);
@@ -237,7 +261,8 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
             try {
                 log.debug("Beginning codesnippet update execution.");
                 SnippetReplacer.updateCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory,
-                    sourcesGlob, includeSource, readmePath, includeReadme, maxLineLength, failOnError, log);
+                    sourcesGlob, includeSource, readmeRootDirectory, readmeGlob, includeReadme, maxLineLength,
+                    failOnError, log);
                 log.debug("Completed codesnippet update execution.");
             } catch (IOException ex) {
                 log.error(ex);
@@ -249,7 +274,8 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
             try {
                 log.debug("Beginning codesnippet verification execution.");
                 SnippetReplacer.verifyCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory,
-                    sourcesGlob, includeSource, readmePath, includeReadme, maxLineLength, failOnError, log);
+                    sourcesGlob, includeSource, readmeRootDirectory, readmeGlob, includeReadme, maxLineLength,
+                    failOnError, log);
                 log.debug("Completed codesnippet verification execution.");
             } catch (IOException ex) {
                 log.error(ex);

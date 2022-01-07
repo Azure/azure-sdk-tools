@@ -463,6 +463,15 @@ namespace Azure.Sdk.Tools.TestProxy
                     new StorageRequestIdTransform(),
                     new ClientIdTransform(),
                     new HeaderTransform("Retry-After", "0")
+                    {
+                        Condition = new ApplyCondition
+                        {
+                            ResponseHeader = new HeaderCondition
+                            {
+                                Key = "Retry-After"
+                            }
+                        }
+                    }
                 };
 
                 Matcher = new RecordMatcher();

@@ -460,8 +460,9 @@ public final class SnippetReplacer {
         }
 
         if (minWhitespace != null) {
+            Pattern minWhitespacePattern = Pattern.compile(minWhitespace);
             for (String snippetLine : snippetText) {
-                modifiedStrings.add(snippetLine.replaceFirst(minWhitespace, ""));
+                modifiedStrings.add(minWhitespacePattern.matcher(snippetLine).replaceFirst(""));
             }
         }
 

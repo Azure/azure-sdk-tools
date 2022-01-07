@@ -26,18 +26,19 @@ namespace PipelineGenerator
         private string devOpsPath;
 
         public PipelineGenerationContext(
-            string organization, 
-            string project, 
-            string patvar, 
-            string endpoint, 
-            string repository, 
-            string branch, 
-            string agentPool, 
+            string organization,
+            string project,
+            string patvar,
+            string endpoint,
+            string repository,
+            string branch,
+            string agentPool,
             string[] variableGroups,
             string devOpsPath,
-            string prefix, 
+            string prefix,
             bool whatIf,
-            bool noSchedule)
+            bool noSchedule,
+            bool overwriteTriggers)
         {
             this.organization = organization;
             this.project = project;
@@ -51,16 +52,18 @@ namespace PipelineGenerator
             this.Prefix = prefix;
             this.WhatIf = whatIf;
             this.NoSchedule = noSchedule;
+            this.OverwriteTriggers = overwriteTriggers;
         }
 
         public string Branch { get; }
         public string Prefix { get; }
         public bool WhatIf { get; }
         public bool NoSchedule { get; }
+        public bool OverwriteTriggers { get; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
 
-        private int[] ParseIntArray(string[] strs) 
+        private int[] ParseIntArray(string[] strs)
             => strs.Select(str => int.Parse(str)).ToArray();
 
         private VssConnection cachedConnection;
@@ -91,7 +94,7 @@ namespace PipelineGenerator
         }
 
         private TeamProjectReference cachedProjectReference;
-       
+
         public async Task<TeamProjectReference> GetProjectReferenceAsync(CancellationToken cancellationToken)
         {
             if (cachedProjectReference == null)

@@ -142,7 +142,13 @@ jobs:
   - script: |
       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention tests --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(TestOptions)
     displayName: 'Generate test pipelines for: $(RepositoryName)'
-    condition: ne(variables['TestOptions'],'')
+    condition: and(succeeded(), ne(variables['TestOptions'],''))
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: |
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix) --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName) --convention weekly --agentpool Hosted --branch refs/heads/$(DefaultBranch) --patvar PATVAR --debug $(TestOptions)
+    displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
+    condition: and(succeeded(), ne(variables['TestOptions'],''))
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
 

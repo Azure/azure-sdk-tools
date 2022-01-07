@@ -16,7 +16,7 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        protected override string GetDefinitionName(SdkComponent component)
+        public override string GetDefinitionName(SdkComponent component)
         {
             return component.Variant == null ? $"{Context.Prefix} - {component.Name} - tests" : $"{Context.Prefix} - {component.Name} - tests.{component.Variant}";
         }
@@ -25,7 +25,7 @@ namespace PipelineGenerator.Conventions
         {
             var hasChanges = await base.ApplyConventionAsync(definition, component);
 
-            if (EnsureDefautPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
+            if (EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
             {
                 hasChanges = true;
             }

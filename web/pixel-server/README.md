@@ -16,13 +16,13 @@ To add a tracking pixel, simply embed an image of the following form.
 
 ```
 Markdown:
-![AltText](https://<yourappservicename>.azurewebsites.net/api/impressions?path=<URI-path> "AltText")
+![AltText](https://<yourappservicename>.azurewebsites.net/api/impressions/<URI-path> "AltText")
 
 RST:
-.. image::  https://<yourappservicename>.azurewebsites.net/api/impressions?path=<URI-path>
+.. image::  https://<yourappservicename>.azurewebsites.net/api/impressions/<URI-path>
 
 Img URL:
-<img src="https://<yourappservicename>.azurewebsites.net/api/impressions?path=<URI-path>">
+<img src="https://<yourappservicename>.azurewebsites.net/api/impressions/<URI-path>">
 ```
 
 ## Deployment and Setup
@@ -50,3 +50,14 @@ Or, if you the above is too much trouble. Go through the UI.
 
 ![Where To Click](example.png)
 
+## Querying App Insight's logs
+
+The customEvents table can be filtered by name `PixelImpression`. The table will contain a column `visitor_path` for the URI-PATH that's passed in with the request. 
+
+Example query:
+```kusto
+customEvents
+| project name, operation_Name, timestamp, customDimensions.visitor_path
+| where name == "PixelImpression" and timestamp >= ago(90d)
+| sort by timestamp
+```

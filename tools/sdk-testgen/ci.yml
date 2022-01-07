@@ -38,8 +38,12 @@ stages:
       - job: build
         displayName: "Build"
         steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
+          - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
+            parameters:
+              SourceDirectory: 'tools/sdk-testgen'
 
+          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
+          
           - script: |
               rush rebuild -v
             displayName: "Build all packages"

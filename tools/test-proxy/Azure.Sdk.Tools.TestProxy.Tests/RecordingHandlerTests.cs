@@ -31,9 +31,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             if (skipsToCheck.HasFlag(CheckSkips.IncludeTransforms))
             {
-                Assert.Equal(2, handlerForTest.Transforms.Count);
+                Assert.Equal(3, handlerForTest.Transforms.Count);
                 Assert.IsType<StorageRequestIdTransform>(handlerForTest.Transforms[0]);
                 Assert.IsType<ClientIdTransform>(handlerForTest.Transforms[1]);
+                Assert.IsType<HeaderTransform>(handlerForTest.Transforms[2]);
             }
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeMatcher))

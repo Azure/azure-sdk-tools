@@ -24,7 +24,7 @@
         "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
         "Date": "Tue, 18 May 2021 23:27:43 GMT",
         "Retry-After": "10",
-        "Location": "https://fakeazsdktestaccount.table.core.windows.net/Tables(\u0027listtable09bf2a3d\u0027)",
+        "Location": ["https://fakeazsdktestaccount.table.core.windows.net/Tables(\u0027listtable09bf2a3d\u0027)", "nomatch"],
         "Server": [
           "Windows-Azure-Table/1.0",
           "Microsoft-HTTPAPI/2.0"
@@ -42,7 +42,7 @@
       }
     },
     {
-      "RequestUri": "https://fakeazsdktestaccount.table.core.windows.net/Tables/value",
+      "RequestUri": "https://fakeazsdktestaccount.table.core.windows.net/Tables",
       "RequestMethod": "POST",
       "RequestHeaders": {
         "Accept": "application/json;odata=minimalmetadata",
@@ -64,7 +64,8 @@
         "Cache-Control": "no-cache",
         "Content-Type": "application/json; odata=minimalmetadata; streaming=true; charset=utf-8",
         "Date": "Tue, 18 May 2021 23:27:43 GMT",
-        "Location": "https://fakeazsdktestaccount.table.core.windows.net/Tables(\u0027listtable09bf2a3d\u0027)",
+        "Retry-After": "10",
+        "Location": "https://fakeazsdktestaccount.table.core.windows.net/Tables1(\u0027listtable09bf2a3d\u0027)",
         "Server": [
           "Windows-Azure-Table/1.0",
           "Microsoft-HTTPAPI/2.0"

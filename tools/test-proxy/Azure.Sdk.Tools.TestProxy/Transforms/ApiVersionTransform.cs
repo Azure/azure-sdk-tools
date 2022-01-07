@@ -18,13 +18,12 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
         /// This transform applies during playback mode. It copies the header "api-version" of the request
         /// onto the response before sending the response back to the client.
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="response"></param>
-        public override void ApplyTransform(HttpRequest request, HttpResponse response)
+        /// <param name="entry">The entry to transform.</param>
+        public override void ApplyTransform(RecordEntry entry)
         {
-            if (request.Headers.TryGetValue("api-version", out var clientId))
+            if (entry.Request.Headers.TryGetValue("api-version", out var clientId))
             {
-                response.Headers.Add("api-version", clientId);
+                entry.Response.Headers.Add("api-version", clientId);
             }
         }
     }

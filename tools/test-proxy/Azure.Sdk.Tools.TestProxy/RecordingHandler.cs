@@ -343,26 +343,18 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
 
+            foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
+            {
+                transform.Transform(match);
+            }
+
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
             outgoingResponse.StatusCode = match.StatusCode;
 
             foreach (var header in match.Response.Headers)
             {
-                if (header.Key == "Retry-After")
-                {
-                    // in Playback, we change Retry-After header to 0 to prevent unnecessary waiting
-                    outgoingResponse.Headers.Add(header.Key, "0");
-                }
-                else
-                {
-                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
-                }
-            }
-
-            foreach (ResponseTransform transform in session.AdditionalTransforms.Count > 0 ? Transforms.Concat(session.AdditionalTransforms) : Transforms)
-            {
-                transform.Transform(incomingRequest, outgoingResponse);
+                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
             }
 
             outgoingResponse.Headers.Remove("Transfer-Encoding");
@@ -469,7 +461,17 @@ namespace Azure.Sdk.Tools.TestProxy
                 Transforms = new List<ResponseTransform>
                 {
                     new StorageRequestIdTransform(),
-                    new ClientIdTransform()
+                    new ClientIdTransform(),
+                    new HeaderTransform("Retry-After", "0")
+                    {
+                        Condition = new ApplyCondition
+                        {
+                            ResponseHeader = new HeaderCondition
+                            {
+                                Key = "Retry-After"
+                            }
+                        }
+                    }
                 };
 
                 Matcher = new RecordMatcher();

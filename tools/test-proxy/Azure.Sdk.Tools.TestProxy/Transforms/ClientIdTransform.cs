@@ -18,11 +18,11 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
             Condition = condition;
         }
 
-        public override void ApplyTransform(HttpRequest request, HttpResponse response)
+        public override void ApplyTransform(RecordEntry entry)
         {
-            if (request.Headers.TryGetValue("x-ms-client-id", out var clientId))
+            if (entry.Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
             {
-                response.Headers.Add("x-ms-client-id", clientId);
+                entry.Response.Headers.Add("x-ms-client-id", clientId);
             }
         }
     }

@@ -505,6 +505,64 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async Task TestAddHeaderTransform()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(
+                "{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"key\": \"Location\", \"valueRegex\": \".*/value\" } }}");
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Transforms.Clear();
+            await controller.AddTransform();
+            var result = testRecordingHandler.Transforms.First();
+
+            Assert.True(result is HeaderTransform);
+            var key = (string) typeof(HeaderTransform).GetField("_key", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            var replacement = (string) typeof(HeaderTransform).GetField("_value", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(result);
+            var regex = result.Condition.ResponseHeader.ValueRegex;
+            Assert.Equal("Location", key);
+            Assert.Equal("https://fakeazsdktestaccount.table.core.windows.net/Tables", replacement);
+            Assert.Equal(".*/value", regex);
+            Assert.Equal(".*/token", result.Condition.UriRegex);
+        }
+
+        [Theory]
+        [InlineData("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"valueRegex\": \".*/value\" } }}")]
+        [InlineData("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"key\": \"\", \"valueRegex\": \".*/value\" } }}")]
+        public async Task TestAddHeaderTransformThrowsWhenMissingOrEmptyResponseHeaderKey(string body)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderTransform";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Transforms.Clear();
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.AddTransform()
+            );
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
         public async void TestAddTransformIndividualRecording()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

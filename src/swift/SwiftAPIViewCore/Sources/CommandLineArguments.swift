@@ -73,16 +73,6 @@ class CommandLineArguments: Encodable {
         }
     }
 
-    /// Initializer for testing
-    internal init(source: String?, dest: String?, packageName: String?, packageVersion: String?) {
-        rawArgs = [String: String]()
-        rawArgs["source"] = source
-        rawArgs["dest"] = dest
-        rawArgs["packageName"] = packageName
-        rawArgs["packageVersion"] = packageVersion
-    }
-
-
     /// Returns the argument key without the `--` prefix.
     private func parseKey(from item: String) -> String {
         guard let key = item.split(separator: "=", maxSplits: 1).map({ String($0) }).first else {

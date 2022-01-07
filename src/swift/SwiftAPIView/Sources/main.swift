@@ -31,7 +31,7 @@ import SwiftAPIViewCore
 let logLevel = LogLevel.warning
 SharedLogger.set(logger: StdoutLogger(), withLevel: logLevel)
 do {
-    try APIViewManager.shared.run()
+    try APIViewManager().run()
 } catch {
     SharedLogger.error("\(error)")
 }

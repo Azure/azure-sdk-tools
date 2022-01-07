@@ -29,8 +29,37 @@ import XCTest
 
 class SwiftAPIViewCoreTests: XCTestCase {
 
-    func testParse() throws {
-        let args = CommandLineArguments(source: "", dest: "", packageName: "", packageVersion: "")
-        let manager = APIViewManager(withArgs: args)
+    override func setUpWithError() throws {
+        SharedLogger.set(logger: NullLogger(), withLevel: .info)
+    }
+
+    private func load(testFile filename: String) -> String {
+        let bundle = Bundle(for: Swift.type(of: self))
+        return bundle.path(forResource: filename, ofType: "swifttxt")!
+    }
+
+    private func load(expectFile filename: String) -> String {
+        let bundle = Bundle(for: Swift.type(of: self))
+        let path = bundle.path(forResource: filename, ofType: "txt")!
+        return try! String(contentsOfFile: path)
+    }
+
+    private func compare(expected: String, actual: String) {
+        let actualLines = actual.split(separator: "\n").map { String($0) }
+        let expectedLines = expected.split(separator: "\n").map { String($0) }
+        XCTAssertEqual(actualLines.count, expectedLines.count)
+        for (i, expected) in expectedLines.enumerated() {
+            let actual = actualLines[i]
+            XCTAssert(actual == expected, "Line \(i): (\(actual) is not equal to (\(expected)")
+        }
+    }
+
+    func testFile1() throws {
+        let manager = APIViewManager(mode: .testing)
+        manager.config.sourcePath = load(testFile: "TestFile1")
+        manager.config.packageVersion = "1.0.0"
+        let generated = try! manager.run()
+        let expected = load(expectFile: "ExpectFile1")
+        compare(expected: expected, actual: generated)
     }
 }

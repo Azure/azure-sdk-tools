@@ -37,7 +37,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
@@ -60,7 +60,7 @@ func ExampleProximityPlacementGroupsClient_Update() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsUpdateResult)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
@@ -95,7 +95,7 @@ func ExampleProximityPlacementGroupsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsGetResult)
+	log.Printf("Response result: %#v\n", res.ProximityPlacementGroupsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json

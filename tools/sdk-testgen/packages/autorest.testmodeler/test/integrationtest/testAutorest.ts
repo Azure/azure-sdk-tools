@@ -88,7 +88,7 @@ describe('Run autorest and compare the output', () => {
 
     it('', async () => {
         jest.setTimeout(8 * 60 * 60 * 1000);
-        const swaggerDir = path.join(`${__dirname}`, '../swagger');
+        const swaggerDir = path.join(`${__dirname}`, '../../../../swagger');
         const outputDir = path.join(`${__dirname}`, 'output');
         const tempoutputDir = path.join(`${__dirname}`, 'tempoutput');
 

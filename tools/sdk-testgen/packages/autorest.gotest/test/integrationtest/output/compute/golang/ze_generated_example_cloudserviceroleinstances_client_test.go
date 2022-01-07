@@ -55,7 +55,7 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesGetResult)
+	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
@@ -74,7 +74,7 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesGetInstanceViewResult)
+	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesClientGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json

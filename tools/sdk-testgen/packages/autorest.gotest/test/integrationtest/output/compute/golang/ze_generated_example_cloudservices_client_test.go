@@ -81,7 +81,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServicesCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.CloudServicesClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
@@ -108,7 +108,7 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServicesUpdateResult)
+	log.Printf("Response result: %#v\n", res.CloudServicesClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
@@ -147,7 +147,7 @@ func ExampleCloudServicesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServicesGetResult)
+	log.Printf("Response result: %#v\n", res.CloudServicesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
@@ -165,7 +165,7 @@ func ExampleCloudServicesClient_GetInstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServicesGetInstanceViewResult)
+	log.Printf("Response result: %#v\n", res.CloudServicesClientGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json

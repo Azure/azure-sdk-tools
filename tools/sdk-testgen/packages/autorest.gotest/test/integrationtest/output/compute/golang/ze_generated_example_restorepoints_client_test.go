@@ -62,5 +62,5 @@ func ExampleRestorePointsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.RestorePointsGetResult)
+	log.Printf("Response result: %#v\n", res.RestorePointsClientGetResult)
 }

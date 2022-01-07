@@ -56,7 +56,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
@@ -75,7 +75,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsGetInstanceViewResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsClientGetInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
@@ -94,7 +94,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
@@ -140,5 +140,5 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsRunCommandResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMsClientRunCommandResult)
 }

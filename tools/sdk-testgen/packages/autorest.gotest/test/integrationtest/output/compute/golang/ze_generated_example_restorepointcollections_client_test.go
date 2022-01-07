@@ -42,7 +42,7 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.RestorePointCollectionsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.RestorePointCollectionsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
@@ -60,7 +60,7 @@ func ExampleRestorePointCollectionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.RestorePointCollectionsGetResult)
+	log.Printf("Response result: %#v\n", res.RestorePointCollectionsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json

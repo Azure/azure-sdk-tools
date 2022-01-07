@@ -62,7 +62,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsGetResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsClientGetResult)
 }
 
 
@@ -83,7 +83,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsUpdateResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsClientUpdateResult)
 }
 
 
@@ -207,7 +207,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsGetResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsClientGetResult)
 }
 
 
@@ -251,7 +251,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsGetResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientGetResult)
 }
 
 
@@ -278,7 +278,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsCreateOrUpdateResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientCreateOrUpdateResult)
 }
 
 
@@ -304,7 +304,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsUpdateResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientUpdateResult)
 }
 
 
@@ -424,7 +424,7 @@ nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.LocationsCheckNameAvailabilityResult)
+	log.Printf(\\"Response result: %#v\\\\n\\", res.LocationsClientCheckNameAvailabilityResult)
 }
 
 
@@ -520,7 +520,7 @@ var (
 
 
 func TestExtensions_Create(t *testing.T) {
-    // From example Extensions_Create
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -533,13 +533,13 @@ func TestExtensions_Create(t *testing.T) {
 \\"examples-rg\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestExtensions_Get(t *testing.T) {
-    // From example Extensions_Get
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -552,13 +552,13 @@ func TestExtensions_Get(t *testing.T) {
 \\"examples-rg\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestExtensions_Update(t *testing.T) {
-    // From example Extensions_Update
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -571,13 +571,13 @@ func TestExtensions_Update(t *testing.T) {
 \\"examples-rg\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestExtensions_Delete(t *testing.T) {
-    // From example Extensions_Delete
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -590,13 +590,13 @@ func TestExtensions_Delete(t *testing.T) {
 \\"examples-rg\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestExtensions_ListByFarmBeats(t *testing.T) {
-    // From example Extensions_ListByFarmBeats
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -613,7 +613,7 @@ SkipToken: nil,
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf(\\"failed to advance page: %v\\", err)
+                t.Fatalf(\\"Failed to advance page for example : %v\\", err)
             }
             if !nextResult {
                 break
@@ -623,7 +623,7 @@ SkipToken: nil,
 
 
 func TestFarmBeatsExtensions_List(t *testing.T) {
-    // From example FarmBeatsExtensions_List
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -639,7 +639,7 @@ MaxPageSize: nil,
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf(\\"failed to advance page: %v\\", err)
+                t.Fatalf(\\"Failed to advance page for example : %v\\", err)
             }
             if !nextResult {
                 break
@@ -649,7 +649,7 @@ MaxPageSize: nil,
 
 
 func TestFarmBeatsExtensions_Get(t *testing.T) {
-    // From example FarmBeatsExtensions_Get
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -660,13 +660,13 @@ func TestFarmBeatsExtensions_Get(t *testing.T) {
 \\"DTN.ContentServices\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestFarmBeatsModels_Get(t *testing.T) {
-    // From example FarmBeatsModels_Get
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -678,13 +678,13 @@ func TestFarmBeatsModels_Get(t *testing.T) {
 \\"examples-farmBeatsResourceName\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
-    // From example FarmBeatsModels_CreateOrUpdate
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -703,13 +703,13 @@ Location: to.StringPtr(\\"eastus2\\"),
 },
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestFarmBeatsModels_Update(t *testing.T) {
-    // From example FarmBeatsModels_Update
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -727,13 +727,13 @@ Tags: map[string]*string{
 },
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestFarmBeatsModels_Delete(t *testing.T) {
-    // From example FarmBeatsModels_Delete
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -745,13 +745,13 @@ func TestFarmBeatsModels_Delete(t *testing.T) {
 \\"examples-farmBeatsResourceName\\",
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
-    // From example FarmBeatsModels_ListBySubscription
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -764,7 +764,7 @@ SkipToken: nil,
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf(\\"failed to advance page: %v\\", err)
+                t.Fatalf(\\"Failed to advance page for example : %v\\", err)
             }
             if !nextResult {
                 break
@@ -774,7 +774,7 @@ SkipToken: nil,
 
 
 func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
-    // From example FarmBeatsModels_ListByResourceGroup
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -788,7 +788,7 @@ SkipToken: nil,
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf(\\"failed to advance page: %v\\", err)
+                t.Fatalf(\\"Failed to advance page for example : %v\\", err)
             }
             if !nextResult {
                 break
@@ -798,7 +798,7 @@ SkipToken: nil,
 
 
 func TestLocations_CheckNameAvailability(t *testing.T) {
-    // From example Locations_CheckNameAvailability_AlreadyExists
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -812,11 +812,11 @@ Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 
     
-    // From example Locations_CheckNameAvailability_Available
+    // From example 
     client = armagfood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
             res, err = client.CheckNameAvailability(ctx,
 armagfood.CheckNameAvailabilityRequest{
@@ -825,13 +825,13 @@ Type: to.StringPtr(\\"Microsoft.AgFoodPlatform/farmBeats\\"),
 },
 nil)
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf(\\"Failed to get result for example : %v\\", err)
         }
 }
 
 
 func TestOperations_List(t *testing.T) {
-    // From example Operations_List
+    // From example 
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal(\\"stacktrace from panic: \\\\n\\" + string(debug.Stack()))
@@ -842,7 +842,7 @@ func TestOperations_List(t *testing.T) {
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf(\\"failed to advance page: %v\\", err)
+                t.Fatalf(\\"Failed to advance page for example : %v\\", err)
             }
             if !nextResult {
                 break
@@ -877,16 +877,7 @@ func setUp() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 	
-    cred, err = azidentity.NewEnvironmentCredential(
-		&azidentity.EnvironmentCredentialOptions{
-			AuthorityHost: azidentity.AuthorityHost(mockHost), 
-			ClientOptions: azcore.ClientOptions{
-				Transport: client,
-			},
-		})
-	if err != nil {
-		panic(err)
-	}
+    cred = &MockCredential{}
 
 	options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -895,14 +886,20 @@ func setUp() {
 			},
 			Transport: client,
 		},
-		Host: arm.Endpoint(mockHost),
+		Endpoint: arm.Endpoint(mockHost),
 	}
 }
 
 func tearDown() {
 
 }
-",
+
+type MockCredential struct {
+}
+
+func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: \\"MockToken\\", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
+}",
 }
 `;
 

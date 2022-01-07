@@ -31,7 +31,7 @@ func ExampleCloudServiceRolesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServiceRolesGetResult)
+	log.Printf("Response result: %#v\n", res.CloudServiceRolesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json

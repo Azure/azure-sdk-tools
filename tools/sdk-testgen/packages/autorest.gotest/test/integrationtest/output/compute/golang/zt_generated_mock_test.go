@@ -24,7 +24,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"golang.org/x/net/http2"
 )
 
@@ -41,7 +40,7 @@ func TestOperations_List(t *testing.T) {
 }
 
 func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
-	// From example Create an availability set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an availability set."},
 	})
@@ -66,7 +65,7 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json: %v", err)
 	}
 	// Response check
 	{
@@ -87,7 +86,7 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.AvailabilitySet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.AvailabilitySet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -105,7 +104,7 @@ func TestAvailabilitySets_Get(t *testing.T) {
 }
 
 func TestAvailabilitySets_ListBySubscription(t *testing.T) {
-	// From example List availability sets in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List availability sets in a subscription."},
 	})
@@ -115,11 +114,11 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 		}
 	}()
 	client := golang.NewAvailabilitySetsClient("{subscriptionId}", cred, &options)
-	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("virtualMachines\\$ref")})
+	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("Faked for test: +ge+2020, %3E2012")})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -197,7 +196,7 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().AvailabilitySetListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().AvailabilitySetListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -215,7 +214,7 @@ func TestAvailabilitySets_ListAvailableSizes(t *testing.T) {
 }
 
 func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
-	// From example Create or Update a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or Update a proximity placement group."},
 	})
@@ -236,7 +235,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -253,13 +252,13 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestProximityPlacementGroups_Update(t *testing.T) {
-	// From example Create a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
@@ -279,7 +278,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -296,13 +295,13 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestProximityPlacementGroups_Delete(t *testing.T) {
-	// From example Create a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
@@ -317,12 +316,12 @@ func TestProximityPlacementGroups_Delete(t *testing.T) {
 		"$(resourceName)",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json: %v", err)
 	}
 }
 
 func TestProximityPlacementGroups_Get(t *testing.T) {
-	// From example Create a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
@@ -337,7 +336,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 		"myProximityPlacementGroup",
 		&golang.ProximityPlacementGroupsGetOptions{IncludeColocationStatus: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -366,13 +365,13 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
-	// From example Create a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
@@ -386,7 +385,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -417,7 +416,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ProximityPlacementGroupListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -427,7 +426,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 }
 
 func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
-	// From example Create a proximity placement group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
@@ -442,7 +441,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -473,7 +472,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ProximityPlacementGroupListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ProximityPlacementGroupListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -483,7 +482,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 }
 
 func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a dedicated host group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host group."},
 	})
@@ -510,7 +509,7 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -533,7 +532,7 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -547,7 +546,7 @@ func TestDedicatedHostGroups_Delete(t *testing.T) {
 }
 
 func TestDedicatedHostGroups_Get(t *testing.T) {
-	// From example Create a dedicated host group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a dedicated host group."},
 	})
@@ -562,7 +561,7 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 		"myDedicatedHostGroup",
 		&golang.DedicatedHostGroupsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -637,7 +636,7 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -651,7 +650,7 @@ func TestDedicatedHostGroups_ListBySubscription(t *testing.T) {
 }
 
 func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a dedicated host .
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host ."},
 	})
@@ -679,11 +678,11 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json: %v", err)
 	}
 	// Response check
 	{
@@ -708,7 +707,7 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHost)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -722,7 +721,7 @@ func TestDedicatedHosts_Delete(t *testing.T) {
 }
 
 func TestDedicatedHosts_Get(t *testing.T) {
-	// From example Get a dedicated host.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a dedicated host."},
 	})
@@ -738,7 +737,7 @@ func TestDedicatedHosts_Get(t *testing.T) {
 		"myHost",
 		&golang.DedicatedHostsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json: %v", err)
 	}
 	// Response check
 	{
@@ -788,7 +787,7 @@ func TestDedicatedHosts_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHost)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -806,7 +805,7 @@ func TestSSHPublicKeys_ListByResourceGroup(t *testing.T) {
 }
 
 func TestSSHPublicKeys_Create(t *testing.T) {
-	// From example Create a new SSH public key resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a new SSH public key resource."},
 	})
@@ -827,7 +826,7 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json: %v", err)
 	}
 	// Response check
 	{
@@ -843,7 +842,7 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -857,7 +856,7 @@ func TestSSHPublicKeys_Delete(t *testing.T) {
 }
 
 func TestSSHPublicKeys_Get(t *testing.T) {
-	// From example Get an ssh public key.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an ssh public key."},
 	})
@@ -872,7 +871,7 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 		"mySshPublicKeyName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json: %v", err)
 	}
 	// Response check
 	{
@@ -891,13 +890,13 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
-	// From example Generate an SSH key pair.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generate an SSH key pair."},
 	})
@@ -912,7 +911,7 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 		"mySshPublicKeyName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json: %v", err)
 	}
 	// Response check
 	{
@@ -925,7 +924,7 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyGenerateKeyPairResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyGenerateKeyPairResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -999,7 +998,7 @@ func TestUsage_List(t *testing.T) {
 }
 
 func TestVirtualMachines_ListByLocation(t *testing.T) {
-	// From example Lists all the virtual machines under the specified subscription for the specified location.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the virtual machines under the specified subscription for the specified location."},
 	})
@@ -1014,7 +1013,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -1134,7 +1133,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -1148,7 +1147,7 @@ func TestVirtualMachines_Capture(t *testing.T) {
 }
 
 func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
-	// From example Create a Linux vm with a patch setting assessmentMode of ImageDefault.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting assessmentMode of ImageDefault."},
 	})
@@ -1207,11 +1206,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
 	// Response check
 	{
@@ -1270,11 +1269,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Linux vm with a patch setting patchMode of ImageDefault.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting patchMode of ImageDefault."},
 	})
@@ -1328,11 +1327,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json: %v", err)
 	}
 	// Response check
 	{
@@ -1391,11 +1390,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
@@ -1450,11 +1449,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
 	// Response check
 	{
@@ -1514,11 +1513,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a VM with Uefi Settings of secureBoot and vTPM.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with Uefi Settings of secureBoot and vTPM."},
 	})
@@ -1573,11 +1572,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json: %v", err)
 	}
 	// Response check
 	{
@@ -1641,11 +1640,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a VM with UserData
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with UserData"},
 	})
@@ -1700,11 +1699,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json: %v", err)
 	}
 	// Response check
 	{
@@ -1767,11 +1766,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a VM with network interface configuration
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with network interface configuration"},
 	})
@@ -1839,11 +1838,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json: %v", err)
 	}
 	// Response check
 	{
@@ -1900,11 +1899,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Windows vm with a patch setting assessmentMode of ImageDefault.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting assessmentMode of ImageDefault."},
 	})
@@ -1959,11 +1958,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
 	// Response check
 	{
@@ -2023,11 +2022,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Windows vm with a patch setting patchMode of AutomaticByOS.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByOS."},
 	})
@@ -2082,11 +2081,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json: %v", err)
 	}
 	// Response check
 	{
@@ -2146,11 +2145,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true."},
 	})
@@ -2206,11 +2205,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json: %v", err)
 	}
 	// Response check
 	{
@@ -2271,11 +2270,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Windows vm with a patch setting patchMode of Manual.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of Manual."},
 	})
@@ -2330,11 +2329,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json: %v", err)
 	}
 	// Response check
 	{
@@ -2394,11 +2393,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
@@ -2454,11 +2453,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
 	// Response check
 	{
@@ -2519,11 +2518,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a custom-image vm from an unmanaged generalized os image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image vm from an unmanaged generalized os image."},
 	})
@@ -2569,11 +2568,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -2627,11 +2626,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a platform-image vm with unmanaged os and data disks.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image vm with unmanaged os and data disks."},
 	})
@@ -2696,11 +2695,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json: %v", err)
 	}
 	// Response check
 	{
@@ -2777,11 +2776,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm from a custom image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a custom image."},
 	})
@@ -2826,11 +2825,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -2884,11 +2883,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm from a generalized shared image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a generalized shared image."},
 	})
@@ -2933,11 +2932,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -2991,11 +2990,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm from a specialized shared image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a specialized shared image."},
 	})
@@ -3035,11 +3034,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -3085,11 +3084,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain."},
 	})
@@ -3141,11 +3140,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json: %v", err)
 	}
 	// Response check
 	{
@@ -3206,11 +3205,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm in an availability set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in an availability set."},
 	})
@@ -3261,11 +3260,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json: %v", err)
 	}
 	// Response check
 	{
@@ -3325,11 +3324,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with DiskEncryptionSet resource id in the os disk and data disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with DiskEncryptionSet resource id in the os disk and data disk."},
 	})
@@ -3403,11 +3402,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json: %v", err)
 	}
 	// Response check
 	{
@@ -3489,11 +3488,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with Host Encryption using encryptionAtHost property.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Host Encryption using encryptionAtHost property."},
 	})
@@ -3549,11 +3548,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json: %v", err)
 	}
 	// Response check
 	{
@@ -3618,11 +3617,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with Scheduled Events Profile
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Scheduled Events Profile"},
 	})
@@ -3682,11 +3681,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json: %v", err)
 	}
 	// Response check
 	{
@@ -3755,11 +3754,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with a marketplace image plan.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with a marketplace image plan."},
 	})
@@ -3812,11 +3811,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json: %v", err)
 	}
 	// Response check
 	{
@@ -3878,11 +3877,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with an extensions time budget.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with an extensions time budget."},
 	})
@@ -3937,11 +3936,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json: %v", err)
 	}
 	// Response check
 	{
@@ -4005,11 +4004,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with boot diagnostics.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with boot diagnostics."},
 	})
@@ -4063,11 +4062,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json: %v", err)
 	}
 	// Response check
 	{
@@ -4130,11 +4129,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with empty data disks.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with empty data disks."},
 	})
@@ -4193,11 +4192,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json: %v", err)
 	}
 	// Response check
 	{
@@ -4272,11 +4271,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with ephemeral os disk provisioning in Cache disk using placement property.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Cache disk using placement property."},
 	})
@@ -4333,11 +4332,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -4403,11 +4402,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with ephemeral os disk provisioning in Resource disk using placement property.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Resource disk using placement property."},
 	})
@@ -4464,11 +4463,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -4534,11 +4533,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with ephemeral os disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk."},
 	})
@@ -4594,11 +4593,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -4663,11 +4662,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with managed boot diagnostics.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with managed boot diagnostics."},
 	})
@@ -4720,11 +4719,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json: %v", err)
 	}
 	// Response check
 	{
@@ -4786,11 +4785,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with password authentication.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with password authentication."},
 	})
@@ -4838,11 +4837,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json: %v", err)
 	}
 	// Response check
 	{
@@ -4899,11 +4898,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with premium storage.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with premium storage."},
 	})
@@ -4951,11 +4950,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json: %v", err)
 	}
 	// Response check
 	{
@@ -5012,11 +5011,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a vm with ssh authentication.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ssh authentication."},
 	})
@@ -5073,11 +5072,11 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json: %v", err)
 	}
 	// Response check
 	{
@@ -5140,13 +5139,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachines_Update(t *testing.T) {
-	// From example Update a VM by detaching data disk
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by detaching data disk"},
 	})
@@ -5211,11 +5210,11 @@ func TestVirtualMachines_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json: %v", err)
 	}
 	// Response check
 	{
@@ -5292,11 +5291,11 @@ func TestVirtualMachines_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a VM by force-detaching data disk
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by force-detaching data disk"},
 	})
@@ -5357,11 +5356,11 @@ func TestVirtualMachines_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -5439,13 +5438,13 @@ func TestVirtualMachines_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachines_Delete(t *testing.T) {
-	// From example Force delete a VM
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force delete a VM"},
 	})
@@ -5460,16 +5459,16 @@ func TestVirtualMachines_Delete(t *testing.T) {
 		"myVM",
 		&golang.VirtualMachinesBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
 	}
 }
 
 func TestVirtualMachines_Get(t *testing.T) {
-	// From example Get a Virtual Machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a Virtual Machine."},
 	})
@@ -5484,7 +5483,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 		"myVM",
 		&golang.VirtualMachinesGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json: %v", err)
 	}
 	// Response check
 	{
@@ -5597,11 +5596,11 @@ func TestVirtualMachines_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a virtual machine placed on a dedicated host group through automatic placement
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine placed on a dedicated host group through automatic placement"},
 	})
@@ -5611,7 +5610,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 		"myVM",
 		&golang.VirtualMachinesGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -5673,13 +5672,13 @@ func TestVirtualMachines_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachines_InstanceView(t *testing.T) {
-	// From example Get Virtual Machine Instance View.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Virtual Machine Instance View."},
 	})
@@ -5694,7 +5693,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 		"myVM",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json: %v", err)
 	}
 	// Response check
 	{
@@ -5823,11 +5822,11 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get instance view of a virtual machine placed on a dedicated host group through automatic placement.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine placed on a dedicated host group through automatic placement."},
 	})
@@ -5837,7 +5836,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 		"myVM",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -5886,7 +5885,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -5900,7 +5899,7 @@ func TestVirtualMachines_Deallocate(t *testing.T) {
 }
 
 func TestVirtualMachines_Generalize(t *testing.T) {
-	// From example Generalize a Virtual Machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generalize a Virtual Machine."},
 	})
@@ -5915,7 +5914,7 @@ func TestVirtualMachines_Generalize(t *testing.T) {
 		"myVMName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json: %v", err)
 	}
 }
 
@@ -5928,7 +5927,7 @@ func TestVirtualMachines_ListAll(t *testing.T) {
 }
 
 func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
-	// From example Lists all available virtual machine sizes to which the specified virtual machine can be resized
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available virtual machine sizes to which the specified virtual machine can be resized"},
 	})
@@ -5943,7 +5942,7 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 		"myVmName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json: %v", err)
 	}
 	// Response check
 	{
@@ -5970,7 +5969,7 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineSizeListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineSizeListResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -5980,7 +5979,7 @@ func TestVirtualMachines_PowerOff(t *testing.T) {
 }
 
 func TestVirtualMachines_Reapply(t *testing.T) {
-	// From example Reapply the state of a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reapply the state of a virtual machine."},
 	})
@@ -5995,11 +5994,11 @@ func TestVirtualMachines_Reapply(t *testing.T) {
 		"VMName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json: %v", err)
 	}
 }
 
@@ -6016,7 +6015,7 @@ func TestVirtualMachines_Redeploy(t *testing.T) {
 }
 
 func TestVirtualMachines_Reimage(t *testing.T) {
-	// From example Reimage a Virtual Machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage a Virtual Machine."},
 	})
@@ -6034,16 +6033,16 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json: %v", err)
 	}
 }
 
 func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
-	// From example RetrieveBootDiagnosticsData of a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
@@ -6058,7 +6057,7 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 		"VMName",
 		&golang.VirtualMachinesRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json: %v", err)
 	}
 	// Response check
 	{
@@ -6070,7 +6069,7 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -6080,7 +6079,7 @@ func TestVirtualMachines_PerformMaintenance(t *testing.T) {
 }
 
 func TestVirtualMachines_SimulateEviction(t *testing.T) {
-	// From example Simulate Eviction a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
@@ -6095,12 +6094,12 @@ func TestVirtualMachines_SimulateEviction(t *testing.T) {
 		"VMName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json: %v", err)
 	}
 }
 
 func TestVirtualMachines_AssessPatches(t *testing.T) {
-	// From example Assess patch state of a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Assess patch state of a virtual machine."},
 	})
@@ -6115,11 +6114,11 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 		"myVMName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json: %v", err)
 	}
 	// Response check
 	{
@@ -6162,13 +6161,13 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineAssessPatchesResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachines_InstallPatches(t *testing.T) {
-	// From example Install patch state of a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Install patch state of a virtual machine."},
 	})
@@ -6193,11 +6192,11 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json: %v", err)
 	}
 	// Response check
 	{
@@ -6236,13 +6235,13 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstallPatchesResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachines_RunCommand(t *testing.T) {
-	// From example VirtualMachineRunCommand
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommand"},
 	})
@@ -6260,11 +6259,11 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json: %v", err)
 	}
 	// Response check
 	{
@@ -6287,13 +6286,13 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
-	// From example Lists all the VM scale sets under the specified subscription for the specified location.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the VM scale sets under the specified subscription for the specified location."},
 	})
@@ -6308,7 +6307,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -6468,7 +6467,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineScaleSetListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineScaleSetListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -6478,7 +6477,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
-	// From example Create a custom-image scale set from an unmanaged generalized os image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image scale set from an unmanaged generalized os image."},
 	})
@@ -6487,10 +6486,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
-	client := golang.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
+	client := golang.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"myResourceGroup",
-		"{vmss-name}",
+		"<resource-group-name>",
+		"<vm-scale-set-name>",
 		golang.VirtualMachineScaleSet{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.VirtualMachineScaleSetProperties{
@@ -6535,19 +6534,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					},
 				},
 			},
-			SKU: &golang.SKU{
-				Name:     to.StringPtr("Standard_D1_v2"),
-				Capacity: to.Int64Ptr(3),
-				Tier:     to.StringPtr("Standard"),
-			},
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -6621,11 +6615,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a platform-image scale set with unmanaged os disks.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image scale set with unmanaged os disks."},
 	})
@@ -6694,11 +6688,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json: %v", err)
 	}
 	// Response check
 	{
@@ -6776,11 +6770,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set from a custom image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a custom image."},
 	})
@@ -6842,11 +6836,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -6920,11 +6914,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set from a generalized shared image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a generalized shared image."},
 	})
@@ -6986,11 +6980,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -7064,11 +7058,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set from a specialized shared image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a specialized shared image."},
 	})
@@ -7125,11 +7119,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -7195,11 +7189,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with DiskEncryptionSet resource in os disk and data disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with DiskEncryptionSet resource in os disk and data disk."},
 	})
@@ -7277,11 +7271,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json: %v", err)
 	}
 	// Response check
 	{
@@ -7371,11 +7365,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with Fpga Network Interfaces.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Fpga Network Interfaces."},
 	})
@@ -7457,11 +7451,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json: %v", err)
 	}
 	// Response check
 	{
@@ -7557,11 +7551,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with Host Encryption using encryptionAtHost property.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Host Encryption using encryptionAtHost property."},
 	})
@@ -7634,11 +7628,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json: %v", err)
 	}
 	// Response check
 	{
@@ -7724,11 +7718,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with Uefi Settings of secureBoot and vTPM.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Uefi Settings of secureBoot and vTPM."},
 	})
@@ -7800,11 +7794,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json: %v", err)
 	}
 	// Response check
 	{
@@ -7889,11 +7883,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with a marketplace image plan.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with a marketplace image plan."},
 	})
@@ -7963,11 +7957,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json: %v", err)
 	}
 	// Response check
 	{
@@ -8050,11 +8044,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with an azure application gateway.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure application gateway."},
 	})
@@ -8123,11 +8117,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json: %v", err)
 	}
 	// Response check
 	{
@@ -8209,11 +8203,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with an azure load balancer.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure load balancer."},
 	})
@@ -8292,11 +8286,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json: %v", err)
 	}
 	// Response check
 	{
@@ -8382,11 +8376,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with automatic repairs enabled
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with automatic repairs enabled"},
 	})
@@ -8455,11 +8449,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json: %v", err)
 	}
 	// Response check
 	{
@@ -8541,11 +8535,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with boot diagnostics.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with boot diagnostics."},
 	})
@@ -8616,11 +8610,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json: %v", err)
 	}
 	// Response check
 	{
@@ -8704,11 +8698,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with empty data disks on each vm.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with empty data disks on each vm."},
 	})
@@ -8785,11 +8779,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json: %v", err)
 	}
 	// Response check
 	{
@@ -8887,11 +8881,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with ephemeral os disks using placement property.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks using placement property."},
 	})
@@ -8965,11 +8959,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json: %v", err)
 	}
 	// Response check
 	{
@@ -9056,11 +9050,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with ephemeral os disks.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks."},
 	})
@@ -9129,11 +9123,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -9219,11 +9213,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with extension time budget.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with extension time budget."},
 	})
@@ -9308,11 +9302,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json: %v", err)
 	}
 	// Response check
 	{
@@ -9410,11 +9404,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with managed boot diagnostics.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with managed boot diagnostics."},
 	})
@@ -9484,11 +9478,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json: %v", err)
 	}
 	// Response check
 	{
@@ -9571,11 +9565,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with password authentication.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with password authentication."},
 	})
@@ -9640,11 +9634,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json: %v", err)
 	}
 	// Response check
 	{
@@ -9722,11 +9716,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with premium storage.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with premium storage."},
 	})
@@ -9791,11 +9785,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json: %v", err)
 	}
 	// Response check
 	{
@@ -9873,11 +9867,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with ssh authentication.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ssh authentication."},
 	})
@@ -9951,11 +9945,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json: %v", err)
 	}
 	// Response check
 	{
@@ -10039,11 +10033,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with terminate scheduled events enabled.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with terminate scheduled events enabled."},
 	})
@@ -10114,11 +10108,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json: %v", err)
 	}
 	// Response check
 	{
@@ -10202,11 +10196,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with userData.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with userData."},
 	})
@@ -10272,11 +10266,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json: %v", err)
 	}
 	// Response check
 	{
@@ -10360,11 +10354,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a scale set with virtual machines in different zones.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with virtual machines in different zones."},
 	})
@@ -10444,11 +10438,11 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json: %v", err)
 	}
 	// Response check
 	{
@@ -10550,7 +10544,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -10560,7 +10554,7 @@ func TestVirtualMachineScaleSets_Update(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSets_Delete(t *testing.T) {
-	// From example Force Delete a VM scale set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a VM scale set."},
 	})
@@ -10575,16 +10569,16 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 		"myvmScaleSet",
 		&golang.VirtualMachineScaleSetsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
 	}
 }
 
 func TestVirtualMachineScaleSets_Get(t *testing.T) {
-	// From example Get a virtual machine scale set placed on a dedicated host group through automatic placement.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set placed on a dedicated host group through automatic placement."},
 	})
@@ -10599,7 +10593,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 		"myVirtualMachineScaleSet",
 		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -10685,11 +10679,11 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a virtual machine scale set with UserData
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set with UserData"},
 	})
@@ -10699,7 +10693,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 		"myVirtualMachineScaleSet",
 		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json: %v", err)
 	}
 	// Response check
 	{
@@ -10786,7 +10780,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -10864,7 +10858,7 @@ func TestVirtualMachineSizes_List(t *testing.T) {
 }
 
 func TestImages_CreateOrUpdate(t *testing.T) {
-	// From example Create a virtual machine image from a blob with DiskEncryptionSet resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob with DiskEncryptionSet resource."},
 	})
@@ -10894,11 +10888,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -10927,11 +10921,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from a blob.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob."},
 	})
@@ -10954,11 +10948,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json: %v", err)
 	}
 	// Response check
 	{
@@ -10985,11 +10979,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from a managed disk with DiskEncryptionSet resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk with DiskEncryptionSet resource."},
 	})
@@ -11016,11 +11010,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -11051,11 +11045,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from a managed disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk."},
 	})
@@ -11080,11 +11074,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -11113,11 +11107,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from a snapshot with DiskEncryptionSet resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot with DiskEncryptionSet resource."},
 	})
@@ -11144,11 +11138,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -11179,11 +11173,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from a snapshot.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot."},
 	})
@@ -11208,11 +11202,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json: %v", err)
 	}
 	// Response check
 	{
@@ -11241,11 +11235,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image from an existing virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from an existing virtual machine."},
 	})
@@ -11263,11 +11257,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json: %v", err)
 	}
 	// Response check
 	{
@@ -11299,11 +11293,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image that includes a data disk from a blob.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a blob."},
 	})
@@ -11331,11 +11325,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json: %v", err)
 	}
 	// Response check
 	{
@@ -11366,11 +11360,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image that includes a data disk from a managed disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a managed disk."},
 	})
@@ -11402,11 +11396,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -11441,11 +11435,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a virtual machine image that includes a data disk from a snapshot.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a snapshot."},
 	})
@@ -11477,11 +11471,11 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json: %v", err)
 	}
 	// Response check
 	{
@@ -11516,13 +11510,13 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestImages_Update(t *testing.T) {
-	// From example Updates tags of an Image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Updates tags of an Image."},
 	})
@@ -11548,11 +11542,11 @@ func TestImages_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -11600,7 +11594,7 @@ func TestImages_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -11610,7 +11604,7 @@ func TestImages_Delete(t *testing.T) {
 }
 
 func TestImages_Get(t *testing.T) {
-	// From example Get information about a virtual machine image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a virtual machine image."},
 	})
@@ -11625,7 +11619,7 @@ func TestImages_Get(t *testing.T) {
 		"myImage",
 		&golang.ImagesGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -11670,13 +11664,13 @@ func TestImages_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestImages_ListByResourceGroup(t *testing.T) {
-	// From example List all virtual machine images in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a resource group."},
 	})
@@ -11691,7 +11685,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -11736,7 +11730,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ImageListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -11746,7 +11740,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 }
 
 func TestImages_List(t *testing.T) {
-	// From example List all virtual machine images in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a subscription."},
 	})
@@ -11760,7 +11754,7 @@ func TestImages_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -11805,7 +11799,7 @@ func TestImages_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ImageListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ImageListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -11815,7 +11809,7 @@ func TestImages_List(t *testing.T) {
 }
 
 func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a restore point collection.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a restore point collection."},
 	})
@@ -11841,7 +11835,7 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json: %v", err)
 	}
 	// Response check
 	{
@@ -11866,7 +11860,7 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -11880,7 +11874,7 @@ func TestRestorePointCollections_Delete(t *testing.T) {
 }
 
 func TestRestorePointCollections_Get(t *testing.T) {
-	// From example Get a restore point collection (but not the restore points contained in the restore point collection)
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection (but not the restore points contained in the restore point collection)"},
 	})
@@ -11895,7 +11889,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 		"myRpc",
 		&golang.RestorePointCollectionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json: %v", err)
 	}
 	// Response check
 	{
@@ -11920,11 +11914,11 @@ func TestRestorePointCollections_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a restore point collection, including the restore points contained in the restore point collection
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection, including the restore points contained in the restore point collection"},
 	})
@@ -11934,7 +11928,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 		"rpcName",
 		&golang.RestorePointCollectionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json: %v", err)
 	}
 	// Response check
 	{
@@ -12025,13 +12019,13 @@ func TestRestorePointCollections_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestRestorePointCollections_List(t *testing.T) {
-	// From example Gets the list of restore point collections in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a resource group."},
 	})
@@ -12046,7 +12040,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -12090,7 +12084,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RestorePointCollectionListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -12100,7 +12094,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 }
 
 func TestRestorePointCollections_ListAll(t *testing.T) {
-	// From example Gets the list of restore point collections in a subscription
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a subscription"},
 	})
@@ -12114,7 +12108,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -12158,7 +12152,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RestorePointCollectionListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().RestorePointCollectionListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -12168,7 +12162,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 }
 
 func TestRestorePoints_Create(t *testing.T) {
-	// From example Create a restore point
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a restore point"},
 	})
@@ -12190,11 +12184,11 @@ func TestRestorePoints_Create(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json: %v", err)
 	}
 }
 
@@ -12203,7 +12197,7 @@ func TestRestorePoints_Delete(t *testing.T) {
 }
 
 func TestRestorePoints_Get(t *testing.T) {
-	// From example Get a restore point
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point"},
 	})
@@ -12219,7 +12213,7 @@ func TestRestorePoints_Get(t *testing.T) {
 		"rpName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json: %v", err)
 	}
 	// Response check
 	{
@@ -12292,7 +12286,7 @@ func TestRestorePoints_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RestorePoint) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePoint)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -12326,7 +12320,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartOSUpgrade(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.T) {
-	// From example Start an extension rolling upgrade.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start an extension rolling upgrade."},
 	})
@@ -12341,11 +12335,11 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.
 		"{vmss-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json: %v", err)
 	}
 }
 
@@ -12354,7 +12348,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_GetLatest(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
-	// From example Create VirtualMachineScaleSet VM extension.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM extension."},
 	})
@@ -12405,11 +12399,11 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	// Response check
 	{
@@ -12432,13 +12426,13 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
-	// From example Update VirtualMachineScaleSet VM extension.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM extension."},
 	})
@@ -12466,11 +12460,11 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	// Response check
 	{
@@ -12493,13 +12487,13 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
-	// From example Delete VirtualMachineScaleSet VM extension.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM extension."},
 	})
@@ -12516,16 +12510,16 @@ func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 		"myVMExtension",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
-	// From example Get VirtualMachineScaleSet VM extension.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM extension."},
 	})
@@ -12542,7 +12536,7 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 		"myVMExtension",
 		&golang.VirtualMachineScaleSetVMExtensionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	// Response check
 	{
@@ -12565,13 +12559,13 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
-	// From example List extensions in Vmss instance.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List extensions in Vmss instance."},
 	})
@@ -12587,7 +12581,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 		"0",
 		&golang.VirtualMachineScaleSetVMExtensionsListOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
 	// Response check
 	{
@@ -12628,7 +12622,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtensionsListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtensionsListResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -12650,7 +12644,7 @@ func TestVirtualMachineScaleSetVMs_Update(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
-	// From example Force Delete a virtual machine from a VM scale set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a virtual machine from a VM scale set."},
 	})
@@ -12666,16 +12660,16 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 		"0",
 		&golang.VirtualMachineScaleSetVMsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
 	}
 }
 
 func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
-	// From example Get VM scale set VM with UserData
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VM scale set VM with UserData"},
 	})
@@ -12691,7 +12685,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 		"0",
 		&golang.VirtualMachineScaleSetVMsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json: %v", err)
 	}
 	// Response check
 	{
@@ -12813,13 +12807,13 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVM) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVM)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
-	// From example Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement."},
 	})
@@ -12835,7 +12829,7 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 		"0",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
 	// Response check
 	{
@@ -12882,7 +12876,7 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMInstanceView)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -12908,7 +12902,7 @@ func TestVirtualMachineScaleSetVMs_Redeploy(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
-	// From example RetrieveBootDiagnosticsData of a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
@@ -12924,7 +12918,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 		"0",
 		&golang.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json: %v", err)
 	}
 	// Response check
 	{
@@ -12936,7 +12930,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -12946,7 +12940,7 @@ func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
-	// From example Simulate Eviction a virtual machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
@@ -12962,12 +12956,12 @@ func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 		"InstanceId",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json: %v", err)
 	}
 }
 
 func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
-	// From example VirtualMachineScaleSetVMs_RunCommand
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineScaleSetVMs_RunCommand"},
 	})
@@ -12988,11 +12982,11 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json: %v", err)
 	}
 	// Response check
 	{
@@ -13015,13 +13009,13 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
-	// From example Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals."},
 	})
@@ -13042,11 +13036,11 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json: %v", err)
 	}
 	// Response check
 	{
@@ -13059,13 +13053,13 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
-	// From example Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period."},
 	})
@@ -13088,11 +13082,11 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json: %v", err)
 	}
 	// Response check
 	{
@@ -13105,13 +13099,13 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_List(t *testing.T) {
-	// From example VirtualMachineRunCommandList
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandList"},
 	})
@@ -13126,7 +13120,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -13206,7 +13200,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RunCommandListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().RunCommandListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -13216,7 +13210,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 }
 
 func TestVirtualMachineRunCommands_Get(t *testing.T) {
-	// From example VirtualMachineRunCommandGet
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandGet"},
 	})
@@ -13231,7 +13225,7 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 		"RunPowerShellScript",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json: %v", err)
 	}
 	// Response check
 	{
@@ -13263,13 +13257,13 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RunCommandDocument) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandDocument)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a run command."},
 	})
@@ -13306,11 +13300,11 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json: %v", err)
 	}
 	// Response check
 	{
@@ -13346,13 +13340,13 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_Update(t *testing.T) {
-	// From example Update a run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a run command."},
 	})
@@ -13375,11 +13369,11 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json: %v", err)
 	}
 	// Response check
 	{
@@ -13415,13 +13409,13 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_Delete(t *testing.T) {
-	// From example Delete a run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a run command."},
 	})
@@ -13437,16 +13431,16 @@ func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 		"myRunCommand",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json: %v", err)
 	}
 }
 
 func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
-	// From example Get a run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a run command."},
 	})
@@ -13462,7 +13456,7 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 		"myRunCommand",
 		&golang.VirtualMachineRunCommandsGetByVirtualMachineOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json: %v", err)
 	}
 	// Response check
 	{
@@ -13498,13 +13492,13 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
-	// From example List run commands in a Virtual Machine.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in a Virtual Machine."},
 	})
@@ -13520,7 +13514,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -13558,7 +13552,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineRunCommandsListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -13568,7 +13562,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
-	// From example Create VirtualMachineScaleSet VM run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM run command."},
 	})
@@ -13606,11 +13600,11 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	// Response check
 	{
@@ -13642,13 +13636,13 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
-	// From example Update VirtualMachineScaleSet VM run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM run command."},
 	})
@@ -13672,11 +13666,11 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	// Response check
 	{
@@ -13712,13 +13706,13 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
-	// From example Delete VirtualMachineScaleSet VM run command.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM run command."},
 	})
@@ -13735,16 +13729,16 @@ func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 		"myRunCommand",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
-	// From example Get VirtualMachineScaleSet VM run commands.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM run commands."},
 	})
@@ -13761,7 +13755,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 		"myRunCommand",
 		&golang.VirtualMachineScaleSetVMRunCommandsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
 	// Response check
 	{
@@ -13797,13 +13791,13 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
-	// From example List run commands in Vmss instance.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in Vmss instance."},
 	})
@@ -13820,7 +13814,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -13854,7 +13848,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().VirtualMachineRunCommandsListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().VirtualMachineRunCommandsListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -13864,7 +13858,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 }
 
 func TestResourceSKUs_List(t *testing.T) {
-	// From example Lists all available Resource SKUs
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs"},
 	})
@@ -13878,7 +13872,7 @@ func TestResourceSKUs_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -14053,7 +14047,7 @@ func TestResourceSKUs_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceSKUsResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -14061,7 +14055,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		}
 	}
 
-	// From example Lists all available Resource SKUs for the specified region
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs for the specified region"},
 	})
@@ -14070,7 +14064,7 @@ func TestResourceSKUs_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -14245,7 +14239,7 @@ func TestResourceSKUs_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceSKUsResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceSKUsResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -14255,7 +14249,7 @@ func TestResourceSKUs_List(t *testing.T) {
 }
 
 func TestDisks_CreateOrUpdate(t *testing.T) {
-	// From example Create a managed disk and associate with disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk access resource."},
 	})
@@ -14281,11 +14275,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json: %v", err)
 	}
 	// Response check
 	{
@@ -14306,11 +14300,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk and associate with disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk encryption set."},
 	})
@@ -14332,11 +14326,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -14358,11 +14352,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk by copying a snapshot.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by copying a snapshot."},
 	})
@@ -14381,11 +14375,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json: %v", err)
 	}
 	// Response check
 	{
@@ -14404,11 +14398,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk by importing an unmanaged blob from a different subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from a different subscription."},
 	})
@@ -14428,11 +14422,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
 	// Response check
 	{
@@ -14452,11 +14446,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk by importing an unmanaged blob from the same subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from the same subscription."},
 	})
@@ -14475,11 +14469,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
 	// Response check
 	{
@@ -14498,11 +14492,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk from a platform image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from a platform image."},
 	})
@@ -14524,11 +14518,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -14556,11 +14550,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk from an existing managed disk in the same or different subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from an existing managed disk in the same or different subscription."},
 	})
@@ -14579,11 +14573,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -14602,11 +14596,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk with security profile
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with security profile"},
 	})
@@ -14631,11 +14625,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json: %v", err)
 	}
 	// Response check
 	{
@@ -14660,11 +14654,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed disk with ssd zrs account type.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with ssd zrs account type."},
 	})
@@ -14686,11 +14680,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json: %v", err)
 	}
 	// Response check
 	{
@@ -14713,11 +14707,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a managed upload disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed upload disk."},
 	})
@@ -14736,11 +14730,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -14759,11 +14753,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create an empty managed disk in extended location.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk in extended location."},
 	})
@@ -14786,11 +14780,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json: %v", err)
 	}
 	// Response check
 	{
@@ -14813,11 +14807,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create an empty managed disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk."},
 	})
@@ -14836,11 +14830,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -14859,11 +14853,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create an ultra managed disk with logicalSectorSize 512E
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an ultra managed disk with logicalSectorSize 512E"},
 	})
@@ -14886,11 +14880,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json: %v", err)
 	}
 	// Response check
 	{
@@ -14914,13 +14908,13 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDisks_Update(t *testing.T) {
-	// From example Create or update a bursting enabled managed disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a bursting enabled managed disk."},
 	})
@@ -14941,11 +14935,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -14965,11 +14959,11 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a managed disk to add purchase plan.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add purchase plan."},
 	})
@@ -14989,11 +14983,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json: %v", err)
 	}
 	// Response check
 	{
@@ -15027,11 +15021,11 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a managed disk to add supportsHibernation.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add supportsHibernation."},
 	})
@@ -15046,11 +15040,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json: %v", err)
 	}
 	// Response check
 	{
@@ -15077,11 +15071,11 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a managed disk to change tier.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to change tier."},
 	})
@@ -15096,11 +15090,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json: %v", err)
 	}
 	// Response check
 	{
@@ -15119,11 +15113,11 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a managed disk to disable bursting.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to disable bursting."},
 	})
@@ -15138,11 +15132,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json: %v", err)
 	}
 	// Response check
 	{
@@ -15160,11 +15154,11 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update managed disk to remove disk access resource association.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update managed disk to remove disk access resource association."},
 	})
@@ -15179,11 +15173,11 @@ func TestDisks_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json: %v", err)
 	}
 	// Response check
 	{
@@ -15203,13 +15197,13 @@ func TestDisks_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDisks_Get(t *testing.T) {
-	// From example Get information about a managed disk.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a managed disk."},
 	})
@@ -15224,7 +15218,7 @@ func TestDisks_Get(t *testing.T) {
 		"myManagedDisk",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json: %v", err)
 	}
 	// Response check
 	{
@@ -15289,7 +15283,7 @@ func TestDisks_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -15299,7 +15293,7 @@ func TestDisks_Delete(t *testing.T) {
 }
 
 func TestDisks_ListByResourceGroup(t *testing.T) {
-	// From example List all managed disks in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a resource group."},
 	})
@@ -15314,7 +15308,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -15426,7 +15420,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -15436,7 +15430,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 }
 
 func TestDisks_List(t *testing.T) {
-	// From example List all managed disks in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a subscription."},
 	})
@@ -15450,7 +15444,7 @@ func TestDisks_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -15562,7 +15556,7 @@ func TestDisks_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -15580,7 +15574,7 @@ func TestDisks_RevokeAccess(t *testing.T) {
 }
 
 func TestSnapshots_CreateOrUpdate(t *testing.T) {
-	// From example Create a snapshot by importing an unmanaged blob from a different subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from a different subscription."},
 	})
@@ -15605,11 +15599,11 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
 	// Response check
 	{
@@ -15629,11 +15623,11 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a snapshot by importing an unmanaged blob from the same subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from the same subscription."},
 	})
@@ -15652,11 +15646,11 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
 	// Response check
 	{
@@ -15675,11 +15669,11 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a snapshot from an existing snapshot in the same or a different subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot from an existing snapshot in the same or a different subscription."},
 	})
@@ -15698,11 +15692,11 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json: %v", err)
 	}
 	// Response check
 	{
@@ -15721,7 +15715,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -15731,7 +15725,7 @@ func TestSnapshots_Update(t *testing.T) {
 }
 
 func TestSnapshots_Get(t *testing.T) {
-	// From example Get information about a snapshot.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a snapshot."},
 	})
@@ -15746,7 +15740,7 @@ func TestSnapshots_Get(t *testing.T) {
 		"mySnapshot",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json: %v", err)
 	}
 	// Response check
 	{
@@ -15803,7 +15797,7 @@ func TestSnapshots_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
@@ -15813,7 +15807,7 @@ func TestSnapshots_Delete(t *testing.T) {
 }
 
 func TestSnapshots_ListByResourceGroup(t *testing.T) {
-	// From example List all snapshots in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a resource group."},
 	})
@@ -15828,7 +15822,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -15879,7 +15873,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SnapshotList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -15889,7 +15883,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 }
 
 func TestSnapshots_List(t *testing.T) {
-	// From example List all snapshots in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a subscription."},
 	})
@@ -15903,7 +15897,7 @@ func TestSnapshots_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -15996,7 +15990,7 @@ func TestSnapshots_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SnapshotList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SnapshotList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16014,7 +16008,7 @@ func TestSnapshots_RevokeAccess(t *testing.T) {
 }
 
 func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
-	// From example Create a disk encryption set with key vault from a different subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set with key vault from a different subscription."},
 	})
@@ -16041,11 +16035,11 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json: %v", err)
 	}
 	// Response check
 	{
@@ -16067,11 +16061,11 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create a disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set."},
 	})
@@ -16096,11 +16090,11 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -16125,13 +16119,13 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskEncryptionSets_Update(t *testing.T) {
-	// From example Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded"},
 	})
@@ -16158,11 +16152,11 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json: %v", err)
 	}
 	// Response check
 	{
@@ -16188,11 +16182,11 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating"},
 	})
@@ -16214,11 +16208,11 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json: %v", err)
 	}
 	// Response check
 	{
@@ -16248,11 +16242,11 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set."},
 	})
@@ -16277,11 +16271,11 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -16311,13 +16305,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskEncryptionSets_Get(t *testing.T) {
-	// From example Get information about a disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk encryption set."},
 	})
@@ -16332,7 +16326,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 		"myDiskEncryptionSet",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json: %v", err)
 	}
 	// Response check
 	{
@@ -16364,13 +16358,13 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskEncryptionSets_Delete(t *testing.T) {
-	// From example Delete a disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk encryption set."},
 	})
@@ -16385,16 +16379,16 @@ func TestDiskEncryptionSets_Delete(t *testing.T) {
 		"myDiskEncryptionSet",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json: %v", err)
 	}
 }
 
 func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
-	// From example List all disk encryption sets in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a resource group."},
 	})
@@ -16409,7 +16403,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -16467,7 +16461,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskEncryptionSetList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16477,7 +16471,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 }
 
 func TestDiskEncryptionSets_List(t *testing.T) {
-	// From example List all disk encryption sets in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a subscription."},
 	})
@@ -16491,7 +16485,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -16549,7 +16543,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskEncryptionSetList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskEncryptionSetList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16559,7 +16553,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 }
 
 func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
-	// From example List all resources that are encrypted with this disk encryption set.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all resources that are encrypted with this disk encryption set."},
 	})
@@ -16575,7 +16569,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -16587,7 +16581,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceURIList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceURIList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16597,7 +16591,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 }
 
 func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
-	// From example Create a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk access resource."},
 	})
@@ -16615,11 +16609,11 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json: %v", err)
 	}
 	// Response check
 	{
@@ -16637,13 +16631,13 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_Update(t *testing.T) {
-	// From example Update a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk access resource."},
 	})
@@ -16664,11 +16658,11 @@ func TestDiskAccesses_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json: %v", err)
 	}
 	// Response check
 	{
@@ -16686,13 +16680,13 @@ func TestDiskAccesses_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_Get(t *testing.T) {
-	// From example Get information about a disk access resource with private endpoints.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource with private endpoints."},
 	})
@@ -16707,7 +16701,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 		"myDiskAccess",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json: %v", err)
 	}
 	// Response check
 	{
@@ -16746,11 +16740,11 @@ func TestDiskAccesses_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get information about a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource."},
 	})
@@ -16760,7 +16754,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 		"myDiskAccess",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json: %v", err)
 	}
 	// Response check
 	{
@@ -16782,13 +16776,13 @@ func TestDiskAccesses_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_Delete(t *testing.T) {
-	// From example Delete a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk access resource."},
 	})
@@ -16803,16 +16797,16 @@ func TestDiskAccesses_Delete(t *testing.T) {
 		"myDiskAccess",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json: %v", err)
 	}
 }
 
 func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
-	// From example List all disk access resources in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a resource group."},
 	})
@@ -16827,7 +16821,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -16882,7 +16876,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskAccessList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16892,7 +16886,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 }
 
 func TestDiskAccesses_List(t *testing.T) {
-	// From example List all disk access resources in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a subscription."},
 	})
@@ -16906,7 +16900,7 @@ func TestDiskAccesses_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -16961,7 +16955,7 @@ func TestDiskAccesses_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskAccessList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskAccessList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -16971,7 +16965,7 @@ func TestDiskAccesses_List(t *testing.T) {
 }
 
 func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
-	// From example List all possible private link resources under disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all possible private link resources under disk access resource."},
 	})
@@ -16986,7 +16980,7 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 		"myDiskAccess",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json: %v", err)
 	}
 	// Response check
 	{
@@ -17009,13 +17003,13 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.PrivateLinkResourceListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateLinkResourceListResult)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
-	// From example Approve a Private Endpoint Connection under a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Approve a Private Endpoint Connection under a disk access resource."},
 	})
@@ -17039,11 +17033,11 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json: %v", err)
 	}
 	// Response check
 	{
@@ -17067,13 +17061,13 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
-	// From example Get information about a private endpoint connection under a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
@@ -17089,7 +17083,7 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 		"myPrivateEndpointConnection",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json: %v", err)
 	}
 	// Response check
 	{
@@ -17113,13 +17107,13 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
-	// From example Delete a private endpoint connection under a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a private endpoint connection under a disk access resource."},
 	})
@@ -17135,16 +17129,16 @@ func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 		"myPrivateEndpointConnection",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json: %v", err)
 	}
 }
 
 func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
-	// From example Get information about a private endpoint connection under a disk access resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
@@ -17160,7 +17154,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -17186,7 +17180,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().PrivateEndpointConnectionListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().PrivateEndpointConnectionListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -17196,7 +17190,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 }
 
 func TestDiskRestorePoint_Get(t *testing.T) {
-	// From example Get an incremental disk restorePoint resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
@@ -17213,7 +17207,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 		"TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json: %v", err)
 	}
 	// Response check
 	{
@@ -17233,13 +17227,13 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.DiskRestorePoint) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskRestorePoint)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
-	// From example Get an incremental disk restorePoint resource.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
@@ -17256,7 +17250,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -17278,7 +17272,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().DiskRestorePointList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().DiskRestorePointList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -17288,7 +17282,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 }
 
 func TestGalleries_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a simple gallery with sharing profile.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery with sharing profile."},
 	})
@@ -17312,11 +17306,11 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json: %v", err)
 	}
 	// Response check
 	{
@@ -17338,11 +17332,11 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery."},
 	})
@@ -17358,11 +17352,11 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -17381,13 +17375,13 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleries_Update(t *testing.T) {
-	// From example Update a simple gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery."},
 	})
@@ -17407,11 +17401,11 @@ func TestGalleries_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -17430,13 +17424,13 @@ func TestGalleries_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleries_Get(t *testing.T) {
-	// From example Get a gallery with select permissions.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery with select permissions."},
 	})
@@ -17451,7 +17445,7 @@ func TestGalleries_Get(t *testing.T) {
 		"myGalleryName",
 		&golang.GalleriesGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json: %v", err)
 	}
 	// Response check
 	{
@@ -17480,11 +17474,11 @@ func TestGalleries_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -17494,7 +17488,7 @@ func TestGalleries_Get(t *testing.T) {
 		"myGalleryName",
 		&golang.GalleriesGetOptions{Select: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -17513,13 +17507,13 @@ func TestGalleries_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleries_Delete(t *testing.T) {
-	// From example Delete a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery."},
 	})
@@ -17534,16 +17528,16 @@ func TestGalleries_Delete(t *testing.T) {
 		"myGalleryName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json: %v", err)
 	}
 }
 
 func TestGalleries_ListByResourceGroup(t *testing.T) {
-	// From example List galleries in a resource group.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a resource group."},
 	})
@@ -17558,7 +17552,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -17580,7 +17574,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -17590,7 +17584,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 }
 
 func TestGalleries_List(t *testing.T) {
-	// From example List galleries in a subscription.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a subscription."},
 	})
@@ -17604,7 +17598,7 @@ func TestGalleries_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -17626,7 +17620,7 @@ func TestGalleries_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -17636,7 +17630,7 @@ func TestGalleries_List(t *testing.T) {
 }
 
 func TestGalleryImages_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a simple gallery image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery image."},
 	})
@@ -17665,11 +17659,11 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -17692,13 +17686,13 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImages_Update(t *testing.T) {
-	// From example Update a simple gallery image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery image."},
 	})
@@ -17726,11 +17720,11 @@ func TestGalleryImages_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -17753,13 +17747,13 @@ func TestGalleryImages_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImages_Get(t *testing.T) {
-	// From example Get a gallery image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image."},
 	})
@@ -17775,7 +17769,7 @@ func TestGalleryImages_Get(t *testing.T) {
 		"myGalleryImageName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -17798,13 +17792,13 @@ func TestGalleryImages_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImages_Delete(t *testing.T) {
-	// From example Delete a gallery image.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image."},
 	})
@@ -17820,16 +17814,16 @@ func TestGalleryImages_Delete(t *testing.T) {
 		"myGalleryImageName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json: %v", err)
 	}
 }
 
 func TestGalleryImages_ListByGallery(t *testing.T) {
-	// From example List gallery images in a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery images in a gallery."},
 	})
@@ -17845,7 +17839,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -17870,7 +17864,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryImageList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -17880,7 +17874,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 }
 
 func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a simple Gallery Image Version using VM as source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using VM as source."},
 	})
@@ -17947,11 +17941,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -18025,11 +18019,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple Gallery Image Version using managed image as source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using managed image as source."},
 	})
@@ -18091,11 +18085,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -18169,11 +18163,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple Gallery Image Version using mix of disks and snapshots as a source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using mix of disks and snapshots as a source."},
 	})
@@ -18238,11 +18232,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -18311,11 +18305,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple Gallery Image Version using shared image as source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using shared image as source."},
 	})
@@ -18377,11 +18371,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -18455,11 +18449,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple Gallery Image Version using snapshots as a source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using snapshots as a source."},
 	})
@@ -18524,11 +18518,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -18597,11 +18591,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create or update a simple Gallery Image Version using vhd as a source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using vhd as a source."},
 	})
@@ -18658,11 +18652,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json: %v", err)
 	}
 	// Response check
 	{
@@ -18721,13 +18715,13 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImageVersions_Update(t *testing.T) {
-	// From example Update a simple Gallery Image Version (Managed Image as source).
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version (Managed Image as source)."},
 	})
@@ -18765,11 +18759,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -18825,11 +18819,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Update a simple Gallery Image Version without source id.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version without source id."},
 	})
@@ -18858,11 +18852,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json: %v", err)
 	}
 	// Response check
 	{
@@ -18918,13 +18912,13 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImageVersions_Get(t *testing.T) {
-	// From example Get a gallery image version with replication status.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with replication status."},
 	})
@@ -18941,7 +18935,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json: %v", err)
 	}
 	// Response check
 	{
@@ -19017,11 +19011,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a gallery image version with snapshots as a source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with snapshots as a source."},
 	})
@@ -19033,7 +19027,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryImageVersionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -19088,11 +19082,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a gallery image version with vhd as a source.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with vhd as a source."},
 	})
@@ -19104,7 +19098,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryImageVersionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json: %v", err)
 	}
 	// Response check
 	{
@@ -19163,11 +19157,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a gallery image version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version."},
 	})
@@ -19179,7 +19173,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryImageVersionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -19239,13 +19233,13 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryImageVersions_Delete(t *testing.T) {
-	// From example Delete a gallery image version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image version."},
 	})
@@ -19262,16 +19256,16 @@ func TestGalleryImageVersions_Delete(t *testing.T) {
 		"1.0.0",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json: %v", err)
 	}
 }
 
 func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
-	// From example List gallery image versions in a gallery image definition.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery image versions in a gallery image definition."},
 	})
@@ -19288,7 +19282,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -19350,7 +19344,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryImageVersionList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryImageVersionList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -19360,7 +19354,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 }
 
 func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a simple gallery Application.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application."},
 	})
@@ -19386,11 +19380,11 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json: %v", err)
 	}
 	// Response check
 	{
@@ -19411,13 +19405,13 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplications_Update(t *testing.T) {
-	// From example Update a simple gallery Application.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application."},
 	})
@@ -19442,11 +19436,11 @@ func TestGalleryApplications_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json: %v", err)
 	}
 	// Response check
 	{
@@ -19467,13 +19461,13 @@ func TestGalleryApplications_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplications_Get(t *testing.T) {
-	// From example Get a gallery Application.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application."},
 	})
@@ -19489,7 +19483,7 @@ func TestGalleryApplications_Get(t *testing.T) {
 		"myGalleryApplicationName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json: %v", err)
 	}
 	// Response check
 	{
@@ -19508,13 +19502,13 @@ func TestGalleryApplications_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplications_Delete(t *testing.T) {
-	// From example Delete a gallery Application.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application."},
 	})
@@ -19530,16 +19524,16 @@ func TestGalleryApplications_Delete(t *testing.T) {
 		"myGalleryApplicationName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json: %v", err)
 	}
 }
 
 func TestGalleryApplications_ListByGallery(t *testing.T) {
-	// From example List gallery Applications in a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Applications in a gallery."},
 	})
@@ -19555,7 +19549,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -19576,7 +19570,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryApplicationList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -19586,7 +19580,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 }
 
 func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
-	// From example Create or update a simple gallery Application Version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application Version."},
 	})
@@ -19626,11 +19620,11 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -19668,13 +19662,13 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplicationVersions_Update(t *testing.T) {
-	// From example Update a simple gallery Application Version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application Version."},
 	})
@@ -19713,11 +19707,11 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -19755,13 +19749,13 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplicationVersions_Get(t *testing.T) {
-	// From example Get a gallery Application Version with replication status.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version with replication status."},
 	})
@@ -19778,7 +19772,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryApplicationVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json: %v", err)
 	}
 	// Response check
 	{
@@ -19824,11 +19818,11 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Get a gallery Application Version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version."},
 	})
@@ -19840,7 +19834,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"1.0.0",
 		&golang.GalleryApplicationVersionsGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -19878,13 +19872,13 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestGalleryApplicationVersions_Delete(t *testing.T) {
-	// From example Delete a gallery Application Version.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application Version."},
 	})
@@ -19901,16 +19895,16 @@ func TestGalleryApplicationVersions_Delete(t *testing.T) {
 		"1.0.0",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json: %v", err)
 	}
 }
 
 func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
-	// From example List gallery Application Versions in a gallery Application Definition.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Application Versions in a gallery Application Definition."},
 	})
@@ -19927,7 +19921,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -19967,7 +19961,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().GalleryApplicationVersionList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().GalleryApplicationVersionList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -19977,7 +19971,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 }
 
 func TestGallerySharingProfile_Update(t *testing.T) {
-	// From example Add sharing id to the sharing profile of a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Add sharing id to the sharing profile of a gallery."},
 	})
@@ -20007,11 +20001,11 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -20034,11 +20028,11 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharingUpdate)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example reset sharing profile of a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"reset sharing profile of a gallery."},
 	})
@@ -20051,11 +20045,11 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		},
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -20066,13 +20060,13 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharingUpdate)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSharedGalleries_List(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20087,7 +20081,7 @@ func TestSharedGalleries_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -20104,7 +20098,7 @@ func TestSharedGalleries_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -20114,7 +20108,7 @@ func TestSharedGalleries_List(t *testing.T) {
 }
 
 func TestSharedGalleries_Get(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20129,7 +20123,7 @@ func TestSharedGalleries_Get(t *testing.T) {
 		"galleryUniqueName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json: %v", err)
 	}
 	// Response check
 	{
@@ -20144,13 +20138,13 @@ func TestSharedGalleries_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SharedGallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGallery)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSharedGalleryImages_List(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20166,7 +20160,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -20193,7 +20187,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryImageList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -20203,7 +20197,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 }
 
 func TestSharedGalleryImages_Get(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20219,7 +20213,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 		"myGalleryImageName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json: %v", err)
 	}
 	// Response check
 	{
@@ -20244,13 +20238,13 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGalleryImage)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSharedGalleryImageVersions_List(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20267,7 +20261,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -20288,7 +20282,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedGalleryImageVersionList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SharedGalleryImageVersionList)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -20298,7 +20292,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 }
 
 func TestSharedGalleryImageVersions_Get(t *testing.T) {
-	// From example Get a gallery.
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
@@ -20315,7 +20309,7 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryImageVersionName",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -20334,13 +20328,13 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGalleryImageVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceRoleInstances_Delete(t *testing.T) {
-	// From example Delete Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instance"},
 	})
@@ -20356,16 +20350,16 @@ func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json: %v", err)
 	}
 }
 
 func TestCloudServiceRoleInstances_Get(t *testing.T) {
-	// From example Get Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role Instance"},
 	})
@@ -20381,7 +20375,7 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 		"{cs-name}",
 		&golang.CloudServiceRoleInstancesGetOptions{Expand: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json: %v", err)
 	}
 	// Response check
 	{
@@ -20407,13 +20401,13 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RoleInstance) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RoleInstance)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
-	// From example Get Instance View of Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Instance View of Cloud Service Role Instance"},
 	})
@@ -20429,7 +20423,7 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json: %v", err)
 	}
 	// Response check
 	{
@@ -20449,13 +20443,13 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.RoleInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RoleInstanceView)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceRoleInstances_List(t *testing.T) {
-	// From example List Role Instances in a Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Role Instances in a Cloud Service"},
 	})
@@ -20471,7 +20465,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -20553,7 +20547,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().RoleInstanceListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().RoleInstanceListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -20563,7 +20557,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 }
 
 func TestCloudServiceRoleInstances_Restart(t *testing.T) {
-	// From example Restart Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instance"},
 	})
@@ -20579,16 +20573,16 @@ func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json: %v", err)
 	}
 }
 
 func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
-	// From example Reimage Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instance"},
 	})
@@ -20604,16 +20598,16 @@ func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json: %v", err)
 	}
 }
 
 func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
-	// From example Rebuild Cloud Service Role Instance
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instance"},
 	})
@@ -20629,11 +20623,11 @@ func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json: %v", err)
 	}
 }
 
@@ -20642,7 +20636,7 @@ func TestCloudServiceRoleInstances_GetRemoteDesktopFile(t *testing.T) {
 }
 
 func TestCloudServiceRoles_Get(t *testing.T) {
-	// From example Get Cloud Service Role
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role"},
 	})
@@ -20658,7 +20652,7 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json: %v", err)
 	}
 	// Response check
 	{
@@ -20680,13 +20674,13 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudServiceRole) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudServiceRole)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceRoles_List(t *testing.T) {
-	// From example List Roles in a Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Roles in a Cloud Service"},
 	})
@@ -20702,7 +20696,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -20740,7 +20734,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceRoleListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceRoleListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -20750,7 +20744,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 }
 
 func TestCloudServices_CreateOrUpdate(t *testing.T) {
-	// From example Create New Cloud Service with Multiple Roles
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Multiple Roles"},
 	})
@@ -20809,11 +20803,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json: %v", err)
 	}
 	// Response check
 	{
@@ -20873,11 +20867,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create New Cloud Service with Single Role
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role"},
 	})
@@ -20923,11 +20917,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json: %v", err)
 	}
 	// Response check
 	{
@@ -20979,11 +20973,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create New Cloud Service with Single Role and Certificate from Key Vault
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and Certificate from Key Vault"},
 	})
@@ -21041,11 +21035,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json: %v", err)
 	}
 	// Response check
 	{
@@ -21106,11 +21100,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 
-	// From example Create New Cloud Service with Single Role and RDP Extension
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and RDP Extension"},
 	})
@@ -21170,11 +21164,11 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json: %v", err)
 	}
 	res, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json: %v", err)
 	}
 	// Response check
 	{
@@ -21242,13 +21236,13 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServices_Update(t *testing.T) {
-	// From example Update existing Cloud Service to add tags
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update existing Cloud Service to add tags"},
 	})
@@ -21268,11 +21262,11 @@ func TestCloudServices_Update(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json: %v", err)
 	}
 	// Response check
 	{
@@ -21334,13 +21328,13 @@ func TestCloudServices_Update(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServices_Delete(t *testing.T) {
-	// From example Delete Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service"},
 	})
@@ -21355,16 +21349,16 @@ func TestCloudServices_Delete(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json: %v", err)
 	}
 }
 
 func TestCloudServices_Get(t *testing.T) {
-	// From example Get Cloud Service with Multiple Roles and RDP Extension
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service with Multiple Roles and RDP Extension"},
 	})
@@ -21379,7 +21373,7 @@ func TestCloudServices_Get(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json: %v", err)
 	}
 	// Response check
 	{
@@ -21454,13 +21448,13 @@ func TestCloudServices_Get(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServices_GetInstanceView(t *testing.T) {
-	// From example Get Cloud Service Instance View with Multiple Roles
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Instance View with Multiple Roles"},
 	})
@@ -21475,7 +21469,7 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json: %v", err)
 	}
 	// Response check
 	{
@@ -21526,13 +21520,13 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.CloudServiceInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudServiceInstanceView)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServices_ListAll(t *testing.T) {
-	// From example List Cloud Services in a Subscription
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Subscription"},
 	})
@@ -21546,7 +21540,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -21623,7 +21617,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -21633,7 +21627,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 }
 
 func TestCloudServices_List(t *testing.T) {
-	// From example List Cloud Services in a Resource Group
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Resource Group"},
 	})
@@ -21648,7 +21642,7 @@ func TestCloudServices_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -21725,7 +21719,7 @@ func TestCloudServices_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().CloudServiceListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().CloudServiceListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -21735,7 +21729,7 @@ func TestCloudServices_List(t *testing.T) {
 }
 
 func TestCloudServices_Start(t *testing.T) {
-	// From example Start Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start Cloud Service"},
 	})
@@ -21750,16 +21744,16 @@ func TestCloudServices_Start(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json: %v", err)
 	}
 }
 
 func TestCloudServices_PowerOff(t *testing.T) {
-	// From example Stop or PowerOff Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Stop or PowerOff Cloud Service"},
 	})
@@ -21774,16 +21768,16 @@ func TestCloudServices_PowerOff(t *testing.T) {
 		"{cs-name}",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json: %v", err)
 	}
 }
 
 func TestCloudServices_Restart(t *testing.T) {
-	// From example Restart Cloud Service Role Instances
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instances"},
 	})
@@ -21803,16 +21797,16 @@ func TestCloudServices_Restart(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json: %v", err)
 	}
 }
 
 func TestCloudServices_Reimage(t *testing.T) {
-	// From example Reimage Cloud Service Role Instances
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instances"},
 	})
@@ -21832,16 +21826,16 @@ func TestCloudServices_Reimage(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json: %v", err)
 	}
 }
 
 func TestCloudServices_Rebuild(t *testing.T) {
-	// From example Rebuild Cloud Service Role Instances
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instances"},
 	})
@@ -21861,16 +21855,16 @@ func TestCloudServices_Rebuild(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json: %v", err)
 	}
 }
 
 func TestCloudServices_DeleteInstances(t *testing.T) {
-	// From example Delete Cloud Service Role Instances
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instances"},
 	})
@@ -21890,16 +21884,16 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 		},
 		})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json: %v", err)
 	}
 }
 
 func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
-	// From example Update Cloud Service to specified Domain
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update Cloud Service to specified Domain"},
 	})
@@ -21915,16 +21909,16 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 		1,
 		&golang.CloudServicesUpdateDomainBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get LRO result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
 	}
 }
 
 func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
-	// From example Get Cloud Service Update Domain
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Update Domain"},
 	})
@@ -21940,7 +21934,7 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 		1,
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json: %v", err)
 	}
 	// Response check
 	{
@@ -21952,13 +21946,13 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.UpdateDomain) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.UpdateDomain)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
-	// From example List Update Domains in Cloud Service
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Update Domains in Cloud Service"},
 	})
@@ -21974,7 +21968,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -21992,7 +21986,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().UpdateDomainListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().UpdateDomainListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -22002,7 +21996,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 }
 
 func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
-	// From example Get Cloud Service OS Version
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Version"},
 	})
@@ -22017,7 +22011,7 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 		"WA-GUEST-OS-3.90_202010-02",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json: %v", err)
 	}
 	// Response check
 	{
@@ -22039,13 +22033,13 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.OSVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.OSVersion)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
-	// From example List Cloud Service OS Versions in a subscription
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Versions in a subscription"},
 	})
@@ -22060,7 +22054,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -22098,7 +22092,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().OSVersionListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().OSVersionListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -22108,7 +22102,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 }
 
 func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
-	// From example Get Cloud Service OS Family
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Family"},
 	})
@@ -22123,7 +22117,7 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 		"3",
 		nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json: %v", err)
 	}
 	// Response check
 	{
@@ -22148,13 +22142,13 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 		if !reflect.DeepEqual(exampleRes, res.OSFamily) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.OSFamily)
-			t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
-	// From example List Cloud Service OS Families in a subscription
+	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Families in a subscription"},
 	})
@@ -22169,7 +22163,7 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("failed to advance page: %v", err)
+			t.Fatalf("Failed to advance page for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -22213,7 +22207,7 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().OSFamilyListResult) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().OSFamilyListResult)
-				t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -22248,16 +22242,7 @@ func setUp() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 
-	cred, err = azidentity.NewEnvironmentCredential(
-		&azidentity.EnvironmentCredentialOptions{
-			AuthorityHost: azidentity.AuthorityHost(mockHost),
-			ClientOptions: azcore.ClientOptions{
-				Transport: client,
-			},
-		})
-	if err != nil {
-		panic(err)
-	}
+	cred = &MockCredential{}
 
 	options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -22266,10 +22251,17 @@ func setUp() {
 			},
 			Transport: client,
 		},
-		Host: arm.Endpoint(mockHost),
+		Endpoint: arm.Endpoint(mockHost),
 	}
 }
 
 func tearDown() {
 
+}
+
+type MockCredential struct {
+}
+
+func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

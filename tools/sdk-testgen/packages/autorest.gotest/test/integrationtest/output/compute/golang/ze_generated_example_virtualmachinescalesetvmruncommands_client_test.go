@@ -60,7 +60,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
@@ -91,7 +91,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
@@ -134,7 +134,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMRunCommandsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json

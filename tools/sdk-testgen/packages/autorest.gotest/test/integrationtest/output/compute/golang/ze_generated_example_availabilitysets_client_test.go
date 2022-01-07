@@ -41,7 +41,7 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.AvailabilitySetsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.AvailabilitySetsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json

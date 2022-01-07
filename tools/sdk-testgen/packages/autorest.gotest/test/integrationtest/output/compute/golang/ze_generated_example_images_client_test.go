@@ -52,7 +52,7 @@ func ExampleImagesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ImagesCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.ImagesClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json
@@ -85,7 +85,7 @@ func ExampleImagesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ImagesUpdateResult)
+	log.Printf("Response result: %#v\n", res.ImagesClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json
@@ -103,7 +103,7 @@ func ExampleImagesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.ImagesGetResult)
+	log.Printf("Response result: %#v\n", res.ImagesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json

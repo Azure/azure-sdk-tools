@@ -52,5 +52,5 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GallerySharingProfileUpdateResult)
+	log.Printf("Response result: %#v\n", res.GallerySharingProfileClientUpdateResult)
 }

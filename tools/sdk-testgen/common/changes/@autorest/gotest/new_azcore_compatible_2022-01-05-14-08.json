@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Fix multiple time format and any-object default value issue.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

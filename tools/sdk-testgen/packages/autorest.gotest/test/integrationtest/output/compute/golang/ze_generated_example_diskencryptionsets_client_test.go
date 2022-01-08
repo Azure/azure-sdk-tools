@@ -49,7 +49,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
@@ -83,7 +83,7 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsUpdateResult)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
@@ -101,7 +101,7 @@ func ExampleDiskEncryptionSetsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsGetResult)
+	log.Printf("Response result: %#v\n", res.DiskEncryptionSetsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json

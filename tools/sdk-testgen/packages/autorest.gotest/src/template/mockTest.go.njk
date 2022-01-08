@@ -33,10 +33,10 @@ var (
 {% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
 {%- for example in exampleGroup.examples %}
-    // From example {{example.name}}
+    // From example {{example.originalFile}}
 	{%- if sendExampleId %}
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
-        "example-id": {"{{example.name}}"},
+        "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
     })
 	{%- endif %}
 	{%- if loop.first %}
@@ -56,12 +56,12 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
             {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
         {%- endif %}
         if err != nil {
-            t.Fatal(err)
+            t.Fatalf("Failed to get result for example {{example.originalFile}}: %v", err)
         }
         {%- if example.isLRO %}
             {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
             if err != nil {
-                t.Fatal(err)
+                t.Fatalf("Failed to get LRO result for example {{example.originalFile}}: %v", err)
             }
         {%- endif %}
     {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
@@ -69,7 +69,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
-                t.Fatalf("failed to advance page: %v", err)
+                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
             }
             {%- if example.checkResponse and verifyResponse%}
             // Response check
@@ -78,7 +78,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
                 if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}}) {
                     exampleResJson, _ := json.Marshal(pagerExampleRes)
                     mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}})
-                    t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
                 }
             } else {
                 t.Logf("Page end.")
@@ -98,7 +98,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
         for {
             nextResult := res.NextPage(ctx)
             if err := res.Err(); err != nil {
-                t.Fatalf("failed to advance page: %v", err)
+                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
             }
             {%- if example.checkResponse and verifyResponse%}
             // Response check
@@ -107,7 +107,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
                 if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}}) {
                     exampleResJson, _ := json.Marshal(pagerExampleRes)
                     mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}})
-                    t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
                 }
             } else {
                 t.Logf("Page end.")
@@ -131,7 +131,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
             if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
                 exampleResJson, _ := json.Marshal(exampleRes)
                 mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})
-                t.Fatalf("Mock response is not equal to example response:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
             }
         }
     {%- endif %}
@@ -172,16 +172,7 @@ func setUp() {
 	tr.TLSClientConfig.InsecureSkipVerify = true
 	client := &http.Client{Transport: tr}
 	
-    cred, err = azidentity.NewEnvironmentCredential(
-		&azidentity.EnvironmentCredentialOptions{
-			AuthorityHost: azidentity.AuthorityHost(mockHost), 
-			ClientOptions: azcore.ClientOptions{
-				Transport: client,
-			},
-		})
-	if err != nil {
-		panic(err)
-	}
+    cred = &MockCredential{}
 
 	options = arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
@@ -190,10 +181,17 @@ func setUp() {
 			},
 			Transport: client,
 		},
-		Host: arm.Endpoint(mockHost),
+		Endpoint: arm.Endpoint(mockHost),
 	}
 }
 
 func tearDown() {
 
+}
+
+type MockCredential struct {
+}
+
+func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
 }

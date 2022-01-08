@@ -43,7 +43,7 @@ func ExampleDedicatedHostGroupsClient_CreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DedicatedHostGroupsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.DedicatedHostGroupsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
@@ -61,5 +61,5 @@ func ExampleDedicatedHostGroupsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DedicatedHostGroupsGetResult)
+	log.Printf("Response result: %#v\n", res.DedicatedHostGroupsClientGetResult)
 }

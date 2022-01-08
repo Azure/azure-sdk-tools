@@ -89,7 +89,7 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryImageVersionsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
@@ -134,7 +134,7 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryImageVersionsUpdateResult)
+	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
@@ -154,7 +154,7 @@ func ExampleGalleryImageVersionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryImageVersionsGetResult)
+	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json

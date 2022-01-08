@@ -73,7 +73,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
@@ -108,7 +108,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
@@ -151,7 +151,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
@@ -170,5 +170,5 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsListResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetVMExtensionsClientListResult)
 }

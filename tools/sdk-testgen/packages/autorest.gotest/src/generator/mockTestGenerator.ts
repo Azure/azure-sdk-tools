@@ -230,6 +230,8 @@ export class MockTestDataRender extends BaseDataRender {
                     } else {
                         return `${this.context.packageName + '.'}${this.getLanguageName(param.schema)}{}`;
                     }
+                case SchemaType.AnyObject:
+                    return 'nil';
                 default:
                     return '';
             }
@@ -369,9 +371,17 @@ export class MockTestDataRender extends BaseDataRender {
         } else if (['int32', 'int64', 'float32', 'float64'].indexOf(goType) >= 0) {
             ret = `${Number(rawValue)}`;
         } else if (goType === 'time.Time') {
-            this.context.importManager.add('time');
-            const timeFormat = (schema as DateTimeSchema).format === 'date-time-rfc1123' ? 'time.RFC1123' : 'time.RFC3339Nano';
-            ret = `func() time.Time { t, _ := time.Parse(${timeFormat}, "${rawValue}"); return t}()`;
+            if (schema.type === SchemaType.UnixTime) {
+                this.context.importManager.add('time');
+                ret = `time.Unix(${rawValue}, 0)`;
+            } else if (schema.type === SchemaType.Date) {
+                this.context.importManager.add('time');
+                ret = `func() time.Time { t, _ := time.Parse("2006-01-02", "${rawValue}"); return t}()`;
+            } else {
+                this.context.importManager.add('time');
+                const timeFormat = (schema as DateTimeSchema).format === 'date-time-rfc1123' ? 'time.RFC1123' : 'time.RFC3339Nano';
+                ret = `func() time.Time { t, _ := time.Parse(${timeFormat}, "${rawValue}"); return t}()`;
+            }
         } else if (goType === 'map[string]interface{}') {
             ret = GoHelper.obejctToString(rawValue);
         } else if (goType === 'interface{}' && Array.isArray(rawValue)) {

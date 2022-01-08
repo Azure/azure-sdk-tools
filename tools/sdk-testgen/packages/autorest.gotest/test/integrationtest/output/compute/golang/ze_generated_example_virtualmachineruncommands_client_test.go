@@ -57,7 +57,7 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
@@ -101,7 +101,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
@@ -131,7 +131,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
@@ -172,7 +172,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsGetByVirtualMachineResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineRunCommandsClientGetByVirtualMachineResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json

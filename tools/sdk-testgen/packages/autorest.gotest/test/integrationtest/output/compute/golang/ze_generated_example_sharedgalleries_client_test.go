@@ -54,5 +54,5 @@ func ExampleSharedGalleriesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.SharedGalleriesGetResult)
+	log.Printf("Response result: %#v\n", res.SharedGalleriesClientGetResult)
 }

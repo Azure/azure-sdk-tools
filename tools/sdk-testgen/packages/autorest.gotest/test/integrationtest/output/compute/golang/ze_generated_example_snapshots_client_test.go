@@ -47,7 +47,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.SnapshotsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.SnapshotsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
@@ -65,7 +65,7 @@ func ExampleSnapshotsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.SnapshotsGetResult)
+	log.Printf("Response result: %#v\n", res.SnapshotsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json

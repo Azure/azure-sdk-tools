@@ -40,7 +40,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
@@ -68,7 +68,7 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesUpdateResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
@@ -86,7 +86,7 @@ func ExampleDiskAccessesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesGetResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
@@ -172,7 +172,7 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesGetPrivateLinkResourcesResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientGetPrivateLinkResourcesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
@@ -203,7 +203,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesUpdateAPrivateEndpointConnectionResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientUpdateAPrivateEndpointConnectionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
@@ -222,7 +222,7 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskAccessesGetAPrivateEndpointConnectionResult)
+	log.Printf("Response result: %#v\n", res.DiskAccessesClientGetAPrivateEndpointConnectionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json

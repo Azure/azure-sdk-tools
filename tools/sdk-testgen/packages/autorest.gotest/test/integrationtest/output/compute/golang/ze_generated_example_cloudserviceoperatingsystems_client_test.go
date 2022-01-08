@@ -30,7 +30,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSVersionResult)
+	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsClientGetOSVersionResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
@@ -72,7 +72,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsGetOSFamilyResult)
+	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsClientGetOSFamilyResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json

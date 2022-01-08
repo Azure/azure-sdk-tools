@@ -32,7 +32,7 @@ func ExampleDiskRestorePointClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.DiskRestorePointGetResult)
+	log.Printf("Response result: %#v\n", res.DiskRestorePointClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json

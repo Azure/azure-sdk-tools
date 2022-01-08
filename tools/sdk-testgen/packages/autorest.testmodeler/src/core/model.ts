@@ -209,9 +209,6 @@ export class ExampleParameter {
     public constructor(parameter: Parameter, rawValue: any) {
         this.parameter = parameter;
         this.exampleValue = ExampleValue.createInstance(rawValue, new Set(), parameter?.schema, parameter.language);
-        if (this.parameter.protocol?.http?.in === 'query' && typeof this.exampleValue.rawValue === 'string') {
-            this.exampleValue.rawValue = decodeURIComponent(this.exampleValue.rawValue.replace(/\+/g, '%20'));
-        }
     }
 }
 

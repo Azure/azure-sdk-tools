@@ -32,12 +32,16 @@ export class GoHelper {
         for (const item of rawValue) {
             if (_.isArray(item)) {
                 ret += this.arrayToString(item);
-                `,\n`;
+                ret += `,\n`;
             } else if (_.isObject(item)) {
                 ret += this.obejctToString(item);
                 ret += `,\n`;
             } else if (_.isString(item)) {
                 ret += `${Helper.quotedEscapeString(item)},\n`;
+            } else if (item === null) {
+                ret += `nil,\n`;
+            } else if (_.isNumber(item)) {
+                ret += `float64(${item}),\n`;
             } else {
                 ret += `${item},\n`;
             }

@@ -97,11 +97,6 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 					},
 				},
 			},
-			SKU: &golang.SKU{
-				Name:     to.StringPtr("<name>"),
-				Capacity: to.Int64Ptr(3),
-				Tier:     to.StringPtr("<tier>"),
-			},
 		},
 		nil)
 	if err != nil {
@@ -111,7 +106,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
@@ -150,5 +145,5 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsClientGetResult)
 }

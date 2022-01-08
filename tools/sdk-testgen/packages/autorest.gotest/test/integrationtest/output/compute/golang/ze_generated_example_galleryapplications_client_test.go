@@ -48,7 +48,7 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryApplicationsCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationsClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
@@ -80,7 +80,7 @@ func ExampleGalleryApplicationsClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryApplicationsUpdateResult)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationsClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
@@ -99,7 +99,7 @@ func ExampleGalleryApplicationsClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.GalleryApplicationsGetResult)
+	log.Printf("Response result: %#v\n", res.GalleryApplicationsClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json

@@ -105,7 +105,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesCreateOrUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientCreateOrUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
@@ -177,7 +177,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesUpdateResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientUpdateResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
@@ -216,7 +216,7 @@ func ExampleVirtualMachinesClient_Get() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesGetResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientGetResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
@@ -234,7 +234,7 @@ func ExampleVirtualMachinesClient_InstanceView() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesInstanceViewResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientInstanceViewResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
@@ -269,7 +269,7 @@ func ExampleVirtualMachinesClient_ListAvailableSizes() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesListAvailableSizesResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientListAvailableSizesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
@@ -332,7 +332,7 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesRetrieveBootDiagnosticsDataResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientRetrieveBootDiagnosticsDataResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
@@ -371,7 +371,7 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesAssessPatchesResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientAssessPatchesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
@@ -403,7 +403,7 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesInstallPatchesResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientInstallPatchesResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
@@ -428,5 +428,5 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachinesRunCommandResult)
+	log.Printf("Response result: %#v\n", res.VirtualMachinesClientRunCommandResult)
 }

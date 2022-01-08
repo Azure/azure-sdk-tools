@@ -221,7 +221,7 @@ describe('GoTestGenerator from RP signalR', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
         const codeModel = MockTool.loadCodeModel('signalR/test-modeler-pre.yaml');
-        const swaggerFolder = path.join(__dirname, '..', '..', 'swagger/specification/signalr/resource-manager/');
+        const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
         testCodeModel = TestCodeModeler.createInstance(
             codeModel as TestCodeModel,
             new TestConfig(

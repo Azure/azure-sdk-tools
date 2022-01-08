@@ -135,7 +135,9 @@ export class ResponseGenerator {
                     urlMappingResult.groups &&
                     urlMappingResult.groups[paramSpec.name]
                 ) {
-                    parameters[paramSpec.name] = decodeURI(urlMappingResult.groups[paramSpec.name])
+                    parameters[paramSpec.name] = unescape(
+                        decodeURI(urlMappingResult.groups[paramSpec.name])
+                    )
                     types[paramSpec.name] = ParameterType.Path
                 }
             } else if (paramSpec.in === ParameterType.Body.toString()) {
@@ -147,17 +149,6 @@ export class ResponseGenerator {
                     Object.prototype.hasOwnProperty.call(liveRequest.query, paramSpec.name)
                 ) {
                     parameters[paramSpec.name] = liveRequest.query[paramSpec.name]
-                    // query value should be escape as example value use escaped string
-                    if (typeof parameters[paramSpec.name] === 'string') {
-                        parameters[paramSpec.name] = escape(parameters[paramSpec.name])
-                    } else if (Array.isArray(parameters[paramSpec.name])) {
-                        parameters[paramSpec.name] = parameters[paramSpec.name].map((x: any) => {
-                            if (typeof x === 'string') {
-                                return escape(x)
-                            }
-                            return x
-                        })
-                    }
                     types[paramSpec.name] = ParameterType.Query
                 }
             } else if (paramSpec.in === ParameterType.Header.toString()) {

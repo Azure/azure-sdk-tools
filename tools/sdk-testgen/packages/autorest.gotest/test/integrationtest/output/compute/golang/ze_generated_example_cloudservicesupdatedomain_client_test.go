@@ -55,7 +55,7 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Response result: %#v\n", res.CloudServicesUpdateDomainGetUpdateDomainResult)
+	log.Printf("Response result: %#v\n", res.CloudServicesUpdateDomainClientGetUpdateDomainResult)
 }
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json

@@ -96,7 +96,6 @@ describe('ExampleParameter constructor(...)', () => {
 });
 
 describe('TestCodeModel functions', () => {
-
     afterEach(() => {
         jest.restoreAllMocks();
     });

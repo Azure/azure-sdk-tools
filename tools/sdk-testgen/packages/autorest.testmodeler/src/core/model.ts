@@ -309,7 +309,9 @@ export class TestCodeModeler {
 
     public genMockTests() {
         this.initiateTests();
-        if (!this.testConfig.getValue(Config.useExampleModel)) return;
+        if (!this.testConfig.getValue(Config.useExampleModel)) {
+            return;
+        }
         this.codeModel.operationGroups.forEach((operationGroup) => {
             operationGroup.operations.forEach((operation) => {
                 const operationId = operationGroup.language.default.name + '_' + operation.language.default.name;

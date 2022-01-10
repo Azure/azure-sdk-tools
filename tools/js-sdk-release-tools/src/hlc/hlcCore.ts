@@ -10,9 +10,6 @@ import {changeRushJson} from "../utils/changeRushJson";
 import {modifyOrGenerateCiYaml} from "../utils/changeCiYaml";
 import {isBetaVersion} from "../utils/version";
 
-const commentJson = require('comment-json');
-const yaml = require('yaml');
-
 export interface OutputPackageInfo {
     packageName: string;
     path: string[];
@@ -23,6 +20,18 @@ export interface OutputPackageInfo {
     };
     artifacts: string[];
     result: string;
+}
+
+export interface OutputPackageInfoForSdkGeneration {
+    packageName: string;
+    path: string[];
+    changelog: {
+        content: string;
+        hasBreakingChange: boolean;
+    };
+    artifacts: string[];
+    result: string;
+    packageFolder: string;
 }
 
 function changeReadmeMd(packageFolderPath: string) {
@@ -45,7 +54,7 @@ function changeReadmeMd(packageFolderPath: string) {
 
 }
 
-export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, additionalArgs?: string, outputJson?: any, swaggerRepoUrl?: string) {
+export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, forSdkGeneration: boolean, tag?: string, use?: string, useDebugger?: boolean, additionalArgs?: string, outputJson?: any, swaggerRepoUrl?: string) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${absoluteReadmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
     let cmd = `autorest --version=3.1.3 --typescript --modelerfour.lenient-model-deduplication --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${azureSDKForJSRepoRoot} ${absoluteReadmeMd}`;
@@ -81,22 +90,40 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
 
         const changedPackageDirectories: Set<string> = await getChangedPackageDirectory();
         for (const changedPackageDirectory of changedPackageDirectories) {
-            const outputPackageInfo: OutputPackageInfo = {
-                "packageName": "",
-                "path": [
-                    'rush.json',
-                    'common/config/rush/pnpm-lock.yaml'
-                ],
-                "readmeMd": [
-                    relativeReadmeMd
-                ],
-                "changelog": {
-                    "content": "",
-                    "hasBreakingChange": false
-                },
-                "artifacts": [],
-                "result": "succeeded"
-            };
+            let outputPackageInfo;
+            if (forSdkGeneration) {
+                outputPackageInfo = {
+                    "packageName": "",
+                    "path": [
+                        'rush.json',
+                        'common/config/rush/pnpm-lock.yaml'
+                    ],
+                    "changelog": {
+                        "content": "",
+                        "hasBreakingChange": false
+                    },
+                    "packageFolder": '',
+                    "artifacts": [],
+                    "result": "succeeded"
+                } as OutputPackageInfoForSdkGeneration;
+            } else {
+                outputPackageInfo = {
+                    "packageName": "",
+                    "path": [
+                        'rush.json',
+                        'common/config/rush/pnpm-lock.yaml'
+                    ],
+                    "readmeMd": [
+                        relativeReadmeMd
+                    ],
+                    "changelog": {
+                        "content": "",
+                        "hasBreakingChange": false
+                    },
+                    "artifacts": [],
+                    "result": "succeeded"
+                } as OutputPackageInfo;
+            }
             try {
                 const packageFolderPath: string = path.join(azureSDKForJSRepoRoot, changedPackageDirectory);
                 logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
@@ -113,26 +140,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                     const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
                     logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
                     execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, { stdio: 'inherit' });
-                    if (outputJson) {
-                        outputPackageInfo.packageName = 'track2_' + packageJson.name;
-                        if (changelog) {
-                            outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                            outputPackageInfo.changelog.content = changelog.displayChangeLog();
-                            const breakingChangeItems = changelog.getBreakingChangeItems();
-                            if (!!breakingChangeItems && breakingChangeItems.length > 0) {
-                                outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
-                            }
-                            const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));;
-                            const newVersion = newPackageJson['version'];
-                            outputPackageInfo['version'] = newVersion;
-                        }
-                        outputPackageInfo.path.push(path.dirname(changedPackageDirectory));
-                        for (const file of fs.readdirSync(packageFolderPath)) {
-                            if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
-                                outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
-                            }
-                        }
-                    }
+
                     const metaInfo: any = {
                         commit: gitCommitId,
                         readme: relativeReadmeMd,
@@ -146,8 +154,34 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                         metaInfo['use'] = use;
                     }
                     fs.writeFileSync(path.join(packageFolderPath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
-                    modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
+                    const changedCiYaml = modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
                     changeReadmeMd(packageFolderPath);
+
+                    if (outputJson) {
+                        outputPackageInfo.packageName = 'track2_' + packageJson.name;
+                        if (changelog) {
+                            outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
+                            outputPackageInfo.changelog.content = changelog.displayChangeLog();
+                            const breakingChangeItems = changelog.getBreakingChangeItems();
+                            if (!!breakingChangeItems && breakingChangeItems.length > 0) {
+                                outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                            }
+                            const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));;
+                            const newVersion = newPackageJson['version'];
+                            outputPackageInfo['version'] = newVersion;
+                        }
+                        outputPackageInfo.packageFolder = changedPackageDirectory;
+
+                        outputPackageInfo.path.push(changedPackageDirectory)
+                        if (!!changedCiYaml) {
+                              outputPackageInfo.path.push(path.join(path.dirname(changedPackageDirectory), path.basename(changedCiYaml)));
+                        }
+                        for (const file of fs.readdirSync(packageFolderPath)) {
+                            if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
+                                outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
+                            }
+                        }
+                    }
                 } else {
                     throw 'find undefined packageFolderPath'
                 }

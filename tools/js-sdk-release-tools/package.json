@@ -12,6 +12,7 @@
     "changelog-tool": "./dist/changelogToolCli.js",
     "hlc-code-gen": "./dist/hlcCodeGenCli.js",
     "hlc-code-gen-for-pipeline": "./dist/hlcCodegenForPipelineCli.js",
+    "hlc-code-gen-for-sdk-generation-pipeline": "./dist/hlcCodegenForSdkGenerationCli.js.js",
     "rlc-code-gen": "./dist/llcCodegenCli.js"
   },
   "author": "Microsoft Corporation",

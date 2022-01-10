@@ -46,7 +46,9 @@ export function modifyOrGenerateCiYaml(azureSDKForJSRepoRoot: string, changedPac
             changed = addArtifact(ciYaml?.extends?.parameters?.Artifacts, name, safeName) || changed;
             if (changed) {
                 fs.writeFileSync(ciYamlPath, yaml.stringify(ciYaml), {encoding: 'utf-8'});
+                return ciYamlPath;
             }
+            return undefined;
         } else {
             relativeRpFolderPath = relativeRpFolderPath.replace(/\\/g, '/');
             const ciYaml = `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
@@ -80,5 +82,6 @@ extends:
         `;
             fs.writeFileSync(ciYamlPath, ciYaml, {encoding: 'utf-8'});
         }
+        return ciYamlPath;
     }
 }

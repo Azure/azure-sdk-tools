@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 
-import {generateSdkAutomatically, OutputPackageInfo} from "./hlc/hlcCore";
+import {generateSdkAutomatically, OutputPackageInfoForSdkGeneration} from "./hlc/hlcCore";
 
 const shell = require('shelljs');
 const fs = require('fs');
 const path = require('path');
 
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use?: string, useDebugger?: boolean) {
+async function automationGenerateForSdkGeneration(inputJsonPath: string, outputJsonPath: string, use?: string, useDebugger?: boolean) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, {encoding: 'utf-8'}));
     const specFolder: string = inputJson['specFolder'];
-    const readmeFiles: string[] = inputJson['relatedReadmeMdFiles'];
+    const readmeFile: string = inputJson['relatedReadmeMdFile'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
-    const packages: OutputPackageInfo[] = [];
+    const packages: OutputPackageInfoForSdkGeneration[] = [];
     const outputJson = {
         packages: packages
     };
-    for (const readmeMd of readmeFiles) {
-        await generateSdkAutomatically(String(shell.pwd()), path.join(specFolder, readmeMd), readmeMd, gitCommitId, false, undefined, use, useDebugger, undefined, outputJson, repoHttpsUrl);
-    }
+    await generateSdkAutomatically(String(shell.pwd()), readmeFile, path.relative(specFolder, readmeFile), gitCommitId, true, undefined, use, useDebugger, undefined, outputJson, repoHttpsUrl);
 
     fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, undefined, '  '), {encoding: 'utf-8'})
 }
@@ -31,4 +29,4 @@ const optionDefinitions = [
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.useDebugger? true : false);
+automationGenerateForSdkGeneration(options.inputJsonPath, options.outputJsonPath, options.use, options.useDebugger? true : false);

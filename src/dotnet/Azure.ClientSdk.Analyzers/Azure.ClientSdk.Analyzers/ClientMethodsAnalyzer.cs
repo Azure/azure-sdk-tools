@@ -23,9 +23,10 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
-            static bool IsCancellationTokenParameter(IParameterSymbol parameterSymbol)
+            static bool SupportsCancellationsParameter(IParameterSymbol parameterSymbol)
             {
-                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
+                return (parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken") ||
+                       (parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext");
             }
 
             CheckClientMethodReturnType(context, member);
@@ -36,17 +37,17 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             var lastArgument = member.Parameters.LastOrDefault();
-            var isCancellationTokenParameter = lastArgument != null && IsCancellationTokenParameter(lastArgument);
+            var supportsCancellations = lastArgument != null && SupportsCancellationsParameter(lastArgument);
 
-            if (!isCancellationTokenParameter)
+            if (!supportsCancellations)
             {
-                var overloadWithCancellationToken = FindMethod(
+                var overloadSupportsCancellations = FindMethod(
                     member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
                     member.TypeParameters,
                     member.Parameters,
-                    p => IsCancellationTokenParameter(p));
+                    p => SupportsCancellationsParameter(p));
 
-                if (overloadWithCancellationToken != null)
+                if (overloadSupportsCancellations != null)
                 {
                     // Skip methods that have overloads with cancellation tokens
                     return;

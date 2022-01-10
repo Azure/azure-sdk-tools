@@ -32,6 +32,9 @@ class TestClass:
         """
         return None
 
+    def with_default_values(self, foo="1", *, bar="2", baz=None):
+        return None
+
 
 class TestFunctionParsing:
     
@@ -39,7 +42,7 @@ class TestFunctionParsing:
         func_node = FunctionNode("test", None, TestClass.with_optional_typehint, "test")
         arg = func_node.args["description"]
         assert arg.argtype == "typing.Optional[str]"
-        assert arg.default == "None"
+        assert arg.default == "..."
 
     def test_optional_docstring(self):
         func_node = FunctionNode("test", None, TestClass.with_optional_docstring, "test")
@@ -60,3 +63,9 @@ class TestFunctionParsing:
         # the type annotation comes ONLY from the docstring. The Python2 type hint is not used!
         assert arg.argtype == "str"
         assert arg.default == ""
+
+    def test_default_values(self):
+        func_node = FunctionNode("test", None, TestClass.with_default_values, "test")
+        assert func_node.args["foo"].default == "1"
+        assert func_node.kw_args["bar"].default == "2"
+        assert func_node.kw_args["baz"].default == "..."

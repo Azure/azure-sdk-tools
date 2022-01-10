@@ -39,6 +39,7 @@ steps:
       PRBranchName: UpdateRepositoryRefsFor${{ parameters.ToolRepo }}
       CommitMsg: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
       PRTitle: Update ${{ parameters.ToolRepo }} Repository Resource Refs in Yaml files
+      PRBody: Update triggered by - $(System.CollectionUri)/$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
       ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts

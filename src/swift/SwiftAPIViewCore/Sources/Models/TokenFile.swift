@@ -135,9 +135,9 @@ class TokenFile: Codable {
         add(token: item)
     }
 
-    func keyword(value: String) {
+    func keyword(value: String, definitionId: String? = nil) {
         checkIndent()
-        let item = TokenItem(definitionId: nil, navigateToId: nil, value: value, kind: .keyword)
+        let item = TokenItem(definitionId: definitionId, navigateToId: nil, value: value, kind: .keyword)
         add(token: item)
     }
 
@@ -250,7 +250,7 @@ class TokenFile: Codable {
         // register type as linkable
         let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
 
-        handle(attributes: decl.attributes)
+        handle(attributes: decl.attributes, defId: defId)
         keyword(value: accessLevel.textDescription)
         whitespace()
         if decl.isFinal {
@@ -261,7 +261,7 @@ class TokenFile: Codable {
         whitespace()
         type(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
-        handle(clause: decl.typeInheritanceClause)
+        handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
         whitespace()
         punctuation("{")
@@ -283,14 +283,15 @@ class TokenFile: Codable {
         // register type as linkable
         let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
 
-        handle(attributes: decl.attributes)
+        handle(attributes: decl.attributes, defId: defId)
+
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "struct")
         whitespace()
         type(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
-        handle(clause: decl.typeInheritanceClause)
+        handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
         whitespace()
         punctuation("{")
@@ -312,7 +313,8 @@ class TokenFile: Codable {
         // register type as linkable
         let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
 
-        handle(attributes: decl.attributes)
+        handle(attributes: decl.attributes, defId: defId)
+
         if decl.isIndirect {
             keyword(value: "indirect")
             whitespace()
@@ -323,7 +325,7 @@ class TokenFile: Codable {
         whitespace()
         type(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
-        handle(clause: decl.typeInheritanceClause)
+        handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
         whitespace()
         punctuation("{")
@@ -345,14 +347,15 @@ class TokenFile: Codable {
         // register type as linkable
         let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
 
-        handle(attributes: decl.attributes)
+        handle(attributes: decl.attributes, defId: defId)
+
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "protocol")
         whitespace()
         type(name: decl.name.textDescription, definitionId: defId)
         whitespace()
-        handle(clause: decl.typeInheritanceClause)
+        handle(clause: decl.typeInheritanceClause, defId: defId)
         whitespace()
         punctuation("{")
         newLine()
@@ -373,7 +376,8 @@ class TokenFile: Codable {
         // register type as linkable
         let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
 
-        handle(attributes: decl.attributes)
+        handle(attributes: decl.attributes, defId: defId)
+
         keyword(value: accessLevel.textDescription)
         whitespace()
         keyword(value: "typealias")
@@ -398,8 +402,9 @@ class TokenFile: Codable {
                 return false
             }
         }
+        let defId = defId(forName: decl.type.textDescription, withPrefix: "\(defIdPrefix).extension")
+        handle(attributes: decl.attributes, defId: defId)
 
-        handle(attributes: decl.attributes)
         if let access = accessLevel {
             let value = access.textDescription
             keyword(value: value)
@@ -407,11 +412,10 @@ class TokenFile: Codable {
         }
         keyword(value: "extension")
         whitespace()
-        let defId = defId(forName: decl.type.textDescription, withPrefix: "\(defIdPrefix).extension")
 
         type(name: decl.type.textDescription, definitionId: defId)
         whitespace()
-        handle(clause: decl.typeInheritanceClause)
+        handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
         punctuation("{")
         newLine()
@@ -634,21 +638,21 @@ class TokenFile: Codable {
         }
     }
 
-    private func handle(result: Type?) {
+    private func handle(result: Type?, defId: String) {
         guard let result = result else { return }
         let typeModel = TypeModel(from: result)
         punctuation("->")
         whitespace()
-        handle(typeModel: typeModel)
+        handle(typeModel: typeModel, defId: defId)
     }
 
-    private func handle(parameter: FunctionSignature.Parameter) {
+    private func handle(parameter: FunctionSignature.Parameter, defId: String) {
         let name = parameter.externalName?.textDescription ?? parameter.localName.textDescription
         let typeModel = TypeModel(from: parameter.typeAnnotation)
         member(name: name)
         punctuation(":")
         whitespace()
-        handle(typeModel: typeModel)
+        handle(typeModel: typeModel, defId: defId)
         if let defaultArgument = parameter.defaultArgumentClause {
             whitespace()
             punctuation("=")
@@ -668,12 +672,12 @@ class TokenFile: Codable {
         }
     }
 
-    private func handle(signature: FunctionSignature) {
+    private func handle(signature: FunctionSignature, defId: String) {
         punctuation("(")
         if !signature.parameterList.isEmpty {
             let stopIdx = signature.parameterList.count - 1
             for (idx, parameter) in signature.parameterList.enumerated() {
-                handle(parameter: parameter)
+                handle(parameter: parameter, defId: defId)
                 if idx != stopIdx {
                     punctuation(",")
                     whitespace()
@@ -684,17 +688,17 @@ class TokenFile: Codable {
         whitespace()
         handle(async: signature.asyncKind)
         handle(throws: signature.throwsKind)
-        handle(result: signature.result?.type)
+        handle(result: signature.result?.type, defId: defId)
         whitespace()
     }
 
-    private func handle(clause typeInheritance: TypeInheritanceClause?) {
+    private func handle(clause typeInheritance: TypeInheritanceClause?, defId: String) {
         guard let typeInheritance = typeInheritance else { return }
         punctuation(":")
         whitespace()
         for (idx, item) in typeInheritance.typeInheritanceList.enumerated() {
             let typeModel = TypeModel(from: item)
-            handle(typeModel: typeModel)
+            handle(typeModel: typeModel, defId: defId)
             if idx != typeInheritance.typeInheritanceList.count - 1 {
                 punctuation(",")
                 whitespace()
@@ -766,23 +770,28 @@ class TokenFile: Codable {
         whitespace()
     }
 
-    private func handle(attributes: Attributes, inline: Bool = false) {
+    private func handle(attributes: Attributes, defId: String, inline: Bool = false) {
         guard !attributes.isEmpty else { return }
         // extra newline for readability
         inline ? whitespace() : newLine()
         attributes.forEach { attribute in
-            keyword(value: "@\(attribute.name.textDescription)")
-            if let argument = attribute.argumentClause {
-                text(argument.textDescription)
+            let attrName = "@\(attribute.name.textDescription)"
+            let attrArgs = attribute.argumentClause?.textDescription
+            // deliberately use the full string without whitespace as the definition ID for non-inline attributes
+            let attrString = "\(attrName)\(attrArgs ?? "")".replacingOccurrences(of: " ", with: "")
+            let defId = inline == true ? nil : self.defId(forName: attrString, withPrefix: defId)
+            keyword(value: attrName, definitionId: defId)
+            if let argument = attrArgs {
+                text(argument, definitionId: defId)
             }
             inline ? whitespace() : newLine()
         }
     }
 
-    private func handle(typeModel: TypeModel?) {
+    private func handle(typeModel: TypeModel?, defId: String) {
         guard let source = typeModel else { return }
         if let attributes = typeModel?.attributes {
-            handle(attributes: attributes, inline: true)
+            handle(attributes: attributes, defId: defId, inline: true)
         }
         if source.isArray { punctuation("[") }
         type(name: source.name)
@@ -792,7 +801,7 @@ class TokenFile: Codable {
         }
     }
 
-    private func handle(tuple: TupleType?) {
+    private func handle(tuple: TupleType?, defId: String) {
         guard let tuple = tuple else { return }
         punctuation("(")
         let stopIdx = tuple.elements.count - 1
@@ -802,7 +811,7 @@ class TokenFile: Codable {
                 punctuation(":")
                 whitespace()
             }
-            handle(typeModel: TypeModel(from: element.type))
+            handle(typeModel: TypeModel(from: element.type), defId: defId)
             if idx != stopIdx {
                 punctuation(",")
                 whitespace()
@@ -839,7 +848,7 @@ class TokenFile: Codable {
                 keyword(value: "case")
                 whitespace()
                 self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
-                handle(tuple: enumCaseValue.tuple)
+                handle(tuple: enumCaseValue.tuple, defId: enumDefId)
                 newLine()
             }
         case let .rawValue(enumCase):
@@ -878,7 +887,7 @@ class TokenFile: Codable {
             whitespace()
             self.member(name: name)
             if let inheritance = data.typeInheritance {
-                handle(clause: inheritance)
+                handle(clause: inheritance, defId: defId)
             }
             newLine()
         case let .method(data):
@@ -889,14 +898,14 @@ class TokenFile: Codable {
         case let .property(data):
             let name = data.name.textDescription
 
-            handle(attributes: data.attributes)
+            handle(attributes: data.attributes, defId: defId)
             handle(modifiers: data.modifiers)
             keyword(value: "var")
             whitespace()
             self.member(name: name)
             punctuation(":")
             whitespace()
-            handle(typeModel: TypeModel(from: data.typeAnnotation))
+            handle(typeModel: TypeModel(from: data.typeAnnotation), defId: defId)
             whitespace()
             punctuation("{")
             whitespace()
@@ -942,14 +951,14 @@ class TokenFile: Codable {
 
     private func processMember(name: String, defId: String, attributes: Attributes, modifiers: DeclarationModifiers, typeModel: TypeModel, isConst: Bool, defaultValue: String?, accessLevel: AccessLevelModifier) -> Bool {
         guard publicModifiers.contains(accessLevel) else { return false }
-        handle(attributes: attributes)
+        handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
         keyword(value: isConst ? "let" : "var")
         whitespace()
         member(name: name, definitionId: defId)
         punctuation(":")
         whitespace()
-        handle(typeModel: typeModel)
+        handle(typeModel: typeModel, defId: defId)
         if let defaultValue = defaultValue {
             whitespace()
             punctuation("=")
@@ -962,13 +971,13 @@ class TokenFile: Codable {
 
     private func processInitializer(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, kind: String, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, throwsKind: ThrowsKind, parameterList: [FunctionSignature.Parameter], genericWhere: GenericWhereClause?) -> Bool {
         guard publicModifiers.contains(accessLevel) else { return false }
-        handle(attributes: attributes)
+        handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
         member(name: "init", definitionId: defId)
         punctuation(kind)
         handle(clause: genericParam)
         let initSignature = FunctionSignature(parameterList: parameterList, throwsKind: throwsKind, result: nil)
-        handle(signature: initSignature)
+        handle(signature: initSignature, defId: defId)
         handle(clause: genericWhere)
         newLine()
         return true
@@ -976,17 +985,17 @@ class TokenFile: Codable {
 
     private func processSubscript(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, parameterList: [FunctionSignature.Parameter], resultType: Type, genericWhere: GenericWhereClause?) -> Bool {
         guard publicModifiers.contains(accessLevel) else { return false }
-        handle(attributes: attributes)
+        handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
         keyword(value: "subscript")
         handle(clause: genericParam)
         punctuation("(")
         parameterList.forEach { param in
-            handle(parameter: param)
+            handle(parameter: param, defId: defId)
         }
         punctuation(")")
         whitespace()
-        handle(result: resultType)
+        handle(result: resultType, defId: defId)
         handle(clause: genericWhere)
         newLine()
         return true
@@ -994,13 +1003,13 @@ class TokenFile: Codable {
 
     private func processFunction(name: String, defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, signature: FunctionSignature, genericParam: GenericParameterClause?, genericWhere: GenericWhereClause?) -> Bool {
         guard publicModifiers.contains(accessLevel) else { return false }
-        handle(attributes: attributes)
+        handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
         keyword(value: "func")
         whitespace()
         member(name: name, definitionId: defId)
         handle(clause: genericParam)
-        handle(signature: signature)
+        handle(signature: signature, defId: defId)
         handle(clause: genericWhere)
         newLine()
         return true

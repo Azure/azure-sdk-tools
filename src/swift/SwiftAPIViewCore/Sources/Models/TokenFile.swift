@@ -187,8 +187,15 @@ class TokenFile: Codable {
     /// Constructs a definition ID and ensures it is unique.
     internal func defId(forName name: String, withPrefix prefix: String?) -> String {
         let defId = prefix != nil ? "\(prefix!).\(name)" : name
-        guard self.definitionIds[defId] == nil else {
-            fatalError("Definition ID should be unique")
+        guard !defId.contains(" ") else {
+            fatalError("Definition ID should not contain whitespace")
+        }
+        if self.definitionIds[defId] != nil {
+            // extension definition statements are permitted to repeat since
+            // there is no way to make them unique
+            if !(prefix ?? "").hasSuffix("extension") {
+                fatalError("Definition ID should be unique")
+            }
         }
         definitionIds[defId] = defId
         return defId
@@ -400,7 +407,7 @@ class TokenFile: Codable {
         }
         keyword(value: "extension")
         whitespace()
-        let defId = defId(forName: decl.type.textDescription, withPrefix: defIdPrefix)
+        let defId = defId(forName: decl.type.textDescription, withPrefix: "\(defIdPrefix).extension")
 
         type(name: decl.type.textDescription, definitionId: defId)
         whitespace()
@@ -478,7 +485,7 @@ class TokenFile: Codable {
 
     private func process(_ decl: SubscriptDeclaration, defIdPrefix: String, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        let defId = defId(forName: decl.textDescription, withPrefix: defIdPrefix)
+        let defId = defId(forName: "subscript", withPrefix: defIdPrefix)
         return processSubscript(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, genericParam: decl.genericParameterClause, parameterList: decl.parameterList, resultType: decl.resultType, genericWhere: decl.genericWhereClause)
     }
 
@@ -876,7 +883,7 @@ class TokenFile: Codable {
             newLine()
         case let .method(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = self.defId(forName: data.textDescription, withPrefix: defId)
+            let defId = self.defId(forName: data.name.textDescription, withPrefix: defId)
             let name = data.name.textDescription
             _ = processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
         case let .property(data):
@@ -911,11 +918,11 @@ class TokenFile: Codable {
             newLine()
         case let .initializer(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = self.defId(forName: data.textDescription, withPrefix: defId)
+            let defId = self.defId(forName: data.fullName, withPrefix: defId)
             _ = processInitializer(defId: defId, attributes: data.attributes, modifiers: data.modifiers, kind: data.kind.textDescription, accessLevel: accessLevel,  genericParam: data.genericParameter, throwsKind: data.throwsKind, parameterList: data.parameterList, genericWhere: data.genericWhere)
         case let .subscript(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = self.defId(forName: data.textDescription, withPrefix: defId)
+            let defId = self.defId(forName: "subscript", withPrefix: defId)
             _ = processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere)
         default:
             SharedLogger.fail("Unsupported protocol member: \(member)")

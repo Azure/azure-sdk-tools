@@ -55,3 +55,10 @@ extension FunctionDeclaration {
         return "\(self.name)(\(labels.joined(separator: ":")))"
     }
 }
+
+extension ProtocolDeclaration.InitializerMember {
+    var fullName: String {
+        let labels = self.parameterList.map { $0.externalName?.textDescription ?? $0.localName.textDescription }
+        return "init(\(labels.joined(separator: ":")))"
+    }
+}

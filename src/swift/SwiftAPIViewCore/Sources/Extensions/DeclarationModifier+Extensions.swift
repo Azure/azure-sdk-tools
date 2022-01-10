@@ -41,3 +41,17 @@ extension DeclarationModifiers {
         return nil
     }
 }
+
+extension InitializerDeclaration {
+    var fullName: String {
+        let labels = self.parameterList.map { $0.externalName?.textDescription ?? $0.localName.textDescription }
+        return "init(\(labels.joined(separator: ":")))"
+    }
+}
+
+extension FunctionDeclaration {
+    var fullName: String {
+        let labels = self.signature.parameterList.map { $0.externalName?.textDescription ?? $0.localName.textDescription }
+        return "\(self.name)(\(labels.joined(separator: ":")))"
+    }
+}

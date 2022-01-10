@@ -12,3 +12,10 @@ class TokenKind(Enum):
     MemberName = 7
     StringLiteral = 8
     Literal = 9
+    Comment = 10
+    DocumentRangeStart = 11
+    DocumentRangeEnd = 12
+    DeprecatedRangeStart = 13
+    DeprecatedRangeEnd = 14
+    SkipDiffRangeStart = 15
+    SkipDiffRangeEnd = 16

@@ -125,6 +125,7 @@ namespace RandomNamespace
         public async Task AZC0002DoesntFireIfThereIsAnOverloadWithRequestContext()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -221,6 +222,7 @@ namespace RandomNamespace
         public async Task AZC0002NotProducedForMethodsWithRequestContext()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 

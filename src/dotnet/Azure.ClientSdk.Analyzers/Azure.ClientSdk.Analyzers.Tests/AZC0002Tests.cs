@@ -87,6 +87,33 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0002ProducedForMethodsWhereRequestContextIsNotLast()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
+        {
+            return null;
+        }
+
+        public virtual void {|AZC0002:Get|}(RequestContext context = default, string text = default)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0002DoesntFireIfThereIsAnOverloadWithCancellationToken()
         {
             const string code = @"

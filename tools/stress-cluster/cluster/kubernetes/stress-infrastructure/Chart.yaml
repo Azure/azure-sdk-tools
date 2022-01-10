@@ -27,3 +27,7 @@ dependencies:
 - name: chaos-mesh
   version: 0.5.1
   repository: https://charts.chaos-mesh.org
+  condition: deploy.chaosmesh
+- name: stress-test-addons
+  version: 0.1.12
+  repository: https://stresstestcharts.blob.core.windows.net/helm/

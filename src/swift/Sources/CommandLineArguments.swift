@@ -34,6 +34,7 @@ class CommandLineArguments: Encodable {
         "source",
         "dest",
         "package-name",
+        "package-version"
     ]
 
     // MARK: Computed properties
@@ -50,6 +51,10 @@ class CommandLineArguments: Encodable {
 
     var packageName: String? {
         return rawArgs["package-name"]
+    }
+
+    var packageVersion: String? {
+        return rawArgs["package-version"]
     }
 
     // MARK: Initializers

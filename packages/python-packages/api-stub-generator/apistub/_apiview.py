@@ -4,15 +4,16 @@ import logging
 import re
 import importlib
 import inspect
+import platform
 
 from ._token import Token
 from ._token_kind import TokenKind
 from ._version import VERSION
 from ._diagnostic import Diagnostic
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
 
-HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{})".format(VERSION)
+HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
 TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPERATOR = " or "
 

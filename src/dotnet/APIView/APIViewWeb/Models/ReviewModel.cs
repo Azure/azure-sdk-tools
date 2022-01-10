@@ -81,5 +81,7 @@ namespace APIViewWeb
 
         // Master version of review for each package will be auto created
         public bool IsAutomatic { get; set; }
+
+        public ReviewType FilterType { get; set; }
     }
 }

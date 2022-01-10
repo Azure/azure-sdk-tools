@@ -39,7 +39,7 @@ namespace APIViewWeb
         private const string AccessModifierProtected = "protected";
         private const string AccessModifierPublic = "public";
         private const string RootNamespace = "Azure";
-        private const string DetailsNamespacePostfix = "::Details";
+        private const string DetailsNamespacePostfix = "::_detail";
         private const string ImplicitConstrucorHintError = "Implicit constructor is found. Constructors must be explicitly declared.";
         private const string NonAccessModifierMemberError = "Found field without access modifier. Access modifier must be explicitly declared.";
 

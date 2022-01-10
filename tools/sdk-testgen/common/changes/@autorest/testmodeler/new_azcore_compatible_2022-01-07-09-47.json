@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Remove decode for query param in example model to be align with swagger example rule.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

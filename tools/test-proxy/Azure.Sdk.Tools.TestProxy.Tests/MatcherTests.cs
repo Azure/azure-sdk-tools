@@ -1,12 +1,12 @@
-﻿using Azure.Core;
-using Azure.Sdk.Tools.TestProxy.Common;
+﻿using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
-using System;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class MatcherTests
     {
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
+        public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
 
         [Fact]
         public void BodilessMatcherMatchesIdenticalRequest()
@@ -33,7 +34,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var bodilessRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             bodilessRequest.Request.Body = new byte[] { };
-
+            bodilessRequest.Request.Headers["Content-Length"] = new string[] { "0" };
+            
             var expectedBodilessMatch = sessionForRetrieval.Session.Lookup(bodilessRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
 
@@ -44,6 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var differentBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
             differentBodyRequest.Request.Body = TestHelpers.GenerateByteRequestBody("This is a test body :)");
+            differentBodyRequest.Request.Headers["Content-Length"] = new string[] { "15" };
 
             var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBodyRequest, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }
@@ -72,6 +75,211 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Throws<TestRecordingMismatchException>(() => {
                 sessionForRetrieval.Session.Lookup(identicalBodyDiffHeaders, BodilessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
             });
+        }
+
+
+        [Fact]
+        public void HeaderlessMatcherMatchesHeaderlessRequest()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var headerlessRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            headerlessRequest.Request.Headers = new SortedDictionary<string, string[]>();
+
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(headerlessRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void HeaderlessMatcherMatchesDifferentHeadersRequest()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers.Remove(differentHeadersRequest.Request.Headers.Keys.Last());
+
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentHeadersRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void HeaderlessMatcherMatchesIdenticalHeadersRequest()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var identicalHeaders = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            
+            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(identicalHeaders, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void HeaderlessMatcherThrowsOnDiffBody()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var diffBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            diffBodyRequest.Request.Body = Encoding.UTF8.GetBytes("A Different Request Body");
+
+            Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(diffBodyRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+        }
+
+        [Fact]
+        public void HeaderlessMatcherThrowsOnDiffUri()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differenUriRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differenUriRequest.RequestUri = "https://shouldntmatch.com";
+
+            Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differenUriRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+        }
+
+        [Fact]
+        public void CustomMatcherDefaultArgumentsMatch()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
+            var matcher = new CustomDefaultMatcher();
+
+            sessionForRetrieval.Session.Lookup(identicalRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherDisableBodyMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var differenBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json").Session.Entries[0];
+            differenBodyRequest.Request.Body = Encoding.UTF8.GetBytes("Definitely not the same body");
+
+            var matcher = new CustomDefaultMatcher(compareBodies: false);
+
+            sessionForRetrieval.Session.Lookup(differenBodyRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyExcludedHeadersMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
+
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
+
+            sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredHeadersMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRequestNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            differentHeadersRequest.Request.Headers.Remove("Accept-Encoding");
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differentHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+            Assert.Contains("<Accept-Encoding> is absent in request", assertion.Message);
+        }
+
+        [Fact]
+        public void CustomMatcherSpecifyIgnoredThrowsOnRecordNonPresence()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            sessionForRetrieval.Session.Entries[0].Request.Headers.Remove("Accept-Encoding");
+            var sameOriginalHeadersRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+
+            var matcher = new CustomDefaultMatcher(ignoredHeaders: "Accept-Encoding");
+
+            var assertion = Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(sameOriginalHeadersRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+
+            Assert.Contains("<Accept-Encoding> is absent in record", assertion.Message);
+        }
+
+        [Fact]
+        public void CustomMatcherDefaultMatches()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            var matcher = new CustomDefaultMatcher();
+
+            sessionForRetrieval.Session.Lookup(identicalRequest, matcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
+
+        [Fact]
+        public void CustomMatcherThrowsOnUnmatched()
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json");
+            var differentRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/if_none_match_present.json").Session.Entries[0];
+            var matcher = new CustomDefaultMatcher(excludedHeaders: "Accept-Encoding");
+
+            differentRequest.Request.Headers["Accept-Encoding"] = new string[] { "a-test-header-that-shouldn't-match" };
+            differentRequest.RequestUri = "https://shouldntmatch.com";
+
+            Assert.Throws<TestRecordingMismatchException>(() => {
+                sessionForRetrieval.Session.Lookup(differentRequest, HeaderlessMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+            });
+        }
+
+        [Fact]
+        public async Task CustomMatcherMatchesDifferentUriOrder()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
+            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            // prepare recording context
+            playbackContext.Request.Headers.Clear();
+            playbackContext.Response.Headers.Clear();
+            var requestHeaders = new Dictionary<string, string>(){
+                { ":authority", "localhost:5001" },
+                { ":method", "POST" },
+                { ":path", "/" },
+                { ":scheme", "https" },
+                { "Accept-Encoding", "gzip" },
+                { "Content-Length", "0" },
+                { "User-Agent", "Go-http-client/2.0" },
+                { "x-recording-id", recordingId },
+                { "x-recording-upstream-base-uri", "https://management.azure.com/" }
+            };
+            foreach (var kvp in requestHeaders)
+            {
+                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+            }
+            playbackContext.Request.Method = "POST";
+
+            // the query parameters are in reversed order from the recording deliberately.
+            var queryString = "?uselessUriAddition=hellothere&api-version=2019-05-01";
+            var path = "/subscriptions/12345678-1234-1234-5678-123456789010/providers/Microsoft.ContainerRegistry/checkNameAvailability";
+            playbackContext.Request.Host = new HostString("https://localhost:5001");
+            playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response);
+            Assert.Equal("WESTUS:20210909T204819Z:f9a33867-6efc-4748-b322-303b2b933466", playbackContext.Response.Headers["x-ms-routing-request-id"].ToString());
         }
     }
 }

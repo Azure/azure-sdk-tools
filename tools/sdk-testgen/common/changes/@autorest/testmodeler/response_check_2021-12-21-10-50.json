@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Refactor config get set method.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

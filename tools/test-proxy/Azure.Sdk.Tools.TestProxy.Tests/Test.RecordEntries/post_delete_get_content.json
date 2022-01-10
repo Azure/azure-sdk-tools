@@ -17,7 +17,7 @@
         "x-ms-date": "Tue, 18 May 2021 23:27:42 GMT",
         "x-ms-version": "2019-02-02"
       },
-      "RequestBody": "{\u0022TableName\u0022: \u0022listtable09bf2a3d\u0022}",
+      "RequestBody": "{\u0022TableName\u0022:    \u0022listtable09bf2a3d\u0022}",
       "StatusCode": 201,
       "ResponseHeaders": {
         "Cache-Control": "no-cache",

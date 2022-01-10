@@ -5,6 +5,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,6 +42,11 @@ public class Pom implements MavenGAV {
         try {
             // use xpath to get the artifact ID
             final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            builderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            builderFactory.setXIncludeAware(false);
+            builderFactory.setExpandEntityReferences(false);
+
             final DocumentBuilder builder = builderFactory.newDocumentBuilder();
             final Document xmlDocument = builder.parse(pomFileStream);
             final XPath xPath = XPathFactory.newInstance().newXPath();

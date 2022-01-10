@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Add response check to mock test generation.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

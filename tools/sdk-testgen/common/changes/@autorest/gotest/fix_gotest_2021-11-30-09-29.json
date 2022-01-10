@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Fix result check problem for lro operation with pageable config.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

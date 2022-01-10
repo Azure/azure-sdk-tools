@@ -1,8 +1,6 @@
 import logging
 import inspect
-import enum
 from enum import Enum
-import types
 import operator
 
 from ._base_node import NodeEntityBase
@@ -54,13 +52,14 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj):
+    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         self.errors = []
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
+        self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
         self._set_abc_implements()
         self._sort_elements()
@@ -101,7 +100,7 @@ class ClassNode(NodeEntityBase):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
-            return function_module and function_module.startswith(self.namespace)
+            return function_module and function_module.startswith(self.pkg_root_namespace)
 
         return False
 
@@ -160,9 +159,9 @@ class ClassNode(NodeEntityBase):
         docstring = getattr(self.obj, "__doc__")
         if docstring:
             docstring_parser = DocstringParser(docstring)
-            for var in docstring_parser.find_args("ivar"):
+            for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, var.argname, var.argtype, None, True
+                    self.namespace, self, key, var.argtype, None, True
                 )
                 self.child_nodes.append(ivar_node)
 

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Refine log for mock test and fix array item code generate bug.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

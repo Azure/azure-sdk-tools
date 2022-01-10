@@ -25,4 +25,5 @@ Azure\autorest.python
 Azure\autorest.typescript
 Azure\autorest.go
 Azure\autorest.swift
+Azure\autorest.cpp
 Azure\perks

@@ -2,7 +2,7 @@
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace NotificationConfiguration
+namespace Azure.Sdk.Tools.NotificationConfiguration
 {
     static class YamlHelper
     {

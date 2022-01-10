@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Fix result log problem for multiple response operation.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

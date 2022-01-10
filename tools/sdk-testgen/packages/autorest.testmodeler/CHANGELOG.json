@@ -1,0 +1,65 @@
+{
+  "name": "@autorest/testmodeler",
+  "entries": [
+    {
+      "version": "1.0.4",
+      "tag": "@autorest/testmodeler_v1.0.4",
+      "date": "Fri, 12 Dec 2021 07:35:05 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Match body parameter case insensivly."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.3",
+      "tag": "@autorest/testmodeler_v1.0.3",
+      "date": "Mon, 29 Nov 2021 06:10:09 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "1. uncapitalize example parameter names. 2. skip non-json examples"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.2",
+      "tag": "@autorest/testmodeler_v1.0.2",
+      "date": "Mon, 15 Nov 2021 09:39:03 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix `additionalProperties` problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.1",
+      "tag": "@autorest/testmodeler_v1.0.1",
+      "date": "Tue, 09 Nov 2021 09:17:24 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix `AdditionalProperties` model problem and duplicate operation id problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.0",
+      "tag": "@autorest/testmodeler_v1.0.0",
+      "date": "Fri, 29 Oct 2021 05:53:50 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Init public version of autorest extension for test modeler"
+          }
+        ]
+      }
+    }
+  ]
+}

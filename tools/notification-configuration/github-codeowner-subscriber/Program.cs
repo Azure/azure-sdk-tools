@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
-using NotificationConfiguration;
-using NotificationConfiguration.Enums;
-using NotificationConfiguration.Helpers;
-using NotificationConfiguration.Models;
-using NotificationConfiguration.Services;
+using Azure.Sdk.Tools.NotificationConfiguration.Enums;
+using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
+using Azure.Sdk.Tools.NotificationConfiguration.Models;
+using Azure.Sdk.Tools.NotificationConfiguration.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.CodeOwnersParser;
 
-namespace GitHubCodeownerSubscriber
+namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {
     class Program
     {
@@ -119,9 +119,9 @@ namespace GitHubCodeownerSubscriber
                         // Get contents of CODEOWNERS
                         logger.LogInformation("Fetching CODEOWNERS file");
                         var managementUrl = new Uri(group.Pipeline.Repository.Properties["manageUrl"]);
-                        var codeownersContent = await gitHubService.GetCodeownersFile(managementUrl);
+                        var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
 
-                        if (codeownersContent == default)
+                        if (codeOwnerEntries == default)
                         {
                             logger.LogInformation("CODEOWNERS file not found, skipping sync");
                             continue;
@@ -129,17 +129,15 @@ namespace GitHubCodeownerSubscriber
 
                         var process = group.Pipeline.Process as YamlProcess;
 
-                        // Find matching contacts for the YAML file's path
-                        var parser = new CodeOwnersParser(codeownersContent);
                         logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-                        var contacts = parser.GetContactsForPath(process.YamlFilename);
+                        var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
+                        codeOwnerEntry.FilterOutNonUserAliases();
 
-                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, contacts.Count);
+                        logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                         // Get set of team members in the CODEOWNERS file
-                        var contactResolutionTasks = contacts
-                            .Where(contact => contact.StartsWith("@"))
-                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact.Substring(1)));
+                        var contactResolutionTasks = codeOwnerEntry.Owners
+                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact));
                         var codeownerPrincipals = await Task.WhenAll(contactResolutionTasks);
 
                         var codeownersDescriptorsTasks = codeownerPrincipals

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Compatible with latest azcore and azidentity.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

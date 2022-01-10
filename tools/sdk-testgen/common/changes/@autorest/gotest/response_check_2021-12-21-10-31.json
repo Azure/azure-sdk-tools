@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Upgrade to latest autorest/core and autorest/go.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

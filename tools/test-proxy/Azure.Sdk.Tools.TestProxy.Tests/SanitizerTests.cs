@@ -1,4 +1,5 @@
-﻿using Azure.Sdk.Tools.TestProxy.Sanitizers;
+﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -125,13 +126,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void ReplaceRequestSubscriptionId()
         {
-            // TODO: tests successfully replacement
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_subscriptionid.json");
+            var targetEntry = session.Session.Entries.First();
+            var originalUri = targetEntry.RequestUri.ToString();
+            var subscriptionIdReplaceSanitizer = new UriSubscriptionIdSanitizer();
+
+            session.Session.Sanitize(subscriptionIdReplaceSanitizer);
+            var sanitizedUri = targetEntry.RequestUri;
+
+            Assert.NotEqual(originalUri, sanitizedUri);
+            Assert.StartsWith("/subscriptions/00000000-0000-0000-0000-000000000000/", sanitizedUri.Replace("https://management.azure.com", ""));
+            Assert.DoesNotContain("12345678-1234-1234-5678-123456789010", sanitizedUri);
+            Assert.Equal(originalUri.Length, sanitizedUri.Length);
         }
 
         [Fact]
         public void ReplaceRequestSubscriptionIdNoAction()
         {
-            // TODO: successful sanitize, no action necessary
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries.First();
+            var originalUri = targetEntry.RequestUri.ToString();
+            var subscriptionIdReplaceSanitizer = new UriSubscriptionIdSanitizer();
+
+            session.Session.Sanitize(subscriptionIdReplaceSanitizer);
+            var sanitizedUri = targetEntry.RequestUri;
+
+            // no action should have taken place here.
+            Assert.Equal(originalUri, sanitizedUri);
         }
 
         [Fact]
@@ -264,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var removeHeaderSanitizer = new RemoveHeaderSanitizer(headersForRemoval: headerForRemoval);
             session.Session.Sanitize(removeHeaderSanitizer);
 
-            foreach(var header in headerForRemoval.Split().Select(x => x.Trim()))
+            foreach(var header in headerForRemoval.Split(",").Select(x => x.Trim()))
             {
                 Assert.False(targetEntry.Request.Headers.ContainsKey(header));
             }
@@ -280,7 +301,36 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
             session.Session.Sanitize(bodyKeySanitizer);
 
-            Assert.Contains(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Contains(replacementValue, newBody);
+            Assert.Equal("{\"TableName\":\"sanitized.tablename\"}", newBody);
+        }
+
+        [Fact]
+        public void BodyKeySanitizerIgnoresNulls()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_null_secrets.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+            var originalBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.connectionString", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Equal(originalBody, newBody);
+        }
+
+        [Fact]
+        public void BodyKeySanitizerHandlesNonJSON()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");
+            var targetEntry = session.Session.Entries[0];
+            var replacementValue = "sanitized.tablename";
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.TableName", value: replacementValue);
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
         }
 
         [Fact]
@@ -303,28 +353,105 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var replacementValue = "BodyIsSanitized";
 
             var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$.Location", value: replacementValue);
+            var originalValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
             session.Session.Sanitize(bodyKeySanitizer);
+            var newValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
 
-            Assert.DoesNotContain(replacementValue, Encoding.UTF8.GetString(targetEntry.Request.Body));
+            Assert.DoesNotContain(replacementValue, newValue);
+            Assert.Equal(originalValue, newValue);
         }
 
 
         [Fact]
-        public void ContinuationSanitizerMultipleStepsNoKey()
+        public void ContinuationSanitizerSingleReplace()
         {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/requests_with_continuation.json");
+            var continueSanitizer = new ContinuationSanitizer("correlationId", "guid", resetAfterFirst: "false");
+            var targetKey = "correlationId";
+            var originalRequestGuid = session.Session.Entries[0].Response.Headers[targetKey].First();
 
+            session.Session.Sanitize(continueSanitizer);
+
+            var firstRequest = session.Session.Entries[0].Response.Headers[targetKey].First();
+            var firstResponse = session.Session.Entries[1].Request.Headers[targetKey].First();
+            var secondRequest = session.Session.Entries[2].Response.Headers[targetKey].First();
+            var secondResponse = session.Session.Entries[3].Request.Headers[targetKey].First();
+
+            Assert.NotEqual(originalRequestGuid, firstRequest);
+            Assert.Equal(firstRequest, firstResponse);
+            Assert.NotEqual(firstRequest, secondRequest);
+            Assert.Equal(firstResponse, secondResponse);
         }
 
         [Fact]
-        public void ContinuationSanitizerSimpleRequestResponse()
+        public void ContinuationSanitizerMultipleReplace()
         {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/requests_with_continuation.json");
+            var continueSanitizer = new ContinuationSanitizer("correlationId", "guid", resetAfterFirst: "true");
+            var targetKey = "correlationId";
+            var originalSendGuid = session.Session.Entries[0].Response.Headers[targetKey].First();
 
+            session.Session.Sanitize(continueSanitizer);
+
+            var firstRequest = session.Session.Entries[0].Response.Headers[targetKey].First();
+            var firstResponse = session.Session.Entries[1].Request.Headers[targetKey].First();
+            var secondRequest = session.Session.Entries[2].Response.Headers[targetKey].First();
+            var secondResponse = session.Session.Entries[3].Request.Headers[targetKey].First();
+
+            Assert.NotEqual(originalSendGuid, firstRequest);
+            Assert.Equal(firstRequest, firstResponse);
+            Assert.NotEqual(firstResponse, secondRequest);
+            Assert.Equal(secondRequest, secondResponse);
         }
 
         [Fact]
-        public void ContinuationSanitizerMultipleSteps()
+        public void ContinuationSanitizerNonExistentKey()
         {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/requests_with_continuation.json");
+            var continueSanitizer = new ContinuationSanitizer("non-existent-key", "guid", resetAfterFirst: "true");
+            var targetKey = "correlationId";
+            var originalSendGuid = session.Session.Entries[0].Response.Headers[targetKey].First();
 
+            session.Session.Sanitize(continueSanitizer);
+
+            var firstRequest = session.Session.Entries[0].Response.Headers[targetKey].First();
+            var firstResponse = session.Session.Entries[1].Request.Headers[targetKey].First();
+            var secondRequest = session.Session.Entries[2].Response.Headers[targetKey].First();
+            var secondResponse = session.Session.Entries[3].Request.Headers[targetKey].First();
+
+            Assert.Equal(originalSendGuid, firstRequest);
+            Assert.Equal(firstRequest, firstResponse);
+            Assert.NotEqual(firstResponse, secondRequest);
+            Assert.Equal(secondRequest, secondResponse);
+        }
+
+        [Fact]
+        public void ConditionalSanitizeUriRegexAppliesForRegex()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_xml_body.json");
+            var targetHeader = "x-ms-version";
+
+            var removeHeadersSanitizer = new RemoveHeaderSanitizer(targetHeader, condition: new ApplyCondition() { UriRegex = @".+/Tables.*" });
+            session.Session.Sanitize(removeHeadersSanitizer);
+            var firstEntry = session.Session.Entries[0];
+            // this entry should be untouched by sanitization, it's request URI should not match the regex above
+            var secondEntry = session.Session.Entries[1];
+            var thirdEntry = session.Session.Entries[2];
+
+            Assert.False(firstEntry.Request.Headers.ContainsKey(targetHeader));
+            Assert.True(secondEntry.Request.Headers.ContainsKey(targetHeader));
+            Assert.False(thirdEntry.Request.Headers.ContainsKey(targetHeader));
+        }
+
+        [Fact]
+        public void ConditionalSanitizeUriRegexProperlySkips()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_xml_body.json");
+            var targetHeader = "x-ms-version";
+
+            var removeHeadersSanitizer = new RemoveHeaderSanitizer(targetHeader, condition: new ApplyCondition() { UriRegex = @".+/token" });
+            session.Session.Sanitize(removeHeadersSanitizer);
+            Assert.DoesNotContain<bool>(false, session.Session.Entries.Select(x => x.Request.Headers.ContainsKey(targetHeader)));
         }
     }
 }

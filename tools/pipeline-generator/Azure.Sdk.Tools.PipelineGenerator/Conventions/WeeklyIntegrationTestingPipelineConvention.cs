@@ -9,7 +9,7 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        protected override string GetDefinitionName(SdkComponent component)
+        public override string GetDefinitionName(SdkComponent component)
         {
             var definitionName = $"{Context.Prefix} - {component.Name} - tests-weekly";
             if (component.Variant != null) {
@@ -23,10 +23,12 @@ namespace PipelineGenerator.Conventions
             var bucket = definition.Id % TotalBuckets;
             var startHours = bucket / BucketsPerHour;
             var startMinutes = bucket % BucketsPerHour;
+            var daysToBuild = new ScheduleDays[]{ ScheduleDays.Saturday, ScheduleDays.Sunday };
+            var dayBucket = definition.Id % daysToBuild.Length;
 
             var schedule = new Schedule
             {
-                DaysToBuild = ScheduleDays.Saturday | ScheduleDays.Sunday,
+                DaysToBuild = daysToBuild[dayBucket],
                 ScheduleOnlyWithChanges = true,
                 StartHours = FirstSchedulingHour + startHours,
                 StartMinutes = startMinutes * BucketSizeInMinutes,

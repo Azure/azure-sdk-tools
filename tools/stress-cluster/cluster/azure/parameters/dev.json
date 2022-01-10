@@ -2,8 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "groupName": {
+    "subscriptionId": {
       "value": // add me
+    },
+    "groupSuffix": {
+      "value": // add me, e.g. <your alias>
     },
     "clusterName": {
       "value": "stress-dev"
@@ -12,10 +15,10 @@
       "value": "westus2"
     },
     "staticTestSecretsKeyvaultName": {
-      "value": "StressTestSecrets"
+      "value": // add me, e.g. stress-secrets-<your alias>
     },
     "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-StressTestSecrets"
+      "value": // add me, e.g. rg-stress-secrets-<your alias>
     },
     "tags": {
       "value": {

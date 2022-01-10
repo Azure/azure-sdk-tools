@@ -6,9 +6,11 @@ metadata:
     testName: packet-loss
     chaos: "true"
 spec:
+  nodeSelector:
+    sku: 'default'
   containers:
     - name: network-example
       command: ["bash", "poll.sh"]
-      image: {{ default "" .Values.repository }}/network-stress-example:{{ default "v1" .Values.tag }}
+      image: {{ .Values.image }}
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

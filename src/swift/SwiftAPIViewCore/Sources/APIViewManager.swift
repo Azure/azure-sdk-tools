@@ -31,32 +31,75 @@ import Parser
 import Source
 import SourceKittenFramework
 
+
+public enum APIViewManagerMode {
+    case testing
+    case commandLine
+}
+
+public class APIViewConfiguration {
+    public var sourcePath: String = ""
+
+    public var destPath: String? = nil
+
+    public var packageName: String? = nil
+
+    public var packageVersion: String? = nil
+
+    public func loadCommandLineArgs() {
+        let args = CommandLineArguments()
+        guard let source = args.source else {
+            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
+        }
+        self.sourcePath = source
+        self.destPath = args.dest ?? self.destPath
+        self.packageName = args.packageName ?? self.packageName
+        self.packageVersion = args.packageVersion ?? self.packageVersion
+    }
+}
+
 /// Handles the generation of APIView JSON files.
-class APIViewManager {
+public class APIViewManager {
+
     // MARK: Properties
 
-    static var shared = APIViewManager()
-    let args = CommandLineArguments()
-    var tokenFile: TokenFile!
-    var statements = OrderedDictionary<Int, Statement>()
+    public var config = APIViewConfiguration()
+
+    var mode: APIViewManagerMode
+
+    // MARK: Initializer
+
+    public init(mode: APIViewManagerMode = .commandLine) {
+        self.mode = mode
+    }
 
     // MARK: Methods
 
-    func run() throws {
-        guard let sourcePath = args.source else {
-            SharedLogger.fail("usage error: SwiftAPIView --source PATH")
+    public func run() throws -> String {
+        if mode == .commandLine {
+            config.loadCommandLineArgs()
         }
-        guard let sourceUrl = URL(string: args.source ?? sourcePath) else {
-            SharedLogger.fail("usage error: `--source PATH` was invalid.")
+        guard let sourceUrl = URL(string: config.sourcePath) else {
+            SharedLogger.fail("usage error: source path was invalid.")
         }
+        let tokenFile = try buildTokenFile(from: sourceUrl)
 
-        try buildTokenFile(from: sourceUrl)
+        switch mode {
+        case .commandLine:
+            save(tokenFile: tokenFile)
+            return ""
+        case .testing:
+            return tokenFile.text
+        }
+    }
 
+    /// Persist the token file to disk
+    func save(tokenFile: TokenFile) {
         let destUrl: URL
-        if let destPath = args.dest {
+        if let destPath = config.destPath {
             destUrl = URL(fileURLWithPath: destPath)
         } else {
-            let destPath = "SwiftAPIView.json"
+            let destPath = "\(config.packageName!)_swift.json"
             guard let dest = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(destPath) else {
                 SharedLogger.fail("Could not access file system.")
             }
@@ -74,7 +117,7 @@ class APIViewManager {
 
     /// Handles automatic processing of swiftinterface file, if supplied
     func process(filePath: String) throws -> SourceFile {
-        if filePath.hasSuffix("swift") || filePath.hasSuffix("swiftinterface") {
+        if filePath.hasSuffix("swift") || filePath.hasSuffix("swifttxt") || filePath.hasSuffix("swiftinterface") {
             return try SourceReader.read(at: filePath)
         }
         if filePath.hasSuffix("h") {
@@ -144,14 +187,7 @@ class APIViewManager {
         return filePaths
     }
 
-    /// Hashes top-level statement text to eliminate duplicates.
-    func merge(statements: [Statement]) {
-        statements.forEach { statement in
-            self.statements[statement.description.hash] = statement
-        }
-    }
-
-    func buildTokenFile(from sourceUrl: URL) throws {
+    func buildTokenFile(from sourceUrl: URL) throws -> TokenFile {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var packageName: String?
         var packageVersion: String?
@@ -161,21 +197,26 @@ class APIViewManager {
             SharedLogger.fail("\(sourceUrl.path) does not exist.")
         }
 
+        var statements = OrderedDictionary<Int, Statement>()
         var filePaths = [String]()
         if isDir.boolValue {
-            packageName = args.packageName ?? extractPackageName(from: sourceUrl)
-            packageVersion = args.packageVersion ?? extractPackageVersion(from: sourceUrl)
+            packageName = config.packageName ?? extractPackageName(from: sourceUrl)
+            packageVersion = config.packageVersion ?? extractPackageVersion(from: sourceUrl)
             filePaths = collectFilePaths(at: sourceUrl)
         } else {
-            packageName = args.packageName ?? sourceUrl.lastPathComponent
-            packageVersion = args.packageVersion
+            packageName = config.packageName ?? sourceUrl.lastPathComponent
+            packageVersion = config.packageVersion
             filePaths.append(sourceUrl.absoluteString)
         }
         for filePath in filePaths {
             do {
                 let sourceFile = try process(filePath: filePath)
                 let topLevelDecl = try Parser(source: sourceFile).parse()
-                merge(statements: topLevelDecl.statements)
+
+                // hash top-level statement text to eliminate duplicates
+                topLevelDecl.statements.forEach { statement in
+                    statements[statement.description.hash] = statement
+                }
             } catch let error {
                 SharedLogger.warn(error.localizedDescription)
             }
@@ -192,8 +233,11 @@ class APIViewManager {
             let failString = errors.joined(separator: "\n")
             SharedLogger.fail(failString)
         }
+        config.packageName = packageName!
+        config.packageVersion = packageVersion!
         let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: version)
+        let tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: packageVersion!)
         tokenFile.process(statements: Array(statements.values))
+        return tokenFile
     }
 }

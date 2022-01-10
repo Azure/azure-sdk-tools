@@ -56,12 +56,16 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--package-version=0.0.2"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--package-name=TestPackage"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
@@ -72,8 +76,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/Tests/TestSwiftFile.swift"
-            isEnabled = "NO">
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/Tests/SwiftAPIViewCoreTests.swift"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

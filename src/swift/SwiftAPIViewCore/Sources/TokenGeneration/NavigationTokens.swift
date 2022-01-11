@@ -64,7 +64,7 @@ extension TokenFile {
         guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
             return nil
         }
-        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
+        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .struct)
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
@@ -82,7 +82,7 @@ extension TokenFile {
         guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
             return nil
         }
-        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
+        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .enum)
         decl.members.forEach { member in
             switch member {
             case let .declaration(memberDecl):
@@ -100,7 +100,7 @@ extension TokenFile {
         guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
             return nil
         }
-        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
+        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .interface)
         for item in decl.members {
             if case let ProtocolDeclaration.Member.associatedType(data) = item {
                 navItem.childItems.append(NavigationItem(name: data.name.textDescription, prefix: navItem.navigationId, typeKind: .class))
@@ -116,6 +116,16 @@ extension TokenFile {
         return nil
     }
 
+    private func navigationTokens(from decl: PrecedenceGroupDeclaration, withPrefix prefix: String) -> NavigationItem? {
+        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .unknown)
+        return navItem
+    }
+
+    private func navigationTokens(from decl: OperatorDeclaration, withPrefix prefix: String) -> NavigationItem? {
+        let navItem = NavigationItem(name: decl.operator, prefix: prefix, typeKind: .unknown)
+        return navItem
+    }
+
     private func navigationTokens(from decl: Statement, withPrefix prefix: String) -> NavigationItem? {
         switch decl {
         case let decl as ClassDeclaration:
@@ -127,6 +137,10 @@ extension TokenFile {
         case let decl as ProtocolDeclaration:
             return navigationTokens(from: decl, withPrefix: prefix)
         case let decl as StructDeclaration:
+            return navigationTokens(from: decl, withPrefix: prefix)
+        case let decl as PrecedenceGroupDeclaration:
+            return navigationTokens(from: decl, withPrefix: prefix)
+        case let decl as OperatorDeclaration:
             return navigationTokens(from: decl, withPrefix: prefix)
         default:
             return nil

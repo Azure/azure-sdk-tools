@@ -62,3 +62,16 @@ extension ProtocolDeclaration.InitializerMember {
         return "init(\(labels.joined(separator: ":")))"
     }
 }
+
+extension OperatorDeclaration {
+    var `operator`: String {
+        switch self.kind {
+        case let .infix(opName, _):
+            return opName
+        case let .postfix(opName):
+            return opName
+        case let .prefix(opName):
+            return opName
+        }
+    }
+}

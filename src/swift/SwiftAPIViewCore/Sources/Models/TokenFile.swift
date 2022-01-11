@@ -531,7 +531,7 @@ class TokenFile: Codable {
         if let name = name {
             punctuation(":")
             whitespace()
-            typeDeclaration(name: name)
+            typeReference(name: name)
         }
         newLine()
         return true

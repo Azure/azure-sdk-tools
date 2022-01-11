@@ -509,18 +509,16 @@ class TokenFile: Codable {
             kword = "postfix"
             opName = op
         }
+        let opDefId = defId(forName: opName, withPrefix: defIdPrefix)
         keyword(value: kword)
         whitespace()
         keyword(value: "operator")
         whitespace()
-        text(opName)
+        text(opName, definitionId: opDefId)
         if let name = name {
             punctuation(":")
             whitespace()
-
-            // register type name to make linkable
-            let defId = defId(forName: name, withPrefix: defIdPrefix)
-            type(name: name, definitionId: defId)
+            type(name: name)
         }
         newLine()
         return true
@@ -528,9 +526,10 @@ class TokenFile: Codable {
 
     private func process(_ decl: PrecedenceGroupDeclaration, defIdPrefix: String) -> Bool {
         let name = decl.name.textDescription
+        let defId = self.defId(forName: name, withPrefix: defIdPrefix)
         keyword(value: "precedencegroup")
         whitespace()
-        type(name: name)
+        type(name: name, definitionId: defId)
         whitespace()
         punctuation("{")
         newLine()
@@ -538,32 +537,38 @@ class TokenFile: Codable {
             decl.attributes.forEach { attr in
                 switch attr {
                 case let .assignment(val):
-                    keyword(value: "assignment")
+                    let defId = self.defId(forName: "assignment", withPrefix: defId)
+                    keyword(value: "assignment", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     keyword(value: String(val))
                 case .associativityLeft:
-                    keyword(value: "associativity")
+                    let defId = self.defId(forName: "associativity", withPrefix: defId)
+                    keyword(value: "associativity", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     keyword(value: "left")
                 case .associativityNone:
-                    keyword(value: "associativity")
+                    let defId = self.defId(forName: "associativity", withPrefix: defId)
+                    keyword(value: "associativity", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     keyword(value: "none")
                 case .associativityRight:
-                    keyword(value: "associativity")
+                    let defId = self.defId(forName: "associativity", withPrefix: defId)
+                    keyword(value: "associativity", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     keyword(value: "right")
                 case let .higherThan(val):
-                    keyword(value: "higherThan")
+                    let defId = self.defId(forName: "higherThan", withPrefix: defId)
+                    keyword(value: "higherThan", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     type(name: val.map { $0.textDescription }.joined(separator: "."))
                 case  let .lowerThan(val):
-                    keyword(value: "lowerThan")
+                    let defId = self.defId(forName: "lowerThan", withPrefix: defId)
+                    keyword(value: "lowerThan", definitionId: defId)
                     punctuation(":")
                     whitespace()
                     type(name: val.map { $0.textDescription }.joined(separator: "."))
@@ -883,9 +888,10 @@ class TokenFile: Codable {
         switch member {
         case let .associatedType(data):
             let name = data.name.textDescription
+            let defId = self.defId(forName: name, withPrefix: defId)
             keyword(value: "associatedtype")
             whitespace()
-            self.member(name: name)
+            self.member(name: name, definitionId: defId)
             if let inheritance = data.typeInheritance {
                 handle(clause: inheritance, defId: defId)
             }
@@ -897,12 +903,12 @@ class TokenFile: Codable {
             _ = processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
         case let .property(data):
             let name = data.name.textDescription
-
+            let defId = self.defId(forName: name, withPrefix: defId)
             handle(attributes: data.attributes, defId: defId)
             handle(modifiers: data.modifiers)
             keyword(value: "var")
             whitespace()
-            self.member(name: name)
+            self.member(name: name, definitionId: defId)
             punctuation(":")
             whitespace()
             handle(typeModel: TypeModel(from: data.typeAnnotation), defId: defId)
@@ -973,7 +979,7 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
         handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
-        member(name: "init", definitionId: defId)
+        keyword(value: "init", definitionId: defId)
         punctuation(kind)
         handle(clause: genericParam)
         let initSignature = FunctionSignature(parameterList: parameterList, throwsKind: throwsKind, result: nil)
@@ -987,7 +993,7 @@ class TokenFile: Codable {
         guard publicModifiers.contains(accessLevel) else { return false }
         handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
-        keyword(value: "subscript")
+        keyword(value: "subscript", definitionId: defId)
         handle(clause: genericParam)
         punctuation("(")
         parameterList.forEach { param in

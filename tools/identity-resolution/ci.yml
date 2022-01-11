@@ -43,8 +43,7 @@ extends:
           exit 1
         }
       displayName: Test on converting github to ms alias 
-      workingDirectory: tools/identity-resolution/identity-converter/  
-      continueOnError: true                                                                               
+      workingDirectory: tools/identity-resolution/identity-converter/                                                                         
     - pwsh: |
         $github = dotnet run `
           --aad-app-id-var $(notification-aad-app-id) `

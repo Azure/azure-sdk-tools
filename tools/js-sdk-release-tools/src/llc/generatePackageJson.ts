@@ -84,9 +84,6 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
             "unit-test:node": "cross-env mocha -r esm --require ts-node/register --reporter ../../../common/tools/mocha-multi-reporter.js --timeout 1200000 --full-trace \"test/{,!(browser)/**/}*.spec.ts\"",
             "unit-test": "npm run unit-test:node && npm run unit-test:browser",
             "docs": "typedoc --excludePrivate --excludeExternals  --out ./dist/docs ./src",
-            "browser": {
-                "./dist-esm/test/public/utils/env.js": "./dist-esm/test/public/utils/env.browser.js"
-            }
         },
         "sideEffects": false,
         "autoPublish": false,

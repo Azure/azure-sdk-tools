@@ -14,7 +14,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { 
+    public class SomeClientOptions : Azure.Core.ClientOptions { 
 
         public enum ServiceVersion
         {
@@ -35,7 +35,7 @@ namespace RandomNamespace
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { 
+    public class SomeClientOptions : Azure.Core.ClientOptions { 
 
         public enum ServiceVersion
         {
@@ -57,7 +57,7 @@ namespace RandomNamespace
             const string code = @"
 namespace RandomNamespace
 {
-    public class SomeClientOptions { 
+    public class SomeClientOptions : Azure.Core.ClientOptions { 
 
         public enum ServiceVersion
         {

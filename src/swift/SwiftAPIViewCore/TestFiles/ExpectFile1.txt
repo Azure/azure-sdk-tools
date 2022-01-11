@@ -58,6 +58,9 @@ package TestFile1.swifttxt {
     public class SomeGeneric<GenericType> {
     }
     
+    public class MultiGeneric<TypeA: Hashable, TypeB> {
+    }
+    
     
     @available(macOS 10.12, *)
     indirect public enum VariableNode<GenericType> {

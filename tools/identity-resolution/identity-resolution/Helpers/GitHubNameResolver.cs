@@ -155,6 +155,63 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
                 return default;
             }
         }
+
+        /// <summary>
+        /// Queries Kusto for mapping information present in a target table. Assumes githubemployeelink. 
+        /// </summary>
+        /// <param name="alias">Employee email alias, e.g. 'username' in username@microsoft.com. </param>
+        /// <returns>Internal alias or null if no internal user found</returns>
+        public async Task<IdentityDetail> GetMappingInformationFromAlias(string alias)
+        {
+            var query = $"{kustoTable} | where aadAlias == '{alias}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
+
+            // TODO: Figure out how to make this async
+            using (var reader = client.ExecuteQuery(query))
+            {
+                if (reader.Read())
+                {
+                    return new IdentityDetail(){
+                        GithubUserName = reader.GetString(0),
+                        AadId = reader.GetString(1),
+                        Name = reader.GetString(2),
+                        Alias = reader.GetString(3),
+                        AadUpn = reader.GetString(4)
+                    };
+                }
+
+                logger.LogWarning("Could Not Resolve Identity of User = {0}", alias);
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Queries Kusto for mapping information present in a target table. Assumes githubemployeelink. 
+        /// </summary>
+        /// <param name="githubUserName">Employee github identity like sima-zhu.</param>
+        /// <returns>Internal alias or null if no internal user found</returns>
+        public async Task<IdentityDetail> GetMappingInformationFromGithubUserName(string githubUserName)
+        {
+            var query = $"{kustoTable} | where githubUserName == '{githubUserName}' | project githubUserName, aadId, aadName, aadAlias, aadUpn | limit 1;";
+
+            // TODO: Figure out how to make this async
+            using (var reader = client.ExecuteQuery(query))
+            {
+                if (reader.Read())
+                {
+                    return new IdentityDetail(){
+                        GithubUserName = reader.GetString(0),
+                        AadId = reader.GetString(1),
+                        Name = reader.GetString(2),
+                        Alias = reader.GetString(3),
+                        AadUpn = reader.GetString(4)
+                    };
+                }
+
+                logger.LogWarning("Could Not Resolve Identity of User = {0}", githubUserName);
+                return default;
+            }
+        }
+
 #pragma warning restore 1998
 
         /// <summary>

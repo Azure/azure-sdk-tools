@@ -26,3 +26,38 @@ extends:
   parameters:
     ToolDirectory: tools/identity-resolution
     DotNetCoreVersion: 5.0.301
+    TestPostSteps:
+    - pwsh: |
+        $msAlias = dotnet run `
+          --aad-app-id-var $(notification-aad-app-id) `
+          --aad-app-secret-var $(notification-aad-secret) `
+          --aad-tenant-var $(notification-aad-tenant) `
+          --kusto-url-var $(notification-kusto-url) `
+          --kusto-database-var $(notification-kusto-db) `
+          --kusto-table-var $(notification-kusto-table) `
+          --input-format 'github' `
+          --input-value 'sima-zhu'
+        
+        if ($msAlias -ne "sizhu") {
+          Write-Host "Expect to get sizhu, but returned $msAlias"
+          exit 1
+        }
+      displayName: Test on converting github to ms alias command line   
+      workingDirectory: tools/identity-resolution/identity-converter/  
+      continueOnError: true                                                                               
+    - pwsh: |
+        $github = dotnet run `
+          --aad-app-id-var $(notification-aad-app-id) `
+          --aad-app-secret-var $(notification-aad-secret) `
+          --aad-tenant-var $(notification-aad-tenant) `
+          --kusto-url-var $(notification-kusto-url) `
+          --kusto-database-var $(notification-kusto-db) `
+          --kusto-table-var $(notification-kusto-table) `
+          --input-format 'msAlias' `
+          --input-value 'sizhu'
+        if ($github -ne "sima-zhu") {
+          Write-Host "Expect to get sima-zhu, but returned $github"
+          exit 1
+        }
+      displayName: Test on converting ms alias to github command line     
+      workingDirectory: tools/identity-resolution/identity-converter/ 

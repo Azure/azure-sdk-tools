@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             _targetKey = key;
             _newValue = value;
+            _targetValue = target;
             Condition = condition;
         }
 

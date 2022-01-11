@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// This sanitizer offers regex replace within a returned body. Specifically, this means regex applying to the raw JSON. If you are attempting to simply 
         /// replace a specific key, the BodyKeySanitizer is probably the way to go. Regardless, there are examples present in SanitizerTests.cs.
         /// to 
+        /// </summary>
         /// <param name="value">The substitution value.</param>
         /// <param name="target">A target string. This could contain special regex characters like "?()+*" but they will be treated as a literal.
         /// <param name="condition">

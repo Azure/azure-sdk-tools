@@ -462,9 +462,13 @@ class TokenFile: Codable {
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
-            // TODO: complete implementation
+            // the willSetDidSet block is irrelevant from an API perspective
+            // so we ignore it.
             typeModel = TypeModel(from: typeAnno!)
             name = ident.textDescription
+            guard expression == nil else {
+                fatalError("Expression not implemented. Please contact the SDK team.")
+            }
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
         }

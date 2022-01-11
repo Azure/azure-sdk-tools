@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// Applies a simple value replacement for a target header key. If it does not exist, no actions will be taken.
         /// </summary>
         /// <param name="key">The name of the header we're operating against.</param>
-        /// <param name="target">A target string. This could contain special regex characters like "?()+*" but they will be treated as a literal.
+        /// <param name="target">A target string. This could contain special regex characters like "?()+*" but they will be treated as a literal.</param>
         /// <param name="value">The substitution value.</param>
         /// <param name="condition">
         /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 

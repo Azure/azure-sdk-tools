@@ -59,8 +59,8 @@ class TokenFile: Codable {
     /// Access modifier to expose via APIView
     let publicModifiers: [AccessLevelModifier] = [.public, .open]
 
-    /// Tracks assigned definition IDs so they can be linked where key is the name and value is the definition ID (which could be different)
-    private var definitionIds = [String: String]()
+    /// Tracks assigned definition IDs so they can be linked
+    private var definitionIds = Set<String>()
 
     var text: String {
         return tokens.map { $0.text }.joined()
@@ -147,9 +147,23 @@ class TokenFile: Codable {
         add(token: item)
     }
 
-    func type(name: String, definitionId: String? = nil) {
+    /// Register the declaration of a new type
+    func typeDeclaration(name: String, definitionId: String? = nil) {
         checkIndent()
         let item = TokenItem(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
+        add(token: item)
+    }
+
+    /// Link to a registered type
+    func typeReference(name: String) {
+        checkIndent()
+        // TODO: Ensure this works for dotted names
+        let matches = definitionIds.filter { $0.hasSuffix(name) }
+        guard matches.count < 2 else {
+            fatalError("Found \(matches.count) matches for \(name).")
+        }
+        let linkId = matches.first
+        let item = TokenItem(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
         add(token: item)
     }
 
@@ -190,14 +204,10 @@ class TokenFile: Codable {
         guard !defId.contains(" ") else {
             fatalError("Definition ID should not contain whitespace")
         }
-        if self.definitionIds[defId] != nil {
-            // extension definition statements are permitted to repeat since
-            // there is no way to make them unique
-            if !(prefix ?? "").hasSuffix("extension") {
-                fatalError("Definition ID should be unique")
-            }
+        if self.definitionIds.contains(defId) {
+            fatalError("Definition ID should be unique")
         }
-        definitionIds[defId] = defId
+        definitionIds.insert(defId)
         return defId
     }
 
@@ -235,11 +245,11 @@ class TokenFile: Codable {
         punctuation("}")
         newLine()
 
-        navigation = navigationTokens(from: statements)
+        navigation = navigationTokens(from: statements, withPrefix: packageName)
         // ensure items appear in sorted order
-        navigation.sort(by: { $0.text < $1.text })
+        navigation.sort(by: { $0.name < $1.name })
         navigation.forEach { item in
-            item.childItems.sort(by: { $0.text < $1.text })
+            item.childItems.sort(by: { $0.name < $1.name })
         }
     }
 
@@ -259,7 +269,7 @@ class TokenFile: Codable {
         }
         keyword(value: "class")
         whitespace()
-        type(name: decl.name.textDescription, definitionId: defId)
+        typeDeclaration(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
         handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
@@ -289,7 +299,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "struct")
         whitespace()
-        type(name: decl.name.textDescription, definitionId: defId)
+        typeDeclaration(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
         handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
@@ -323,7 +333,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "enum")
         whitespace()
-        type(name: decl.name.textDescription, definitionId: defId)
+        typeDeclaration(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.genericParameterClause)
         handle(clause: decl.typeInheritanceClause, defId: defId)
         handle(clause: decl.genericWhereClause)
@@ -353,7 +363,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "protocol")
         whitespace()
-        type(name: decl.name.textDescription, definitionId: defId)
+        typeDeclaration(name: decl.name.textDescription, definitionId: defId)
         whitespace()
         handle(clause: decl.typeInheritanceClause, defId: defId)
         whitespace()
@@ -382,7 +392,7 @@ class TokenFile: Codable {
         whitespace()
         keyword(value: "typealias")
         whitespace()
-        type(name: decl.name.textDescription, definitionId: defId)
+        typeDeclaration(name: decl.name.textDescription, definitionId: defId)
         handle(clause: decl.generic)
         whitespace()
         punctuation("=")
@@ -402,8 +412,7 @@ class TokenFile: Codable {
                 return false
             }
         }
-        let defId = defId(forName: decl.type.textDescription, withPrefix: "\(defIdPrefix).extension")
-        handle(attributes: decl.attributes, defId: defId)
+        handle(attributes: decl.attributes, defId: defIdPrefix)
 
         if let access = accessLevel {
             let value = access.textDescription
@@ -412,16 +421,15 @@ class TokenFile: Codable {
         }
         keyword(value: "extension")
         whitespace()
-
-        type(name: decl.type.textDescription, definitionId: defId)
+        typeReference(name: decl.type.textDescription)
         whitespace()
-        handle(clause: decl.typeInheritanceClause, defId: defId)
+        handle(clause: decl.typeInheritanceClause, defId: defIdPrefix)
         handle(clause: decl.genericWhereClause)
         punctuation("{")
         newLine()
         indent {
             decl.members.forEach { member in
-                handle(member: member, defId: defId, overridingAccess: accessLevel)
+                handle(member: member, defId: defIdPrefix, overridingAccess: accessLevel)
             }
         }
         punctuation("}")
@@ -433,7 +441,8 @@ class TokenFile: Codable {
         for item in decl.initializerList {
             if let typeModel = item.typeModel {
                 let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-                return processMember(name: item.name, defId: defIdPrefix, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: true, defaultValue: item.defaultValue, accessLevel: accessLevel)
+                let defId = defId(forName: item.name, withPrefix: defIdPrefix)
+                return processMember(name: item.name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: true, defaultValue: item.defaultValue, accessLevel: accessLevel)
             }
         }
         SharedLogger.fail("Type information not found.")
@@ -522,7 +531,7 @@ class TokenFile: Codable {
         if let name = name {
             punctuation(":")
             whitespace()
-            type(name: name)
+            typeDeclaration(name: name)
         }
         newLine()
         return true
@@ -533,7 +542,7 @@ class TokenFile: Codable {
         let defId = self.defId(forName: name, withPrefix: defIdPrefix)
         keyword(value: "precedencegroup")
         whitespace()
-        type(name: name, definitionId: defId)
+        typeDeclaration(name: name, definitionId: defId)
         whitespace()
         punctuation("{")
         newLine()
@@ -569,13 +578,13 @@ class TokenFile: Codable {
                     keyword(value: "higherThan", definitionId: defId)
                     punctuation(":")
                     whitespace()
-                    type(name: val.map { $0.textDescription }.joined(separator: "."))
+                    typeReference(name: val.map { $0.textDescription }.joined(separator: "."))
                 case  let .lowerThan(val):
                     let defId = self.defId(forName: "lowerThan", withPrefix: defId)
                     keyword(value: "lowerThan", definitionId: defId)
                     punctuation(":")
                     whitespace()
-                    type(name: val.map { $0.textDescription }.joined(separator: "."))
+                    typeReference(name: val.map { $0.textDescription }.joined(separator: "."))
                 }
                 newLine()
             }
@@ -718,23 +727,22 @@ class TokenFile: Codable {
 
     private func handle(clause genericParam: GenericParameterClause?) {
         guard let genericParam = genericParam else { return }
-        // TODO: make dotted names linkable
         punctuation("<")
         let stopIdx = genericParam.parameterList.count - 1
         for (idx, param) in genericParam.parameterList.enumerated() {
             switch param {
             case let .identifier(type1):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
             case let .protocolConformance(type1, protocol2):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
                 punctuation(":")
                 whitespace()
-                type(name: protocol2.textDescription)
+                typeReference(name: protocol2.textDescription)
             case let .typeConformance(type1, type2):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
                 punctuation(":")
                 whitespace()
-                type(name: type2.textDescription)
+                typeReference(name: type2.textDescription)
             }
             if idx != stopIdx {
                 punctuation(",")
@@ -752,24 +760,23 @@ class TokenFile: Codable {
         whitespace()
         let stopIdx = genericWhere.requirementList.count - 1
         for (idx, requirement) in genericWhere.requirementList.enumerated() {
-            // TODO: make dotted names linkable
             switch requirement {
             case let .protocolConformance(type1, protocol2):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
                 punctuation(":")
                 whitespace()
-                type(name: protocol2.textDescription)
+                typeReference(name: protocol2.textDescription)
             case let .sameType(type1, type2):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
                 whitespace()
                 punctuation("==")
                 whitespace()
-                type(name: type2.textDescription)
+                typeReference(name: type2.textDescription)
             case let .typeConformance(type1, type2):
-                type(name: type1.textDescription)
+                typeReference(name: type1.textDescription)
                 punctuation(":")
                 whitespace()
-                type(name: type2.textDescription)
+                typeReference(name: type2.textDescription)
             }
             if idx != stopIdx {
                 punctuation(",")
@@ -803,10 +810,17 @@ class TokenFile: Codable {
             handle(attributes: attributes, defId: defId, inline: true)
         }
         if source.isArray { punctuation("[") }
-        type(name: source.name)
+        typeReference(name: source.name)
         if source.isArray { punctuation("]") }
         if source.isOptional {
             punctuation("?")
+        }
+        if !source.genericArgumentList.isEmpty {
+            punctuation("<")
+            for item in source.genericArgumentList {
+                self.handle(typeModel: item, defId: defId)
+            }
+            punctuation(">")
         }
     }
 

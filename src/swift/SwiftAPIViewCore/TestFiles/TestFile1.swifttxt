@@ -141,10 +141,14 @@ public struct SomeStruct: Codable, Equatable {
     }
 }
 
-// MARK: Test Generic Class
+// MARK: Test Generic Classes
 
 @available(macOS 10.12, *)
 public class SomeGeneric<GenericType> {}
+
+public class MultiGeneric<TypeA: Hashable, TypeB> {
+    let arrayOfGenerics: Array<Array<TypeA>>
+}
 
 // MARK: Test Enum
 

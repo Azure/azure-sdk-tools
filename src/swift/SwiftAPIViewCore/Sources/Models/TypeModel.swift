@@ -31,6 +31,7 @@ struct TypeModel {
     var name: String
     var isOptional = false
     var isArray = false
+    var genericArgumentList = [TypeModel]()
     var attributes: Attributes? = nil
 
     init(from source: TypeAnnotation) {
@@ -57,12 +58,11 @@ struct TypeModel {
         guard genericArgumentClauses.count < 2 else {
             SharedLogger.fail("Unexpectedly found multiple generic argument clauses.")
         }
-        if genericArgumentClauses.count == 1 {
-            // TODO: remove reliance on textDescription
-            name = source.textDescription
-        } else {
-            name = source.names.map { $0.name.textDescription }.joined(separator: ".")
+        let names = source.names.map { $0.name.textDescription }
+        if let clause = genericArgumentClauses.first {
+            genericArgumentList = clause.argumentList.map { TypeModel(from: $0) }
         }
+        name = String(names.joined(separator: "."))
     }
 
     init(from source: PatternInitializer) {
@@ -80,11 +80,13 @@ struct TypeModel {
         // TODO: remove reliance on textDescription
         name = source.textDescription
         attributes = source.attributes
+        let test = "best"
     }
 
     init(from source: DictionaryType) {
         // TODO: remove reliance on textDescription
         name = source.textDescription
+        let test = "best"
     }
 
     init(from source: Type) {

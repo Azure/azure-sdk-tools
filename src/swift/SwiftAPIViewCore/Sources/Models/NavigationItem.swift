@@ -28,25 +28,25 @@ import Foundation
 
 /// APIView navigation item for the left-hand navigation sidebar
 class NavigationItem: Codable {
-    /// Text to display in the navigation sidebar
-    var text: String
+    /// Name to display in the navigation sidebar
+    var name: String
     /// Unique indentifier describing the navigation path
-    var navigationId: String?
+    var navigationId: String
     /// Child navigation items
     var childItems = [NavigationItem]()
     /// Tags which determine the type of icon displayed in the navigation pane of APIView
     var tags: NavigationTags
 
-    init(text: String, navigationId: String?, typeKind: NavigationTypeKind) {
-        self.text = text
-        self.navigationId = navigationId
+    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
+        self.name = name
+        self.navigationId = "\(prefix).\(name)"
         tags = NavigationTags(typeKind: typeKind)
     }
 
     // MARK: Codable
 
     enum CodingKeys: String, CodingKey {
-        case text = "Text"
+        case name = "Text"
         case navigationId = "NavigationId"
         case childItems = "ChildItems"
         case tags = "Tags"
@@ -54,7 +54,7 @@ class NavigationItem: Codable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(text, forKey: .text)
+        try container.encode(name, forKey: .name)
         try container.encode(navigationId, forKey: .navigationId)
         try container.encode(childItems, forKey: .childItems)
         try container.encode(tags, forKey: .tags)

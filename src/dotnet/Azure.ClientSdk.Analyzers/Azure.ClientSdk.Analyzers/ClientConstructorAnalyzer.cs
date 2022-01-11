@@ -18,15 +18,8 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0007
         });
 
-        private bool IsClientOptionsParameter(IParameterSymbol symbol)
-        {
-            if (symbol == null)
-            {
-                return false;
-            }
-            return symbol.Type.Name.EndsWith(ClientOptionsAnalyzer.ClientOptionsSuffix);
-        }
-
+        private bool IsClientOptionsParameter(IParameterSymbol symbol) 
+            => symbol != null && IsClientOptionsType(symbol.Type);
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {

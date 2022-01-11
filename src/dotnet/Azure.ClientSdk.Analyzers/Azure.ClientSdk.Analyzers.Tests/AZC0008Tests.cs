@@ -15,7 +15,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             const string code = @"
 namespace RandomNamespace
 {
-    public class {|AZC0008:SomeClientOptions|} { 
+    public class {|AZC0008:SomeClientOptions|} : Azure.Core.ClientOptions { 
 
     }
 }";

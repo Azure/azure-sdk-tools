@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "use new api scenario through testmodeler",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

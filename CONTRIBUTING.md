@@ -7,7 +7,7 @@ Do not add third party tools directly in your folder, use it as dependencies.
 
 ## Codeowners
 
-Add code owner in [CODEOWNER](https://github.com/Azure/azure-sdk-tools/blob/main/.github/CODEOWNERS) with following format:
+Add code owner in [CODEOWNERS](https://github.com/Azure/azure-sdk-tools/blob/main/.github/CODEOWNERS) with following format:
 ```
 /tools/<tool-name>/ @owner1 @owner2
 ```

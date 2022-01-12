@@ -158,7 +158,14 @@ class TokenFile: Codable {
     func typeReference(name: String) {
         checkIndent()
         // TODO: Ensure this works for dotted names
-        let matches = definitionIds.filter { $0.hasSuffix(name) }
+        let matches: [String]
+        if name.contains(".") {
+            matches = definitionIds.filter { $0.hasSuffix(name) }
+        } else {
+            // if type does not contain a dot, then suffix is insufficient
+            // we must completely match the final segment of the type name
+            matches = definitionIds.filter { $0.split(separator: ".").last! == name }
+        }
         guard matches.count < 2 else {
             fatalError("Found \(matches.count) matches for \(name).")
         }

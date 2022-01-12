@@ -80,12 +80,14 @@ struct TypeModel {
 
     init(from source: FunctionType) {
         // TODO: remove reliance on textDescription
+        // ex: Chat completionHandler
         name = source.textDescription
         attributes = source.attributes
     }
 
     init(from source: DictionaryType) {
         // TODO: remove reliance on textDescription
+        // ex: Chat metadata type
         name = source.textDescription
     }
 

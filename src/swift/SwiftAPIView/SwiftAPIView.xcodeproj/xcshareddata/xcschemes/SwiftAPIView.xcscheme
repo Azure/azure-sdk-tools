@@ -53,22 +53,18 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--package-version=1.0.0"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-version=0.0.0"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--package-name=TestFile1"
-            isEnabled = "YES">
+            argument = "--package-name=AzureCommunicationChat"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -77,7 +73,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile1.swifttxt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

@@ -82,13 +82,11 @@ struct TypeModel {
         // TODO: remove reliance on textDescription
         name = source.textDescription
         attributes = source.attributes
-        let test = "best"
     }
 
     init(from source: DictionaryType) {
         // TODO: remove reliance on textDescription
         name = source.textDescription
-        let test = "best"
     }
 
     init(from source: Type) {

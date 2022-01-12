@@ -17,13 +17,15 @@ package TestFile1.swifttxt {
         associatedtype Item
         mutating func append(_: Item)
         var count: Int { get }
-        subscript(i: Int) -> Item
+        subscript(i: Int) -> Item { get }
+        
     }
     
     public protocol SomeOtherProtocol {
         var mutatableValue: String { mutating get mutating set }
         func doSomething(param1: Int, _: String...) throws -> String
-        subscript(index: Int) -> String
+        subscript(index: Int) -> String { get }
+        
         init?(withName: String) throws
         init!(withRisk: String)
         init(withRegular: String)
@@ -59,11 +61,12 @@ package TestFile1.swifttxt {
     }
     
     public class MultiGeneric<TypeA: Hashable, TypeB> {
+        public var arrayOfGenerics: Array<Array<TypeA>>
     }
     
     
     @available(macOS 10.12, *)
-    indirect public enum VariableNode<GenericType> {
+    public indirect enum VariableNode<GenericType> {
         case endpoint(value: GenericType)
         case node(value: GenericType, next: VariableNode)
         case vague(GenericType)
@@ -105,6 +108,6 @@ package TestFile1.swifttxt {
     @objcMembers
     open class SomeObjCClass: NSObject {
         open func myFunc() -> String
-        public func doubleInPlace(number: Int)
+        public func doubleInPlace(number: inout Int)
     }
 }

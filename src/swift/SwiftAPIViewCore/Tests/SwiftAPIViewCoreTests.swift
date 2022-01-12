@@ -47,6 +47,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
     private func compare(expected: String, actual: String) {
         let actualLines = actual.split(separator: "\n").map { String($0) }
         let expectedLines = expected.split(separator: "\n").map { String($0) }
+        print(actual)
         XCTAssertEqual(actualLines.count, expectedLines.count)
         for (i, expected) in expectedLines.enumerated() {
             let actual = actualLines[i]

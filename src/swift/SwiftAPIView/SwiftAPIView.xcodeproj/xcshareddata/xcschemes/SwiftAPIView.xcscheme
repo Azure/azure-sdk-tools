@@ -53,15 +53,15 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-for-ios/sdk/communication/AzureCommunicationChat/Source"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--package-version=1.0.0"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=AzureCommunicationChat"
-            isEnabled = "NO">
+            argument = "--package-name=AzureCommunicationCalling"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
@@ -69,7 +69,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile1.swifttxt"

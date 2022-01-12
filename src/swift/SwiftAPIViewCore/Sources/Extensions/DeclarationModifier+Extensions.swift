@@ -81,6 +81,19 @@ extension ProtocolDeclaration.InitializerMember {
     }
 }
 
+extension ProtocolDeclaration.MethodMember {
+    var fullName: String {
+        var value = "\(self.name)("
+        for param in signature.parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
 extension OperatorDeclaration {
     var `operator`: String {
         switch self.kind {

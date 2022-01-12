@@ -167,7 +167,7 @@ class TokenFile: Codable {
             matches = definitionIds.filter { $0.split(separator: ".").last! == name }
         }
         guard matches.count < 2 else {
-            fatalError("Found \(matches.count) matches for \(name).")
+            SharedLogger.fail("Found \(matches.count) matches for \(name).")
         }
         let linkId = matches.first
         let item = TokenItem(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
@@ -208,11 +208,11 @@ class TokenFile: Codable {
     /// Constructs a definition ID and ensures it is unique.
     internal func defId(forName name: String, withPrefix prefix: String?) -> String {
         let defId = prefix != nil ? "\(prefix!).\(name)" : name
-        guard !defId.contains(" ") else {
-            fatalError("Definition ID should not contain whitespace")
+        if defId.contains(" ") {
+            SharedLogger.fail("Definition ID should not contain whitespace: \(defId)")
         }
         if self.definitionIds.contains(defId) {
-            fatalError("Definition ID should be unique")
+            SharedLogger.fail("Duplication definition ID: \(defId). Will result in duplicate comments.")
         }
         definitionIds.insert(defId)
         return defId
@@ -485,7 +485,7 @@ class TokenFile: Codable {
             typeModel = TypeModel(from: typeAnno!)
             name = ident.textDescription
             guard expression == nil else {
-                fatalError("Expression not implemented. Please contact the SDK team.")
+                SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
             }
         default:
             SharedLogger.fail("Unsupported variable body type: \(decl.body)")
@@ -952,7 +952,7 @@ class TokenFile: Codable {
             newLine()
         case let .method(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-            let defId = self.defId(forName: data.name.textDescription, withPrefix: defId)
+            let defId = self.defId(forName: data.fullName, withPrefix: defId)
             let name = data.name.textDescription
             _ = processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
         case let .property(data):

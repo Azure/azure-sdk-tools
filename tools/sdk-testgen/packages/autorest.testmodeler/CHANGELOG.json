@@ -2,6 +2,26 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "1.1.0",
+      "tag": "@autorest/testmodeler_v1.1.0",
+      "date": "Wed, 12 Jan 2022 02:19:25 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Remove decode for query param in example model to be align with swagger example rule."
+          },
+          {
+            "comment": "Refactor config get set method."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Upgrade to latest autorest/core."
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.4",
       "tag": "@autorest/testmodeler_v1.0.4",
       "date": "Fri, 12 Dec 2021 07:35:05 GMT",

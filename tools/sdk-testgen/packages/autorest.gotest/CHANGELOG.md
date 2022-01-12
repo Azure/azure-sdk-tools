@@ -1,6 +1,26 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 29 Nov 2021 06:10:09 GMT and should not be manually modified.
+This log was last generated on Wed, 12 Jan 2022 02:19:25 GMT and should not be manually modified.
+
+## 1.2.0
+Wed, 12 Jan 2022 02:19:25 GMT
+
+### Minor changes
+
+- Compatible with latest azcore and azidentity.
+- Add response check to mock test generation.
+
+### Patches
+
+- Fix result check problem for lro operation with pageable config.
+- Fix result log problem for multiple response operation.
+- Fix wrong param name for pageable opeation with custom item name.
+- Different conversion for choice and sealedchoice.
+- Fix wrong generation of null value for object.
+- Fix some generated problems including: polymorphism response type, client param, pager response check.
+- Fix multiple time format and any-object default value issue.
+- Refine log for mock test and fix array item code generate bug.
+- Upgrade to latest autorest/core and autorest/go.
 
 ## 1.1.3
 Mon, 29 Nov 2021 06:10:09 GMT

@@ -56,11 +56,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-version=1.0.0"
+            argument = "--package-version=0.0.0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=AzureCommunicationCalling"
+            argument = "--package-name=TestFile2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -69,11 +69,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile1.swifttxt"
-            isEnabled = "NO">
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile2.swifttxt"
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

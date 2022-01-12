@@ -325,12 +325,12 @@ class TokenFile: Codable {
 
         handle(attributes: decl.attributes, defId: defId)
 
+        keyword(value: accessLevel.textDescription)
+        whitespace()
         if decl.isIndirect {
             keyword(value: "indirect")
             whitespace()
         }
-        keyword(value: accessLevel.textDescription)
-        whitespace()
         keyword(value: "enum")
         whitespace()
         typeDeclaration(name: decl.name.textDescription, definitionId: defId)
@@ -397,7 +397,9 @@ class TokenFile: Codable {
         whitespace()
         punctuation("=")
         whitespace()
-        text(decl.assignment.textDescription)
+        // TODO: Don't use assignment.textDescription
+        // Break out into richer types
+        typeReference(name: decl.assignment.textDescription)
         newLine()
         return true
     }
@@ -503,7 +505,7 @@ class TokenFile: Codable {
     private func process(_ decl: SubscriptDeclaration, defIdPrefix: String, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
         let defId = defId(forName: "subscript", withPrefix: defIdPrefix)
-        return processSubscript(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, genericParam: decl.genericParameterClause, parameterList: decl.parameterList, resultType: decl.resultType, genericWhere: decl.genericWhereClause)
+        return processSubscript(defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, accessLevel: accessLevel, genericParam: decl.genericParameterClause, parameterList: decl.parameterList, resultType: decl.resultType, genericWhere: decl.genericWhereClause, getterSetterKeywordBlock: nil)
     }
 
     private func process(_ decl: OperatorDeclaration, defIdPrefix: String) -> Bool {
@@ -786,6 +788,29 @@ class TokenFile: Codable {
         whitespace()
     }
 
+    private func handle(clause: GetterSetterKeywordBlock?) {
+        guard let clause = clause else { return }
+        whitespace()
+        punctuation("{")
+        whitespace()
+        if clause.getter.mutationModifier != nil {
+            keyword(value: "mutating")
+            whitespace()
+        }
+        keyword(value: "get" )
+        whitespace()
+        if let setter = clause.setter {
+            if setter.mutationModifier != nil {
+                keyword(value: "mutating")
+                whitespace()
+            }
+            keyword(value: "set")
+            whitespace()
+        }
+        punctuation("}")
+        newLine()
+    }
+
     private func handle(attributes: Attributes, defId: String, inline: Bool = false) {
         guard !attributes.isEmpty else { return }
         // extra newline for readability
@@ -808,6 +833,10 @@ class TokenFile: Codable {
         guard let source = typeModel else { return }
         if let attributes = typeModel?.attributes {
             handle(attributes: attributes, defId: defId, inline: true)
+        }
+        if source.isInOut {
+            keyword(value: "inout")
+            whitespace()
         }
         if source.isArray { punctuation("[") }
         typeReference(name: source.name)
@@ -886,13 +915,13 @@ class TokenFile: Codable {
                     whitespace()
                     switch value {
                     case let .boolean(val):
-                        text(String(val))
+                        stringLiteral(String(val))
                     case let .floatingPoint(val):
-                        text(String(val))
+                        stringLiteral(String(val))
                     case let .integer(val):
-                        text(String(val))
+                        stringLiteral(String(val))
                     case let .string(val):
-                        text("\"\(val)\"")
+                        stringLiteral("\"\(val)\"")
                     }
                 }
                 newLine()
@@ -930,25 +959,7 @@ class TokenFile: Codable {
             punctuation(":")
             whitespace()
             handle(typeModel: TypeModel(from: data.typeAnnotation), defId: defId)
-            whitespace()
-            punctuation("{")
-            whitespace()
-            if data.getterSetterKeywordBlock.getter.mutationModifier != nil {
-                keyword(value: "mutating")
-                whitespace()
-            }
-            keyword(value: "get" )
-            whitespace()
-            if let setter = data.getterSetterKeywordBlock.setter {
-                if setter.mutationModifier != nil {
-                    keyword(value: "mutating")
-                    whitespace()
-                }
-                keyword(value: "set")
-                whitespace()
-            }
-            punctuation("}")
-            newLine()
+            handle(clause: data.getterSetterKeywordBlock)
         case let .initializer(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
             let defId = self.defId(forName: data.fullName, withPrefix: defId)
@@ -956,7 +967,7 @@ class TokenFile: Codable {
         case let .subscript(data):
             let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
             let defId = self.defId(forName: "subscript", withPrefix: defId)
-            _ = processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere)
+            _ = processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere, getterSetterKeywordBlock: data.getterSetterKeywordBlock)
         default:
             SharedLogger.fail("Unsupported protocol member: \(member)")
         }
@@ -987,7 +998,7 @@ class TokenFile: Codable {
             whitespace()
             punctuation("=")
             whitespace()
-            text(defaultValue)
+            stringLiteral(defaultValue)
         }
         newLine()
         return true
@@ -1007,7 +1018,7 @@ class TokenFile: Codable {
         return true
     }
 
-    private func processSubscript(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, parameterList: [FunctionSignature.Parameter], resultType: Type, genericWhere: GenericWhereClause?) -> Bool {
+    private func processSubscript(defId: String, attributes: Attributes, modifiers: DeclarationModifiers, accessLevel: AccessLevelModifier, genericParam: GenericParameterClause?, parameterList: [FunctionSignature.Parameter], resultType: Type, genericWhere: GenericWhereClause?, getterSetterKeywordBlock: GetterSetterKeywordBlock?) -> Bool {
         guard publicModifiers.contains(accessLevel) else { return false }
         handle(attributes: attributes, defId: defId)
         handle(modifiers: modifiers)
@@ -1021,6 +1032,7 @@ class TokenFile: Codable {
         whitespace()
         handle(result: resultType, defId: defId)
         handle(clause: genericWhere)
+        handle(clause: getterSetterKeywordBlock)
         newLine()
         return true
     }

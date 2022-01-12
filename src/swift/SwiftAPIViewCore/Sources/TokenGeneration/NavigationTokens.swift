@@ -126,6 +126,11 @@ extension TokenFile {
         return navItem
     }
 
+    private func navigationTokens(from decl: TypealiasDeclaration, withPrefix prefix: String) -> NavigationItem? {
+        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
+        return navItem
+    }
+
     private func navigationTokens(from decl: Statement, withPrefix prefix: String) -> NavigationItem? {
         switch decl {
         case let decl as ClassDeclaration:
@@ -141,6 +146,8 @@ extension TokenFile {
         case let decl as PrecedenceGroupDeclaration:
             return navigationTokens(from: decl, withPrefix: prefix)
         case let decl as OperatorDeclaration:
+            return navigationTokens(from: decl, withPrefix: prefix)
+        case let decl as TypealiasDeclaration:
             return navigationTokens(from: decl, withPrefix: prefix)
         default:
             return nil

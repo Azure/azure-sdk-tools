@@ -31,11 +31,13 @@ struct TypeModel {
     var name: String
     var isOptional = false
     var isArray = false
+    var isInOut = false
     var genericArgumentList = [TypeModel]()
     var attributes: Attributes? = nil
 
     init(from source: TypeAnnotation) {
         self.init(from: source.type)
+        isInOut = source.isInOutParameter
         attributes = source.attributes
     }
 

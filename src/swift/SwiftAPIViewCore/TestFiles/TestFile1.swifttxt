@@ -147,7 +147,7 @@ public struct SomeStruct: Codable, Equatable {
 public class SomeGeneric<GenericType> {}
 
 public class MultiGeneric<TypeA: Hashable, TypeB> {
-    let arrayOfGenerics: Array<Array<TypeA>>
+    public var arrayOfGenerics: Array<Array<TypeA>>
 }
 
 // MARK: Test Enum

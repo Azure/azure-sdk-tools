@@ -453,5 +453,90 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             session.Session.Sanitize(removeHeadersSanitizer);
             Assert.DoesNotContain<bool>(false, session.Session.Entries.Select(x => x.Request.Headers.ContainsKey(targetHeader)));
         }
+
+        [Fact]
+        public void GenStringSanitizerAppliesForMultipleComponents()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetString = "listtable09bf2a3d";
+            var replacementString = "<thistablehasbeenreplaced!>";
+            var targetEntry = session.Session.Entries[0];
+
+            var originalRequestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var originalResponseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            var originalLocation = targetEntry.Response.Headers["Location"].First().ToString();
+
+            var sanitizer = new GeneralStringSanitizer(targetString, replacementString);
+            session.Session.Sanitize(sanitizer);
+
+            var resultRequestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var resultResponseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            var resultLocation = targetEntry.Response.Headers["Location"].First().ToString();
+
+
+            // request body
+            Assert.NotEqual(originalRequestBody, resultRequestBody);
+            Assert.DoesNotContain(targetString, resultRequestBody);
+            Assert.Contains(replacementString, resultRequestBody);
+            
+            // result body
+            Assert.NotEqual(originalResponseBody, resultResponseBody);
+            Assert.DoesNotContain(targetString, resultResponseBody);
+            Assert.Contains(replacementString, resultResponseBody);
+            
+            // uri
+            Assert.NotEqual(originalLocation, resultLocation);
+            Assert.DoesNotContain(targetString, resultLocation);
+            Assert.Contains(replacementString, resultLocation);
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        public void GenStringSanitizerQuietExitForAllHttpComponents(string targetValue, string replacementValue)
+        {
+            // header sanitize, body sanitize, uri sanitize nothing and leave things unchanged
+        }
+
+        [Theory]
+        [InlineData("", "", "")]
+        public void HeaderStringSanitizerApplies(string targetKey, string targetValue, string replacementValue)
+        {
+            // header sanitize works properly
+        }
+
+        [Theory]
+        [InlineData("", "", "")]
+        public void HeaderStringSanitizerQuietlyExits(string targetKey, string targetValue, string replacementValue)
+        {
+            // header sanitize quiety exits of no work to be done
+        }
+
+        [Theory]
+        [InlineData("", "", "")]
+        public void BodyStringSanitizerApplies(string targetKey, string targetValue, string replacementValue)
+        {
+            // body sanitize works properly
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        public void BodyStringSanitizerQuietlyExits(string targetValue, string replacementValue)
+        {
+            // body sanitize quietly exits if no application
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        public void UriStringSanitizerQuielyExits(string targetValue, string replacementValue)
+        {
+            // uri sanitize works properly
+        }
+
+        [Theory]
+        [InlineData("", "")]
+        public void UriStringSanitizerQuietlyExits(string targetValue, string replacementValue)
+        {
+            // uri sanitize quietly exits if no application
+        }
     }
 }

@@ -1,13 +1,6 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Wed, 12 Jan 2022 08:45:43 GMT and should not be manually modified.
-
-## 2.0.0
-Wed, 12 Jan 2022 08:45:43 GMT
-
-### Breaking changes
-
-- load api scenario with oav@2.11.3
+This log was last generated on Wed, 12 Jan 2022 02:19:25 GMT and should not be manually modified.
 
 ## 1.1.0
 Wed, 12 Jan 2022 02:19:25 GMT

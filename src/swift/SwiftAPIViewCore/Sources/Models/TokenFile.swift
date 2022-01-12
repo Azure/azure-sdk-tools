@@ -845,18 +845,68 @@ class TokenFile: Codable {
             keyword(value: "inout")
             whitespace()
         }
-        if source.isArray { punctuation("[") }
-        typeReference(name: source.name)
-        if source.isArray { punctuation("]") }
-        if source.isOptional {
-            punctuation("?")
-        }
-        if !source.genericArgumentList.isEmpty {
-            punctuation("<")
-            for item in source.genericArgumentList {
-                self.handle(typeModel: item, defId: defId)
+        if source.isArray {
+            punctuation("[")
+            typeReference(name: source.name)
+            punctuation("]")
+        } else if source.isDict {
+            punctuation("[")
+            typeReference(name: source.arguments!.first!.name)
+            punctuation(":")
+            whitespace()
+            typeReference(name: source.arguments!.last!.name)
+            punctuation("]")
+        } else if source.isTuple {
+            guard let arguments = source.arguments else {
+                SharedLogger.fail("Tuples must have arguments.")
             }
-            punctuation(">")
+            punctuation("(")
+            let argCount = arguments.count
+            for (idx, arg) in arguments.enumerated() {
+                self.handle(typeModel: arg, defId: defId)
+                if idx + 1 != argCount {
+                    punctuation(",")
+                    whitespace()
+                }
+            }
+            punctuation(")")
+        } else {
+            typeReference(name: source.name)
+            if let genericArgs = source.genericArgumentList {
+                punctuation("<")
+                let argCount = genericArgs.count
+                for (idx, item) in genericArgs.enumerated() {
+                    self.handle(typeModel: item, defId: defId)
+                    if idx + 1 != argCount {
+                        punctuation(",")
+                        whitespace()
+                    }
+                }
+                punctuation(">")
+            }
+            if let arguments = source.arguments {
+                punctuation("(")
+                let argCount = arguments.count
+                for (idx, arg) in arguments.enumerated() {
+                    self.handle(typeModel: arg, defId: defId)
+                    if idx + 1 != argCount {
+                        punctuation(",")
+                        whitespace()
+                    }
+                }
+                punctuation(")")
+                if let retType = source.returnType {
+                    whitespace()
+                    text("->")
+                    whitespace()
+                    self.handle(typeModel: retType, defId: defId)
+                }
+            }
+        }
+        if source.isOptional && !source.isImplicitlyUnwrapped {
+            punctuation("?")
+        } else if source.isImplicitlyUnwrapped {
+            punctuation("!")
         }
     }
 

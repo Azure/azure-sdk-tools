@@ -29,9 +29,14 @@ import Foundation
 public class Widget {
     public var delegate: WidgetDelegate?
 
-    public let metadata: Dictionary<String, Optional<String>>?
+    public let metadata: Dictionary<String, String?>?
 
-    public func someFunc(withCompletionHandler: @escaping (Result<String, Error>) -> Void)
+    public init(fromDict: [String: String?]) {
+        self.delegate = nil
+        self.metadata = nil
+    }
+
+    public func someFunc(withCompletionHandler: @escaping (Result<Widget, Error>) -> Void) {}
 }
 
 public protocol WidgetDelegate {
@@ -50,4 +55,17 @@ public class Dog {
 public class Owner {
     public let catPersonality: Cat.Personality
     public let dogPersonality: Dog.Personality
+    public let myTuple: (String, Int)
+    public let myNamedTuple: (name: String, age: Int)
+    public let myCat: Cat!
+    public let myDog: Dog!
+
+    public init() {
+        self.catPersonality = Cat.Personality()
+        self.dogPersonality = Dog.Personality()
+        self.myTuple = ("", 0)
+        self.myNamedTuple = (name: "Hi", age: 1)
+        self.myCat = Cat()
+        self.myDog = Dog()
+    }
 }

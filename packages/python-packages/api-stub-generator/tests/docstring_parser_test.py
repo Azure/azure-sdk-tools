@@ -172,9 +172,9 @@ class TestDocstringParser:
     def test_docstring_multi_complex_type(self):
         self._test_variable_type(docstring_multi_complex_type, {
             "documents": "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]",
-            "country_hint": "str",
-            "model_version": "str",
-            "show_stats": "bool"
+            "country_hint": "Optional[str]",
+            "model_version": "Optional[str]",
+            "show_stats": "Optional[bool]"
         })
 
     def test_docstring_param_type_private(self):

@@ -157,9 +157,9 @@ stages:
         steps:
 
           - task: UsePythonVersion@0
-            displayName: 'Use Python 3.6'
+            displayName: 'Use Python 3.10'
             inputs:
-              versionSpec: 3.6
+              versionSpec: 3.10
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'

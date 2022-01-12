@@ -1,4 +1,5 @@
 from inspect import Parameter
+from typing import Optional
 
 class NodeEntityBase:
     """This is the base class for all node types
@@ -54,6 +55,10 @@ def get_qualified_name(obj, namespace):
     name = str(obj)
     if hasattr(obj, "__name__"):
         name = getattr(obj, "__name__")
+        # workaround because typing.Optional __name__ is just Optional in Python 3.10
+        # but not in previous versions
+        if name == "Optional":
+            name = str(obj)
     elif hasattr(obj, "__qualname__"):
         name = getattr(obj, "__qualname__")
 

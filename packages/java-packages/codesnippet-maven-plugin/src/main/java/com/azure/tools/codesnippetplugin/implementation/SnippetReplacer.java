@@ -138,41 +138,47 @@ public final class SnippetReplacer {
             return;
         }
 
-        // Get the files that match the codesnippet glob and are contained in the codesnippet root directory.
-        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, codesnippetGlob, false);
-
         // Only get the source files if sources are included in the update.
         List<Path> sourceFiles = Collections.emptyList();
-        if (includeSources) {
+        if (includeSources && sourcesRootDirectory.toFile().exists()) {
             // Get the files that match the sources glob and are contained in the sources root directory.
             sourceFiles = globFiles(sourcesRootDirectory, sourcesGlob, true);
         }
+
+        // Only get the README files if READMEs are included in the update.
+        List<Path> readmeFiles = Collections.emptyList();
+        if (includeReadme && readmeRootDirectory.toFile().exists()) {
+            readmeFiles = globFiles(readmeRootDirectory, readmeGlob, true);
+        }
+
+        if (sourceFiles.isEmpty() && readmeFiles.isEmpty()) {
+            logger.info("No files to update.");
+            return;
+        }
+
+        // Get the files that match the codesnippet glob and are contained in the codesnippet root directory.
+        List<Path> codesnippetFiles = globFiles(codesnippetRootDirectory, codesnippetGlob, false);
 
         // scan the sample files for all the snippet files
         Map<String, Codesnippet> foundSnippets = getAllSnippets(codesnippetFiles);
 
         List<CodesnippetError> errors = new ArrayList<>();
 
-        // walk across all the java files, run UpdateSrcSnippets
-        if (includeSources) {
-            for (Path sourcePath : sourceFiles) {
-                if (mode == ExecutionMode.UPDATE) {
-                    errors.addAll(updateSourceCodeSnippets(sourcePath, foundSnippets, maxLineLength));
-                } else {
-                    errors.addAll(verifySourceCodeSnippets(sourcePath, foundSnippets, maxLineLength));
-                }
+        // Updates all source files.
+        for (Path sourcePath : sourceFiles) {
+            if (mode == ExecutionMode.UPDATE) {
+                errors.addAll(updateSourceCodeSnippets(sourcePath, foundSnippets, maxLineLength));
+            } else {
+                errors.addAll(verifySourceCodeSnippets(sourcePath, foundSnippets, maxLineLength));
             }
         }
 
-        // now find folderToVerify/README.md
-        // run Update ReadmeSnippets on that
-        if (includeReadme) {
-            for (Path readmeFile : globFiles(readmeRootDirectory, readmeGlob, true)) {
-                if (mode == ExecutionMode.UPDATE) {
-                    errors.addAll(updateReadmeCodesnippets(readmeFile, foundSnippets));
-                } else {
-                    errors.addAll(verifyReadmeCodesnippets(readmeFile, foundSnippets));
-                }
+        // Update all README files.
+        for (Path readmeFile : readmeFiles) {
+            if (mode == ExecutionMode.UPDATE) {
+                errors.addAll(updateReadmeCodesnippets(readmeFile, foundSnippets));
+            } else {
+                errors.addAll(verifyReadmeCodesnippets(readmeFile, foundSnippets));
             }
         }
 

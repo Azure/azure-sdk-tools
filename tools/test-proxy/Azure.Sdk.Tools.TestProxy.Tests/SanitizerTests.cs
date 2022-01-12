@@ -1,5 +1,6 @@
 ﻿using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -452,6 +453,192 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var removeHeadersSanitizer = new RemoveHeaderSanitizer(targetHeader, condition: new ApplyCondition() { UriRegex = @".+/token" });
             session.Session.Sanitize(removeHeadersSanitizer);
             Assert.DoesNotContain<bool>(false, session.Session.Entries.Select(x => x.Request.Headers.ContainsKey(targetHeader)));
+        }
+
+        [Fact]
+        public void GenStringSanitizerAppliesForMultipleComponents()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var targetString = "listtable09bf2a3d";
+            var replacementString = "<thistablehasbeenreplaced!>";
+            var targetEntry = session.Session.Entries[0];
+
+            var originalRequestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var originalResponseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            var originalLocation = targetEntry.Response.Headers["Location"].First().ToString();
+
+            var sanitizer = new GeneralStringSanitizer(targetString, replacementString);
+            session.Session.Sanitize(sanitizer);
+
+            var resultRequestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var resultResponseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            var resultLocation = targetEntry.Response.Headers["Location"].First().ToString();
+
+
+            // request body
+            Assert.NotEqual(originalRequestBody, resultRequestBody);
+            Assert.DoesNotContain(targetString, resultRequestBody);
+            Assert.Contains(replacementString, resultRequestBody);
+            
+            // result body
+            Assert.NotEqual(originalResponseBody, resultResponseBody);
+            Assert.DoesNotContain(targetString, resultResponseBody);
+            Assert.Contains(replacementString, resultResponseBody);
+            
+            // uri
+            Assert.NotEqual(originalLocation, resultLocation);
+            Assert.DoesNotContain(targetString, resultLocation);
+            Assert.Contains(replacementString, resultLocation);
+        }
+
+        [Fact]
+        public void GenStringSanitizerQuietExitForAllHttpComponents()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+            var untouchedSession = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
+
+            var targetString = ".*";
+            var replacementString = "<thistablehasbeenreplaced!>";
+            var targetEntry = session.Session.Entries[0];
+            var targetUntouchedEntry = untouchedSession.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new GeneralStringSanitizer(targetString, replacementString);
+            session.Session.Sanitize(sanitizer);
+
+            var resultRequestBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var resultResponseBody = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            var resultLocation = targetEntry.Response.Headers["Location"].First().ToString();
+
+            Assert.DoesNotContain(targetString, resultRequestBody);
+            Assert.DoesNotContain(targetString, resultResponseBody);
+            Assert.DoesNotContain(targetString, resultLocation);
+
+            Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
+            Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
+            Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
+        }
+
+        [Theory]
+        [InlineData("Accept-Encoding", ",", "<comma>", "Test.RecordEntries/post_delete_get_content.json")]
+        [InlineData("Accept", "*/*", "<starslashstar>", "Test.RecordEntries/oauth_request_with_variables.json")]
+        [InlineData("User-Agent", ".19041-SP0", "<useragent>", "Test.RecordEntries/post_delete_get_content.json")]
+        public void HeaderStringSanitizerApplies(string targetKey, string targetValue, string replacementValue, string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var targetEntry = session.Session.Entries[0];
+            var originalHeaderValue = targetEntry.Request.Headers[targetKey].First().ToString();
+            
+            var sanitizer = new HeaderStringSanitizer(targetKey, targetValue, value: replacementValue);
+            session.Session.Sanitize(sanitizer);
+            
+            var resultHeaderValue = targetEntry.Request.Headers[targetKey].First().ToString();
+
+            Assert.NotEqual(resultHeaderValue, originalHeaderValue);
+            Assert.Contains(replacementValue, resultHeaderValue);
+            Assert.DoesNotContain(targetValue, resultHeaderValue);
+        }
+
+        [Theory]
+        [InlineData("DataServiceVersion", "application/json", "<replacedString>", "Test.RecordEntries/post_delete_get_content.json")]
+        public void HeaderStringSanitizerQuietlyExits(string targetKey, string targetValue, string replacementValue, string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var untouchedSession = TestHelpers.LoadRecordSession(recordingFile);
+            var targetUntouchedEntry = untouchedSession.Session.Entries[0];
+            var targetEntry = session.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new HeaderStringSanitizer(targetKey, targetValue, value: replacementValue);
+            session.Session.Sanitize(sanitizer);
+
+            Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
+            Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
+        }
+
+        [Theory]
+        [InlineData("listtable09bf2a3d", "<replacedtablename>", "Test.RecordEntries/post_delete_get_content.json")]
+        [InlineData("%20profile%20offline", "<profilereplaced>", "Test.RecordEntries/oauth_request.json")]
+        [InlineData("|,&x-client-last-telemetry=2|0|", "<client>", "Test.RecordEntries/oauth_request.json")]
+        [InlineData("}", "<bracket>", "Test.RecordEntries/response_with_null_secrets.json")]
+        public void BodyStringSanitizerApplies(string targetValue, string replacementValue, string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var targetEntry = session.Session.Entries[0];
+            var originalBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var sanitizer = new BodyStringSanitizer(targetValue, value: replacementValue);
+            session.Session.Sanitize(sanitizer);
+
+            var resultBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            Assert.NotEqual(originalBodyValue, resultBodyValue);
+            Assert.Contains(replacementValue, resultBodyValue);
+            Assert.DoesNotContain(targetValue, resultBodyValue);
+        }
+
+        [Theory]
+        [InlineData("TableNames", "<tablename>", "Test.RecordEntries/response_with_null_secrets.json")]
+        [InlineData("d2270777-c002-0072-313d-4ce19f000000", "<targetId>", "Test.RecordEntries/response_with_null_secrets.json")]
+        [InlineData(".19041-SP0", "<useragent>", "Test.RecordEntries/response_with_null_secrets.json")]
+        public void BodyStringSanitizerQuietlyExits(string targetValue, string replacementValue, string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var untouchedSession = TestHelpers.LoadRecordSession(recordingFile);
+            var targetEntry = session.Session.Entries[0];
+            var originalBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            var targetUntouchedEntry = untouchedSession.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new BodyStringSanitizer(targetValue, value: replacementValue);
+            session.Session.Sanitize(sanitizer);
+
+            var resultBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
+        }
+
+        [Theory]
+        [InlineData("/v2.0/", "<oath-v2>", "Test.RecordEntries/oauth_request.json")]
+        [InlineData("https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010", "<partofpath>", "Test.RecordEntries/request_with_subscriptionid.json")]
+        [InlineData("?api-version=2019-05-01", "<api-version>", "Test.RecordEntries/request_with_subscriptionid.json")]
+        public void UriStringSanitizerApplies(string targetValue, string replacementValue, string recordingFile)
+        {
+            var session = TestHelpers.LoadRecordSession(recordingFile);
+            var untouchedSession = TestHelpers.LoadRecordSession(recordingFile);
+
+            var targetEntry = session.Session.Entries[0];
+            var targetUntouchedEntry = untouchedSession.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new UriStringSanitizer(targetValue, replacementValue);
+            session.Session.Sanitize(sanitizer);
+
+            var originalUriValue = targetUntouchedEntry.RequestUri.ToString();
+            var resultUriValue = targetEntry.RequestUri.ToString();
+
+            Assert.NotEqual(originalUriValue, resultUriValue);
+            Assert.Contains(replacementValue, resultUriValue);
+            Assert.DoesNotContain(targetValue, resultUriValue);
+        }
+
+        [Theory]
+        [InlineData("fakeazsdktestaccount2", "<replacementValue!", "Test.RecordEntries/post_delete_get_content.json")]
+        public void UriStringSanitizerQuietlyExits(string targetValue, string replacementValue, string targetFile)
+        {
+            var session = TestHelpers.LoadRecordSession(targetFile);
+            var untouchedSession = TestHelpers.LoadRecordSession(targetFile);
+
+            var targetEntry = session.Session.Entries[0];
+            var targetUntouchedEntry = untouchedSession.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new UriStringSanitizer(targetValue, replacementValue);
+            session.Session.Sanitize(sanitizer);
+
+            Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
         }
     }
 }

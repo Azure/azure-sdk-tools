@@ -94,7 +94,7 @@ describe('Run autorest and compare the output', () => {
 
         let finalResult = true;
         const allTests: Array<Promise<boolean>> = [];
-        for (const rp of ['compute']) {
+        for (const rp of ['appplatform', 'compute', 'signalr']) {
             console.log('Start Processing: ' + rp);
 
             // Remove tmpoutput

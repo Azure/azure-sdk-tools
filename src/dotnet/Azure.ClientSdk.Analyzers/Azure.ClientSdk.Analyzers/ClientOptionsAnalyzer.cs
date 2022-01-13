@@ -11,7 +11,6 @@ namespace Azure.ClientSdk.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ClientOptionsAnalyzer : SymbolAnalyzerBase
     {
-        internal const string ClientOptionsSuffix = "ClientOptions";
         protected const string ServiceVersionName = "ServiceVersion";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
@@ -27,12 +26,10 @@ namespace Azure.ClientSdk.Analyzers
         public override void Analyze(ISymbolAnalysisContext symbolAnalysisContext)
         {
             var typeSymbol = (INamedTypeSymbol)symbolAnalysisContext.Symbol;
-            if (typeSymbol.TypeKind != TypeKind.Class || !typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.DeclaredAccessibility != Accessibility.Public)
+            if (IsClientOptionsType(typeSymbol))
             {
-                return;
+                AnalyzeClientOptionsType(symbolAnalysisContext);
             }
-
-            AnalyzeClientOptionsType(symbolAnalysisContext);
         }
 
         private void AnalyzeClientOptionsType(ISymbolAnalysisContext context)

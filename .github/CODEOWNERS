@@ -15,6 +15,6 @@
 /tools/pipeline-generator/ @weshaggard @benbp
 /tools/test-proxy/ @scbedd @mikeharder
 /tools/stress-cluster/ @benbp @ckairen
-/tools/mock-service-host/ @changll @chenjieshi
-/tools/sdk-testgen/ @changll @chenjieshi
+/tools/mock-service-host/ @changlong-liu @tadelesh
+/tools/sdk-testgen/ @changlong-liu @tadelesh
 /tools/js-sdk-release-tools/ @weidong @qiaozha

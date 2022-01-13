@@ -123,17 +123,27 @@ class FunctionNode(NodeEntityBase):
         # Add all keyword only args here temporarily until docstring is parsed
         # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
-        for argname in params:
-            arg = ArgType(argname, get_qualified_name(params[argname].annotation, self.namespace), "", self)
+        for argname, argvalues in params.items():
+            arg = ArgType(argname, get_qualified_name(argvalues.annotation, self.namespace), "", self)
             # set default value if available
-            if params[argname].default != Parameter.empty:
-                arg.default = str(params[argname].default)
+            if argvalues.default != Parameter.empty:
+                arg.default = str(argvalues.default)
+
             # Store handle to kwarg object to replace it later
-            if params[argname].kind == Parameter.VAR_KEYWORD:
+            if argvalues.kind == Parameter.VAR_KEYWORD:
                 arg.argname = f"**{argname}"
 
-            if params[argname].kind == Parameter.KEYWORD_ONLY:
+            if argvalues.kind == Parameter.KEYWORD_ONLY:
+                # Keyword-only args with "None" default are displayed as "..."
+                # to match logic in docstring parsing
+                if arg.default == "None":
+                    arg.default = "..."
                 self.kw_args[arg.argname] = arg
+            elif argvalues.kind == Parameter.VAR_POSITIONAL:
+                # to work with docstring parsing, the key must
+                # not have the * in it.
+                arg.argname = f"*{argname}"
+                self.args[argname] = arg
             else:
                 self.args[arg.argname] = arg
 
@@ -213,7 +223,7 @@ class FunctionNode(NodeEntityBase):
                 if not docstring_match:
                     continue
                 signature_arg.argtype = docstring_match.argtype or signature_arg.argtype
-                signature_arg.default = docstring_match.default or signature_arg.default
+                signature_arg.default = signature_arg.default if signature_arg.default is not None else docstring_match.default
 
             # Update keyword argument metadata from the docstring; otherwise, stick with
             # what was parsed from the signature.
@@ -224,7 +234,7 @@ class FunctionNode(NodeEntityBase):
                     continue
                 remaining_docstring_kwargs.remove(argname)
                 kw_arg.argtype = docstring_match.argtype or kw_arg.argtype
-                kw_arg.default = docstring_match.default or kw_arg.default
+                kw_arg.default = kw_arg.default if kw_arg.default is not None else docstring_match.default
             
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
@@ -264,7 +274,7 @@ class FunctionNode(NodeEntityBase):
             long_ret_type = self.return_type
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
-                error_message = "Return type in type hint is not matching return type in docstring"
+                error_message = "The return type is described in both a type hint and docstring, but they do not match."
                 self.add_error(error_message)
 
 

@@ -732,5 +732,64 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Empty(testRecordingHandler.Transforms);
             Assert.Contains(errorText, assertion.Message);
         }
+
+        [Fact]
+        public async Task AddSanitizerThrowsOnMissingRequiredArgument()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "GeneralStringSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\"}");
+            httpContext.Request.ContentLength = 33;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.AddSanitizer()
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains("Required parameter key System.String target was not found in the request body.", assertion.Message);
+        }
+
+        [Fact]
+        public async Task AddSanitizerContinuesWithTwoRequiredParams()
+        {
+            var targetKey = "Content-Type";
+            var targetString = "application/javascript";
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderStringSanitizer";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"target\":\"" + targetString + "\", \"key\":\"" + targetKey + "\"}");
+            httpContext.Request.ContentLength = 79;
+
+            var controller = new Admin(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.Sanitizers.Clear();
+            await controller.AddSanitizer();
+
+            var addedSanitizer = testRecordingHandler.Sanitizers.First();
+            Assert.True(addedSanitizer is HeaderStringSanitizer);
+
+            var actualTargetString = (string)typeof(HeaderStringSanitizer).GetField("_targetValue", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(addedSanitizer);
+            var actualTargetKey = (string)typeof(HeaderStringSanitizer).GetField("_targetKey", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(addedSanitizer);
+            Assert.Equal(targetKey, actualTargetKey);
+            Assert.Equal(targetString, actualTargetString);
+        }
     }
 }

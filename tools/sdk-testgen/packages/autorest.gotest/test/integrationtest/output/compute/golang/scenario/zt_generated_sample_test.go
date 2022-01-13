@@ -33,7 +33,6 @@ var (
 	err               error
 	resourceGroup     *armresources.ResourceGroup
 	fakeStepVar       = "signalrswaggertest4"
-	parametersName    = "signalrswaggertest4"
 	resourceName      = "signalrswaggertest4"
 	location          string
 	resourceGroupName string
@@ -44,6 +43,7 @@ var (
 
 func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	fakeScenarioVar := "signalrswaggertest5"
+	resourceName := "$(resourceName)"
 	// From step Generate_Unique_Name
 	{
 		var deploymentExtend *armresources.DeploymentExtended
@@ -54,7 +54,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
 	}
 
-	// From step Create or Update a proximity placement group.
+	// From step Create-or-Update-a-proximity-placement-group
 	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		proximityPlacementGroupsCreateOrUpdateResponse, err := ProximityPlacementGroupsClient.CreateOrUpdate(ctx,
@@ -93,7 +93,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		fakeScenarioVar = tmp.(string)
 	}
 
-	// From step Delete proximity placement group
+	// From step Delete-proximity_placement_group
 	{
 		_, err = ProximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
@@ -104,7 +104,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		}
 	}
 
-	// From step Create a vm with Host Encryption using encryptionAtHost property.
+	// From step Create_a_vm_with_Host_Encryption_using_encryptionAtHost_property
 	VirtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId)
 	{
 		fakeStepVar := "signalrswaggertest6"
@@ -170,7 +170,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 }
 
 func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
-	// From step Delete proximity placement group
+	// From step Delete_proximity_placement_group
 	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		_, err = ProximityPlacementGroupsClient.Delete(ctx,
@@ -184,7 +184,7 @@ func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 }
 
 func prepare() {
-	// From step Delete proximity placement group
+	// From step Delete-proximity-placement-group
 	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
 	{
 		_, err = ProximityPlacementGroupsClient.Delete(ctx,

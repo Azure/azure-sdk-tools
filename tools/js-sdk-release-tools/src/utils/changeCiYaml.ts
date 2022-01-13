@@ -45,11 +45,14 @@ export function modifyOrGenerateCiYaml(azureSDKForJSRepoRoot: string, changedPac
             changed = addExcludeBranch(ciYaml?.pr?.branches) || changed;
             changed = addArtifact(ciYaml?.extends?.parameters?.Artifacts, name, safeName) || changed;
             if (changed) {
-                fs.writeFileSync(ciYamlPath, yaml.stringify(ciYaml), {encoding: 'utf-8'});
+                fs.writeFileSync(ciYamlPath, `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+                
+${yaml.stringify(ciYaml)}`, {encoding: 'utf-8'});
             }
         } else {
             relativeRpFolderPath = relativeRpFolderPath.replace(/\\/g, '/');
             const ciYaml = `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+            
 trigger:
   branches:
     include:

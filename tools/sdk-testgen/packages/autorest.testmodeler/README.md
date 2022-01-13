@@ -50,6 +50,22 @@ testmodeler:
             location: eastus
 ```
 
+### --testmodeler.scenario.codemodel-restcall-only
+
+If there is no 'test-resources' defined in readme file and the readme is located in local file system, testmodeler will search all available api-scenario and try to load them as test scenario.
+In this context, option codemodel-restcall-only defined whether testmodeler abandon api-scenarios who contains restcall steps that can't be linked to an operation in codemodel.
+
+The default value of this option is true.
+
+### --testmodeler.use-example-model
+
+This options switch whether ExampleModel in generated in test model. While default to be true, it can be disabled like below:
+```
+testmodeler:
+    use-example-model: false
+```
+
+
 ## Autorest Pipeline Configurations
 
 ```yaml

@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Wed, 12 Jan 2022 02:19:25 GMT and should not be manually modified.
+This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+
+## 1.3.0
+Wed, 12 Jan 2022 09:10:46 GMT
+
+### Minor changes
+
+- use new api scenario through testmodeler
 
 ## 1.2.0
 Wed, 12 Jan 2022 02:19:25 GMT

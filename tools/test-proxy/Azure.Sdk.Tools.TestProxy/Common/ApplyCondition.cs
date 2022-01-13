@@ -59,7 +59,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var headerProp = GetProp(nameof(ResponseHeader), jsonElement);
                 if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
-                    ResponseHeader = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    
+                    ResponseHeader = JsonSerializer.Deserialize<HeaderCondition>(headerProp.Value.ToString(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     if (string.IsNullOrWhiteSpace(ResponseHeader.Key))
                     {
                         throw new ArgumentException("Key is required for response header conditions.");

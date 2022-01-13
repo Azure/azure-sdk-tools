@@ -847,14 +847,14 @@ class TokenFile: Codable {
         }
         if source.isArray {
             punctuation("[")
-            typeReference(name: source.name)
+            handle(typeModel: source.arguments!.first!, defId: defId)
             punctuation("]")
         } else if source.isDict {
             punctuation("[")
-            typeReference(name: source.arguments!.first!.name)
+            handle(typeModel: source.arguments!.first!, defId: defId)
             punctuation(":")
             whitespace()
-            typeReference(name: source.arguments!.last!.name)
+            handle(typeModel: source.arguments!.last!, defId: defId)
             punctuation("]")
         } else if source.isTuple {
             guard let arguments = source.arguments else {

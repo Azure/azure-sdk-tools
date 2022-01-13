@@ -59,6 +59,8 @@ public class Owner {
     public let myNamedTuple: (name: String, age: Int)
     public let myCat: Cat!
     public let myDog: Dog!
+    public let myCats: Array<Cat?>!
+    public let myDogs: [Dog?]!
 
     public init() {
         self.catPersonality = Cat.Personality()
@@ -67,5 +69,7 @@ public class Owner {
         self.myNamedTuple = (name: "Hi", age: 1)
         self.myCat = Cat()
         self.myDog = Dog()
+        self.myCats = [Cat?]()
+        self.myDogs = [Dog?]()
     }
 }

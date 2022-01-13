@@ -66,8 +66,11 @@ class TypeModel {
     }
 
     convenience init(from source: ArrayType) {
-        self.init(from: source.elementType)
-        isArray = true
+        self.init(
+            name: "",
+            isArray: true,
+            arguments: [TypeModel(from: source.elementType)]
+        )
     }
 
     convenience init(from source: TypeIdentifier) {
@@ -93,6 +96,15 @@ class TypeModel {
             self.init(
                 name: "",
                 isDict: true,
+                arguments: genericArgs
+            )
+        } else if name == "Array" {
+            guard genericArgs?.count == 1 else {
+                SharedLogger.fail("Array must have exactly one generic argument")
+            }
+            self.init(
+                name: "",
+                isArray: true,
                 arguments: genericArgs
             )
         } else {

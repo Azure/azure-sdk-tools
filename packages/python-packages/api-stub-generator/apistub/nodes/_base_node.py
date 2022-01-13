@@ -2,8 +2,8 @@ from inspect import Parameter
 import re
 from typing import Optional
 
-class_regex = re.compile(r"<class '([a-zA-Z]+)'>")
-forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z]+)'\)")
+class_regex = re.compile(r"<class '([a-zA-Z._]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
 
 class NodeEntityBase:
     """This is the base class for all node types
@@ -86,7 +86,7 @@ def get_qualified_name(obj, namespace):
 
     value = name
     if module_name and module_name.startswith(namespace):
-        value = f"{module_name}.{name}".format(module_name, name)
+        value = f"{module_name}.{name}"
     if args:
         arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"

@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.2.9 (Unreleased)
+Fixed issue where Python 3-style type hints stopped displaying
+  their inner types.
+
 ## Version 0.2.8 (Unreleased)
 Kwargs that were previously displayed as "type = ..." will now
   be displayed as "Optional[type] = ..." to align with syntax

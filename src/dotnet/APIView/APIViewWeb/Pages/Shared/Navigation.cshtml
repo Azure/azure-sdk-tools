@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<APIView.NavigationItem>
 
 <ul class="nav-list-children">
-        @foreach (var item in Model)
+        @foreach (var item in Model ?? Enumerable.Empty<APIView.NavigationItem>())
         {
             <li class="nav-list-group">
                 <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>
@@ -15,7 +15,7 @@
                     <span class="icon icon-unknown">&nbsp;&nbsp;</span>
                 }
 
-                <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>
+                <a href="#@item.NavigationId" title="@(item.Text)">@(item.Text.Replace("/subscriptions/{subscriptionId}", "/S/{sid}").Replace("/resourceGroups/{resourceGroupName}/", "/RG/{rgn}"))</a>
 
                 <partial name="Shared/Navigation" model="item.ChildItems"/>
             </li>

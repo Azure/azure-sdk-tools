@@ -93,6 +93,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
+            services.AddSingleton<LanguageService, SwaggerLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
 
             services.AddAuthentication(options =>
@@ -188,8 +189,8 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
-            services.AddHostedService<ReviewBackgroundHostedService>();
-            services.AddHostedService<PullRequestBackgroundHostedService>();
+            // services.AddHostedService<ReviewBackgroundHostedService>();
+            // services.AddHostedService<PullRequestBackgroundHostedService>();
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

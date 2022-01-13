@@ -33,7 +33,7 @@ extension URL {
         if let existing = try? resourceValues(forKeys: [.isDirectoryKey]) {
             if !existing.isDirectory! {
                 let err = "Path exists but is not a folder!"
-                fatalError(err)
+                SharedLogger.fail(err)
             }
         } else {
             // Path does not exist so let us create it

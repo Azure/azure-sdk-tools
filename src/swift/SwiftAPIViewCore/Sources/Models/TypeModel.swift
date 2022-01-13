@@ -27,67 +27,133 @@
 import AST
 import Foundation
 
-struct TypeModel {
+class TypeModel {
     var name: String
-    var isOptional = false
-    var isArray = false
-    var attributes: Attributes? = nil
+    var isOptional: Bool
+    var isImplicitlyUnwrapped: Bool
+    var isArray: Bool
+    var isDict: Bool
+    var isTuple: Bool
+    var isInOut: Bool
+    var genericArgumentList: [TypeModel]?
+    var attributes: Attributes?
+    var arguments: [TypeModel]?
+    var returnType: TypeModel?
 
-    init(from source: TypeAnnotation) {
+    init(name: String, isOptional: Bool = false, isImplicitlyUnwrapped: Bool = false, isArray: Bool = false, isDict: Bool = false, isTuple: Bool = false, isInOut: Bool = false, genericArgumentList: [TypeModel]? = nil, attributes: Attributes? = nil, arguments: [TypeModel]? = nil, returnType: TypeModel? = nil) {
+        self.name = name
+        self.isOptional = isOptional
+        self.isImplicitlyUnwrapped = isImplicitlyUnwrapped
+        self.isArray = isArray
+        self.isDict = isDict
+        self.isTuple = isTuple
+        self.isInOut = isInOut
+        self.genericArgumentList = genericArgumentList
+        self.attributes = attributes
+        self.arguments = arguments
+        self.returnType = returnType
+    }
+
+    convenience init(from source: TypeAnnotation) {
         self.init(from: source.type)
+        isInOut = source.isInOutParameter
         attributes = source.attributes
     }
 
-    init(from source: OptionalType) {
+    convenience init(from source: OptionalType) {
         self.init(from: source.wrappedType)
         isOptional = true
     }
 
-    init(from source: ArrayType) {
-        self.init(from: source.elementType)
-        isArray = true
+    convenience init(from source: ArrayType) {
+        self.init(
+            name: "",
+            isArray: true,
+            arguments: [TypeModel(from: source.elementType)]
+        )
     }
 
-    init(from source: String) {
-        name = source
-    }
-
-    init(from source: TypeIdentifier) {
+    convenience init(from source: TypeIdentifier) {
         let genericArgumentClauses = source.names.compactMap { $0.genericArgumentClause }
         guard genericArgumentClauses.count < 2 else {
             SharedLogger.fail("Unexpectedly found multiple generic argument clauses.")
         }
-        if genericArgumentClauses.count == 1 {
-            // TODO: remove reliance on textDescription
-            name = source.textDescription
+        let names = source.names.map { $0.name.textDescription }
+        let name = String(names.joined(separator: "."))
+        let genericArgs = genericArgumentClauses.first?.argumentList.map { TypeModel(from: $0) }
+        if name == "Optional" {
+            guard genericArgs?.count == 1 else {
+                SharedLogger.fail("Optionals must have exactly one generic type.")
+            }
+            self.init(
+                name: genericArgs!.first!.name,
+                isOptional: true
+            )
+        } else if name == "Dictionary" {
+            guard genericArgs?.count == 2 else {
+                SharedLogger.fail("Dictionary must have exactly two generic arguments")
+            }
+            self.init(
+                name: "",
+                isDict: true,
+                arguments: genericArgs
+            )
+        } else if name == "Array" {
+            guard genericArgs?.count == 1 else {
+                SharedLogger.fail("Array must have exactly one generic argument")
+            }
+            self.init(
+                name: "",
+                isArray: true,
+                arguments: genericArgs
+            )
         } else {
-            name = source.names.map { $0.name.textDescription }.joined(separator: ".")
+            self.init(
+                name: name,
+                genericArgumentList: genericArgs
+            )
         }
     }
 
-    init(from source: PatternInitializer) {
+    convenience init(from source: PatternInitializer) {
         if case let identPattern as IdentifierPattern = source.pattern,
             let typeAnnotation = identPattern.typeAnnotation {
             self.init(from: typeAnnotation)
         } else if let expression = source.initializerExpression as? LiteralExpression {
-            self.init(from: expression.kind.textDescription)
+            // TODO: Revist this
+            self.init(name: expression.kind.textDescription)
         } else {
             SharedLogger.fail("Unable to extract type information.")
         }
     }
 
-    init(from source: FunctionType) {
-        // TODO: remove reliance on textDescription
-        name = source.textDescription
-        attributes = source.attributes
+    convenience init(from source: FunctionType) {
+        self.init(
+            name: "",
+            attributes: source.attributes,
+            arguments: source.arguments.map { TypeModel(from: $0.type) },
+            returnType: TypeModel(from: source.returnType)
+        )
     }
 
-    init(from source: DictionaryType) {
-        // TODO: remove reliance on textDescription
-        name = source.textDescription
+    convenience init(from source: TupleType) {
+        // FIXME: Handle named tuple names
+        self.init(
+            name: "",
+            isTuple: true,
+            arguments: source.elements.map { TypeModel(from: $0.type) }
+        )
     }
 
-    init(from source: Type) {
+    convenience init(from source: DictionaryType) {
+        self.init(
+            name: "",
+            isDict: true,
+            arguments: [TypeModel(from: source.keyType), TypeModel(from: source.valueType)]
+        )
+    }
+
+    convenience init(from source: Type) {
         switch source {
         case let src as OptionalType:
             self.init(from: src)
@@ -101,12 +167,13 @@ struct TypeModel {
             self.init(from: src)
         case let src as MetatypeType:
             self.init(from: src.referenceType)
-        case let src as AnyType:
-            self.init(from: src.textDescription)
         case let src as TupleType:
-            self.init(from: src.textDescription)
+            self.init(from: src)
         case let src as ImplicitlyUnwrappedOptionalType:
-            self.init(from: src.textDescription)
+            self.init(from: src.wrappedType)
+            self.isImplicitlyUnwrapped = true
+        case is AnyType:
+            self.init(name: "Any")
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")
         }

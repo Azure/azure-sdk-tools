@@ -56,11 +56,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-version=0.0.2"
+            argument = "--package-version=0.0.0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=TestPackage"
+            argument = "--package-name=TestFile2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -68,15 +68,11 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/SpeechSDK/source/bindings/objective-c/public"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
             argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/Tests/SwiftAPIViewCoreTests.swift"
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile2.swifttxt"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

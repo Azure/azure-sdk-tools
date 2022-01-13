@@ -41,7 +41,8 @@ extension PatternInitializer {
             return TypeModel(from: typeInfo)
         }
         if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeModel(from: literalExpression.kind.textDescription)
+            // TODO: Revisit this
+            return TypeModel(name: literalExpression.kind.textDescription)
         }
         SharedLogger.fail("Unsupported pattern: \(self)")
     }

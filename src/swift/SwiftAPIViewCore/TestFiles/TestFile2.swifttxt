@@ -26,37 +26,50 @@
 
 import Foundation
 
-/// APIView navigation item for the left-hand navigation sidebar
-class NavigationItem: Codable {
-    /// Name to display in the navigation sidebar
-    var name: String
-    /// Unique indentifier describing the navigation path
-    var navigationId: String
-    /// Child navigation items
-    var childItems = [NavigationItem]()
-    /// Tags which determine the type of icon displayed in the navigation pane of APIView
-    var tags: NavigationTags
+public class Widget {
+    public var delegate: WidgetDelegate?
 
-    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
-        self.name = name
-        self.navigationId = "\(prefix).\(name)"
-        tags = NavigationTags(typeKind: typeKind)
+    public let metadata: Dictionary<String, String?>?
+
+    public init(fromDict: [String: String?]) {
+        self.delegate = nil
+        self.metadata = nil
     }
 
-    // MARK: Codable
+    public func someFunc(withCompletionHandler: @escaping (Result<Widget, Error>) -> Void) {}
+}
 
-    enum CodingKeys: String, CodingKey {
-        case name = "Text"
-        case navigationId = "NavigationId"
-        case childItems = "ChildItems"
-        case tags = "Tags"
-    }
+public protocol WidgetDelegate {
+    func widget(_: Widget, didUpdate: Any)
+    func widget(_: Widget, didFailWithError: Error)
+}
 
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(navigationId, forKey: .navigationId)
-        try container.encode(childItems, forKey: .childItems)
-        try container.encode(tags, forKey: .tags)
+public class Cat {
+    public class Personality {}
+}
+
+public class Dog {
+    public class Personality {}
+}
+
+public class Owner {
+    public let catPersonality: Cat.Personality
+    public let dogPersonality: Dog.Personality
+    public let myTuple: (String, Int)
+    public let myNamedTuple: (name: String, age: Int)
+    public let myCat: Cat!
+    public let myDog: Dog!
+    public let myCats: Array<Cat?>!
+    public let myDogs: [Dog?]!
+
+    public init() {
+        self.catPersonality = Cat.Personality()
+        self.dogPersonality = Dog.Personality()
+        self.myTuple = ("", 0)
+        self.myNamedTuple = (name: "Hi", age: 1)
+        self.myCat = Cat()
+        self.myDog = Dog()
+        self.myCats = [Cat?]()
+        self.myDogs = [Dog?]()
     }
 }

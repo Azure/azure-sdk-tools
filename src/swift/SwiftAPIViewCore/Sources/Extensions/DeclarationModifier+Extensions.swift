@@ -44,14 +44,65 @@ extension DeclarationModifiers {
 
 extension InitializerDeclaration {
     var fullName: String {
-        let labels = self.parameterList.map { $0.externalName?.textDescription ?? $0.localName.textDescription }
-        return "init(\(labels.joined(separator: ":")))"
+        var value = "init("
+        for param in parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
     }
 }
 
 extension FunctionDeclaration {
     var fullName: String {
-        let labels = self.signature.parameterList.map { $0.externalName?.textDescription ?? $0.localName.textDescription }
-        return "\(self.name)(\(labels.joined(separator: ":")))"
+        var value = "\(self.name)("
+        for param in signature.parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension ProtocolDeclaration.InitializerMember {
+    var fullName: String {
+        var value = "init("
+        for param in parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension ProtocolDeclaration.MethodMember {
+    var fullName: String {
+        var value = "\(self.name)("
+        for param in signature.parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension OperatorDeclaration {
+    var `operator`: String {
+        switch self.kind {
+        case let .infix(opName, _):
+            return opName
+        case let .postfix(opName):
+            return opName
+        case let .prefix(opName):
+            return opName
+        }
     }
 }

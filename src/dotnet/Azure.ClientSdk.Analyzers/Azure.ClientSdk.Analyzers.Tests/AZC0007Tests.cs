@@ -37,5 +37,41 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0007ProducedForClientsWithOptionsNotDerivedFromClientOptions()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public {|AZC0007:SomeClient|}(string connectionString, SomeClientOptions options) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0007NotProducedForClientsWithDefaultOptionsCtorWithArguments()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    using System;
+
+    public class SomeClientOptions : Azure.Core.ClientOptions {}
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string connectionString, SomeClientOptions clientOptions = default) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

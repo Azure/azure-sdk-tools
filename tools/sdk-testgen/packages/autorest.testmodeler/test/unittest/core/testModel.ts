@@ -96,14 +96,13 @@ describe('ExampleParameter constructor(...)', () => {
 });
 
 describe('TestCodeModel functions', () => {
-    const codeModel = MockTool.createCodeModel();
-
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
     describe('genMockTests', () => {
         it('genMockTests', async () => {
+            const codeModel = MockTool.createCodeModel();
             const testCodeModel = TestCodeModeler.createInstance(
                 codeModel as TestCodeModel,
                 new TestConfig(
@@ -122,6 +121,7 @@ describe('TestCodeModel functions', () => {
 
     describe('genMockTests with some example disabled', () => {
         it('genMockTests', async () => {
+            const codeModel = MockTool.createCodeModel();
             const testCodeModel = TestCodeModeler.createInstance(
                 codeModel as TestCodeModel,
                 new TestConfig(
@@ -131,6 +131,25 @@ describe('TestCodeModel functions', () => {
                                 ['disabled-examples']: ['Extensions_Get', 'Extensions_Delete'],
                             },
                             'split-parents-value': true,
+                        },
+                    },
+                    configDefaults,
+                ),
+            );
+            testCodeModel.genMockTests();
+            expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
+        });
+    });
+
+    describe('Do not genMockTests if use-example-model is false', () => {
+        it('genMockTests', async () => {
+            const codeModel = MockTool.createCodeModel();
+            const testCodeModel = TestCodeModeler.createInstance(
+                codeModel as TestCodeModel,
+                new TestConfig(
+                    {
+                        testmodeler: {
+                            'use-example-model': false,
                         },
                     },
                     configDefaults,

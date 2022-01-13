@@ -91,7 +91,7 @@
 		{%- else %}
 		{%- set deploymentVariable = "_" %}
 		{%- endif %}
-	{{deploymentVariable}}, err = createDeployment(ctx, "{{step.step}}", getAnyJson([]byte(`{{step.armTemplatePayload | dump}}`)), getAnyJson([]byte(`{{step.armTemplateParametersPayload.parameters | dump}}`)))
+	{{deploymentVariable}}, err = createDeployment(ctx, "{{step.step}}", getAnyJson([]byte(`{{step.armTemplatePayload | dump}}`)), getAnyJson([]byte(`{}`)))
 	if err != nil {
 		t.Fatalf("%v\n %v", err, string(debug.Stack()))
 	}

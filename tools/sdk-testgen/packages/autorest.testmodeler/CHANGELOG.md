@@ -1,6 +1,25 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Fri, 12 Dec 2021 07:35:05 GMT and should not be manually modified.
+This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+
+## 2.0.0
+Wed, 12 Jan 2022 09:10:46 GMT
+
+### Breaking changes
+
+- load api scenario with oav@2.11.3
+
+## 1.1.0
+Wed, 12 Jan 2022 02:19:25 GMT
+
+### Minor changes
+
+- Remove decode for query param in example model to be align with swagger example rule.
+- Refactor config get set method.
+
+### Patches
+
+- Upgrade to latest autorest/core.
 
 ## 1.0.4
 Fri, 12 Dec 2021 07:35:05 GMT

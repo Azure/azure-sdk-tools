@@ -55,7 +55,7 @@ version: 3.7.3
 
 use-extension:
   "@autorest/go" : "4.0.0-preview.34"
-  "@autorest/testmodeler" : "1.0.4"
+  "@autorest/testmodeler" : "2.0.0"
 
 pipeline:
     test-modeler:

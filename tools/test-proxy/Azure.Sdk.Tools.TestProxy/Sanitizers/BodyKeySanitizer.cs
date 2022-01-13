@@ -7,7 +7,7 @@ using System.Net;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// This sanitizer operates on a RecordSession entry and applies itself to the Request and Response bodies contained therein. It ONLY operates on the request/response bodies. Not header or URIs.
+    /// This sanitizer operates on a RecordSession entry and applies regex replacement to the Request and Response bodies contained therein. It ONLY operates on the request/response bodies. Not header or URIs.
     /// </summary>
     public class BodyKeySanitizer : RecordedTestSanitizer
     {

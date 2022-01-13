@@ -266,9 +266,7 @@ class FunctionNode(NodeEntityBase):
                 self.add_error("Typehint is missing for method {}".format(self.name))
             return
 
-        if not self.return_type:
-            self.return_type = type_hint_ret_type
-        else:
+        if self.return_type:
             # Verify return type is same in docstring and typehint if typehint is available
             short_return_type = self._generate_short_type(self.return_type)
             long_ret_type = self.return_type
@@ -276,6 +274,9 @@ class FunctionNode(NodeEntityBase):
                 logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
                 error_message = "The return type is described in both a type hint and docstring, but they do not match."
                 self.add_error(error_message)
+        # because the typehint isn't subject to the 2-line limit, prefer it over
+        # a type parsed from the docstring.
+        self.return_type = type_hint_ret_type or self.return_type
 
 
     def _generate_signature_token(self, apiview):

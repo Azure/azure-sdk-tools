@@ -28,20 +28,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             string value = null;
             var document = await GetBody(req);
-            var recordingFile = GetProp(key, document.RootElement);
 
-            if (recordingFile.Value.ValueKind != JsonValueKind.Undefined)
+            if(document != null)
             {
-                value = recordingFile.Value.GetString();
-            }
-            else
-            {
-                if (!allowNulls)
+                var recordingFile = GetProp(key, document.RootElement);
+
+                if (recordingFile.Value.ValueKind != JsonValueKind.Undefined)
                 {
-                    throw new HttpException(HttpStatusCode.BadRequest, $"Failed attempting to retrieve value from request body. Targeted key was: {key}. Raw body value was {document.RootElement.GetRawText()}.");
+                    value = recordingFile.Value.GetString();
+                }
+                else
+                {
+                    if (!allowNulls)
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Failed attempting to retrieve value from request body. Targeted key was: {key}. Raw body value was {document.RootElement.GetRawText()}.");
+                    }
                 }
             }
-
+            
             return value;
         }
 

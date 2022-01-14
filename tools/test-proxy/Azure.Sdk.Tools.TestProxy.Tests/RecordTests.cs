@@ -22,7 +22,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-recording-file"] = "recordings/TestStartRecordSimple.json";
+            var body = "{\"x-recording-file\":\"recordings/TestStartRecordSimple.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
             var controller = new Record(testRecordingHandler)
             {
@@ -114,6 +116,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
             playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
 
             var controller = new Playback(testRecordingHandler)
             {

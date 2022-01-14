@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
@@ -39,7 +40,9 @@ namespace APIViewWeb.Respositories
 
         private readonly DevopsArtifactRepository _devopsArtifactRepository;
 
-        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+        private readonly PackageNameManager _packageNameManager;
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public ReviewManager(
             IAuthorizationService authorizationService,
@@ -49,7 +52,8 @@ namespace APIViewWeb.Respositories
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager,
-            DevopsArtifactRepository devopsArtifactRepository)
+            DevopsArtifactRepository devopsArtifactRepository,
+            PackageNameManager packageNameManager)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -59,6 +63,7 @@ namespace APIViewWeb.Respositories
             _languageServices = languageServices;
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsArtifactRepository;
+            _packageNameManager = packageNameManager;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
@@ -129,6 +134,14 @@ namespace APIViewWeb.Respositories
                     }
                 });
             }
+
+            if (review.PackageName != null && review.PackageDisplayName == null)
+            {
+                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                review.PackageDisplayName = p?.DisplayName;
+                review.ServiceName = p?.ServiceName;
+            }
+
             return review;
         }
 
@@ -206,6 +219,13 @@ namespace APIViewWeb.Respositories
             revision.Label = label;
 
             review.Revisions.Add(revision);
+
+            if (review.PackageName != null)
+            {
+                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
+                review.ServiceName = p?.ServiceName ?? review.ServiceName;
+            }
 
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
@@ -572,6 +592,37 @@ namespace APIViewWeb.Respositories
             using var memoryStream = new MemoryStream();
             var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
+        }
+
+        public async Task<string> GetReviewsJsonAsync()
+        {
+            SortedDictionary<string, ServiceGroupModel> response = new ();
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            foreach (var review in reviews)
+            {
+                var packageDisplayName = review.PackageDisplayName;
+                var serviceName = review.ServiceName;
+                if (!response.ContainsKey(serviceName))
+                {
+                    response[serviceName] = new ServiceGroupModel()
+                    {
+                        ServiceName = serviceName
+                    };
+                }
+
+                var packageDict = response[serviceName].packages;
+                if (!packageDict.ContainsKey(packageDisplayName))
+                {
+                    packageDict[packageDisplayName] = new PackageGroupModel()
+                    {
+                        PackageDisplayName = packageDisplayName
+                    };
+                }
+                packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
+            }
+
+            var jsonResponse = JsonSerializer.Serialize(response);
+            return jsonResponse;
         }
     }
 }

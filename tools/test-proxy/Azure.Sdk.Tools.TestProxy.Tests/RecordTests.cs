@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class RecordTests
     {
         [Fact]
-        public void TestStartRecordSimple()
+        public async Task TestStartRecordSimple()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -33,14 +33,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             Assert.NotNull(recordingId);
             Assert.True(testRecordingHandler.RecordingSessions.ContainsKey(recordingId));
         }
 
         [Fact]
-        public void TestStartRecordInMemory()
+        public async Task TestStartRecordInMemory()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             var (fileName, session) = testRecordingHandler.RecordingSessions[recordingId];
@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingSimple()
+        public async Task TestStopRecordingSimple()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers.Remove("x-recording-file");
@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestStopRecordingInMemory()
+        public async Task TestStopRecordingInMemory()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = recordContext
                 }
             };
-            recordController.Start();
+            await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId
             };

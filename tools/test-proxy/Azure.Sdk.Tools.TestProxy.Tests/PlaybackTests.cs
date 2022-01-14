@@ -161,7 +161,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = recordContext
                 }
             };
-            recordController.Start();
+            await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
             recordController.Stop();

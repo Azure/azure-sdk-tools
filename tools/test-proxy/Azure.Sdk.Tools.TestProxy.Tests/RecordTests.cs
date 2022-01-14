@@ -66,7 +66,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             var targetFile = "recordings/TestStartRecordSimple.json";
-            httpContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
             var controller = new Record(testRecordingHandler)
             {

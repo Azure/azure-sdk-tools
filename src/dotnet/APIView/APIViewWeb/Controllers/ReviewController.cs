@@ -20,7 +20,8 @@ namespace APIViewWeb.Controllers
         [HttpGet]
         public async Task<string> GetReviews()
         {
-            return await _reviewManager.GetReviewsJsonAsync();
+            var reviewUrlPrefix = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review";
+            return await _reviewManager.GetReviewsJsonAsync(reviewUrlPrefix);
         }
     }
 }

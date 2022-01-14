@@ -197,7 +197,7 @@ export class Coordinator {
     ): Record<string, any> | undefined {
         if (validationRequest.providerNamespace === 'microsoft.unknown') {
             const path = getPath(getPureUrl(req.url))
-            if (path.length === 2) {
+            if (path.length === 2 && path[0].toLowerCase() === 'subscriptions') {
                 // handle "/subscriptions/{subscriptionId}"
                 return {
                     [HttpStatusCode.OK]: {

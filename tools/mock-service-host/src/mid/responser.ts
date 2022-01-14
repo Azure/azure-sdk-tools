@@ -57,7 +57,7 @@ export class ResponseGenerator {
         ])
     }
 
-    private getSpecItem(spec: any, operationId: string): SpecItem | undefined {
+    public static getSpecItem(spec: any, operationId: string): SpecItem | undefined {
         let paths = spec.paths || {}
         if (spec[AzureExtensions.XMsPaths]) {
             paths = { ...paths, ...spec[AzureExtensions.XMsPaths] }
@@ -215,7 +215,7 @@ export class ResponseGenerator {
         applySpecTransformers(spec, this.transformContext)
         applyGlobalTransformers(this.transformContext)
 
-        const specItem = this.getSpecItem(spec, operation.operationId as string)
+        const specItem = ResponseGenerator.getSpecItem(spec, operation.operationId as string)
         if (!specItem) {
             throw Error(`operation ${operation.operationId} can't be found in ${specFile}`)
         }

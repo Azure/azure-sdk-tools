@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mockForExample:  mock resourceType 1`] = `
+Object {
+  "requestResourceId": "/subscriptions/a9cbceed-cd54-47f1-b7a2-bad149218603/resourceGroups/mockRg/providers/Microsoft.Resources/mockResource/mockName",
+  "requestResourceType": "Microsoft.Resources/mockResource",
+  "responseResourceId": "/subscriptions/xxx/resourceGroups/yy",
+  "responseResourceType": "Microsoft.Resources/mockResource",
+}
+`;

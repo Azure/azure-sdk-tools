@@ -156,3 +156,14 @@ export function queryToObject(httpQuery: string): Record<string, string> {
     }
     return ret
 }
+
+export function isResourceObject(obj: Record<string, any>): boolean {
+    return (
+        Object.prototype.hasOwnProperty.call(obj, 'id') &&
+        typeof obj.id === 'string' &&
+        Object.prototype.hasOwnProperty.call(obj, 'type') &&
+        typeof obj.type === 'string' &&
+        Object.prototype.hasOwnProperty.call(obj, 'name') &&
+        typeof obj.name === 'string'
+    )
+}

@@ -12,7 +12,7 @@ import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRul
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { SpecItem } from '../responser'
-import { logger } from '../../common/utils'
+import { isResourceObject, logger } from '../../common/utils'
 import { parse as parseUrl } from 'url'
 import Mocker from './mocker'
 
@@ -58,6 +58,7 @@ export default class SwaggerMocker {
         example.responses = this.mockResponse(example.responses, specItem)
         this.patchResourceId(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
+        this.patchResourceType(example)
     }
 
     /**
@@ -92,6 +93,19 @@ export default class SwaggerMocker {
         })
     }
 
+    private patchResourceType(obj: any) {
+        if (Array.isArray(obj)) {
+            obj.map((x) => this.patchResourceType(x))
+        } else if (typeof obj === 'object') {
+            if (isResourceObject(obj) && obj.type.match(/^a+$/) !== null) {
+                obj.type = 'Microsoft.Resources/mockResource'
+            }
+            for (const [_, item] of Object.entries(obj)) {
+                this.patchResourceType(item)
+            }
+        }
+    }
+
     public static flattenPath(path: string): Record<string, string> {
         const items = path.split('/')
         const ret: Record<string, string> = {}
@@ -118,10 +132,14 @@ export default class SwaggerMocker {
                     const resourceGroup = pathElements.subscriptions || 'mockGroup'
                     key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${key}`
                 }
+                const isUserAssigneIdentities = key.toLowerCase() === 'userassignedidentities'
+                if (isUserAssigneIdentities && Object.prototype.hasOwnProperty.call(obj, 'type')) {
+                    obj.type = ''
+                }
                 ret[key] = this.mockUserAssignedIdentities(
                     item,
                     pathElements,
-                    key.toLowerCase() === 'userassignedidentities'
+                    isUserAssigneIdentities
                 )
             }
             return ret

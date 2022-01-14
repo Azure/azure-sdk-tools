@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
+            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "At least one of two headers 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
+                throw new HttpException(HttpStatusCode.BadRequest, "At least one of either JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
             }
         }
 

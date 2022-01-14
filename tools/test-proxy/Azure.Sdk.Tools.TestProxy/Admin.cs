@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            ResponseTransform t = (ResponseTransform)GetTransform(tName, await GetBody(Request));
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await GetBody(Request));
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await GetBody(Request));
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -193,27 +193,5 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
-        private async static Task<JsonDocument> GetBody(HttpRequest req)
-        {
-            if (req.ContentLength > 0)
-            {
-                try
-                {
-                    var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
-                    return result;
-                }
-                catch(Exception e)
-                {
-                    req.Body.Position = 0;
-                    using (StreamReader readstream = new StreamReader(req.Body, Encoding.UTF8))
-                    {
-                        string bodyContent = readstream.ReadToEnd();
-                        throw new HttpException(HttpStatusCode.BadRequest, $"The body of this request is invalid JSON. Content: { bodyContent }. Exception detail: {e.Message}");
-                    }
-                }
-            }
-
-            return null;
-        }
     }
 }

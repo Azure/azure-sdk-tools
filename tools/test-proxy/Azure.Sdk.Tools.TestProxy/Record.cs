@@ -30,9 +30,9 @@ namespace Azure.Sdk.Tools.TestProxy
             };
 
         [HttpPost]
-        public void Start()
+        public async Task Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
+            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
 
             _recordingHandler.StartRecording(file, Response);
         }

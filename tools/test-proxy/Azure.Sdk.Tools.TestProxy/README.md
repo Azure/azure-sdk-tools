@@ -238,9 +238,9 @@ headers {
 
 ### An important note about perf testing
 
-If a user does **not** provide a `fileId` via body `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
+If a user does **not** provide a `fileId` via body key `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
 
-Start the recording **without a `x-recording-file` body**.
+Start the recording **without a `x-recording-file` body value**.
 
 ```json
 URL: https://localhost:5001/record/start

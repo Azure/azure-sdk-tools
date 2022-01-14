@@ -6,7 +6,7 @@
 
 from apistub.nodes import ClassNode, FunctionNode
 
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Union
 
 class TestClass:
     """ Function parsing tests."""
@@ -44,6 +44,13 @@ class TestClass:
 
     def with_python3_str_typehint(self) -> List[str]:
         return TestClass()
+
+    def with_python2_union_typehint(self):
+        # type: (...) -> List[Union[str, int]]
+        return ""
+
+    def with_python3_union_typehint(self) -> List[Union[str, int]]:
+        return ""
     
 
 class TestFunctionParsing:
@@ -89,3 +96,10 @@ class TestFunctionParsing:
 
         func_node = FunctionNode("test", None, TestClass.with_python3_str_typehint, "test")
         assert func_node.return_type == "List[str]"
+
+    def test_complex_typehints(self):
+        func_node = FunctionNode("test", None, TestClass.with_python2_union_typehint, "test")
+        assert func_node.return_type == "List[Union[str, int]]"
+
+        func_node = FunctionNode("test", None, TestClass.with_python3_union_typehint, "test")
+        assert func_node.return_type == "List[Union[str, int]]"

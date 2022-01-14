@@ -6,7 +6,7 @@
 
 from apistub.nodes import ClassNode, FunctionNode
 
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 class TestClass:
     """ Function parsing tests."""
@@ -35,13 +35,23 @@ class TestClass:
     def with_default_values(self, foo="1", *, bar="2", baz=None):
         return None
 
+    def with_python2_list_typehint(self):
+        # type: () -> List[TestClass]
+        return TestClass()
+
+    def with_python3_list_typehint(self) -> List["TestClass"]:
+        return TestClass()
+
+    def with_python3_str_typehint(self) -> List[str]:
+        return TestClass()
+    
 
 class TestFunctionParsing:
     
     def test_optional_typehint(self):
         func_node = FunctionNode("test", None, TestClass.with_optional_typehint, "test")
         arg = func_node.args["description"]
-        assert arg.argtype == "typing.Optional[str]"
+        assert arg.argtype == "Optional[str]"
         assert arg.default == "..."
 
     def test_optional_docstring(self):
@@ -69,3 +79,13 @@ class TestFunctionParsing:
         assert func_node.args["foo"].default == "1"
         assert func_node.kw_args["bar"].default == "2"
         assert func_node.kw_args["baz"].default == "..."
+
+    def test_typehint_and_docstring_return_types(self):
+        func_node = FunctionNode("test", None, TestClass.with_python2_list_typehint, "test")
+        assert func_node.return_type == "List[TestClass]"
+
+        func_node = FunctionNode("test", None, TestClass.with_python3_list_typehint, "test")
+        assert func_node.return_type == "List[TestClass]"
+
+        func_node = FunctionNode("test", None, TestClass.with_python3_str_typehint, "test")
+        assert func_node.return_type == "List[str]"

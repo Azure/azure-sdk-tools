@@ -1,5 +1,9 @@
 from inspect import Parameter
+import re
 from typing import Optional
+
+class_regex = re.compile(r"<class '([a-zA-Z._]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
 
 class NodeEntityBase:
     """This is the base class for all node types
@@ -55,17 +59,35 @@ def get_qualified_name(obj, namespace):
     name = str(obj)
     if hasattr(obj, "__name__"):
         name = getattr(obj, "__name__")
-        # workaround because typing.Optional __name__ is just Optional in Python 3.10
-        # but not in previous versions
-        if name == "Optional":
-            name = str(obj)
     elif hasattr(obj, "__qualname__"):
         name = getattr(obj, "__qualname__")
+
+    args = []
+    # newer versions of Python extract inner types into __args__
+    # and are no longer part of the name
+    if hasattr(obj, "__args__"):
+        for arg in getattr(obj, "__args__"):
+            arg_string = str(arg)
+            if class_regex.match(arg_string):
+                value = class_regex.search(arg_string).group(1)
+                # we ignore NoneType since Optional implies that NoneType is
+                # acceptable
+                if value != "NoneType":
+                    args.append(value)
+            elif forward_ref_regex.match(arg_string):
+                value = forward_ref_regex.search(arg_string).group(1)
+                args.append(value)
+            else:
+                args.append(arg_string)
 
     module_name = ""
     if hasattr(obj, "__module__"):
         module_name = getattr(obj, "__module__")
-    if module_name and module_name.startswith(namespace):
-        return "{0}.{1}".format(module_name, name)
 
-    return name
+    value = name
+    if module_name and module_name.startswith(namespace):
+        value = f"{module_name}.{name}"
+    if args:
+        arg_string = ", ".join(args)
+        value = f"{value}[{arg_string}]"
+    return value

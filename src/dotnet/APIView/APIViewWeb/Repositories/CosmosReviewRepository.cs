@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
@@ -14,11 +15,13 @@ namespace APIViewWeb
     public class CosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
+        private readonly PackageNameManager _packageNameManager;
 
-        public CosmosReviewRepository(IConfiguration configuration)
+        public CosmosReviewRepository(IConfiguration configuration, PackageNameManager packageNameManager)
         {
             var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
+            _packageNameManager = packageNameManager;
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -76,6 +79,16 @@ namespace APIViewWeb
             {
                 var result = await itemQueryIterator.ReadNextAsync();
                 allReviews.AddRange(result.Resource);
+            }
+
+            foreach(var r in allReviews)
+            {
+                if (r.PackageDisplayName == null || r.ServiceName == null)
+                {
+                    var p = _packageNameManager.GetPackageDetails(r.PackageName);
+                    r.PackageDisplayName = p?.DisplayName ?? "Other";
+                    r.ServiceName = p?.ServiceName ?? "Other";
+                }
             }
             return allReviews.OrderByDescending(r => r.LastUpdated);
         }

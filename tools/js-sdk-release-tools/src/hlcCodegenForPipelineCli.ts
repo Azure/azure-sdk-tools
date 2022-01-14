@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {generateSdkAutomatically, OutputPackageInfo} from "./hlc/hlcCore";
+import {logger} from "./utils/logger";
 
 const shell = require('shelljs');
 const fs = require('fs');
@@ -31,4 +32,7 @@ const optionDefinitions = [
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.useDebugger? true : false);
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.useDebugger? true : false).catch(e => {
+    logger.logError(e.message);
+    process.exit(1);
+});

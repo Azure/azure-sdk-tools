@@ -144,8 +144,14 @@ const messages = {
 }
 
 export async function getInputFromCommand(parameter: string): Promise<string> {
-    const input = await ask(messages[parameter].yellow);
-    return input as string;
+    while (true) {
+        const input = (await ask(messages[parameter].yellow)) as string;
+        if (input.trim() === '') {
+            logger.logWarn('Please do not input empty string.')
+        } else {
+            return input;
+        }
+    }
 }
 
 export async function getInputFromCommandWithDefaultValue(parameter: string, defaultValue: string): Promise<string> {

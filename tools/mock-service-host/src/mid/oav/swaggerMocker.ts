@@ -132,14 +132,10 @@ export default class SwaggerMocker {
                     const resourceGroup = pathElements.subscriptions || 'mockGroup'
                     key = `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${key}`
                 }
-                const isUserAssigneIdentities = key.toLowerCase() === 'userassignedidentities'
-                if (isUserAssigneIdentities && Object.prototype.hasOwnProperty.call(obj, 'type')) {
-                    obj.type = ''
-                }
                 ret[key] = this.mockUserAssignedIdentities(
                     item,
                     pathElements,
-                    isUserAssigneIdentities
+                    key.toLowerCase() === 'userassignedidentities'
                 )
             }
             return ret

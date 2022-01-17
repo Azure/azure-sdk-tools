@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading.Tasks;
 using System.CommandLine;
 using APIViewWeb;
-using System.CommandLine.Invocation;
 
 namespace swagger_api_parser
 {

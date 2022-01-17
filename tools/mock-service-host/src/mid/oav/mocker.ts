@@ -1,10 +1,12 @@
 import * as mockjs from 'mockjs'
 import { logger } from '../../common/utils'
+import { mockedResourceType } from '../../common/constants'
+
 export default class Mocker {
-    public mock(paramSpec: any, paramName: string, arrItem?: any): any {
+    public mock(paramSpec: any, paramName: string, arrItem?: any, inAzureResource = false): any {
         switch (paramSpec.type) {
             case 'string':
-                return this.generateString(paramSpec, paramName)
+                return this.generateString(paramSpec, paramName, inAzureResource)
             case 'integer':
                 return this.generateInteger(paramSpec)
             case 'number':
@@ -18,7 +20,7 @@ export default class Mocker {
         }
     }
 
-    private generateString(paramSpec: any, paramName: string) {
+    private generateString(paramSpec: any, paramName: string, inAzureResource: boolean) {
         if (paramSpec.format === 'date') {
             return new Date().toISOString().split('T')[0]
         }
@@ -58,8 +60,14 @@ export default class Mocker {
             }
         }
 
-        if (paramName === 'id') {
-            return '/subscriptions/a9cbceed-cd54-47f1-b7a2-bad149218603/resourceGroups/mockRg/providers/Microsoft.Resources/mockResource/mockName'
+        if (inAzureResource) {
+            if (paramName === 'id') {
+                return `/subscriptions/a9cbceed-cd54-47f1-b7a2-bad149218603/resourceGroups/mockRg/providers/${mockedResourceType}/mockName`
+            } else if (paramName === 'name') {
+                return 'mockName'
+            } else if (paramName === 'type') {
+                return mockedResourceType
+            }
         }
 
         if (

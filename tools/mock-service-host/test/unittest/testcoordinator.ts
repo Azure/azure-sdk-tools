@@ -2,7 +2,6 @@ import 'reflect-metadata' // Must be imported exactly once for Inversify
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as assert from 'assert'
-import * as oav from 'oav'
 import * as path from 'path'
 import { Coordinator } from '../../src/mid/coordinator'
 import {

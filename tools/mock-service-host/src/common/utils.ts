@@ -32,14 +32,15 @@ export function replacePropertyValue(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     where = (v: any) => {
         return true
-    }
+    },
+    recursively = true
 ): any {
     const newObject = lodash.clone(object)
 
     lodash.each(object, (val, key) => {
         if (key === property && where(val)) {
             newObject[key] = newVal
-        } else if (typeof val === 'object') {
+        } else if (typeof val === 'object' && recursively) {
             newObject[key] = replacePropertyValue(property, newVal, val, where)
         }
     })
@@ -157,13 +158,14 @@ export function queryToObject(httpQuery: string): Record<string, string> {
     return ret
 }
 
-export function isResourceObject(obj: Record<string, any>): boolean {
-    return (
-        Object.prototype.hasOwnProperty.call(obj, 'id') &&
-        typeof obj.id === 'string' &&
-        Object.prototype.hasOwnProperty.call(obj, 'type') &&
-        typeof obj.type === 'string' &&
-        Object.prototype.hasOwnProperty.call(obj, 'name') &&
-        typeof obj.name === 'string'
-    )
+export function setStringIfExist(obj: any, propertyName: string, value: string) {
+    if (isNullOrUndefined(obj)) {
+        return
+    }
+    if (
+        Object.prototype.hasOwnProperty.call(obj, propertyName) &&
+        typeof obj[propertyName] === 'string'
+    ) {
+        obj[propertyName] = value
+    }
 }

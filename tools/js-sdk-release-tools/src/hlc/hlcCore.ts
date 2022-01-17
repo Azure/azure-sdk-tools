@@ -1,5 +1,5 @@
 import {logger} from "../utils/logger";
-import { execSync } from "child_process";
+import {execSync} from "child_process";
 
 import fs from "fs";
 import * as path from "path";
@@ -71,99 +71,98 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
         cmd += ` ${additionalArgs}`;
     }
 
+    logger.logGreen('Executing command:');
+    logger.logGreen('------------------------------------------------------------');
+    logger.logGreen(cmd);
+    logger.logGreen('------------------------------------------------------------');
     try {
-        logger.logGreen('Executing command:');
-        logger.logGreen('------------------------------------------------------------');
-        logger.logGreen(cmd);
-        logger.logGreen('------------------------------------------------------------');
+        execSync(cmd, {stdio: 'inherit'});
+    } catch (e) {
+        throw new Error(`An error occurred while generating codes for readme file: "${absoluteReadmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+    }
 
-        execSync(cmd, { stdio: 'inherit' });
+    const changedPackageDirectories: Set<string> = await getChangedPackageDirectory();
+    for (const changedPackageDirectory of changedPackageDirectories) {
+        const outputPackageInfo: OutputPackageInfo = {
+            "packageName": "",
+            "path": [
+                'rush.json',
+                'common/config/rush/pnpm-lock.yaml'
+            ],
+            "readmeMd": [
+                relativeReadmeMd
+            ],
+            "changelog": {
+                "content": "",
+                "hasBreakingChange": false
+            },
+            "artifacts": [],
+            "result": "succeeded"
+        };
+        try {
+            const packageFolderPath: string = path.join(azureSDKForJSRepoRoot, changedPackageDirectory);
+            logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
+            if (packageFolderPath) {
+                const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'}));
 
-        const changedPackageDirectories: Set<string> = await getChangedPackageDirectory();
-        for (const changedPackageDirectory of changedPackageDirectories) {
-            const outputPackageInfo: OutputPackageInfo = {
-                "packageName": "",
-                "path": [
-                    'rush.json',
-                    'common/config/rush/pnpm-lock.yaml'
-                ],
-                "readmeMd": [
-                    relativeReadmeMd
-                ],
-                "changelog": {
-                    "content": "",
-                    "hasBreakingChange": false
-                },
-                "artifacts": [],
-                "result": "succeeded"
-            };
-            try {
-                const packageFolderPath: string = path.join(azureSDKForJSRepoRoot, changedPackageDirectory);
-                logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
-                if (packageFolderPath) {
-                    const packageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));
+                changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
 
-                    changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
-
-                    logger.logGreen(`rush update`);
-                    execSync('rush update', { stdio: 'inherit' });
-                    logger.logGreen(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`);
-                    execSync(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`, { stdio: 'inherit' });
-                    logger.logGreen('Generating Changelog and Bumping Version...');
-                    const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
-                    logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
-                    execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, { stdio: 'inherit' });
-                    if (outputJson) {
-                        outputPackageInfo.packageName = 'track2_' + packageJson.name;
-                        if (changelog) {
-                            outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                            outputPackageInfo.changelog.content = changelog.displayChangeLog();
-                            const breakingChangeItems = changelog.getBreakingChangeItems();
-                            if (!!breakingChangeItems && breakingChangeItems.length > 0) {
-                                outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
-                            }
-                            const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), { encoding: 'utf-8' }));;
-                            const newVersion = newPackageJson['version'];
-                            outputPackageInfo['version'] = newVersion;
-                        }
-                        outputPackageInfo.path.push(path.dirname(changedPackageDirectory));
-                        for (const file of fs.readdirSync(packageFolderPath)) {
-                            if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
-                                outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
-                            }
-                        }
-                    }
-                    const metaInfo: any = {
-                        commit: gitCommitId,
-                        readme: relativeReadmeMd,
-                        autorest_command: cmd,
-                        repository_url: swaggerRepoUrl? `${swaggerRepoUrl}.git` : 'https://github.com/Azure/azure-rest-api-specs.git'
-                    };
-                    if (tag) {
-                        metaInfo['tag'] = tag;
-                    }
-                    if (use) {
-                        metaInfo['use'] = use;
-                    }
-                    fs.writeFileSync(path.join(packageFolderPath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
-                    modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
-                    changeReadmeMd(packageFolderPath);
-                } else {
-                    throw 'find undefined packageFolderPath'
-                }
-            } catch (e) {
-                logger.logError('Error:');
-                logger.logError(`An error occurred while generating codes and run build for readme file: "${absoluteReadmeMd}":\nErr: ${e}\nStderr: "${e.stderr}\nStdout: "${e.stdout}"`);
-                outputPackageInfo.result = 'failed';
-            } finally {
+                logger.logGreen(`rush update`);
+                execSync('rush update', {stdio: 'inherit'});
+                logger.logGreen(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`);
+                execSync(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`, {stdio: 'inherit'});
+                logger.logGreen('Generating Changelog and Bumping Version...');
+                const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
+                execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
                 if (outputJson) {
-                    outputJson.packages.push(outputPackageInfo);
+                    outputPackageInfo.packageName = 'track2_' + packageJson.name;
+                    if (changelog) {
+                        outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
+                        outputPackageInfo.changelog.content = changelog.displayChangeLog();
+                        const breakingChangeItems = changelog.getBreakingChangeItems();
+                        if (!!breakingChangeItems && breakingChangeItems.length > 0) {
+                            outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                        }
+                        const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'}));
+                        ;
+                        const newVersion = newPackageJson['version'];
+                        outputPackageInfo['version'] = newVersion;
+                    }
+                    outputPackageInfo.path.push(path.dirname(changedPackageDirectory));
+                    for (const file of fs.readdirSync(packageFolderPath)) {
+                        if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
+                            outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
+                        }
+                    }
                 }
+                const metaInfo: any = {
+                    commit: gitCommitId,
+                    readme: relativeReadmeMd,
+                    autorest_command: cmd,
+                    repository_url: swaggerRepoUrl ? `${swaggerRepoUrl}.git` : 'https://github.com/Azure/azure-rest-api-specs.git'
+                };
+                if (tag) {
+                    metaInfo['tag'] = tag;
+                }
+                if (use) {
+                    metaInfo['use'] = use;
+                }
+                fs.writeFileSync(path.join(packageFolderPath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
+                modifyOrGenerateCiYaml(azureSDKForJSRepoRoot, changedPackageDirectory, packageJson.name, true);
+                changeReadmeMd(packageFolderPath);
+            } else {
+                throw 'find undefined packageFolderPath'
+            }
+        } catch (e) {
+            logger.logError('Error:');
+            logger.logError(`An error occurred while run build for readme file: "${absoluteReadmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            outputPackageInfo.result = 'failed';
+        } finally {
+            if (outputJson) {
+                outputJson.packages.push(outputPackageInfo);
             }
         }
-    } catch (err) {
-        logger.log('Error:');
-        logger.log(`An error occurred while generating client for readme file: "${absoluteReadmeMd}":\nErr: ${err}\nStderr: "${err.stderr}"`);
     }
 
     logger.log(`>>>>>>>>>>>>>>>>>>> End: "${absoluteReadmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);

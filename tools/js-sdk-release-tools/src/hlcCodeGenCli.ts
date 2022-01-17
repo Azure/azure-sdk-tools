@@ -27,4 +27,7 @@ const optionDefinitions = [
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerate(options.readme, options.tag, options.use, options.useDebugger? true : false, options['additional-args']);
+automationGenerate(options.readme, options.tag, options.use, options.useDebugger? true : false, options['additional-args']).catch(e => {
+    logger.logError(e.message);
+    process.exit(1);
+});

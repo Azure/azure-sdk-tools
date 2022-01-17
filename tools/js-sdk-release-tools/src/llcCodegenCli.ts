@@ -38,7 +38,7 @@ async function autoGenerate(options: any) {
         }
         packagePath = findPackageInRepo(packageName, sdkRepo);
         if (!packagePath) {
-            logger.logGreen(`${packageName} is first generated, please help input necessary information to create swagger/README.md.`);
+            logger.logGreen(`${packageName} is first generated.`);
             const rp = options['service-name']? options['service-name'] : await getInputFromCommand('service-name');
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp));
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp, getPackageFolderName(packageName)));

@@ -10,4 +10,12 @@
     <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NuGet.CommandLine" Version="6.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
+  </ItemGroup>
+
 </Project>

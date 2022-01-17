@@ -1,19 +1,38 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.CommandLine;
 using APIViewWeb;
+using System.CommandLine.Invocation;
 
 namespace swagger_api_parser
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {   
-            if(args.Length == 0)
+
+            var swagger = new Argument<string>("swagger", "The input swagger file.");
+
+            var cmd = new RootCommand
             {
-                throw new ArgumentException("swagger");
-            }
-            var input = Path.GetFullPath(args[0]);
+                swagger,
+            };
+
+            cmd.Description = "Parse swagger file into codefile.";
+
+            cmd.SetHandler(async (string swagger) =>
+            {
+                await handleGenerateCodeFile(swagger);
+            }, swagger);
+
+            return cmd.Invoke(args);
+
+        }
+
+        static async Task handleGenerateCodeFile(string swagger)
+        {
+            var input = Path.GetFullPath(swagger);
 
             Console.WriteLine("Input swagger file: {0}", input);
             var output = input.Replace(".json", ".swagger");
@@ -23,6 +42,7 @@ namespace swagger_api_parser
             var fileWriteStream = File.OpenWrite(output);
             await cf.SerializeAsync(fileWriteStream);
             Console.WriteLine("Generated output file {0}", output);
+
         }
     }
 }

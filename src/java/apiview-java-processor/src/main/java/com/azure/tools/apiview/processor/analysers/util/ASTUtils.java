@@ -16,6 +16,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.List;
@@ -107,6 +108,11 @@ public class ASTUtils {
         return MAKE_ID.matcher(fullPath).replaceAll("-");
     }
 
+    public static String makeId(AnnotationExpr annotation) {
+        int line = annotation.getBegin().orElseThrow(RuntimeException::new).line;
+        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + "-L" + line);
+    }
+
     /**
      * Returns true if the type is public or protected, or it the type is an interface that is defined within another
      * public interface.
@@ -194,6 +200,9 @@ public class ASTUtils {
         if (node instanceof TypeDeclaration<?>) {
             TypeDeclaration<?> type = (TypeDeclaration<?>) node;
             return type.getFullyQualifiedName().get();
+        } else if (node instanceof CallableDeclaration) {
+            CallableDeclaration callableDeclaration = (CallableDeclaration) node;
+            return getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
         } else {
             return "";
         }

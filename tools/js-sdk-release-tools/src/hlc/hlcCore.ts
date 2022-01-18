@@ -45,7 +45,7 @@ function changeReadmeMd(packageFolderPath: string) {
 
 }
 
-function changeConfigAboutTest(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, mode: string) {
+function changeConfigOfTest(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, mode: string) {
     const tsConfig = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), {encoding: 'utf-8'}));
     const packageJson = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), {encoding: 'utf-8'}));
     const apiExtractor = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), {encoding: 'utf-8'}));
@@ -126,7 +126,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                 changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
 
                 // change configuration to skip build test
-                changeConfigAboutTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'change')
+                changeConfigOfTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'change')
 
                 logger.logGreen(`rush update`);
                 execSync('rush update', {stdio: 'inherit'});
@@ -182,7 +182,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
             if (outputJson) {
                 outputJson.packages.push(outputPackageInfo);
             }
-            changeConfigAboutTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'revert');
+            changeConfigOfTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'revert');
         }
     }
 

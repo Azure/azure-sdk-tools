@@ -66,7 +66,7 @@ APIView tool shows three different types of reviews based on how it is generated
 - Pull request reviews
 
 ### Manual
-Manual reviews are created by developers vy uploading artifact as per teh instructions given above. This will allow developers to review API changes if API review is not available from PR branch.
+Manual reviews are created by developers by uploading artifact as per the instructions given above. This will allow developers to review API changes if API review is not available from PR branch.
 
 ### Automatic
 API review tool has a master version of API review created automatically by azure-sdk bot as part of our scheduled CI pipelines in Azure Devops internal project. CI will check for any new change in public API surface level as part of every scheduled run and create a new revision if it finds any difference. These reviews cannot be deleted or updated with new revisions manually , in other words, this is a locked version of API reviews. Only actions that are allowed on master review is Add/update/remove/Resolve comment and Approve API reviews.
@@ -76,4 +76,4 @@ As part of build and release pipelines, we will enforce API approval by architec
 Automatic API reviews are not listed by default when you login to API review tool. You can view automatic reviews by clicking on "Automatic" button in top right corner in the main page.
 
 ### API reviews from pull requests
-PR pipline for Java, C#, JS and Python sends a request to APIView tool to identify if there are any changes made at API level as part of the PR it is processing. APIView tool compared the stub file from PR pipeline against API review revision created from main branch and creates a new review if there is any change. APIView will also add a comment to GitHub PR with a link to API review if there is any change detected. APIView will not crete any review for this PR if it does not have any API level change.
+PR pipeline for Java, C#, JS and Python sends a request to APIView tool to identify if there are any changes made at API level as part of the PR it is processing. APIView tool compared the stub file from PR pipeline against API review revision created from main branch and creates a new review if there is any change. APIView will also add a comment to GitHub PR with a link to API review if there is any change detected. APIView will not create any review for a PR if it does not have any API level change.

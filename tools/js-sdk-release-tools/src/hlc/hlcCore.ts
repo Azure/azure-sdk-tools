@@ -45,6 +45,24 @@ function changeReadmeMd(packageFolderPath: string) {
 
 }
 
+function changeConfigOfTest(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, mode: string) {
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), {encoding: 'utf-8'}));
+    const packageJson = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), {encoding: 'utf-8'}));
+    const apiExtractor = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), {encoding: 'utf-8'}));
+    if (mode === 'change') {
+        tsConfig['include'] = ["./src/**/*.ts"];
+        packageJson['module'] = "./dist-esm/index.js";
+        apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
+    } else if (mode === 'revert') {
+        tsConfig['include'] = ["./src/**/*.ts", "./test/**/*.ts"];
+        packageJson['module'] = "./dist-esm/src/index.js";
+        apiExtractor['mainEntryPointFilePath'] = "./dist-esm/src/index.d.ts";
+    }
+    fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), JSON.stringify(tsConfig, undefined, '  '), {encoding: 'utf-8'});
+    fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), JSON.stringify(packageJson, undefined, '  '), {encoding: 'utf-8'});
+    fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), JSON.stringify(apiExtractor, undefined, '  '), {encoding: 'utf-8'});
+}
+
 export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, absoluteReadmeMd: string, relativeReadmeMd: string, gitCommitId: string, tag?: string, use?: string, useDebugger?: boolean, additionalArgs?: string, outputJson?: any, swaggerRepoUrl?: string) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${absoluteReadmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
@@ -107,9 +125,12 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
 
                 changeRushJson(azureSDKForJSRepoRoot, packageJson.name, changedPackageDirectory, 'management');
 
+                // change configuration to skip build test
+                changeConfigOfTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'change')
+
                 logger.logGreen(`rush update`);
                 execSync('rush update', {stdio: 'inherit'});
-                logger.logGreen(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`);
+                logger.logGreen(`rush build src folder`);
                 execSync(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`, {stdio: 'inherit'});
                 logger.logGreen('Generating Changelog and Bumping Version...');
                 const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
@@ -125,7 +146,6 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
                             outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
                         }
                         const newPackageJson = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'}));
-                        ;
                         const newVersion = newPackageJson['version'];
                         outputPackageInfo['version'] = newVersion;
                     }
@@ -162,6 +182,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
             if (outputJson) {
                 outputJson.packages.push(outputPackageInfo);
             }
+            changeConfigOfTest(azureSDKForJSRepoRoot, changedPackageDirectory, 'revert');
         }
     }
 

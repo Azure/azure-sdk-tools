@@ -130,7 +130,7 @@ export async function generateSdkAutomatically(azureSDKForJSRepoRoot: string, ab
 
                 logger.logGreen(`rush update`);
                 execSync('rush update', {stdio: 'inherit'});
-                logger.logGreen(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`);
+                logger.logGreen(`rush build src folder`);
                 execSync(`node common/scripts/install-run-rush.js build --from ${packageJson.name} --verbose -p max`, {stdio: 'inherit'});
                 logger.logGreen('Generating Changelog and Bumping Version...');
                 const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);

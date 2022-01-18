@@ -594,10 +594,10 @@ namespace APIViewWeb.Respositories
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 
-        public async Task<string> GetReviewsJsonAsync(string reviewUrlPrefix)
+        public async Task<List<ServiceGroupModel>> GetReviewsByServicesAsync(ReviewType filterType)
         {
             SortedDictionary<string, ServiceGroupModel> response = new ();
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: filterType);
             foreach (var review in reviews)
             {
                 var packageDisplayName = review.PackageDisplayName;
@@ -618,15 +618,9 @@ namespace APIViewWeb.Respositories
                         PackageDisplayName = packageDisplayName
                     };
                 }
-                var r = new ReviewDisplayModel(review)
-                {
-                    LinkToReview = $"{reviewUrlPrefix}/{review.ReviewId}"
-                };
-                packageDict[packageDisplayName].reviews.Add(r);
+                packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
             }
-
-            var jsonResponse = JsonSerializer.Serialize(response);
-            return jsonResponse;
+            return response.Values.ToList();
         }
     }
 }

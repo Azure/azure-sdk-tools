@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using APIViewWeb.Models;
 using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -32,11 +33,13 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(SupportsGet = true)]
         public ReviewType FilterType { get; set; } = ReviewType.Manual;
 
-        public IEnumerable<ReviewModel> Assemblies { get; set; }
+        public IEnumerable<ReviewModel> Assemblies { get; set; } = new List<ReviewModel>();
+
+        public IEnumerable<ServiceGroupModel> reviewServices { get; set; }
 
         public async Task OnGetAsync()
         {
-            Assemblies = await _manager.GetReviewsAsync(Closed, Language, filterType: FilterType);
+            reviewServices = await _manager.GetReviewsByServicesAsync(FilterType);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()

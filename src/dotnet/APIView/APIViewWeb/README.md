@@ -18,10 +18,10 @@ APIView tool allows to see only stub version of classes, methods, properties, me
 
 ## How to create an API review manually
 
-API review can be created by uploading an artifact to APIView tool. Type of the artifact is different across each language. Some language, for e.g., Swift requires developer to run parser tool locally to generate stub file and upload json stub file instead of any artifact. Following are the detailed instruction on hwo to create review for each language. 
+API review can be created by uploading an artifact to APIView tool. Type of the artifact is different across each language. Some language, for e.g., Swift requires developer to run parser tool locally to generate stub file and upload json stub file instead of any artifact. Following are the detailed instructions on how to create review for each language. 
 
 ### C#
-Run `dotnet pack` for the required package to generate nuget file. Upload the resulting .nupkg file using `Create Review` link in APIView.
+Run `dotnet pack` for the required package to generate Nuget file. Upload the resulting .nupkg file using `Create Review` link in APIView.
 
 ### C
 1. Install clang 10 or later.
@@ -69,7 +69,7 @@ APIView tool shows three different types of reviews based on how it is generated
 Manual reviews are created by developers vy uploading artifact as per teh instructions given above. This will allow developers to review API changes if API review is not available from PR branch.
 
 ### Automatic
-Azure devops pipeline creates a review or addd a new revision based on the code changes in main branch if package has a new API changes. APIView tool maintains only one review for each package per language. It creates a new revision each time a new change is made at API level for that package. These reviews cannot be deleted or updated with new revisions manually , in other words, this is a locked version of API reviews. Only actions that are allowed on master review is Add/update/remove/Resolve comment and Approve API reviews.
+API review tool has a master version of API review created automatically by azure-sdk bot as part of our scheduled CI pipelines in Azure Devops internal project. CI will check for any new change in public API surface level as part of every scheduled run and create a new revision if it finds any difference. These reviews cannot be deleted or updated with new revisions manually , in other words, this is a locked version of API reviews. Only actions that are allowed on master review is Add/update/remove/Resolve comment and Approve API reviews.
 
 As part of build and release pipelines, we will enforce API approval by architect or deputy architect if package version is GA which means we need to ensure latest revision of automatically created review is approved in API review tool to release a GA version package. This is applicable for any package ( both data plane and management plane) that is listed as an artifact in CI yaml.
 
@@ -77,4 +77,3 @@ Automatic API reviews are not listed by default when you login to API review too
 
 ### API reviews from pull requests
 PR pipline for Java, C#, JS and Python sends a request to APIView tool to identify if there are any changes made at API level as part of the PR it is processing. APIView tool compared the stub file from PR pipeline against API review revision created from main branch and creates a new review if there is any change. APIView will also add a comment to GitHub PR with a link to API review if there is any change detected. APIView will not crete any review for this PR if it does not have any API level change.
-

@@ -197,7 +197,7 @@ export class Coordinator {
     ): Record<string, any> | undefined {
         if (validationRequest.providerNamespace === 'microsoft.unknown') {
             const path = getPath(getPureUrl(req.url))
-            if (path.length === 2) {
+            if (path.length === 2 && path[0].toLowerCase() === 'subscriptions') {
                 // handle "/subscriptions/{subscriptionId}"
                 return {
                     [HttpStatusCode.OK]: {
@@ -300,9 +300,15 @@ export class Coordinator {
                 //set name
                 const path = getPath(getPureUrl(req.url))
                 if (!isExampleResponse) {
-                    ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                        return typeof v === 'string' && v.match(/^a+$/) !== null
-                    })
+                    ret = replacePropertyValue(
+                        'name',
+                        path[path.length - 1],
+                        ret,
+                        (v) => {
+                            return typeof v === 'string'
+                        },
+                        false
+                    )
                 }
             }
 

@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-#build/
+build/
 develop-eggs/
 dist/
 downloads/
@@ -486,9 +486,13 @@ src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
 
 # npm
 *-lock.json
-src/swift/SwiftAPIView.xcworkspace/xcuserdata
+
 
 # oav converter
 tools/oav-traffic-converter/input-example/
 tools/oav-traffic-converter/output-example/
 tools/oav-traffic-converter/build/
+
+# ios
+src/swift/*.xcworkspace/xcuserdata/
+src/swift/**/*.xcodeproj/xcuserdata/

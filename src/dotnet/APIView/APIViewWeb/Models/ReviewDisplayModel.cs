@@ -15,7 +15,6 @@ namespace APIViewWeb.Models
         public bool IsApproved { get; set; }
         public string ServiceName { get; set; }
         public string PackageDisplayName { get; set; }
-        public string LinkToReview { get; set; }
 
         public ReviewDisplayModel(ReviewModel review)
         {

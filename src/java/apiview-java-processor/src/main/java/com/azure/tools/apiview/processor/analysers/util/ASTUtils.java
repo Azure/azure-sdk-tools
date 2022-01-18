@@ -191,6 +191,13 @@ public class ASTUtils {
         return false;
     }
 
+    public static boolean isTypeImplementingInterface(TypeDeclaration type, String interfaceName) {
+        return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
+                .filter(_interface -> _interface.getNameAsString().equals(interfaceName))
+                .limit(1)
+                .count() > 0;
+    }
+
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
         if (!nodeOptional.isPresent()) {
             return "";

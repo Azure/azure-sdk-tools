@@ -481,6 +481,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public string GetRecordingPath(string file)
         {
+            var normalizedFileName = file.Replace('\\', '/');
+
             if (String.IsNullOrWhiteSpace(file))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Recording file value of {file} is invalid. Try again with a populated filename.");
@@ -493,7 +495,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 path = Path.Join(RepoPath, file);
             }
 
-            return (path + (!path.EndsWith(".json") ? ".json" : String.Empty)).Replace("\\", "/");
+            return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));
         }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)

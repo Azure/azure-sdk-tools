@@ -8,18 +8,20 @@
 
 /* Begin PBXBuildFile section */
 		0A6A5434268B82D0001006AF /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5433268B82D0001006AF /* main.swift */; };
-		0A846A322787A07C00C967A8 /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; };
 		D32E06F32797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = D32E06F12797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib */; };
+		D32E06F62797CE24004724AA /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; };
+		D32E06F72797CE24004724AA /* SwiftAPIViewCore.framework in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		D32E06F42797C7A1004724AA /* Embed Libraries */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
+			dstPath = Frameworks;
 			dstSubfolderSpec = 10;
 			files = (
 				D32E06F32797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib in Embed Libraries */,
+				D32E06F72797CE24004724AA /* SwiftAPIViewCore.framework in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -39,7 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A846A322787A07C00C967A8 /* SwiftAPIViewCore.framework in Frameworks */,
+				D32E06F62797CE24004724AA /* SwiftAPIViewCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

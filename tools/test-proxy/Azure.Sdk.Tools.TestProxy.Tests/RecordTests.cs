@@ -18,6 +18,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class RecordTests
     {
         [Fact]
+        [Theory]
+        [InlineData]
         public async Task TestStartRecordSimple()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -60,12 +62,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Empty(fileName);
         }
 
-        [Fact]
-        public async Task TestStopRecordingSimple()
+        [Theory]
+        [InlineData("recordings/TestStartRecordSimple.json")]
+        [InlineData("recordings/TestStartRecordSimplé.json")]
+        public async Task TestStopRecordingSimple(string targetFile)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            var targetFile = "recordings/TestStartRecordSimple.json";
             var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
@@ -164,6 +167,5 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Contains("Uri doesn't match:", resultingException.Message);
         }
-
     }
 }

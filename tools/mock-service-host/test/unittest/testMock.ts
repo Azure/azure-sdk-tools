@@ -97,7 +97,8 @@ describe('mockForExample: ', () => {
             'fakeRp',
             {
                 method: 'put',
-                url: 'https://localhost:8443/subscriptions/xxx/resourceGroups/yy'
+                url:
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/yy/providers/Microsoft.ApiManagement/service/serviceName/policies/policyId'
             }
         )
 

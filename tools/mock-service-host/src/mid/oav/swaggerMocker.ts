@@ -58,19 +58,31 @@ export default class SwaggerMocker {
         }
         example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
         example.responses = this.mockResponse(example.responses, specItem)
-        this.patchResourceId(example.responses, liveRequest)
+        this.patchResourceIdAndType(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceId(responses: any, liveRequest: LiveRequest) {
+    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
-        const resourceTypeMatch = (url.pathname || '').match(/\/microsoft.[^/]+\/[^/]+\//i)
-        const resourceType = resourceTypeMatch
-            ? resourceTypeMatch[resourceTypeMatch?.length - 1].slice(0, -1)
-            : mockedResourceType
+
+        const pathElements = (url.pathname || '').split('/')
+        let resourceType = ''
+        let foundProvider = false
+        for (let i = 0; i < pathElements.length; i++) {
+            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
+                foundProvider = true
+                resourceType = pathElements[i]
+            }
+            if (foundProvider && i % 2 === 1) {
+                resourceType = `${resourceType}/${pathElements[i]}`
+            }
+        }
+        if (resourceType.length === 0) {
+            resourceType = mockedResourceType
+        }
 
         Object.keys(responses).forEach((key) => {
             if (responses[key]?.body?.id) {
@@ -92,15 +104,20 @@ export default class SwaggerMocker {
             }
 
             // get(list)
-            if (Array.isArray(responses[key]?.body?.value) && responses[key]?.body?.value?.length) {
-                responses[key]?.body?.value?.forEach((item: any) => {
-                    if (item.id) {
-                        const resourceName = item.name || 'resourceName'
-                        url.pathname = `${url.pathname}/${resourceName}`
-                        item.id = url.pathname
-                    }
-                    setStringIfExist(item, 'type', resourceType)
-                })
+            for (const arr of [
+                responses[key]?.body?.value /*pagable list*/,
+                responses[key]?.body /*non-pagable list*/
+            ]) {
+                if (Array.isArray(arr) && arr.length) {
+                    arr.forEach((item: any) => {
+                        if (item.id) {
+                            const resourceName = item.name || 'resourceName'
+                            url.pathname = `${url.pathname}/${resourceName}`
+                            item.id = url.pathname
+                        }
+                        setStringIfExist(item, 'type', resourceType)
+                    })
+                }
             }
         })
     }

@@ -19,13 +19,13 @@ Core of the APIView tool is the web app developed using ASP.Net and TypeScript. 
 
 | Module                        | Source Path                                                                                                                     |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| apiview.dev                   | https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView/APIViewWeb]                                               |
-| C# Parser                     | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs]                     |
+| apiview.dev                   | https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView/APIViewWeb                                                |
+| C#                            | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs                      |
 | C                             | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CLanguageService.cs                  |
 | C++                           | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CppLanguageService.cs                |
-| Java Parser                   | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
-| JS/TS Parser                  | https://github.com/Azure/azure-sdk-tools/tree/main/src/ts/ts-genapi                                                             |
-| Python Parser                 | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
+| Java                          | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
+| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/ts/ts-genapi                                                             |
+| Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
 
@@ -40,7 +40,7 @@ Following are tools required to develop and run test instance of APIView to veri
 - Git
 - Visual Studio
 - .Net
-- Any LTS version of Node.js (Link to download)[https://nodejs.org/en/download/]
+- Any LTS version of Node.js [download](https://nodejs.org/en/download/)
 - Java (Optional: Only required if you want to generate Java review locally)
 - Python 3.9+ (Optional: Only required if you want to generate Python review locally)
 - Go compiler (Optional: Only to generate and test Go reviews)
@@ -58,10 +58,8 @@ Create following Azure resources in your Azure subscription.
 
 #### Azure storage account
 
- - Create a storage account in Azure. (Azure storage account)[https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal]
- - Create two blob storage containers with names as below within the storage account created in previous step
-    -`originals`
-    -`codefiles`
+ - Create a storage account in Azure. [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
+ - Create two blob storage containers with names as follows within the storage account created in previous step: `originals` and `codefiles`
 
 #### Azure Cosmos DB
  - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
@@ -86,7 +84,7 @@ Create following Azure resources in your Azure subscription.
 
 
 ### Clone source code repo 
-- Create a new fork of GitHub repo (azure-sdk-tools)[https://github.com/Azure/azure-sdk-tools]
+- Create a new fork of GitHub repo [azure-sdk-tools](https://github.com/Azure/azure-sdk-tools)
 - Clone forked repo to development machine.
 - Create a new branch from `main` branch of cloned source repo.
 
@@ -132,7 +130,7 @@ This should compile and get client-side scripting as well as CSS ready.
  
 ### Verify setup
 
-Okay. I have followed all the steps and now I need to verify if it's running fine locally to debug APIView. Download a NuGet file from NuGet package manager for any Azure package to test uploading to API review. One of the options is Azure.Template package (here)[https://www.nuget.org/packages/Azure.Template/]
+Okay. I have followed all the steps and now I need to verify if it's running fine locally to debug APIView. Download a NuGet file from NuGet package manager for any Azure package to test uploading to API review. One of the options is Azure.Template package [here](https://www.nuget.org/packages/Azure.Template/)
 
 - Select `APIViewWeb` from solution explorer in Visual Studio and run debug or right click and select `Debug` -> `Start New Instance`
 
@@ -167,26 +165,26 @@ Happy coding!!!!
  If change is specific to a language parser, then follow language specific parser testing guidelines. 
 
  #### C, C++, C#
- - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+ - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
  
  #### Python
  - Install python api stub generator package using Python version configured in `PYTHONEXECUTABLEPATH`
- - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+ - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
  #### Java
  - Build Java package parser jar file and copy the jar file to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
- - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+ - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
  #### Go
  - Compile and build Go source parser into .exe file and copy the .exe file to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
- - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+ - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
  #### JS/TS
   - Got to <azure-sdk-tools repo root>/src/ts/ts-genapi
   - run `npm install`
   - run `npm run-script build`
   - Copy compiled `index.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
-  - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+  - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
 
  Parser version should always be incremented if change is at parser level and if that change is required to be reflected on existing reviews as well. Existing reviews are refreshed to reflect the changes as a backend task if parser version is changed. So, this won't reflect immediately.

@@ -21,8 +21,14 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
 
     public BuilderTraitsDiagnosticRule() {
         traits = new HashMap<>();
-        traits.put("TokenCredentialSupport", Arrays.asList(
+        traits.put("TokenCredentialTrait", Arrays.asList(
             new TraitMethod("credential", "TokenCredential")
+        ));
+        traits.put("HttpConfigTrait", Arrays.asList(
+            new TraitMethod("httpClient", "HttpClient"),
+            new TraitMethod("pipeline", "HttpPipeline"),
+            new TraitMethod("addPolicy", "HttpPipelinePolicy"),
+            new TraitMethod("httpLogOptions", "HttpLogOptions")
         ));
     }
 

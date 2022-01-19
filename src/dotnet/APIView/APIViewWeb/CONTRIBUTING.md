@@ -14,7 +14,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Where to begin
 
-Core of the APIView tool the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure storage account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file.
+Core of the APIView tool the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure storage account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file.
 
 | Module                        | Source Path                                                                                                                     |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
@@ -54,12 +54,12 @@ Following are tools required to develop and run test instance of APIView to veri
     - Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
     - Azure subscription with permission to create storage account and Cosmos DB instance.
 
-In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos datadabase instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
+In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
 
 
 ### Azure resources required to test
 
-You can verify your code changes locally by running a debugging instance of APIView tool locally using visual studio. This still requires Azure storage blob and Azure Cosmos DB instance to store stub file and metadata. Local development and testing does not require any Azure web app.
+You can verify your code changes locally by running a debugging instance of APIView tool locally using visual studio. This still requires Azure storage blob and Azure Cosmos DB instance to store stub file and metadata. Local development and testing do not require any Azure web app instance.
 
 Create following Azure resources in your Azure subscription.
 
@@ -71,7 +71,7 @@ Create following Azure resources in your Azure subscription.
         `codefiles`
 
 #### Azure Cosmos DB
- - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partion Key for each of them. Partition key is case sensitive.
+ - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
 
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
@@ -86,12 +86,12 @@ Create following Azure resources in your Azure subscription.
 ## Getting Started
 
 ### Create a GitHub Oath application for local authentication
-- Go to `github.com/<your github username>`
+- Go to `github.com/<your GitHub username>`
 - Go to `Settings` -> `Developer Settings`
 - Select `OAuth Apps` from menu options
 - Click on `New OAuth App`
-- Give an application name, for e.g.g APIViewDebug and URL `http://localhost:5000`. Add same URL as call back URL also.
-- Copy Cient ID and Secret for this OAuth app. These are required to be added in configuration to run local debugging instance.
+- Give an application name, for e.g. APIViewDebug and URL `http://localhost:5000`. Add same URL as call back URL also.
+- Copy Client ID and Secret for this OAuth app. These are required to be added in configuration to run local debugging instance.
 
 
 ### Clone source code repo 
@@ -101,7 +101,7 @@ Create following Azure resources in your Azure subscription.
 
 
 ### Setup debugging instance using Visual Studio
-- If you are making any changes to apiview core web app or any of the langauges that are integrated within core web app (C, C++, C#) or to test APIVIew locally then open `Visual Studio` and load (APIView solution)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView.sln]
+- If you are making any changes to apiview core web app or any of the languages that are integrated within core web app (C, C++, C#) or to test APIVIew locally then open `Visual Studio` and load (APIView solution)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView.sln]
 
 
 ### Connect local debugging instance to Azure resource
@@ -109,7 +109,7 @@ Following configuration is required to connect local debug instance to Azure res
 
 - Right click on `APIViewWeb` project in `APIView solution` using solution explorer in Visual Studio and select `Manage User Secrets`.
 
-- Copy the following to `secrets.json` window opened using manage user secrets and update the configuration with valid Github OAuth client ID and secret and Cosmos and Storge connection string.
+- Copy the following to `secrets.json` window opened using manage user secrets and update the configuration with valid GitHub OAuth client ID and secret and Cosmos and Storge connection string.
 
   {
     "Github": {
@@ -136,18 +136,18 @@ APIView web app has some type script code and this needs to be compiled for clie
 - run `npm install`
 - run `npm run-script build`
 
-This should compile and get client side scripting as well as css ready.
+This should compile and get client-side scripting as well as CSS ready.
 
  
 ### Verify setup
 
-Okay. I have followed all the steps and now I need to verify if it's running fine locally to debug APIView. Download a Nuget file from Nuget package manager for any Azure package to test uploading to API review. One of the option is Azure.Template package (here)[https://www.nuget.org/packages/Azure.Template/]
+Okay. I have followed all the steps and now I need to verify if it's running fine locally to debug APIView. Download a NuGet file from NuGet package manager for any Azure package to test uploading to API review. One of the options is Azure.Template package (here)[https://www.nuget.org/packages/Azure.Template/]
 
 - Select `APIViewWeb` from solution explorer in Visual Studio and run debug or right click and select `Debug` -> `Start New Instance`
 
-- This should open a browser instance with login page to APIView. Click on the Login and this should ask your Github credentials and a confirmation to allow OAuth application created earleir to access your Github public information.
+- This should open a browser instance with login page to APIView. Click on the Login and this should ask your GitHub credentials and a confirmation to allow OAuth application created earlier to access your GitHub public information.
 
-- If Github Client ID configuration in manage user secrets is correct, login should be successful as long an you are part of Azure or Microsoft Github org and org information is publicly available under your GitHub account.
+- If GitHub Client ID configuration in manage user secrets is correct, login should be successful if you are part of Azure or Microsoft GitHub org and org information is publicly available under your GitHub account.
 
 - Home page should be displayed with an empty list of reviews. 
 
@@ -165,10 +165,38 @@ If any of the above step is showing errors, following are the action items to ch
 - Verify and ensure cosmos DB instance has all 3 containers as per the instructions above and verify partition key for each of them.
 
 
-## I have made my changes. How do I debug?
-
-If above se
-
- - Following additional steps is required to test creating Java reviews locally.  D:\git\azure-sdk-tools\artifacts\bin\APIViewWeb\Debug\netcoreapp3.1
+Happy coding!!!!
 
 
+## I have made my changes. what's next?
+
+ If change is in core apiview web app module then start a debug run using Visual Studio and verify the change using an existing review as well as by creating a new review.
+
+ If change is specific to a language parser, then follow language specific parser testing guidelines. 
+
+ #### C, C++, C#
+ - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+ 
+ #### Python
+ - Install python api stub generator package using Python version configured in `PYTHONEXECUTABLEPATH`
+ - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+
+ #### Java
+ - Build Java package parser jar file and copy the jar file to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
+ - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+
+ #### Go
+ - Compile and build Go source parser into .exe file and copy the .exe file to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
+ - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+
+ #### JS/TS
+  - Got to <azure-sdk-tools repo root>/src/ts/ts-genapi
+  - run `npm install`
+  - run `npm run-script build`
+  - Copy compiled `index.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
+  - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+
+ Parser version should always be incremented if change is at parser level and if that change is required to be reflected on existing reviews as well. Existing reviews are refreshed to reflect the changes as a backend task if parser version is changed. So, this won't reflect immediately.
+
+ Create a GitHub pull request for the changes to merge it to main branch if code changes are ready and tested thoroughly.
+ 

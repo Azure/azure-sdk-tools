@@ -28,9 +28,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         }
 
         public async Task ConfigureNotifications(
-            string projectName, 
-            string projectPath, 
-            bool persistChanges = true, 
+            string projectName,
+            string projectPath,
+            bool persistChanges = true,
             PipelineSelectionStrategy strategy = PipelineSelectionStrategy.Scheduled)
         {
             var pipelines = await GetPipelinesAsync(projectName, projectPath, strategy);
@@ -38,22 +38,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             foreach (var pipeline in pipelines)
             {
-                // If the pipeline name length is max or greater there is no
-                // room to add differentiators like "-- Sync Notifications"
-                // and this will result in team name collisions.
-                if (pipeline.Name.Length >= MaxTeamNameLength)
-                {
-                    throw new Exception($"Pipeline Name outside of character limit: Max = {MaxTeamNameLength}, Actual = {pipeline.Name.Length}, Name = {pipeline.Name}");
-                }
-
                 using (logger.BeginScope("Evaluate Pipeline Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
                 {
-                    var parentTeam = await EnsureTeamExists(pipeline, "Notifications", TeamPurpose.ParentNotificationTeam, teams, persistChanges);
-                    var childTeam = await EnsureTeamExists(pipeline, "Sync Notifications", TeamPurpose.SynchronizedNotificationTeam, teams, persistChanges);
+                    var parentTeam = await EnsureTeamExists(pipeline, "[ntfy]", TeamPurpose.ParentNotificationTeam, teams, persistChanges);
+                    var childTeam = await EnsureTeamExists(pipeline, "[sync]", TeamPurpose.SynchronizedNotificationTeam, teams, persistChanges);
 
                     if (!persistChanges && (parentTeam == default || childTeam == default))
                     {
-                        // Skip team nesting and notification work if 
+                        // Skip team nesting and notification work if
                         logger.LogInformation("Skipping Teams and Notifications because parent or child team does not exist");
                         continue;
                     }
@@ -61,21 +53,25 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
                     await EnsureScheduledBuildFailSubscriptionExists(pipeline, parentTeam, persistChanges);
 
-                    // Associate 
+                    // Associate
                 }
             }
         }
 
         private async Task<WebApiTeam> EnsureTeamExists(
             BuildDefinition pipeline,
-            string suffix,
+            string prefix,
             TeamPurpose purpose,
-            IEnumerable<WebApiTeam> teams, 
+            IEnumerable<WebApiTeam> teams,
             bool persistChanges)
         {
             // Ensure team name fits within maximum 64 character limit
             // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
-            string teamName = StringHelper.MaxLength($"{pipeline.Name} -- {suffix}", MaxTeamNameLength);
+            string fullTeamName = $"{prefix} {pipeline.Name}";
+            string teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
+            if (fullTeamName.Length > teamName.Length) {
+                logger.LogWarning($"Notification Name (length {fullTeamName.Length}) will be truncated to {teamName}");
+            }
             bool updateMetadataAndName = false;
             var result = teams.FirstOrDefault(
                 team =>
@@ -111,7 +107,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             if (result == default)
             {
-                logger.LogInformation("Team Not Found Suffix = {0}", suffix);
+                logger.LogInformation("Team Not Found prefix = {0}", prefix);
                 var teamMetadata = new TeamMetadata
                 {
                     PipelineId = pipeline.Id,

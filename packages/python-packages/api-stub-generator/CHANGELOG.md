@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.2.10 (Unreleased)
+Added support for TypedDict classes.
+
 ## Version 0.2.9 (Unreleased)
 Fixed issue where Python 3-style type hints stopped displaying
   their inner types.

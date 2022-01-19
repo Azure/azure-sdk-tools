@@ -9,7 +9,7 @@ class NodeEntityBase:
     """This is the base class for all node types
     :param str: namespace
         module name of the underlying object within this node
-    :param: parant_node
+    :param: parent_node
         Parent of current node. For e.g. Class Node in case instance member is current node
     :param: obj
         Python object that is represented by current node. For e.g. class, function, property
@@ -44,6 +44,10 @@ class NodeEntityBase:
             for c in self.child_nodes:
                 c.generate_tokens(apiview)
             apiview.end_group()
+
+    def generate_string(self):
+        # TODO: Implement
+        return None
 
 
 def get_qualified_name(obj, namespace):

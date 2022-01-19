@@ -236,6 +236,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                             { "Date", new[] { "Fri, 05 Nov 2020 02:42:26 GMT"} },
                             { "x-ms-date", new[] { "Fri, 05 Nov 2020 02:42:26 GMT"} },
                             { "x-ms-client-request-id", new[] {"non random request id"} },
+                            { "x-ms-client-id", new[] {"non random client id"} },
                             { "User-Agent", new[] {"non random sdk"} },
                             { "traceparent", new[] { "non random traceparent" } }
                         }
@@ -256,6 +257,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                             { "Date", new[] { "Fri, 06 Nov 2020 02:42:26 GMT"} },
                             { "x-ms-date", new[] { "Fri, 06 Nov 2020 02:42:26 GMT"} },
                             { "x-ms-client-request-id", new[] {"some random request id"} },
+                            { "x-ms-client-id", new[] {"some random client id"} },
                             { "User-Agent", new[] {"some random sdk"} },
                             { "traceparent", new[] {"some random traceparent"} }
                         }

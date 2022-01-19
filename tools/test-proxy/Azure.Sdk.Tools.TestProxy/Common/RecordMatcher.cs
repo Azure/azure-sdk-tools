@@ -52,6 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "Date",
             "x-ms-date",
             "x-ms-client-request-id",
+            "x-ms-client-id",
             "User-Agent",
             "x-ms-useragent",
             "x-ms-version",

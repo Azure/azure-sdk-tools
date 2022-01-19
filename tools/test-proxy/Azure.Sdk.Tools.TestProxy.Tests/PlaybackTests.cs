@@ -20,7 +20,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-recording-file"] = "Test.RecordEntries/requests_with_continuation.json";
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/requests_with_continuation.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
             var controller = new Playback(testRecordingHandler)
             {
@@ -50,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = recordContext
                 }
             };
-            recordController.Start();
+            await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
             recordController.Stop();
@@ -58,6 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // apply same recordingId when starting in-memory session
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
+
             var playbackController = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()
@@ -124,7 +127,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-recording-file"] = "Test.RecordEntries/requests_with_continuation.json";
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/requests_with_continuation.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
             var controller = new Playback(testRecordingHandler)
             {
@@ -156,7 +161,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = recordContext
                 }
             };
-            recordController.Start();
+            await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
             recordController.Stop();
@@ -183,7 +188,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-recording-file"] = "Test.RecordEntries/response_with_retry_after.json";
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/response_with_retry_after.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
             var controller = new Playback(testRecordingHandler)
             {

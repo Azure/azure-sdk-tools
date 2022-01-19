@@ -241,8 +241,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
             var playbackContext = new DefaultHttpContext();
             var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
-            playbackContext.Request.Headers["x-recording-file"] = targetFile;
-
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+           
             var controller = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()

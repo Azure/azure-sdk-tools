@@ -106,7 +106,7 @@ A couple notes before running the test-proxy:
 
 ### Where will my recordings end up?
 
-In the next step, you will be asked to provide a header to `/record/start/` under key `x-recording-file`. The value provided will be consumed by the test-proxy and **used to write your recording to disk**.
+In the next step, you will be asked to provide a JSON body within your POST to `/record/start/`. This body should be a JSON object with a top-level key `x-recording-file` present. The value of this key will be consumed by the test-proxy and **used to write your recording to disk**.
 
 For example, let's invoke the test-proxy:
 
@@ -114,7 +114,7 @@ For example, let's invoke the test-proxy:
 test-proxy --storage-location "C:/repo/sdk-for-net/"
 ```
 
-When we **start** a test run (method outlined in next section), we have to provide a file location via header `x-recording-file`.
+When we **start** a test run (method outlined in next section), we have to provide a file location within JSON body key `x-recording-file`.
 
 When your recording is finalized, it will be stored following the below logic.
 
@@ -125,7 +125,7 @@ recording = sdk/tools/test-proxy/tests/testFile.testFunction.cs
 final_output_location = C:/repo/sdk-for-net/sdk/tools/test-proxy/tests/testFile.testFunction.cs.json
 ```
 
-During a `playback` start, the **same** value for header `x-recording-file` should be provided. This allows the test-proxy to load a previous recording into memory.
+During a `playback` start, the **same** value for `x-recording-file` should be provided within the POST body. This allows the test-proxy to load a previous recording into memory.
 
 Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file. If the parent folders do not exist, they will be created at run-time during the write operation.
 
@@ -135,7 +135,7 @@ Before each individual test runs, a `recordingId` must be retrieved from the tes
 
 ```json
 URL: https://localhost:5001/record/start
-headers {
+BODY {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -206,7 +206,7 @@ POST to the proxy server:
 
 ```json
 URL: https://localhost:5001/playback/start
-headers {
+BODY: {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -238,9 +238,9 @@ headers {
 
 ### An important note about perf testing
 
-If a user does **not** provide a `fileId` via header `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
+If a user does **not** provide a `fileId` via body key `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
 
-Start the recording **without a `x-recording-file` header**.
+Start the recording **without a `x-recording-file` body value**.
 
 ```json
 URL: https://localhost:5001/record/start

@@ -27,7 +27,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var untransformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[1];
 
             // start playback
-            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+
             var controller = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()
@@ -67,7 +70,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var transformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[0];
 
             // start playback
-            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+
             var controller = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()
@@ -109,7 +115,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var untransformedEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[1];
 
             // start playback
-            playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+
             var controller = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()

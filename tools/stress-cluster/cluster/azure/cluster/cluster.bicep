@@ -9,7 +9,7 @@ param enableHighMemAgentPool bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.21.2'
+var kubernetesVersion = '1.22.4'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var defaultAgentPool = {

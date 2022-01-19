@@ -47,10 +47,11 @@ function Load-RequestHeaders() {
 
 try {
     $headers = Load-RequestHeaders
+    Write-Host "Fetching ms alias for github identity: $GithubName".
     $resp = Invoke-RestMethod $OpensourceAPIBaseURI -Method 'GET' -Headers $Headers
 }
 catch { 
-    LogError $PSItem.ToString()
+    LogError $_
     exit 1
 }
 

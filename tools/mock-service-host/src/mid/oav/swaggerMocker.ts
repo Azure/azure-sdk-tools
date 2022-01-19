@@ -58,14 +58,14 @@ export default class SwaggerMocker {
         }
         example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
         example.responses = this.mockResponse(example.responses, specItem)
-        this.patchResourceId(example.responses, liveRequest)
+        this.patchResourceIdAndType(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceId(responses: any, liveRequest: LiveRequest) {
+    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
 
         const pathElements = (url.pathname || '').split('/')
@@ -79,6 +79,9 @@ export default class SwaggerMocker {
             if (foundProvider && i % 2 === 1) {
                 resourceType = `${resourceType}/${pathElements[i]}`
             }
+        }
+        if (resourceType.length === 0) {
+            resourceType = mockedResourceType
         }
 
         Object.keys(responses).forEach((key) => {

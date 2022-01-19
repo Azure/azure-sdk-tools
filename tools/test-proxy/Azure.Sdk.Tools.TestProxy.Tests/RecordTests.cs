@@ -18,8 +18,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public class RecordTests
     {
         [Fact]
-        [Theory]
-        [InlineData]
         public async Task TestStartRecordSimple()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

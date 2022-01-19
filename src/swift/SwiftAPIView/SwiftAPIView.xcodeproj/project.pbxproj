@@ -8,18 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		0A6A5434268B82D0001006AF /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A5433268B82D0001006AF /* main.swift */; };
-		0A846A322787A07C00C967A8 /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; };
+		D32E06F32797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = D32E06F12797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib */; };
+		D32E06F62797CE24004724AA /* SwiftAPIViewCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; };
+		D32E06F72797CE24004724AA /* SwiftAPIViewCore.framework in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		0A6A542E268B82D0001006AF /* CopyFiles */ = {
+		D32E06F42797C7A1004724AA /* Embed Libraries */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			dstPath = Frameworks;
+			dstSubfolderSpec = 10;
 			files = (
+				D32E06F32797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib in Embed Libraries */,
+				D32E06F72797CE24004724AA /* SwiftAPIViewCore.framework in Embed Libraries */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -28,6 +33,7 @@
 		0A6A5433268B82D0001006AF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		0A6A543B268B845A001006AF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = SwiftAPIViewCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D32E06F12797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = lib_InternalSwiftSyntaxParser.dylib; path = $DT_TOOLCHAIN_DIR/usr/lib/swift/macosx/lib_InternalSwiftSyntaxParser.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,7 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A846A322787A07C00C967A8 /* SwiftAPIViewCore.framework in Frameworks */,
+				D32E06F62797CE24004724AA /* SwiftAPIViewCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				0A846A312787A07C00C967A8 /* SwiftAPIViewCore.framework */,
+				D32E06F12797C7A1004724AA /* lib_InternalSwiftSyntaxParser.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -85,8 +92,7 @@
 			buildPhases = (
 				0A6A542C268B82D0001006AF /* Sources */,
 				0A6A542D268B82D0001006AF /* Frameworks */,
-				0A6A542E268B82D0001006AF /* CopyFiles */,
-				0AA97B6926CF03B40040A744 /* Link InternalSwiftSyntaxParser.dylib */,
+				D32E06F42797C7A1004724AA /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -132,27 +138,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		0AA97B6926CF03B40040A744 /* Link InternalSwiftSyntaxParser.dylib */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Link InternalSwiftSyntaxParser.dylib";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "for path in ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug/; do\n    cp \"$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx/lib_InternalSwiftSyntaxParser.dylib\" $path\ndone\n";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0A6A542C268B82D0001006AF /* Sources */ = {

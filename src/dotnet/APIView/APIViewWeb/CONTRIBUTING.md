@@ -14,50 +14,43 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Where to begin
 
-Core of the APIView tool the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure storage account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file.
+Core of the APIView tool is the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure Storage Account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file. If change is specific to a language in how langauge specific API details are extracted to stub tokens then change will be at parser level for that language. If change is applicable for all languages then change will most likely be in core APIView web app.
+
 
 | Module                        | Source Path                                                                                                                     |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | apiview.dev                   | https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView/APIViewWeb]                                               |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | C# Parser                     | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs]                     |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | C                             | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CLanguageService.cs                  |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | C++                           | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CppLanguageService.cs                |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | Java Parser                   | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | JS/TS Parser                  | https://github.com/Azure/azure-sdk-tools/tree/main/src/ts/ts-genapi                                                             |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | Python Parser                 | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+
 
 
 ## Pre-requisites
 
-### Setting up development machine
+### Development machine setup
 
 Following are tools required to develop and run test instance of APIView to verify changes locally on your machine.
 
-    - Git
-    - Visual Studio
-    - .Net
-    - Any LTS version of Node.js (Link to download)[https://nodejs.org/en/download/]
-    - Java (Optional: Only required if you want to generate Java review locally)
-    - Python 3.9+ (Optional: Only required if you want to generate Python review locally)
-    - Go compiler (Optional: Only to generate and test Go reviews)
-    - Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
-    - Azure subscription with permission to create storage account and Cosmos DB instance.
+- Git
+- Visual Studio
+- .Net
+- Any LTS version of Node.js (Link to download)[https://nodejs.org/en/download/]
+- Java (Optional: Only required if you want to generate Java review locally)
+- Python 3.9+ (Optional: Only required if you want to generate Python review locally)
+- Go compiler (Optional: Only to generate and test Go reviews)
+- Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
+ - Azure subscription with permission to create storage account and Cosmos DB instance.
 
 In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
 
 
-### Azure resources required to test
+### Azure resources required to run APIView instance locally
 
 You can verify your code changes locally by running a debugging instance of APIView tool locally using visual studio. This still requires Azure storage blob and Azure Cosmos DB instance to store stub file and metadata. Local development and testing do not require any Azure web app instance.
 
@@ -67,8 +60,8 @@ Create following Azure resources in your Azure subscription.
 
  - Create a storage account in Azure. (Azure storage account)[https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal]
  - Create two blob storage containers with names as below within the storage account created in previous step
-        `originals`
-        `codefiles`
+    -`originals`
+    -`codefiles`
 
 #### Azure Cosmos DB
  - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
@@ -76,12 +69,10 @@ Create following Azure resources in your Azure subscription.
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
    | Reviews             | /id                |
-   |---------------------|--------------------|
    | Comments            | /ReviewId          |
-   |---------------------|--------------------|
    | PullRequests        | /PullRequestNumber |
-   |------------------------------------------|
    
+
 
 ## Getting Started
 
@@ -95,13 +86,13 @@ Create following Azure resources in your Azure subscription.
 
 
 ### Clone source code repo 
-- Create a new fork of GitHub repo `(azure-sdk-tools)[https://github.com/Azure/azure-sdk-tools]`
+- Create a new fork of GitHub repo (azure-sdk-tools)[https://github.com/Azure/azure-sdk-tools]
 - Clone forked repo to development machine.
 - Create a new branch from `main` branch of cloned source repo.
 
 
 ### Setup debugging instance using Visual Studio
-- If you are making any changes to apiview core web app or any of the languages that are integrated within core web app (C, C++, C#) or to test APIVIew locally then open `Visual Studio` and load (APIView solution)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView.sln]
+- If you are making any changes to apiview core web app or any of the languages that are integrated within core web app (C, C++, C#) or to test APIVIew locally then open `Visual Studio` and load `<azure-sdk-tools repo root/src/dotnet/APIView/APIView.sln`
 
 
 ### Connect local debugging instance to Azure resource
@@ -126,7 +117,7 @@ Following configuration is required to connect local debug instance to Azure res
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",
     "BackgroundTaskDisabled": true
- }
+  }
 
 ### Compile TypeScript code
 
@@ -154,7 +145,7 @@ Okay. I have followed all the steps and now I need to verify if it's running fin
 - Click `Create review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
 
 
-If any of the above step is showing errors, following are the action items to check:
+If any of the above steps is showing errors, following are the items to check:
 
 - Verify OAuth Client ID and Secret
 
@@ -166,6 +157,7 @@ If any of the above step is showing errors, following are the action items to ch
 
 
 Happy coding!!!!
+
 
 
 ## I have made my changes. what's next?
@@ -195,6 +187,7 @@ Happy coding!!!!
   - run `npm run-script build`
   - Copy compiled `index.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
   - Start Visual Studio debug run and create a new review as per the instructions in (APIView README.md)[https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md]
+
 
  Parser version should always be incremented if change is at parser level and if that change is required to be reflected on existing reviews as well. Existing reviews are refreshed to reflect the changes as a backend task if parser version is changed. So, this won't reflect immediately.
 

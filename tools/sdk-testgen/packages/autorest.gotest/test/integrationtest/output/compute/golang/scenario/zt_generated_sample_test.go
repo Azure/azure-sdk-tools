@@ -10,54 +10,181 @@ package golang_test
 
 import (
 	"context"
-	"log"
 	"os"
-	"runtime/debug"
 	"testing"
 
 	"encoding/json"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/go-openapi/jsonpointer"
 )
 
 var (
 	ctx               context.Context
 	cred              azcore.TokenCredential
-	con               *arm.Connection
-	err               error
 	resourceGroup     *armresources.ResourceGroup
 	fakeStepVar       = "signalrswaggertest4"
 	resourceName      = "signalrswaggertest4"
-	location          string
-	resourceGroupName string
-	subscriptionId    string
+	location          = getEnv("LOCATION", "")
+	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "")
+	subscriptionId    = getEnv("SUBSCRIPTION_ID", "")
 	name              string
 	fakeScenarioVar   string
 )
 
+func TestSample(t *testing.T) {
+	setUp(t)
+	scenarioMicrosoftSignalrserviceBasicCrud(t)
+	scenarioMicrosoftSignalrserviceDeleteonly(t)
+	tearDown(t)
+}
+
+func setUp(t *testing.T) {
+	var err error
+	ctx = context.Background()
+	cred, err = azidentity.NewEnvironmentCredential(nil)
+	if err != nil {
+		t.Fatalf("Failed to create credential: %v", err)
+	}
+
+	resourceGroup, err = createResourceGroup(ctx, cred)
+	if err != nil {
+		t.Fatalf("Failed to create resource group: %v", err)
+	}
+	t.Logf("Resource group created: id - %s name - %s", *resourceGroup.ID, *resourceGroup.Name)
+
+	prepare(t)
+}
+func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+
+	param := armresources.ResourceGroup{
+		Location: to.StringPtr(location),
+	}
+
+	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.ResourceGroup, nil
+}
+
+func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+
+	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func tearDown(t *testing.T) {
+	cleanup(t)
+	err := deleteResourceGroup(ctx, cred)
+	if err != nil {
+		t.Fatalf("Failed to delete resource group: %v", err)
+	}
+	t.Logf("Resource group deleted")
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		armresources.Deployment{
+			Properties: &armresources.DeploymentProperties{
+				Template:   template,
+				Parameters: params,
+				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			},
+		},
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res.DeploymentExtended, nil
+}
+
+func prepare(t *testing.T) {
+	// From step Delete-proximity-placement-group
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	{
+		_, err := proximityPlacementGroupsClient.Delete(ctx,
+			resourceGroupName,
+			resourceName,
+			nil)
+		if err != nil {
+			t.Fatalf("Request error: %v", err)
+		}
+	}
+}
 func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	fakeScenarioVar := "signalrswaggertest5"
-	resourceName := "$(resourceName)"
+	resourceName := resourceName
 	// From step Generate_Unique_Name
 	{
-		var deploymentExtend *armresources.DeploymentExtended
-		deploymentExtend, err = createDeployment(ctx, "Generate_Unique_Name", getAnyJson([]byte(`{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","outputs":{"name":{"type":"string","value":"[variables('name').value]"},"resourceName":{"type":"string","value":"[variables('name').value]"}},"resources":[],"variables":{"name":{"type":"string","metadata":{"description":"Name of the SignalR service."},"value":"[concat('sw',uniqueString(resourceGroup().id))]"}}}`)), getAnyJson([]byte(`{}`)))
-		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+		template := map[string]interface{}{
+			"$schema":        "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+			"contentVersion": "1.0.0.0",
+			"outputs": map[string]interface{}{
+				"name": map[string]interface{}{
+					"type":  "string",
+					"value": "[variables('name').value]",
+				},
+				"resourceName": map[string]interface{}{
+					"type":  "string",
+					"value": "[variables('name').value]",
+				},
+			},
+			"resources": []interface{}{},
+			"variables": map[string]interface{}{
+				"name": map[string]interface{}{
+					"type": "string",
+					"metadata": map[string]interface{}{
+						"description": "Name of the SignalR service.",
+					},
+					"value": "[concat('sw',uniqueString(resourceGroup().id))]",
+				},
+			},
 		}
+		params := map[string]interface{}{}
+		deploymentExtend, err := createDeployment("Generate_Unique_Name", template, params)
+		if err != nil {
+			t.Fatalf("Deployment error: %v", err)
+		}
+		name = deploymentExtend.Properties.Outputs["name"].(map[string]interface{})["value"].(string)
 		resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
 	}
 
 	// From step Create-or-Update-a-proximity-placement-group
-	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
 	{
-		proximityPlacementGroupsCreateOrUpdateResponse, err := ProximityPlacementGroupsClient.CreateOrUpdate(ctx,
+		proximityPlacementGroupsCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
 			resourceGroupName,
 			resourceName,
 			golang.ProximityPlacementGroup{
@@ -68,12 +195,12 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			},
 			nil)
 		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+			t.Fatalf("Request error: %v", err)
 		}
-		log.Printf("Response result: %#v\n", proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsCreateOrUpdateResult)
+		t.Logf("Response result: %#v\n", proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
 
 		var respBody interface{}
-		byteBody, err := response.MarshalJSON()
+		byteBody, err := json.Marshal(proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
 		if err != nil {
 			t.Fatalf("Marshall response body failed: %v", err)
 		}
@@ -95,20 +222,20 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 
 	// From step Delete-proximity_placement_group
 	{
-		_, err = ProximityPlacementGroupsClient.Delete(ctx,
+		_, err := proximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
 			resourceName,
 			nil)
 		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+			t.Fatalf("Request error: %v", err)
 		}
 	}
 
 	// From step Create_a_vm_with_Host_Encryption_using_encryptionAtHost_property
-	VirtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId)
+	virtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId, cred, nil)
 	{
 		fakeStepVar := "signalrswaggertest6"
-		virtualMachinesCreateOrUpdatePollerResponse, err := VirtualMachinesClient.BeginCreateOrUpdate(ctx,
+		virtualMachinesCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
 			resourceGroupName,
 			"myVM",
 			golang.VirtualMachine{
@@ -159,144 +286,29 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			},
 			nil)
 		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+			t.Fatalf("Request error: %v", err)
 		}
 		response, err := virtualMachinesCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
 		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+			t.Fatalf("Request error: %v", err)
 		}
-		log.Printf("Response result: %#v\n", response.VirtualMachinesCreateOrUpdateResult)
+		t.Logf("Response result: %#v\n", response.VirtualMachinesClientCreateOrUpdateResult)
 	}
 }
 
 func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 	// From step Delete_proximity_placement_group
-	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
+	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
 	{
-		_, err = ProximityPlacementGroupsClient.Delete(ctx,
+		_, err := proximityPlacementGroupsClient.Delete(ctx,
 			resourceGroupName,
 			resourceName,
 			nil)
 		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
+			t.Fatalf("Request error: %v", err)
 		}
 	}
 }
 
-func prepare() {
-	// From step Delete-proximity-placement-group
-	ProximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId)
-	{
-		_, err = ProximityPlacementGroupsClient.Delete(ctx,
-			resourceGroupName,
-			resourceName,
-			nil)
-		if err != nil {
-			t.Fatalf("%v\n %v", err, string(debug.Stack()))
-		}
-	}
-}
-
-func TestSample(t *testing.T) {
-	setUp()
-	scenarioMicrosoftSignalrserviceBasicCrud(t)
-	scenarioMicrosoftSignalrserviceDeleteonly(t)
-	tearDown()
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
-func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
-
-	param := armresources.ResourceGroup{
-		Location: to.StringPtr(location),
-	}
-
-	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.ResourceGroup, nil
-}
-
-func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
-
-	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
-	if err != nil {
-		return err
-	}
-	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func setUp() {
-	ctx = context.Background()
-	location = getEnv("LOCATION", "westus")
-	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
-	subscriptionId = getEnv("SUBSCRIPTION_ID", "00000000-00000000-00000000-00000000")
-
-	cred, err = azidentity.NewEnvironmentCredential(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
-		Logging: azcore.LogOptions{
-			IncludeBody: true,
-		},
-	})
-	resourceGroup, err := createResourceGroup(ctx, con)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Resource Group %s created", *resourceGroup.ID)
-	prepare()
-}
-
-func tearDown() {
-	deleteResourceGroup(ctx, con)
-}
-
-func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
-	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
-	poller, err := deployClient.BeginCreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		deploymentName,
-		armresources.Deployment{
-			Properties: &armresources.DeploymentProperties{
-				Template:   template,
-				Parameters: params,
-				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
-			},
-		},
-		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := poller.PollUntilDone(ctx, 10*time.Second)
-	if err != nil {
-		return nil, err
-	}
-
-	return res.DeploymentExtended, nil
-}
-
-func getAnyJson(customJSON []byte) map[string]interface{} {
-	var anyJson map[string]interface{}
-	_ = json.Unmarshal(customJSON, &anyJson)
-	return anyJson
+func cleanup(t *testing.T) {
 }

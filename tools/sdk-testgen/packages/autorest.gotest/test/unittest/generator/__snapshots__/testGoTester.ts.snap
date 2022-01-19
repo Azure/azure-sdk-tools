@@ -905,7 +905,7 @@ func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestO
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "scenario/zt_generated_signalR_test.go": "//go:build go1.16
+  "scenario/zt_generated_signalr_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -929,8 +929,8 @@ import (
 import (
 	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
 	\\"reflect\\"
 	\\"time\\"
 )
@@ -940,48 +940,168 @@ import (
 var (
 	ctx            context.Context
 	cred           azcore.TokenCredential
-	con            *arm.Connection
-	err            error
 	resourceGroup	*armresources.ResourceGroup
     resourceName = \\"signalrswaggertest4\\"
-    location  string
-    resourceGroupName  string
-    subscriptionId  string
+    location = getEnv(\\"LOCATION\\", \\"\\")
+    resourceGroupName = getEnv(\\"RESOURCE_GROUP_NAME\\", \\"\\")
+    subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"\\")
     name string
 )
-func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
-    resourceName := \\"$(resourceName)\\"
-	// From step Generate_Unique_Name
-	{
-	var deploymentExtend *armresources.DeploymentExtended
-	deploymentExtend, err = createDeployment(ctx, \\"Generate_Unique_Name\\", getAnyJson([]byte(\`{\\"$schema\\":\\"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\\",\\"contentVersion\\":\\"1.0.0.0\\",\\"outputs\\":{\\"name\\":{\\"type\\":\\"string\\",\\"value\\":\\"[variables('name').value]\\"},\\"resourceName\\":{\\"type\\":\\"string\\",\\"value\\":\\"[variables('name').value]\\"}},\\"resources\\":[],\\"variables\\":{\\"name\\":{\\"type\\":\\"string\\",\\"metadata\\":{\\"description\\":\\"Name of the SignalR service.\\"},\\"value\\":\\"[concat('sw',uniqueString(resourceGroup().id))]\\"}}}\`)), getAnyJson([]byte(\`{}\`)))
+
+func TestSignalr(t *testing.T) {
+	setUp(t)
+	scenarioMicrosoftSignalrserviceBasicCrud(t)
+	tearDown(t)
+}
+
+func setUp(t *testing.T) {
+    var err error
+	ctx = context.Background()
+	cred, err = azidentity.NewEnvironmentCredential(nil)
 	if err != nil {
-		t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-	}
-	resourceName = deploymentExtend.Properties.Outputs[\\"resourceName\\"].(map[string]interface{})[\\"value\\"].(string)
+		t.Fatalf(\\"Failed to create credential: %v\\", err)
 	}
 
-    
-	// From step SignalR_CheckNameAvailability
-			SignalRClient := armsignalr.NewSignalRClient(subscriptionId)
-	{
-			signalRCheckNameAvailabilityResponse, err := SignalRClient.CheckNameAvailability(ctx,
+	resourceGroup, err = createResourceGroup(ctx, cred)
+	if err != nil {
+		t.Fatalf(\\"Failed to create resource group: %v\\", err)
+	}
+	t.Logf(\\"Resource group created: id - %s name - %s\\", *resourceGroup.ID, *resourceGroup.Name)
+
+    prepare(t)
+}
+func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+
+	param := armresources.ResourceGroup {
+		Location: to.StringPtr(location),
+	}
+
+	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.ResourceGroup, nil
+}
+
+func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+
+	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func tearDown(t *testing.T) {
+    cleanup(t)
+	err := deleteResourceGroup(ctx, cred)
+	if err != nil {
+		t.Fatalf(\\"Failed to delete resource group: %v\\", err)
+	}
+	t.Logf(\\"Resource group deleted\\")
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		armresources.Deployment{
+			Properties: &armresources.DeploymentProperties{
+				Template:   template,
+				Parameters: params,
+				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			},
+		},
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res.DeploymentExtended, nil
+}
+
+func prepare(t *testing.T) {
+}
+func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
+    resourceName := resourceName
+// From step Generate_Unique_Name
+{
+template := map[string]interface{}{
+\\"$schema\\": \\"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\\",
+\\"contentVersion\\": \\"1.0.0.0\\",
+\\"outputs\\":map[string]interface{}{
+\\"name\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"value\\": \\"[variables('name').value]\\",
+},
+\\"resourceName\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"value\\": \\"[variables('name').value]\\",
+},
+},
+\\"resources\\":[]interface{}{
+},
+\\"variables\\":map[string]interface{}{
+\\"name\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"metadata\\":map[string]interface{}{
+\\"description\\": \\"Name of the SignalR service.\\",
+},
+\\"value\\": \\"[concat('sw',uniqueString(resourceGroup().id))]\\",
+},
+},
+}
+params := map[string]interface{}{}
+deploymentExtend, err := createDeployment(\\"Generate_Unique_Name\\", template, params)
+if err != nil {
+    t.Fatalf(\\"Deployment error: %v\\", err)
+}
+name = deploymentExtend.Properties.Outputs[\\"name\\"].(map[string]interface{})[\\"value\\"].(string)
+resourceName = deploymentExtend.Properties.Outputs[\\"resourceName\\"].(map[string]interface{})[\\"value\\"].(string)
+}
+
+
+// From step SignalR_CheckNameAvailability
+        signalRClient := armsignalr.NewSignalRClient(subscriptionId, cred, nil)
+{
+        signalRCheckNameAvailabilityResponse, err := signalRClient.CheckNameAvailability(ctx,
 location,
 &armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
 Name: to.StringPtr(\\"my-signalr-service\\"),
 Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRCheckNameAvailabilityResponse.SignalRCheckNameAvailabilityResult)
-	}
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    t.Logf(\\"Response result: %#v\\\\n\\", signalRCheckNameAvailabilityResponse.SignalRClientCheckNameAvailabilityResult)
+}
 
-    
-	// From step SignalR_CreateOrUpdate
-	{
-			signalRCreateOrUpdatePollerResponse, err := SignalRClient.BeginCreateOrUpdate(ctx,
+
+// From step SignalR_CreateOrUpdate
+{
+        signalRCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -1057,33 +1177,33 @@ Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
 },
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		response, err := signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", response.SignalRCreateOrUpdateResult)
-	}
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    response, err := signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    t.Logf(\\"Response result: %#v\\\\n\\", response.SignalRClientCreateOrUpdateResult)
+}
 
-    
-	// From step SignalR_Get
-	{
-			signalRGetResponse, err := SignalRClient.Get(ctx,
+
+// From step SignalR_Get
+{
+        signalRGetResponse, err := signalRClient.Get(ctx,
 resourceGroupName,
 resourceName,
 nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRGetResponse.SignalRGetResult)
-	}
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    t.Logf(\\"Response result: %#v\\\\n\\", signalRGetResponse.SignalRClientGetResult)
+}
 
-    
-	// From step SignalR_Update
-	{
-			signalRUpdatePollerResponse, err := SignalRClient.BeginUpdate(ctx,
+
+// From step SignalR_Update
+{
+        signalRUpdatePollerResponse, err := signalRClient.BeginUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -1159,210 +1279,108 @@ Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
 },
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		response, err := signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", response.SignalRUpdateResult)
-	}
-
-    
-	// From step SignalR_ListKeys
-	{
-			signalRListKeysResponse, err := SignalRClient.ListKeys(ctx,
-resourceGroupName,
-resourceName,
-nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRListKeysResponse.SignalRListKeysResult)
-	}
-
-    
-	// From step Usages_List
-			UsagesClient := armsignalr.NewUsagesClient(subscriptionId)
-	{
-		usagesListPager := UsagesClient.List(location,
-nil)
-		for usagesListPager.NextPage(ctx) {
-			if err := usagesListPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range usagesListPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_ListByResourceGroup
-	{
-		signalRListByResourceGroupPager := SignalRClient.ListByResourceGroup(resourceGroupName,
-nil)
-		for signalRListByResourceGroupPager.NextPage(ctx) {
-			if err := signalRListByResourceGroupPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range signalRListByResourceGroupPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_ListBySubscription
-	{
-		signalRListBySubscriptionPager := SignalRClient.ListBySubscription(nil)
-		for signalRListBySubscriptionPager.NextPage(ctx) {
-			if err := signalRListBySubscriptionPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range signalRListBySubscriptionPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step Operations_List
-			OperationsClient := armsignalr.NewOperationsClient()
-	{
-		operationsListPager := OperationsClient.List(nil)
-		for operationsListPager.NextPage(ctx) {
-			if err := operationsListPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range operationsListPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_Delete
-	{
-			signalRDeletePollerResponse, err := SignalRClient.BeginDelete(ctx,
-resourceGroupName,
-resourceName,
-nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		_, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-	}
-}
-
-func prepare() {
-}
-
-func TestSignalr(t *testing.T) {
-	setUp()
-	scenarioMicrosoftSignalrserviceBasicCrud(t)
-	tearDown()
-}
-
-func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
     }
-    return fallback
+    response, err := signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    t.Logf(\\"Response result: %#v\\\\n\\", response.SignalRClientUpdateResult)
 }
 
-func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
 
-	param := armresources.ResourceGroup{
-		Location: to.StringPtr(location),
-	}
-
-	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.ResourceGroup, nil
+// From step SignalR_ListKeys
+{
+        signalRListKeysResponse, err := signalRClient.ListKeys(ctx,
+resourceGroupName,
+resourceName,
+nil)
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    t.Logf(\\"Response result: %#v\\\\n\\", signalRListKeysResponse.SignalRClientListKeysResult)
 }
 
-func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
 
-	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
-	if err != nil {
-		return err
-	}
-	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
-		return err
-	}
-
-	return nil
+// From step Usages_List
+        usagesClient := armsignalr.NewUsagesClient(subscriptionId, cred, nil)
+{
+    usagesListPager := usagesClient.List(location,
+nil)
+    for usagesListPager.NextPage(ctx) {
+        if err := usagesListPager.Err(); err != nil {
+            t.Fatalf(\\"Failed to advance page: %v\\", err)
+        }
+        for _, v := range usagesListPager.PageResponse().Value {
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
+        }
+    }
 }
 
-func setUp() {
-	ctx = context.Background()
-    location = getEnv(\\"LOCATION\\", \\"westus\\")
-    resourceGroupName = getEnv(\\"RESOURCE_GROUP_NAME\\", \\"scenarioTestTempGroup\\")
-    subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"00000000-00000000-00000000-00000000\\")
 
-	cred, err = azidentity.NewEnvironmentCredential(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
-		Logging: azcore.LogOptions{
-			IncludeBody: true,
-		},
-	})
-	resourceGroup, err := createResourceGroup(ctx, con)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf(\\"Resource Group %s created\\", *resourceGroup.ID)
-    prepare()
+// From step SignalR_ListByResourceGroup
+{
+    signalRListByResourceGroupPager := signalRClient.ListByResourceGroup(resourceGroupName,
+nil)
+    for signalRListByResourceGroupPager.NextPage(ctx) {
+        if err := signalRListByResourceGroupPager.Err(); err != nil {
+            t.Fatalf(\\"Failed to advance page: %v\\", err)
+        }
+        for _, v := range signalRListByResourceGroupPager.PageResponse().Value {
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
+        }
+    }
 }
 
-func tearDown() {
-	deleteResourceGroup(ctx, con)
+
+// From step SignalR_ListBySubscription
+{
+    signalRListBySubscriptionPager := signalRClient.ListBySubscription(nil)
+    for signalRListBySubscriptionPager.NextPage(ctx) {
+        if err := signalRListBySubscriptionPager.Err(); err != nil {
+            t.Fatalf(\\"Failed to advance page: %v\\", err)
+        }
+        for _, v := range signalRListBySubscriptionPager.PageResponse().Value {
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
+        }
+    }
 }
 
-func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
-	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
-	poller, err := deployClient.BeginCreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		deploymentName,
-		armresources.Deployment{
-			Properties: &armresources.DeploymentProperties{
-				Template:   template,
-				Parameters: params,
-				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
-			},
-		},
-		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
-	)
-	if err != nil {
-		return nil, err
-	}
 
-	res, err := poller.PollUntilDone(ctx, 10*time.Second)
-	if err != nil {
-		return nil, err
-	}
-
-	return res.DeploymentExtended, nil
+// From step Operations_List
+        operationsClient := armsignalr.NewOperationsClient(cred, nil)
+{
+    operationsListPager := operationsClient.List(nil)
+    for operationsListPager.NextPage(ctx) {
+        if err := operationsListPager.Err(); err != nil {
+            t.Fatalf(\\"Failed to advance page: %v\\", err)
+        }
+        for _, v := range operationsListPager.PageResponse().Value {
+            t.Logf(\\"Pager result: %#v\\\\n\\", v)
+        }
+    }
 }
 
-func getAnyJson(customJSON []byte) map[string]interface{} {
-	var anyJson map[string]interface{}
-	_ = json.Unmarshal(customJSON, &anyJson)
-	return anyJson
+
+// From step SignalR_Delete
+{
+        signalRDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
+resourceGroupName,
+resourceName,
+nil)
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+    _, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    if err != nil {
+        t.Fatalf(\\"Request error: %v\\", err)
+    }
+}
+}
+
+
+func cleanup(t *testing.T) {
 }",
 }
 `;

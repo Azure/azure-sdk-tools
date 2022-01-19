@@ -24,8 +24,6 @@ import (
 var (
 	ctx            context.Context
 	cred           azcore.TokenCredential
-	con            *arm.Connection
-	err            error
 {%- if scope.toLowerCase() == 'resourcegroup'%}
 	resourceGroup	*armresources.ResourceGroup
 {%- endif %}
@@ -34,7 +32,7 @@ var (
 {%- endfor %}
 {%- for variable, _ in requiredVariablesDefault %}
 {%- if not variables.hasOwnProperty(variable) %}
-    {{variable}}  string
+    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
 {%- endif %}
 {%- endfor %}
 {%- for outputVariableName in outputVariableNames %}
@@ -44,46 +42,39 @@ var (
 {%- endfor %}
 )
 
-{%- for testScenario in scenarios %}
-func scenario{{jsFunc.descToTestname(testScenario.description)}}(t *testing.T) {
-	{%- for variable, value in testScenario.requiredVariablesDefault %}
-	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
-    {{variable}} := getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
-	{%- endif %}
-	{%- endfor %}
-	{%- for name, value in testScenario.variables %}
-    {{name}} := {{jsFunc.quotedEscapeString(value)}}
-	{%- endfor %}
-	
-	{%- set steps = testScenario.steps %}
-	{%- include "./scenarioContent.go.njk" %}
-}
-{% endfor %}
-func prepare() {
-	{%- set steps = prepareSteps %}
-	{%- include "./scenarioContent.go.njk" %}
-}
-
 func Test{{testCaseName}}(t *testing.T) {
-	setUp()
+	setUp(t)
 	{%- for testScenario in scenarios %}
-	scenario{{jsFunc.descToTestname(testScenario.description)}}(t)
+	scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t)
 	{%- endfor %}
-	tearDown()
+	tearDown(t)
 }
 
-func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
-    }
-    return fallback
+func setUp(t *testing.T) {
+    var err error
+	ctx = context.Background()
+
+    {%- if scope.toLowerCase() == 'resourcegroup'%}
+	cred, err = azidentity.NewEnvironmentCredential(nil)
+	if err != nil {
+		t.Fatalf("Failed to create credential: %v", err)
+	}
+
+	resourceGroup, err = createResourceGroup(ctx, cred)
+	if err != nil {
+		t.Fatalf("Failed to create resource group: %v", err)
+	}
+	t.Logf("Resource group created: id - %s name - %s", *resourceGroup.ID, *resourceGroup.Name)
+    {%- endif %}
+
+    prepare(t)
 }
+
 {%- if scope.toLowerCase() == 'resourcegroup'%}
+func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
 
-func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
-
-	param := armresources.ResourceGroup{
+	param := armresources.ResourceGroup {
 		Location: to.StringPtr(location),
 	}
 
@@ -92,11 +83,11 @@ func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armr
 		return nil, err
 	}
 
-	return resp.ResourceGroup, nil
+	return &resp.ResourceGroup, nil
 }
 
-func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
 
 	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
@@ -110,43 +101,27 @@ func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error 
 }
 {%- endif %}
 
-func setUp() {
-	ctx = context.Background()
-
-	{%- for variable, value in requiredVariablesDefault %}
-    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{value}}")
-	{%- endfor %}
-
-	cred, err = azidentity.NewEnvironmentCredential(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
-		Logging: azcore.LogOptions{
-			IncludeBody: true,
-		},
-	})
+func tearDown(t *testing.T) {
+    cleanup(t)
 {%- if scope.toLowerCase() == 'resourcegroup'%}
-	resourceGroup, err := createResourceGroup(ctx, con)
+	err := deleteResourceGroup(ctx, cred)
 	if err != nil {
-		panic(err)
+		t.Fatalf("Failed to delete resource group: %v", err)
 	}
-	log.Printf("Resource Group %s created", *resourceGroup.ID)
+	t.Logf("Resource group deleted")
 {%- endif %}
-    prepare()
 }
 
-func tearDown() {
-{%- if scope.toLowerCase() == 'resourcegroup'%}
-	deleteResourceGroup(ctx, con)
-{%- endif %}
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
 }
 
 {%- if useArmTemplate %}
-
-func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
-	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
+func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
 	poller, err := deployClient.BeginCreateOrUpdate(
 		ctx,
 		resourceGroupName,
@@ -158,7 +133,7 @@ func createDeployment(ctx context.Context, deploymentName string, template, para
 				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
 			},
 		},
-		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
 	)
 	if err != nil {
 		return nil, err
@@ -169,12 +144,32 @@ func createDeployment(ctx context.Context, deploymentName string, template, para
 		return nil, err
 	}
 
-	return res.DeploymentExtended, nil
-}
-
-func getAnyJson(customJSON []byte) map[string]interface{} {
-	var anyJson map[string]interface{}
-	_ = json.Unmarshal(customJSON, &anyJson)
-	return anyJson
+	return &res.DeploymentExtended, nil
 }
 {%- endif %}
+
+func prepare(t *testing.T) {
+	{%- set steps = prepareSteps %}
+	{%- include "./scenarioContent.go.njk" %}
+}
+
+{%- for testScenario in scenarios %}
+func scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t *testing.T) {
+	{%- for variable, value in testScenario.requiredVariablesDefault %}
+	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
+    {{variable}} := getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
+	{%- endif %}
+	{%- endfor %}
+	{%- for name, value in testScenario.variables %}
+    {{name}} := {{value}}
+	{%- endfor %}
+	
+	{%- set steps = testScenario.steps %}
+	{%- include "./scenarioContent.go.njk" %}
+}
+{% endfor %}
+
+func cleanup(t *testing.T) {
+	{%- set steps = cleanUpSteps %}
+	{%- include "./scenarioContent.go.njk" %}
+}

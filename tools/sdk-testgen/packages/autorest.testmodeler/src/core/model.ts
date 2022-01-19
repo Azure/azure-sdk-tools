@@ -40,6 +40,7 @@ export interface ExampleExtension {
 
 export type TestStepModel = {
     outputVariableNames: string[];
+    inputVariableNames: string[];
 };
 
 export type StepArmTemplateModel = StepArmTemplate & TestStepModel;

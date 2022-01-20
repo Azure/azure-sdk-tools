@@ -6,7 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -19,11 +22,15 @@ namespace APIViewWeb
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
         private readonly string _apiScriptPath;
+        private readonly string _tempDiirectory;
+
+        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         public PythonLanguageService(IConfiguration configuration)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
             _apiScriptPath = Path.Combine(Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location), "api-stub-generator", "apistubgen.py");
+            _tempDiirectory = Path.Combine(Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location), "temp");
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
@@ -40,24 +47,25 @@ namespace APIViewWeb
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            var tempPath = Path.GetTempPath();
+            _telemetryClient.TrackEvent("Creating code file for " + originalName);
             var randomSegment = Guid.NewGuid().ToString("N");
-            var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
+            var tempDirectory = Path.Combine(_tempDiirectory, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
             var originalFilePath = Path.Combine(tempDirectory, originalName);
-
             var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
 
             using (var file = File.Create(originalFilePath))
             {
                 await stream.CopyToAsync(file);
             }
-
+            _telemetryClient.TrackEvent("Created local copy of file " + originalName);
             try
             {
                 var apiStubGenPath = GetPythonVirtualEnv(tempDirectory);
+                _telemetryClient.TrackEvent("Created virtualenv");
                 var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 RunProcess(tempDirectory, apiStubGenPath, arguments);
+                _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);

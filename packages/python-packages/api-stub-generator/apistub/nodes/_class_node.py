@@ -224,9 +224,9 @@ class ClassNode(NodeEntityBase):
         apiview.begin_group()
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
             apiview.add_newline()
-            apiview.set_blank_lines(1)
             apiview.add_whitespace()
             e.generate_tokens(apiview)
+            apiview.add_newline()
         for func in [
             x
             for x in self.child_nodes

@@ -58,7 +58,6 @@ namespace APIViewWeb
             {
                 await stream.CopyToAsync(file);
             }
-            _telemetryClient.TrackEvent("Created local copy of file " + originalName);
             try
             {
                 var apiStubGenPath = GetPythonVirtualEnv(tempDirectory);
@@ -91,6 +90,7 @@ namespace APIViewWeb
             using (var process = Process.Start(processStartInfo))
             {
                 process.WaitForExit();
+                _telemetryClient.TrackEvent("Completed parsing python wheel. Exit code: " + process.ExitCode);
                 if (process.ExitCode != 0)
                 {
                     throw new InvalidOperationException(

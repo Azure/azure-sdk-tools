@@ -65,6 +65,10 @@ namespace APIViewWeb
                 var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 RunProcess(tempDirectory, apiStubGenPath, arguments);
                 _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
+                if (!File.Exists(jsonFilePath))
+                {
+                    _telemetryClient.TrackEvent("Token json file is missing: " + jsonFilePath);
+                }
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
@@ -72,6 +76,11 @@ namespace APIViewWeb
                     codeFile.Language = Name;
                     return codeFile;
                 }
+            }
+            catch(Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw ex;
             }
             finally
             {
@@ -89,7 +98,7 @@ namespace APIViewWeb
             };
             using (var process = Process.Start(processStartInfo))
             {
-                process.WaitForExit();
+                process.WaitForExit(3 * 60 * 1000);
                 _telemetryClient.TrackEvent("Completed parsing python wheel. Exit code: " + process.ExitCode);
                 if (process.ExitCode != 0)
                 {

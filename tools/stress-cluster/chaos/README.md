@@ -77,16 +77,24 @@ To create any resources in the cluster, you will need to create a namespace for 
 kubectl create namespace <your alias>
 ```
 
-You will then need to build and push your container image to an Azure Container Registry the cluster has access to:
+You will then need to build and push your container image to an Azure Container Registry the cluster has access to.
+
+Get the default container registry for the stress testing Kubernetes cluster:
 
 ```bash
-# Get the default container registry for our Kubernetes cluster.
 az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
 # Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
 ```
 
+Login to the azure container registry. The below command will add a token to the registy to the local docker config. This must be refreshed daily.
+
+```
+az acr login -n <registry name>
+```
+
+Build and push development image to stress test cluster registry
+
 ```bash
-# Build and push development image to stress test cluster registry
 docker build . -t "<registry server host name from above>/<your alias>/<test job image name>:<version>"
 docker push "<registry server host name from above>/<your username>/<test job image name>:<version>"
 ```

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swagger-api-parser", "swagg
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "..\..\..\..\..\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj", "{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIView", "..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj", "{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04A2E9C9-C5D4-4D5C-92CE-66B4BCFCD79A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33DFC38B-8A02-48C4-8BCB-334B0D0F5BEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

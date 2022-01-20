@@ -64,6 +64,12 @@ extension FunctionDeclaration {
             value += "\(label)[\(type)]:"
         }
         value += ")"
+        if self.signature.asyncKind == .async {
+            value += "[async]"
+        }
+        if self.signature.throwsKind != .nothrowing {
+            value += "[\(self.signature.throwsKind.textDescription)]"
+        }
         return value.replacingOccurrences(of: " ", with: "")
     }
 }

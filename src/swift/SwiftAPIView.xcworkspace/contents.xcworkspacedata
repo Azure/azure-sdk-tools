@@ -7,4 +7,10 @@
    <FileRef
       location = "group:SwiftAPIView/SwiftAPIView.xcodeproj">
    </FileRef>
+   <FileRef
+      location = "group:SwiftAPIView/../CHANGELOG.md">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftAPIView/../README.md">
+   </FileRef>
 </Workspace>

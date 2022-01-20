@@ -73,3 +73,17 @@ public class Owner {
         self.myDogs = [Dog?]()
     }
 }
+
+public class AsyncEnabledObject {
+    public func act(using data: Data?) -> String {
+        return ""
+    }
+
+    public func act(using data: Data?, completionHandler handler: @escaping (String, Error?) -> Void) {
+        handler(("", nil))
+    }
+
+    public func act(using data: Data?) async -> String {
+        return ""
+    }
+}

@@ -81,12 +81,12 @@ class ModuleNode(NodeEntityBase):
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
                 c.generate_tokens(apiview)
-                apiview.add_new_line(2)
+                apiview.set_blank_lines(2)
 
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(apiview)
-                apiview.add_new_line(1)
+                apiview.set_blank_lines(2)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

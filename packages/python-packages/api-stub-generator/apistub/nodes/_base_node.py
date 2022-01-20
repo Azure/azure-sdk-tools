@@ -42,7 +42,6 @@ class NodeEntityBase:
             apiview.add_text("", self.display_name)
             apiview.begin_group()
             for c in self.child_nodes:
-                apiview.add_new_line()
                 c.generate_tokens(apiview)
             apiview.end_group()
 

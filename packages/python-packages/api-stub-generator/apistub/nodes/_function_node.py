@@ -4,6 +4,8 @@ from collections import OrderedDict
 import astroid
 import re
 from inspect import Parameter
+
+from charset_normalizer import api
 from ._docstring_parser import DocstringParser
 from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -292,7 +294,7 @@ class FunctionNode(NodeEntityBase):
         for index, key in enumerate(self.args.keys()):
             # Add new line if args are listed in new line
             if use_multi_line:
-                apiview.add_new_line()
+                apiview.add_newline()
                 apiview.add_whitespace()
 
             self.args[key].generate_tokens(
@@ -303,7 +305,7 @@ class FunctionNode(NodeEntityBase):
                 apiview.add_punctuation(",", False, True)
 
         if use_multi_line:
-            apiview.add_new_line()
+            apiview.add_newline()
             apiview.end_group()
             apiview.add_whitespace()
             apiview.add_punctuation(")")
@@ -321,7 +323,7 @@ class FunctionNode(NodeEntityBase):
         for annot in self.annotations:
             apiview.add_whitespace()
             apiview.add_keyword(annot)
-            apiview.add_new_line()
+            apiview.add_newline()
 
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
@@ -342,6 +344,7 @@ class FunctionNode(NodeEntityBase):
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
+        apiview.add_newline()
 
         if self.errors:
             for e in self.errors:

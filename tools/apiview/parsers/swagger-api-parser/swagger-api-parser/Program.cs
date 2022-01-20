@@ -8,7 +8,7 @@ namespace swagger_api_parser
 {
     internal class Program
     {
-        static async Task<int> Main(string[] args)
+        static Task<int> Main(string[] args)
         {   
 
             var swagger = new Argument<string>("swagger", "The input swagger file.");
@@ -22,14 +22,14 @@ namespace swagger_api_parser
 
             cmd.SetHandler(async (string swagger) =>
             {
-                await handleGenerateCodeFile(swagger);
+                await HandleGenerateCodeFile(swagger);
             }, swagger);
 
-            return cmd.Invoke(args);
+            return Task.FromResult(cmd.Invoke(args));
 
         }
 
-        static async Task handleGenerateCodeFile(string swagger)
+        static async Task HandleGenerateCodeFile(string swagger)
         {
             var input = Path.GetFullPath(swagger);
 

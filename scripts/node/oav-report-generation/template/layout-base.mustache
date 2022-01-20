@@ -61,6 +61,35 @@
             span {
                 background-color: #E1EAE8;
             }
+
+            #general-errors {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                background-color:#FF8680;                
+            }
+
+            #general-errors-content {
+                width: 100%;
+                padding-top: 1em;
+                margin: 0;
+            }
+
+            #general-errors-item {
+                background-color:lightgrey"
+            }
+            
+            #runtime-errors {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            #runtime-errors-content {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
         </style>
     </head>
 
@@ -71,22 +100,22 @@
             </h1>
             <!-- TODO: localize the UTC date via JS -->
             <h3 class="datedrop">
-                Generated {{ generatedDate }}.
+                Generated {{ formatGeneratedDate }}.
             </h3>
             <table style="border: 0px;" width="100%">
                 <tr>
                     <td width="33%" class="highlight">
-                        <p style="background-color: #B9FF80">
+                        <p style="border: 1px solid aliceblue">
                             {{ language }}
                         </p>
                     </td>
                     <td width="34%" class="highlight">
-                        <p style="background-color: #7DF9FF">
+                        <p style="border: 1px solid aliceblue">
                             Generated from <a href="#">604ee4</a>
                         </p>
                     </td>
                     <td width="33%" class="highlight">
-                        <p style="background-color: #FF8680">
+                        <p style="border: 1px solid aliceblue">
                             {{ getTotalErrors }} Total Failures
                         </p>
                     </td>
@@ -94,22 +123,28 @@
             </table>
         </div>
 
-        <div id ="general">
+        <div id="general-errors">
             <h2>
-                General Errors
+                {{ getTotalGeneralErrors }} General Errors
             </h2>
-            <p>
-                There are {{ getTotalGeneralErrors }} runtime errors.
-            </p>
+            <div id="general-errors-content">
+                {{#getGeneralErrors}}
+                <div class="general-error-item">
+                    <div style="float: left">{{operationInfo.apiVersion}}</div>
+                    <div style="float: right">{{operationInfo.operationId}}</div>
+                    <div style="float: left; clear: both;">{{payloadFilePath}}</div>
+                </div>
+                {{/getGeneralErrors}}
+            </div>
         </div>
 
         <div id ="runtime-errors"> 
             <h2>
-                RunTime Errors
+                {{ getTotalRunTimeErrors }} RunTime Errors
             </h2>
-            <p>
-                There are {{ getTotalRunTimeErrors }} runtime errors.
-            </p>
+            <div id="runtime-errors-content">
+
+            </div>
         </div>
 
         <div id="mypanel"></div>

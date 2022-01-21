@@ -44,7 +44,6 @@ class ApiView:
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
-        self.add_newline()
         self.set_blank_lines(2)
 
     def add_token(self, token):

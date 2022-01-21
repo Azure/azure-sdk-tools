@@ -28,10 +28,14 @@ class TestApiView:
 
     def test_set_blank_lines(self):
         apiview = ApiView(None, "test", "0.0", "test")
+        apiview.set_blank_lines(3)
+        assert self._count_newlines(apiview) == 4 # +1 for carriage return
+
         apiview.add_text(None, "Something")
         apiview.add_newline()
         apiview.set_blank_lines(1)
         apiview.set_blank_lines(5)
         # only the last invocation matters
-        apiview.set_blank_lines(3)
-        assert self._count_newlines(apiview) == 4 # +1 for carriage return
+        apiview.set_blank_lines(2)
+        assert self._count_newlines(apiview) == 3 # +1 for carriage return
+

@@ -232,7 +232,6 @@ class ClassNode(NodeEntityBase):
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
-            apiview.add_newline()
             apiview.set_blank_lines(1)
             func.generate_tokens(apiview)
         apiview.end_group()

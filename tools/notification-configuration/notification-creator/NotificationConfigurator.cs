@@ -38,10 +38,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             foreach (var pipeline in pipelines)
             {
-                using (logger.BeginScope("Evaluate Pipeline Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
+                using (logger.BeginScope("Evaluate Pipeline: Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
                 {
-                    var parentTeam = await EnsureTeamExists(pipeline, "[ntfy]", TeamPurpose.ParentNotificationTeam, teams, persistChanges);
-                    var childTeam = await EnsureTeamExists(pipeline, "[sync]", TeamPurpose.SynchronizedNotificationTeam, teams, persistChanges);
+                    var parentTeam = await EnsureTeamExists(pipeline, TeamPurpose.ParentNotificationTeam, teams, persistChanges);
+                    var childTeam = await EnsureTeamExists(pipeline, TeamPurpose.SynchronizedNotificationTeam, teams, persistChanges);
 
                     if (!persistChanges && (parentTeam == default || childTeam == default))
                     {
@@ -60,18 +60,27 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
         private async Task<WebApiTeam> EnsureTeamExists(
             BuildDefinition pipeline,
-            string prefix,
             TeamPurpose purpose,
             IEnumerable<WebApiTeam> teams,
             bool persistChanges)
         {
-            // Ensure team name fits within maximum 64 character limit
-            // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
-            string fullTeamName = $"{prefix} {pipeline.Name}";
-            string teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
-            if (fullTeamName.Length > teamName.Length) {
-                logger.LogWarning($"Notification Name (length {fullTeamName.Length}) will be truncated to {teamName}");
+            string teamName = $"[{pipeline.Id}] ";
+
+            if (purpose == TeamPurpose.ParentNotificationTeam)
+            {
+                // Ensure team name fits within maximum 64 character limit
+                // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
+                string fullTeamName = teamName + $"{pipeline.Name}";
+                teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
+                if (fullTeamName.Length > teamName.Length) {
+                    logger.LogWarning($"Notification team name (length {fullTeamName.Length}) will be truncated to {teamName}");
+                }
             }
+            else if (purpose == TeamPurpose.SynchronizedNotificationTeam)
+            {
+                teamName += $"Code owners sync notifications";
+            }
+
             bool updateMetadataAndName = false;
             var result = teams.FirstOrDefault(
                 team =>
@@ -107,11 +116,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             if (result == default)
             {
-                logger.LogInformation("Team Not Found prefix = {0}", prefix);
+                logger.LogInformation("Team Not Found purpose = {0}", purpose);
                 var teamMetadata = new TeamMetadata
                 {
                     PipelineId = pipeline.Id,
                     Purpose = purpose,
+                    PipelineName = pipeline.Name,
                 };
                 var newTeam = new WebApiTeam
                 {

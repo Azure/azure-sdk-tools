@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             this.logger = logger;
         }
 
-        private async Task<T> GetClientAsync<T>() 
+        private async Task<T> GetClientAsync<T>()
             where T : VssHttpClientBase
         {
             var type = typeof(T);
@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             await clientCacheSemaphore.WaitAsync();
             if (clientCache.ContainsKey(type))
             {
-                
+
                 result = (T)clientCache[type];
             }
             else
@@ -193,7 +193,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         public async Task<bool> CheckMembershipAsync(string parent, string child)
         {
             var client = await GetClientAsync<GraphHttpClient>();
-            
+
             logger.LogInformation("CheckMembership ParentId = {0} ChildId = {1}", parent, child);
             var result = await client.CheckMembershipExistenceAsync(child, parent);
 
@@ -244,14 +244,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
 
             logger.LogInformation("GetMembersAsync TeamId = {0}, TeamName = {1}", team.Id, team.Name);
             var members = await client.GetTeamMembersWithExtendedPropertiesAsync(
-                team.ProjectId.ToString(), 
+                team.ProjectId.ToString(),
                 team.Id.ToString()
             );
             return members;
         }
-        
+
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>

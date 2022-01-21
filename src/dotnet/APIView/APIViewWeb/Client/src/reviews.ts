@@ -1,92 +1,148 @@
 ﻿$(() => {
-    const languageSelect = $("#reviews-table-language-filter");
-    const searchBox = $("#reviews-table-search-box");
-    const groupbyPackage = $("#groupbyPackageRadio");
-    const disableRowgroup = $("#groupbyNoneRadio");
-    var collapsedGroups = {};
+  // Search
+  const searchBox = $('#reviews-table-search-box');
+  const searchContext = $('.review-name') as any;
+  const serviceGroupRows = $('.service-group-row');
+  const packageGroupRows = $('.package-group-row');
+  const reviewHeaderRows = $('.review-rows-header');
 
-    // Enable data Tables
-    var reviewsTable = (<any>$('#reviews-table')).DataTable({
-      "responsive": true,
-      "order": [
-        [6, 'asc']
-      ],
-      "rowGroup": {
-        enable: true,
-        dataSrc: 6,
-        startRender: function(rows, group) {
-          var collapsed = !collapsedGroups[group];
-          var arrowClass = "fa-chevron-up";
-          if (collapsed) {
-            arrowClass = "fa-chevron-down";
-          }
+  // Enable tooltip
+  (<any>$('[data-toggle="tooltip"]')).tooltip();
 
-          rows.nodes().each(function(r) {
-            r.style.display = '';
-            if (collapsed) {
-              r.style.display = 'none';
-            }
-          });
+  function toggleServiceGroup(serviceRow, state) {
+    var serviceGroupTag = serviceRow[0].id;
+    var serviceRowIcon = serviceRow.find('i').first();
+    var packageGroupRow = $(`.${serviceGroupTag}`);
+    if (state == "closed")
+    {
+      packageGroupRow.removeClass('hidden-row');
+      serviceRowIcon.removeClass('fa-angle-right').addClass('fa-angle-down');
+      serviceRow.addClass('shadow-sm');
+    }
+    else
+    {
+      packageGroupRow.addClass('hidden-row');
+      serviceRowIcon.removeClass('fa-angle-down').addClass('fa-angle-right');
+      serviceRow.removeClass('shadow-sm');
+    }
+  }
 
-          return $('<tr/>')
-            .append('<td colspan="6" class="clickable bg-light bg-gradient font-weight-normal"><i class="fas ' + arrowClass + '"></i>&nbsp;&nbsp;' + group + ' (' + rows.count() + ')</td>')
-            .attr('data-name', group)
-            .toggleClass('collapsed', collapsed);
+  function togglePackageGroup(packageRow, state) {
+    var packageGroupTag = packageRow[0].id;
+    var packageRowIcon = packageRow.find('i').first();
+    var packageDataRows = $(`.${packageGroupTag}`);
+    if (state == "closed")
+    {
+      packageDataRows.removeClass('hidden-row');
+      packageRowIcon.removeClass('fa-angle-right').addClass('fa-angle-down');
+      packageRow.addClass('shadow-sm');
+    }
+    else
+    {
+      packageDataRows.addClass('hidden-row');
+      packageRowIcon.removeClass('fa-angle-down').addClass('fa-angle-right');
+      packageRow.removeClass('shadow-sm');
+    }
+  }
+
+  function filterReviews(){
+    // highlight matching text using mark.js framework and hide rows that don't match
+    const searchText = (searchBox.val() as string).toUpperCase();
+    searchContext.closest('tr').removeClass('hidden-row').unmark();
+    if(searchText)
+    {
+      searchContext.mark(searchText, {
+        done: function () {
+          searchContext.not(':has(mark)').closest('tr').addClass('hidden-row');
+            serviceGroupRows.addClass('hidden-row');
+            packageGroupRows.addClass('hidden-row');
+            reviewHeaderRows.addClass('hidden-row');
         }
-      },
-      "dom": '<"row"t><"row"<"col-3 px-0"i><"col px-0"p>>',
-      "columnDefs" : [
-        { orderable: false, targets: 5 }, 
-        { visible: false, targets: 6 },
-        { className: 'dt-body-center', targets: 5 }
-      ],
-      "pageLength" : 100,
-      "search.smart" : true,
-      "drawCallback": function (settings){
-        // Enable bootstraps tooltip
-        (<any>$('[data-toggle="tooltip"]')).tooltip();
-      }
-    });
+      });
+    }
+    else
+    {
+      serviceGroupRows.removeClass('hidden-row').addClass('shadow-sm');
+      serviceGroupRows.find('i').removeClass('fa-angle-right').addClass('fa-angle-down');
+      packageGroupRows.removeClass('hidden-row').addClass('shadow-sm');
+      packageGroupRows.find('i').removeClass('fa-angle-right').addClass('fa-angle-down');
+      reviewHeaderRows.removeClass('hidden-row').addClass('shadow-sm');
+    }
+  }
 
-    // Row Groups toggling
-    $('#reviews-table tbody').on('click', 'tr.dtrg-start', function() {
-      var name = $(this).data('name');
-      var arrowIcon = $(this).find("td > i");
-      arrowIcon.toggleClass('fa-chevron-down');
-      arrowIcon.toggleClass('fa-chevron-up');
-      collapsedGroups[name] = !collapsedGroups[name];
-      reviewsTable.draw(false);
+    // Expand all Service Groups
+  $('#expand-all-service-groups-btn').on('click', function () {
+    $('.service-group-row').each(function(index, value){
+      toggleServiceGroup($(this), "closed");
     });
+  });
 
-    // Event on every draw of the table
-    reviewsTable.on('draw', function(e, settings){
-      if (settings.rowGroup.c.enable === false)
-      {
-        $('#reviews-table tbody tr').css("display","");
-      }
+  // Expand all Groups
+  $('#expand-all-groups-btn').on('click', function () {
+    $('.service-group-row').each(function(index, value){
+      toggleServiceGroup($(this), "closed");
     });
-
-    // Group Rows by Package
-    groupbyPackage.on("click", function() {
-      collapsedGroups = {};
-      reviewsTable.rowGroup().enable().draw();
+    $('.package-group-row').each(function(index, value){
+      togglePackageGroup($(this), "closed");
     });
+  });
 
-    // Disable Row Grouping
-    disableRowgroup.on("click", function() {
-      reviewsTable.rowGroup().disable().draw();
+  // Collapse all Groups
+  $('#collapse-all-groups-btn').on('click', function () {
+    $('.service-group-row').each(function(index, value){
+      toggleServiceGroup($(this), "opened");
     });
-
-    // Search
-    searchBox.on("input", function (e) {
-      reviewsTable.search($(this).val() as string).draw();
+    $('.package-group-row').each(function(index, value){
+      togglePackageGroup($(this), "opened");
     });
+  });
 
-    // Filter by Language
-    languageSelect.on('change', function(e) {
-      reviewsTable.columns(4).search($(this).val() as string, true, false, false).draw();
+  // Toggle individual service Group
+  $('#reviews-table tbody').on('click', '.service-group-row', function() {
+    var serviceRowIcon = $(this).find('i').first();
+    var serviceGroupID = $(this).first()[0].id;
+    if (serviceRowIcon.hasClass('fa-angle-right'))
+    {
+      toggleServiceGroup($(this), "closed");
+    }
+    else 
+    {
+      $(`.package-group-row.${serviceGroupID}`).each(function(index, value){
+        var packageRowIcon = $(this).find('i').first();
+        if (packageRowIcon.hasClass(`fa-angle-down`))
+        {
+          togglePackageGroup($(this), "opened");
+        }
+      });
+      toggleServiceGroup($(this), "opened");
+    }
+  });
+
+  // Toggle individual package Group
+  $('#reviews-table tbody').on('click', '.package-group-row', function() {
+    var packageRowIcon = $(this).find('i').first();
+    if (packageRowIcon.hasClass('fa-angle-right'))
+    {
+      togglePackageGroup($(this), "closed");
+    }
+    else 
+    {
+      togglePackageGroup($(this), "opened");
+    }
+  });
+
+  // If already populated from navigating back, filter again
+  if (searchBox.val()) {
+    filterReviews();
+  }
+  else
+  {
+    $('.service-group-row').each(function(index, value) {
+      $(this)
     });
   }
-);
 
-
+  searchBox.on('input', function() {
+    setTimeout(filterReviews, 300);
+  });
+});

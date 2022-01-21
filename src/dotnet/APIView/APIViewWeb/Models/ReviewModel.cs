@@ -101,9 +101,6 @@ namespace APIViewWeb
         public ReviewType FilterType { get; set; }
 
         [JsonIgnore]
-        public string PackageName => Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
-
-        [JsonIgnore]
         public bool IsApproved => Revisions.LastOrDefault()?.Approvers?.Any() ?? false;
 
         public string ServiceName { get; set; }

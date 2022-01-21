@@ -6,49 +6,67 @@
 }
 
 <div class="container-fluid">
-    <div class="row">
-        <div class="col my-3">
-            <div class="dropdown float-left mr-2">
-                <button class="btn btn-light btn-sm shadow-sm border dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    @Model.Revision.DisplayName
-                </button>
-
-                <div class="dropdown-menu">
-                    @foreach (var revision in Model.Review.Revisions.Reverse())
-                    {
-                        var colorCss =  revision.IsApproved ? "text-success" : "";
-                        <a class="dropdown-item @colorCss" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId" asp-route-doc="@Model.ShowDocumentation">
-                            @revision.DisplayName
-                        </a>
-                    }
-                </div>
+    <div class="row pt-3 pb-2">
+        <div class="col-7">
+            <div class="float-left mr-2 mt-1">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item"><a href="#">Review</a></li>
+                    </ol>
+                </nav>
             </div>
+            <div class="d-flex justify-content-between">
+                <div class="input-group input-group-sm mr-2" id="rXXeview-select-box">
+                    <select class="custom-select" data-width="100%" id="rXXeview-input-group-select">
+                        <option selected>azure-core-amqp (version 2.3.0-beta.1) - Candidate 2.3.0-beta-1</option>
+                        <option value="1">azure-security-attestation (version 1.0.0-beta.2)</option>
+                        <option value="2">@@azure/communication-phone-numbers - Phone Numbers including basic Short Codes client functionalitie'</option>
+                        <option value="3">azure-communication-phonenumbers (version 1.0.3)</option>
+                    </select>
+                </div>
+                <div class="dropdown mr-2">
+                    <a class="btn btn-sm btn-light shadow-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                        Revisions
+                    </a>
 
-            @if (Model.PreviousRevisions.Any())
-            {
-                <div class="btn-group float-left">
-                    @if (Model.DiffRevisionId != null)
-                    {
-                        <a class="btn btn-light btn-sm shadow-sm border active" asp-route-diffRevisionId="" asp-route-doc="@Model.ShowDocumentation">Diff with @Model.DiffRevision?.DisplayName</a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-light btn-sm shadow-sm border" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.PreviousRevisions.Last().RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>Diff</a>
-                    }
-                    <button type="button" class="btn btn-light btn-sm shadow-sm border dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-
-                    <div class="dropdown-menu">
-                        @foreach (var revision in Model.PreviousRevisions.Reverse())
+                    <div class="dropdown-menu dropdown-menu-right">
+                        @foreach (var revision in Model.Review.Revisions.Reverse())
                         {
-                            var colorCss = revision.IsApproved ? "text-success" : "";
-                            <a class="dropdown-item @colorCss" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
+                            var colorCss =  revision.IsApproved ? "text-success" : "";
+                            <a class="dropdown-item @colorCss" asp-route-id="@Model.Review.ReviewId" asp-route-revisionId="@revision.RevisionId" asp-route-doc="@Model.ShowDocumentation">
                                 @revision.DisplayName
                             </a>
                         }
                     </div>
                 </div>
-            }
+                @if (Model.PreviousRevisions.Any())
+                {
+                    <div class="btn-group float-left">
+                        @if (Model.DiffRevisionId != null)
+                        {
+                            <a class="btn btn-sm btn-light shadow-sm active" role="button" asp-route-diffRevisionId="" asp-route-doc="@Model.ShowDocumentation">Diff</a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-sm btn-light shadow-sm" role="button" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.PreviousRevisions.Last().RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>Diff</a>
+                        }
+                        <button type="button" class="btn btn-sm btn-light shadow-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
 
+                        <div class="dropdown-menu dropdown-menu-right">
+                            @foreach (var revision in Model.PreviousRevisions.Reverse())
+                            {
+                                var colorCss = revision.IsApproved ? "text-success" : "";
+                                <a class="dropdown-item @colorCss" active-if="@(Model.DiffRevisionId == revision.RevisionId)" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: revision.RevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
+                                    @revision.DisplayName
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-5">
             <form asp-resource="@Model.Review" class="form-inline float-right ml-2" method="post" asp-page-handler="ToggleClosed">
                 @if (Model.Review.IsClosed)
                 {
@@ -59,11 +77,10 @@
                 else
                 {
                     <button type="submit" class="btn btn-sm border shadow-sm btn-light">
-                        <i class="fa fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
+                        <i class="far fa-window-close" aria-hidden="true"></i>&nbsp;&nbsp;Close
                     </button>
                 }
             </form>
-
             <div class="float-right">
                 <form asp-resource="@Model.Review" class="form-inline float-left ml-2" method="post" asp-page-handler="ToggleSubscribed">
                     @if (Model.Review.GetUserEmail(User) != null)
@@ -71,13 +88,13 @@
                         if (Model.Review.IsUserSubscribed(User))
                         {
                             <button type="submit" class="btn border btn-sm shadow-sm btn-light">
-                                <i class="fa fa-minus-square" aria-hidden="true"></i>&nbsp;&nbsp;Unsubscribe
+                                <i class="far fa-minus-square" aria-hidden="true"></i>&nbsp;&nbsp;Unsubscribe
                             </button>
                         }
                         else
                         {
                             <button type="submit" class="btn border btn-sm shadow-sm btn-light">
-                                <i class="fa fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;Subscribe
+                                <i class="far fa-plus-square" aria-hidden="true"></i>&nbsp;&nbsp;Subscribe
                             </button>
                         }
                     }
@@ -123,7 +140,7 @@
                     }
                 </div>
             </div>
-            <div class="float-right">
+            <div class="float-right ml-2">
                 <form asp-resource="@Model.Review" class="form-inline float-left ml-2" asp-page-handler="ToggleApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                     <input type="hidden" name="revisionId" value="@Model.Revision.RevisionId" />
                     @if (Model.DiffRevision == null || Model.DiffRevision.Approvers.Count > 0)
@@ -137,7 +154,7 @@
                         else
                         {
                             <button type="submit" class="btn btn-sm shadow-sm btn-success">
-                                <i class="fa fa-sm fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
+                                <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
                             </button>
                         }
                     }
@@ -152,7 +169,7 @@
                         else
                         {
                             <button type="submit" class="btn btn-sm shadow-sm btn-light" disabled data-placement="bottom" data-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                <i class="fa fa-sm fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
+                                <i class="far fa-thumbs-up" aria-hidden="true"></i>&nbsp;&nbsp;Approve
                             </button>
                         }
                     }
@@ -162,14 +179,14 @@
                 @{
                     var toolTipTitle = $"{Model.ActiveConversations} active revision threads, {Model.TotalActiveConversations} total active threads";
                     <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Conversiations Info" data-content="@toolTipTitle">
-                        💬 @Model.ActiveConversations / @Model.TotalActiveConversations
+                        <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
                     </button>
                 }
             </div>
             <div class="float-right ml-2">
                 @if (Model.Revision.Approvers.Count > 0)
                 {
-                    var approvers = String.Join(",", Model.Revision.Approvers);
+                    var approvers = String.Join(", ", Model.Revision.Approvers);
                     <button type="button" class="btn btn-sm shadow-sm btn-success" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Approvers" data-content="@approvers">
                         <i class="fas fa-check-circle"></i> APPROVED
                         <span class="badge badge-light">@Model.Revision.Approvers.Count</span>

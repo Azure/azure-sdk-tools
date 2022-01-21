@@ -1,6 +1,8 @@
 ﻿@page
 @model APIViewWeb.Pages.Assemblies.IndexPageModel
 @using APIViewWeb
+@using System
+@using System.Text.RegularExpressions
 @{
     ViewData["Title"] = "Reviews";
 }
@@ -9,7 +11,7 @@
         <div class="row mx-5 d-flex flex-row align-items-center">
             <div class="col px-0 d-flex flex-row align-items-center">
                 <div class="input-group mr-2" style="min-width: 200px;">
-                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search by Review Name">
+                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search by Review Name"></input>
                 </div>
                 <div class="mb-0 mr-2">
                     <select id="reviews-table-language-filter" class="custom-select" style="width: auto;">
@@ -48,18 +50,6 @@
                                     <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
                                     <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
                                     <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">GROUP BY</h6>
-                            <div class="dropdown-item">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="groupbyRadioOptions" id="groupbyPackageRadio" value="package" checked>
-                                    <label class="form-check-label" >Package</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="groupbyRadioOptions" id="groupbyNoneRadio" value="service">
-                                    <label class="form-check-label" >None</label>
                                 </div>
                             </div>
                         </form>
@@ -251,67 +241,102 @@
     </div>
 
     <div class="mx-5 mt-3 row">
-        <div class="col">
-            <table id="reviews-table" class="table table-striped" style="width:100%">
+        <div class="col p-0 border rounded table-responsive">
+            <table id="reviews-table" class="table table-sm m-0" style="width:100%">
                 <thead>
                     <tr>
-                        <th scope="col" class="border-top-0">Name</th>
-                        <th scope="col" class="border-top-0">Creator</th>
-                        <th scope="col" class="border-top-0">Updated</th>
-                        <th scope="col" class="border-top-0">Type</th>
-                        <th scope="col" class="border-top-0">Language</th>
-                        <th class="border-top-0"></th>
-                        <th scope="col" class="border-top-0">PackageName</th>
+                        <th colspan="6">
+                            <span class="border-right px-1 pb-1">
+                                <button type="button" id="expand-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Groups">
+                                    <i class="fas fa-angle-right mr-1"></i>All
+                                </button>
+                                <button type="button" id="expand-all-service-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Service Groups">
+                                    <i class="fas fa-angle-right mr-1"></i>Service
+                                </button>
+                            </span>
+                            <span class="pl-2">
+                                <button type="button" id="collapse-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Collapse all Groups">
+                                    <i class="fas fa-angle-down mr-1"></i>All
+                                </button>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var assembly in Model.Assemblies)
+                    @foreach (var serviceGroup in Model.reviewServices)
                     {
-                        <tr>
-                            <td class="border-right align-middle">
-                                <a class="review-name ml-4" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
-                                @if (assembly.Revisions.LastOrDefault()?.IsApproved == true)
-                                {
-                                    <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
-                                }
-                            </td>
-                            <td class="border-right align-middle">
-                                <a username="@assembly.Author">@assembly.Author</a>
-                            </td>
-                            <td class="border-right align-middle">
-                                <span data-placement="left" data-toggle="tooltip" title="@assembly.LastUpdated" date="@assembly.LastUpdated.ToLocalTime()"></span>
-                            </td>
-                            <td class="border-right align-middle">
-                                @if (assembly.IsAutomatic)
-                                {
-                                    <span>Automatic</span>
-                                }
-                                else
-                                {
-                                    <span>Manual</span>
-                                }
-                            </td>
-                            <td class="border-right align-middle">
-                                <span>@assembly.Language</span>
-                            </td>
-                            <td>
-                                @if (assembly.Author == User.GetGitHubLogin())
-                                {
-                                    <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">
-                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
-                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="true"><i class="fas fa-times-circle"></i> Delete</button>
-                                    </span>
-                                }
-                            </td>
-                            <td>
-                                <span>@assembly.PackageName</span>
+                        var serviceGroupTag = @serviceGroup.ServiceName.ToLower().Replace(" ","-");
+                        @serviceGroupTag = @Regex.Replace(@serviceGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
+                        <tr id="@serviceGroupTag" class="service-group-row clickable animate__fadeIn animate__fadeOut">
+                            <td colspan="6" class="align-middle">
+                                <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
+                                    <i class="fas fa-angle-right"></i>
+                                </button>
+                                <span>@serviceGroup.ServiceName</span>
+                                <span class="badge badge-info ml-1">@serviceGroup.packages.Count</span>
                             </td>
                         </tr>
+                        @foreach (var packageGroup in serviceGroup.packages.Values)
+                        {
+                            var packageGroupTag = @serviceGroupTag + '_' + @packageGroup.PackageDisplayName.ToLower().Replace(" ","-");
+                            @packageGroupTag = @Regex.Replace(@packageGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
+                            <tr id="@packageGroupTag" class="package-group-row @serviceGroupTag clickable hidden-row animate__fadeIn animate__fadeOut">
+                                <td colspan="6" class="align-middle pl-4">
+                                    <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <span>@packageGroup.PackageDisplayName</span>
+                                    <span class="badge badge-info ml-1">@packageGroup.reviews.Count</span>
+                                </td>
+                            </tr>
+                            <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
+                                <th scope="col" class="border-top-0 pl-4"><small class="ml-4">NAME</small></th>
+                                <th scope="col" class="border-top-0"><small>CREATOR</small></th>
+                                <th scope="col" class="border-top-0"><small>UPDATED</small></th>
+                                <th scope="col" class="border-top-0"><small>TYPE</small></th>
+                                <th scope="col" class="border-top-0"><small>LANGUAGE</small></th>
+                                <th class="border-top-0"></th>
+                            </tr>
+                            @foreach (var reviewData in packageGroup.reviews)
+                            {
+                                var truncationIndex = @Math.Min(@reviewData.ReviewDisplayName.Length, 100);
+                                <tr class="package-data-row @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
+                                    <td class="border-right pl-4">
+                                        <a class="review-name ml-4" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
+                                        @if (reviewData.IsApproved == true)
+                                        {
+                                            <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
+                                        }
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <a username="@reviewData.Author">@reviewData.Author</a>
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <span data-placement="left" data-toggle="tooltip" title="@reviewData.LastUpdated" date="@reviewData.LastUpdated.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <span>@reviewData.FilterType.ToString()</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span>@reviewData.Language</span>
+                                    </td>
+                                    <td>
+                                        @if (reviewData.Author == User.GetGitHubLogin())
+                                        {
+                                            <a asp-page="./Delete" asp-route-id="@reviewData.id">
+                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
+                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
                     }
                 </tbody>
             </table>

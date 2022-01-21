@@ -16,6 +16,18 @@
                 <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
             </li>
         </ul>
+        <div class="secondary-header-info-box">
+            <span class="secondary-header-info-text text-monospace">
+                @if (Model.GetType() == typeof(APIViewWeb.Pages.Assemblies.ReviewPageModel))
+                {
+                    <small><strong>Revision:</strong> @Model.Revision.DisplayName</small><br></br>
+                    @if (Model.DiffRevisionId != null)
+                    {
+                        <small><strong>Diff:</strong> @Model.DiffRevision?.DisplayName</small>
+                    }
+                }
+            </span>
+        </div>
     </div>
 </nav>
 @RenderBody()

@@ -256,12 +256,8 @@ class StubGenerator:
         return pkg_name, version
 
     def _install_package(self, pkg_name):
-        # Uninstall the package and reinstall it to parse so inspect can get members in package
-        # We don't want to force reinstall to avoid reinstalling other dependent packages
-        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
-        check_call(commands)
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
-        check_call(commands)
+        check_call(commands, timeout = 60)
 
 
 class NodeIndex:

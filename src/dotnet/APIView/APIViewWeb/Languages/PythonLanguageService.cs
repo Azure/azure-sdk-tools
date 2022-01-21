@@ -6,7 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -19,6 +22,8 @@ namespace APIViewWeb
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
         private readonly string _apiScriptPath;
+
+        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         public PythonLanguageService(IConfiguration configuration)
         {
@@ -41,23 +46,23 @@ namespace APIViewWeb
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             var tempPath = Path.GetTempPath();
+            _telemetryClient.TrackEvent("Creating code file for " + originalName);
             var randomSegment = Guid.NewGuid().ToString("N");
             var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
             var originalFilePath = Path.Combine(tempDirectory, originalName);
-
             var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
 
             using (var file = File.Create(originalFilePath))
             {
                 await stream.CopyToAsync(file);
             }
-
             try
             {
                 var apiStubGenPath = GetPythonVirtualEnv(tempDirectory);
                 var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 RunProcess(tempDirectory, apiStubGenPath, arguments);
+                _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
                     var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
@@ -65,6 +70,11 @@ namespace APIViewWeb
                     codeFile.Language = Name;
                     return codeFile;
                 }
+            }
+            catch(Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw ex;
             }
             finally
             {
@@ -82,7 +92,8 @@ namespace APIViewWeb
             };
             using (var process = Process.Start(processStartInfo))
             {
-                process.WaitForExit();
+                process.WaitForExit(3 * 60 * 1000);
+                _telemetryClient.TrackEvent("Completed parsing python wheel. Exit code: " + process.ExitCode);
                 if (process.ExitCode != 0)
                 {
                     throw new InvalidOperationException(

@@ -100,7 +100,6 @@ class FunctionNode(NodeEntityBase):
                 self.name
             )
             self.add_error(error_message)
-            logging.error(error_message)
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
@@ -373,7 +372,6 @@ class FunctionNode(NodeEntityBase):
                     logging.debug("list API returns valid paged return type")
                     return
             error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1} and page type must be included in docstring rtype".format(self.name, self.return_type)
-            logging.error(error_msg)
             self.add_error(error_msg)                
         
 

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -183,7 +184,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestInMemoryPurgesSucessfully()
+        public async Task TestInMemoryPurgesSucessfully()
         {
             var recordingHandler = TestHelpers.LoadRecordSessionIntoInMemoryStore("Test.RecordEntries/post_delete_get_content.json");
             var httpContext = new DefaultHttpContext();
@@ -197,7 +198,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestInMemoryDoesntPurgeErroneously()
+        public async Task TestInMemoryDoesntPurgeErroneously()
         {
             var recordingHandler = TestHelpers.LoadRecordSessionIntoInMemoryStore("Test.RecordEntries/post_delete_get_content.json");
             var httpContext = new DefaultHttpContext();
@@ -211,7 +212,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestLoadOfAbsoluteRecording()
+        public async Task TestLoadOfAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
@@ -229,7 +230,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestLoadOfRelativeRecording()
+        public async Task TestLoadOfRelativeRecording()
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
@@ -292,7 +293,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestLoadNonexistentAbsoluteRecording()
+        public async Task TestLoadNonexistentAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
             var currentPath = Directory.GetCurrentDirectory();
@@ -309,7 +310,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestLoadNonexistentRelativeRecording()
+        public async Task TestLoadNonexistentRelativeRecording()
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
@@ -385,7 +386,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestStartPlaybackWithVariables()
+        public async Task TestStartPlaybackWithVariables()
         {
             var httpContext = new DefaultHttpContext();
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -403,12 +404,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async void TestStartPlaybackWithoutVariables()
+        public async Task TestStartPlaybackWithoutVariables()
         {
             var startHttpContext = new DefaultHttpContext();
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
+        }
+
+        [Fact]
+        public async Task CreateEntryUsesAbsoluteUri()
+        {
+            var request = new DefaultHttpContext().Request;
+            var uri = new Uri("http://contoso.net/my cool directory");
+            request.Host = new HostString(uri.Host);
+            request.Path = uri.PathAndQuery;
+            request.Headers["x-recording-upstream-base-uri"] = uri.AbsoluteUri;
+
+            var entry = await RecordingHandler.CreateEntryAsync(request);
+            Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
         }
     }
 }

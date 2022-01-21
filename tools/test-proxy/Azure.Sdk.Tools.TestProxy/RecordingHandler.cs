@@ -372,7 +372,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public static async Task<RecordEntry> CreateEntryAsync(HttpRequest request)
         {
             var entry = new RecordEntry();
-            entry.RequestUri = GetRequestUri(request).ToString();
+            entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
 
             foreach (var header in request.Headers)

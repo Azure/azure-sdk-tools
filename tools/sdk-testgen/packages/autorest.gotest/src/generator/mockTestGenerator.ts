@@ -232,6 +232,8 @@ export class MockTestDataRender extends BaseDataRender {
                     }
                 case SchemaType.AnyObject:
                     return 'nil';
+                case SchemaType.Any:
+                    return 'nil';
                 default:
                     return '';
             }

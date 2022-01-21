@@ -3,7 +3,7 @@ lockfileVersion: 5.3
 specifiers:
   '@autorest/codemodel': ~4.17.2
   '@autorest/extension-base': ~3.4.4
-  '@autorest/go': 4.0.0-preview.34
+  '@autorest/go': 4.0.0-preview.36
   '@azure-tools/codegen': ~2.9.0
   '@azure-tools/linq': ~3.1.0
   '@rush-temp/gotest': file:./projects/gotest.tgz
@@ -36,7 +36,7 @@ specifiers:
 dependencies:
   '@autorest/codemodel': 4.17.2
   '@autorest/extension-base': 3.4.4
-  '@autorest/go': 4.0.0-preview.34
+  '@autorest/go': 4.0.0-preview.36
   '@azure-tools/codegen': 2.9.0
   '@azure-tools/linq': 3.1.263
   '@rush-temp/gotest': file:projects/gotest.tgz
@@ -85,8 +85,8 @@ packages:
       vscode-jsonrpc: 3.6.2
     dev: false
 
-  /@autorest/go/4.0.0-preview.34:
-    resolution: {integrity: sha512-bAUVDSW4BAcSoyKaps/Qtw0xct8Yyw8C8gvsbwAHGxr5leWLqXz7/xu1V1mYhhePn9/d3fJxXWawLckEsPO3ag==}
+  /@autorest/go/4.0.0-preview.36:
+    resolution: {integrity: sha512-EPupno7CDo5RYSuS4vA7GeHoEZU8QyUTKs8g/wxFPff8hb5qYThKnpMrC6Kr/c5Stzj9vjZI6bqFm1hyH3+H6Q==}
     engines: {node: '>=10.12.0'}
     dependencies:
       '@autorest/codemodel': 4.17.2
@@ -8239,13 +8239,13 @@ packages:
     dev: false
 
   file:projects/gotest.tgz:
-    resolution: {integrity: sha512-30N5gA/bp+0BKZwJpWJhib8ZdCDlrSsKvsgUWC58lq0+eHxxLIhIkL8CusSJvB1qi3Lp+9THqXoAKIsujd2gLg==, tarball: file:projects/gotest.tgz}
+    resolution: {integrity: sha512-valFSRU9Uieh4PuAbwKZE0mp6RtDje+ykwKyb1Aa4C/k3S/oWENxr/H/8jvnnVLdDxtY7zJ36d8d1eI8+WQy2Q==, tarball: file:projects/gotest.tgz}
     name: '@rush-temp/gotest'
     version: 0.0.0
     dependencies:
       '@autorest/codemodel': 4.17.2
       '@autorest/extension-base': 3.4.4
-      '@autorest/go': 4.0.0-preview.34
+      '@autorest/go': 4.0.0-preview.36
       '@azure-tools/codegen': 2.9.0
       '@azure-tools/linq': 3.1.263
       '@types/jest': 26.0.24
@@ -8284,7 +8284,7 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-8sLYdpf23QisCdz4mUvZqTakE3zO28pDH6GXiL2GMAA44PXm5qyIteq2r4p2ahjZyzrBiBKq4o2Dx4f043WVTw==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-x3if42ChcFCFp17iUmg1+1C8cdPGbnmdX5MACe8p5FMQDscQU19Sk18S2ymBsmYlmwNIrL+HJcFzROyS1UKcJA==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:

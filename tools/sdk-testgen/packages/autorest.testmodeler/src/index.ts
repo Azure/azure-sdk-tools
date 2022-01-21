@@ -11,6 +11,6 @@ export type FileCallback = (path: string, rows: string[]) => void;
 
 const extension = new AutoRestExtension();
 
-extension.Add('test-modeler', testModeler);
+extension.add('test-modeler', testModeler);
 
-extension.Run();
+extension.run();

@@ -69,7 +69,7 @@ class ApiView:
     def add_space(self):
         self.add_token(Token(" ", TokenKind.Whitespace))
 
-    def add_newline(self, *, additional_line_count=0):
+    def add_newline(self):
         """ Used to END a line and wrap to the next.
             Cannot be used to inject blank lines.
         """

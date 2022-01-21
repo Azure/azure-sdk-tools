@@ -6,7 +6,6 @@ package com.azure.tools.codesnippetplugin.implementation;
 import com.azure.tools.codesnippetplugin.ExecutionMode;
 import com.azure.tools.codesnippetplugin.RootAndGlob;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 
 import java.io.BufferedWriter;
@@ -69,7 +68,7 @@ public final class SnippetReplacer {
     public static void verifyCodesnippets(RootAndGlob codesnippetRootAndGlob, List<RootAndGlob> additionalCodesnippets,
         RootAndGlob sourcesRootAndGlob, boolean includeSources, RootAndGlob readmeRootAndGlob,
         List<RootAndGlob> additionalReadmes, boolean includeReadme, int maxLineLength, boolean failOnError, Log logger)
-        throws IOException, MojoExecutionException, MojoFailureException {
+        throws IOException, MojoExecutionException {
         runCodesnippets(codesnippetRootAndGlob, additionalCodesnippets, sourcesRootAndGlob, includeSources,
             readmeRootAndGlob, additionalReadmes, includeReadme, maxLineLength, failOnError, ExecutionMode.VERIFY,
             logger);
@@ -120,7 +119,7 @@ public final class SnippetReplacer {
     public static void updateCodesnippets(RootAndGlob codesnippetRootAndGlob, List<RootAndGlob> additionalCodesnippets,
         RootAndGlob sourcesRootAndGlob, boolean includeSources, RootAndGlob readmeRootAndGlob,
         List<RootAndGlob> additionalReadmes, boolean includeReadme, int maxLineLength, boolean failOnError, Log logger)
-        throws IOException, MojoExecutionException, MojoFailureException {
+        throws IOException, MojoExecutionException {
         runCodesnippets(codesnippetRootAndGlob, additionalCodesnippets, sourcesRootAndGlob, includeSources,
             readmeRootAndGlob, additionalReadmes, includeReadme, maxLineLength, failOnError, ExecutionMode.UPDATE,
             logger);
@@ -129,7 +128,7 @@ public final class SnippetReplacer {
     private static void runCodesnippets(RootAndGlob codesnippetRootAndGlob, List<RootAndGlob> additionalCodesnippets,
         RootAndGlob sourcesRootAndGlob, boolean includeSources, RootAndGlob readmeRootAndGlob,
         List<RootAndGlob> additionalReadmes, boolean includeReadme, int maxLineLength, boolean failOnError,
-        ExecutionMode mode, Log logger) throws IOException, MojoExecutionException, MojoFailureException {
+        ExecutionMode mode, Log logger) throws IOException, MojoExecutionException {
         // Neither sources nor README is included in the update, there is no work to be done.
         if (!includeSources && !includeReadme) {
             logger.debug("Neither sources or README were included. No codesnippet updating will be done.");

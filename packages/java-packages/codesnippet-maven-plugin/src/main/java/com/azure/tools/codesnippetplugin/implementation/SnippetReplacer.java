@@ -140,18 +140,18 @@ public final class SnippetReplacer {
         List<Path> sourceFiles = Collections.emptyList();
         if (includeSources && sourcesRootAndGlob.rootExists()) {
             // Get the files that match the sources glob and are contained in the sources root directory.
-            sourceFiles = sourcesRootAndGlob.globFiles(true);
+            sourceFiles = sourcesRootAndGlob.globFiles();
         }
 
         // Only get the README files if READMEs are included in the update.
         List<Path> readmeFiles = new ArrayList<>();
         if (includeReadme) {
             if (readmeRootAndGlob.rootExists()) {
-                readmeFiles = readmeRootAndGlob.globFiles(true);
+                readmeFiles = readmeRootAndGlob.globFiles();
             }
 
             for (RootAndGlob additionalReadme : additionalReadmes) {
-                readmeFiles.addAll(additionalReadme.globFiles(true));
+                readmeFiles.addAll(additionalReadme.globFiles());
             }
         }
 
@@ -161,9 +161,9 @@ public final class SnippetReplacer {
         }
 
         // Get the files that match the codesnippet glob and are contained in the codesnippet root directory.
-        List<Path> codesnippetFiles = codesnippetRootAndGlob.globFiles(false);
+        List<Path> codesnippetFiles = codesnippetRootAndGlob.globFiles();
         for (RootAndGlob additionalCodesnippet : additionalCodesnippets) {
-            codesnippetFiles.addAll(additionalCodesnippet.globFiles(false));
+            codesnippetFiles.addAll(additionalCodesnippet.globFiles());
         }
 
         // scan the sample files for all the snippet files

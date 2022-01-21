@@ -3,7 +3,6 @@
 
 package com.azure.tools.codesnippetplugin;
 
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
@@ -89,20 +88,10 @@ public final class RootAndGlob {
     /**
      * Gets the list of files that are included based on the root and glob.
      *
-     * @param validate Whether an exception is thrown if the root isn't a directory.
      * @return The list of files contained in the root directory that match the glob.
      * @throws IOException If an I/O failure occurs while walking the root directory.
-     * @throws MojoFailureException If the root file isn't a directory and {@code validate} is true.
      */
-    public List<Path> globFiles(boolean validate) throws IOException, MojoFailureException {
-        if (!root.isDirectory()) {
-            if (validate) {
-                throw new MojoFailureException(String.format("Expected '%s' to be a directory but it wasn't.", root));
-            } else {
-                return new ArrayList<>();
-            }
-        }
-
+    public List<Path> globFiles() throws IOException {
         List<Path> locatedPaths = new ArrayList<>();
         PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
 

@@ -134,7 +134,7 @@ namespace APIViewWeb.Respositories
 
         private async Task UpdateReviewAsync(ReviewModel review)
         {
-            foreach (var revision in review.Revisions)
+            foreach (var revision in review.Revisions.Reverse())
             {
                 foreach (var file in revision.Files)
                 {

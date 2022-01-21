@@ -1,10 +1,12 @@
 ﻿$(() => {
   // Search
+  const languageSelect = $("#reviews-table-language-filter");
   const searchBox = $('#reviews-table-search-box');
   const searchContext = $('.review-name') as any;
   const serviceGroupRows = $('.service-group-row');
   const packageGroupRows = $('.package-group-row');
   const reviewHeaderRows = $('.review-rows-header');
+  const packageDataRows = $('.package-data-row');
 
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
@@ -72,27 +74,27 @@
 
     // Expand all Service Groups
   $('#expand-all-service-groups-btn').on('click', function () {
-    $('.service-group-row').each(function(index, value){
+    serviceGroupRows.each(function(index, value){
       toggleServiceGroup($(this), "closed");
     });
   });
 
   // Expand all Groups
   $('#expand-all-groups-btn').on('click', function () {
-    $('.service-group-row').each(function(index, value){
+    serviceGroupRows.each(function(index, value){
       toggleServiceGroup($(this), "closed");
     });
-    $('.package-group-row').each(function(index, value){
+    packageGroupRows.each(function(index, value){
       togglePackageGroup($(this), "closed");
     });
   });
 
   // Collapse all Groups
   $('#collapse-all-groups-btn').on('click', function () {
-    $('.service-group-row').each(function(index, value){
+    serviceGroupRows.each(function(index, value){
       toggleServiceGroup($(this), "opened");
     });
-    $('.package-group-row').each(function(index, value){
+    packageGroupRows.each(function(index, value){
       togglePackageGroup($(this), "opened");
     });
   });
@@ -135,14 +137,31 @@
   if (searchBox.val()) {
     filterReviews();
   }
-  else
-  {
-    $('.service-group-row').each(function(index, value) {
-      $(this)
-    });
-  }
 
   searchBox.on('input', function() {
     setTimeout(filterReviews, 300);
+  });
+
+  languageSelect.on('change', function(e) {
+    var filterText = $(this).val() as string;
+    if (filterText == "")
+    {
+      packageDataRows.removeClass('hidden-row-via-filter');
+    }
+    else 
+    {
+      packageDataRows.each(function(index, value) {
+        let langColumn = value.children[4];
+        if (langColumn && langColumn.firstElementChild && langColumn.firstElementChild.textContent && 
+          !langColumn.firstElementChild.textContent.match(RegExp(filterText)))
+        {
+          $(this).addClass('hidden-row-via-filter');
+        }
+        else
+        {
+          $(this).removeClass('hidden-row-via-filter');
+        }
+      });
+    }
   });
 });

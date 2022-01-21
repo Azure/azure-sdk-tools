@@ -646,6 +646,10 @@ mark {
     display: none;
 }
 
+.hidden-row-via-filter {
+    display: none;
+}
+
 .breadcrumb {
     display: flex;
     -ms-flex-wrap: wrap;
@@ -663,23 +667,4 @@ mark {
     position: relative;
     top: -27px;
     left: 16px;
-}
-
-.secondary-header-info-box {
-    position: relative;
-    float: right;
-    top: -34px;
-}
-
-.secondary-header-info-text {
-    position: absolute;
-    right: 0px;
-    width: max-content;
-    max-width: 500px;
-    text-align: right;
-    line-height: 0.6rem;
-    overflow: hidden;
-    white-space: nowrap;
-    text-shadow: 0px 1px 0px rgba(255,255,255,.5);
-    text-overflow: ellipsis;
 }

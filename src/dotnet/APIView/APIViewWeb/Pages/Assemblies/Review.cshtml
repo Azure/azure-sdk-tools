@@ -11,8 +11,8 @@
             <div class="float-left mr-2 mt-1">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item"><a href="#">Review</a></li>
+                        <li class="breadcrumb-item"><a href="#">Reviews</a></li>
+                        <li class="breadcrumb-item">Service Name</li>
                     </ol>
                 </nav>
             </div>
@@ -177,8 +177,13 @@
             </div>
             <div class="float-right ml-2">
                 @{
-                    var toolTipTitle = $"{Model.ActiveConversations} active revision threads, {Model.TotalActiveConversations} total active threads";
-                    <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-title="Conversiations Info" data-content="@toolTipTitle">
+                    var popOverContent = $"<b>{Model.ActiveConversations}</b> active revision threads.<br><b>{Model.TotalActiveConversations}</b> total active threads.<br>"
+                    + $"<b>Current Revision:</b> <em>{@Model.Revision.DisplayName}</em>";
+                    @if (Model.DiffRevisionId != null)
+                    {
+                        popOverContent += $"<br><b>Current Diff:</b> <em>{@Model.DiffRevision?.DisplayName}</em>";
+                    }
+                    <button type="button" class="btn btn-info btn-sm shadow-sm" data-placement="bottom" data-trigger="focus" data-toggle="popover" data-html="true" data-title="Page Info" data-content="@popOverContent">
                         <i class="far fa-comment-alt mr-2"></i><span class="badge badge-light">@Model.ActiveConversations / @Model.TotalActiveConversations</span>
                     </button>
                 }
@@ -201,7 +206,7 @@
             </div>
         </div>
     </div>
-    <div class="row pr-3 pl-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
+    <div class="row px-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
         <div id="review-left" class="col-lg-2 col rounded-1 border">
             <div class="namespace-view">
                 @if (Model.CodeFile != null)

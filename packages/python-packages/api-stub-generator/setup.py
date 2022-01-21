@@ -29,7 +29,10 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    install_requires=["astroid"],
+    install_requires=[
+        "astroid",
+        "charset-normalizer"
+    ],
     python_requires=">=3.4.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},
     classifiers=[

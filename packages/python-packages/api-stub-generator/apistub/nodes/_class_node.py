@@ -212,6 +212,7 @@ class ClassNode(NodeEntityBase):
         if self.implements:
             apiview.add_keyword("implements", True, True)
             self._generate_token_for_collection(self.implements, apiview)
+        apiview.add_newline()
 
         # Generate token for child nodes
         if self.child_nodes:
@@ -220,20 +221,19 @@ class ClassNode(NodeEntityBase):
 
     def _generate_child_tokens(self, apiview):
         # Add members and methods
-        apiview.add_new_line()
         apiview.begin_group()
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
+            apiview.add_newline()
             apiview.add_whitespace()
             e.generate_tokens(apiview)
-            apiview.add_new_line()
-        apiview.add_new_line(1)
+            apiview.add_newline()
         for func in [
             x
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
+            apiview.set_blank_lines(1)
             func.generate_tokens(apiview)
-            apiview.add_new_line(1)
         apiview.end_group()
 
 

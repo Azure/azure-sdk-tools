@@ -6,6 +6,7 @@ Fixed issue where Python 3-style type hints stopped displaying
 Fixed issue where docstring annotations were preferred over
   Python 2-style type hints for return types. Since docstrings
   have a 2-line limit, this preference didn't make sense.
+Fixed issue where too many blank lines were generated.
 
 ## Version 0.2.8 (Unreleased)
 Kwargs that were previously displayed as "type = ..." will now

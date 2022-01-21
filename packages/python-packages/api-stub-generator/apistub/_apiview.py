@@ -44,7 +44,7 @@ class ApiView:
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
-        self.add_new_line(2)
+        self.set_blank_lines(2)
 
     def add_token(self, token):
         self.Tokens.append(token)
@@ -68,11 +68,36 @@ class ApiView:
     def add_space(self):
         self.add_token(Token(" ", TokenKind.Whitespace))
 
-    def add_new_line(self, additional_line_count=0):
-        self.add_token(Token("", TokenKind.Newline))
-        for n in range(additional_line_count):
-            self.add_space()
+    def add_newline(self):
+        """ Used to END a line and wrap to the next.
+            Cannot be used to inject blank lines.
+        """
+        # don't add newline if it already is in place
+        if self.Tokens[-1].Kind != TokenKind.Newline:
             self.add_token(Token("", TokenKind.Newline))
+
+    def set_blank_lines(self, count):
+        """ Ensures a specific number of blank lines.
+            Will add or remove newline tokens as needed
+            to ensure the exact number of blank lines.
+        """
+        # count the number of trailing newlines
+        newline_count = 0
+        for token in self.Tokens[::-1]:
+            if token.Kind == TokenKind.Newline:
+                newline_count += 1
+            else:
+                break
+        
+        if newline_count < (count + 1):
+            # if there are not enough newlines, add some
+            for n in range((count + 1) - newline_count):
+                self.add_token(Token("", TokenKind.Newline))
+        elif newline_count > (count + 1):
+            # if there are too many newlines, remove some
+            excess = newline_count - (count + 1)
+            for _ in range(excess):
+                self.Tokens.pop()
 
     def add_punctuation(self, value, prefix_space=False, postfix_space=False):
         if prefix_space:

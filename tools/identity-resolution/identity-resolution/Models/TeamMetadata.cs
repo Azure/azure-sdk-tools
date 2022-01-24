@@ -16,6 +16,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Models
         public int PipelineId { get; set; }
 
         /// <summary>
+        /// Name of associated alert pipeline
+        /// </summary>
+        public string PipelineName { get; set; }
+
+        /// <summary>
         /// Team's purpose
         /// </summary>
         public TeamPurpose Purpose { get; set; }

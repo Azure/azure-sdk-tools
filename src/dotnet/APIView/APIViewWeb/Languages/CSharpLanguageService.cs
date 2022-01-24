@@ -4,8 +4,10 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using ApiView;
 
 namespace APIViewWeb
@@ -26,6 +28,11 @@ namespace APIViewWeb
             return name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsNuspec(string name)
+        {
+            return name.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static bool IsNuget(string name)
         {
             return name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase);
@@ -43,6 +50,7 @@ namespace APIViewWeb
             {
                 Stream dllStream = stream;
                 Stream docStream = null;
+                string[] dependencies = null;
 
                 if (IsNuget(originalName))
                 {
@@ -57,7 +65,15 @@ namespace APIViewWeb
                             {
                                 docStream = docEntry.Open();
                             }
-                            break;
+                        }
+                        else if (IsNuspec(entry.Name))
+                        {
+                            var nuspecStream = entry.Open();
+                            var document = XDocument.Load(nuspecStream);
+                            dependencies = document.Descendants()
+                                .Where(d => d.Name.LocalName == "dependency")
+                                .Select(d => d.Attribute("id").Value)
+                                .ToArray();
                         }
                     }
                 }
@@ -68,7 +84,7 @@ namespace APIViewWeb
                     return Task.FromResult(GetDummyReviewCodeFile(originalName));
                 }
                 
-                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis));
+                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies));
             }
             finally
             {

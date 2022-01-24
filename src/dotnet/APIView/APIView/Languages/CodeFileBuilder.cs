@@ -68,7 +68,7 @@ namespace ApiView
             }
         }
 
-        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
+        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, string[] dependencies)
         {
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
@@ -100,6 +100,23 @@ namespace ApiView
                 ChildItems = navigationItems.ToArray(),
                 Tags = { { "TypeKind", "assembly" } }
             };
+
+            // add dependencies
+            if (dependencies != null)
+            {
+                builder.NewLine();
+                builder.Append("Dependencies:", CodeFileTokenKind.Text);
+                builder.NewLine();
+                foreach (string dependency in dependencies)
+                {
+                    builder.Append(new CodeFileToken(dependency, CodeFileTokenKind.Text)
+                    {
+                        // allow dependency to be commentable
+                        DefinitionId = dependency
+                    });
+                    builder.NewLine();
+                }
+            }
 
             var node = new CodeFile()
             {

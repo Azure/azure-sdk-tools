@@ -11,8 +11,8 @@ SwiftAPIView is a plugin that converts `.swift` source code and `.h` Objective-C
 ### Build Instructions
 
 1. Clone the `azure-sdk-tools` repository.
-2. Open the `SwiftAPIView.xcodeproj` file, which should launch Xcode.
-3. In Xcode, build the project file, which will automatically bring in the necessary dependencies.
+2. Open the `SwiftAPIView.xcworkspace` file, which should launch Xcode.
+3. In Xcode, select the `SwiftAPIView` console scheme and build, which will automatically bring in the necessary dependencies and automatically build `SwiftAPIViewCore`.
 
 ### Execution Instructions
 

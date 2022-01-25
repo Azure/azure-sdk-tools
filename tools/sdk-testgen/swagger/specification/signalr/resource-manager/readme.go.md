@@ -2,23 +2,26 @@
 
 These settings apply only when `--go` is specified on the command line.
 
-``` yaml $(go)
-tag: package-2020-07-01-preview
+``` yaml $(go) && !$(track2)
 go:
   license-header: MICROSOFT_MIT_NO_VERSION
   namespace: signalr
   clear-output-folder: true
 ```
 
-### Go multi-api
-
-``` yaml $(go) && $(multiapi)
-batch:
-  - tag: package-2018-03-01-preview
-  - tag: package-2018-10-01
-  - tag: package-2020-05-01
-  - tag: package-2020-07-01-preview
-  - tag: package-2021-04-01-preview
+``` yaml $(go) && $(track2)
+license-header: MICROSOFT_MIT_NO_VERSION
+module-name: sdk/resourcemanager/signalr/armsignalr
+module: github.com/Azure/azure-sdk-for-go/$(module-name)
+output-folder: $(go-sdk-folder)/$(module-name)
+azure-arm: true
+directive:
+- rename-model:
+    from: 'SignalRResource'
+    to: 'ResourceInfo'
+- rename-model:
+    from: 'SignalRResourceList'
+    to: 'ResourceInfoList'
 ```
 
 ### Tag: package-2018-03-01-preview and go

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Add scenario test generation support.",
+      "type": "major"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

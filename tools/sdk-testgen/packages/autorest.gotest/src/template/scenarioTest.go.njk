@@ -24,29 +24,18 @@ import (
 var (
 	ctx            context.Context
 	cred           azcore.TokenCredential
-{%- if scope.toLowerCase() == 'resourcegroup'%}
-	resourceGroup	*armresources.ResourceGroup
-{%- endif %}
-{%- for name, value in variables %}
-    {{name}} = {{jsFunc.quotedEscapeString(value)}}
-{%- endfor %}
-{%- for variable, _ in requiredVariablesDefault %}
-{%- if not variables.hasOwnProperty(variable) %}
-    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
-{%- endif %}
-{%- endfor %}
-{%- for outputVariableName in outputVariableNames %}
-{%- if not variables.hasOwnProperty(outputVariableName) and not requiredVariablesDefault.hasOwnProperty(outputVariableName)%}
-    {{outputVariableName}} string
-{%- endif %}
-{%- endfor %}
+{% if scope.toLowerCase() == 'resourcegroup'%}	resourceGroup	*armresources.ResourceGroup{% endif %}
+{% for name, value in variables %}
+{% if value === "<newDefinedVariable>" %}    {{name}} string{% else %}    {{name}} = {{value}}{% endif %}
+{% endfor %}
+{% for variable, _ in requiredVariablesDefault %}
+{% if not variables.hasOwnProperty(variable) %}    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}"){% endif %}
+{% endfor %}
 )
 
 func Test{{testCaseName}}(t *testing.T) {
 	setUp(t)
-	{%- for testScenario in scenarios %}
-	scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t)
-	{%- endfor %}
+{% for testScenario in scenarios %}	scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t)	{% endfor %}
 	tearDown(t)
 }
 
@@ -54,7 +43,7 @@ func setUp(t *testing.T) {
     var err error
 	ctx = context.Background()
 
-    {%- if scope.toLowerCase() == 'resourcegroup'%}
+    {% if scope.toLowerCase() == 'resourcegroup'%}
 	cred, err = azidentity.NewEnvironmentCredential(nil)
 	if err != nil {
 		t.Fatalf("Failed to create credential: %v", err)
@@ -65,12 +54,12 @@ func setUp(t *testing.T) {
 		t.Fatalf("Failed to create resource group: %v", err)
 	}
 	t.Logf("Resource group created: id - %s name - %s", *resourceGroup.ID, *resourceGroup.Name)
-    {%- endif %}
+    {% endif %}
 
     prepare(t)
 }
 
-{%- if scope.toLowerCase() == 'resourcegroup'%}
+{% if scope.toLowerCase() == 'resourcegroup'%}
 func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
 	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
 
@@ -99,17 +88,17 @@ func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error
 
 	return nil
 }
-{%- endif %}
+{% endif %}
 
 func tearDown(t *testing.T) {
     cleanup(t)
-{%- if scope.toLowerCase() == 'resourcegroup'%}
+{% if scope.toLowerCase() == 'resourcegroup'%}
 	err := deleteResourceGroup(ctx, cred)
 	if err != nil {
 		t.Fatalf("Failed to delete resource group: %v", err)
 	}
 	t.Logf("Resource group deleted")
-{%- endif %}
+{% endif %}
 }
 
 func getEnv(key, fallback string) string {
@@ -119,7 +108,7 @@ func getEnv(key, fallback string) string {
     return fallback
 }
 
-{%- if useArmTemplate %}
+{% if useArmTemplate %}
 func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
 	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
 	poller, err := deployClient.BeginCreateOrUpdate(
@@ -146,30 +135,34 @@ func createDeployment(deploymentName string, template, params map[string]interfa
 
 	return &res.DeploymentExtended, nil
 }
-{%- endif %}
+{% endif %}
 
 func prepare(t *testing.T) {
-	{%- set steps = prepareSteps %}
-	{%- include "./scenarioContent.go.njk" %}
+	{% set steps = prepareSteps %}
+	{% include "./scenarioContent.go.njk" %}
 }
 
-{%- for testScenario in scenarios %}
+{% for testScenario in scenarios %}
 func scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t *testing.T) {
-	{%- for variable, value in testScenario.requiredVariablesDefault %}
-	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
+	{% for variable, value in testScenario.requiredVariablesDefault %}
+	{% if not requiredVariablesDefault.hasOwnProperty(variable) %}
     {{variable}} := getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
-	{%- endif %}
-	{%- endfor %}
-	{%- for name, value in testScenario.variables %}
+	{% endif %}
+	{% endfor %}
+	{% for name, value in testScenario.variables %}
+    {% if value === "<newDefinedVariable>" %}
+    var {{name}} string
+    {% else %}
     {{name}} := {{value}}
-	{%- endfor %}
+    {% endif %}
+	{% endfor %}
 	
-	{%- set steps = testScenario.steps %}
-	{%- include "./scenarioContent.go.njk" %}
+	{% set steps = testScenario.steps %}
+	{% include "./scenarioContent.go.njk" %}
 }
 {% endfor %}
 
 func cleanup(t *testing.T) {
-	{%- set steps = cleanUpSteps %}
-	{%- include "./scenarioContent.go.njk" %}
+	{% set steps = cleanUpSteps %}
+	{% include "./scenarioContent.go.njk" %}
 }

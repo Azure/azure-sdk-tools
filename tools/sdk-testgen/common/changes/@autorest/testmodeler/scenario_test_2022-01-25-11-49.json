@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/testmodeler",
+      "comment": "Refine scenario test modeler.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/testmodeler"
+}

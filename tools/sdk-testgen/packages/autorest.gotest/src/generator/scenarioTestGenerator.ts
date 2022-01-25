@@ -16,7 +16,8 @@ import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 import { StepArmTemplateModel, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
-    definedVariables: Record<string, string> = {};
+    parentVariables: Record<string, string> = {};
+    currentVariables: Record<string, string> = {};
     scenarioReferencedVariables: Set<string> = new Set<string>();
     stepReferencedVariables: Set<string> = new Set<string>();
 
@@ -33,12 +34,14 @@ export class ScenarioTestDataRender extends MockTestDataRender {
 
         for (const step of testDef.prepareSteps) {
             // inner variable should overwrite outer ones
-            this.definedVariables = {
+            this.parentVariables = {
                 ...testDef.requiredVariablesDefault,
                 ...testDef.variables,
+            };
+            this.currentVariables = {
                 ...step.variables,
             };
-            this.genRenderDataForStep(testDef, step);
+            this.genRenderDataForStep(step);
         }
         for (const scenario of testDef.scenarios as TestScenarioModel[]) {
             if (scenario.scenario === undefined) {
@@ -48,14 +51,16 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             for (const step of scenario.steps) {
                 this.stepReferencedVariables = new Set<string>();
                 // inner variable should overwrite outer ones
-                this.definedVariables = {
+                this.parentVariables = {
                     ...testDef.requiredVariablesDefault,
                     ...testDef.variables,
                     ...scenario.requiredVariablesDefault,
                     ...scenario.variables,
+                };
+                this.currentVariables = {
                     ...step.variables,
                 };
-                this.genRenderDataForStep(testDef, step);
+                this.genRenderDataForStep(step);
             }
 
             // remove useless variable
@@ -66,31 +71,52 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             }
 
             // resolve scenario variables
-            this.definedVariables = {
+            this.parentVariables = {
                 ...testDef.requiredVariablesDefault,
                 ...testDef.variables,
+            };
+            this.currentVariables = {
                 ...scenario.requiredVariablesDefault,
                 ...scenario.variables,
             };
             for (const [key, value] of Object.entries(scenario.variables || {})) {
                 scenario.variables[key] = this.getStringValue(value);
+                if (key === scenario.variables[key] && !this.parentVariables.hasOwnProperty(key)) {
+                    scenario.variables[key] = '<newDefinedVariable>';
+                }
             }
         }
         for (const step of testDef.cleanUpSteps) {
             // inner variable should overwrite outer ones
-            this.definedVariables = {
+            this.parentVariables = {
                 ...testDef.requiredVariablesDefault,
                 ...testDef.variables,
+            };
+            this.currentVariables = {
                 ...step.variables,
             };
-            this.genRenderDataForStep(testDef, step);
+            this.genRenderDataForStep(step);
+        }
+
+        // resolve scope variables
+        this.parentVariables = {};
+        this.currentVariables = {
+            ...testDef.requiredVariablesDefault,
+            ...testDef.variables,
+        };
+        for (const [key, value] of Object.entries(testDef.variables || {})) {
+            testDef.variables[key] = this.getStringValue(value);
+            if (key === testDef.variables[key]) {
+                testDef.variables[key] = '<newDefinedVariable>';
+            }
         }
     }
 
-    private genRenderDataForStep(testDef: TestDefinitionModel, step: Step) {
+    private genRenderDataForStep(step: Step) {
         switch (step.type) {
             case OavStepType.restCall: {
                 const example = (step as StepRestCallModel).exampleModel as GoExampleModel;
+                // request and response parse
                 this.fillExampleOutput(example);
                 if (step.outputVariables && Object.keys(step.outputVariables).length > 0) {
                     this.context.importManager.add('github.com/go-openapi/jsonpointer');
@@ -99,35 +125,26 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 break;
             }
             case OavStepType.armTemplate: {
-                testDef.useArmTemplate = true;
-                // for arm template, all string parameter should be considered as input variable
-                (step as StepArmTemplateModel).inputVariableNames = [];
-                for (const parameterName of Object.keys(step.armTemplatePayload.parameters || {})) {
-                    if (_.has(this.definedVariables, parameterName) && step.armTemplatePayload.parameters[parameterName].type === 'string') {
-                        (step as StepArmTemplateModel).inputVariableNames.push(parameterName);
-                    }
-                }
-                // for arm template, all string output should be considered as output variable
-                (step as StepArmTemplateModel).outputVariableNames = [];
-                for (const outputName of Object.keys(step.armTemplatePayload.outputs || {})) {
-                    if (_.has(this.definedVariables, outputName) && step.armTemplatePayload.outputs[outputName].type === 'string') {
-                        (step as StepArmTemplateModel).outputVariableNames.push(outputName);
-                    }
-                }
-                step['armTemplateOutput'] = GoHelper.obejctToString(step.armTemplatePayload);
-                // add all environment variable
+                // environment variables & arguments parse
                 const environments = [];
                 if (step.armTemplatePayload.resources) {
                     step.armTemplatePayload.resources.forEach((t) => {
                         (t.properties['environmentVariables'] || []).forEach((e) => {
-                            environments.push({
-                                key: e.name,
-                                value: this.getStringValue(e.value || e.secureValue),
-                            });
+                            if (e.value) {
+                                e.value = '<parsedVariable>' + this.getStringValue(e.value);
+                            } else {
+                                e.secureValue = '<parsedVariable>' + this.getStringValue(e.secureValue);
+                            }
                         });
+                        if (t.properties['arguments']) {
+                            t.properties['arguments'] = this.getStringValue(t.properties['arguments']);
+                        }
                     });
                 }
-                step['environmentVaribles'] = environments;
+
+                // template parse
+                step['armTemplateOutput'] = GoHelper.obejctToString(step.armTemplatePayload);
+
                 break;
             }
             default:
@@ -141,12 +158,15 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         // resolve step variables
         for (const [key, value] of Object.entries(step.variables || {})) {
             step.variables[key] = this.getStringValue(value);
+            if (key === step.variables[key] && !this.parentVariables.hasOwnProperty(key)) {
+                step.variables[key] = '<newDefinedVariable>';
+            }
         }
     }
 
     protected getStringValue(rawValue: string) {
         if (typeof rawValue === 'string') {
-            return this.parseOavVariable(rawValue, this.definedVariables).join(' + ');
+            return this.parseOavVariable(rawValue, { ...this.parentVariables, ...this.currentVariables }).join(' + ');
         } else {
             return Helper.quotedEscapeString(rawValue);
         }
@@ -167,7 +187,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         if (m) {
             placeHolders = m.map((x) => x.toString());
         }
-        for (const placeHolder of placeHolders.filter((x) => Object.prototype.hasOwnProperty.call(definedVariables, x.slice(2, -1)))) {
+        for (const placeHolder of placeHolders.filter((x) => definedVariables.hasOwnProperty(x.slice(2, -1)))) {
             const p = s.indexOf(placeHolder);
             if (p > 0) {
                 ret.push(Helper.quotedEscapeString(s.substring(0, p)));
@@ -193,7 +213,7 @@ export class ScenarioTestCodeGenerator extends BaseCodeGenerator {
             this.renderAndWrite(
                 { ...testDef, testCaseName: Helper.capitalize(Helper.toCamelCase(filename)), allVariables: [] },
                 'scenarioTest.go.njk',
-                `scenario/${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_test.go`,
+                `scenario_test/${filename.toLowerCase()}/${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_test.go`,
                 extraParam,
                 {
                     toSnakeCase: Helper.toSnakeCase,

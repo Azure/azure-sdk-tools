@@ -73,11 +73,14 @@ namespace APIViewWeb
                             var document = XDocument.Load(nuspecStream);
                             var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
                             dependencies.AddRange(
-                                dependencyElements.GroupBy(e => e.Attribute("id").Value)
-                                // remove duplicates (this can happen when a library targets multiple frameworks)
-                                .Select(e => e.First())
-                                .OrderBy(e => e.Attribute("id").Value)
-                                .Select(dependency => new DependencyInfo(dependency.Attribute("id").Value, dependency.Attribute("version").Value)));
+                                    dependencyElements.Select(dependency => new DependencyInfo(
+                                            dependency.Attribute("id").Value,
+                                                dependency.Attribute("version").Value)));
+                            // filter duplicates and sort
+                            dependencies = dependencies
+                                .GroupBy(d => d.Name)
+                                .Select(d => d.First())
+                                .OrderBy(d => d.Name).ToList();
                         }
                     }
                 }

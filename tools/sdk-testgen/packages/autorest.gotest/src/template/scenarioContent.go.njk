@@ -1,40 +1,40 @@
-{% set _ = allVariables.splice(0, allVariables.length) %}
-{% for step in steps %}
+{%- set _ = allVariables.splice(0, allVariables.length) %}
+{%- for step in steps %}
 // From step {{step.step}}
-{% if step.type == "restCall" %}
-    {% set example = step.exampleModel %}
-    {% set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.clientName) %}
-    {% if allVariables.indexOf(clientVariable)<0 %}
+{%- if step.type == "restCall" %}
+    {%- set example = step.exampleModel %}
+    {%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.clientName) %}
+    {%- if allVariables.indexOf(clientVariable)<0 %}
         {{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, nil)
-        {% set _ = allVariables.push(clientVariable) %}
-    {% endif %}
-{% endif %}
+        {%- set _ = allVariables.push(clientVariable) %}
+    {%- endif %}
+{%- endif %}
 {
-{% for name, value in step.variables %}
+{%- for name, value in step.variables %}
 {{name}} := {{value}}
-{% endfor %}
-{% if step.type == "restCall" %}		
-    {% if example.checkResponse %}
-        {% set resVariable = jsFunc.genVariableName(example.returnInfo[0]) %}
-    {% endif %}
-    {% if example.returnInfo.length == 2 %}
-    {% if example.isLRO %}
-        {% set pollerVariable = jsFunc.genVariableName(example.pollerType)%}
+{%- endfor %}
+{%- if step.type == "restCall" %}		
+    {%- if example.checkResponse %}
+        {%- set resVariable = jsFunc.genVariableName(example.returnInfo[0]) %}
+    {%- endif %}
+    {%- if example.returnInfo.length == 2 %}
+    {%- if example.isLRO %}
+        {%- set pollerVariable = jsFunc.genVariableName(example.pollerType)%}
         {{pollerVariable}}, err := {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
-    {% else %}
-        {% if example.checkResponse %}{{resVariable}}{% else %}_{% endif %}, err := {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
-    {% endif %}
+    {%- else %}
+        {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err := {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
+    {%- endif %}
     if err != nil {
         t.Fatalf("Request error: %v", err)
     }
-    {% if example.isLRO %}
-    {% if example.checkResponse %}{{resVariable}}{% else %}_{% endif %}, err {% if example.checkResponse %}:{% endif %}= {{pollerVariable}}.PollUntilDone(ctx, 10*time.Second)
+    {%- if example.isLRO %}
+    {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err {%- if example.checkResponse %}:{%- endif %}= {{pollerVariable}}.PollUntilDone(ctx, 10*time.Second)
     if err != nil {
         t.Fatalf("Request error: %v", err)
     }
-    {% endif %}
-    {% elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-    {% set pagerVariable = jsFunc.genVariableName(example.pageableType) %}
+    {%- endif %}
+    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+    {%- set pagerVariable = jsFunc.genVariableName(example.pageableType) %}
     {{pagerVariable}} := {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
     for {{pagerVariable}}.NextPage(ctx) {
         if err := {{pagerVariable}}.Err(); err != nil {
@@ -44,10 +44,10 @@
             t.Logf("Pager result: %#v\n", v)
         }
     }
-    {% else %}
+    {%- else %}
     {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
-    {% endif %}
-    {% if example.isLRO and example.isPageable and example.checkResponse %}
+    {%- endif %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
     for {{resVariable}}.NextPage(ctx) {
         if err := {{resVariable}}.Err(); err != nil {
             t.Fatalf("Failed to advance page: %v", err)
@@ -56,15 +56,15 @@
             t.Logf("Pager result: %#v\n", v)
         }
     }
-    {% endif %}
-    {% if example.checkResponse and not example.isPageable%}
-    t.Logf("Response result: %#v\n", {{resVariable}}.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{% endif %})
+    {%- endif %}
+    {%- if example.checkResponse and not example.isPageable%}
+    t.Logf("Response result: %#v\n", {{resVariable}}.{%- if example.isMultiRespOperation %}Value{%- else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{%- endif %})
 
-    {% for outputVariableName, variableProperties in step.outputVariables%}
-    {% if loop.first %}
+    {%- for outputVariableName, variableProperties in step.outputVariables%}
+    {%- if loop.first %}
 
     var respBody interface{}
-    byteBody, err := json.Marshal({{resVariable}}.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{% endif %})
+    byteBody, err := json.Marshal({{resVariable}}.{%- if example.isMultiRespOperation %}Value{%- else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{%- endif %})
     if err != nil {
         t.Fatalf("Marshall response body failed: %v", err)
     }
@@ -72,43 +72,42 @@
     if err != nil {
         t.Fatalf("Unmarshall response body to JSON failed: %v", err)
     }
-    {% endif %}
-    pointer, err {% if loop.first %}:{% endif %}= jsonpointer.New("{{variableProperties.fromResponse}}")
+    {%- endif %}
+    pointer, err {%- if loop.first %}:{%- endif %}= jsonpointer.New("{{variableProperties.fromResponse}}")
     if err != nil {
         t.Fatalf("Unable to create Jsonpointer for {{variableProperties.fromResponse}} : %v",  err)
     }
-    tmp, _, err {% if loop.first %}:{% endif %}= pointer.Get(respBody)
+    tmp, _, err {%- if loop.first %}:{%- endif %}= pointer.Get(respBody)
     if err != nil {
         t.Fatalf("Get JsonPointer failed {{variableProperties.fromResponse}} in %v: %v", byteBody[:], err)
     }
     {{outputVariableName}} = tmp.(string)
-    {% endfor %}
-    {% endif %}
-{% elif step.type == "armTemplateDeployment" %}
-    {% if step.armTemplatePayload.outputs %}
-    {% set deploymentVariable = "deploymentExtend" %}
-    {% else %}
-    {% set deploymentVariable = "_" %}
-    {% endif %}
+    {%- endfor %}
+    {%- endif %}
+{%- elif step.type == "armTemplateDeployment" %}
+    {%- if step.armTemplatePayload.outputs %}
+    {%- set deploymentVariable = "deploymentExtend" %}
+    {%- else %}
+    {%- set deploymentVariable = "_" %}
+    {%- endif %}
 template := {{step.armTemplateOutput}}
 params := map[string]interface{}{
-    {% for k, v in step.armTemplatePayload.parameters %}
-    {% if v.defaultValue === "$("  + k + ")" %}
+    {%- for k, v in step.armTemplatePayload.parameters %}
+    {%- if v.defaultValue === "$("  + k + ")" %}
 "{{k}}": {{k}},
-    {% endif %}
-    {% endfor %}
+    {%- endif %}
+    {%- endfor %}
 }
-
 {{deploymentVariable}}, err := createDeployment("{{step.step}}", template, params)
 if err != nil {
     t.Fatalf("Deployment error: %v", err)
 }
-{% for k,v in step.armTemplatePayload.outputs %}
+{%- for k,v in step.armTemplatePayload.outputs %}
 {{k}} = {{deploymentVariable}}.Properties.Outputs["{{k}}"].(map[string]interface{})["value"].(string)
-{% endfor %}
-{% endif %}
+{%- endfor %}
+{%- endif %}
 }
-{% if not loop.last %}
+{%- if not loop.last %}
 
 {% endif %}
-{% endfor %}
+{%- endfor %}

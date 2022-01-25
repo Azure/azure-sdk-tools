@@ -13,7 +13,7 @@ import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
-import { StepArmTemplateModel, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+import { StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     parentVariables: Record<string, string> = {};
@@ -81,7 +81,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             };
             for (const [key, value] of Object.entries(scenario.variables || {})) {
                 scenario.variables[key] = this.getStringValue(value);
-                if (key === scenario.variables[key] && !this.parentVariables.hasOwnProperty(key)) {
+                if (key === scenario.variables[key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
                     scenario.variables[key] = '<newDefinedVariable>';
                 }
             }
@@ -126,7 +126,6 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             }
             case OavStepType.armTemplate: {
                 // environment variables & arguments parse
-                const environments = [];
                 if (step.armTemplatePayload.resources) {
                     step.armTemplatePayload.resources.forEach((t) => {
                         (t.properties['environmentVariables'] || []).forEach((e) => {
@@ -158,7 +157,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         // resolve step variables
         for (const [key, value] of Object.entries(step.variables || {})) {
             step.variables[key] = this.getStringValue(value);
-            if (key === step.variables[key] && !this.parentVariables.hasOwnProperty(key)) {
+            if (key === step.variables[key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
                 step.variables[key] = '<newDefinedVariable>';
             }
         }
@@ -187,7 +186,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         if (m) {
             placeHolders = m.map((x) => x.toString());
         }
-        for (const placeHolder of placeHolders.filter((x) => definedVariables.hasOwnProperty(x.slice(2, -1)))) {
+        for (const placeHolder of placeHolders.filter((x) => Object.prototype.hasOwnProperty.call(definedVariables, x.slice(2, -1)))) {
             const p = s.indexOf(placeHolder);
             if (p > 0) {
                 ret.push(Helper.quotedEscapeString(s.substring(0, p)));

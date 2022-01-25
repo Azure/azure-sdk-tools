@@ -32,46 +32,46 @@ var (
 {% for exampleGroup in exampleGroups %}
 {% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
-{% for example in exampleGroup.examples %}
+{%- for example in exampleGroup.examples %}
     // From example {{example.originalFile}}
-	{% if sendExampleId %}
+	{%- if sendExampleId %}
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
         "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
     })
-	{% endif %}
-	{% if loop.first %}
+	{%- endif %}
+	{%- if loop.first %}
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
 	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
-    {% else %}
+    {%- else %}
     client = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
-	{% endif %}
-	{% if example.returnInfo.length == 2 %}
-        {% if example.isLRO %}
+	{%- endif %}
+	{%- if example.returnInfo.length == 2 %}
+        {%- if example.isLRO %}
             poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        {% else %}
+        {%- else %}
             {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        {% endif %}
+        {%- endif %}
         if err != nil {
             t.Fatalf("Failed to get result for example {{example.originalFile}}: %v", err)
         }
-        {% if example.isLRO %}
+        {%- if example.isLRO %}
             {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
             if err != nil {
                 t.Fatalf("Failed to get LRO result for example {{example.originalFile}}: %v", err)
             }
-        {% endif %}
-    {% elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+        {%- endif %}
+    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
         pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
         for {
             nextResult := pager.NextPage(ctx)
             if err := pager.Err(); err != nil {
                 t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
             }
-            {% if example.checkResponse and verifyResponse%}
+            {%- if example.checkResponse and verifyResponse%}
             // Response check
             if nextResult {
                 pagerExampleRes := {{example.responseOutput}}
@@ -84,23 +84,23 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
                 t.Logf("Page end.")
                 break
             }
-            {% else %}
+            {%- else %}
             if !nextResult {
                 break
             }
-            {% endif %}
+            {%- endif %}
         }
-    {% else %}
+    {%- else %}
         client.{{example.opName}}({{example.methodParametersOutput}})
-    {% endif %}
+    {%- endif %}
 
-    {% if example.isLRO and example.isPageable and example.checkResponse %}
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
         for {
             nextResult := res.NextPage(ctx)
             if err := res.Err(); err != nil {
                 t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
             }
-            {% if example.checkResponse and verifyResponse%}
+            {%- if example.checkResponse and verifyResponse%}
             // Response check
             if nextResult {
                 pagerExampleRes := {{example.responseOutput}}
@@ -113,37 +113,37 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
                 t.Logf("Page end.")
                 break
             }
-            {% else %}
+            {%- else %}
             if !nextResult {
                 break
             }
-            {% endif %}
+            {%- endif %}
         }
-    {% endif %}
+    {%- endif %}
         
-    {% if example.checkResponse and not example.isPageable and verifyResponse%}
+    {%- if example.checkResponse and not example.isPageable and verifyResponse%}
         // Response check
         {
             exampleRes := {{example.responseOutput}}
-            {% if example.responseHasLROState %}
+            {%- if example.responseHasLROState %}
             exampleRes.Properties.ProvisioningState = {{packageName}}.ProvisioningStateSucceeded.ToPtr()
-            {% endif %}
+            {%- endif %}
             if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
                 exampleResJson, _ := json.Marshal(exampleRes)
                 mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})
                 t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
             }
         }
-    {% endif %}
-    {% if not loop.last %}
+    {%- endif %}
+    {%- if not loop.last %}
 
     {% endif %}
-{% endfor %}
-{% if exampleGroup.examples|length <=0 %}
+{%- endfor %}
+{%- if exampleGroup.examples|length <=0 %}
 	t.Skip("Warning: No test steps for this operation!")
-{% endif %}
+{%- endif %}
 }
-{% endif %}
+{%- endif %}
 {% endfor %}
 
 // TestMain will exec each test

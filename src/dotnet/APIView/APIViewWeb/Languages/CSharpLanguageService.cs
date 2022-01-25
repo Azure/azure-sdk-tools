@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -50,7 +51,7 @@ namespace APIViewWeb
             {
                 Stream dllStream = stream;
                 Stream docStream = null;
-                string[] dependencies = null;
+                List<DependencyInfo> dependencies = new List<DependencyInfo>();
 
                 if (IsNuget(originalName))
                 {
@@ -68,12 +69,13 @@ namespace APIViewWeb
                         }
                         else if (IsNuspec(entry.Name))
                         {
-                            var nuspecStream = entry.Open();
+                            using var nuspecStream = entry.Open();
                             var document = XDocument.Load(nuspecStream);
-                            dependencies = document.Descendants()
-                                .Where(d => d.Name.LocalName == "dependency")
-                                .Select(d => d.Attribute("id").Value)
-                                .ToArray();
+                            foreach (var dependency in document.Descendants().Where(d => d.Name.LocalName == "dependency").Distinct())
+                            {
+                                dependencies.Add(
+                                    new DependencyInfo(dependency.Attribute("id").Value, dependency.Attribute("version").Value));
+                            }
                         }
                     }
                 }
@@ -81,7 +83,7 @@ namespace APIViewWeb
                 var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
                 if ( assemblySymbol == null)
                 {
-                    return Task.FromResult(GetDummyReviewCodeFile(originalName));
+                    return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
                 }
                 
                 return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies));
@@ -92,7 +94,7 @@ namespace APIViewWeb
             }
         }
 
-        private CodeFile GetDummyReviewCodeFile(string originalName)
+        private CodeFile GetDummyReviewCodeFile(string originalName, List<DependencyInfo> dependencies)
         {
             var packageName = Path.GetFileNameWithoutExtension(originalName);
             var reviewName = "";
@@ -107,12 +109,16 @@ namespace APIViewWeb
                 reviewName = $"{packageName} (metapackage)";
             }
 
+            var builder = new CodeFileTokensBuilder();
+            CodeFileBuilder.BuildDependencies(builder, dependencies);
+
             return new CodeFile()
             {                
                 Name = reviewName,
                 Language = "C#",
                 VersionString = CodeFileBuilder.CurrentVersion,
-                PackageName = packageName
+                PackageName = packageName,
+                Tokens = builder.Tokens.ToArray()
             };
         }
     }

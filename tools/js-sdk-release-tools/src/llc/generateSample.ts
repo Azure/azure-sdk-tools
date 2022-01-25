@@ -11,11 +11,12 @@ function generateSampleDev(packagePath) {
 // Licensed under the MIT License.
 
 /**
- * This sample demonstrates how get a list of collections
+ * This sample is a good start for you write your own samples
  *
+ * @summary sample
  */
 
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 
 dotenv.config();
 
@@ -35,7 +36,7 @@ function generateSampleEnv(packagePath) {
         logger.logGreen(`File samples.env already exists, we don't generate it.`)
         return;
     }
-    const content = `# Purview Scanning resource endpoint
+    const content = `# Resource endpoint
 ENDPOINT=
 
 # App registration secret for AAD authentication
@@ -55,7 +56,4 @@ export function generateSample(packagePath) {
     if (!fs.existsSync(path.join(packagePath, 'samples', 'v1'))) {
         fs.mkdirSync(path.join(packagePath, 'samples', 'v1'));
     }
-    // TODO there will be sample test in codegen
-    //generateJsSample(packagePath);
-    //generateTsSample(packagePath);
 }

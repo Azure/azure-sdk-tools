@@ -3,5 +3,5 @@ variables:
   skipComponentGovernanceDetection: true
   DotNetCoreVersion: '3.1.405'
   NugetSecurityAnalysisWarningLevel: 'none'
-  NotificationsCreatorVersion: '1.0.0-dev.20211209.3'
+  NotificationsCreatorVersion: '1.0.0-dev.20220125.1'
   CodeOwnersSubscriberVersion: '1.0.0-dev.20211209.3'

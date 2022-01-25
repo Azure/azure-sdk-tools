@@ -49,7 +49,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "21";
+        public const string CurrentVersion = "22";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -68,7 +68,7 @@ namespace ApiView
             }
         }
 
-        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis)
+        public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo> dependencies)
         {
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
@@ -78,6 +78,9 @@ namespace ApiView
                 analyzer.VisitAssembly(assemblySymbol);
             }
             var builder = new CodeFileTokensBuilder();
+
+            BuildDependencies(builder, dependencies);
+
             var navigationItems = new List<NavigationItem>();
             foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
             {
@@ -113,6 +116,31 @@ namespace ApiView
             };
 
             return node;
+        }
+
+        public static void BuildDependencies(CodeFileTokensBuilder builder, List<DependencyInfo> dependencies)
+        {
+            if (dependencies != null)
+            {
+                builder.NewLine();
+                builder.Append("Dependencies:", CodeFileTokenKind.Text);
+                builder.NewLine();
+                foreach (DependencyInfo dependency in dependencies)
+                {
+                    builder.Append(new CodeFileToken(dependency.Name, CodeFileTokenKind.Text)
+                    {
+                        // allow dependency to be commentable
+                        DefinitionId = dependency.Name
+                    });
+                    // don't include the version in the API sign-off diffs
+                    builder.Append(null, CodeFileTokenKind.SkipDiffRangeStart);
+                    builder.Append($"-{dependency.Version}", CodeFileTokenKind.Text);
+                    builder.Append(null, CodeFileTokenKind.SkipDiffRangeEnd);
+                    builder.NewLine();
+                }
+
+                builder.NewLine();
+            }
         }
 
         private void Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems)

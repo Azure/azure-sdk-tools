@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             IEnumerable<WebApiTeam> teams,
             bool persistChanges)
         {
-            string teamName = $"[{pipeline.Id}] ";
+            string teamName = $"{pipeline.Id} ";
 
             if (purpose == TeamPurpose.ParentNotificationTeam)
             {

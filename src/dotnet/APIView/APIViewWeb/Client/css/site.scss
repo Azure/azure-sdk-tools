@@ -424,7 +424,7 @@ form.comment {
 #review-left {
     // Override values from bootstrap
     max-width: none;
-    min-width: 130px;
+    min-width: 10px;
 }
 
 #review-right {
@@ -602,14 +602,6 @@ mark {
     width: 30px;
 }
 
-.reviews-table-filter-label {
-    border-top-left-radius: 0.25rem;
-    border-top-right-radius: 0rem;
-    border-bottom-left-radius: 0.25rem;
-    border-bottom-right-radius: 0rem;
-    border-right: 0px;
-}
-
 #reviews-table td {
     white-space: nowrap;
     overflow: hidden;
@@ -648,23 +640,4 @@ mark {
 
 .hidden-row-via-filter {
     display: none;
-}
-
-.breadcrumb {
-    display: flex;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    padding: 0px 0px 0px 1px;
-    list-style: none;
-    background: rgba(255, 255, 255, 0);
-}
-
-.breadcrumb-item {
-    max-height: 20px;
-}
-
-#review-select-box {
-    position: relative;
-    top: -27px;
-    left: 16px;
 }

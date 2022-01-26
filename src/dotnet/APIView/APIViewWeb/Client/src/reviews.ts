@@ -72,6 +72,24 @@
     }
   }
 
+  // Diff button
+  $('.diff-button').each(function(index, value){
+    $(this).on('click', function () {
+      window.location.href = $(this).val() as string;
+    });
+  });
+
+  // Change dropdown filter for review and revision
+  $('#revisions-custom-select, #diff-custom-select').each(function(index, value) {
+    $(this).on('change', function() {
+      var url = $(this).find(":selected").val();
+      if (url)
+      {
+        window.location.href = url as string;
+      }
+    });
+  });
+
     // Expand all Service Groups
   $('#expand-all-service-groups-btn').on('click', function () {
     serviceGroupRows.each(function(index, value){
@@ -97,6 +115,18 @@
     packageGroupRows.each(function(index, value){
       togglePackageGroup($(this), "opened");
     });
+  });
+
+  // Clear all filters
+  $('#clear-all-filters').on('click', function() {
+    if (languageSelect.val() != "")
+    {
+      languageSelect.val("").trigger('change');
+    }
+    if (searchBox.val() != "")
+    {
+      searchBox.val("").trigger('input');
+    }
   });
 
   // Toggle individual service Group
@@ -142,6 +172,7 @@
     setTimeout(filterReviews, 300);
   });
 
+  // Filter by language
   languageSelect.on('change', function(e) {
     var filterText = $(this).val() as string;
     if (filterText == "")

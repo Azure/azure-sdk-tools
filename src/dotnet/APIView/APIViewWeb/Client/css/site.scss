@@ -649,22 +649,3 @@ mark {
 .hidden-row-via-filter {
     display: none;
 }
-
-.breadcrumb {
-    display: flex;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    padding: 0px 0px 0px 1px;
-    list-style: none;
-    background: rgba(255, 255, 255, 0);
-}
-
-.breadcrumb-item {
-    max-height: 20px;
-}
-
-#review-select-box {
-    position: relative;
-    top: -27px;
-    left: 16px;
-}

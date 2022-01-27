@@ -32,6 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 int statusCode = (int)e.StatusCode;
+                if (statusCode >= 500 && statusCode <= 599)
+                {
+                    throw;
+                }
 
                 response.Clear();
                 response.StatusCode = statusCode;
@@ -64,7 +68,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = unexpectedStatusCode.ToString()
+                    StackTrace =  e.StackTrace,
+                    Status = unexpectedStatusCode.ToString(),
+                    Line = e.Data
                 };
 
                 var body = JsonSerializer.Serialize(bodyObj);

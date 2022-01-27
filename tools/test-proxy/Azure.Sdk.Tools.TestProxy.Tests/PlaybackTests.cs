@@ -211,7 +211,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("0", response.Headers["Retry-After"]);
 
             // this response did not have the retry-after header initially, so it should not have been added.
-            entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+            entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[1];
             request = TestHelpers.CreateRequestFromEntry(entry);
             response = new DefaultHttpContext().Response;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);

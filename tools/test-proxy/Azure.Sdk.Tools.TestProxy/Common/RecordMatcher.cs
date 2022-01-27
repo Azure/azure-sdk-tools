@@ -82,47 +82,50 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             foreach (RecordEntry entry in entries)
             {
-                int score = 0;
-
-                var uri = request.RequestUri;
-                var recordRequestUri = entry.RequestUri;
-                if (entry.IsTrack1Recording)
+                if (!entry.Removed)
                 {
-                    //there's no domain name for request uri in track 1 record, so add it from request uri
-                    int len = 8; //length of "https://"
-                    int domainEndingIndex = uri.IndexOf('/', len);
-                    if (domainEndingIndex > 0)
+                    int score = 0;
+
+                    var uri = request.RequestUri;
+                    var recordRequestUri = entry.RequestUri;
+                    if (entry.IsTrack1Recording)
                     {
-                        recordRequestUri = uri.Substring(0, domainEndingIndex) + recordRequestUri;
+                        //there's no domain name for request uri in track 1 record, so add it from request uri
+                        int len = 8; //length of "https://"
+                        int domainEndingIndex = uri.IndexOf('/', len);
+                        if (domainEndingIndex > 0)
+                        {
+                            recordRequestUri = uri.Substring(0, domainEndingIndex) + recordRequestUri;
+                        }
                     }
-                }
 
-                if (!AreUrisSame(recordRequestUri, uri))
-                {
-                    score++;
-                }
+                    if (!AreUrisSame(recordRequestUri, uri))
+                    {
+                        score++;
+                    }
 
-                if (entry.RequestMethod != request.RequestMethod)
-                {
-                    score++;
-                }
+                    if (entry.RequestMethod != request.RequestMethod)
+                    {
+                        score++;
+                    }
 
-                //we only check Uri + RequestMethod for track1 record
-                if (!entry.IsTrack1Recording)
-                {
-                    score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
-                    score += CompareBodies(request.Request.Body, entry.Request.Body);
-                }
+                    //we only check Uri + RequestMethod for track1 record
+                    if (!entry.IsTrack1Recording)
+                    {
+                        score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
+                        score += CompareBodies(request.Request.Body, entry.Request.Body);
+                    }
 
-                if (score == 0)
-                {
-                    return entry;
-                }
+                    if (score == 0)
+                    {
+                        return entry;
+                    }
 
-                if (score < bestScore)
-                {
-                    bestScoreEntry = entry;
-                    bestScore = score;
+                    if (score < bestScore)
+                    {
+                        bestScoreEntry = entry;
+                        bestScore = score;
+                    }
                 }
             }
 

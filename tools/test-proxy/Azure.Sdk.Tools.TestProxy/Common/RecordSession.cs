@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 entry = matcher.FindMatch(requestEntry, Entries);
                 if (remove)
                 {
-                    Entries.Remove(entry);
+                    entry.Removed = true;
                 }
             }
 

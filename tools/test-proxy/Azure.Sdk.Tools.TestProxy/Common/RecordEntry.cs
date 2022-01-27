@@ -26,6 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
+        public bool Removed = false;
+
         public string RequestUri { get; set; }
 
         public bool IsTrack1Recording { get; set; }

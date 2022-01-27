@@ -25,6 +25,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("[{\"json\":\"value\"},{\"json\":\"value\"}]", "application/json")]
         [InlineData("\"\"", "application/json")]
         [InlineData("invalid json", "application/json")]
+        [InlineData("null", "application/json")]
+        [InlineData("\"null\"", "application/json")]
+        [InlineData(null, "application/json")]
+        [InlineData("{}", "application/json")]
+        [InlineData("[]", "application/json")]
+        [InlineData("19", "application/json")]
+        [InlineData("true", "application/json")]
+        [InlineData("false", "application/json")]
         [InlineData("{ \"json\": \"value\" }", "unknown")]
         [InlineData("multi\rline", "application/xml")]
         [InlineData("multi\r\nline", "application/xml")]
@@ -33,7 +41,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("true", "")]
         public void CanRoundtripSessionRecord(string body, string contentType)
         {
-            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+            byte[] bodyBytes = body != null ? Encoding.UTF8.GetBytes(body) : null;
 
             var session = new RecordSession();
             session.Variables["a"] = "value a";

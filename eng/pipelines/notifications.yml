@@ -27,6 +27,8 @@ stages:
           PathPrefix: 'c'
         CPP:
           PathPrefix: 'cpp'
+        Go:
+          PathPrefix: 'go'
 
     pool:
       vmImage: ubuntu-20.04
@@ -69,7 +71,7 @@ stages:
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
 
-      - pwsh: | 
+      - pwsh: |
           github-codeowner-subscriber `
             --organization $(Organization) `
             --project $(Project) `

@@ -14,7 +14,7 @@
                     @Model.Review.ServiceName
                     <span>&nbsp;|&nbsp;</span>
                 }
-                <small class="text-muted">@Model.Review.PackageName&nbsp;&nbsp;<span class="badge badge-info"><em>@Model.Review.Language</em></span></small>
+                <small class="text-muted">@Model.Review.PackageDisplayName&nbsp;&nbsp;<span class="badge badge-info"><em>@Model.Review.Language</em></span></small>
             </h3>
         </div>
     </div>
@@ -261,7 +261,7 @@
         </div>
     </div>
     <div class="row px-3" data-review-id="@Model.Review.ReviewId" data-revision-id="@Model.Revision.RevisionId" data-language="@Model.Review.Language">
-        <div id="review-left" class="col-lg-2 col rounded-1 border">
+        <div id="review-left" class="col-2 rounded-1 border">
             <div class="namespace-view">
                 @if (Model.CodeFile != null)
                 {
@@ -278,7 +278,6 @@
                         <partial name="_CodeLine" model="@line" />
                     }
                 </tbody>
-
             </table>
         </div>
     </div>

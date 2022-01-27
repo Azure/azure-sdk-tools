@@ -622,5 +622,10 @@ namespace APIViewWeb.Respositories
             }
             return response.Values.ToList();
         }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName);
+        }
     }
 }

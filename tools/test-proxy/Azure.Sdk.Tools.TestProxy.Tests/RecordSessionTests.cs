@@ -541,6 +541,43 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             ContentLengthUpdatedCorrectlyOnEmptyBody(isHeadRequest: false);
         }
 
+        [Fact]
+        public void SerializingEntryRespectsLiteralNull()
+        {
+            var nullBytes = Encoding.UTF8.GetBytes("null");
+            var entry = new RecordEntry()
+            {
+                RequestUri = "http://localhost/",
+                RequestMethod = RequestMethod.Get,
+                Request =
+                {
+                    Body = nullBytes,
+                    Headers =
+                    {
+                        {"Content-Type", new[] {"application/json"}},
+                        {"Content-Length", new[] {"4"}},
+                    },
+                },
+                Response =
+                {
+                    Body = nullBytes,
+                    Headers =
+                    {
+                        {"Content-Type", new[] {"application/json"}},
+                        {"Content-Length", new[] {"4"}},
+                    },
+                }
+            };
+            var arrayBufferWriter = new ArrayBufferWriter<byte>();
+            using var jsonWriter = new Utf8JsonWriter(arrayBufferWriter);
+            entry.Serialize(jsonWriter);
+            jsonWriter.Flush();
+
+            var deserialized = RecordEntry.Deserialize(JsonDocument.Parse(arrayBufferWriter.WrittenMemory).RootElement);
+            Assert.Equal(nullBytes, deserialized.Request.Body);
+            Assert.Equal(nullBytes, deserialized.Response.Body);
+        }
+
         private void ContentLengthUpdatedCorrectlyOnEmptyBody(bool isHeadRequest)
         {
             var sanitizer = new RecordedTestSanitizer();

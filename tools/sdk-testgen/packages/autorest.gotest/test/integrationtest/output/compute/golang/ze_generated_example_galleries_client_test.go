@@ -87,7 +87,7 @@ func ExampleGalleriesClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
-		&golang.GalleriesGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
+		&golang.GalleriesClientGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -191,7 +191,7 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&golang.VirtualMachinesBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -212,7 +212,7 @@ func ExampleVirtualMachinesClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&golang.VirtualMachinesGetOptions{Expand: nil})
+		&golang.VirtualMachinesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -304,7 +304,7 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&golang.VirtualMachinesBeginReimageOptions{Parameters: &golang.VirtualMachineReimageParameters{
+		&golang.VirtualMachinesClientBeginReimageOptions{Parameters: &golang.VirtualMachineReimageParameters{
 			TempDisk: to.BoolPtr(true),
 		},
 		})
@@ -328,7 +328,7 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&golang.VirtualMachinesRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
+		&golang.VirtualMachinesClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -130,7 +130,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<run-command-name>",
-		&golang.VirtualMachineScaleSetVMRunCommandsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMRunCommandsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_List() {
 	pager := client.List("<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&golang.VirtualMachineScaleSetVMRunCommandsListOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {

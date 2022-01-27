@@ -21912,7 +21912,6 @@ testModel:
                     $Result
                   timeout: PT1H
           isCleanUpStep: true
-          outputVariableNames: []
           outputVariables: {}
           requiredVariables: []
           requiredVariablesDefault: {}
@@ -21921,11 +21920,7 @@ testModel:
           variables:
             resourceGroupName: $(dnsResourceGroup)
             subscriptionId: $(dnsSubscriptionId)
-      outputVariableNames:
-        - serviceName
-        - insightsInstrumentationKey
-        - uploadUrl
-        - relativePath
+      outputVariableNames: []
       prepareSteps:
         - &ref_934
           type: armTemplateDeployment
@@ -21945,8 +21940,6 @@ testModel:
             variables:
               serviceNameLong: '[concat(parameters(''serviceNamePrefix''), uniqueString(resourceGroup().id))]'
           isPrepareStep: true
-          outputVariableNames:
-            - serviceName
           outputVariables: {}
           requiredVariables: []
           requiredVariablesDefault: {}
@@ -21981,8 +21974,6 @@ testModel:
                   Request_Source: CustomDeployment
                 tags: {}
           isPrepareStep: true
-          outputVariableNames:
-            - insightsInstrumentationKey
           outputVariables: {}
           requiredVariables: []
           requiredVariablesDefault: {}
@@ -22041,7 +22032,6 @@ testModel:
                     $RecordSet
                   timeout: PT1H
           isPrepareStep: true
-          outputVariableNames: []
           outputVariables: {}
           requiredVariables: []
           requiredVariablesDefault: {}
@@ -27767,7 +27757,6 @@ testModel:
                       retentionInterval: P1D
                       scriptContent: "$uploadUri = ${Env:uploadUrl}\n$blobUri = ${Env:blobUrl}\n$localFilePath = '/tmp/temp.file'\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\n\t$DownLoadTask\n}\n\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\n\t$UploadTask\n}\n\nConnect-AzAccount -Identity\nDownloadJarFromBlob $blobUri $localFilePath\nUploadToFileShare $uploadUri $localFilePath"
                       timeout: PT1H
-              outputVariableNames: []
               outputVariables: {}
               requiredVariables: []
               requiredVariablesDefault: {}

@@ -29,7 +29,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
+		&golang.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
 			Location: to.StringPtr("<location>"),
 			Properties: &golang.CloudServiceProperties{
 				Configuration: to.StringPtr("<configuration>"),
@@ -95,7 +95,7 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginUpdateOptions{Parameters: &golang.CloudServiceUpdate{
+		&golang.CloudServicesClientBeginUpdateOptions{Parameters: &golang.CloudServiceUpdate{
 			Tags: map[string]*string{
 				"Documentation": to.StringPtr("RestAPI"),
 			},
@@ -268,7 +268,7 @@ func ExampleCloudServicesClient_BeginRestart() {
 	poller, err := client.BeginRestart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginRestartOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginRestartOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -294,7 +294,7 @@ func ExampleCloudServicesClient_BeginReimage() {
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginReimageOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginReimageOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -320,7 +320,7 @@ func ExampleCloudServicesClient_BeginRebuild() {
 	poller, err := client.BeginRebuild(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginRebuildOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginRebuildOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -346,7 +346,7 @@ func ExampleCloudServicesClient_BeginDeleteInstances() {
 	poller, err := client.BeginDeleteInstances(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&golang.CloudServicesBeginDeleteInstancesOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginDeleteInstancesOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},

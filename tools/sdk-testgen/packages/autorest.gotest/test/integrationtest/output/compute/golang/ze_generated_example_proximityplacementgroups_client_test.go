@@ -91,7 +91,7 @@ func ExampleProximityPlacementGroupsClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
-		&golang.ProximityPlacementGroupsGetOptions{IncludeColocationStatus: nil})
+		&golang.ProximityPlacementGroupsClientGetOptions{IncludeColocationStatus: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

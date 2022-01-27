@@ -56,7 +56,7 @@ func ExampleRestorePointCollectionsClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
-		&golang.RestorePointCollectionsGetOptions{Expand: nil})
+		&golang.RestorePointCollectionsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

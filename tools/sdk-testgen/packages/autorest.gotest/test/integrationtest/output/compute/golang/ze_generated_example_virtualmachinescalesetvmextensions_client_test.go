@@ -147,7 +147,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<vm-extension-name>",
-		&golang.VirtualMachineScaleSetVMExtensionsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMExtensionsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&golang.VirtualMachineScaleSetVMExtensionsListOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMExtensionsClientListOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

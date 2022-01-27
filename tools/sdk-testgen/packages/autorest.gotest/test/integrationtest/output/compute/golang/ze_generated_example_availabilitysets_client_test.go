@@ -52,7 +52,7 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 	}
 	ctx := context.Background()
 	client := golang.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
-	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("<expand>")})
+	pager := client.ListBySubscription(&golang.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.StringPtr("<expand>")})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {

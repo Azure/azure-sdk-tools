@@ -26,7 +26,7 @@ func ExampleSharedGalleryImageVersionsClient_List() {
 	pager := client.List("<location>",
 		"<gallery-unique-name>",
 		"<gallery-image-name>",
-		&golang.SharedGalleryImageVersionsListOptions{SharedTo: nil})
+		&golang.SharedGalleryImageVersionsClientListOptions{SharedTo: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {

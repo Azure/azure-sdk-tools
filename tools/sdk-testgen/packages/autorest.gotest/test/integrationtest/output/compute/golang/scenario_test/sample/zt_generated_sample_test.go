@@ -32,8 +32,6 @@ var (
 	location          = getEnv("LOCATION", "")
 	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "")
 	subscriptionId    = getEnv("SUBSCRIPTION_ID", "")
-	name              string
-	fakeScenarioVar   string
 )
 
 func TestSample(t *testing.T) {
@@ -50,33 +48,28 @@ func setUp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create credential: %v", err)
 	}
-
 	resourceGroup, err = createResourceGroup(ctx, cred)
 	if err != nil {
 		t.Fatalf("Failed to create resource group: %v", err)
 	}
 	t.Logf("Resource group created: id - %s name - %s", *resourceGroup.ID, *resourceGroup.Name)
-
 	prepare(t)
 }
+
 func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
 	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-
 	param := armresources.ResourceGroup{
 		Location: to.StringPtr(location),
 	}
-
 	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	return &resp.ResourceGroup, nil
 }
 
 func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error {
 	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-
 	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
 		return err
@@ -84,7 +77,6 @@ func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error
 	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -103,6 +95,7 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
+
 func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
 	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
 	poller, err := deployClient.BeginCreateOrUpdate(
@@ -121,12 +114,10 @@ func createDeployment(deploymentName string, template, params map[string]interfa
 	if err != nil {
 		return nil, err
 	}
-
 	res, err := poller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
-
 	return &res.DeploymentExtended, nil
 }
 
@@ -184,7 +175,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	// From step Create-or-Update-a-proximity-placement-group
 	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
 	{
-		proximityPlacementGroupsCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
+		proximityPlacementGroupsClientCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
 			resourceGroupName,
 			resourceName,
 			golang.ProximityPlacementGroup{
@@ -197,10 +188,10 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request error: %v", err)
 		}
-		t.Logf("Response result: %#v\n", proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
+		t.Logf("Response result: %#v\n", proximityPlacementGroupsClientCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
 
 		var respBody interface{}
-		byteBody, err := json.Marshal(proximityPlacementGroupsCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
+		byteBody, err := json.Marshal(proximityPlacementGroupsClientCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
 		if err != nil {
 			t.Fatalf("Marshall response body failed: %v", err)
 		}
@@ -208,7 +199,6 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Unmarshall response body to JSON failed: %v", err)
 		}
-
 		pointer, err := jsonpointer.New("/id")
 		if err != nil {
 			t.Fatalf("Unable to create Jsonpointer for /id : %v", err)
@@ -235,7 +225,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 	virtualMachinesClient := golang.NewVirtualMachinesClient(subscriptionId, cred, nil)
 	{
 		fakeStepVar := "signalrswaggertest6"
-		virtualMachinesCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
+		virtualMachinesClientCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
 			resourceGroupName,
 			"myVM",
 			golang.VirtualMachine{
@@ -288,14 +278,13 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request error: %v", err)
 		}
-		response, err := virtualMachinesCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+		response, err := virtualMachinesClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
 		if err != nil {
 			t.Fatalf("Request error: %v", err)
 		}
 		t.Logf("Response result: %#v\n", response.VirtualMachinesClientCreateOrUpdateResult)
 	}
 }
-
 func scenarioMicrosoftSignalrserviceDeleteonly(t *testing.T) {
 	// From step Delete_proximity_placement_group
 	proximityPlacementGroupsClient := golang.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)

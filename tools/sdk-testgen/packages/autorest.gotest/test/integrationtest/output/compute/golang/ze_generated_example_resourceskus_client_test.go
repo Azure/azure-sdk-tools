@@ -23,7 +23,7 @@ func ExampleResourceSKUsClient_List() {
 	}
 	ctx := context.Background()
 	client := golang.NewResourceSKUsClient("<subscription-id>", cred, nil)
-	pager := client.List(&golang.ResourceSKUsListOptions{Filter: nil})
+	pager := client.List(&golang.ResourceSKUsClientListOptions{Filter: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {

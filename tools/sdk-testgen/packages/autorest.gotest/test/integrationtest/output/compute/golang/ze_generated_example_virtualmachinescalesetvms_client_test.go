@@ -30,7 +30,7 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&golang.VirtualMachineScaleSetVMsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&golang.VirtualMachineScaleSetVMsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&golang.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
+		&golang.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		log.Fatal(err)
 	}

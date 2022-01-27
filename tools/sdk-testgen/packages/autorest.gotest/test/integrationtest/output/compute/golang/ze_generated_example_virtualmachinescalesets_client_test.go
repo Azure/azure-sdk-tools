@@ -120,7 +120,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&golang.VirtualMachineScaleSetsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

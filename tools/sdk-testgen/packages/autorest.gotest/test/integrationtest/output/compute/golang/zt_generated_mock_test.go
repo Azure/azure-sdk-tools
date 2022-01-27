@@ -82,7 +82,6 @@ func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 				Name: to.StringPtr("Classic"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.AvailabilitySet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.AvailabilitySet)
@@ -114,7 +113,7 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 		}
 	}()
 	client := golang.NewAvailabilitySetsClient("{subscriptionId}", cred, &options)
-	pager := client.ListBySubscription(&golang.AvailabilitySetsListBySubscriptionOptions{Expand: to.StringPtr("Faked for test: +ge+2020, %3E2012")})
+	pager := client.ListBySubscription(&golang.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.StringPtr("Faked for test: +ge+2020, %3E2012")})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -248,7 +247,6 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
@@ -291,7 +289,6 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 				ProximityPlacementGroupType: golang.ProximityPlacementGroupType("Standard").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
@@ -334,7 +331,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myProximityPlacementGroup",
-		&golang.ProximityPlacementGroupsGetOptions{IncludeColocationStatus: nil})
+		&golang.ProximityPlacementGroupsClientGetOptions{IncludeColocationStatus: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json: %v", err)
 	}
@@ -361,7 +358,6 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 					}},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ProximityPlacementGroup)
@@ -528,7 +524,6 @@ func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 			Zones: []*string{
 				to.StringPtr("1")},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
@@ -559,7 +554,7 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myDedicatedHostGroup",
-		&golang.DedicatedHostGroupsGetOptions{Expand: nil})
+		&golang.DedicatedHostGroupsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json: %v", err)
 	}
@@ -632,7 +627,6 @@ func TestDedicatedHostGroups_Get(t *testing.T) {
 			Zones: []*string{
 				to.StringPtr("3")},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHostGroup) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHostGroup)
@@ -703,7 +697,6 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 				Name: to.StringPtr("DSv3-Type1"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHost)
@@ -735,7 +728,7 @@ func TestDedicatedHosts_Get(t *testing.T) {
 		"myResourceGroup",
 		"myDedicatedHostGroup",
 		"myHost",
-		&golang.DedicatedHostsGetOptions{Expand: nil})
+		&golang.DedicatedHostsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json: %v", err)
 	}
@@ -783,7 +776,6 @@ func TestDedicatedHosts_Get(t *testing.T) {
 				Name: to.StringPtr("DSv3-Type1"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DedicatedHost) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DedicatedHost)
@@ -838,7 +830,6 @@ func TestSSHPublicKeys_Create(t *testing.T) {
 				PublicKey: to.StringPtr("{ssh-rsa public key}"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
@@ -886,7 +877,6 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 				PublicKey: to.StringPtr("{ssh-rsa public key}"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyResource) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyResource)
@@ -920,7 +910,6 @@ func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 			PrivateKey: to.StringPtr("{ssh private key}"),
 			PublicKey:  to.StringPtr("{ssh-rsa public key}"),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SSHPublicKeyGenerateKeyPairResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SSHPublicKeyGenerateKeyPairResult)
@@ -1265,7 +1254,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -1386,7 +1374,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -1509,7 +1496,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -1636,7 +1622,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -1762,7 +1747,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -1895,7 +1879,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("b7a098cc-b0b8-46e8-a205-62f301a62a8f"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2018,7 +2001,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2141,7 +2123,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2266,7 +2247,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2389,7 +2369,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2514,7 +2493,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2622,7 +2600,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("926cd555-a07c-4ff5-b214-4aa4dd09d79b"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2772,7 +2749,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5230a749-2f68-4830-900b-702182d32e63"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2879,7 +2855,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -2986,7 +2961,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3080,7 +3054,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3201,7 +3174,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("7cce54f2-ecd3-4ddd-a8d9-50984faa3918"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3320,7 +3292,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("b7a098cc-b0b8-46e8-a205-62f301a62a8f"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3484,7 +3455,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("71aa3d5a-d73d-4970-9182-8580433b2865"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3613,7 +3583,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3750,7 +3719,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -3873,7 +3841,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4000,7 +3967,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4125,7 +4091,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4267,7 +4232,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4398,7 +4362,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4529,7 +4492,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4658,7 +4620,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("5c0d55a7-c407-4ed6-bf7d-ddb810267c85"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4781,7 +4742,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("676420ba-7a24-4bfe-80bd-9c841ee184fa"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -4894,7 +4854,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("b248db33-62ba-4d2d-b791-811e075ee0f5"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5007,7 +4966,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("a149cd25-409f-41af-8088-275f5486bc93"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5135,7 +5093,6 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				VMID: to.StringPtr("e0de9b84-a506-4b95-9623-00a425d05c90"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5287,7 +5244,6 @@ func TestVirtualMachines_Update(t *testing.T) {
 				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5434,7 +5390,6 @@ func TestVirtualMachines_Update(t *testing.T) {
 				VMID: to.StringPtr("3906fef9-a1e5-4b83-a8a8-540858b41df0"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5457,7 +5412,7 @@ func TestVirtualMachines_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
-		&golang.VirtualMachinesBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
 	}
@@ -5481,7 +5436,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
-		&golang.VirtualMachinesGetOptions{Expand: nil})
+		&golang.VirtualMachinesClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json: %v", err)
 	}
@@ -5592,7 +5547,6 @@ func TestVirtualMachines_Get(t *testing.T) {
 					},
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5608,7 +5562,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVM",
-		&golang.VirtualMachinesGetOptions{Expand: nil})
+		&golang.VirtualMachinesClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
@@ -5668,7 +5622,6 @@ func TestVirtualMachines_Get(t *testing.T) {
 				VMID: to.StringPtr("0f47b100-583c-48e3-a4c0-aefc2c9bbcc1"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachine) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachine)
@@ -5818,7 +5771,6 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 					TypeHandlerVersion: to.StringPtr("1.5.5.9"),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
@@ -5881,7 +5833,6 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 				VMAgentVersion: to.StringPtr("2.7.41491.949"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstanceView)
@@ -5965,7 +5916,6 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 					ResourceDiskSizeInMB: to.Int32Ptr(20480),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineSizeListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineSizeListResult)
@@ -6028,7 +5978,7 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 	poller, err := client.BeginReimage(ctx,
 		"myResourceGroup",
 		"myVMName",
-		&golang.VirtualMachinesBeginReimageOptions{Parameters: &golang.VirtualMachineReimageParameters{
+		&golang.VirtualMachinesClientBeginReimageOptions{Parameters: &golang.VirtualMachineReimageParameters{
 			TempDisk: to.BoolPtr(true),
 		},
 		})
@@ -6055,7 +6005,7 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"ResourceGroup",
 		"VMName",
-		&golang.VirtualMachinesRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
+		&golang.VirtualMachinesClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json: %v", err)
 	}
@@ -6065,7 +6015,6 @@ func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 			ConsoleScreenshotBlobURI: to.StringPtr("https://storageuri/vm.screenshot.bmp?{sasKey}"),
 			SerialConsoleLogBlobURI:  to.StringPtr("https://storageuri/vm.serialconsole.log?{sasKey}"),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
@@ -6157,7 +6106,6 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 			StartDateTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
 			Status:                        golang.PatchOperationStatus("Succeeded").ToPtr(),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineAssessPatchesResult)
@@ -6231,7 +6179,6 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 			StartDateTime:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
 			Status:            golang.PatchOperationStatus("Succeeded").ToPtr(),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineInstallPatchesResult)
@@ -6282,7 +6229,6 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 					Message:       to.StringPtr(""),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandResult)
@@ -6611,7 +6557,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -6766,7 +6711,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -6910,7 +6854,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7054,7 +6997,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7185,7 +7127,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7361,7 +7302,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7547,7 +7487,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7714,7 +7653,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -7879,7 +7817,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8040,7 +7977,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8199,7 +8135,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8372,7 +8307,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8531,7 +8465,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8694,7 +8627,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -8877,7 +8809,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9046,7 +8977,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9209,7 +9139,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9400,7 +9329,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9561,7 +9489,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9712,7 +9639,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -9863,7 +9789,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10029,7 +9954,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10192,7 +10116,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10350,7 +10273,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10540,7 +10462,6 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				to.StringPtr("1"),
 				to.StringPtr("3")},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10567,7 +10488,7 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
-		&golang.VirtualMachineScaleSetsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
 	}
@@ -10591,7 +10512,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
-		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json: %v", err)
 	}
@@ -10675,7 +10596,6 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10691,7 +10611,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myVirtualMachineScaleSet",
-		&golang.VirtualMachineScaleSetsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json: %v", err)
 	}
@@ -10776,7 +10696,6 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSet)
@@ -10917,7 +10836,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -10975,7 +10893,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11041,7 +10958,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11103,7 +11019,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11169,7 +11084,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11231,7 +11145,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11289,7 +11202,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11356,7 +11268,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11431,7 +11342,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11506,7 +11416,6 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11590,7 +11499,6 @@ func TestImages_Update(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11617,7 +11525,7 @@ func TestImages_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myImage",
-		&golang.ImagesGetOptions{Expand: nil})
+		&golang.ImagesClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json: %v", err)
 	}
@@ -11660,7 +11568,6 @@ func TestImages_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Image) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Image)
@@ -11856,7 +11763,6 @@ func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
@@ -11887,7 +11793,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myRpc",
-		&golang.RestorePointCollectionsGetOptions{Expand: nil})
+		&golang.RestorePointCollectionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json: %v", err)
 	}
@@ -11910,7 +11816,6 @@ func TestRestorePointCollections_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
@@ -11926,7 +11831,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"rpcName",
-		&golang.RestorePointCollectionsGetOptions{Expand: nil})
+		&golang.RestorePointCollectionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json: %v", err)
 	}
@@ -12015,7 +11920,6 @@ func TestRestorePointCollections_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RestorePointCollection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePointCollection)
@@ -12282,7 +12186,6 @@ func TestRestorePoints_Get(t *testing.T) {
 				VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RestorePoint) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RestorePoint)
@@ -12422,7 +12325,6 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 				TypeHandlerVersion: to.StringPtr("1.2"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
@@ -12483,7 +12385,6 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 				TypeHandlerVersion: to.StringPtr("1.2"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
@@ -12534,7 +12435,7 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 		"myvmScaleSet",
 		"0",
 		"myVMExtension",
-		&golang.VirtualMachineScaleSetVMExtensionsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMExtensionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
@@ -12555,7 +12456,6 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 				TypeHandlerVersion: to.StringPtr("1.2"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtension) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtension)
@@ -12579,7 +12479,7 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&golang.VirtualMachineScaleSetVMExtensionsListOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMExtensionsClientListOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
@@ -12618,7 +12518,6 @@ func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 					},
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMExtensionsListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMExtensionsListResult)
@@ -12658,7 +12557,7 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&golang.VirtualMachineScaleSetVMsBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&golang.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
 	}
@@ -12683,7 +12582,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 		"myResourceGroup",
 		"{vmss-name}",
 		"0",
-		&golang.VirtualMachineScaleSetVMsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json: %v", err)
 	}
@@ -12803,7 +12702,6 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 					},
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVM) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVM)
@@ -12872,7 +12770,6 @@ func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 				VMAgentVersion: to.StringPtr("Unknown"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineScaleSetVMInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineScaleSetVMInstanceView)
@@ -12916,7 +12813,7 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 		"ResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&golang.VirtualMachineScaleSetVMsRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
+		&golang.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json: %v", err)
 	}
@@ -12926,7 +12823,6 @@ func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 			ConsoleScreenshotBlobURI: to.StringPtr("https://storageuri/myvmScaleSetinstance.screenshot.bmp?{saskey}"),
 			SerialConsoleLogBlobURI:  to.StringPtr("https://storageuri/myvmScaleSetinstance.serialconsole.log?{saskey}"),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RetrieveBootDiagnosticsDataResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RetrieveBootDiagnosticsDataResult)
@@ -13005,7 +12901,6 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 					Message:       to.StringPtr(""),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RunCommandResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandResult)
@@ -13049,7 +12944,6 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 				Output: to.StringPtr("https://crptestar4227.blob.core.windows.net:443/sascontainer/RequestRateByInterval_20180121-0154_20180123-0154.csv"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
@@ -13095,7 +12989,6 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 				Output: to.StringPtr("https://crptestar4227.blob.core.windows.net:443/sascontainer/ThrottledRequests_20180121-0154_20180123-0154.csv"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.LogAnalyticsOperationResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.LogAnalyticsOperationResult)
@@ -13253,7 +13146,6 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 				to.StringPtr(")"),
 				to.StringPtr("Write-Host This is a sample script with parameters $arg1 $arg2")},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RunCommandDocument) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RunCommandDocument)
@@ -13336,7 +13228,6 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13405,7 +13296,6 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13454,7 +13344,7 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 		"myResourceGroup",
 		"myVM",
 		"myRunCommand",
-		&golang.VirtualMachineRunCommandsGetByVirtualMachineOptions{Expand: nil})
+		&golang.VirtualMachineRunCommandsClientGetByVirtualMachineOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json: %v", err)
 	}
@@ -13488,7 +13378,6 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13510,7 +13399,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 	client := golang.NewVirtualMachineRunCommandsClient("{subscription-id}", cred, &options)
 	pager := client.ListByVirtualMachine("myResourceGroup",
 		"myVM",
-		&golang.VirtualMachineRunCommandsListByVirtualMachineOptions{Expand: nil})
+		&golang.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -13632,7 +13521,6 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13702,7 +13590,6 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13753,7 +13640,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 		"myvmScaleSet",
 		"0",
 		"myRunCommand",
-		&golang.VirtualMachineScaleSetVMRunCommandsGetOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMRunCommandsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
@@ -13787,7 +13674,6 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 				TimeoutInSeconds: to.Int32Ptr(3600),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineRunCommand) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.VirtualMachineRunCommand)
@@ -13810,7 +13696,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 	pager := client.List("myResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&golang.VirtualMachineScaleSetVMRunCommandsListOptions{Expand: nil})
+		&golang.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -13868,7 +13754,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		}
 	}()
 	client := golang.NewResourceSKUsClient("{subscription-id}", cred, &options)
-	pager := client.List(&golang.ResourceSKUsListOptions{Filter: nil})
+	pager := client.List(&golang.ResourceSKUsClientListOptions{Filter: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -14060,7 +13946,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		"example-id": {"Lists all available Resource SKUs for the specified region"},
 	})
 	client = golang.NewResourceSKUsClient("{subscription-id}", cred, &options)
-	pager = client.List(&golang.ResourceSKUsListOptions{Filter: to.StringPtr("location eq 'westus'")})
+	pager = client.List(&golang.ResourceSKUsClientListOptions{Filter: to.StringPtr("location eq 'westus'")})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -14296,7 +14182,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14348,7 +14233,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14394,7 +14278,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14442,7 +14325,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14488,7 +14370,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14546,7 +14427,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14592,7 +14472,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14650,7 +14529,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14703,7 +14581,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Tier: to.StringPtr("Premium"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14749,7 +14626,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14803,7 +14679,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14849,7 +14724,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14904,7 +14778,6 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Tier: to.StringPtr("Ultra"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -14955,7 +14828,6 @@ func TestDisks_Update(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15017,7 +14889,6 @@ func TestDisks_Update(t *testing.T) {
 				Tier: to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15067,7 +14938,6 @@ func TestDisks_Update(t *testing.T) {
 				Tier: to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15109,7 +14979,6 @@ func TestDisks_Update(t *testing.T) {
 				Tier:              to.StringPtr("P30"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15150,7 +15019,6 @@ func TestDisks_Update(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15193,7 +15061,6 @@ func TestDisks_Update(t *testing.T) {
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15279,7 +15146,6 @@ func TestDisks_Get(t *testing.T) {
 				Name: golang.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Disk)
@@ -15619,7 +15485,6 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
@@ -15665,7 +15530,6 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
@@ -15711,7 +15575,6 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
@@ -15793,7 +15656,6 @@ func TestSnapshots_Get(t *testing.T) {
 				TimeCreated:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.079872+00:00"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Snapshot) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Snapshot)
@@ -16057,7 +15919,6 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16115,7 +15976,6 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				PreviousKeys:   []*golang.KeyForDiskEncryptionSet{},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16178,7 +16038,6 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16238,7 +16097,6 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16301,7 +16159,6 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				PreviousKeys:             []*golang.KeyForDiskEncryptionSet{},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16354,7 +16211,6 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskEncryptionSet) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskEncryptionSet)
@@ -16627,7 +16483,6 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
@@ -16676,7 +16531,6 @@ func TestDiskAccesses_Update(t *testing.T) {
 				"project":    to.StringPtr("PrivateEndpoints"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
@@ -16736,7 +16590,6 @@ func TestDiskAccesses_Get(t *testing.T) {
 				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
@@ -16772,7 +16625,6 @@ func TestDiskAccesses_Get(t *testing.T) {
 				TimeCreated:       to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-05-01T04:41:35.079872+00:00"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskAccess) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskAccess)
@@ -16999,7 +16851,6 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 					},
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.PrivateLinkResourceListResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateLinkResourceListResult)
@@ -17057,7 +16908,6 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 				ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
@@ -17103,7 +16953,6 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 				ProvisioningState: golang.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
@@ -17223,7 +17072,6 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 				TimeCreated:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-09-16T04:41:35.079872+00:00"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.DiskRestorePoint) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.DiskRestorePoint)
@@ -17328,7 +17176,6 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
@@ -17371,7 +17218,6 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
@@ -17420,7 +17266,6 @@ func TestGalleries_Update(t *testing.T) {
 				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
@@ -17443,7 +17288,7 @@ func TestGalleries_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&golang.GalleriesGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
+		&golang.GalleriesClientGetOptions{Select: golang.SelectPermissions("Permissions").ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json: %v", err)
 	}
@@ -17470,7 +17315,6 @@ func TestGalleries_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
@@ -17486,7 +17330,7 @@ func TestGalleries_Get(t *testing.T) {
 	res, err = client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&golang.GalleriesGetOptions{Select: nil})
+		&golang.GalleriesClientGetOptions{Select: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json: %v", err)
 	}
@@ -17503,7 +17347,6 @@ func TestGalleries_Get(t *testing.T) {
 				ProvisioningState: golang.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.Gallery)
@@ -17682,7 +17525,6 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
@@ -17743,7 +17585,6 @@ func TestGalleryImages_Update(t *testing.T) {
 				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
@@ -17788,7 +17629,6 @@ func TestGalleryImages_Get(t *testing.T) {
 				ProvisioningState: golang.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImage)
@@ -18015,7 +17855,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18159,7 +17998,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18301,7 +18139,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18445,7 +18282,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18587,7 +18423,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18711,7 +18546,6 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18815,7 +18649,6 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18908,7 +18741,6 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -18933,7 +18765,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&golang.GalleryImageVersionsClientGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json: %v", err)
 	}
@@ -19007,7 +18839,6 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -19025,7 +18856,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&golang.GalleryImageVersionsGetOptions{Expand: nil})
+		&golang.GalleryImageVersionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
@@ -19078,7 +18909,6 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -19096,7 +18926,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&golang.GalleryImageVersionsGetOptions{Expand: nil})
+		&golang.GalleryImageVersionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json: %v", err)
 	}
@@ -19153,7 +18983,6 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -19171,7 +19000,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&golang.GalleryImageVersionsGetOptions{Expand: nil})
+		&golang.GalleryImageVersionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json: %v", err)
 	}
@@ -19229,7 +19058,6 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryImageVersion)
@@ -19401,7 +19229,6 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
@@ -19457,7 +19284,6 @@ func TestGalleryApplications_Update(t *testing.T) {
 				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
@@ -19498,7 +19324,6 @@ func TestGalleryApplications_Get(t *testing.T) {
 				SupportedOSType:     golang.OperatingSystemTypesWindows.ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplication) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplication)
@@ -19658,7 +19483,6 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
@@ -19745,7 +19569,6 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
@@ -19770,7 +19593,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&golang.GalleryApplicationVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&golang.GalleryApplicationVersionsClientGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json: %v", err)
 	}
@@ -19814,7 +19637,6 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
@@ -19832,7 +19654,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&golang.GalleryApplicationVersionsGetOptions{Expand: nil})
+		&golang.GalleryApplicationVersionsClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json: %v", err)
 	}
@@ -19868,7 +19690,6 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 				},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.GalleryApplicationVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.GalleryApplicationVersion)
@@ -20024,7 +19845,6 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 				}},
 			OperationType: golang.SharingUpdateOperationTypes("Add").ToPtr(),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharingUpdate)
@@ -20056,7 +19876,6 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		exampleRes := golang.SharingUpdate{
 			OperationType: golang.SharingUpdateOperationTypes("Reset").ToPtr(),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharingUpdate)
@@ -20077,7 +19896,7 @@ func TestSharedGalleries_List(t *testing.T) {
 	}()
 	client := golang.NewSharedGalleriesClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
-		&golang.SharedGalleriesListOptions{SharedTo: nil})
+		&golang.SharedGalleriesClientListOptions{SharedTo: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -20134,7 +19953,6 @@ func TestSharedGalleries_Get(t *testing.T) {
 				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SharedGallery) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGallery)
@@ -20156,7 +19974,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 	client := golang.NewSharedGalleryImagesClient("{subscription-id}", cred, &options)
 	pager := client.List("myLocation",
 		"galleryUniqueName",
-		&golang.SharedGalleryImagesListOptions{SharedTo: nil})
+		&golang.SharedGalleryImagesClientListOptions{SharedTo: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -20234,7 +20052,6 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 				OSType:  golang.OperatingSystemTypesWindows.ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImage) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGalleryImage)
@@ -20257,7 +20074,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 	pager := client.List("myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
-		&golang.SharedGalleryImageVersionsListOptions{SharedTo: nil})
+		&golang.SharedGalleryImageVersionsClientListOptions{SharedTo: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -20324,7 +20141,6 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 				PublishedDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-03-20T09:12:28Z"); return t }()),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.SharedGalleryImageVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SharedGalleryImageVersion)
@@ -20373,7 +20189,7 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServiceRoleInstancesGetOptions{Expand: nil})
+		&golang.CloudServiceRoleInstancesClientGetOptions{Expand: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json: %v", err)
 	}
@@ -20397,7 +20213,6 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 				Tier: to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RoleInstance) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RoleInstance)
@@ -20439,7 +20254,6 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 					Message:       to.StringPtr(""),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.RoleInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.RoleInstanceView)
@@ -20461,7 +20275,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 	client := golang.NewCloudServiceRoleInstancesClient("{subscription-id}", cred, &options)
 	pager := client.List("ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServiceRoleInstancesListOptions{Expand: nil})
+		&golang.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
@@ -20670,7 +20484,6 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 				Tier:     to.StringPtr("Standard"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudServiceRole) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudServiceRole)
@@ -20757,7 +20570,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
+		&golang.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.CloudServiceProperties{
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
@@ -20863,7 +20676,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -20879,7 +20691,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
+		&golang.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.CloudServiceProperties{
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
@@ -20969,7 +20781,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -20985,7 +20796,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
+		&golang.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.CloudServiceProperties{
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
@@ -21096,7 +20907,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -21112,7 +20922,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
+		&golang.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &golang.CloudService{
 			Location: to.StringPtr("westus"),
 			Properties: &golang.CloudServiceProperties{
 				Configuration: to.StringPtr("{ServiceConfiguration}"),
@@ -21232,7 +21042,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -21255,7 +21064,7 @@ func TestCloudServices_Update(t *testing.T) {
 	poller, err := client.BeginUpdate(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginUpdateOptions{Parameters: &golang.CloudServiceUpdate{
+		&golang.CloudServicesClientBeginUpdateOptions{Parameters: &golang.CloudServiceUpdate{
 			Tags: map[string]*string{
 				"Documentation": to.StringPtr("RestAPI"),
 			},
@@ -21324,7 +21133,6 @@ func TestCloudServices_Update(t *testing.T) {
 				"Documentation": to.StringPtr("RestAPI"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -21444,7 +21252,6 @@ func TestCloudServices_Get(t *testing.T) {
 				UpgradeMode: golang.CloudServiceUpgradeMode("Auto").ToPtr(),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudService)
@@ -21516,7 +21323,6 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 					Level:         golang.StatusLevelTypesInfo.ToPtr(),
 				}},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.CloudServiceInstanceView) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.CloudServiceInstanceView)
@@ -21790,7 +21596,7 @@ func TestCloudServices_Restart(t *testing.T) {
 	poller, err := client.BeginRestart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginRestartOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginRestartOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -21819,7 +21625,7 @@ func TestCloudServices_Reimage(t *testing.T) {
 	poller, err := client.BeginReimage(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginReimageOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginReimageOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -21848,7 +21654,7 @@ func TestCloudServices_Rebuild(t *testing.T) {
 	poller, err := client.BeginRebuild(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginRebuildOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginRebuildOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -21877,7 +21683,7 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 	poller, err := client.BeginDeleteInstances(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&golang.CloudServicesBeginDeleteInstancesOptions{Parameters: &golang.RoleInstances{
+		&golang.CloudServicesClientBeginDeleteInstancesOptions{Parameters: &golang.RoleInstances{
 			RoleInstances: []*string{
 				to.StringPtr("ContosoFrontend_IN_0"),
 				to.StringPtr("ContosoBackend_IN_1")},
@@ -21907,7 +21713,7 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 		"ConstosoRG",
 		"{cs-name}",
 		1,
-		&golang.CloudServicesUpdateDomainBeginWalkUpdateDomainOptions{Parameters: nil})
+		&golang.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
 	}
@@ -21942,7 +21748,6 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 			Name: to.StringPtr("1"),
 			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/ConstosoRG/providers/Microsoft.Compute/cloudServices/{cs-name}/updateDomains/1"),
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.UpdateDomain) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.UpdateDomain)
@@ -22029,7 +21834,6 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 				Version:     to.StringPtr("WA-GUEST-OS-3.90_202010-02"),
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.OSVersion) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.OSVersion)
@@ -22138,7 +21942,6 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 					}},
 			},
 		}
-
 		if !reflect.DeepEqual(exampleRes, res.OSFamily) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.OSFamily)

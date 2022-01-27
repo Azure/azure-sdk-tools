@@ -150,7 +150,7 @@ func ExampleGalleryImageVersionsClient_Get() {
 		"<gallery-name>",
 		"<gallery-image-name>",
 		"<gallery-image-version-name>",
-		&golang.GalleryImageVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&golang.GalleryImageVersionsClientGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}

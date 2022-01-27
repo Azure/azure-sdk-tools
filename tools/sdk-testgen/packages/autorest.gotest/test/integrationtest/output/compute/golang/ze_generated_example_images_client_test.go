@@ -99,7 +99,7 @@ func ExampleImagesClient_Get() {
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<image-name>",
-		&golang.ImagesGetOptions{Expand: nil})
+		&golang.ImagesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}

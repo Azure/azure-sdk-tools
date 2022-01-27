@@ -905,7 +905,7 @@ func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestO
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "scenario/zt_generated_signalr_test.go": "//go:build go1.16
+  "scenario_test/signalr/zt_generated_signalr_test.go": "//go:build go1.16
 // +build go1.16
 
 
@@ -945,7 +945,6 @@ var (
     location = getEnv(\\"LOCATION\\", \\"\\")
     resourceGroupName = getEnv(\\"RESOURCE_GROUP_NAME\\", \\"\\")
     subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"\\")
-    name string
 )
 
 func TestSignalr(t *testing.T) {
@@ -961,33 +960,28 @@ func setUp(t *testing.T) {
 	if err != nil {
 		t.Fatalf(\\"Failed to create credential: %v\\", err)
 	}
-
 	resourceGroup, err = createResourceGroup(ctx, cred)
 	if err != nil {
 		t.Fatalf(\\"Failed to create resource group: %v\\", err)
 	}
 	t.Logf(\\"Resource group created: id - %s name - %s\\", *resourceGroup.ID, *resourceGroup.Name)
-
     prepare(t)
 }
+
 func createResourceGroup(ctx context.Context, cred azcore.TokenCredential) (*armresources.ResourceGroup, error) {
 	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-
 	param := armresources.ResourceGroup {
 		Location: to.StringPtr(location),
 	}
-
 	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	return &resp.ResourceGroup, nil
 }
 
 func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error {
 	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-
 	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
 		return err
@@ -995,7 +989,6 @@ func deleteResourceGroup(ctx context.Context, cred azcore.TokenCredential) error
 	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -1014,6 +1007,7 @@ func getEnv(key, fallback string) string {
     }
     return fallback
 }
+
 func createDeployment(deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
 	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
 	poller, err := deployClient.BeginCreateOrUpdate(
@@ -1032,12 +1026,10 @@ func createDeployment(deploymentName string, template, params map[string]interfa
 	if err != nil {
 		return nil, err
 	}
-
 	res, err := poller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
-
 	return &res.DeploymentExtended, nil
 }
 
@@ -1072,7 +1064,8 @@ template := map[string]interface{}{
 },
 },
 }
-params := map[string]interface{}{}
+params := map[string]interface{}{
+}
 deploymentExtend, err := createDeployment(\\"Generate_Unique_Name\\", template, params)
 if err != nil {
     t.Fatalf(\\"Deployment error: %v\\", err)
@@ -1180,7 +1173,7 @@ Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
-    response, err := signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    response, err:= signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
@@ -1282,7 +1275,7 @@ Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
-    response, err := signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    response, err:= signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
@@ -1372,13 +1365,12 @@ nil)
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
-    _, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+    _, err= signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
     if err != nil {
         t.Fatalf(\\"Request error: %v\\", err)
     }
 }
 }
-
 
 func cleanup(t *testing.T) {
 }",

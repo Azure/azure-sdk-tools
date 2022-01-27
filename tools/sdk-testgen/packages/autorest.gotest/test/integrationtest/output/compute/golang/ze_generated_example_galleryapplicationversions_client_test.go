@@ -124,7 +124,7 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 		"<gallery-name>",
 		"<gallery-application-name>",
 		"<gallery-application-version-name>",
-		&golang.GalleryApplicationVersionsGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&golang.GalleryApplicationVersionsClientGetOptions{Expand: golang.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}

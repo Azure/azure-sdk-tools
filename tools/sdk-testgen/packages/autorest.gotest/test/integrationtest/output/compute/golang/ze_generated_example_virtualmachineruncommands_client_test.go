@@ -168,7 +168,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 		"<resource-group-name>",
 		"<vm-name>",
 		"<run-command-name>",
-		&golang.VirtualMachineRunCommandsGetByVirtualMachineOptions{Expand: nil})
+		&golang.VirtualMachineRunCommandsClientGetByVirtualMachineOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 	client := golang.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
 	pager := client.ListByVirtualMachine("<resource-group-name>",
 		"<vm-name>",
-		&golang.VirtualMachineRunCommandsListByVirtualMachineOptions{Expand: nil})
+		&golang.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {

@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("\"\"", "application/json")]
         [InlineData("invalid json", "application/json")]
         [InlineData("null", "application/json")]
+        [InlineData(null, "application/json")]
         [InlineData("{}", "application/json")]
         [InlineData("[]", "application/json")]
         [InlineData("{ \"json\": \"value\" }", "unknown")]
@@ -36,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("true", "")]
         public void CanRoundtripSessionRecord(string body, string contentType)
         {
-            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+            byte[] bodyBytes = body != null ? Encoding.UTF8.GetBytes(body) : null;
 
             var session = new RecordSession();
             session.Variables["a"] = "value a";
@@ -542,43 +543,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void ContentLengthResetToZeroOnGetRequestWithEmptyBody()
         {
             ContentLengthUpdatedCorrectlyOnEmptyBody(isHeadRequest: false);
-        }
-
-        [Fact]
-        public void SerializingEntryRespectsLiteralNull()
-        {
-            var nullBytes = Encoding.UTF8.GetBytes("null");
-            var entry = new RecordEntry()
-            {
-                RequestUri = "http://localhost/",
-                RequestMethod = RequestMethod.Get,
-                Request =
-                {
-                    Body = nullBytes,
-                    Headers =
-                    {
-                        {"Content-Type", new[] {"application/json"}},
-                        {"Content-Length", new[] {"4"}},
-                    },
-                },
-                Response =
-                {
-                    Body = nullBytes,
-                    Headers =
-                    {
-                        {"Content-Type", new[] {"application/json"}},
-                        {"Content-Length", new[] {"4"}},
-                    },
-                }
-            };
-            var arrayBufferWriter = new ArrayBufferWriter<byte>();
-            using var jsonWriter = new Utf8JsonWriter(arrayBufferWriter);
-            entry.Serialize(jsonWriter);
-            jsonWriter.Flush();
-
-            var deserialized = RecordEntry.Deserialize(JsonDocument.Parse(arrayBufferWriter.WrittenMemory).RootElement);
-            Assert.Equal(nullBytes, deserialized.Request.Body);
-            Assert.Equal(nullBytes, deserialized.Response.Body);
         }
 
         private void ContentLengthUpdatedCorrectlyOnEmptyBody(bool isHeadRequest)

@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("\"\"", "application/json")]
         [InlineData("invalid json", "application/json")]
         [InlineData("null", "application/json")]
+        [InlineData("\"null\"", "application/json")]
         [InlineData(null, "application/json")]
         [InlineData("{}", "application/json")]
         [InlineData("[]", "application/json")]

@@ -22,6 +22,24 @@
     $(SHOW_DIFFONLY_HREF)[0].click();
   });
 
+  // Diff button
+  $('.diff-button').each(function(index, value){
+    $(this).on('click', function () {
+      window.location.href = $(this).val() as string;
+    });
+  });
+
+  // Change dropdown filter for review and revision
+  $('#revisions-custom-select, #diff-custom-select').each(function(index, value) {
+    $(this).on('change', function() {
+      var url = $(this).find(":selected").val();
+      if (url)
+      {
+        window.location.href = url as string;
+      }
+    });
+  });
+
   // enable tooltip and popover
   (<any>$('[data-toggle="tooltip"]')).tooltip();
   (<any>$('[data-toggle="popover"]')).popover();

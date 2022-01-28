@@ -502,24 +502,26 @@ export class TestCodeModeler {
     }
 
     public async loadAvailableTestResources(fileRoot: string, loader: ApiScenarioLoader) {
-        const scenariosFolder = 'scenarios';
+        const scenariosFolders = ['scenarios', 'test-scenarios'];
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
-            const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
-            // currently loadAvailableTestResources only support scenario scanning from local file system
-            if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
-                for (const scenarioFile of fs.readdirSync(scenarioPath)) {
-                    if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
-                        continue;
-                    }
-                    const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
-                    try {
-                        const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
+            for (const scenariosFolder of scenariosFolders) {
+                const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
+                // currently loadAvailableTestResources only support scenario scanning from local file system
+                if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
+                    for (const scenarioFile of fs.readdirSync(scenarioPath)) {
+                        if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
+                            continue;
+                        }
+                        const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
+                        try {
+                            const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
-                        this.initiateTestDefinition(testDef, codemodelRestCallOnly);
-                        this.codeModel.testModel.scenarioTests.push(testDef);
-                    } catch {
-                        console.warn(`${scenarioPathName} is not a valid api scenario`);
+                            this.initiateTestDefinition(testDef, codemodelRestCallOnly);
+                            this.codeModel.testModel.scenarioTests.push(testDef);
+                        } catch (e) {
+                            console.warn(`${scenarioPathName} is not a valid api scenario`);
+                        }
                     }
                 }
             }

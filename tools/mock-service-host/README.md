@@ -45,22 +45,20 @@ Stateless:
 
 ## Start Mock Service Host
 
-### Clone this project
+### Install Mock Server Host
 
-Use git to clone this repo to your local workspace.
-
+You need to create a workspace for the config and cache of Mock Server Host and then use `npm install` to get the latest Mock Server Host.
 ```shell
-# cd MY_WORKSPACE
-# git clone git@github.com:Azure/azure-sdk-tools.git
-# cd MY_WORKSPACE/tools/mock-service-host
+# mkdir <MY_WORKSPACE> && cd <MY_WORKSPACE>
+# npm install @azure-tools/mock-service-host
 ```
 
 ### Configure mock-service-host running environment to use your local swagger
 
-The Azrue Rest Api Spec repo is a companion repo of mock-service-host. By default, the mock-service-host downloads [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to the cache folder and loads the target Resource provider based on configuration. You can ask it to load all RPs by updating configs in file '.env'.
+The Azrue Rest Api Spec repo is a companion repo of Mock Server Host. By default, the Mock Server Host downloads [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to the cache folder and loads the target Resource provider based on configuration. You can ask it to load all RPs by add config file '.env' under your workspace.
 
 ```
-+-- mock-service-host/
++-- <MY_WORKSPACE>/
 |   +-- cache/                   // swagger repos will be downloaded here in the first start-up of mock-service-host
 |   +-- .env                     // you can create this file, and add configs in it.
 ```
@@ -80,28 +78,11 @@ Change specRetrievalGitUrl and specRetrievalGitBranch if you are not using the p
 validationPathsPattern=specification/mediaservices/resource-manager/Microsoft.Media/**/*.json
 ```
 
-### [Optional] Download \*.pem files for self-signed certificate.
-The SSL certificates are required when launching the mock-service-host. This step download the default *.pem certificate files from Azure KeyVault.
-
-```shell
-# az login ...      // login azure cli with your credential
-# . initiate.sh   // for LINUX or mac
-```
-
-or
-
-```bat
-> initiate.ps1    // for Windows, need to run in powershell
-```
-
-If failed for permission reasons, please contact [CodeGen Core team vsccodegen@microsoft.com](vsccodegen@microsoft.com) for authentication on keyvault used in the scripts. Or you may create self-signed key&cert by your self, the required files can be found in [src/webserver/httpServerConstructor.ts](./src/webserver/httpServerConstructor.ts)
-
-> **_NOTE:_** If you don't do this step, the mock-service-host will try to create new certificates when lauching. The need to ensure [OpenSSL Toolkit](https://www.openssl.org/) has been installed in your environment.
-
 ### Start Mock Service Host
 
 ```
-# npm install && npm run start
+# cd <MY_WORKSPACE>
+# node node_modules/@azure-tools/mock-service-host/dist/src/main.js
 ```
 
 Common trouble shootings for starting the web server:
@@ -113,7 +94,7 @@ It takes up to two minutes to load all swagger files in the azure-rest-api-specs
 
 ## Consume Mock Service Host
 
-After the mock server is started, this section describes how to consume the mock server with different client tool/lib.
+This section describes how to consume the mock server with different client tool/lib after the mock server is started.
 ### Using Azure SDK for GO
 
 #### Install SDK package

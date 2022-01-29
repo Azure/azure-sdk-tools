@@ -46,8 +46,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                Assert.Single(handlerForTest.Sanitizers);
+                Assert.Equal(2, handlerForTest.Sanitizers.Count);
                 Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
+                Assert.IsType<OAuthResponseSanitizer>(handlerForTest.Sanitizers[1]);
             }
         }
 

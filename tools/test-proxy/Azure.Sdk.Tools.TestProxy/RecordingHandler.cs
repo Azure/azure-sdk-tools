@@ -394,17 +394,26 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
             {
-                playbackSession.AdditionalSanitizers.Add(sanitizer);
+                lock (playbackSession)
+                {
+                    playbackSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                lock (recordingSession.ModifiableSession)
+                {
+                    recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
             {
-                inMemSession.AdditionalSanitizers.Add(sanitizer);
+                lock (inMemSession)
+                {
+                    inMemSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)

@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -464,7 +465,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer()
+                    new RecordedTestSanitizer(),
+                    new OAuthResponseSanitizer()
                 };
 
                 Transforms = new List<ResponseTransform>

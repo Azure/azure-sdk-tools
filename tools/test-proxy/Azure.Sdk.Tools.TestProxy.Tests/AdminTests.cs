@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false }");
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false, \"ignoredQueryParameters\": \"api-version,location\" }");
             
             // content length must be set for the body to be parsed in SetMatcher
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
@@ -202,6 +202,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("Content-Type", matcher.ExcludeHeaders);
             Assert.Contains("Content-Length", matcher.ExcludeHeaders);
             Assert.Contains("Connection", matcher.IgnoredHeaders);
+            Assert.Contains("api-version", matcher.IgnoredQueryParameters);
+            Assert.Contains("location", matcher.IgnoredQueryParameters);
         }
 
         [Fact]

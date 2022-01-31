@@ -139,7 +139,7 @@ class ClassNode(NodeEntityBase):
                     )
             elif isinstance(child_obj, dict):
                 for (item_name, item_type) in child_obj.items():
-                    if inspect.isclass(item_type) or getattr(item_type, "__module__") == "typing":
+                    if inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )

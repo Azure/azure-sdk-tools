@@ -2,7 +2,7 @@ from inspect import Parameter
 import re
 from typing import Optional
 
-class_regex = re.compile(r"<class '([a-zA-Z._]+)'>")
+keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
 
 class NodeEntityBase:
@@ -71,8 +71,8 @@ def get_qualified_name(obj, namespace):
     if hasattr(obj, "__args__"):
         for arg in getattr(obj, "__args__"):
             arg_string = str(arg)
-            if class_regex.match(arg_string):
-                value = class_regex.search(arg_string).group(1)
+            if keyword_regex.match(arg_string):
+                value = keyword_regex.search(arg_string).group(2)
                 # we ignore NoneType since Optional implies that NoneType is
                 # acceptable
                 if value != "NoneType":

@@ -21,14 +21,35 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
 
     public BuilderTraitsDiagnosticRule() {
         traits = new HashMap<>();
+        traits.put("AzureKeyCredentialTrait", Arrays.asList(
+            new TraitMethod("credential", "AzureKeyCredential")
+        ));
+        traits.put("AzureNamedKeyCredentialTrait", Arrays.asList(
+            new TraitMethod("credential", "AzureNamedKeyCredentialTrait")
+        ));
+        traits.put("AzureSasCredentialTrait", Arrays.asList(
+            new TraitMethod("credential", "AzureSasCredential")
+        ));
         traits.put("TokenCredentialTrait", Arrays.asList(
             new TraitMethod("credential", "TokenCredential")
         ));
-        traits.put("HttpConfigTrait", Arrays.asList(
+        traits.put("ConfigurationTrait", Arrays.asList(
+            new TraitMethod("configuration", "Configuration")
+        ));
+        traits.put("ConnectionStringTrait", Arrays.asList(
+            new TraitMethod("connectionString", "String")
+        ));
+        traits.put("HttpTrait", Arrays.asList(
             new TraitMethod("httpClient", "HttpClient"),
             new TraitMethod("pipeline", "HttpPipeline"),
             new TraitMethod("addPolicy", "HttpPipelinePolicy"),
+            new TraitMethod("retryOptions", "RetryOptions"),
             new TraitMethod("httpLogOptions", "HttpLogOptions")
+        ));
+        traits.put("AmqpTrait", Arrays.asList(
+            new TraitMethod("retryOptions", "AmqpRetryOptions"),
+            new TraitMethod("transportType", "AmqpTransportType"),
+            new TraitMethod("proxyOptions", "ProxyOptions")
         ));
     }
 

@@ -51,7 +51,7 @@ namespace APIViewWeb
             {
                 Stream dllStream = stream;
                 Stream docStream = null;
-                List<DependencyInfo> dependencies = new List<DependencyInfo>();
+                List<DependencyInfo> dependencies = null;
 
                 if (IsNuget(originalName))
                 {
@@ -72,6 +72,7 @@ namespace APIViewWeb
                             using var nuspecStream = entry.Open();
                             var document = XDocument.Load(nuspecStream);
                             var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
+                            dependencies = new List<DependencyInfo>();
                             dependencies.AddRange(
                                     dependencyElements.Select(dependency => new DependencyInfo(
                                             dependency.Attribute("id").Value,

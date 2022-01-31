@@ -34,7 +34,13 @@ param(
   [string]$Subscription,
   
   [Parameter(Mandatory = $false)]
-  [boolean]$Audit=$true
+  [boolean]$Audit=$true,
+
+  [Parameter(Mandatory = $false)]
+  [boolean]$DeleteAsync=$false,
+
+  [Parameter(Mandatory = $false)]
+  [boolean]$Login=$true
 )
 
 function IsValidAlias
@@ -48,7 +54,7 @@ function IsValidAlias
 
     foreach ($domain in $domains)
     {
-        if (Get-AzAdUser -UserPrincipalName "$($Matches.2)@$($domain)")
+        if (Get-AzAdUser -UserPrincipalName "$Alias@$domain")
         {
             return $true;
         }
@@ -67,15 +73,18 @@ else
 }
 
 # Connect and select active subscription
-Connect-AzAccount
-Select-AzSubscription -Subscription $Subscription
+if ($Login)
+{
+    Connect-AzAccount
+    Select-AzSubscription -Subscription $Subscription
+}
 
 #initialize lists
 $deleted = @()
 $skipped = @()
 
 # Loop through the resource groups and delete any with non-compliant names
-foreach ($resourceGroup in Get-AzResourceGroup | Sort ResourceGroupName)
+foreach ($resourceGroup in Get-AzResourceGroup | Sort-Object ResourceGroupName)
 {
     # skip exceptions
     if ($resourceGroup.Tags -and $resourceGroup.Tags["CleanupException"] -eq "true")
@@ -85,8 +94,40 @@ foreach ($resourceGroup in Get-AzResourceGroup | Sort ResourceGroupName)
         continue
     }
 
+    # Exclude groups with a valid owners tag list
+    if ($resourceGroup.Tags -and $resourceGroup.Tags["owners"])
+    {
+        $hasValidOwner = $false
+        $owners = $resourceGroup.Tags["owners"]
+        foreach ($owner in $owners -Split "[;, ]") {
+            if (IsValidAlias -Alias $owner) {
+                $hasValidOwner = $true
+                break
+            }
+        }
+        if ($hasValidOwner)
+        {
+            Write-Host " Skipping tagged exception resource group '$($resourceGroup.ResourceGroupName)' with owners '$owners'"
+            $skipped += $($resourceGroup.ResourceGroupName)
+            continue
+        }
+    }
+
+    # Exclude groups already marked for cleanup within a week
+    if ($resourceGroup.Tags -and $resourceGroup.Tags["DeleteAfter"])
+    {
+        $now = [DateTime]::UtcNow
+        $parsedTime = [DateTime]::MaxValue
+        $canParse = [DateTime]::TryParse($resourceGroup.Tags["DeleteAfter"], [ref]$parsedTime)
+        if ($canParse -and ($parsedTime -lt $now.AddDays(7))) {
+            Write-Host " Skipping compliant resource group '$($resourceGroup.ResourceGroupName)' marked DeleteAfter '$parsedTime'"
+            $skipped += $($resourceGroup.ResourceGroupName)
+            continue
+        }
+    }
+
     # check compliance (formatting first, then validate alias) and skip if compliant
-    if ($resourceGroup.ResourceGroupName -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" -and IsValidAlias -Alias $Matches.2)
+    if ($resourceGroup.ResourceGroupName -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" -and (IsValidAlias -Alias $matches[2]))
     {
         Write-Host " Skipping compliant resource group: $($resourceGroup.ResourceGroupName)"
         $skipped += $($resourceGroup.ResourceGroupName)
@@ -103,7 +144,11 @@ foreach ($resourceGroup in Get-AzResourceGroup | Sort ResourceGroupName)
     }
     else
     {
-        if (Remove-AzResourceGroup -Name $resourceGroup.ResourceGroupName -Force)
+        if ($DeleteAsync)
+        {
+            Remove-AzResourceGroup -Name $resourceGroup.ResourceGroupName -Force -AsJob
+        }
+        elseif (Remove-AzResourceGroup -Name $resourceGroup.ResourceGroupName -Force)
         {
             Write-Host " Succeeded."
         }

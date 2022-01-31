@@ -50,8 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = e.StatusCode.ToString(),
-                    StackTrace = e.StackTrace,
+                    Status = e.StatusCode.ToString()
                 };
 
                 var body = JsonSerializer.Serialize(bodyObj);

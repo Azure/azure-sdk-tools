@@ -120,7 +120,7 @@ namespace ApiView
 
         public static void BuildDependencies(CodeFileTokensBuilder builder, List<DependencyInfo> dependencies)
         {
-            if (dependencies != null)
+            if (dependencies != null && dependencies.Any())
             {
                 builder.NewLine();
                 builder.Append("Dependencies:", CodeFileTokenKind.Text);

@@ -1,5 +1,11 @@
 #!/usr/bin/env pwsh -c
 
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'}
+#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'}
+
 <#
 .SYNOPSIS
 Subscription cleanup script
@@ -69,7 +75,7 @@ if ($Audit)
 }
 else
 {
-    Write-Host -ForegroundColor Red "!!!NOT IN AUDIT MODE. RESOURCE GROUPS WILL BE DELETED!!!"
+    Write-Warning "!!!NOT IN AUDIT MODE. RESOURCE GROUPS WILL BE DELETED!!!"
 }
 
 # Connect and select active subscription
@@ -83,7 +89,7 @@ if ($Login)
 $deleted = @()
 $skipped = @()
 
-# Loop through the resource groups and delete any with non-compliant names
+# Loop through the resource groups and delete any with non-compliant names/tags
 foreach ($resourceGroup in Get-AzResourceGroup | Sort-Object ResourceGroupName)
 {
     # skip exceptions

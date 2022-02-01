@@ -46,10 +46,6 @@ class NodeEntityBase:
                 c.generate_tokens(apiview)
             apiview.end_group()
 
-    def generate_string(self):
-        # TODO: Implement
-        return None
-
 
 def get_qualified_name(obj, namespace):
     """Generate and return fully qualified name of object with module name for internal types.

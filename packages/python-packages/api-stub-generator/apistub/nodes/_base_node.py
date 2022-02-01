@@ -4,6 +4,7 @@ from typing import Optional
 
 keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
+name_regex = re.compile(r"([^[]*)")
 
 class NodeEntityBase:
     """This is the base class for all node types
@@ -65,6 +66,10 @@ def get_qualified_name(obj, namespace):
     elif hasattr(obj, "__qualname__"):
         name = getattr(obj, "__qualname__")
 
+    module_name = ""
+    if hasattr(obj, "__module__"):
+        module_name = getattr(obj, "__module__")
+
     args = []
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
@@ -83,13 +88,14 @@ def get_qualified_name(obj, namespace):
             else:
                 args.append(arg_string)
 
-    module_name = ""
-    if hasattr(obj, "__module__"):
-        module_name = getattr(obj, "__module__")
-
-    value = name
+    # omit any brackets for Python 3.9/3.10 compatibility
+    value = name_regex.search(name).group(0)
     if module_name and module_name.startswith(namespace):
         value = f"{module_name}.{name}"
+    elif value.startswith(module_name):
+        # strip the module name if it isn't the namespace (example: typing)
+        value = value[len(module_name) +1:]
+
     if args:
         arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"

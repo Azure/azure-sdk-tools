@@ -113,6 +113,7 @@ spec:
       containers:
       - name: <container name, pick anything>
         image: <container image name>
+        imagePullPolicy: Always
         command: ["test entrypoint command/binary"]
         args: [<args string array for your test command>]
       restartPolicy: Never
@@ -321,6 +322,7 @@ spec:
   containers:
     - name: deployment-example
       image: mcr.microsoft.com/azure-cli
+      imagePullPolicy: Always
       command: ['bash', '-c']
       args:
         - |

@@ -7,7 +7,6 @@
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 
 from enum import Enum, EnumMeta
-from six import with_metaclass
 from typing import TypedDict, Union
 
 class _CaseInsensitiveEnumMeta(EnumMeta):
@@ -27,7 +26,7 @@ class _CaseInsensitiveEnumMeta(EnumMeta):
             raise AttributeError(name)
 
 
-class PetEnum(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
     """A test enum
     """
     DOG = "dog"

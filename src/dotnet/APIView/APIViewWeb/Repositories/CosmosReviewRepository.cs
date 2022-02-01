@@ -81,15 +81,6 @@ namespace APIViewWeb
                 allReviews.AddRange(result.Resource);
             }
 
-            foreach(var r in allReviews)
-            {
-                if (r.PackageDisplayName == null || r.ServiceName == null)
-                {
-                    var p = _packageNameManager.GetPackageDetails(r.PackageName);
-                    r.PackageDisplayName = p?.DisplayName ?? "Other";
-                    r.ServiceName = p?.ServiceName ?? "Other";
-                }
-            }
             return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 

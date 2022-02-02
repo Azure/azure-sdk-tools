@@ -43,7 +43,9 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
         /// <param name="version">Flag. Invoke to get the version of the tool.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
+        /// <param name="httpPort">Port to use for HTTP endpoint. Default to use 5000</param>
+        /// <param name="httpsPort">Port to use for HTTPs endpoint. Default to use 5001</param>
+        public static void Main(bool insecure = false, string storageLocation = null, bool version = false, int httpPort = 5000, int httpsPort = 5001)
         {
             if (version)
             {
@@ -69,8 +71,15 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var host = Host.CreateDefaultBuilder();
 
+            var httpAddressUrl = "http://localhost:" + httpPort.ToString();
+            var httpsAddressUrl = "https://localhost:" + httpsPort.ToString();
+
             host.ConfigureWebHostDefaults(
-                builder => builder.UseStartup<Startup>());
+                builder =>
+                {
+                    builder.UseStartup<Startup>();
+                    builder.UseUrls(httpAddressUrl, httpsAddressUrl);
+                });
 
             host.Build().Run();
 

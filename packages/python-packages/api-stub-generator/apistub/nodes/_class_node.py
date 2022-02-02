@@ -127,16 +127,20 @@ class ClassNode(NodeEntityBase):
                     self.child_nodes.append(
                         FunctionNode(self.namespace, self, child_obj)
                     )
-            elif self.is_enum and isinstance(child_obj, self.obj):
+
+            # otherwise, anything with leading underscore should be ingored
+            if name.startswith("_"):
+                continue
+
+            if self.is_enum and isinstance(child_obj, self.obj):
                 # Enum values will be of parent instance type
                 child_obj.__name__ = name
                 self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
             elif isinstance(child_obj, property):
-                if not name.startswith("_"):
-                    # Add instance properties
-                    self.child_nodes.append(
-                        PropertyNode(self.namespace, self, name, child_obj)
-                    )
+                # Add instance properties
+                self.child_nodes.append(
+                    PropertyNode(self.namespace, self, name, child_obj)
+                )
             elif isinstance(child_obj, dict):
                 for (item_name, item_type) in child_obj.items():
                     if inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
@@ -147,9 +151,7 @@ class ClassNode(NodeEntityBase):
                         self.child_nodes.append(
                             PropertyNode(self.namespace, self, item_name, child_obj)
                         )
-            elif not name.startswith("_") and (
-                isinstance(child_obj, str) or isinstance(child_obj, int)
-            ):
+            elif isinstance(child_obj, str) or isinstance(child_obj, int):
                 # Add any public class level variables
                 # if variable is already present  in parsed list then just update the value
                 var_nodes = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]

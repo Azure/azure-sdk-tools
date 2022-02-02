@@ -39,11 +39,5 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             return StringSanitizer.SanitizeValue(body, _newValue, _regexValue, _groupForReplace);
         }
-
-
-        public override byte[] SanitizeBody(string contentType, byte[] body)
-        {
-            return Encoding.UTF8.GetBytes(StringSanitizer.SanitizeValue(Encoding.UTF8.GetString(body), _newValue, _regexValue, _groupForReplace));
-        }
     }
 }

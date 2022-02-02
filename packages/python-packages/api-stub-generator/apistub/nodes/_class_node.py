@@ -2,15 +2,18 @@ import logging
 import inspect
 from enum import Enum
 import operator
+from typing import TypedDict
 
 from ._base_node import NodeEntityBase
 from ._function_node import FunctionNode
 from ._enum_node import EnumNode
+from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 
 
+find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
 find_instancefunc = (
     lambda x: isinstance(x, FunctionNode)
@@ -134,6 +137,16 @@ class ClassNode(NodeEntityBase):
                     self.child_nodes.append(
                         PropertyNode(self.namespace, self, name, child_obj)
                     )
+            elif isinstance(child_obj, dict):
+                for (item_name, item_type) in child_obj.items():
+                    if inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                        self.child_nodes.append(
+                            KeyNode(self.namespace, self, item_name, item_type)
+                        )
+                    else:
+                        self.child_nodes.append(
+                            PropertyNode(self.namespace, self, item_name, child_obj)
+                        )
             elif not name.startswith("_") and (
                 isinstance(child_obj, str) or isinstance(child_obj, int)
             ):
@@ -170,7 +183,8 @@ class ClassNode(NodeEntityBase):
         # properties, variables, Enums, dunder methods, class functions and instance methods
         # sort all elements based on name firstand then group them
         self.child_nodes.sort(key=operator.attrgetter("name"))
-        sorted_children = list(filter(find_props, self.child_nodes))
+        sorted_children = list(filter(find_keys, self.child_nodes))
+        sorted_children.extend(filter(find_props, self.child_nodes))
         sorted_children.extend(filter(find_var, self.child_nodes))
         sorted_children.extend(filter(find_enum, self.child_nodes))
         sorted_children.extend(filter(find_dunder_func, self.child_nodes))

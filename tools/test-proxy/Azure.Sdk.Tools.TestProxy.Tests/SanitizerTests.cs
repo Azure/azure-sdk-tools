@@ -238,6 +238,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyRegexSanitizerIgnoresNonTextualBodies()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(regex: ".*");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Equal(content, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
         public void BodyRegexSanitizerQuietlyExits()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");

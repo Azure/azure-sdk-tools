@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(e is TestRecordingMismatchException)
                 {
                     response.Headers.Add("x-request-mismatch", "true");
+                    response.Headers.Add("x-request-mismatch-error", e.Message);
                 }
                 
                 var bodyObj = new
@@ -67,7 +68,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = unexpectedStatusCode.ToString()
+                    Status = unexpectedStatusCode.ToString(),
+                    StackTrace = e.StackTrace,
                 };
 
                 var body = JsonSerializer.Serialize(bodyObj);

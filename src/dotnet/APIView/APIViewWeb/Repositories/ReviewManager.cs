@@ -320,7 +320,7 @@ namespace APIViewWeb.Respositories
 
         private LanguageService GetLanguageService(string language)
         {
-            return _languageServices.Single(service => service.Name == language);
+           return _languageServices.Single(service => service.Name == language);
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)

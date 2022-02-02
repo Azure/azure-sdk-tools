@@ -30,7 +30,7 @@
   });
 
   // Change dropdown filter for review and revision
-  $('#revisions-custom-select, #diff-custom-select').each(function(index, value) {
+  $('#revisions-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
     $(this).on('change', function() {
       var url = $(this).find(":selected").val();
       if (url)

@@ -404,9 +404,13 @@ For additional reading on this process for trusting SSL certs locally, feel free
 
 ## Troubleshooting
 
-### Visual Studio - Community edition
+### Visual studio
 
-There's an issue with the Visual Studio Community edition. Use Enterprise to run locally.
+If you get the message dialog `The project doesn't know how to rin the profile Azure.Sdk.Tools.TestProxy`, you can fix it by reviewing the next two things:
+
+### ASP.NET and web development
+
+Run Visual Studio installer and make sure ASP.NET and web development is installed.
 
 ### Windows IIS
 

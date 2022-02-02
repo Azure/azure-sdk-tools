@@ -30,7 +30,7 @@
   });
 
   // Change dropdown filter for review and revision
-  $('#revisions-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
+  $('#revisions-bootstraps-select, #review-bootstraps-select, #diff-bootstraps-select').each(function(index, value) {
     $(this).on('change', function() {
       var url = $(this).find(":selected").val();
       if (url)
@@ -43,5 +43,4 @@
   // enable tooltip and popover
   (<any>$('[data-toggle="tooltip"]')).tooltip();
   (<any>$('[data-toggle="popover"]')).popover();
-
 });

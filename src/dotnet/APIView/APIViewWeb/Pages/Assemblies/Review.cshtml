@@ -27,10 +27,20 @@
                             <label class="input-group-text" for="review-bootstraps-select">Review</label>
                         </div>
                         <select class="selectpicker show-tick p-0" data-style="btn-light btn-sm border rounded-left-0 m-0" data-live-search="true" data-size="10" data-width="calc(100% - 60px)" data-container="body" id="review-bootstraps-select">
-                            <option selected value="0" data-subtext="Java">azure-core-amqp (version 2.3.0-beta.1) - Candidate 2.3.0-beta-1</option>
-                            <option value="1" data-subtext="Java">azure-security-attestation (version 1.0.0-beta.2)</option>
-                            <option value="2" data-subtext="JavaScript">@@azure/communication-phone-numbers - Phone Numbers including basic Short Codes client functionalitie</option>
-                            <option value="3" data-subtext="Python">azure-communication-phonenumbers (version 1.0.3)</option>
+                            @foreach(var review in Model.ReviewsForPackage)
+                            {
+                                var urlValue = @Url.ActionLink("Review", "Assemblies", new {
+                                    id = review.ReviewId
+                                });
+                                if (review.ReviewId == Model.Review.ReviewId)
+                                {
+                                    <option selected value="@urlValue" data-subtext="@review.Language">@review.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@urlValue" data-subtext="@review.Language">@review.Name</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>

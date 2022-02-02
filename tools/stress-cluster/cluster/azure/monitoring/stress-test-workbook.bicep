@@ -9,8 +9,8 @@ param workbookType string = 'workbook'
 @description('The id of resource instance to which the workbook will be associated')
 param workbookSourceId string = 'azure monitor'
 
-@description('The guid for this workbook instance (must be deterministic in order to be idempotent)')
-param workbookId string = guid(resourceGroup().name)
+// The guid for this workbook instance (must be deterministic in order to be idempotent)
+var workbookId = guid(resourceGroup().name)
 
 var workbookContent = {
   version: 'Notebook/1.0'

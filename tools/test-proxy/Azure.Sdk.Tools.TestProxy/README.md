@@ -401,3 +401,13 @@ To connect to the docker on SSL, both the docker image and your local machine mu
 In the future, passing in a custom cert via a bound volume that contains your certificate will be a possibility as well.
 
 For additional reading on this process for trusting SSL certs locally, feel free to read up [here.](https://devblogs.microsoft.com/aspnet/configuring-https-in-asp-net-core-across-different-platforms/) The afore-mentioned [docker specific readme](../docker/README.md) also has details that are relevant.
+
+## Troubleshooting
+
+### Visual Studio - Community edition
+
+There's an issue with the Visual Studio Community edition. Use Enterprise to run locally.
+
+### Windows IIS
+
+If you can't lauch the test proxy locally from Visual Studio, make sure [IIS is installed](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) in your local system.

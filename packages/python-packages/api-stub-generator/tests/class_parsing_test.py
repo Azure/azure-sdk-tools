@@ -45,6 +45,11 @@ class FakeObject(object):
         self.age = age
         self.union = union
 
+    # This should be ignored
+    _SOME_THING = {
+        "cat": "hat"
+    }
+
 
 FakeTypedDict = TypedDict(
     'FakeTypedDict',

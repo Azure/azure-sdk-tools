@@ -138,6 +138,9 @@ class ClassNode(NodeEntityBase):
                         PropertyNode(self.namespace, self, name, child_obj)
                     )
             elif isinstance(child_obj, dict):
+                # TypedDict names are "__annotations__"
+                if name.startswith("_") and not name == "__annotations__":
+                    continue
                 for (item_name, item_type) in child_obj.items():
                     if inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
                         self.child_nodes.append(

@@ -1,0 +1,87 @@
+## Resource management guidelines
+
+This document contains guidelines for creating and managing Azure resources in the Azure SDK Engineering System
+subscriptions. EngSys has automation that will delete resources based on the criteria outlined below. This is to
+improve our overall security and keep us in compliance with company policies.
+
+
+## Managing Dev Resources in the Playground Subscription
+
+This section applies to resource groups located in the `Azure SDK Developer Playground` subscription.
+
+Currently the automation will inspect resource groups and role assignments only.
+
+### Resource Groups
+
+The automation will delete all resource groups in the playground subscription DAILY, unless they meet one of the following criteria:
+
+- The resource group starts with a valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`, followed by an
+  optional hyphen and extra characters.
+    - Valid group name examples: `myalias`, `myalias-test-foobar` for `myalias@microsoft.com`
+- The resource group contains a tag with the name `owners` where the value is a csv formatted string that contains at
+  least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`. This convention should only be used
+  when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
+  provider like AKS).
+    - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
+- The resource group contains a tag with the name `DeleteAfter` and an ISO8601 formatted date value, where the date is
+  not greater than 7 days in the future.
+    - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
+    - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
+      future date to renew the lease.
+    - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
+      Example extending resource group lease by three days:
+      ```
+      # powershell
+      Set-AzResourceGroup -Name <group name> -Tag @{ DeleteAfter = [DateTime]::UtcNow.AddDays(3).ToString("o") }
+
+      # bash
+      az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
+      ```
+
+For long-lived resources, please also add a resource group tag named `Description` describing the purpose of the group.
+
+### Role Assignments
+
+Role Assignments should be created at the resource group scope or below, where the resource group follows the above
+guidelines. Subscription level role assignments may be deleted at any time. Reach out to the EngSys team for exemptions.
+
+## Managing CI resources in the test subscription
+
+This section applies to resource groups located in the `Azure SDK Test Resources` subscription. Developers should not
+create resources for individual testing in this subscription, but sometimes resources may need to be created to host
+static assets, secrets or configuration related to pipeline tests.
+
+Currently all EngSys tooling will inspect resource groups and role assignments only.
+
+### Resource Groups
+
+EngSys will delete all resource groups in the testing subscription DAILY, unless they meet one of the following criteria:
+
+- The resource group contains a tag with the name `owners` where the value is a csv formatted string that contains at
+  least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`. This convention should only be used
+  when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
+  provider like AKS).
+    - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
+- The resource group contains a tag with the name `DeleteAfter` and an ISO8601 formatted date value, where the date is
+  greater than the current date.
+    - Resource groups which do not contain a `DeleteAfter` tag will have one added for a 24 hour duration
+      to mark them for deletion and give any test pipelines that are actively using the resources time to
+      complete.
+    - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
+      future date to renew the lease.
+    - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
+      Example extending resource group lease by three days:
+      ```
+      # powershell
+      Set-AzResourceGroup -Name <group name> -Tag @{ DeleteAfter = [DateTime]::UtcNow.AddDays(3).ToString("o") }
+
+      # bash
+      az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
+      ```
+
+For long-lived resources, please also add a resource group tag named `Description` describing the purpose of the group.
+
+### Role Assignments
+
+Role Assignments should be created at the resource group scope or below, where the resource group follows the above
+guidelines. Subscription level role assignments may be deleted at any time. Reach out to the EngSys team for exemptions.

@@ -69,7 +69,7 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
-The test-proxy resolves the its storage location via:
+The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
@@ -83,6 +83,14 @@ By default, the server will listen on the following port mappings:
 |-|-|
 | http | 5000 |
 | https | 5001 |
+
+### Use custom port for http and https
+
+Use command line argument `http-port` and `https-port` to select a custom port to be used.
+
+```powershell
+test-proxy --http-port 1989 --https-port 1031
+```
 
 ## Environment Variables
 

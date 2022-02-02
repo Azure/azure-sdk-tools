@@ -67,6 +67,8 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
 
+        public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
+
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
@@ -115,7 +117,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
-
+            ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName);
             return Page();
         }
 

@@ -4,6 +4,13 @@ This document contains guidelines for creating and managing Azure resources in t
 subscriptions. EngSys has automation that will delete resources based on the criteria outlined below. This is to
 improve our overall security and keep us in compliance with company policies.
 
+  * [Managing Dev Resources in the Playground Subscription](#managing-dev-resources-in-the-playground-subscription)
+     * [Resource Groups](#resource-groups)
+     * [Role Assignments](#role-assignments)
+  * [Managing CI resources in the test subscription](#managing-ci-resources-in-the-test-subscription)
+     * [Resource Groups](#resource-groups-1)
+     * [Role Assignments](#role-assignments-1)
+
 
 ## Managing Dev Resources in the Playground Subscription
 

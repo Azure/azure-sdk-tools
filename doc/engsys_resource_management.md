@@ -19,7 +19,7 @@ Currently, the automation will inspect resource groups and role assignments only
 
 ### Resource Groups
 
-The automation will delete all resource groups in the playground subscription DAILY, unless they meet one of the following criteria:
+The automation will delete all resource groups in the playground subscription DAILY, unless they meet at least one of the following criteria:
 
 - The resource group starts with a valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`, followed by an
   optional hyphen and extra characters.
@@ -29,11 +29,14 @@ The automation will delete all resource groups in the playground subscription DA
   when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
   provider like AKS).
     - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
-- The resource group contains a tag with the name `DeleteAfter` and an ISO8601 formatted date value, where the date is
-  not greater than 7 days in the future.
+- The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
+  (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
     - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
     - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
       future date to renew the lease.
+    - Resource groups which do not contain a `DeleteAfter` tag will have one added for a 24 hour duration
+      to mark them for deletion and give any test pipelines that are actively using the resources time to
+      complete.
     - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
       Example extending resource group lease by three days:
       ```
@@ -67,20 +70,21 @@ Currently all EngSys tooling will inspect resource groups and role assignments o
 
 ### Resource Groups
 
-EngSys will delete all resource groups in the testing subscription DAILY, unless they meet one of the following criteria:
+EngSys will delete all resource groups in the testing subscription DAILY, unless they meet at least one of the following criteria:
 
 - The resource group contains a tag with the name `owners` where the value is a csv formatted string that contains at
   least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`. This convention should only be used
   when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
   provider like AKS).
     - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
-- The resource group contains a tag with the name `DeleteAfter` and an ISO8601 formatted date value, where the date is
-  greater than the current date.
+- The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
+  (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
+    - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
+    - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
+      future date to renew the lease.
     - Resource groups which do not contain a `DeleteAfter` tag will have one added for a 24 hour duration
       to mark them for deletion and give any test pipelines that are actively using the resources time to
       complete.
-    - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
-      future date to renew the lease.
     - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
       Example extending resource group lease by three days:
       ```

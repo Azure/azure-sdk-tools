@@ -408,7 +408,7 @@ For additional reading on this process for trusting SSL certs locally, feel free
 
 If you get the message dialog `The project doesn't know how to run the profile Azure.Sdk.Tools.TestProxy`, you can fix it by reviewing the next two things:
 
-### ASP.NET and web development
+#### ASP.NET and web development
 
 Run Visual Studio installer and make sure ASP.NET and web development is installed.
 
@@ -418,7 +418,7 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 
 ![image](https://user-images.githubusercontent.com/24213737/152257948-c61e6876-eb36-4414-b8de-8c85aa0532bb.png)
 
-### Windows IIS
+#### Windows IIS
 
 [Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 

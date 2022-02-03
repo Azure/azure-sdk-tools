@@ -641,3 +641,12 @@ mark {
 .hidden-row-via-filter {
     display: none;
 }
+
+.bootstraps-select-label {
+    padding: 4px 5px 3px 2px;
+}
+
+.rounded-left-0 {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}

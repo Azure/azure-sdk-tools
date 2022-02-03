@@ -72,49 +72,40 @@
     }
   }
 
-  // Diff button
-  $('.diff-button').each(function(index, value){
-    $(this).on('click', function () {
-      window.location.href = $(this).val() as string;
-    });
-  });
-
-  // Change dropdown filter for review and revision
-  $('#revisions-custom-select, #diff-custom-select').each(function(index, value) {
-    $(this).on('change', function() {
-      var url = $(this).find(":selected").val();
-      if (url)
-      {
-        window.location.href = url as string;
-      }
-    });
-  });
-
     // Expand all Service Groups
   $('#expand-all-service-groups-btn').on('click', function () {
-    serviceGroupRows.each(function(index, value){
-      toggleServiceGroup($(this), "closed");
-    });
+    if (!(searchBox.val() as string))
+    {
+      serviceGroupRows.each(function(index, value){
+        toggleServiceGroup($(this), "closed");
+      });
+    }
   });
 
   // Expand all Groups
   $('#expand-all-groups-btn').on('click', function () {
-    serviceGroupRows.each(function(index, value){
-      toggleServiceGroup($(this), "closed");
-    });
-    packageGroupRows.each(function(index, value){
-      togglePackageGroup($(this), "closed");
-    });
+    if (!(searchBox.val() as string))
+    {
+      serviceGroupRows.each(function(index, value){
+        toggleServiceGroup($(this), "closed");
+      });
+      packageGroupRows.each(function(index, value){
+        togglePackageGroup($(this), "closed");
+      });
+    }
   });
 
   // Collapse all Groups
   $('#collapse-all-groups-btn').on('click', function () {
-    serviceGroupRows.each(function(index, value){
-      toggleServiceGroup($(this), "opened");
-    });
-    packageGroupRows.each(function(index, value){
-      togglePackageGroup($(this), "opened");
-    });
+    if (!(searchBox.val() as string))
+    {
+      serviceGroupRows.each(function(index, value){
+        toggleServiceGroup($(this), "opened");
+      });
+      packageGroupRows.each(function(index, value){
+        togglePackageGroup($(this), "opened");
+      });
+    }
   });
 
   // Clear all filters

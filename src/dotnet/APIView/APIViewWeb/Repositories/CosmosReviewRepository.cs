@@ -81,16 +81,27 @@ namespace APIViewWeb
                 allReviews.AddRange(result.Resource);
             }
 
-            foreach(var r in allReviews)
-            {
-                if (r.PackageDisplayName == null || r.ServiceName == null)
-                {
-                    var p = _packageNameManager.GetPackageDetails(r.PackageName);
-                    r.PackageDisplayName = p?.DisplayName ?? "Other";
-                    r.ServiceName = p?.ServiceName ?? "Other";
-                }
-            }
             return allReviews.OrderByDescending(r => r.LastUpdated);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = false");
+            queryStringBuilder.Append(" AND r.ServiceName = @serviceName");
+            queryStringBuilder.Append(" AND r.PackageDisplayName = @packageDisplayName");
+
+            var reviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@serviceName", serviceName)
+                .WithParameter("@packageDisplayName", packageDisplayName);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviews.AddRange(result.Resource);
+            }
+            return reviews.OrderByDescending(r => r.LastUpdated);
         }
     }
 }

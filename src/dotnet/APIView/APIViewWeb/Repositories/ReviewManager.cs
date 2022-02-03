@@ -622,8 +622,8 @@ namespace APIViewWeb.Respositories
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: filterType);
             foreach (var review in reviews)
             {
-                var packageDisplayName = review.PackageDisplayName;
-                var serviceName = review.ServiceName;
+                var packageDisplayName = review.PackageDisplayName ?? "Other";
+                var serviceName = review.ServiceName ?? "Other";
                 if (!response.ContainsKey(serviceName))
                 {
                     response[serviceName] = new ServiceGroupModel()

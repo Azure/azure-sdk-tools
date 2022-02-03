@@ -34,11 +34,11 @@
                                 });
                                 if (review.ReviewId == Model.Review.ReviewId)
                                 {
-                                    <option selected value="@urlValue" data-subtext="@review.Language">@review.Name</option>
+                                    <option selected value="@urlValue" data-subtext="@review.Language">@review.DisplayName</option>
                                 }
                                 else
                                 {
-                                    <option value="@urlValue" data-subtext="@review.Language">@review.Name</option>
+                                    <option value="@urlValue" data-subtext="@review.Language">@review.DisplayName</option>
                                 }
                             }
                         </select>

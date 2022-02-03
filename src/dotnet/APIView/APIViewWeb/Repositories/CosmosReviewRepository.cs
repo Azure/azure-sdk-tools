@@ -50,7 +50,7 @@ namespace APIViewWeb
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 
             //Add filter if looking for automatic, manual or PR reviews
-            if (filterType != null)
+            if (filterType != null && filterType != ReviewType.All)
             {
                queryStringBuilder.Append("AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
             }

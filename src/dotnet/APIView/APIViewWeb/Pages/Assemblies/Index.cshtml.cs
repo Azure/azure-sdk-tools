@@ -31,7 +31,7 @@ namespace APIViewWeb.Pages.Assemblies
         public string Language { get; set; } = "All";
 
         [BindProperty(SupportsGet = true)]
-        public ReviewType FilterType { get; set; } = ReviewType.Manual;
+        public ReviewType FilterType { get; set; } = ReviewType.All;
 
         public IEnumerable<ReviewModel> Assemblies { get; set; } = new List<ReviewModel>();
 

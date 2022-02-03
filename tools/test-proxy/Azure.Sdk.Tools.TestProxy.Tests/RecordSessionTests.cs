@@ -389,8 +389,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = new RecordMatcher();
             if (includeVolatile)
             {
-                matcher.VolatileQueryParameters.Add("VolatileParam1");
-                matcher.VolatileQueryParameters.Add("VolatileParam2");
+                matcher.IgnoredQueryParameters.Add("VolatileParam1");
+                matcher.IgnoredQueryParameters.Add("VolatileParam2");
             }
 
             var mockRequest = new RecordEntry()

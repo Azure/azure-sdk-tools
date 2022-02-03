@@ -9,6 +9,7 @@ namespace APIViewWeb
     {
         Manual = 0,
         Automatic,
-        PullRequest
+        PullRequest,
+        All
     }
 }

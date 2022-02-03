@@ -412,6 +412,15 @@ If you get the message dialog `The project doesn't know how to rin the profile A
 
 Run Visual Studio installer and make sure ASP.NET and web development is installed.
 
+![image](https://user-images.githubusercontent.com/24213737/152257876-be1ed946-20bc-47ff-83da-f9ae05db290a.png)
+
+Then, look in the right panel that `Development tine IIS support` is not checked:
+
+![image](https://user-images.githubusercontent.com/24213737/152257948-c61e6876-eb36-4414-b8de-8c85aa0532bb.png)
+
 ### Windows IIS
 
-If you can't lauch the test proxy locally from Visual Studio, make sure [IIS is installed](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) in your local system.
+[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows instalation. Here the list of features to enable:
+
+![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+

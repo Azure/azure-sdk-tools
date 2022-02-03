@@ -1,4 +1,4 @@
-## Resource management guidelines
+## Resource Management Guidelines
 
 This document contains guidelines for creating and managing Azure resources in the Azure SDK Engineering System
 subscriptions. EngSys has automation that will delete resources based on the criteria outlined below. This is to
@@ -7,7 +7,7 @@ improve our overall security and keep us in compliance with company policies.
   * [Managing Dev Resources in the Playground Subscription](#managing-dev-resources-in-the-playground-subscription)
      * [Resource Groups](#resource-groups)
      * [Role Assignments](#role-assignments)
-  * [Managing CI resources in the test subscription](#managing-ci-resources-in-the-test-subscription)
+  * [Managing CI resources in the Test Subscription](#managing-ci-resources-in-the-test-subscription)
      * [Resource Groups](#resource-groups-1)
      * [Role Assignments](#role-assignments-1)
 
@@ -60,7 +60,7 @@ For long-lived resources, please also add a resource group tag named `Purpose` d
 Role assignments should be created at the resource group scope or below, where the resource group follows the above
 guidelines. Subscription-level role assignments may be deleted at any time. Reach out to the EngSys team for exemptions.
 
-## Managing CI resources in the test subscription
+## Managing CI Resources in the Test Subscription
 
 This section applies to resource groups located in the `Azure SDK Test Resources` subscription. Developers should not
 create resources for individual testing in this subscription, but sometimes resources may need to be created to host

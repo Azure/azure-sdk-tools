@@ -11,12 +11,11 @@ improve our overall security and keep us in compliance with company policies.
      * [Resource Groups](#resource-groups-1)
      * [Role Assignments](#role-assignments-1)
 
-
 ## Managing Dev Resources in the Playground Subscription
 
 This section applies to resource groups located in the `Azure SDK Developer Playground` subscription.
 
-Currently the automation will inspect resource groups and role assignments only.
+Currently, the automation will inspect resource groups and role assignments only.
 
 ### Resource Groups
 
@@ -49,8 +48,8 @@ For long-lived resources, please also add a resource group tag named `Descriptio
 
 ### Role Assignments
 
-Role Assignments should be created at the resource group scope or below, where the resource group follows the above
-guidelines. Subscription level role assignments may be deleted at any time. Reach out to the EngSys team for exemptions.
+Role assignments should be created at the resource group scope or below, where the resource group follows the above
+guidelines. Subscription-level role assignments may be deleted at any time. Reach out to the EngSys team for exemptions.
 
 ## Managing CI resources in the test subscription
 

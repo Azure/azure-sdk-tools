@@ -24,11 +24,11 @@ The automation will delete all resource groups in the playground subscription DA
 - The resource group starts with a valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`, followed by an
   optional hyphen and extra characters.
     - Valid group name examples: `myalias`, `myalias-test-foobar` for `myalias@microsoft.com`
-- The resource group contains a tag with the name `owners` where the value is a csv formatted string that contains at
+- The resource group contains a tag with the name `Owners` where the value is a csv formatted string that contains at
   least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`. This convention should only be used
   when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
   provider like AKS).
-    - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
+    - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
 - The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
   (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
     - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
@@ -53,7 +53,7 @@ The automation will delete all resource groups in the playground subscription DA
       az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
       ```
 
-For long-lived resources, please also add a resource group tag named `Description` describing the purpose of the group.
+For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.
 
 ### Role Assignments
 
@@ -72,11 +72,11 @@ Currently all EngSys tooling will inspect resource groups and role assignments o
 
 EngSys will delete all resource groups in the testing subscription DAILY, unless they meet at least one of the following criteria:
 
-- The resource group contains a tag with the name `owners` where the value is a csv formatted string that contains at
+- The resource group contains a tag with the name `Owners` where the value is a csv formatted string that contains at
   least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`. This convention should only be used
   when it is not possible to name the resource group with an alias (for example, inner groups auto-created by a resource
   provider like AKS).
-    - Valid owner tag examples: `owners: myalias`, `owners: myalias,anotheralias,lastalias`
+    - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
 - The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
   (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
     - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
@@ -99,7 +99,7 @@ EngSys will delete all resource groups in the testing subscription DAILY, unless
       az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
       ```
 
-For long-lived resources, please also add a resource group tag named `Description` describing the purpose of the group.
+For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.
 
 ### Role Assignments
 

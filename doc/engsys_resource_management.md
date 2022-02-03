@@ -37,10 +37,16 @@ The automation will delete all resource groups in the playground subscription DA
     - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
       Example extending resource group lease by three days:
       ```
-      # powershell
+      # Test Resources Script
+      # Update default resource group created via New-TestResources.ps1 and a default DeleteAfter of 48 hours.
+      ./eng/common/TestResources/Update-TestResources.ps1
+      # Update custom resource group name and/or custom DeleteAfter hours value (max 168).
+      ./eng/common/TestResources/Update-TestResources.ps1 -ResourceGroupName <rg name> -DeleteAfterHours 120
+
+      # azure powershell, set manually
       Set-AzResourceGroup -Name <group name> -Tag @{ DeleteAfter = [DateTime]::UtcNow.AddDays(3).ToString("o") }
 
-      # bash
+      # azure cli, set manually
       az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
       ```
 
@@ -78,10 +84,14 @@ EngSys will delete all resource groups in the testing subscription DAILY, unless
     - Valid date tag format: `DeleteAfter: 2022-01-29T00:35:48.9372617Z`
       Example extending resource group lease by three days:
       ```
-      # powershell
+      # Test Resources Script
+      # Update custom resource group name and/or custom DeleteAfter hours value (max 168).
+      ./eng/common/TestResources/Update-TestResources.ps1 -ResourceGroupName <rg name> -DeleteAfterHours 120
+
+      # azure powershell, set manually
       Set-AzResourceGroup -Name <group name> -Tag @{ DeleteAfter = [DateTime]::UtcNow.AddDays(3).ToString("o") }
 
-      # bash
+      # azure cli, set manually
       az group update -g <group name> --tags DeleteAfter=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d "$(date) + 3 day")
       ```
 

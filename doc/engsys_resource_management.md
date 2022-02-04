@@ -1,8 +1,8 @@
 ## Resource Management Guidelines
 
-This document contains guidelines for creating and managing Azure resources in the Azure SDK Engineering System
+This document contains guidelines for creating and managing Azure resources in the Azure SDK
 subscriptions. EngSys has automation that will delete resources based on the criteria outlined below. This is to
-improve our overall security and keep us in compliance with company policies.
+improve our overall security risks and manage costs.
 
   * [Managing Dev Resources in the Playground Subscription](#managing-dev-resources-in-the-playground-subscription)
      * [Resource Groups](#resource-groups)

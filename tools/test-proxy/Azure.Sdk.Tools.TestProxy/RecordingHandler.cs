@@ -265,7 +265,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #region playback functionality
         public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
-            HttpRequestInteractions.LogDebugDetails("Staring playback for " + sessionId);
+            HttpRequestInteractions.LogDebugDetails("Starting playback for " + sessionId);
 
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;

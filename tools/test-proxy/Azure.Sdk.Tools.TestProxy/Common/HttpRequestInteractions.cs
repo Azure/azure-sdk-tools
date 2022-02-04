@@ -32,24 +32,33 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void LogDebugDetails(string details)
         {
-            logger.LogInformation(details);
-            // logger.LogDebug(details);
-            // logger.LogTrace(details);
+            if(logger != null)
+            {
+                logger.LogInformation(details);
+                // logger.LogDebug(details);
+                // logger.LogTrace(details);
+            }
         }
 
         public static async Task LogDebugDetails(HttpRequest req)
         {
-            logger.LogInformation(await _generateLogLine(req));
-            // logger.LogDebug("Debug Log from within non-DI logging factory.");
-            // logger.LogTrace("Trace Log from within non-DI logging factory.");
+            if (logger != null)
+            {
+                logger.LogInformation(await _generateLogLine(req));
+                // logger.LogDebug("Debug Log from within non-DI logging factory.");
+                // logger.LogTrace("Trace Log from within non-DI logging factory.");
+            }
         }
 
         public static async Task LogDebugDetails(ILogger loggerInstance, HttpRequest req)
         {
-            loggerInstance.LogInformation(await _generateLogLine(req));
+            if (loggerInstance != null)
+            {
+                loggerInstance.LogInformation(await _generateLogLine(req));
 
-            //loggerInstance.LogDebug("Debug Log from within DI logging factory.");
-            //loggerInstance.LogTrace("Trace Log from within DI logging factory.");
+                //loggerInstance.LogDebug("Debug Log from within DI logging factory.");
+                //loggerInstance.LogTrace("Trace Log from within DI logging factory.");
+            }
         }
         
 

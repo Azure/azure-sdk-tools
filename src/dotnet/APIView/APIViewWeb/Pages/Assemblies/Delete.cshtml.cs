@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using APIViewWeb.Respositories;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 

@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -70,7 +71,18 @@ namespace Azure.Sdk.Tools.TestProxy
             var host = Host.CreateDefaultBuilder();
 
             host.ConfigureWebHostDefaults(
-                builder => builder.UseStartup<Startup>());
+                builder => 
+                    builder.UseStartup<Startup>()
+                    // ripped directly from implemenation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
+                    .ConfigureLogging((hostBuilder, loggingBuilder) =>
+                    {
+                        loggingBuilder.ClearProviders();
+                        loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
+                        loggingBuilder.AddConsole();
+                        loggingBuilder.AddDebug();
+                        loggingBuilder.AddEventSourceLogger();
+                    })
+                );
 
             host.Build().Run();
 
@@ -101,7 +113,7 @@ namespace Azure.Sdk.Tools.TestProxy
             services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -109,6 +121,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             app.UseCors("DefaultPolicy");
             app.UseMiddleware<HttpExceptionMiddleware>();
+
+            HttpRequestInteractions.ConfigureLogger(loggerFactory);
 
             MapRecording(app);
             app.UseRouting();

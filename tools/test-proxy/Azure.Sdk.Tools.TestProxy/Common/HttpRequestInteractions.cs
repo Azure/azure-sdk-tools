@@ -3,8 +3,8 @@
 
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,7 +17,29 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class HttpRequestInteractions
     {
+        /// Outside of DI, there is no way to use the default logging instances elsewhere in your classes.
+        /// Short of re-writing to nlog or serilog, the best way here is to have Startup.Configure() set this static setting
+        private static ILogger logger = null;
 
+        public static void ConfigureLogger(ILoggerFactory factory)
+        {
+            if(logger == null)
+            {
+                logger = factory.CreateLogger<HttpRequestInteractions>();
+            }
+        }
+
+
+        public static void LogDebugDetails(string details)
+        {
+            logger.LogDebug(details);
+        }
+
+        public static void LogDebugDetails(ILogger loggerInstance, HttpRequest req)
+        {
+            loggerInstance.LogDebug("Hello, World");
+        }
+        
         public static JsonProperty GetProp(string name, JsonElement jsonElement)
         {
             return jsonElement.EnumerateObject()

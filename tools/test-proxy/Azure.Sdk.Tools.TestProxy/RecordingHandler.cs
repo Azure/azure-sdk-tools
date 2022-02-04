@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -25,6 +26,8 @@ namespace Azure.Sdk.Tools.TestProxy
         #region constructor and common variables
         public string CurrentBranch = "master";
         public string RepoPath;
+
+        ILogger _logger;
 
         public RecordingHandler(string targetDirectory)
         {

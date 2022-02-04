@@ -31,7 +31,8 @@ The automation will delete all resource groups in the playground subscription DA
     - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
 - The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
   (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
-    - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
+    - If the `DeleteAfter` value is in the past or greater than 7 days in the future at the time the cleanup pipeline runs, it will be deleted.
+      The cleanup pipeline runs multiple times daily, starting at 12am pacific time (UTC-8). See the [schedule](https://dev.azure.com/azure-sdk/internal/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=1357&view=Tab_Triggers).
     - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
       future date to renew the lease.
     - Resource groups which do not contain a `DeleteAfter` tag will have one added for a 24 hour duration
@@ -79,7 +80,8 @@ EngSys will delete all resource groups in the testing subscription DAILY, unless
     - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
 - The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
   (see below for examples), where the date is greater than the current date and not greater than 7 days in the future.
-    - If the `DeleteAfter` value is in the past, or greater than 7 days in the future, it will be deleted.
+    - If the `DeleteAfter` value is in the past or greater than 7 days in the future at the time the cleanup pipeline runs, it will be deleted.
+      The cleanup pipeline runs multiple times daily, starting at 12am pacific time (UTC-8). See the [schedule](https://dev.azure.com/azure-sdk/internal/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=1357&view=Tab_Triggers).
     - If you have a resource group for which you would like to extend the lifetime, update the `DeleteAfter` tag to a
       future date to renew the lease.
     - Resource groups which do not contain a `DeleteAfter` tag will have one added for a 24 hour duration

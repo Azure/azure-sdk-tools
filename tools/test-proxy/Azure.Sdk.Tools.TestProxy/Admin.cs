@@ -42,8 +42,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public void IsAlive()
         {
             HttpRequestInteractions.LogDebugDetails(_logger, Request);
-            _logger.LogDebug("WHAT");
-            _logger.LogInformation("");
             Response.StatusCode = 200;
         }
 

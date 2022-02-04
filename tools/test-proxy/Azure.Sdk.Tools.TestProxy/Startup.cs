@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy
             host.ConfigureWebHostDefaults(
                 builder => 
                     builder.UseStartup<Startup>()
-                    // ripped directly from implemenation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
+                    // ripped directly from implementation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
                     .ConfigureLogging((hostBuilder, loggingBuilder) =>
                     {
                         loggingBuilder.ClearProviders();

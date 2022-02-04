@@ -29,15 +29,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-
         public static void LogDebugDetails(string details)
         {
-            logger.LogDebug(details);
+            logger.LogInformation("Information Log from within non-DI logging factory.");
+            logger.LogDebug("Debug Log from within non-DI logging factory.");
+            logger.LogTrace("Trace Log from within non-DI logging factory.");
         }
 
         public static void LogDebugDetails(ILogger loggerInstance, HttpRequest req)
         {
-            loggerInstance.LogDebug("Hello, World");
+            loggerInstance.LogInformation("Information Log from within DI logging factory.");
+            loggerInstance.LogDebug("Debug Log from within DI logging factory.");
+            loggerInstance.LogTrace("Trace Log from within DI logging factory.");
         }
         
         public static JsonProperty GetProp(string name, JsonElement jsonElement)

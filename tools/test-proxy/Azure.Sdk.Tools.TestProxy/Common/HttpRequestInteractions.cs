@@ -3,6 +3,7 @@
 
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -21,6 +22,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Short of re-writing to nlog or serilog, the best way here is to have Startup.Configure() set this static setting
         private static ILogger logger = null;
 
+        private static readonly string outputFormat = "URI: [{0}] Headers: [{1]] Body: [{2}]";
+
         public static void ConfigureLogger(ILoggerFactory factory)
         {
             if(logger == null)
@@ -31,18 +34,44 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void LogDebugDetails(string details)
         {
-            logger.LogInformation("Information Log from within non-DI logging factory.");
-            logger.LogDebug("Debug Log from within non-DI logging factory.");
-            logger.LogTrace("Trace Log from within non-DI logging factory.");
+            logger.LogInformation(details);
+            // logger.LogDebug(details);
+            // logger.LogTrace(details);
         }
 
-        public static void LogDebugDetails(ILogger loggerInstance, HttpRequest req)
+        public static async Task LogDebugDetails(HttpRequest req)
         {
-            loggerInstance.LogInformation("Information Log from within DI logging factory.");
-            loggerInstance.LogDebug("Debug Log from within DI logging factory.");
-            loggerInstance.LogTrace("Trace Log from within DI logging factory.");
+            logger.LogInformation(await _generateLogLine(req));
+            // logger.LogDebug("Debug Log from within non-DI logging factory.");
+            // logger.LogTrace("Trace Log from within non-DI logging factory.");
+        }
+
+        public static async Task LogDebugDetails(ILogger loggerInstance, HttpRequest req)
+        {
+            loggerInstance.LogInformation(await _generateLogLine(req));
+
+            //loggerInstance.LogDebug("Debug Log from within DI logging factory.");
+            //loggerInstance.LogTrace("Trace Log from within DI logging factory.");
         }
         
+
+        private static async Task<string> _generateLogLine(HttpRequest req)
+        {
+            StringBuilder sb = new StringBuilder();
+            string headers = String.Empty;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                await JsonSerializer.SerializeAsync(ms, req.Headers);
+                headers = Encoding.UTF8.GetString(ms.ToArray());
+            }
+
+            sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
+            sb.AppendLine("Headers: [" + headers + "]");
+
+            return sb.ToString();
+        }
+
         public static JsonProperty GetProp(string name, JsonElement jsonElement)
         {
             return jsonElement.EnumerateObject()
@@ -74,6 +103,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return value;
         }
 
+        public async static Task<string> GetRawBody(HttpRequest req)
+        {
+            if (req.ContentLength > 0)
+            {
+                
+                using (StreamReader reader = new StreamReader(req.Body))
+                {
+                    var result = await reader.ReadToEndAsync();
+                    req.Body.Position = 0;
+                    return result;
+                }
+            }
+
+            return String.Empty;
+        }
+
         public async static Task<JsonDocument> GetBody(HttpRequest req)
         {
             if (req.ContentLength > 0)
@@ -85,7 +130,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 catch (Exception e)
                 {
-                    req.Body.Position = 0;
                     using (StreamReader readstream = new StreamReader(req.Body, Encoding.UTF8))
                     {
                         string bodyContent = readstream.ReadToEnd();

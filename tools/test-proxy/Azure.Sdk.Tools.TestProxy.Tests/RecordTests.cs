@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Record(testRecordingHandler)
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Record(testRecordingHandler)
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             var recordContext = new DefaultHttpContext();
-            var recordController = new Record(testRecordingHandler)
+            var recordController = new Record(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

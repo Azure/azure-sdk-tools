@@ -78,7 +78,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         loggingBuilder.ClearProviders();
                         loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
-                        loggingBuilder.AddConsole();
+                        loggingBuilder.AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[HH:mm:ss] ";
+                        });
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
                     })

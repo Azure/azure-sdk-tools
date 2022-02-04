@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -58,7 +59,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-test-presence"] = "This header has a value";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -75,7 +76,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -94,7 +95,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

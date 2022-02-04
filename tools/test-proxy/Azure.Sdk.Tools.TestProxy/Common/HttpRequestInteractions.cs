@@ -22,8 +22,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Short of re-writing to nlog or serilog, the best way here is to have Startup.Configure() set this static setting
         private static ILogger logger = null;
 
-        private static readonly string outputFormat = "URI: [{0}] Headers: [{1]] Body: [{2}]";
-
         public static void ConfigureLogger(ILoggerFactory factory)
         {
             if(logger == null)

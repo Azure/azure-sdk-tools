@@ -27,8 +27,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public string CurrentBranch = "master";
         public string RepoPath;
 
-        ILogger _logger;
-
         public RecordingHandler(string targetDirectory)
         {
             RepoPath = targetDirectory;
@@ -69,6 +67,8 @@ namespace Azure.Sdk.Tools.TestProxy
         #region recording functionality
         public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
         {
+            HttpRequestInteractions.LogDebugDetails("Stopping record for " + sessionId);
+
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
                 return;
@@ -121,6 +121,8 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             var session = (sessionId ?? String.Empty, new ModifiableRecordSession(new RecordSession()));
 
+            HttpRequestInteractions.LogDebugDetails("Starting record for " + session);
+
             if (!RecordingSessions.TryAdd(id, session))
             {
                 throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new recording session under id {id}.");
@@ -131,6 +133,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
+            await HttpRequestInteractions.LogDebugDetails(incomingRequest);
+
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
@@ -261,6 +265,8 @@ namespace Azure.Sdk.Tools.TestProxy
         #region playback functionality
         public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
+            HttpRequestInteractions.LogDebugDetails("Staring playback for " + sessionId);
+
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
 
@@ -303,6 +309,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)
         {
+            HttpRequestInteractions.LogDebugDetails("Stopping playback for " + recordingId);
+
             if (!PlaybackSessions.TryRemove(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
@@ -328,6 +336,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
+            await HttpRequestInteractions.LogDebugDetails(incomingRequest);
+
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");

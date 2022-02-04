@@ -268,16 +268,6 @@ output RESOURCE_GROUP string = resourceGroup().name
 output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-A stress test package must include a `parameters.json` file as well, which can either be empty or contain parameters:
-
-```
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": { }
-}
-```
-
 ### Helm Chart Dependencies
 
 The `<chart root>/chart/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:

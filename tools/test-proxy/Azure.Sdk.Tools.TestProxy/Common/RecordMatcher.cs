@@ -126,6 +126,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
+
+            HttpRequestInteractions.LogDebugDetails("Generating the exception now.");
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry));
         }
 
@@ -260,30 +262,36 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)
         {
+            // description pass (building exception) vs comparison pass (what's throwing the 404)
+            var inDescription = descriptionBuilder != null ? "DP" : "CP";
+
+            HttpRequestInteractions.LogDebugDetails("In " + inDescription);
+
             int difference = 0;
-            var iteration = 0;
+            var iteration = -1;
             var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);
             foreach (KeyValuePair<string, string[]> header in headers)
             {
+                iteration++;
                 var requestHeaderValues = header.Value;
                 var headerName = header.Key;
 
-                HttpRequestInteractions.LogDebugDetails("Testing [" + iteration + "] " + headerName + "...");
+                HttpRequestInteractions.LogDebugDetails("Testing [" + iteration + inDescription + "] " + headerName + "...");
 
                 if (excludedHeaders.Contains(headerName))
                 {
-                    HttpRequestInteractions.LogDebugDetails("Excluded [" + iteration + "] " + headerName);
+                    HttpRequestInteractions.LogDebugDetails("Excluded [" + iteration + inDescription + "] " + headerName);
                     continue;
                 }
                 else
                 {
-                    HttpRequestInteractions.LogDebugDetails("We don't see [" + iteration + "] " + headerName + " in excluded header set. Current values: excluded headers: [" + string.Join(",", excludedHeaders) + "]. Ignored headers: [" + string.Join(",", ignoredHeaders) + "].");
+                    HttpRequestInteractions.LogDebugDetails("We don't see [" + iteration + inDescription + "] " + headerName + " in excluded header set. Current values: excluded headers: [" + string.Join(",", excludedHeaders) + "]. Ignored headers: [" + string.Join(",", ignoredHeaders) + "].");
                 }
 
-                HttpRequestInteractions.LogDebugDetails("Looking for remaining [" + iteration + "] " + headerName);
+                HttpRequestInteractions.LogDebugDetails("Looking for remaining [" + iteration inDescription + +"] " + headerName);
                 if (remaining.TryGetValue(headerName, out string[] entryHeaderValues))
                 {
-                    HttpRequestInteractions.LogDebugDetails("Found remaining [" + iteration + "] " + headerName);
+                    HttpRequestInteractions.LogDebugDetails("Found remaining [" + iteration inDescription + +"] " + headerName);
                     if (ignoredHeaders.Contains(headerName)) {
                         remaining.Remove(headerName);
                         continue;
@@ -305,12 +313,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 else
                 {
-                    HttpRequestInteractions.LogDebugDetails("Absent in record [" + iteration + "] " + headerName);
+                    HttpRequestInteractions.LogDebugDetails("AIR [" + iteration + inDescription + "] " + headerName);
                     difference++;
                     descriptionBuilder?.AppendLine($"    <{headerName}> is absent in record, value <{JoinHeaderValues(requestHeaderValues)}>");
                 }
-
-                iteration++;
             }
 
             foreach (KeyValuePair<string, string[]> header in remaining)
@@ -322,6 +328,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
+            HttpRequestInteractions.LogDebugDetails(inDescription + " returning comparison value of " + difference);
             return difference;
         }
 

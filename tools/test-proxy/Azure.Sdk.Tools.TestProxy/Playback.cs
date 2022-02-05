@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -14,7 +15,14 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Playback : ControllerBase
     {
         private readonly RecordingHandler _recordingHandler;
-        public Playback(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
+        private readonly ILogger _logger;
+
+        public Playback(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
+        {
+            _recordingHandler = recordingHandler;
+            _logger = loggerFactory.CreateLogger<Playback>();
+
+        } 
 
         [HttpPost]
         public async Task Start()
@@ -37,8 +45,9 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void Stop()
+        public async Task Stop()
         {
+            await HttpRequestInteractions.LogDebugDetails(_logger, Request);
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
             bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 

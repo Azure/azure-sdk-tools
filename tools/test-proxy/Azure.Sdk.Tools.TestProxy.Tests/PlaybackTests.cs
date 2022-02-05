@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class PlaybackTests
     {
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
         [Fact]
         public async void TestStartPlaybackSimple()
         {
@@ -25,7 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -62,7 +64,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
 
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -85,7 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var recordingId = Guid.NewGuid().ToString();
             playbackContext.Request.Headers["x-recording-id"] = recordingId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -108,7 +110,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var recordingId = Guid.NewGuid().ToString();
             playbackContext.Request.Headers["x-recording-id"] = recordingId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -132,7 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -143,7 +145,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var targetRecordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             
             httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            controller.Stop();
+            await controller.Stop();
 
             Assert.False(testRecordingHandler.PlaybackSessions.ContainsKey(targetRecordingId));
         }
@@ -169,7 +171,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
-            var playbackController = new Playback(testRecordingHandler)
+            var playbackController = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -179,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await playbackController.Start();
             var targetRecordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
             playbackContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            playbackController.Stop();
+            await playbackController.Stop();
 
             testRecordingHandler.InMemorySessions.ContainsKey(targetRecordingId);
         }
@@ -193,7 +195,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

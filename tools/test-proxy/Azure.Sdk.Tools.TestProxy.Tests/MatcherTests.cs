@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
         public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         [Fact]
         public void BodilessMatcherMatchesIdenticalRequest()
@@ -245,7 +247,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
            
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

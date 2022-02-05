@@ -18,6 +18,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordTests
     {
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
         [Fact]
         public async Task TestStartRecordSimple()
         {
@@ -124,7 +126,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

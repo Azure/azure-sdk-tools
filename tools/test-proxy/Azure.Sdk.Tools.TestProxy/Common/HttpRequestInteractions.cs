@@ -60,7 +60,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 //loggerInstance.LogTrace("Trace Log from within DI logging factory.");
             }
         }
-        
+
+        public static void LogDebugDetails(ILogger loggerInstance, string details)
+        {
+            if (loggerInstance != null)
+            {
+                loggerInstance.LogInformation(details);
+
+                //loggerInstance.LogDebug("Debug Log from within DI logging factory.");
+                //loggerInstance.LogTrace("Trace Log from within DI logging factory.");
+            }
+        }
 
         private static async Task<string> _generateLogLine(HttpRequest req)
         {

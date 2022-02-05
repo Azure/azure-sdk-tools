@@ -77,6 +77,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual RecordEntry FindMatch(RecordEntry request, IList<RecordEntry> entries)
         {
+            HttpRequestInteractions.LogDebugDetails("RecordMatcher running to find match. Excluded headers: [" + string.Join(",", ExcludeHeaders) + "]. Ignored headers: [" + string.Join(",", IgnoredHeaders) + "].");
+            
             int bestScore = int.MaxValue;
             RecordEntry bestScoreEntry = null;
 

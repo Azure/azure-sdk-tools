@@ -126,6 +126,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, String.Format("Requested type {0} is not not recognized.", typePrefix + name));
             }
 
+            HttpRequestInteractions.LogDebugDetails(_logger, "Request Content: " + JsonSerializer.Serialize(documentBody.RootElement));
+
+
             var arg_list = new List<Object> { };
 
             // we are deliberately assuming here that there will only be a single constructor

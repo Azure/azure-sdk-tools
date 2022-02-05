@@ -2,6 +2,7 @@
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -10,6 +11,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class TransformTests
     {
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
         [Fact]
         public async Task ConditionalTransformAppliesForRegex()
         {
@@ -31,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -74,7 +77,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -119,7 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
 
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

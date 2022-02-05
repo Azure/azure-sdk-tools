@@ -288,10 +288,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     HttpRequestInteractions.LogDebugDetails("We don't see [" + iteration + inDescription + "] " + headerName + " in excluded header set. Current values: excluded headers: [" + string.Join(",", excludedHeaders) + "]. Ignored headers: [" + string.Join(",", ignoredHeaders) + "].");
                 }
 
-                HttpRequestInteractions.LogDebugDetails("Looking for remaining [" + iteration inDescription + +"] " + headerName);
+                HttpRequestInteractions.LogDebugDetails("Looking for remaining [" + iteration + inDescription +"] " + headerName);
                 if (remaining.TryGetValue(headerName, out string[] entryHeaderValues))
                 {
-                    HttpRequestInteractions.LogDebugDetails("Found remaining [" + iteration inDescription + +"] " + headerName);
+                    HttpRequestInteractions.LogDebugDetails("Found remaining [" + iteration + inDescription  +"] " + headerName);
                     if (ignoredHeaders.Contains(headerName)) {
                         remaining.Remove(headerName);
                         continue;

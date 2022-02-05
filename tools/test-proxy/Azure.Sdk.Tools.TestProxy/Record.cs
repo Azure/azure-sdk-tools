@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequest(id, Request, Response, s_client);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, s_client);
         }
     }
 }

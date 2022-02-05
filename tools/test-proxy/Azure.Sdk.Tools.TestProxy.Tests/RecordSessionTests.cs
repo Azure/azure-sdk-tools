@@ -221,7 +221,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "    <Some-Other-Header> is absent in record, value <V>" + Environment.NewLine +
                 "    <Extra-Header> is absent in request, value <Extra-Value>" + Environment.NewLine +
                 "Body differences:" + Environment.NewLine +
-                "Request and response bodies do not match at index 40:" + Environment.NewLine +
+                "Request and record bodies do not match at index 40:" + Environment.NewLine +
                 "     request: \"e and long.\"" + Environment.NewLine +
                 "     record:  \"e and long but it also doesn't\"" + Environment.NewLine,
                 exception.Message);

@@ -266,12 +266,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var inDescription = descriptionBuilder != null ? "DP" : "CP";
 
             HttpRequestInteractions.LogDebugDetails("In " + inDescription);
+            HttpRequestInteractions.LogDebugDetails("Left/Right[" + inDescription + "] [" + string.Join(",", headers.Keys) + "] [" + string.Join(",", entryHeaders.Keys) + "]");
 
             int difference = 0;
             var iteration = -1;
-            var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);
+            var remaining = new SortedDictionary<string, string[]>(entryHeaders);
             foreach (KeyValuePair<string, string[]> header in headers)
             {
+                HttpRequestInteractions.LogDebugDetails("Remaining [" + iteration + inDescription + "] [" + string.Join(",", remaining.Keys) + "]");
+
                 iteration++;
                 var requestHeaderValues = header.Value;
                 var headerName = header.Key;

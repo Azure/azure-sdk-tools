@@ -189,9 +189,15 @@ namespace Azure.Sdk.Tools.TestProxy
         private static EntryRecordMode GetRecordMode(HttpRequest request)
         {
             EntryRecordMode mode = EntryRecordMode.Record;
-            if (request.Headers.TryGetValue(SkipRecordingHeader, out var value))
+            if (request.Headers.TryGetValue(SkipRecordingHeader, out var values))
             {
-                string skipMode = value.Single();
+                if (values.Count != 1)
+                {
+                    throw new HttpException(
+                        HttpStatusCode.BadRequest,
+                        $"'{SkipRecordingHeader}' should contain a single value set to either 'request-body' or 'request-response'");
+                }
+                string skipMode = values.First();
                 if (skipMode.Equals("request-response", StringComparison.OrdinalIgnoreCase))
                 {
                     mode = EntryRecordMode.DontRecord;

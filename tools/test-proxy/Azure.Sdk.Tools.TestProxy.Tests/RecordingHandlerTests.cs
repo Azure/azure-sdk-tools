@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -350,6 +351,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext = new DefaultHttpContext();
             // send a second request that SHOULD be recorded
             CreateRecordModeRequest(httpContext);
+            httpContext.Request.Headers.Remove("x-recording-skip");
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
             await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
 
@@ -371,8 +373,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Fact]
-        public async Task TestInvalidRecordModeThrows()
+        [Theory]
+        [InlineData("invalid value")]
+        [InlineData("")]
+        [InlineData("request-body", "request-response")]
+        public async Task TestInvalidRecordModeThrows(params string[] values)
         {
             var currentPath = Directory.GetCurrentDirectory();
             var httpContext = new DefaultHttpContext();
@@ -382,7 +387,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             recordingHandler.StartRecording(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            CreateRecordModeRequest(httpContext, "invalid value");
+            CreateRecordModeRequest(httpContext, new StringValues(values));
 
             var mockClient = new HttpClient(new MockHttpHandler());
             HttpException resultingException = await Assert.ThrowsAsync<HttpException>(
@@ -391,13 +396,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
         }
 
-        private static void CreateRecordModeRequest(DefaultHttpContext context, string mode = default)
+        private static void CreateRecordModeRequest(DefaultHttpContext context, StringValues mode = default)
         {
-            if (mode != null)
-            {
-                context.Request.Headers["x-recording-skip"] = mode;
-            }
-
+            context.Request.Headers["x-recording-skip"] = mode;
             context.Request.Headers["x-recording-upstream-base-uri"] = "https://contoso.net";
             context.Request.ContentType = "application/json";
             context.Request.Method = "PUT";

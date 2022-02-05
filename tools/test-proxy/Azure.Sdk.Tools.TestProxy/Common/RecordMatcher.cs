@@ -77,8 +77,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual RecordEntry FindMatch(RecordEntry request, IList<RecordEntry> entries)
         {
-            HttpRequestInteractions.LogDebugDetails("RecordMatcher running to find match. Excluded headers: [" + string.Join(",", ExcludeHeaders) + "]. Ignored headers: [" + string.Join(",", IgnoredHeaders) + "].");
-            
             int bestScore = int.MaxValue;
             RecordEntry bestScoreEntry = null;
 
@@ -262,6 +260,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)
         {
+            HttpRequestInteractions.LogDebugDetails("Comparing dictionaries. Checking excluded headers: [" + string.Join(",", excludedHeaders) + "]. Ignored headers: [" + string.Join(",", ignoredHeaders) + "].");
+
             int difference = 0;
             var remaining = new SortedDictionary<string, string[]>(entryHeaders, entryHeaders.Comparer);
             foreach (KeyValuePair<string, string[]> header in headers)

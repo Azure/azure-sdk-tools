@@ -362,7 +362,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 using var fileStream = File.Open(fullPathToRecording, FileMode.Open);
                 using var doc = JsonDocument.Parse(fileStream);
                 var record = RecordSession.Deserialize(doc.RootElement);
-                Assert.Equal(1, record.Entries.Count);
+                Assert.Single(record.Entries);
                 var entry = record.Entries.First();
                 Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
                 Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));

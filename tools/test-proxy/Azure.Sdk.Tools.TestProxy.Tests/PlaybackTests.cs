@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class PlaybackTests
     {
+
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
         [Fact]
         public async void TestStartPlaybackSimple()
         {
@@ -45,7 +49,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // get a recordingId that can be used for in-mem
             var recordContext = new DefaultHttpContext();
-            var recordController = new Record(testRecordingHandler)
+            var recordController = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -154,7 +158,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // get a recordingId that can be used for in-mem
             var recordContext = new DefaultHttpContext();
-            var recordController = new Record(testRecordingHandler)
+            var recordController = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

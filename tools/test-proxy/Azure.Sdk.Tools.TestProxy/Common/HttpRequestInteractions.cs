@@ -17,32 +17,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class HttpRequestInteractions
     {
-        /// Outside of DI, there is no way to use the default logging instances elsewhere in your classes.
-        /// Short of re-writing to nlog or serilog, the best way here is to have Startup.Configure() set this static setting
-        private static ILogger logger = null;
-
-        public static void ConfigureLogger(ILoggerFactory factory)
-        {
-            if(logger == null)
-            {
-                logger = factory.CreateLogger<HttpRequestInteractions>();
-            }
-        }
-
-        public static void LogDebugDetails(string details)
-        {
-            logger.LogInformation("Information Log from within non-DI logging factory.");
-            logger.LogDebug("Debug Log from within non-DI logging factory.");
-            logger.LogTrace("Trace Log from within non-DI logging factory.");
-        }
-
-        public static void LogDebugDetails(ILogger loggerInstance, HttpRequest req)
-        {
-            loggerInstance.LogInformation("Information Log from within DI logging factory.");
-            loggerInstance.LogDebug("Debug Log from within DI logging factory.");
-            loggerInstance.LogTrace("Trace Log from within DI logging factory.");
-        }
-        
         public static JsonProperty GetProp(string name, JsonElement jsonElement)
         {
             return jsonElement.EnumerateObject()

@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(e is TestRecordingMismatchException)
                 {
                     response.Headers.Add("x-request-mismatch", "true");
-                    response.Headers.Add("x-request-mismatch-error", e.Message);
+                    // response.Headers.Add("x-request-mismatch-error", e.Message); need to encode this data.
                 }
                 
                 var bodyObj = new

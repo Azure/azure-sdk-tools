@@ -227,14 +227,14 @@ describe('GoTestGenerator from RP signalR', () => {
             new TestConfig(
                 {
                     __parents: {
-                        'Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
+                        'Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
                             ? `file:///${swaggerFolder}`
                             : `file://${swaggerFolder}`,
                     },
-                    'input-file': ['Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json'],
+                    'input-file': ['Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json'],
                     'test-resources': [
                         {
-                            test: 'Microsoft.SignalRService/preview/2020-07-01-preview/test-scenarios/signalR.yaml',
+                            test: 'Microsoft.SignalRService/preview/2021-06-01-preview/scenarios/signalR.yaml',
                         },
                     ],
                     testmodeler: {

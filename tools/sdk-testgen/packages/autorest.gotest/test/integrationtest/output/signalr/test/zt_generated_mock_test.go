@@ -36,7 +36,7 @@ var (
 )
 
 func TestOperations_List(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Operations_List.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Operations_List"},
 	})
@@ -50,7 +50,7 @@ func TestOperations_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Operations_List.json: %v", err)
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -59,7 +59,7 @@ func TestOperations_List(t *testing.T) {
 					{
 						Name: to.StringPtr("Microsoft.SignalRService/SignalR/read"),
 						Display: &test.OperationDisplay{
-							Description: to.StringPtr("View the SignalR's settings and configurations in the management portal or through API"),
+							Description: to.StringPtr("View the resource settings and configurations in the management portal or through API"),
 							Operation:   to.StringPtr("Manage SignalR (read-only)"),
 							Provider:    to.StringPtr("Microsoft.SignalRService"),
 							Resource:    to.StringPtr("SignalR"),
@@ -71,7 +71,7 @@ func TestOperations_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().OperationList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().OperationList)
-				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -81,7 +81,7 @@ func TestOperations_List(t *testing.T) {
 }
 
 func TestSignalR_CheckNameAvailability(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CheckNameAvailability.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CheckNameAvailability"},
 	})
@@ -93,27 +93,31 @@ func TestSignalR_CheckNameAvailability(t *testing.T) {
 	client := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
-		&test.SignalRClientCheckNameAvailabilityOptions{Parameters: nil})
+		test.NameAvailabilityParameters{
+			Name: to.StringPtr("mySignalRService"),
+			Type: to.StringPtr("Microsoft.SignalRService/SignalR"),
+		},
+		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CheckNameAvailability.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json: %v", err)
 	}
 	// Response check
 	{
 		exampleRes := test.NameAvailability{
-			Message:       to.StringPtr("The name is already used."),
+			Message:       to.StringPtr("The name is already taken. Please try a different name."),
 			NameAvailable: to.BoolPtr(false),
 			Reason:        to.StringPtr("AlreadyExists"),
 		}
 		if !reflect.DeepEqual(exampleRes, res.NameAvailability) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.NameAvailability)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalR_ListBySubscription(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListBySubscription.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListBySubscription"},
 	})
@@ -127,7 +131,7 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListBySubscription.json: %v", err)
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -142,45 +146,85 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 							"key1": to.StringPtr("value1"),
 						},
 						Identity: &test.ManagedIdentity{
-							Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+							Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 							PrincipalID: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 							TenantID:    to.StringPtr("00000000-0000-0000-0000-000000000000"),
 						},
-						Kind: test.ServiceKind("SignalR").ToPtr(),
+						Kind: test.ServiceKindSignalR.ToPtr(),
 						Properties: &test.SignalRProperties{
 							Cors: &test.SignalRCorsSettings{
 								AllowedOrigins: []*string{
 									to.StringPtr("https://foo.com"),
 									to.StringPtr("https://bar.com")},
 							},
+							DisableAADAuth:   to.BoolPtr(false),
+							DisableLocalAuth: to.BoolPtr(false),
+							ExternalIP:       to.StringPtr("10.0.0.1"),
 							Features: []*test.SignalRFeature{
 								{
-									Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+									Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("Serverless"),
 								},
 								{
-									Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+									Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("True"),
 								},
 								{
-									Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+									Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+									Properties: map[string]*string{},
+									Value:      to.StringPtr("False"),
+								},
+								{
+									Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("False"),
 								}},
+							HostName: to.StringPtr("mysignalrservice.service.signalr.net"),
 							NetworkACLs: &test.SignalRNetworkACLs{
-								DefaultAction: test.ACLAction("Deny").ToPtr(),
+								DefaultAction: test.ACLActionDeny.ToPtr(),
 								PrivateEndpoints: []*test.PrivateEndpointACL{
 									{
 										Allow: []*test.SignalRRequestType{
-											test.SignalRRequestType("ServerConnection").ToPtr()},
-										Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+											test.SignalRRequestTypeServerConnection.ToPtr()},
+										Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 									}},
 								PublicNetwork: &test.NetworkACL{
 									Allow: []*test.SignalRRequestType{
-										test.SignalRRequestType("ClientConnection").ToPtr()},
+										test.SignalRRequestTypeClientConnection.ToPtr()},
 								},
+							},
+							PrivateEndpointConnections: []*test.PrivateEndpointConnection{
+								{
+									Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+									Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+									ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+									Properties: &test.PrivateEndpointConnectionProperties{
+										PrivateEndpoint: &test.PrivateEndpoint{
+											ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+										},
+										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+											ActionsRequired: to.StringPtr("None"),
+											Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+										},
+										ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+									},
+									SystemData: &test.SystemData{
+										CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+										CreatedBy:          to.StringPtr("string"),
+										CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+										LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+										LastModifiedBy:     to.StringPtr("string"),
+										LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+									},
+								}},
+							ProvisioningState:   test.ProvisioningStateSucceeded.ToPtr(),
+							PublicNetworkAccess: to.StringPtr("Enabled"),
+							PublicPort:          to.Int32Ptr(443),
+							ServerPort:          to.Int32Ptr(443),
+							TLS: &test.SignalRTLSSettings{
+								ClientCertEnabled: to.BoolPtr(true),
 							},
 							Upstream: &test.ServerlessUpstreamSettings{
 								Templates: []*test.UpstreamTemplate{
@@ -188,44 +232,28 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 										URLTemplate: to.StringPtr("http://foo.com"),
 									}},
 							},
-							ExternalIP: to.StringPtr("10.0.0.1"),
-							HostName:   to.StringPtr("mysignalrservice.service.signalr.net"),
-							PrivateEndpointConnections: []*test.PrivateEndpointConnection{
-								{
-									Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-									Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-									ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-									Properties: &test.PrivateEndpointConnectionProperties{
-										PrivateEndpoint: &test.PrivateEndpoint{
-											ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
-										},
-										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-											ActionsRequired: to.StringPtr("None"),
-											Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
-										},
-										ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-									},
-								}},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-							PublicPort:        to.Int32Ptr(443),
-							ServerPort:        to.Int32Ptr(443),
-							TLS: &test.SignalRTLSSettings{
-								ClientCertEnabled: to.BoolPtr(true),
-							},
 							Version: to.StringPtr("1.0"),
 						},
 						SKU: &test.ResourceSKU{
 							Name:     to.StringPtr("Standard_S1"),
 							Capacity: to.Int32Ptr(1),
 							Size:     to.StringPtr("S1"),
-							Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+							Tier:     test.SignalRSKUTierStandard.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 						},
 					}},
 			}
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceInfoList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceInfoList)
-				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -235,7 +263,7 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 }
 
 func TestSignalR_ListByResourceGroup(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListByResourceGroup.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListByResourceGroup"},
 	})
@@ -250,7 +278,7 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListByResourceGroup.json: %v", err)
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -265,45 +293,85 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 							"key1": to.StringPtr("value1"),
 						},
 						Identity: &test.ManagedIdentity{
-							Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+							Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 							PrincipalID: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 							TenantID:    to.StringPtr("00000000-0000-0000-0000-000000000000"),
 						},
-						Kind: test.ServiceKind("SignalR").ToPtr(),
+						Kind: test.ServiceKindSignalR.ToPtr(),
 						Properties: &test.SignalRProperties{
 							Cors: &test.SignalRCorsSettings{
 								AllowedOrigins: []*string{
 									to.StringPtr("https://foo.com"),
 									to.StringPtr("https://bar.com")},
 							},
+							DisableAADAuth:   to.BoolPtr(false),
+							DisableLocalAuth: to.BoolPtr(false),
+							ExternalIP:       to.StringPtr("10.0.0.1"),
 							Features: []*test.SignalRFeature{
 								{
-									Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+									Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("Serverless"),
 								},
 								{
-									Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+									Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("True"),
 								},
 								{
-									Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+									Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+									Properties: map[string]*string{},
+									Value:      to.StringPtr("False"),
+								},
+								{
+									Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 									Properties: map[string]*string{},
 									Value:      to.StringPtr("False"),
 								}},
+							HostName: to.StringPtr("mysignalrservice.service.signalr.net"),
 							NetworkACLs: &test.SignalRNetworkACLs{
-								DefaultAction: test.ACLAction("Deny").ToPtr(),
+								DefaultAction: test.ACLActionDeny.ToPtr(),
 								PrivateEndpoints: []*test.PrivateEndpointACL{
 									{
 										Allow: []*test.SignalRRequestType{
-											test.SignalRRequestType("ServerConnection").ToPtr()},
-										Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+											test.SignalRRequestTypeServerConnection.ToPtr()},
+										Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 									}},
 								PublicNetwork: &test.NetworkACL{
 									Allow: []*test.SignalRRequestType{
-										test.SignalRRequestType("ClientConnection").ToPtr()},
+										test.SignalRRequestTypeClientConnection.ToPtr()},
 								},
+							},
+							PrivateEndpointConnections: []*test.PrivateEndpointConnection{
+								{
+									Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+									Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+									ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+									Properties: &test.PrivateEndpointConnectionProperties{
+										PrivateEndpoint: &test.PrivateEndpoint{
+											ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+										},
+										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+											ActionsRequired: to.StringPtr("None"),
+											Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+										},
+										ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+									},
+									SystemData: &test.SystemData{
+										CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+										CreatedBy:          to.StringPtr("string"),
+										CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+										LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+										LastModifiedBy:     to.StringPtr("string"),
+										LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+									},
+								}},
+							ProvisioningState:   test.ProvisioningStateSucceeded.ToPtr(),
+							PublicNetworkAccess: to.StringPtr("Enabled"),
+							PublicPort:          to.Int32Ptr(443),
+							ServerPort:          to.Int32Ptr(443),
+							TLS: &test.SignalRTLSSettings{
+								ClientCertEnabled: to.BoolPtr(true),
 							},
 							Upstream: &test.ServerlessUpstreamSettings{
 								Templates: []*test.UpstreamTemplate{
@@ -311,44 +379,28 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 										URLTemplate: to.StringPtr("http://foo.com"),
 									}},
 							},
-							ExternalIP: to.StringPtr("10.0.0.1"),
-							HostName:   to.StringPtr("mysignalrservice.service.signalr.net"),
-							PrivateEndpointConnections: []*test.PrivateEndpointConnection{
-								{
-									Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-									Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-									ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-									Properties: &test.PrivateEndpointConnectionProperties{
-										PrivateEndpoint: &test.PrivateEndpoint{
-											ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
-										},
-										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-											ActionsRequired: to.StringPtr("None"),
-											Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
-										},
-										ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-									},
-								}},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-							PublicPort:        to.Int32Ptr(443),
-							ServerPort:        to.Int32Ptr(443),
-							TLS: &test.SignalRTLSSettings{
-								ClientCertEnabled: to.BoolPtr(true),
-							},
 							Version: to.StringPtr("1.0"),
 						},
 						SKU: &test.ResourceSKU{
 							Name:     to.StringPtr("Standard_S1"),
 							Capacity: to.Int32Ptr(1),
 							Size:     to.StringPtr("S1"),
-							Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+							Tier:     test.SignalRSKUTierStandard.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 						},
 					}},
 			}
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().ResourceInfoList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().ResourceInfoList)
-				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListByResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -358,7 +410,7 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 }
 
 func TestSignalR_Get(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Get.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Get"},
 	})
@@ -373,7 +425,7 @@ func TestSignalR_Get(t *testing.T) {
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Get.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json: %v", err)
 	}
 	// Response check
 	{
@@ -386,45 +438,85 @@ func TestSignalR_Get(t *testing.T) {
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				TenantID:    to.StringPtr("00000000-0000-0000-0000-000000000000"),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
+				ExternalIP:       to.StringPtr("10.0.0.1"),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("True"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("False"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("False"),
 					}},
+				HostName: to.StringPtr("mysignalrservice.service.signalr.net"),
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
-							Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								test.SignalRRequestTypeServerConnection.ToPtr()},
+							Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Properties: &test.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &test.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+								ActionsRequired: to.StringPtr("None"),
+								Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+						},
+					}},
+				ProvisioningState:   test.ProvisioningStateSucceeded.ToPtr(),
+				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicPort:          to.Int32Ptr(443),
+				ServerPort:          to.Int32Ptr(443),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(true),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
@@ -432,49 +524,33 @@ func TestSignalR_Get(t *testing.T) {
 							URLTemplate: to.StringPtr("http://foo.com"),
 						}},
 				},
-				ExternalIP: to.StringPtr("10.0.0.1"),
-				HostName:   to.StringPtr("mysignalrservice.service.signalr.net"),
-				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
-					{
-						Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Properties: &test.PrivateEndpointConnectionProperties{
-							PrivateEndpoint: &test.PrivateEndpoint{
-								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
-							},
-							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-								ActionsRequired: to.StringPtr("None"),
-								Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
-							},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-						},
-					}},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-				PublicPort:        to.Int32Ptr(443),
-				ServerPort:        to.Int32Ptr(443),
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(true),
-				},
 				Version: to.StringPtr("1.0"),
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("Standard_S1"),
 				Capacity: to.Int32Ptr(1),
 				Size:     to.StringPtr("S1"),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+			},
+			SystemData: &test.SystemData{
+				CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				CreatedBy:          to.StringPtr("string"),
+				CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+				LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				LastModifiedBy:     to.StringPtr("string"),
+				LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ResourceInfo)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalR_CreateOrUpdate(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CreateOrUpdate.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CreateOrUpdate"},
 	})
@@ -486,56 +562,67 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 	client := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
-		"mySignalRService123xx",
-		&test.SignalRClientBeginCreateOrUpdateOptions{Parameters: &test.ResourceInfo{
+		"mySignalRService",
+		test.ResourceInfo{
 			Location: to.StringPtr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("True"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("False"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
-							Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								test.SignalRRequestTypeServerConnection.ToPtr()},
+							Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PublicNetworkAccess: to.StringPtr("Enabled"),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthType("ManagedIdentity").ToPtr(),
+								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
 								ManagedIdentity: &test.ManagedIdentitySettings{
 									Resource: to.StringPtr("api://example"),
 								},
@@ -546,23 +633,20 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
 						}},
 				},
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
-				},
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("Standard_S1"),
 				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
 			},
 		},
-		})
+		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
 	}
 	// Response check
 	{
@@ -575,45 +659,85 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				TenantID:    to.StringPtr("00000000-0000-0000-0000-000000000000"),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
+				ExternalIP:       to.StringPtr("10.0.0.1"),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("True"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("False"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("False"),
 					}},
+				HostName: to.StringPtr("mysignalrservice.service.signalr.net"),
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
-							Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								test.SignalRRequestTypeServerConnection.ToPtr()},
+							Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Properties: &test.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &test.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+								ActionsRequired: to.StringPtr("None"),
+								Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+						},
+					}},
+				ProvisioningState:   test.ProvisioningStateSucceeded.ToPtr(),
+				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicPort:          to.Int32Ptr(443),
+				ServerPort:          to.Int32Ptr(443),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(true),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
@@ -621,49 +745,33 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 							URLTemplate: to.StringPtr("http://foo.com"),
 						}},
 				},
-				ExternalIP: to.StringPtr("10.0.0.1"),
-				HostName:   to.StringPtr("mysignalrservice123.service.signalr.net"),
-				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
-					{
-						Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Properties: &test.PrivateEndpointConnectionProperties{
-							PrivateEndpoint: &test.PrivateEndpoint{
-								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
-							},
-							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-								ActionsRequired: to.StringPtr("None"),
-								Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
-							},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-						},
-					}},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-				PublicPort:        to.Int32Ptr(443),
-				ServerPort:        to.Int32Ptr(443),
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(true),
-				},
 				Version: to.StringPtr("1.0"),
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("Standard_S1"),
 				Capacity: to.Int32Ptr(1),
 				Size:     to.StringPtr("S1"),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+			},
+			SystemData: &test.SystemData{
+				CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				CreatedBy:          to.StringPtr("string"),
+				CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+				LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				LastModifiedBy:     to.StringPtr("string"),
+				LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ResourceInfo)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalR_Delete(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Delete.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Delete"},
 	})
@@ -678,16 +786,16 @@ func TestSignalR_Delete(t *testing.T) {
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Delete.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Delete.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json: %v", err)
 	}
 }
 
 func TestSignalR_Update(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Update.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Update"},
 	})
@@ -700,55 +808,66 @@ func TestSignalR_Update(t *testing.T) {
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRClientBeginUpdateOptions{Parameters: &test.ResourceInfo{
+		test.ResourceInfo{
 			Location: to.StringPtr("eastus"),
 			Tags: map[string]*string{
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("True"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("False"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
-							Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								test.SignalRRequestTypeServerConnection.ToPtr()},
+							Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PublicNetworkAccess: to.StringPtr("Enabled"),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthType("ManagedIdentity").ToPtr(),
+								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
 								ManagedIdentity: &test.ManagedIdentitySettings{
 									Resource: to.StringPtr("api://example"),
 								},
@@ -759,23 +878,20 @@ func TestSignalR_Update(t *testing.T) {
 							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
 						}},
 				},
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
-				},
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("Standard_S1"),
 				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
 			},
 		},
-		})
+		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Update.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Update.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json: %v", err)
 	}
 	// Response check
 	{
@@ -788,45 +904,85 @@ func TestSignalR_Update(t *testing.T) {
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				TenantID:    to.StringPtr("00000000-0000-0000-0000-000000000000"),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
+				ExternalIP:       to.StringPtr("10.0.0.1"),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("True"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("False"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("False"),
 					}},
+				HostName: to.StringPtr("mysignalrservice.service.signalr.net"),
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
-							Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								test.SignalRRequestTypeServerConnection.ToPtr()},
+							Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Properties: &test.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &test.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+								ActionsRequired: to.StringPtr("None"),
+								Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+						},
+					}},
+				ProvisioningState:   test.ProvisioningStateSucceeded.ToPtr(),
+				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicPort:          to.Int32Ptr(443),
+				ServerPort:          to.Int32Ptr(443),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(true),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
@@ -834,49 +990,33 @@ func TestSignalR_Update(t *testing.T) {
 							URLTemplate: to.StringPtr("http://foo.com"),
 						}},
 				},
-				ExternalIP: to.StringPtr("10.0.0.1"),
-				HostName:   to.StringPtr("mysignalrservice.service.signalr.net"),
-				PrivateEndpointConnections: []*test.PrivateEndpointConnection{
-					{
-						Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
-						Properties: &test.PrivateEndpointConnectionProperties{
-							PrivateEndpoint: &test.PrivateEndpoint{
-								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
-							},
-							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-								ActionsRequired: to.StringPtr("None"),
-								Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
-							},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-						},
-					}},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
-				PublicPort:        to.Int32Ptr(443),
-				ServerPort:        to.Int32Ptr(443),
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(true),
-				},
 				Version: to.StringPtr("1.0"),
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("Standard_S1"),
 				Capacity: to.Int32Ptr(1),
 				Size:     to.StringPtr("S1"),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+			},
+			SystemData: &test.SystemData{
+				CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				CreatedBy:          to.StringPtr("string"),
+				CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+				LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				LastModifiedBy:     to.StringPtr("string"),
+				LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ResourceInfo) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.ResourceInfo)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalR_ListKeys(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListKeys.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListKeys"},
 	})
@@ -891,26 +1031,21 @@ func TestSignalR_ListKeys(t *testing.T) {
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListKeys.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json: %v", err)
 	}
 	// Response check
 	{
-		exampleRes := test.SignalRKeys{
-			PrimaryConnectionString:   to.StringPtr("Endpoint=https://yourServiceName.service.signalr.net;AccessKey=primaryAccessKey;Version=1.0"),
-			PrimaryKey:                to.StringPtr("primaryAccessKey"),
-			SecondaryConnectionString: to.StringPtr("Endpoint=https://yourServiceName.service.signalr.net;AccessKey=secondaryAccessKey;Version=1.0"),
-			SecondaryKey:              to.StringPtr("secondaryAccessKey"),
-		}
+		exampleRes := test.SignalRKeys{}
 		if !reflect.DeepEqual(exampleRes, res.SignalRKeys) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.SignalRKeys)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalR_RegenerateKey(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_RegenerateKey.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_RegenerateKey"},
 	})
@@ -923,21 +1058,21 @@ func TestSignalR_RegenerateKey(t *testing.T) {
 	poller, err := client.BeginRegenerateKey(ctx,
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRClientBeginRegenerateKeyOptions{Parameters: &test.RegenerateKeyParameters{
-			KeyType: test.KeyType("Primary").ToPtr(),
+		test.RegenerateKeyParameters{
+			KeyType: test.KeyTypePrimary.ToPtr(),
 		},
-		})
+		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
 	}
 }
 
 func TestSignalR_Restart(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Restart.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Restart"},
 	})
@@ -952,16 +1087,16 @@ func TestSignalR_Restart(t *testing.T) {
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Restart.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Restart.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json: %v", err)
 	}
 }
 
 func TestUsages_List(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Usages_List.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Usages_List"},
 	})
@@ -976,7 +1111,7 @@ func TestUsages_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Usages_List.json: %v", err)
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json: %v", err)
 		}
 		// Response check
 		if nextResult {
@@ -1006,7 +1141,66 @@ func TestUsages_List(t *testing.T) {
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SignalRUsageList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().SignalRUsageList)
-				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/Usages_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
+		} else {
+			t.Logf("Page end.")
+			break
+		}
+	}
+}
+
+func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"SignalRPrivateEndpointConnections_List"},
+	})
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
+	pager := client.List("myResourceGroup",
+		"mySignalRService",
+		nil)
+	for {
+		nextResult := pager.NextPage(ctx)
+		if err := pager.Err(); err != nil {
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json: %v", err)
+		}
+		// Response check
+		if nextResult {
+			pagerExampleRes := test.PrivateEndpointConnectionList{
+				Value: []*test.PrivateEndpointConnection{
+					{
+						Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+						Properties: &test.PrivateEndpointConnectionProperties{
+							PrivateEndpoint: &test.PrivateEndpoint{
+								ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
+							},
+							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
+								ActionsRequired: to.StringPtr("None"),
+								Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+							},
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+						},
+						SystemData: &test.SystemData{
+							CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							CreatedBy:          to.StringPtr("string"),
+							CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+							LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+							LastModifiedBy:     to.StringPtr("string"),
+							LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().PrivateEndpointConnectionList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().PrivateEndpointConnectionList)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
@@ -1016,7 +1210,7 @@ func TestUsages_List(t *testing.T) {
 }
 
 func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Get"},
 	})
@@ -1027,40 +1221,48 @@ func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
 	}()
 	client := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	res, err := client.Get(ctx,
-		"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Get.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json: %v", err)
 	}
 	// Response check
 	{
 		exampleRes := test.PrivateEndpointConnection{
-			Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+			Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 			Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
 					ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					ActionsRequired: to.StringPtr("None"),
-					Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+			},
+			SystemData: &test.SystemData{
+				CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				CreatedBy:          to.StringPtr("string"),
+				CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+				LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				LastModifiedBy:     to.StringPtr("string"),
+				LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Update"},
 	})
@@ -1071,51 +1273,59 @@ func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 	}()
 	client := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	res, err := client.Update(ctx,
-		"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRPrivateEndpointConnectionsClientUpdateOptions{Parameters: &test.PrivateEndpointConnection{
+		test.PrivateEndpointConnection{
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
 					ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					ActionsRequired: to.StringPtr("None"),
-					Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
 				},
 			},
 		},
-		})
+		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Update.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json: %v", err)
 	}
 	// Response check
 	{
 		exampleRes := test.PrivateEndpointConnection{
-			Name: to.StringPtr("mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+			Name: to.StringPtr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 			Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
-			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
 					ID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					ActionsRequired: to.StringPtr("None"),
-					Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
+			},
+			SystemData: &test.SystemData{
+				CreatedAt:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				CreatedBy:          to.StringPtr("string"),
+				CreatedByType:      test.CreatedByTypeUser.ToPtr(),
+				LastModifiedAt:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2015-02-03T04:05:06Z"); return t }()),
+				LastModifiedBy:     to.StringPtr("string"),
+				LastModifiedByType: test.CreatedByTypeUser.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
 			exampleResJson, _ := json.Marshal(exampleRes)
 			mockResJson, _ := json.Marshal(res.PrivateEndpointConnection)
-			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 		}
 	}
 }
 
 func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Delete"},
 	})
@@ -1126,21 +1336,21 @@ func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
 	}()
 	client := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	poller, err := client.BeginDelete(ctx,
-		"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
 		nil)
 	if err != nil {
-		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
 	}
 }
 
 func TestSignalRPrivateLinkResources_List(t *testing.T) {
-	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateLinkResources_List.json
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
 	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateLinkResources_List"},
 	})
@@ -1156,34 +1366,209 @@ func TestSignalRPrivateLinkResources_List(t *testing.T) {
 	for {
 		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
-			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateLinkResources_List.json: %v", err)
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json: %v", err)
 		}
 		// Response check
 		if nextResult {
 			pagerExampleRes := test.PrivateLinkResourceList{
 				Value: []*test.PrivateLinkResource{
 					{
-						Name: to.StringPtr("signalr"),
+						Name: to.StringPtr("myPrivateLink"),
 						Type: to.StringPtr("privateLinkResources"),
-						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/privateLinkResources"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateLinkResources/myPrivateLink"),
 						Properties: &test.PrivateLinkResourceProperties{
 							GroupID: to.StringPtr("signalr"),
 							RequiredMembers: []*string{
 								to.StringPtr("signalr")},
 							RequiredZoneNames: []*string{
 								to.StringPtr("privatelink.service.signalr.net")},
+							ShareablePrivateLinkResourceTypes: []*test.ShareablePrivateLinkResourceType{
+								{
+									Name: to.StringPtr("site"),
+									Properties: &test.ShareablePrivateLinkResourceProperties{
+										Type:        to.StringPtr("Microsoft.Web/sites"),
+										Description: to.StringPtr("Azure App Service can be used as an upstream"),
+										GroupID:     to.StringPtr("sites"),
+									},
+								}},
 						},
 					}},
 			}
 			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().PrivateLinkResourceList) {
 				exampleResJson, _ := json.Marshal(pagerExampleRes)
 				mockResJson, _ := json.Marshal(pager.PageResponse().PrivateLinkResourceList)
-				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
 			}
 		} else {
 			t.Logf("Page end.")
 			break
 		}
+	}
+}
+
+func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"SignalRSharedPrivateLinkResources_List"},
+	})
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
+	pager := client.List("myResourceGroup",
+		"mySignalRService",
+		nil)
+	for {
+		nextResult := pager.NextPage(ctx)
+		if err := pager.Err(); err != nil {
+			t.Fatalf("Failed to advance page for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json: %v", err)
+		}
+		// Response check
+		if nextResult {
+			pagerExampleRes := test.SharedPrivateLinkResourceList{
+				Value: []*test.SharedPrivateLinkResource{
+					{
+						Name: to.StringPtr("upstream"),
+						Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/upstream"),
+						Properties: &test.SharedPrivateLinkResourceProperties{
+							GroupID:               to.StringPtr("sites"),
+							PrivateLinkResourceID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"),
+							ProvisioningState:     test.ProvisioningStateSucceeded.ToPtr(),
+							RequestMessage:        to.StringPtr("Please approve"),
+							Status:                test.SharedPrivateLinkResourceStatusApproved.ToPtr(),
+						},
+					}},
+			}
+			if !reflect.DeepEqual(pagerExampleRes, pager.PageResponse().SharedPrivateLinkResourceList) {
+				exampleResJson, _ := json.Marshal(pagerExampleRes)
+				mockResJson, _ := json.Marshal(pager.PageResponse().SharedPrivateLinkResourceList)
+				t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+			}
+		} else {
+			t.Logf("Page end.")
+			break
+		}
+	}
+}
+
+func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"SignalRSharedPrivateLinkResources_Get"},
+	})
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
+	res, err := client.Get(ctx,
+		"upstream",
+		"myResourceGroup",
+		"mySignalRService",
+		nil)
+	if err != nil {
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json: %v", err)
+	}
+	// Response check
+	{
+		exampleRes := test.SharedPrivateLinkResource{
+			Name: to.StringPtr("upstream"),
+			Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/upstream"),
+			Properties: &test.SharedPrivateLinkResourceProperties{
+				GroupID:               to.StringPtr("sites"),
+				PrivateLinkResourceID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"),
+				ProvisioningState:     test.ProvisioningStateSucceeded.ToPtr(),
+				RequestMessage:        to.StringPtr("Please approve"),
+				Status:                test.SharedPrivateLinkResourceStatusApproved.ToPtr(),
+			},
+		}
+		if !reflect.DeepEqual(exampleRes, res.SharedPrivateLinkResource) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharedPrivateLinkResource)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+}
+
+func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"SignalRSharedPrivateLinkResources_CreateOrUpdate"},
+	})
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
+	poller, err := client.BeginCreateOrUpdate(ctx,
+		"upstream",
+		"myResourceGroup",
+		"mySignalRService",
+		test.SharedPrivateLinkResource{
+			Properties: &test.SharedPrivateLinkResourceProperties{
+				GroupID:               to.StringPtr("sites"),
+				PrivateLinkResourceID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"),
+				RequestMessage:        to.StringPtr("Please approve"),
+			},
+		},
+		nil)
+	if err != nil {
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json: %v", err)
+	}
+	res, err := poller.PollUntilDone(ctx, 30*time.Second)
+	if err != nil {
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json: %v", err)
+	}
+	// Response check
+	{
+		exampleRes := test.SharedPrivateLinkResource{
+			Name: to.StringPtr("upstream"),
+			Type: to.StringPtr("Microsoft.SignalRService/SignalR/privateEndpointConnections"),
+			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.SignalRService/SignalR/mySignalRService/privateEndpointConnections/upstream"),
+			Properties: &test.SharedPrivateLinkResourceProperties{
+				GroupID:               to.StringPtr("sites"),
+				PrivateLinkResourceID: to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"),
+				ProvisioningState:     test.ProvisioningStateSucceeded.ToPtr(),
+				RequestMessage:        to.StringPtr("Please approve"),
+				Status:                test.SharedPrivateLinkResourceStatusApproved.ToPtr(),
+			},
+		}
+		if !reflect.DeepEqual(exampleRes, res.SharedPrivateLinkResource) {
+			exampleResJson, _ := json.Marshal(exampleRes)
+			mockResJson, _ := json.Marshal(res.SharedPrivateLinkResource)
+			t.Fatalf("Mock response is not equal to example response for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+		}
+	}
+}
+
+func TestSignalRSharedPrivateLinkResources_Delete(t *testing.T) {
+	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
+	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+		"example-id": {"SignalRSharedPrivateLinkResources_Delete"},
+	})
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
+	poller, err := client.BeginDelete(ctx,
+		"upstream",
+		"myResourceGroup",
+		"mySignalRService",
+		nil)
+	if err != nil {
+		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json: %v", err)
+	}
+	_, err = poller.PollUntilDone(ctx, 30*time.Second)
+	if err != nil {
+		t.Fatalf("Failed to get LRO result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json: %v", err)
 	}
 }
 

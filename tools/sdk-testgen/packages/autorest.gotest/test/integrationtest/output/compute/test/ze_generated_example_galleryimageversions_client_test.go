@@ -12,18 +12,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json
 func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
@@ -34,61 +27,61 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 	ctx := context.Background()
 	client := test.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-image-name>",
-"<gallery-image-version-name>",
-test.GalleryImageVersion{
-Location: to.StringPtr("<location>"),
-Properties: &test.GalleryImageVersionProperties{
-PublishingProfile: &test.GalleryImageVersionPublishingProfile{
-TargetRegions: []*test.TargetRegion{
-{
-Name: to.StringPtr("<name>"),
-Encryption: &test.EncryptionImages{
-DataDiskImages: []*test.DataDiskImageEncryption{
-{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-Lun: to.Int32Ptr(0),
-},
-{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-Lun: to.Int32Ptr(1),
-}},
-OSDiskImage: &test.OSDiskImageEncryption{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-},
-},
-RegionalReplicaCount: to.Int32Ptr(1),
-},
-{
-Name: to.StringPtr("<name>"),
-Encryption: &test.EncryptionImages{
-DataDiskImages: []*test.DataDiskImageEncryption{
-{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-Lun: to.Int32Ptr(0),
-},
-{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-Lun: to.Int32Ptr(1),
-}},
-OSDiskImage: &test.OSDiskImageEncryption{
-DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
-},
-},
-RegionalReplicaCount: to.Int32Ptr(2),
-StorageAccountType: test.StorageAccountType("Standard_ZRS").ToPtr(),
-}},
-},
-StorageProfile: &test.GalleryImageVersionStorageProfile{
-Source: &test.GalleryArtifactVersionSource{
-ID: to.StringPtr("<id>"),
-},
-},
-},
-},
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-image-name>",
+		"<gallery-image-version-name>",
+		test.GalleryImageVersion{
+			Location: to.StringPtr("<location>"),
+			Properties: &test.GalleryImageVersionProperties{
+				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
+					TargetRegions: []*test.TargetRegion{
+						{
+							Name: to.StringPtr("<name>"),
+							Encryption: &test.EncryptionImages{
+								DataDiskImages: []*test.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &test.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name: to.StringPtr("<name>"),
+							Encryption: &test.EncryptionImages{
+								DataDiskImages: []*test.DataDiskImageEncryption{
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(0),
+									},
+									{
+										DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+										Lun:                 to.Int32Ptr(1),
+									}},
+								OSDiskImage: &test.OSDiskImageEncryption{
+									DiskEncryptionSetID: to.StringPtr("<disk-encryption-set-id>"),
+								},
+							},
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &test.GalleryImageVersionStorageProfile{
+					Source: &test.GalleryArtifactVersionSource{
+						ID: to.StringPtr("<id>"),
+					},
+				},
+			},
+		},
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,8 +92,6 @@ nil)
 	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientCreateOrUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
 func ExampleGalleryImageVersionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -110,32 +101,32 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 	ctx := context.Background()
 	client := test.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-image-name>",
-"<gallery-image-version-name>",
-test.GalleryImageVersionUpdate{
-Properties: &test.GalleryImageVersionProperties{
-PublishingProfile: &test.GalleryImageVersionPublishingProfile{
-TargetRegions: []*test.TargetRegion{
-{
-Name: to.StringPtr("<name>"),
-RegionalReplicaCount: to.Int32Ptr(1),
-},
-{
-Name: to.StringPtr("<name>"),
-RegionalReplicaCount: to.Int32Ptr(2),
-StorageAccountType: test.StorageAccountType("Standard_ZRS").ToPtr(),
-}},
-},
-StorageProfile: &test.GalleryImageVersionStorageProfile{
-Source: &test.GalleryArtifactVersionSource{
-ID: to.StringPtr("<id>"),
-},
-},
-},
-},
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-image-name>",
+		"<gallery-image-version-name>",
+		test.GalleryImageVersionUpdate{
+			Properties: &test.GalleryImageVersionProperties{
+				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
+					TargetRegions: []*test.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+						},
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(2),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
+						}},
+				},
+				StorageProfile: &test.GalleryImageVersionStorageProfile{
+					Source: &test.GalleryArtifactVersionSource{
+						ID: to.StringPtr("<id>"),
+					},
+				},
+			},
+		},
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,8 +137,6 @@ nil)
 	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
 func ExampleGalleryImageVersionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -157,19 +146,16 @@ func ExampleGalleryImageVersionsClient_Get() {
 	ctx := context.Background()
 	client := test.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-image-name>",
-"<gallery-image-version-name>",
-&test.GalleryImageVersionsClientGetOptions{Expand: test.ReplicationStatusTypes("ReplicationStatus").ToPtr(),
-})
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-image-name>",
+		"<gallery-image-version-name>",
+		&test.GalleryImageVersionsClientGetOptions{Expand: test.ReplicationStatusTypesReplicationStatus.ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.GalleryImageVersionsClientGetResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json
 func ExampleGalleryImageVersionsClient_BeginDelete() {
@@ -180,11 +166,11 @@ func ExampleGalleryImageVersionsClient_BeginDelete() {
 	ctx := context.Background()
 	client := test.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-image-name>",
-"<gallery-image-version-name>",
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-image-name>",
+		"<gallery-image-version-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -193,8 +179,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json
 func ExampleGalleryImageVersionsClient_ListByGalleryImage() {
@@ -205,21 +189,19 @@ func ExampleGalleryImageVersionsClient_ListByGalleryImage() {
 	ctx := context.Background()
 	client := test.NewGalleryImageVersionsClient("<subscription-id>", cred, nil)
 	pager := client.ListByGalleryImage("<resource-group-name>",
-"<gallery-name>",
-"<gallery-image-name>",
-nil)
+		"<gallery-name>",
+		"<gallery-image-name>",
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-

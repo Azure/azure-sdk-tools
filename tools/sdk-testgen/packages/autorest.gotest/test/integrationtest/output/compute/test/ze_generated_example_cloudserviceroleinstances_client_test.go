@@ -12,18 +12,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
@@ -34,10 +26,10 @@ func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,8 +38,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_Get() {
@@ -58,18 +48,15 @@ func ExampleCloudServiceRoleInstancesClient_Get() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServiceRoleInstancesClientGetOptions{Expand: nil,
-})
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServiceRoleInstancesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesClientGetResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
@@ -80,17 +67,15 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	res, err := client.GetInstanceView(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServiceRoleInstancesClientGetInstanceViewResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
 func ExampleCloudServiceRoleInstancesClient_List() {
@@ -101,24 +86,21 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServiceRoleInstancesClientListOptions{Expand: nil,
-})
+		"<cloud-service-name>",
+		&test.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
@@ -129,10 +111,10 @@ func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRestart(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -141,8 +123,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
@@ -153,10 +133,10 @@ func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReimage(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,8 +145,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
 func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
@@ -177,10 +155,10 @@ func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRoleInstancesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRebuild(ctx,
-"<role-instance-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-instance-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -189,7 +167,3 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
-
-

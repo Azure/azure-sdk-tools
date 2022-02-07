@@ -114,7 +114,7 @@ func ExampleAppsClient_BeginUpdate() {
 		"<app-name>",
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Location: to.StringPtr("<location>"),
 			Properties: &test.AppResourceProperties{

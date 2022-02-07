@@ -89,7 +89,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("<name>"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							Image: &test.VirtualHardDisk{
 								URI: to.StringPtr("<uri>"),
 							},

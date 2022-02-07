@@ -18,7 +18,32 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
+func ExampleSignalRPrivateEndpointConnectionsClient_List() {
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		log.Fatalf("failed to obtain a credential: %v", err)
+	}
+	ctx := context.Background()
+	client := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	pager := client.List("<resource-group-name>",
+		"<resource-name>",
+		nil)
+	for {
+		nextResult := pager.NextPage(ctx)
+		if err := pager.Err(); err != nil {
+			log.Fatalf("failed to advance page: %v", err)
+		}
+		if !nextResult {
+			break
+		}
+		for _, v := range pager.PageResponse().Value {
+			log.Printf("Pager result: %#v\n", v)
+		}
+	}
+}
+
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
 func ExampleSignalRPrivateEndpointConnectionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -37,7 +62,7 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Get() {
 	log.Printf("Response result: %#v\n", res.SignalRPrivateEndpointConnectionsClientGetResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
 func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -49,25 +74,25 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 		"<private-endpoint-connection-name>",
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRPrivateEndpointConnectionsClientUpdateOptions{Parameters: &test.PrivateEndpointConnection{
+		test.PrivateEndpointConnection{
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
 					ID: to.StringPtr("<id>"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					ActionsRequired: to.StringPtr("<actions-required>"),
-					Status:          test.PrivateLinkServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
 				},
 			},
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.SignalRPrivateEndpointConnectionsClientUpdateResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
 func ExampleSignalRPrivateEndpointConnectionsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

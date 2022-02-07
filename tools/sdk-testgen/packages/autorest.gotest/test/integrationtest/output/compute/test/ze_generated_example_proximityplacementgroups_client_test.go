@@ -30,7 +30,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 		test.ProximityPlacementGroup{
 			Location: to.StringPtr("<location>"),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
 		},
 		nil)

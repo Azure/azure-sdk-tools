@@ -72,7 +72,7 @@ func TestServices_Get(t *testing.T) {
 					},
 					RequiredTraffics: []*test.RequiredTraffic{
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -80,7 +80,7 @@ func TestServices_Get(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -88,7 +88,7 @@ func TestServices_Get(t *testing.T) {
 							Protocol: to.StringPtr("UDP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -96,7 +96,7 @@ func TestServices_Get(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						}},
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 				ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 			},
 			SKU: &test.SKU{
@@ -164,7 +164,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 					},
 					RequiredTraffics: []*test.RequiredTraffic{
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -172,7 +172,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -180,7 +180,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 							Protocol: to.StringPtr("UDP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -188,7 +188,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						}},
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 				ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 			},
 			SKU: &test.SKU{
@@ -258,7 +258,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 					},
 					RequiredTraffics: []*test.RequiredTraffic{
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -266,7 +266,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -274,7 +274,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 							Protocol: to.StringPtr("UDP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -285,7 +285,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 					ServiceRuntimeNetworkResourceGroup: to.StringPtr("my-service-runtime-network-rg"),
 					ServiceRuntimeSubnetID:             to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/serviceRuntime"),
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 				ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 			},
 			SKU: &test.SKU{
@@ -377,7 +377,7 @@ func TestServices_Update(t *testing.T) {
 					},
 					RequiredTraffics: []*test.RequiredTraffic{
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -385,7 +385,7 @@ func TestServices_Update(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -393,7 +393,7 @@ func TestServices_Update(t *testing.T) {
 							Protocol: to.StringPtr("UDP"),
 						},
 						{
-							Direction: test.TrafficDirection("Outbound").ToPtr(),
+							Direction: test.TrafficDirectionOutbound.ToPtr(),
 							IPs: []*string{
 								to.StringPtr("20.62.211.25"),
 								to.StringPtr("52.188.47.226")},
@@ -401,7 +401,7 @@ func TestServices_Update(t *testing.T) {
 							Protocol: to.StringPtr("TCP"),
 						}},
 				},
-				ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 				ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 			},
 			SKU: &test.SKU{
@@ -467,7 +467,7 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 		"myResourceGroup",
 		"myservice",
 		test.RegenerateTestKeyRequestPayload{
-			KeyType: test.TestKeyType("Primary").ToPtr(),
+			KeyType: test.TestKeyTypePrimary.ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -619,7 +619,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 								},
 								RequiredTraffics: []*test.RequiredTraffic{
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -627,7 +627,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 										Protocol: to.StringPtr("TCP"),
 									},
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -635,7 +635,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 										Protocol: to.StringPtr("UDP"),
 									},
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -643,7 +643,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 										Protocol: to.StringPtr("TCP"),
 									}},
 							},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 							ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 						},
 						SKU: &test.SKU{
@@ -703,7 +703,7 @@ func TestServices_List(t *testing.T) {
 								},
 								RequiredTraffics: []*test.RequiredTraffic{
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -711,7 +711,7 @@ func TestServices_List(t *testing.T) {
 										Protocol: to.StringPtr("TCP"),
 									},
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -719,7 +719,7 @@ func TestServices_List(t *testing.T) {
 										Protocol: to.StringPtr("UDP"),
 									},
 									{
-										Direction: test.TrafficDirection("Outbound").ToPtr(),
+										Direction: test.TrafficDirectionOutbound.ToPtr(),
 										IPs: []*string{
 											to.StringPtr("20.62.211.25"),
 											to.StringPtr("52.188.47.226")},
@@ -727,7 +727,7 @@ func TestServices_List(t *testing.T) {
 										Protocol: to.StringPtr("TCP"),
 									}},
 							},
-							ProvisioningState: test.ProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.ProvisioningStateSucceeded.ToPtr(),
 							ServiceID:         to.StringPtr("12345678abcd1234abcd12345678abcd"),
 						},
 						SKU: &test.SKU{
@@ -781,7 +781,7 @@ func TestConfigServers_Get(t *testing.T) {
 						URI: to.StringPtr("https://github.com/fake-user/fake-repository.git"),
 					},
 				},
-				ProvisioningState: test.ConfigServerState("Succeeded").ToPtr(),
+				ProvisioningState: test.ConfigServerStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
@@ -841,7 +841,7 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 						URI: to.StringPtr("https://github.com/fake-user/fake-repository.git"),
 					},
 				},
-				ProvisioningState: test.ConfigServerState("Succeeded").ToPtr(),
+				ProvisioningState: test.ConfigServerStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
@@ -901,7 +901,7 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 						URI: to.StringPtr("https://github.com/fake-user/fake-repository.git"),
 					},
 				},
-				ProvisioningState: test.ConfigServerState("Succeeded").ToPtr(),
+				ProvisioningState: test.ConfigServerStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ConfigServerResource) {
@@ -985,7 +985,7 @@ func TestMonitoringSettings_Get(t *testing.T) {
 				},
 				AppInsightsInstrumentationKey: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				AppInsightsSamplingRate:       to.Float64Ptr(10),
-				ProvisioningState:             test.MonitoringSettingState("Succeeded").ToPtr(),
+				ProvisioningState:             test.MonitoringSettingStateSucceeded.ToPtr(),
 				TraceEnabled:                  to.BoolPtr(true),
 			},
 		}
@@ -1038,7 +1038,7 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 				},
 				AppInsightsInstrumentationKey: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				AppInsightsSamplingRate:       to.Float64Ptr(10),
-				ProvisioningState:             test.MonitoringSettingState("Succeeded").ToPtr(),
+				ProvisioningState:             test.MonitoringSettingStateSucceeded.ToPtr(),
 				TraceEnabled:                  to.BoolPtr(true),
 			},
 		}
@@ -1091,7 +1091,7 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 				},
 				AppInsightsInstrumentationKey: to.StringPtr("00000000-0000-0000-0000-000000000000"),
 				AppInsightsSamplingRate:       to.Float64Ptr(10),
-				ProvisioningState:             test.MonitoringSettingState("Succeeded").ToPtr(),
+				ProvisioningState:             test.MonitoringSettingStateSucceeded.ToPtr(),
 				TraceEnabled:                  to.BoolPtr(true),
 			},
 		}
@@ -1129,7 +1129,7 @@ func TestApps_Get(t *testing.T) {
 			Type: to.StringPtr("Microsoft.AppPlatform/Spring/apps"),
 			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/Spring/myservice/apps/myapp"),
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("principalid"),
 				TenantID:    to.StringPtr("tenantid"),
 			},
@@ -1140,14 +1140,14 @@ func TestApps_Get(t *testing.T) {
 				Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 				HTTPSOnly:            to.BoolPtr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("mypersistentdisk"),
+					MountPath: to.StringPtr("/mypersistentdisk"),
 					SizeInGB:  to.Int32Ptr(2),
 					UsedInGB:  to.Int32Ptr(1),
 				},
-				ProvisioningState: test.AppResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.AppResourceProvisioningStateSucceeded.ToPtr(),
 				Public:            to.BoolPtr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("mytemporarydisk"),
+					MountPath: to.StringPtr("/mytemporarydisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 				URL: to.StringPtr("myapp.myservice.azuremicroservices.io"),
@@ -1184,12 +1184,12 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 				Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 				HTTPSOnly:            to.BoolPtr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("mypersistentdisk"),
+					MountPath: to.StringPtr("/mypersistentdisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 				Public: to.BoolPtr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("mytemporarydisk"),
+					MountPath: to.StringPtr("/mytemporarydisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 			},
@@ -1209,7 +1209,7 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 			Type: to.StringPtr("Microsoft.AppPlatform/Spring/apps"),
 			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/Spring/myservice/apps/myapp"),
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("principalid"),
 				TenantID:    to.StringPtr("tenantid"),
 			},
@@ -1220,14 +1220,14 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 				Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 				HTTPSOnly:            to.BoolPtr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("mypersistentdisk"),
+					MountPath: to.StringPtr("/mypersistentdisk"),
 					SizeInGB:  to.Int32Ptr(2),
 					UsedInGB:  to.Int32Ptr(1),
 				},
-				ProvisioningState: test.AppResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.AppResourceProvisioningStateSucceeded.ToPtr(),
 				Public:            to.BoolPtr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("mytemporarydisk"),
+					MountPath: to.StringPtr("/mytemporarydisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 				URL: to.StringPtr("myapp.myservice.azuremicroservices.io"),
@@ -1283,7 +1283,7 @@ func TestApps_Update(t *testing.T) {
 		"myapp",
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Location: to.StringPtr("eastus"),
 			Properties: &test.AppResourceProperties{
@@ -1292,12 +1292,12 @@ func TestApps_Update(t *testing.T) {
 				Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 				HTTPSOnly:            to.BoolPtr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("mypersistentdisk"),
+					MountPath: to.StringPtr("/mypersistentdisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 				Public: to.BoolPtr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("mytemporarydisk"),
+					MountPath: to.StringPtr("/mytemporarydisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 			},
@@ -1317,7 +1317,7 @@ func TestApps_Update(t *testing.T) {
 			Type: to.StringPtr("Microsoft.AppPlatform/Spring/apps"),
 			ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/Spring/myservice/apps/myapp"),
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 				PrincipalID: to.StringPtr("principalid"),
 				TenantID:    to.StringPtr("tenantid"),
 			},
@@ -1328,14 +1328,14 @@ func TestApps_Update(t *testing.T) {
 				Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 				HTTPSOnly:            to.BoolPtr(false),
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("mypersistentdisk"),
+					MountPath: to.StringPtr("/mypersistentdisk"),
 					SizeInGB:  to.Int32Ptr(2),
 					UsedInGB:  to.Int32Ptr(1),
 				},
-				ProvisioningState: test.AppResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.AppResourceProvisioningStateSucceeded.ToPtr(),
 				Public:            to.BoolPtr(true),
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("mytemporarydisk"),
+					MountPath: to.StringPtr("/mytemporarydisk"),
 					SizeInGB:  to.Int32Ptr(2),
 				},
 				URL: to.StringPtr("myapp.myservice.azuremicroservices.io"),
@@ -1377,7 +1377,7 @@ func TestApps_List(t *testing.T) {
 						Type: to.StringPtr("Microsoft.AppPlatform/Spring/apps"),
 						ID:   to.StringPtr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/Spring/myservice/apps/myapp"),
 						Identity: &test.ManagedIdentityProperties{
-							Type:        test.ManagedIdentityType("SystemAssigned").ToPtr(),
+							Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 							PrincipalID: to.StringPtr("principalid"),
 							TenantID:    to.StringPtr("tenantid"),
 						},
@@ -1388,14 +1388,14 @@ func TestApps_List(t *testing.T) {
 							Fqdn:                 to.StringPtr("myapp.mydomain.com"),
 							HTTPSOnly:            to.BoolPtr(false),
 							PersistentDisk: &test.PersistentDisk{
-								MountPath: to.StringPtr("mypersistentdisk"),
+								MountPath: to.StringPtr("/mypersistentdisk"),
 								SizeInGB:  to.Int32Ptr(2),
 								UsedInGB:  to.Int32Ptr(1),
 							},
-							ProvisioningState: test.AppResourceProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.AppResourceProvisioningStateSucceeded.ToPtr(),
 							Public:            to.BoolPtr(true),
 							TemporaryDisk: &test.TemporaryDisk{
-								MountPath: to.StringPtr("mytemporarydisk"),
+								MountPath: to.StringPtr("/mytemporarydisk"),
 								SizeInGB:  to.Int32Ptr(2),
 							},
 							URL: to.StringPtr("myapp.myservice.azuremicroservices.io"),
@@ -2137,7 +2137,7 @@ func TestDeployments_Get(t *testing.T) {
 					},
 					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 				},
 				Instances: []*test.DeploymentInstance{
 					{
@@ -2146,14 +2146,14 @@ func TestDeployments_Get(t *testing.T) {
 						StartTime:       to.StringPtr("2020-08-26T01:55:02Z"),
 						Status:          to.StringPtr("Running"),
 					}},
-				ProvisioningState: test.DeploymentResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.DeploymentResourceProvisioningStateSucceeded.ToPtr(),
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("sub-module-1"),
 					RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 					Version:          to.StringPtr("1.0"),
 				},
-				Status: test.DeploymentResourceStatus("Running").ToPtr(),
+				Status: test.DeploymentResourceStatusRunning.ToPtr(),
 			},
 			SKU: &test.SKU{
 				Name:     to.StringPtr("S0"),
@@ -2194,10 +2194,10 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 					},
 					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("sub-module-1"),
 					RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 					Version:          to.StringPtr("1.0"),
@@ -2228,7 +2228,7 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 					},
 					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 				},
 				Instances: []*test.DeploymentInstance{
 					{
@@ -2237,14 +2237,14 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 						StartTime:       to.StringPtr("2020-08-26T01:55:02Z"),
 						Status:          to.StringPtr("Running"),
 					}},
-				ProvisioningState: test.DeploymentResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.DeploymentResourceProvisioningStateSucceeded.ToPtr(),
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("sub-module-1"),
 					RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 					Version:          to.StringPtr("1.0"),
 				},
-				Status: test.DeploymentResourceStatus("Running").ToPtr(),
+				Status: test.DeploymentResourceStatusRunning.ToPtr(),
 			},
 			SKU: &test.SKU{
 				Name:     to.StringPtr("S0"),
@@ -2305,7 +2305,7 @@ func TestDeployments_Update(t *testing.T) {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("sub-module-1"),
 					RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 					Version:          to.StringPtr("1.0"),
@@ -2336,7 +2336,7 @@ func TestDeployments_Update(t *testing.T) {
 					},
 					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 				},
 				Instances: []*test.DeploymentInstance{
 					{
@@ -2345,14 +2345,14 @@ func TestDeployments_Update(t *testing.T) {
 						StartTime:       to.StringPtr("2020-08-26T01:55:02Z"),
 						Status:          to.StringPtr("Running"),
 					}},
-				ProvisioningState: test.DeploymentResourceProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.DeploymentResourceProvisioningStateSucceeded.ToPtr(),
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("sub-module-1"),
 					RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 					Version:          to.StringPtr("1.0"),
 				},
-				Status: test.DeploymentResourceStatus("Running").ToPtr(),
+				Status: test.DeploymentResourceStatusRunning.ToPtr(),
 			},
 			SKU: &test.SKU{
 				Name:     to.StringPtr("S0"),
@@ -2406,7 +2406,7 @@ func TestDeployments_List(t *testing.T) {
 								},
 								JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 								MemoryInGB:     to.Int32Ptr(3),
-								RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+								RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 							},
 							Instances: []*test.DeploymentInstance{
 								{
@@ -2415,14 +2415,14 @@ func TestDeployments_List(t *testing.T) {
 									StartTime:       to.StringPtr("2020-08-26T01:55:02Z"),
 									Status:          to.StringPtr("Running"),
 								}},
-							ProvisioningState: test.DeploymentResourceProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.DeploymentResourceProvisioningStateSucceeded.ToPtr(),
 							Source: &test.UserSourceInfo{
-								Type:             test.UserSourceType("Source").ToPtr(),
+								Type:             test.UserSourceTypeSource.ToPtr(),
 								ArtifactSelector: to.StringPtr("sub-module-1"),
 								RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 								Version:          to.StringPtr("1.0"),
 							},
-							Status: test.DeploymentResourceStatus("Running").ToPtr(),
+							Status: test.DeploymentResourceStatusRunning.ToPtr(),
 						},
 						SKU: &test.SKU{
 							Name:     to.StringPtr("S0"),
@@ -2480,7 +2480,7 @@ func TestDeployments_ListForCluster(t *testing.T) {
 								},
 								JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
 								MemoryInGB:     to.Int32Ptr(3),
-								RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+								RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 							},
 							Instances: []*test.DeploymentInstance{
 								{
@@ -2489,14 +2489,14 @@ func TestDeployments_ListForCluster(t *testing.T) {
 									StartTime:       to.StringPtr("2020-08-26T01:55:02Z"),
 									Status:          to.StringPtr("Running"),
 								}},
-							ProvisioningState: test.DeploymentResourceProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.DeploymentResourceProvisioningStateSucceeded.ToPtr(),
 							Source: &test.UserSourceInfo{
-								Type:             test.UserSourceType("Source").ToPtr(),
+								Type:             test.UserSourceTypeSource.ToPtr(),
 								ArtifactSelector: to.StringPtr("sub-module-1"),
 								RelativePath:     to.StringPtr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
 								Version:          to.StringPtr("1.0"),
 							},
-							Status: test.DeploymentResourceStatus("Running").ToPtr(),
+							Status: test.DeploymentResourceStatusRunning.ToPtr(),
 						},
 						SKU: &test.SKU{
 							Name:     to.StringPtr("S0"),
@@ -2662,18 +2662,18 @@ func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 		exampleRes := test.AvailableRuntimeVersions{
 			Value: []*test.SupportedRuntimeVersion{
 				{
-					Platform: test.SupportedRuntimePlatform("Java").ToPtr(),
-					Value:    test.SupportedRuntimeValue("Java_8").ToPtr(),
+					Platform: test.SupportedRuntimePlatformJava.ToPtr(),
+					Value:    test.SupportedRuntimeValueJava8.ToPtr(),
 					Version:  to.StringPtr("8"),
 				},
 				{
-					Platform: test.SupportedRuntimePlatform("Java").ToPtr(),
-					Value:    test.SupportedRuntimeValue("Java_11").ToPtr(),
+					Platform: test.SupportedRuntimePlatformJava.ToPtr(),
+					Value:    test.SupportedRuntimeValueJava11.ToPtr(),
 					Version:  to.StringPtr("11"),
 				},
 				{
-					Platform: test.SupportedRuntimePlatform(".NET Core").ToPtr(),
-					Value:    test.SupportedRuntimeValue("NetCore_31").ToPtr(),
+					Platform: test.SupportedRuntimePlatformNETCore.ToPtr(),
+					Value:    test.SupportedRuntimeValueNetCore31.ToPtr(),
 					Version:  to.StringPtr("3.1"),
 				}},
 		}
@@ -2712,7 +2712,7 @@ func TestSKUs_List(t *testing.T) {
 							Default:   to.Int32Ptr(1),
 							Maximum:   to.Int32Ptr(20),
 							Minimum:   to.Int32Ptr(1),
-							ScaleType: test.SKUScaleType("Automatic").ToPtr(),
+							ScaleType: test.SKUScaleTypeAutomatic.ToPtr(),
 						},
 						LocationInfo: []*test.ResourceSKULocationInfo{
 							{

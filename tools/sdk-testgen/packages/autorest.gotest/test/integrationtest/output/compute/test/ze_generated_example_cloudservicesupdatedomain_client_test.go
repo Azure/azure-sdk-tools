@@ -12,18 +12,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
@@ -34,11 +26,10 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 	ctx := context.Background()
 	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginWalkUpdateDomain(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-1,
-&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		1,
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,8 +38,6 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
@@ -59,17 +48,15 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	ctx := context.Background()
 	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	res, err := client.GetUpdateDomain(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-1,
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		1,
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServicesUpdateDomainClientGetUpdateDomainResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
 func ExampleCloudServicesUpdateDomainClient_ListUpdateDomains() {
@@ -80,20 +67,18 @@ func ExampleCloudServicesUpdateDomainClient_ListUpdateDomains() {
 	ctx := context.Background()
 	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
 	pager := client.ListUpdateDomains("<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<cloud-service-name>",
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-

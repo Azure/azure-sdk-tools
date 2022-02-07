@@ -12,18 +12,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
@@ -34,34 +27,34 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	ctx := context.Background()
 	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-application-name>",
-"<gallery-application-version-name>",
-test.GalleryApplicationVersion{
-Location: to.StringPtr("<location>"),
-Properties: &test.GalleryApplicationVersionProperties{
-PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
-EndOfLifeDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t}()),
-ReplicaCount: to.Int32Ptr(1),
-StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
-TargetRegions: []*test.TargetRegion{
-{
-Name: to.StringPtr("<name>"),
-RegionalReplicaCount: to.Int32Ptr(1),
-StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
-}},
-ManageActions: &test.UserArtifactManage{
-Install: to.StringPtr("<install>"),
-Remove: to.StringPtr("<remove>"),
-},
-Source: &test.UserArtifactSource{
-MediaLink: to.StringPtr("<media-link>"),
-},
-},
-},
-},
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-application-name>",
+		"<gallery-application-version-name>",
+		test.GalleryApplicationVersion{
+			Location: to.StringPtr("<location>"),
+			Properties: &test.GalleryApplicationVersionProperties{
+				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*test.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					ManageActions: &test.UserArtifactManage{
+						Install: to.StringPtr("<install>"),
+						Remove:  to.StringPtr("<remove>"),
+					},
+					Source: &test.UserArtifactSource{
+						MediaLink: to.StringPtr("<media-link>"),
+					},
+				},
+			},
+		},
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,8 +65,6 @@ nil)
 	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsClientCreateOrUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -83,33 +74,33 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	ctx := context.Background()
 	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-application-name>",
-"<gallery-application-version-name>",
-test.GalleryApplicationVersionUpdate{
-Properties: &test.GalleryApplicationVersionProperties{
-PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
-EndOfLifeDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t}()),
-ReplicaCount: to.Int32Ptr(1),
-StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
-TargetRegions: []*test.TargetRegion{
-{
-Name: to.StringPtr("<name>"),
-RegionalReplicaCount: to.Int32Ptr(1),
-StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
-}},
-ManageActions: &test.UserArtifactManage{
-Install: to.StringPtr("<install>"),
-Remove: to.StringPtr("<remove>"),
-},
-Source: &test.UserArtifactSource{
-MediaLink: to.StringPtr("<media-link>"),
-},
-},
-},
-},
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-application-name>",
+		"<gallery-application-version-name>",
+		test.GalleryApplicationVersionUpdate{
+			Properties: &test.GalleryApplicationVersionProperties{
+				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
+					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Int32Ptr(1),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
+					TargetRegions: []*test.TargetRegion{
+						{
+							Name:                 to.StringPtr("<name>"),
+							RegionalReplicaCount: to.Int32Ptr(1),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
+						}},
+					ManageActions: &test.UserArtifactManage{
+						Install: to.StringPtr("<install>"),
+						Remove:  to.StringPtr("<remove>"),
+					},
+					Source: &test.UserArtifactSource{
+						MediaLink: to.StringPtr("<media-link>"),
+					},
+				},
+			},
+		},
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,8 +111,6 @@ nil)
 	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsClientUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
 func ExampleGalleryApplicationVersionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -131,19 +120,16 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 	ctx := context.Background()
 	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-application-name>",
-"<gallery-application-version-name>",
-&test.GalleryApplicationVersionsClientGetOptions{Expand: test.ReplicationStatusTypes("ReplicationStatus").ToPtr(),
-})
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-application-name>",
+		"<gallery-application-version-name>",
+		&test.GalleryApplicationVersionsClientGetOptions{Expand: test.ReplicationStatusTypesReplicationStatus.ToPtr()})
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.GalleryApplicationVersionsClientGetResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
 func ExampleGalleryApplicationVersionsClient_BeginDelete() {
@@ -154,11 +140,11 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 	ctx := context.Background()
 	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
-"<resource-group-name>",
-"<gallery-name>",
-"<gallery-application-name>",
-"<gallery-application-version-name>",
-nil)
+		"<resource-group-name>",
+		"<gallery-name>",
+		"<gallery-application-name>",
+		"<gallery-application-version-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -167,8 +153,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
 func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
@@ -179,21 +163,19 @@ func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
 	ctx := context.Background()
 	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	pager := client.ListByGalleryApplication("<resource-group-name>",
-"<gallery-name>",
-"<gallery-application-name>",
-nil)
+		"<gallery-name>",
+		"<gallery-application-name>",
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-

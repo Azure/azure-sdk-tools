@@ -57,7 +57,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 			Location: to.StringPtr("<location>"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -74,7 +74,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 					ComputerName:  to.StringPtr("<computer-name>"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							AssessmentMode: test.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
+							AssessmentMode: test.LinuxPatchAssessmentModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -89,9 +89,9 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("<name>"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -122,7 +122,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 		test.VirtualMachineUpdate{
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -141,13 +141,13 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -161,9 +161,9 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("<name>"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -387,11 +387,11 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 		"<vm-name>",
 		test.VirtualMachineInstallPatchesParameters{
 			MaximumDuration: to.StringPtr("<maximum-duration>"),
-			RebootSetting:   test.VMGuestPatchRebootSetting("IfRequired").ToPtr(),
+			RebootSetting:   test.VMGuestPatchRebootSettingIfRequired.ToPtr(),
 			WindowsParameters: &test.WindowsParameters{
 				ClassificationsToInclude: []*test.VMGuestPatchClassificationWindows{
-					test.VMGuestPatchClassificationWindows("Critical").ToPtr(),
-					test.VMGuestPatchClassificationWindows("Security").ToPtr()},
+					test.VMGuestPatchClassificationWindowsCritical.ToPtr(),
+					test.VMGuestPatchClassificationWindowsSecurity.ToPtr()},
 				MaxPatchPublishDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},

@@ -71,7 +71,7 @@ func ExampleImagesClient_BeginUpdate() {
 				"department": to.StringPtr("HR"),
 			},
 			Properties: &test.ImageProperties{
-				HyperVGeneration: test.HyperVGenerationTypes("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationTypesV1.ToPtr(),
 				SourceVirtualMachine: &test.SubResource{
 					ID: to.StringPtr("<id>"),
 				},

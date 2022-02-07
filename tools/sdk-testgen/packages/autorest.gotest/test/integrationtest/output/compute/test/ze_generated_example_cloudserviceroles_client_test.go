@@ -12,18 +12,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json
 func ExampleCloudServiceRolesClient_Get() {
@@ -34,17 +24,15 @@ func ExampleCloudServiceRolesClient_Get() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRolesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<role-name>",
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<role-name>",
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServiceRolesClientGetResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
 func ExampleCloudServiceRolesClient_List() {
@@ -55,20 +43,18 @@ func ExampleCloudServiceRolesClient_List() {
 	ctx := context.Background()
 	client := test.NewCloudServiceRolesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<cloud-service-name>",
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-

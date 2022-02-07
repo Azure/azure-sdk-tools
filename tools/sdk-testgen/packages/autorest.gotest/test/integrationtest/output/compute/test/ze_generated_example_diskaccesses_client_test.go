@@ -191,7 +191,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					Description: to.StringPtr("<description>"),
-					Status:      test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+					Status:      test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 				},
 			},
 		},

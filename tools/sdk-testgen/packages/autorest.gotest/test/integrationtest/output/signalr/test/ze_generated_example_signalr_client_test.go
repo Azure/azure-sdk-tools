@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CheckNameAvailability.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
 func ExampleSignalRClient_CheckNameAvailability() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -28,14 +28,18 @@ func ExampleSignalRClient_CheckNameAvailability() {
 	client := test.NewSignalRClient("<subscription-id>", cred, nil)
 	res, err := client.CheckNameAvailability(ctx,
 		"<location>",
-		&test.SignalRClientCheckNameAvailabilityOptions{Parameters: nil})
+		test.NameAvailabilityParameters{
+			Name: to.StringPtr("<name>"),
+			Type: to.StringPtr("<type>"),
+		},
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.SignalRClientCheckNameAvailabilityResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListBySubscription.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
 func ExampleSignalRClient_ListBySubscription() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -58,7 +62,7 @@ func ExampleSignalRClient_ListBySubscription() {
 	}
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListByResourceGroup.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
 func ExampleSignalRClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -82,7 +86,7 @@ func ExampleSignalRClient_ListByResourceGroup() {
 	}
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Get.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
 func ExampleSignalRClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -100,7 +104,7 @@ func ExampleSignalRClient_Get() {
 	log.Printf("Response result: %#v\n", res.SignalRClientGetResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_CreateOrUpdate.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
 func ExampleSignalRClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -111,55 +115,66 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRClientBeginCreateOrUpdateOptions{Parameters: &test.ResourceInfo{
+		test.ResourceInfo{
 			Location: to.StringPtr("<location>"),
 			Tags: map[string]*string{
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("<value>"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
+								test.SignalRRequestTypeServerConnection.ToPtr()},
 							Name: to.StringPtr("<name>"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PublicNetworkAccess: to.StringPtr("<public-network-access>"),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthType("ManagedIdentity").ToPtr(),
+								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
 								ManagedIdentity: &test.ManagedIdentitySettings{
 									Resource: to.StringPtr("<resource>"),
 								},
@@ -170,17 +185,14 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 							URLTemplate:     to.StringPtr("<urltemplate>"),
 						}},
 				},
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
-				},
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("<name>"),
 				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
 			},
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -191,7 +203,7 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 	log.Printf("Response result: %#v\n", res.SignalRClientCreateOrUpdateResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Delete.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
 func ExampleSignalRClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -212,7 +224,7 @@ func ExampleSignalRClient_BeginDelete() {
 	}
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Update.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
 func ExampleSignalRClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -223,55 +235,66 @@ func ExampleSignalRClient_BeginUpdate() {
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRClientBeginUpdateOptions{Parameters: &test.ResourceInfo{
+		test.ResourceInfo{
 			Location: to.StringPtr("<location>"),
 			Tags: map[string]*string{
 				"key1": to.StringPtr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityType("SystemAssigned").ToPtr(),
+				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
 			},
-			Kind: test.ServiceKind("SignalR").ToPtr(),
+			Kind: test.ServiceKindSignalR.ToPtr(),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
 						to.StringPtr("https://foo.com"),
 						to.StringPtr("https://bar.com")},
 				},
+				DisableAADAuth:   to.BoolPtr(false),
+				DisableLocalAuth: to.BoolPtr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlags("ServiceMode").ToPtr(),
+						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableConnectivityLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					},
 					{
-						Flag:       test.FeatureFlags("EnableMessagingLogs").ToPtr(),
+						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Properties: map[string]*string{},
+						Value:      to.StringPtr("<value>"),
+					},
+					{
+						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
 						Properties: map[string]*string{},
 						Value:      to.StringPtr("<value>"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLAction("Deny").ToPtr(),
+					DefaultAction: test.ACLActionDeny.ToPtr(),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestType("ServerConnection").ToPtr()},
+								test.SignalRRequestTypeServerConnection.ToPtr()},
 							Name: to.StringPtr("<name>"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestType("ClientConnection").ToPtr()},
+							test.SignalRRequestTypeClientConnection.ToPtr()},
 					},
+				},
+				PublicNetworkAccess: to.StringPtr("<public-network-access>"),
+				TLS: &test.SignalRTLSSettings{
+					ClientCertEnabled: to.BoolPtr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthType("ManagedIdentity").ToPtr(),
+								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
 								ManagedIdentity: &test.ManagedIdentitySettings{
 									Resource: to.StringPtr("<resource>"),
 								},
@@ -282,17 +305,14 @@ func ExampleSignalRClient_BeginUpdate() {
 							URLTemplate:     to.StringPtr("<urltemplate>"),
 						}},
 				},
-				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
-				},
 			},
 			SKU: &test.ResourceSKU{
 				Name:     to.StringPtr("<name>"),
 				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTier("Standard").ToPtr(),
+				Tier:     test.SignalRSKUTierStandard.ToPtr(),
 			},
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -303,7 +323,7 @@ func ExampleSignalRClient_BeginUpdate() {
 	log.Printf("Response result: %#v\n", res.SignalRClientUpdateResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_ListKeys.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
 func ExampleSignalRClient_ListKeys() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -321,7 +341,7 @@ func ExampleSignalRClient_ListKeys() {
 	log.Printf("Response result: %#v\n", res.SignalRClientListKeysResult)
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_RegenerateKey.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
 func ExampleSignalRClient_BeginRegenerateKey() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -332,10 +352,10 @@ func ExampleSignalRClient_BeginRegenerateKey() {
 	poller, err := client.BeginRegenerateKey(ctx,
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRClientBeginRegenerateKeyOptions{Parameters: &test.RegenerateKeyParameters{
-			KeyType: test.KeyType("Primary").ToPtr(),
+		test.RegenerateKeyParameters{
+			KeyType: test.KeyTypePrimary.ToPtr(),
 		},
-		})
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -345,7 +365,7 @@ func ExampleSignalRClient_BeginRegenerateKey() {
 	}
 }
 
-// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2020-07-01-preview/examples/SignalR_Restart.json
+// x-ms-original-file: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
 func ExampleSignalRClient_BeginRestart() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

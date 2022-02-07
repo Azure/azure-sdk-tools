@@ -33,7 +33,7 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		test.GalleryImage{
 			Location: to.StringPtr("<location>"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("<offer>"),
 					Publisher: to.StringPtr("<publisher>"),
@@ -68,7 +68,7 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 		"<gallery-image-name>",
 		test.GalleryImageUpdate{
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("<offer>"),
 					Publisher: to.StringPtr("<publisher>"),

@@ -33,7 +33,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 			Location: to.StringPtr("<location>"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:        to.StringPtr("<source-uri>"),
 					StorageAccountID: to.StringPtr("<storage-account-id>"),
 				},

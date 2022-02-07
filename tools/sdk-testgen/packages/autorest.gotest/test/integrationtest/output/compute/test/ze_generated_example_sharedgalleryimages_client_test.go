@@ -12,18 +12,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json
 func ExampleSharedGalleryImagesClient_List() {
@@ -34,24 +24,21 @@ func ExampleSharedGalleryImagesClient_List() {
 	ctx := context.Background()
 	client := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
 	pager := client.List("<location>",
-"<gallery-unique-name>",
-&test.SharedGalleryImagesClientListOptions{SharedTo: nil,
-})
+		"<gallery-unique-name>",
+		&test.SharedGalleryImagesClientListOptions{SharedTo: nil})
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json
 func ExampleSharedGalleryImagesClient_Get() {
@@ -62,14 +49,12 @@ func ExampleSharedGalleryImagesClient_Get() {
 	ctx := context.Background()
 	client := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<location>",
-"<gallery-unique-name>",
-"<gallery-image-name>",
-nil)
+		"<location>",
+		"<gallery-unique-name>",
+		"<gallery-image-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.SharedGalleryImagesClientGetResult)
 }
-
-

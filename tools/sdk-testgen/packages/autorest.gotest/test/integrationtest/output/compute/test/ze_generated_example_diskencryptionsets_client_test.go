@@ -32,13 +32,13 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 		test.DiskEncryptionSet{
 			Location: to.StringPtr("<location>"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("<key-url>"),
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 			},
 		},
 		nil)
@@ -65,13 +65,13 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 		"<disk-encryption-set-name>",
 		test.DiskEncryptionSetUpdate{
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("<key-url>"),
 				},
-				EncryptionType:                    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:                    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},

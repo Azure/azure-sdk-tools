@@ -60,10 +60,10 @@ func ExampleDeploymentsClient_BeginCreateOrUpdate() {
 					},
 					JvmOptions:     to.StringPtr("<jvm-options>"),
 					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersion("Java_8").ToPtr(),
+					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("<artifact-selector>"),
 					RelativePath:     to.StringPtr("<relative-path>"),
 					Version:          to.StringPtr("<version>"),
@@ -120,7 +120,7 @@ func ExampleDeploymentsClient_BeginUpdate() {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceType("Source").ToPtr(),
+					Type:             test.UserSourceTypeSource.ToPtr(),
 					ArtifactSelector: to.StringPtr("<artifact-selector>"),
 					RelativePath:     to.StringPtr("<relative-path>"),
 					Version:          to.StringPtr("<version>"),

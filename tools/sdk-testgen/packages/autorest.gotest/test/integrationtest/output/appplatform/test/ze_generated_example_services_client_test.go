@@ -153,7 +153,7 @@ func ExampleServicesClient_RegenerateTestKey() {
 		"<resource-group-name>",
 		"<service-name>",
 		test.RegenerateTestKeyRequestPayload{
-			KeyType: test.TestKeyType("Primary").ToPtr(),
+			KeyType: test.TestKeyTypePrimary.ToPtr(),
 		},
 		nil)
 	if err != nil {

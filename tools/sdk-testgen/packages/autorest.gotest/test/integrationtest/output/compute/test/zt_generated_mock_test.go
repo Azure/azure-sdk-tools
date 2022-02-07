@@ -229,7 +229,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 		test.ProximityPlacementGroup{
 			Location: to.StringPtr("westus"),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
 		},
 		nil)
@@ -244,7 +244,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
 			Location: to.StringPtr("westus"),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
@@ -286,7 +286,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/proximityPlacementGroups/myProximityPlacementGroup"),
 			Location: to.StringPtr("westus"),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.ProximityPlacementGroup) {
@@ -347,7 +347,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 					{
 						ID: to.StringPtr("string"),
 					}},
-				ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 				VirtualMachineScaleSets: []*test.SubResourceWithColocationStatus{
 					{
 						ID: to.StringPtr("string"),
@@ -397,7 +397,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 								{
 									ID: to.StringPtr("string"),
 								}},
-							ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+							ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 							VirtualMachineScaleSets: []*test.SubResourceWithColocationStatus{
 								{
 									ID: to.StringPtr("string"),
@@ -453,7 +453,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 								{
 									ID: to.StringPtr("string"),
 								}},
-							ProximityPlacementGroupType: test.ProximityPlacementGroupType("Standard").ToPtr(),
+							ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
 							VirtualMachineScaleSets: []*test.SubResourceWithColocationStatus{
 								{
 									ID: to.StringPtr("string"),
@@ -1022,7 +1022,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
 							},
 							HardwareProfile: &test.HardwareProfile{
-								VMSize: test.VirtualMachineSizeTypes("Standard_A0").ToPtr(),
+								VMSize: test.VirtualMachineSizeTypesStandardA0.ToPtr(),
 							},
 							NetworkProfile: &test.NetworkProfile{
 								NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1052,7 +1052,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								OSDisk: &test.OSDisk{
 									Name:         to.StringPtr("test"),
 									Caching:      test.CachingTypesNone.ToPtr(),
-									CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+									CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 									DiskSizeGB:   to.Int32Ptr(127),
 									OSType:       test.OperatingSystemTypesWindows.ToPtr(),
 									Vhd: &test.VirtualHardDisk{
@@ -1077,7 +1077,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets/{availabilitySetName}"),
 							},
 							HardwareProfile: &test.HardwareProfile{
-								VMSize: test.VirtualMachineSizeTypes("Standard_A0").ToPtr(),
+								VMSize: test.VirtualMachineSizeTypesStandardA0.ToPtr(),
 							},
 							NetworkProfile: &test.NetworkProfile{
 								NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1107,7 +1107,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 								OSDisk: &test.OSDisk{
 									Name:         to.StringPtr("test"),
 									Caching:      test.CachingTypesNone.ToPtr(),
-									CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+									CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 									DiskSizeGB:   to.Int32Ptr(127),
 									OSType:       test.OperatingSystemTypesWindows.ToPtr(),
 									Vhd: &test.VirtualHardDisk{
@@ -1153,7 +1153,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1170,7 +1170,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							AssessmentMode: test.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
+							AssessmentMode: test.LinuxPatchAssessmentModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1185,9 +1185,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -1210,7 +1210,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1226,7 +1226,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							AssessmentMode: test.LinuxPatchAssessmentMode("ImageDefault").ToPtr(),
+							AssessmentMode: test.LinuxPatchAssessmentModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1244,9 +1244,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1273,7 +1273,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1290,7 +1290,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							PatchMode: test.LinuxVMGuestPatchMode("ImageDefault").ToPtr(),
+							PatchMode: test.LinuxVMGuestPatchModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1305,9 +1305,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -1330,7 +1330,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1346,7 +1346,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							PatchMode: test.LinuxVMGuestPatchMode("ImageDefault").ToPtr(),
+							PatchMode: test.LinuxVMGuestPatchModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1364,9 +1364,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1393,7 +1393,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1410,8 +1410,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							AssessmentMode: test.LinuxPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
-							PatchMode:      test.LinuxVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							AssessmentMode: test.LinuxPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      test.LinuxVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1426,9 +1426,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -1451,7 +1451,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1467,8 +1467,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ComputerName:  to.StringPtr("myVM"),
 					LinuxConfiguration: &test.LinuxConfiguration{
 						PatchSettings: &test.LinuxPatchSettings{
-							AssessmentMode: test.LinuxPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
-							PatchMode:      test.LinuxVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							AssessmentMode: test.LinuxPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      test.LinuxVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1486,9 +1486,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -1515,7 +1515,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1548,9 +1548,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardSSDLRS.ToPtr(),
 						},
 					},
 				},
@@ -1573,7 +1573,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1612,9 +1612,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardSSDLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1647,7 +1647,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1673,9 +1673,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("vmOSdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -1705,7 +1705,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1737,9 +1737,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("vmOSdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1766,15 +1766,15 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
-					NetworkAPIVersion: test.NetworkAPIVersion("2020-11-01").ToPtr(),
+					NetworkAPIVersion: test.NetworkAPIVersionTwoThousandTwenty1101.ToPtr(),
 					NetworkInterfaceConfigurations: []*test.VirtualMachineNetworkInterfaceConfiguration{
 						{
 							Name: to.StringPtr("{nic-config-name}"),
 							Properties: &test.VirtualMachineNetworkInterfaceConfigurationProperties{
-								DeleteOption: test.DeleteOptions("Delete").ToPtr(),
+								DeleteOption: test.DeleteOptionsDelete.ToPtr(),
 								IPConfigurations: []*test.VirtualMachineNetworkInterfaceIPConfiguration{
 									{
 										Name: to.StringPtr("{ip-config-name}"),
@@ -1783,12 +1783,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 											PublicIPAddressConfiguration: &test.VirtualMachinePublicIPAddressConfiguration{
 												Name: to.StringPtr("{publicIP-config-name}"),
 												Properties: &test.VirtualMachinePublicIPAddressConfigurationProperties{
-													DeleteOption:             test.DeleteOptions("Detach").ToPtr(),
-													PublicIPAllocationMethod: test.PublicIPAllocationMethod("Static").ToPtr(),
+													DeleteOption:             test.DeleteOptionsDetach.ToPtr(),
+													PublicIPAllocationMethod: test.PublicIPAllocationMethodStatic.ToPtr(),
 												},
 												SKU: &test.PublicIPAddressSKU{
-													PublicIPAddressSKUName: test.PublicIPAddressSKUName("Basic").ToPtr(),
-													PublicIPAddressSKUTier: test.PublicIPAddressSKUTier("Global").ToPtr(),
+													PublicIPAddressSKUName: test.PublicIPAddressSKUNameBasic.ToPtr(),
+													PublicIPAddressSKUTier: test.PublicIPAddressSKUTierGlobal.ToPtr(),
 												},
 											},
 										},
@@ -1812,9 +1812,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -1837,7 +1837,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1869,9 +1869,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -1898,7 +1898,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1916,7 +1916,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							AssessmentMode: test.WindowsPatchAssessmentMode("ImageDefault").ToPtr(),
+							AssessmentMode: test.WindowsPatchAssessmentModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1931,9 +1931,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -1956,7 +1956,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -1974,7 +1974,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							AssessmentMode: test.WindowsPatchAssessmentMode("ImageDefault").ToPtr(),
+							AssessmentMode: test.WindowsPatchAssessmentModeImageDefault.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -1991,9 +1991,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2020,7 +2020,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2038,7 +2038,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							PatchMode: test.WindowsVMGuestPatchMode("AutomaticByOS").ToPtr(),
+							PatchMode: test.WindowsVMGuestPatchModeAutomaticByOS.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2053,9 +2053,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -2078,7 +2078,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2096,7 +2096,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							PatchMode: test.WindowsVMGuestPatchMode("AutomaticByOS").ToPtr(),
+							PatchMode: test.WindowsVMGuestPatchModeAutomaticByOS.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2113,9 +2113,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2142,7 +2142,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2161,7 +2161,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
 							EnableHotpatching: to.BoolPtr(true),
-							PatchMode:         test.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:         test.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2176,9 +2176,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -2201,7 +2201,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2220,7 +2220,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
 							EnableHotpatching: to.BoolPtr(true),
-							PatchMode:         test.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							PatchMode:         test.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2237,9 +2237,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2266,7 +2266,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2284,7 +2284,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							PatchMode: test.WindowsVMGuestPatchMode("Manual").ToPtr(),
+							PatchMode: test.WindowsVMGuestPatchModeManual.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2299,9 +2299,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -2324,7 +2324,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2342,7 +2342,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							PatchMode: test.WindowsVMGuestPatchMode("Manual").ToPtr(),
+							PatchMode: test.WindowsVMGuestPatchModeManual.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2359,9 +2359,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2388,7 +2388,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2406,8 +2406,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							AssessmentMode: test.WindowsPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
-							PatchMode:      test.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							AssessmentMode: test.WindowsPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      test.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2422,9 +2422,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -2447,7 +2447,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2465,8 +2465,8 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					WindowsConfiguration: &test.WindowsConfiguration{
 						EnableAutomaticUpdates: to.BoolPtr(true),
 						PatchSettings: &test.PatchSettings{
-							AssessmentMode: test.WindowsPatchAssessmentMode("AutomaticByPlatform").ToPtr(),
-							PatchMode:      test.WindowsVMGuestPatchMode("AutomaticByPlatform").ToPtr(),
+							AssessmentMode: test.WindowsPatchAssessmentModeAutomaticByPlatform.ToPtr(),
+							PatchMode:      test.WindowsVMGuestPatchModeAutomaticByPlatform.ToPtr(),
 						},
 						ProvisionVMAgent: to.BoolPtr(true),
 					},
@@ -2483,9 +2483,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -2512,7 +2512,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2532,7 +2532,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						Image: &test.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd"),
 						},
@@ -2561,7 +2561,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2587,7 +2587,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						Image: &test.VirtualHardDisk{
 							URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
 						},
@@ -2619,7 +2619,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2638,7 +2638,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							Vhd: &test.VirtualHardDisk{
@@ -2646,7 +2646,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 							},
 						},
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							Vhd: &test.VirtualHardDisk{
@@ -2662,7 +2662,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						Vhd: &test.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/myDisk.vhd"),
 						},
@@ -2687,7 +2687,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2713,7 +2713,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						{
 							Name:         to.StringPtr("dataDisk0"),
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							Vhd: &test.VirtualHardDisk{
@@ -2723,7 +2723,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 						{
 							Name:         to.StringPtr("dataDisk1"),
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							Vhd: &test.VirtualHardDisk{
@@ -2739,7 +2739,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						OSType:       test.OperatingSystemTypesWindows.ToPtr(),
 						Vhd: &test.VirtualHardDisk{
 							URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds/myDisk.vhd"),
@@ -2768,7 +2768,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2791,9 +2791,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -2816,7 +2816,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2844,10 +2844,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -2874,7 +2874,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2897,9 +2897,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -2922,7 +2922,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2950,10 +2950,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -2980,7 +2980,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -2998,9 +2998,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3023,7 +3023,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3043,10 +3043,10 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -3073,7 +3073,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3100,9 +3100,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3128,7 +3128,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3161,9 +3161,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3196,7 +3196,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/{existing-availability-set-name}"),
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3222,9 +3222,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3250,7 +3250,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/availabilitySets/NSGEXISTINGAS"),
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3282,9 +3282,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3311,7 +3311,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3331,19 +3331,19 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*test.DataDisk{
 						{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 						{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Attach").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesAttach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
@@ -3351,7 +3351,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						}},
 					ImageReference: &test.ImageReference{
@@ -3360,12 +3360,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
 							DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 							},
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3388,7 +3388,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3412,19 +3412,19 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*test.DataDisk{
 						{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 						{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Attach").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesAttach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
@@ -3432,7 +3432,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						}},
 					ImageReference: &test.ImageReference{
@@ -3441,13 +3441,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
 							DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskencryptionset-name}"),
 							},
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -3479,7 +3479,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3508,9 +3508,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3538,7 +3538,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3573,9 +3573,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3608,7 +3608,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3640,9 +3640,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3671,7 +3671,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3709,9 +3709,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3743,7 +3743,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3769,9 +3769,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3799,7 +3799,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3831,9 +3831,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3867,7 +3867,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT30M"),
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3893,9 +3893,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -3925,7 +3925,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT30M"),
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -3957,9 +3957,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -3992,7 +3992,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4018,9 +4018,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4049,7 +4049,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4081,9 +4081,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4110,7 +4110,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4129,12 +4129,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 						},
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 						}},
@@ -4147,9 +4147,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4172,7 +4172,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4197,20 +4197,20 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					DataDisks: []*test.DataDisk{
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						}},
 					ImageReference: &test.ImageReference{
@@ -4222,9 +4222,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4256,7 +4256,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4282,13 +4282,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option:    test.DiffDiskOptions("Local").ToPtr(),
-							Placement: test.DiffDiskPlacement("CacheDisk").ToPtr(),
+							Option:    test.DiffDiskOptionsLocal.ToPtr(),
+							Placement: test.DiffDiskPlacementCacheDisk.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4316,7 +4316,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4348,13 +4348,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option:    test.DiffDiskOptions("Local").ToPtr(),
-							Placement: test.DiffDiskPlacement("CacheDisk").ToPtr(),
+							Option:    test.DiffDiskOptionsLocal.ToPtr(),
+							Placement: test.DiffDiskPlacementCacheDisk.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4386,7 +4386,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4412,13 +4412,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option:    test.DiffDiskOptions("Local").ToPtr(),
-							Placement: test.DiffDiskPlacement("ResourceDisk").ToPtr(),
+							Option:    test.DiffDiskOptionsLocal.ToPtr(),
+							Placement: test.DiffDiskPlacementResourceDisk.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4446,7 +4446,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4478,13 +4478,13 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option:    test.DiffDiskOptions("Local").ToPtr(),
-							Placement: test.DiffDiskPlacement("ResourceDisk").ToPtr(),
+							Option:    test.DiffDiskOptionsLocal.ToPtr(),
+							Placement: test.DiffDiskPlacementResourceDisk.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4516,7 +4516,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4542,12 +4542,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option: test.DiffDiskOptions("Local").ToPtr(),
+							Option: test.DiffDiskOptionsLocal.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4575,7 +4575,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4607,12 +4607,12 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiffDiskSettings: &test.DiffDiskSettings{
-							Option: test.DiffDiskOptions("Local").ToPtr(),
+							Option: test.DiffDiskOptionsLocal.ToPtr(),
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4644,7 +4644,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4670,9 +4670,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4700,7 +4700,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4732,9 +4732,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4761,7 +4761,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4787,9 +4787,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -4812,7 +4812,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4844,9 +4844,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4873,7 +4873,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4899,9 +4899,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 					},
 				},
@@ -4924,7 +4924,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -4956,9 +4956,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -4985,7 +4985,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5020,9 +5020,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -5045,7 +5045,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D1_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD1V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5083,9 +5083,9 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesLinux.ToPtr(),
 					},
@@ -5118,7 +5118,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 		test.VirtualMachineUpdate{
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5137,13 +5137,13 @@ func TestVirtualMachines_Update(t *testing.T) {
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -5157,9 +5157,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -5182,7 +5182,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5207,21 +5207,21 @@ func TestVirtualMachines_Update(t *testing.T) {
 					DataDisks: []*test.DataDisk{
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -5234,9 +5234,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5262,7 +5262,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 		test.VirtualMachineUpdate{
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5281,14 +5281,14 @@ func TestVirtualMachines_Update(t *testing.T) {
 				StorageProfile: &test.StorageProfile{
 					DataDisks: []*test.DataDisk{
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
-							DetachOption: test.DiskDetachOptionTypes("ForceDetach").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
+							DetachOption: test.DiskDetachOptionTypesForceDetach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ToBeDetached: to.BoolPtr(false),
@@ -5302,9 +5302,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 					},
 				},
@@ -5327,7 +5327,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5352,22 +5352,22 @@ func TestVirtualMachines_Update(t *testing.T) {
 					DataDisks: []*test.DataDisk{
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
-							DetachOption: test.DiskDetachOptionTypes("ForceDetach").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
+							DetachOption: test.DiskDetachOptionTypesForceDetach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(true),
 						},
 						{
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(1023),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -5380,9 +5380,9 @@ func TestVirtualMachines_Update(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myVMosdisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5462,7 +5462,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 				},
 				ExtensionsTimeBudget: to.StringPtr("PT50M"),
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_DS3_v2").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardDS3V2.ToPtr(),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
@@ -5488,23 +5488,23 @@ func TestVirtualMachines_Get(t *testing.T) {
 						{
 							Name:         to.StringPtr("myDataDisk0"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							Lun:          to.Int32Ptr(0),
 							ManagedDisk: &test.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk0"),
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						},
 						{
 							Name:         to.StringPtr("myDataDisk1"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Attach").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesAttach.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(100),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDataDisk1"),
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						}},
 					ImageReference: &test.ImageReference{
@@ -5516,11 +5516,11 @@ func TestVirtualMachines_Get(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myOsDisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5578,7 +5578,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_D2s_v3").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardD2SV3.ToPtr(),
 				},
 				HostGroup: &test.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/hostGroups/myHostGroup"),
@@ -5610,11 +5610,11 @@ func TestVirtualMachines_Get(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("myOsDisk"),
 						Caching:      test.CachingTypesReadWrite.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(30),
 						ManagedDisk: &test.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myOsDisk"),
-							StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -5677,7 +5677,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-10-14T21:29:47.461517+00:00"); return t }()),
 						}},
 				}},
-			HyperVGeneration: test.HyperVGenerationType("V1").ToPtr(),
+			HyperVGeneration: test.HyperVGenerationTypeV1.ToPtr(),
 			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
 			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
 			PatchStatus: &test.VirtualMachinePatchStatus{
@@ -5688,7 +5688,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 					OtherPatchCount:               to.Int32Ptr(2),
 					RebootPending:                 to.BoolPtr(true),
 					StartTime:                     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-					Status:                        test.PatchOperationStatus("Succeeded").ToPtr(),
+					Status:                        test.PatchOperationStatusSucceeded.ToPtr(),
 				},
 				ConfigurationStatuses: []*test.InstanceViewStatus{
 					{
@@ -5719,7 +5719,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 					NotSelectedPatchCount:     to.Int32Ptr(1),
 					PendingPatchCount:         to.Int32Ptr(1),
 					StartTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-					Status:                    test.PatchOperationStatus("Succeeded").ToPtr(),
+					Status:                    test.PatchOperationStatusSucceeded.ToPtr(),
 				},
 			},
 			PlatformFaultDomain:  to.Int32Ptr(1),
@@ -5806,7 +5806,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 							Time:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2021-03-01T21:29:47.477089+00:00"); return t }()),
 						}},
 				}},
-			HyperVGeneration: test.HyperVGenerationType("V1").ToPtr(),
+			HyperVGeneration: test.HyperVGenerationTypeV1.ToPtr(),
 			OSName:           to.StringPtr("Windows Server 2016 Datacenter"),
 			OSVersion:        to.StringPtr("Microsoft Windows NT 10.0.14393.0"),
 			Statuses: []*test.InstanceViewStatus{
@@ -6077,34 +6077,34 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 				{
 					Name:            to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
 					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
-					AssessmentState: test.PatchAssessmentState("Available").ToPtr(),
+					AssessmentState: test.PatchAssessmentStateAvailable.ToPtr(),
 					Classifications: []*string{
 						to.StringPtr("Definition Updates")},
 					KbID:                 to.StringPtr("2267602"),
 					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
 					PatchID:              to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
 					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
-					RebootBehavior:       test.VMGuestPatchRebootBehavior("NeverReboots").ToPtr(),
+					RebootBehavior:       test.VMGuestPatchRebootBehaviorNeverReboots.ToPtr(),
 					Version:              to.StringPtr(""),
 				},
 				{
 					Name:            to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
 					ActivityID:      to.StringPtr("68f8b292-dfc2-4646-9781-33cc88631968"),
-					AssessmentState: test.PatchAssessmentState("Available").ToPtr(),
+					AssessmentState: test.PatchAssessmentStateAvailable.ToPtr(),
 					Classifications: []*string{
 						to.StringPtr("Update Rollups")},
 					KbID:                 to.StringPtr("890830"),
 					LastModifiedDateTime: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:18:45.2830263Z"); return t }()),
 					PatchID:              to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
 					PublishedDate:        to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-11-07T00:00:00Z"); return t }()),
-					RebootBehavior:       test.VMGuestPatchRebootBehavior("CanRequestReboot").ToPtr(),
+					RebootBehavior:       test.VMGuestPatchRebootBehaviorCanRequestReboot.ToPtr(),
 					Version:              to.StringPtr(""),
 				}},
 			CriticalAndSecurityPatchCount: to.Int32Ptr(1),
 			OtherPatchCount:               to.Int32Ptr(2),
 			RebootPending:                 to.BoolPtr(true),
 			StartDateTime:                 to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-			Status:                        test.PatchOperationStatus("Succeeded").ToPtr(),
+			Status:                        test.PatchOperationStatusSucceeded.ToPtr(),
 		}
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineAssessPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
@@ -6130,11 +6130,11 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 		"myVMName",
 		test.VirtualMachineInstallPatchesParameters{
 			MaximumDuration: to.StringPtr("PT4H"),
-			RebootSetting:   test.VMGuestPatchRebootSetting("IfRequired").ToPtr(),
+			RebootSetting:   test.VMGuestPatchRebootSettingIfRequired.ToPtr(),
 			WindowsParameters: &test.WindowsParameters{
 				ClassificationsToInclude: []*test.VMGuestPatchClassificationWindows{
-					test.VMGuestPatchClassificationWindows("Critical").ToPtr(),
-					test.VMGuestPatchClassificationWindows("Security").ToPtr()},
+					test.VMGuestPatchClassificationWindowsCritical.ToPtr(),
+					test.VMGuestPatchClassificationWindowsSecurity.ToPtr()},
 				MaxPatchPublishDate: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
@@ -6160,7 +6160,7 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 					Name: to.StringPtr("Definition Update for Windows Defender Antivirus - KB2267602 (Definition 1.279.1373.0)"),
 					Classifications: []*string{
 						to.StringPtr("Definition Updates")},
-					InstallationState: test.PatchInstallationState("Installed").ToPtr(),
+					InstallationState: test.PatchInstallationStateInstalled.ToPtr(),
 					KbID:              to.StringPtr("2267602"),
 					PatchID:           to.StringPtr("35428702-5784-4ba4-a6e0-5222258b5411"),
 					Version:           to.StringPtr(""),
@@ -6169,15 +6169,15 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 					Name: to.StringPtr("Windows Malicious Software Removal Tool x64 - October 2018 (KB890830)"),
 					Classifications: []*string{
 						to.StringPtr("Update Rollups")},
-					InstallationState: test.PatchInstallationState("Pending").ToPtr(),
+					InstallationState: test.PatchInstallationStatePending.ToPtr(),
 					KbID:              to.StringPtr("890830"),
 					PatchID:           to.StringPtr("39f9cdd1-795c-4d0e-8c0a-73ab3f31746d"),
 					Version:           to.StringPtr(""),
 				}},
 			PendingPatchCount: to.Int32Ptr(2),
-			RebootStatus:      test.VMGuestPatchRebootStatus("Completed").ToPtr(),
+			RebootStatus:      test.VMGuestPatchRebootStatusCompleted.ToPtr(),
 			StartDateTime:     to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-04-24T21:02:04.2556154Z"); return t }()),
-			Status:            test.PatchOperationStatus("Succeeded").ToPtr(),
+			Status:            test.PatchOperationStatusSucceeded.ToPtr(),
 		}
 		if !reflect.DeepEqual(exampleRes, res.VirtualMachineInstallPatchesResult) {
 			exampleResJson, _ := json.Marshal(exampleRes)
@@ -6319,10 +6319,10 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 									},
 									OSDisk: &test.VirtualMachineScaleSetOSDisk{
 										Caching:      test.CachingTypesReadWrite.ToPtr(),
-										CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+										CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 										DiskSizeGB:   to.Int32Ptr(30),
 										ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-											StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+											StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 										},
 									},
 								},
@@ -6394,10 +6394,10 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 									},
 									OSDisk: &test.VirtualMachineScaleSetOSDisk{
 										Caching:      test.CachingTypesReadWrite.ToPtr(),
-										CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+										CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 										DiskSizeGB:   to.Int32Ptr(30),
 										ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-											StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+											StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 										},
 									},
 								},
@@ -6472,7 +6472,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							Image: &test.VirtualHardDisk{
 								URI: to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/{existing-container-name}/{existing-generalized-os-image-blob-name}.vhd"),
 							},
@@ -6519,7 +6519,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6542,7 +6542,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							Image: &test.VirtualHardDisk{
 								URI: to.StringPtr("https://{existing-storage-account-name}.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/{existing-generalized-os-image-blob-name}.vhd"),
 							},
@@ -6614,7 +6614,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							VhdContainers: []*string{
 								to.StringPtr("http://{existing-storage-account-name-0}.blob.core.windows.net/vhdContainer"),
 								to.StringPtr("http://{existing-storage-account-name-1}.blob.core.windows.net/vhdContainer"),
@@ -6669,7 +6669,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6698,7 +6698,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Name:         to.StringPtr("osDisk"),
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							VhdContainers: []*string{
 								to.StringPtr("http://{existing-storage-account-name}.blob.core.windows.net/vhds")},
 						},
@@ -6764,9 +6764,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -6816,7 +6816,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6840,9 +6840,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -6907,9 +6907,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -6959,7 +6959,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -6983,9 +6983,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7045,9 +7045,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7097,7 +7097,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7113,9 +7113,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7178,14 +7178,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      test.CachingTypesReadWrite.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
 									DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 									},
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							}},
 						ImageReference: &test.ImageReference{
@@ -7193,12 +7193,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7248,7 +7248,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7270,14 +7270,14 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      test.CachingTypesReadWrite.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
 									DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 										ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 									},
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							}},
 						ImageReference: &test.ImageReference{
@@ -7285,12 +7285,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
 								DiskEncryptionSet: &test.DiskEncryptionSetParameters{
 									ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/{existing-diskEncryptionSet-name}"),
 								},
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7354,7 +7354,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 											Name: to.StringPtr("{fpgaNic-Name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
 												Primary:                 to.BoolPtr(true),
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-fpga-subnet-name}"),
 												},
@@ -7375,9 +7375,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7427,7 +7427,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7449,7 +7449,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 											Name: to.StringPtr("{fpgaNic-Name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
 												Primary:                 to.BoolPtr(true),
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/{existing-virtual-network-name}/subnets/{existing-fpga-subnet-name}"),
 												},
@@ -7473,9 +7473,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7551,9 +7551,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7608,7 +7608,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7639,9 +7639,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7716,9 +7716,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardSSDLRS.ToPtr(),
 							},
 						},
 					},
@@ -7768,7 +7768,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7803,9 +7803,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("StandardSSD_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardSSDLRS.ToPtr(),
 							},
 						},
 					},
@@ -7878,9 +7878,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -7935,7 +7935,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -7963,9 +7963,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8037,9 +8037,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8093,7 +8093,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationGateways/nsgExistingAppGw/backendAddressPools/appGatewayBackendPool"),
 													}},
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8121,9 +8121,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8179,7 +8179,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 												PublicIPAddressConfiguration: &test.VirtualMachineScaleSetPublicIPAddressConfiguration{
 													Name: to.StringPtr("{vmss-name}"),
 													Properties: &test.VirtualMachineScaleSetPublicIPAddressConfigurationProperties{
-														PublicIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+														PublicIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 													},
 												},
 												Subnet: &test.APIEntityReference{
@@ -8205,9 +8205,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8265,7 +8265,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 													{
 														ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/loadBalancers/myLb/inboundNatPools/lbNatPool"),
 													}},
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8293,9 +8293,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8367,9 +8367,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8423,7 +8423,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8451,9 +8451,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8527,9 +8527,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8585,7 +8585,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8613,9 +8613,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8677,12 +8677,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					StorageProfile: &test.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
 							{
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 							}},
@@ -8694,10 +8694,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8747,7 +8747,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8770,20 +8770,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      test.CachingTypesNone.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							},
 							{
 								Caching:      test.CachingTypesNone.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							}},
 						ImageReference: &test.ImageReference{
@@ -8794,10 +8794,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8870,13 +8870,13 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiffDiskSettings: &test.DiffDiskSettings{
-								Option:    test.DiffDiskOptions("Local").ToPtr(),
-								Placement: test.DiffDiskPlacement("ResourceDisk").ToPtr(),
+								Option:    test.DiffDiskOptionsLocal.ToPtr(),
+								Placement: test.DiffDiskPlacementResourceDisk.ToPtr(),
 							},
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -8931,7 +8931,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -8959,13 +8959,13 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiffDiskSettings: &test.DiffDiskSettings{
-								Option:    test.DiffDiskOptions("Local").ToPtr(),
-								Placement: test.DiffDiskPlacement("ResourceDisk").ToPtr(),
+								Option:    test.DiffDiskOptionsLocal.ToPtr(),
+								Placement: test.DiffDiskPlacementResourceDisk.ToPtr(),
 							},
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9038,12 +9038,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiffDiskSettings: &test.DiffDiskSettings{
-								Option: test.DiffDiskOptions("Local").ToPtr(),
+								Option: test.DiffDiskOptionsLocal.ToPtr(),
 							},
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9094,7 +9094,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9122,12 +9122,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadOnly.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiffDiskSettings: &test.DiffDiskSettings{
-								Option: test.DiffDiskOptions("Local").ToPtr(),
+								Option: test.DiffDiskOptionsLocal.ToPtr(),
 							},
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9215,9 +9215,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9287,7 +9287,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9315,9 +9315,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9390,9 +9390,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9447,7 +9447,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9475,9 +9475,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9545,9 +9545,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9597,7 +9597,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9625,9 +9625,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9695,9 +9695,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						},
 					},
@@ -9747,7 +9747,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9775,9 +9775,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						},
 					},
@@ -9854,9 +9854,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -9906,7 +9906,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -9940,9 +9940,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10016,9 +10016,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10068,7 +10068,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10102,9 +10102,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10172,9 +10172,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10231,7 +10231,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10259,9 +10259,9 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10323,12 +10323,12 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 					StorageProfile: &test.VirtualMachineScaleSetStorageProfile{
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 							},
 							{
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 							}},
@@ -10340,10 +10340,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10396,7 +10396,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 										{
 											Name: to.StringPtr("{vmss-name}"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-												PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+												PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 												Subnet: &test.APIEntityReference{
 													ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/nsgExistingVnet/subnets/nsgExistingSubnet"),
 												},
@@ -10419,20 +10419,20 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						DataDisks: []*test.VirtualMachineScaleSetDataDisk{
 							{
 								Caching:      test.CachingTypesNone.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(0),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							},
 							{
 								Caching:      test.CachingTypesNone.ToPtr(),
-								CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 								DiskSizeGB:   to.Int32Ptr(1023),
 								Lun:          to.Int32Ptr(1),
 								ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 								},
 							}},
 						ImageReference: &test.ImageReference{
@@ -10443,10 +10443,10 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(512),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						},
 					},
@@ -10581,10 +10581,10 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						},
 					},
@@ -10680,10 +10680,10 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 						},
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
 							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(30),
 							ManagedDisk: &test.VirtualMachineScaleSetManagedDiskParameters{
-								StorageAccountType: test.StorageAccountTypes("Premium_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesPremiumLRS.ToPtr(),
 							},
 						},
 					},
@@ -11443,7 +11443,7 @@ func TestImages_Update(t *testing.T) {
 				"department": to.StringPtr("HR"),
 			},
 			Properties: &test.ImageProperties{
-				HyperVGeneration: test.HyperVGenerationTypes("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationTypesV1.ToPtr(),
 				SourceVirtualMachine: &test.SubResource{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
 				},
@@ -11479,7 +11479,7 @@ func TestImages_Update(t *testing.T) {
 							Snapshot: &test.SubResource{
 								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 							},
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							Lun:                to.Int32Ptr(1),
 						}},
 					OSDisk: &test.ImageOSDisk{
@@ -11491,7 +11491,7 @@ func TestImages_Update(t *testing.T) {
 						Snapshot: &test.SubResource{
 							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 						},
-						StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+						StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						OSState:            test.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:             test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -11548,7 +11548,7 @@ func TestImages_Get(t *testing.T) {
 							Snapshot: &test.SubResource{
 								ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 							},
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							Lun:                to.Int32Ptr(1),
 						}},
 					OSDisk: &test.ImageOSDisk{
@@ -11560,7 +11560,7 @@ func TestImages_Get(t *testing.T) {
 						Snapshot: &test.SubResource{
 							ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 						},
-						StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+						StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						OSState:            test.OperatingSystemStateTypesGeneralized.ToPtr(),
 						OSType:             test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -11615,7 +11615,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 										Snapshot: &test.SubResource{
 											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 										},
-										StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+										StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 										Lun:                to.Int32Ptr(1),
 									}},
 								OSDisk: &test.ImageOSDisk{
@@ -11626,7 +11626,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 									Snapshot: &test.SubResource{
 										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 									},
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 									OSState:            test.OperatingSystemStateTypesGeneralized.ToPtr(),
 									OSType:             test.OperatingSystemTypesWindows.ToPtr(),
 								},
@@ -11684,7 +11684,7 @@ func TestImages_List(t *testing.T) {
 										Snapshot: &test.SubResource{
 											ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot2"),
 										},
-										StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+										StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 										Lun:                to.Int32Ptr(1),
 									}},
 								OSDisk: &test.ImageOSDisk{
@@ -11695,7 +11695,7 @@ func TestImages_List(t *testing.T) {
 									Snapshot: &test.SubResource{
 										ID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 									},
-									StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+									StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 									OSState:            test.OperatingSystemStateTypesGeneralized.ToPtr(),
 									OSType:             test.OperatingSystemTypesWindows.ToPtr(),
 								},
@@ -11852,7 +11852,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 					{
 						Name:            to.StringPtr("restorePointName"),
 						ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/restorePointName"),
-						ConsistencyMode: test.ConsistencyModeTypes("ApplicationConsistent").ToPtr(),
+						ConsistencyMode: test.ConsistencyModeTypesApplicationConsistent.ToPtr(),
 						ExcludeDisks: []*test.APIEntityReference{
 							{
 								ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
@@ -11871,7 +11871,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 								},
 							},
 							HardwareProfile: &test.HardwareProfile{
-								VMSize: test.VirtualMachineSizeTypes("Standard_B1s").ToPtr(),
+								VMSize: test.VirtualMachineSizeTypesStandardB1S.ToPtr(),
 							},
 							OSProfile: &test.OSProfile{
 								AdminUsername:               to.StringPtr("admin"),
@@ -11895,7 +11895,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 										Lun: to.Int32Ptr(1),
 										ManagedDisk: &test.ManagedDiskParameters{
 											ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
-											StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+											StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 										},
 									}},
 								OSDisk: &test.RestorePointSourceVMOSDisk{
@@ -11906,9 +11906,9 @@ func TestRestorePointCollections_Get(t *testing.T) {
 									},
 									ManagedDisk: &test.ManagedDiskParameters{
 										ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
-										StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+										StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 									},
-									OSType: test.OperatingSystemType("Windows").ToPtr(),
+									OSType: test.OperatingSystemTypeWindows.ToPtr(),
 								},
 							},
 							VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
@@ -12124,7 +12124,7 @@ func TestRestorePoints_Get(t *testing.T) {
 		exampleRes := test.RestorePoint{
 			Name:            to.StringPtr("rpName"),
 			ID:              to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpcName/restorePoints/rpName"),
-			ConsistencyMode: test.ConsistencyModeTypes("ApplicationConsistent").ToPtr(),
+			ConsistencyMode: test.ConsistencyModeTypesApplicationConsistent.ToPtr(),
 			ExcludeDisks: []*test.APIEntityReference{
 				{
 					ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
@@ -12143,7 +12143,7 @@ func TestRestorePoints_Get(t *testing.T) {
 					},
 				},
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypes("Standard_B1s").ToPtr(),
+					VMSize: test.VirtualMachineSizeTypesStandardB1S.ToPtr(),
 				},
 				OSProfile: &test.OSProfile{
 					AdminUsername:               to.StringPtr("admin"),
@@ -12167,7 +12167,7 @@ func TestRestorePoints_Get(t *testing.T) {
 							Lun: to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/userdata/providers/Microsoft.Compute/disks/testingexcludedisk_DataDisk_1"),
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 						}},
 					OSDisk: &test.RestorePointSourceVMOSDisk{
@@ -12178,9 +12178,9 @@ func TestRestorePoints_Get(t *testing.T) {
 						},
 						ManagedDisk: &test.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/testingexcludedisk_OsDisk_1_74cdaedcea50483d9833c96adefa100f"),
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
-						OSType: test.OperatingSystemType("Windows").ToPtr(),
+						OSType: test.OperatingSystemTypeWindows.ToPtr(),
 					},
 				},
 				VMID: to.StringPtr("76d6541e-80bd-4dc1-932b-3cae4cfb80e7"),
@@ -12625,7 +12625,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 									{
 										Name: to.StringPtr("vmsstestnetconfig9693"),
 										Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
-											PrivateIPAddressVersion: test.IPVersion("IPv4").ToPtr(),
+											PrivateIPAddressVersion: test.IPVersionIPv4.ToPtr(),
 											Subnet: &test.APIEntityReference{
 												ID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vn4071/subnets/sn5503"),
 											},
@@ -12652,12 +12652,12 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 						{
 							Name:         to.StringPtr("vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
 							Caching:      test.CachingTypesNone.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypes("Empty").ToPtr(),
+							CreateOption: test.DiskCreateOptionTypesEmpty.ToPtr(),
 							DiskSizeGB:   to.Int32Ptr(128),
 							Lun:          to.Int32Ptr(1),
 							ManagedDisk: &test.ManagedDiskParameters{
 								ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_disk2_6c4f554bdafa49baa780eb2d128ff39d"),
-								StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 							},
 							ToBeDetached: to.BoolPtr(false),
 						}},
@@ -12671,11 +12671,11 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 					OSDisk: &test.OSDisk{
 						Name:         to.StringPtr("vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
 						Caching:      test.CachingTypesNone.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypes("FromImage").ToPtr(),
+						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
 						DiskSizeGB:   to.Int32Ptr(127),
 						ManagedDisk: &test.ManagedDiskParameters{
 							ID:                 to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vmss3176_vmss3176_0_OsDisk_1_6d72b805e50e4de6830303c5055077fc"),
-							StorageAccountType: test.StorageAccountTypes("Standard_LRS").ToPtr(),
+							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
 						},
 						OSType: test.OperatingSystemTypesWindows.ToPtr(),
 					},
@@ -14152,11 +14152,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: test.NetworkAccessPolicy("AllowPrivate").ToPtr(),
+				NetworkAccessPolicy: test.NetworkAccessPolicyAllowPrivate.ToPtr(),
 			},
 		},
 		nil)
@@ -14174,11 +14174,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: test.NetworkAccessPolicy("AllowPrivate").ToPtr(),
+				NetworkAccessPolicy: test.NetworkAccessPolicyAllowPrivate.ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
@@ -14201,7 +14201,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 				Encryption: &test.Encryption{
@@ -14224,7 +14224,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 				Encryption: &test.Encryption{
@@ -14252,7 +14252,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 				},
 			},
@@ -14272,7 +14272,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14297,7 +14297,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -14318,7 +14318,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -14344,7 +14344,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Import").ToPtr(),
+					CreateOption: test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 			},
@@ -14364,7 +14364,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Import").ToPtr(),
+					CreateOption: test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14389,7 +14389,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/westus/Publishers/{publisher}/ArtifactTypes/VMImage/Offers/{offer}/Skus/{sku}/Versions/1.0.0"),
 					},
@@ -14412,12 +14412,12 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/westus/Publishers/{publisher}/ArtifactTypes/VMImage/Offers/{offer}/Skus/{sku}/Versions/1.0.0"),
 					},
 				},
-				HyperVGeneration:  test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration:  test.HyperVGenerationV1.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &test.DiskPurchasePlan{
@@ -14446,7 +14446,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk1"),
 				},
 			},
@@ -14466,7 +14466,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk1"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14491,14 +14491,14 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("North Central US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 					},
 				},
 				OSType: test.OperatingSystemTypesWindows.ToPtr(),
 				SecurityProfile: &test.DiskSecurityProfile{
-					SecurityType: test.DiskSecurityTypes("TrustedLaunch").ToPtr(),
+					SecurityType: test.DiskSecurityTypesTrustedLaunch.ToPtr(),
 				},
 			},
 		},
@@ -14517,7 +14517,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("North Central US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 					},
@@ -14525,7 +14525,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				SecurityProfile: &test.DiskSecurityProfile{
-					SecurityType: test.DiskSecurityTypes("TrustedLaunch").ToPtr(),
+					SecurityType: test.DiskSecurityTypesTrustedLaunch.ToPtr(),
 				},
 			},
 		}
@@ -14548,12 +14548,12 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("Premium_ZRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesPremiumZRS.ToPtr(),
 			},
 		},
 		nil)
@@ -14571,13 +14571,13 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("Premium_ZRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesPremiumZRS.ToPtr(),
 				Tier: to.StringPtr("Premium"),
 			},
 		}
@@ -14600,7 +14600,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:    test.DiskCreateOption("Upload").ToPtr(),
+					CreateOption:    test.DiskCreateOptionUpload.ToPtr(),
 					UploadSizeBytes: to.Int64Ptr(10737418752),
 				},
 			},
@@ -14620,7 +14620,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:    test.DiskCreateOption("Upload").ToPtr(),
+					CreateOption:    test.DiskCreateOptionUpload.ToPtr(),
 					UploadSizeBytes: to.Int64Ptr(10737418752),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14645,11 +14645,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			ExtendedLocation: &test.ExtendedLocation{
 				Name: to.StringPtr("{edge-zone-id}"),
-				Type: test.ExtendedLocationTypes("EdgeZone").ToPtr(),
+				Type: test.ExtendedLocationTypesEdgeZone.ToPtr(),
 			},
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
@@ -14669,11 +14669,11 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			ExtendedLocation: &test.ExtendedLocation{
 				Name: to.StringPtr("{edge-zone-id}"),
-				Type: test.ExtendedLocationTypes("EdgeZone").ToPtr(),
+				Type: test.ExtendedLocationTypesEdgeZone.ToPtr(),
 			},
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14698,7 +14698,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
@@ -14718,7 +14718,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14743,13 +14743,13 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:      test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption:      test.DiskCreateOptionEmpty.ToPtr(),
 					LogicalSectorSize: to.Int32Ptr(512),
 				},
 				DiskSizeGB: to.Int32Ptr(200),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("UltraSSD_LRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesUltraSSDLRS.ToPtr(),
 			},
 		},
 		nil)
@@ -14767,14 +14767,14 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption:      test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption:      test.DiskCreateOptionEmpty.ToPtr(),
 					LogicalSectorSize: to.Int32Ptr(512),
 				},
 				DiskSizeGB:        to.Int32Ptr(200),
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("UltraSSD_LRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesUltraSSDLRS.ToPtr(),
 				Tier: to.StringPtr("Ultra"),
 			},
 		}
@@ -14822,7 +14822,7 @@ func TestDisks_Update(t *testing.T) {
 			Properties: &test.DiskProperties{
 				BurstingEnabled: to.BoolPtr(true),
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB:        to.Int32Ptr(1024),
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -14868,13 +14868,13 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
 					},
 				},
 				DiskSizeGB:        to.Int32Ptr(127),
-				HyperVGeneration:  test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration:  test.HyperVGenerationV1.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &test.DiskPurchasePlan{
@@ -14885,7 +14885,7 @@ func TestDisks_Update(t *testing.T) {
 				},
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesStandardLRS.ToPtr(),
 				Tier: to.StringPtr("Standard"),
 			},
 		}
@@ -14924,17 +14924,17 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("westus"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Import").ToPtr(),
+					CreateOption: test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				DiskSizeGB:          to.Int32Ptr(127),
-				HyperVGeneration:    test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration:    test.HyperVGenerationV1.ToPtr(),
 				OSType:              test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 				SupportsHibernation: to.BoolPtr(true),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesStandardLRS.ToPtr(),
 				Tier: to.StringPtr("Standard"),
 			},
 		}
@@ -14973,7 +14973,7 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
 				Tier:              to.StringPtr("P30"),
@@ -15014,7 +15014,7 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
@@ -15036,7 +15036,7 @@ func TestDisks_Update(t *testing.T) {
 		"myDisk",
 		test.DiskUpdate{
 			Properties: &test.DiskUpdateProperties{
-				NetworkAccessPolicy: test.NetworkAccessPolicy("AllowAll").ToPtr(),
+				NetworkAccessPolicy: test.NetworkAccessPolicyAllowAll.ToPtr(),
 			},
 		},
 		nil)
@@ -15054,10 +15054,10 @@ func TestDisks_Update(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: test.NetworkAccessPolicy("AllowAll").ToPtr(),
+				NetworkAccessPolicy: test.NetworkAccessPolicyAllowAll.ToPtr(),
 				ProvisioningState:   to.StringPtr("Succeeded"),
 			},
 		}
@@ -15101,14 +15101,14 @@ func TestDisks_Get(t *testing.T) {
 			ManagedBy: to.StringPtr("/subscriptions/123caaa-123v-v211-a49f-f88ccac5bf88/resourceGroups/ResourceGroupName/providers/Microsoft.Compute/virtualMachines/TestVM414689371c88843d65ec"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+					CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 					ImageReference: &test.ImageDiskReference{
 						ID: to.StringPtr("/Subscriptions/{subscription-id}/Providers/Microsoft.Compute/Locations/westus/Publishers/test_test_pmc2pc1/ArtifactTypes/VMImage/Offers/marketplace_vm_test/Skus/test_sku/Versions/1.0.0"),
 					},
 				},
 				DiskSizeGB: to.Int32Ptr(10),
 				Encryption: &test.Encryption{
-					Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+					Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 				},
 				EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 					Enabled: to.BoolPtr(true),
@@ -15128,7 +15128,7 @@ func TestDisks_Get(t *testing.T) {
 							},
 						}},
 				},
-				HyperVGeneration:  test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration:  test.HyperVGenerationV1.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &test.DiskPurchasePlan{
@@ -15137,13 +15137,13 @@ func TestDisks_Get(t *testing.T) {
 					Publisher: to.StringPtr("test_test_pmc2pc1"),
 				},
 				SecurityProfile: &test.DiskSecurityProfile{
-					SecurityType: test.DiskSecurityTypes("TrustedLaunch").ToPtr(),
+					SecurityType: test.DiskSecurityTypesTrustedLaunch.ToPtr(),
 				},
 				SupportsHibernation: to.BoolPtr(true),
 				TimeCreated:         to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2016-12-28T04:41:35.079872+00:00"); return t }()),
 			},
 			SKU: &test.DiskSKU{
-				Name: test.DiskStorageAccountTypes("Standard_LRS").ToPtr(),
+				Name: test.DiskStorageAccountTypesStandardLRS.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.Disk) {
@@ -15191,12 +15191,12 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+								CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15228,11 +15228,11 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						Location: to.StringPtr("westus"),
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 							},
 							DiskSizeGB: to.Int32Ptr(10),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -15250,14 +15250,14 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+								CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 								ImageReference: &test.ImageDiskReference{
 									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 								},
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15327,12 +15327,12 @@ func TestDisks_List(t *testing.T) {
 						},
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+								CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myManagedDisk1"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15364,11 +15364,11 @@ func TestDisks_List(t *testing.T) {
 						Location: to.StringPtr("westus"),
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+								CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 							},
 							DiskSizeGB: to.Int32Ptr(10),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -15386,14 +15386,14 @@ func TestDisks_List(t *testing.T) {
 						},
 						Properties: &test.DiskProperties{
 							CreationData: &test.CreationData{
-								CreateOption: test.DiskCreateOption("FromImage").ToPtr(),
+								CreateOption: test.DiskCreateOptionFromImage.ToPtr(),
 								ImageReference: &test.ImageDiskReference{
 									ID: to.StringPtr("/Subscriptions/{subscriptionId}/Providers/Microsoft.Compute/Locations/uswest/Publishers/Microsoft/ArtifactTypes/VMImage/Offers/{offer}"),
 								},
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15457,7 +15457,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -15478,7 +15478,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 					StorageAccountID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
@@ -15504,7 +15504,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Import").ToPtr(),
+					CreateOption: test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 			},
@@ -15524,7 +15524,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Import").ToPtr(),
+					CreateOption: test.DiskCreateOptionImport.ToPtr(),
 					SourceURI:    to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -15549,7 +15549,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 				},
 			},
@@ -15569,7 +15569,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 			Location: to.StringPtr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot1"),
 				},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -15618,13 +15618,13 @@ func TestSnapshots_Get(t *testing.T) {
 			},
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+					CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 					SourceResourceID: to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"),
 					SourceUniqueID:   to.StringPtr("d633885d-d102-4481-901e-5b2413d1a7be"),
 				},
 				DiskSizeGB: to.Int32Ptr(100),
 				Encryption: &test.Encryption{
-					Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+					Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 				},
 				EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 					Enabled: to.BoolPtr(true),
@@ -15644,7 +15644,7 @@ func TestSnapshots_Get(t *testing.T) {
 							},
 						}},
 				},
-				HyperVGeneration:  test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration:  test.HyperVGenerationV1.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
 				ProvisioningState: to.StringPtr("Succeeded"),
 				PurchasePlan: &test.DiskPurchasePlan{
@@ -15701,12 +15701,12 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 						},
 						Properties: &test.SnapshotProperties{
 							CreationData: &test.CreationData{
-								CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+								CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15776,12 +15776,12 @@ func TestSnapshots_List(t *testing.T) {
 						},
 						Properties: &test.SnapshotProperties{
 							CreationData: &test.CreationData{
-								CreateOption:     test.DiskCreateOption("Copy").ToPtr(),
+								CreateOption:     test.DiskCreateOptionCopy.ToPtr(),
 								SourceResourceID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15817,13 +15817,13 @@ func TestSnapshots_List(t *testing.T) {
 						},
 						Properties: &test.SnapshotProperties{
 							CreationData: &test.CreationData{
-								CreateOption:     test.DiskCreateOption("Import").ToPtr(),
+								CreateOption:     test.DiskCreateOptionImport.ToPtr(),
 								SourceURI:        to.StringPtr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
 								StorageAccountID: to.StringPtr("subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 							},
 							DiskSizeGB: to.Int32Ptr(200),
 							Encryption: &test.Encryption{
-								Type: test.EncryptionType("EncryptionAtRestWithPlatformKey").ToPtr(),
+								Type: test.EncryptionTypeEncryptionAtRestWithPlatformKey.ToPtr(),
 							},
 							EncryptionSettingsCollection: &test.EncryptionSettingsCollection{
 								Enabled: to.BoolPtr(true),
@@ -15886,13 +15886,13 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		test.DiskEncryptionSet{
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 			},
 		},
 		nil)
@@ -15909,13 +15909,13 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/{key}"),
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				PreviousKeys:   []*test.KeyForDiskEncryptionSet{},
 			},
 		}
@@ -15937,7 +15937,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 		test.DiskEncryptionSet{
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -15946,7 +15946,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 			},
 		},
 		nil)
@@ -15963,7 +15963,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -15972,7 +15972,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				PreviousKeys:   []*test.KeyForDiskEncryptionSet{},
 			},
 		}
@@ -16000,13 +16000,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		"myDiskEncryptionSet",
 		test.DiskEncryptionSetUpdate{
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
 				},
-				EncryptionType:                    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:                    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},
@@ -16026,13 +16026,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/KeyVersion2"),
 				},
-				EncryptionType:                    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:                    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				LastKeyRotationTimestamp:          to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				ProvisioningState:                 to.StringPtr("Succeeded"),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
@@ -16055,13 +16055,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 		"myDiskEncryptionSet",
 		test.DiskEncryptionSetUpdate{
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.DiskEncryptionSetUpdateProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion1"),
 				},
-				EncryptionType:                    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:                    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				RotationToLatestKeyVersionEnabled: to.BoolPtr(true),
 			},
 		},
@@ -16081,13 +16081,13 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskEncryptionSets/myDiskEncryptionSet"),
 			Location: to.StringPtr("West US"),
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
 					KeyURL: to.StringPtr("https://myvaultdifferentsub.vault-int.azure-int.net/keys/keyName/keyVersion2"),
 				},
-				EncryptionType:           test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:           test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				PreviousKeys: []*test.KeyForDiskEncryptionSet{
 					{
@@ -16120,7 +16120,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType: test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType: test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 			},
 			Tags: map[string]*string{
 				"department": to.StringPtr("Development"),
@@ -16145,7 +16145,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				"project":    to.StringPtr("Encryption"),
 			},
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16154,7 +16154,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType:           test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:           test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				LastKeyRotationTimestamp: to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-12-01T04:41:35.079872+00:00"); return t }()),
 				PreviousKeys:             []*test.KeyForDiskEncryptionSet{},
 			},
@@ -16197,7 +16197,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 				"project":    to.StringPtr("Encryption"),
 			},
 			Identity: &test.EncryptionSetIdentity{
-				Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+				Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 			},
 			Properties: &test.EncryptionSetProperties{
 				ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16206,7 +16206,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 						ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 					},
 				},
-				EncryptionType:    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+				EncryptionType:    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 				PreviousKeys:      []*test.KeyForDiskEncryptionSet{},
 				ProvisioningState: to.StringPtr("Succeeded"),
 			},
@@ -16275,7 +16275,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &test.EncryptionSetIdentity{
-							Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+							Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 						},
 						Properties: &test.EncryptionSetProperties{
 							ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16284,7 +16284,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 								},
 							},
-							EncryptionType:    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+							EncryptionType:    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 							PreviousKeys:      []*test.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16299,7 +16299,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &test.EncryptionSetIdentity{
-							Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+							Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 						},
 						Properties: &test.EncryptionSetProperties{
 							ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16308,7 +16308,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
 								},
 							},
-							EncryptionType:    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+							EncryptionType:    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 							PreviousKeys:      []*test.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16357,7 +16357,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &test.EncryptionSetIdentity{
-							Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+							Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 						},
 						Properties: &test.EncryptionSetProperties{
 							ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16366,7 +16366,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault"),
 								},
 							},
-							EncryptionType:    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+							EncryptionType:    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 							PreviousKeys:      []*test.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16381,7 +16381,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 							"project":    to.StringPtr("Encryption"),
 						},
 						Identity: &test.EncryptionSetIdentity{
-							Type: test.DiskEncryptionSetIdentityType("SystemAssigned").ToPtr(),
+							Type: test.DiskEncryptionSetIdentityTypeSystemAssigned.ToPtr(),
 						},
 						Properties: &test.EncryptionSetProperties{
 							ActiveKey: &test.KeyForDiskEncryptionSet{
@@ -16390,7 +16390,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 									ID: to.StringPtr("/subscriptions/{subscriptionId}/resourceGroups/mySecondResourceGroup/providers/Microsoft.KeyVault/vaults/myVMVault2"),
 								},
 							},
-							EncryptionType:    test.DiskEncryptionSetType("EncryptionAtRestWithCustomerKey").ToPtr(),
+							EncryptionType:    test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey.ToPtr(),
 							PreviousKeys:      []*test.KeyForDiskEncryptionSet{},
 							ProvisioningState: to.StringPtr("Succeeded"),
 						},
@@ -16581,9 +16581,9 @@ func TestDiskAccesses_Get(t *testing.T) {
 							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 								Description:     to.StringPtr("Auto-Approved"),
 								ActionsRequired: to.StringPtr("None"),
-								Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+								Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 							},
-							ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 						},
 					}},
 				ProvisioningState: to.StringPtr("Succeeded"),
@@ -16715,9 +16715,9 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 											Description:     to.StringPtr("Auto-Approved"),
 											ActionsRequired: to.StringPtr("None"),
-											Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+											Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 										},
-										ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+										ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 									},
 								}},
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -16794,9 +16794,9 @@ func TestDiskAccesses_List(t *testing.T) {
 										PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 											Description:     to.StringPtr("Auto-Approved"),
 											ActionsRequired: to.StringPtr("None"),
-											Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+											Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 										},
-										ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+										ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 									},
 								}},
 							ProvisioningState: to.StringPtr("Succeeded"),
@@ -16878,7 +16878,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					Description: to.StringPtr("Approving myPrivateEndpointConnection"),
-					Status:      test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+					Status:      test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 				},
 			},
 		},
@@ -16903,9 +16903,9 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					Description:     to.StringPtr("Approving myPrivateEndpointConnection"),
 					ActionsRequired: to.StringPtr("None"),
-					Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 				},
-				ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
@@ -16948,9 +16948,9 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 					Description:     to.StringPtr("Auto-Approved"),
 					ActionsRequired: to.StringPtr("None"),
-					Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+					Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 				},
-				ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.PrivateEndpointConnection) {
@@ -17020,9 +17020,9 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 							PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
 								Description:     to.StringPtr("Auto-Approved"),
 								ActionsRequired: to.StringPtr("None"),
-								Status:          test.PrivateEndpointServiceConnectionStatus("Approved").ToPtr(),
+								Status:          test.PrivateEndpointServiceConnectionStatusApproved.ToPtr(),
 							},
-							ProvisioningState: test.PrivateEndpointConnectionProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.PrivateEndpointConnectionProvisioningStateSucceeded.ToPtr(),
 						},
 					}},
 			}
@@ -17065,7 +17065,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 			ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
 			Properties: &test.DiskRestorePointProperties{
 				FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				OSType:           test.OperatingSystemTypesWindows.ToPtr(),
 				SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
 				SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
@@ -17109,7 +17109,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 						ID:   to.StringPtr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/restorePointCollections/rpc/restorePoints/vmrp/diskRestorePoints/TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745"),
 						Properties: &test.DiskRestorePointProperties{
 							FamilyID:         to.StringPtr("996bf3ce-b6ff-4e86-9db6-dc27ea06cea5"),
-							HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+							HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 							OSType:           test.OperatingSystemTypesWindows.ToPtr(),
 							SourceResourceID: to.StringPtr("/subscriptions/d2260d06-e00d-422f-8b63-93df551a59ae/resourceGroups/rg0680fb0c-89f1-41b4-96c0-35733a181558/providers/Microsoft.Compute/disks/TestDisk45ceb03433006d1baee0"),
 							SourceUniqueID:   to.StringPtr("48e058b1-7eea-4968-b532-10a8a1130c13"),
@@ -17148,7 +17148,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 			Properties: &test.GalleryProperties{
 				Description: to.StringPtr("This is the gallery description."),
 				SharingProfile: &test.SharingProfile{
-					Permissions: test.GallerySharingPermissionTypes("Groups").ToPtr(),
+					Permissions: test.GallerySharingPermissionTypesGroups.ToPtr(),
 				},
 			},
 		},
@@ -17170,9 +17170,9 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Identifier: &test.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 				SharingProfile: &test.SharingProfile{
-					Permissions: test.GallerySharingPermissionTypes("Groups").ToPtr(),
+					Permissions: test.GallerySharingPermissionTypesGroups.ToPtr(),
 				},
 			},
 		}
@@ -17215,7 +17215,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Identifier: &test.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
@@ -17263,7 +17263,7 @@ func TestGalleries_Update(t *testing.T) {
 				Identifier: &test.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
@@ -17288,7 +17288,7 @@ func TestGalleries_Get(t *testing.T) {
 	res, err := client.Get(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&test.GalleriesClientGetOptions{Select: test.SelectPermissions("Permissions").ToPtr()})
+		&test.GalleriesClientGetOptions{Select: test.SelectPermissionsPermissions.ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json: %v", err)
 	}
@@ -17301,17 +17301,17 @@ func TestGalleries_Get(t *testing.T) {
 				SharingProfile: &test.SharingProfile{
 					Groups: []*test.SharingProfileGroup{
 						{
-							Type: test.SharingProfileGroupTypes("Subscriptions").ToPtr(),
+							Type: test.SharingProfileGroupTypesSubscriptions.ToPtr(),
 							IDs: []*string{
 								to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 								to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 						},
 						{
-							Type: test.SharingProfileGroupTypes("AADTenants").ToPtr(),
+							Type: test.SharingProfileGroupTypesAADTenants.ToPtr(),
 							IDs: []*string{
 								to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 						}},
-					Permissions: test.GallerySharingPermissionTypes("Groups").ToPtr(),
+					Permissions: test.GallerySharingPermissionTypesGroups.ToPtr(),
 				},
 			},
 		}
@@ -17344,7 +17344,7 @@ func TestGalleries_Get(t *testing.T) {
 				Identifier: &test.GalleryIdentifier{
 					UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 				},
-				ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.Gallery) {
@@ -17410,7 +17410,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 							Identifier: &test.GalleryIdentifier{
 								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 							},
-							ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 						},
 					}},
 			}
@@ -17456,7 +17456,7 @@ func TestGalleries_List(t *testing.T) {
 							Identifier: &test.GalleryIdentifier{
 								UniqueName: to.StringPtr("{subscription-id}-MYGALLERYNAME"),
 							},
-							ProvisioningState: test.GalleryPropertiesProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.GalleryPropertiesProvisioningStateSucceeded.ToPtr(),
 						},
 					}},
 			}
@@ -17490,7 +17490,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 		test.GalleryImage{
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17514,7 +17514,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17522,7 +17522,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 				},
 				OSState:           test.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: test.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
@@ -17550,7 +17550,7 @@ func TestGalleryImages_Update(t *testing.T) {
 		"myGalleryImageName",
 		test.GalleryImageUpdate{
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17574,7 +17574,7 @@ func TestGalleryImages_Update(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17582,7 +17582,7 @@ func TestGalleryImages_Update(t *testing.T) {
 				},
 				OSState:           test.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: test.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
@@ -17618,7 +17618,7 @@ func TestGalleryImages_Get(t *testing.T) {
 			Name:     to.StringPtr("myGalleryImageName"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -17626,7 +17626,7 @@ func TestGalleryImages_Get(t *testing.T) {
 				},
 				OSState:           test.OperatingSystemStateTypesGeneralized.ToPtr(),
 				OSType:            test.OperatingSystemTypesWindows.ToPtr(),
-				ProvisioningState: test.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.GalleryImage) {
@@ -17689,7 +17689,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 						Name:     to.StringPtr("myGalleryImageName"),
 						Location: to.StringPtr("West US"),
 						Properties: &test.GalleryImageProperties{
-							HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+							HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 							Identifier: &test.GalleryImageIdentifier{
 								Offer:     to.StringPtr("myOfferName"),
 								Publisher: to.StringPtr("myPublisherName"),
@@ -17697,7 +17697,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 							},
 							OSState:           test.OperatingSystemStateTypesGeneralized.ToPtr(),
 							OSType:            test.OperatingSystemTypesWindows.ToPtr(),
-							ProvisioningState: test.GalleryImagePropertiesProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.GalleryImagePropertiesProvisioningStateSucceeded.ToPtr(),
 						},
 					}},
 			}
@@ -17769,7 +17769,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -17793,11 +17793,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -17816,7 +17816,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -17835,7 +17835,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -17912,7 +17912,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -17936,11 +17936,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -17959,7 +17959,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -17978,7 +17978,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18047,7 +18047,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18082,11 +18082,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18101,7 +18101,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18116,7 +18116,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18196,7 +18196,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18220,11 +18220,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18243,7 +18243,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18262,7 +18262,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18331,7 +18331,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18366,11 +18366,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18385,7 +18385,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name: to.StringPtr("East US"),
@@ -18400,7 +18400,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18462,7 +18462,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18499,11 +18499,11 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18518,12 +18518,12 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18581,7 +18581,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18605,11 +18605,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18624,12 +18624,12 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18677,7 +18677,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{},
@@ -18697,11 +18697,11 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18716,12 +18716,12 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_ZRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardZRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18765,7 +18765,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&test.GalleryImageVersionsClientGetOptions{Expand: test.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&test.GalleryImageVersionsClientGetOptions{Expand: test.ReplicationStatusTypesReplicationStatus.ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json: %v", err)
 	}
@@ -18775,11 +18775,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18798,27 +18798,27 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 				},
 				ReplicationStatus: &test.ReplicationStatus{
-					AggregatedState: test.AggregatedReplicationState("Completed").ToPtr(),
+					AggregatedState: test.AggregatedReplicationStateCompleted.ToPtr(),
 					Summary: []*test.RegionalReplicationStatus{
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("West US"),
-							State:    test.ReplicationState("Completed").ToPtr(),
+							State:    test.ReplicationStateCompleted.ToPtr(),
 							Details:  to.StringPtr(""),
 						},
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("East US"),
-							State:    test.ReplicationState("Completed").ToPtr(),
+							State:    test.ReplicationStateCompleted.ToPtr(),
 							Details:  to.StringPtr(""),
 						}},
 				},
@@ -18866,11 +18866,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18885,12 +18885,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -18936,11 +18936,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -18955,12 +18955,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -19010,11 +19010,11 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryImageVersionProperties{
-				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name: to.StringPtr("West US"),
@@ -19033,12 +19033,12 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 								},
 							},
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						},
 						{
 							Name:                 to.StringPtr("East US"),
 							RegionalReplicaCount: to.Int32Ptr(2),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 				},
 				StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -19120,11 +19120,11 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 						Name:     to.StringPtr("1.0.0"),
 						Location: to.StringPtr("West US"),
 						Properties: &test.GalleryImageVersionProperties{
-							ProvisioningState: test.GalleryImageVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.GalleryImageVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 							PublishingProfile: &test.GalleryImageVersionPublishingProfile{
 								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-01T00:00:00Z"); return t }()),
 								ReplicaCount:       to.Int32Ptr(1),
-								StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 								TargetRegions: []*test.TargetRegion{
 									{
 										Name: to.StringPtr("West US"),
@@ -19143,12 +19143,12 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 											},
 										},
 										RegionalReplicaCount: to.Int32Ptr(1),
-										StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+										StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 									},
 									{
 										Name:                 to.StringPtr("East US"),
 										RegionalReplicaCount: to.Int32Ptr(2),
-										StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+										StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 									}},
 							},
 							StorageProfile: &test.GalleryImageVersionStorageProfile{
@@ -19426,12 +19426,12 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					ManageActions: &test.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
@@ -19459,18 +19459,18 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryApplicationVersionProperties{
-				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &test.UserArtifactManage{
@@ -19512,12 +19512,12 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					ManageActions: &test.UserArtifactManage{
 						Install: to.StringPtr("powershell -command \"Expand-Archive -Path package.zip -DestinationPath C:\\package\""),
@@ -19545,18 +19545,18 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryApplicationVersionProperties{
-				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &test.UserArtifactManage{
@@ -19593,7 +19593,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&test.GalleryApplicationVersionsClientGetOptions{Expand: test.ReplicationStatusTypes("ReplicationStatus").ToPtr()})
+		&test.GalleryApplicationVersionsClientGetOptions{Expand: test.ReplicationStatusTypesReplicationStatus.ToPtr()})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json: %v", err)
 	}
@@ -19603,18 +19603,18 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 			Name:     to.StringPtr("1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryApplicationVersionProperties{
-				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &test.UserArtifactManage{
@@ -19626,12 +19626,12 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 					},
 				},
 				ReplicationStatus: &test.ReplicationStatus{
-					AggregatedState: test.AggregatedReplicationState("Completed").ToPtr(),
+					AggregatedState: test.AggregatedReplicationStateCompleted.ToPtr(),
 					Summary: []*test.RegionalReplicationStatus{
 						{
 							Progress: to.Int32Ptr(100),
 							Region:   to.StringPtr("West US"),
-							State:    test.ReplicationState("Completed").ToPtr(),
+							State:    test.ReplicationStateCompleted.ToPtr(),
 							Details:  to.StringPtr(""),
 						}},
 				},
@@ -19666,18 +19666,18 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 			ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 			Location: to.StringPtr("West US"),
 			Properties: &test.GalleryApplicationVersionProperties{
-				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+				ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 					ExcludeFromLatest:  to.BoolPtr(false),
 					PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 					TargetRegions: []*test.TargetRegion{
 						{
 							Name:                 to.StringPtr("West US"),
 							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 						}},
 					EnableHealthCheck: to.BoolPtr(false),
 					ManageActions: &test.UserArtifactManage{
@@ -19754,18 +19754,18 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 						ID:       to.StringPtr("/subscriptions/01523d7c-60da-455e-adef-521b547922c4/resourceGroups/galleryPsTestRg98/providers/Microsoft.Compute/galleries/galleryPsTestGallery6165/applications/galleryPsTestGalleryApplication7825/versions/1.0.0"),
 						Location: to.StringPtr("West US"),
 						Properties: &test.GalleryApplicationVersionProperties{
-							ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningState("Succeeded").ToPtr(),
+							ProvisioningState: test.GalleryApplicationVersionPropertiesProvisioningStateSucceeded.ToPtr(),
 							PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
 								EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00+00:00"); return t }()),
 								ExcludeFromLatest:  to.BoolPtr(false),
 								PublishedDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-06-21T17:13:57.5972568+00:00"); return t }()),
 								ReplicaCount:       to.Int32Ptr(1),
-								StorageAccountType: test.StorageAccountType("Standard_LRS").ToPtr(),
+								StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
 								TargetRegions: []*test.TargetRegion{
 									{
 										Name:                 to.StringPtr("West US"),
 										RegionalReplicaCount: to.Int32Ptr(1),
-										StorageAccountType:   test.StorageAccountType("Standard_LRS").ToPtr(),
+										StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
 									}},
 								EnableHealthCheck: to.BoolPtr(false),
 								ManageActions: &test.UserArtifactManage{
@@ -19808,17 +19808,17 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		test.SharingUpdate{
 			Groups: []*test.SharingProfileGroup{
 				{
-					Type: test.SharingProfileGroupTypes("Subscriptions").ToPtr(),
+					Type: test.SharingProfileGroupTypesSubscriptions.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: test.SharingProfileGroupTypes("AADTenants").ToPtr(),
+					Type: test.SharingProfileGroupTypesAADTenants.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: test.SharingUpdateOperationTypes("Add").ToPtr(),
+			OperationType: test.SharingUpdateOperationTypesAdd.ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -19833,17 +19833,17 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		exampleRes := test.SharingUpdate{
 			Groups: []*test.SharingProfileGroup{
 				{
-					Type: test.SharingProfileGroupTypes("Subscriptions").ToPtr(),
+					Type: test.SharingProfileGroupTypesSubscriptions.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
 						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: test.SharingProfileGroupTypes("AADTenants").ToPtr(),
+					Type: test.SharingProfileGroupTypesAADTenants.ToPtr(),
 					IDs: []*string{
 						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: test.SharingUpdateOperationTypes("Add").ToPtr(),
+			OperationType: test.SharingUpdateOperationTypesAdd.ToPtr(),
 		}
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
@@ -19861,7 +19861,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		"myResourceGroup",
 		"myGalleryName",
 		test.SharingUpdate{
-			OperationType: test.SharingUpdateOperationTypes("Reset").ToPtr(),
+			OperationType: test.SharingUpdateOperationTypesReset.ToPtr(),
 		},
 		nil)
 	if err != nil {
@@ -19874,7 +19874,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	// Response check
 	{
 		exampleRes := test.SharingUpdate{
-			OperationType: test.SharingUpdateOperationTypes("Reset").ToPtr(),
+			OperationType: test.SharingUpdateOperationTypesReset.ToPtr(),
 		}
 		if !reflect.DeepEqual(exampleRes, res.SharingUpdate) {
 			exampleResJson, _ := json.Marshal(exampleRes)
@@ -19991,7 +19991,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 							UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
 						},
 						Properties: &test.SharedGalleryImageProperties{
-							HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+							HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 							Identifier: &test.GalleryImageIdentifier{
 								Offer:     to.StringPtr("myOfferName"),
 								Publisher: to.StringPtr("myPublisherName"),
@@ -20042,7 +20042,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 				UniqueID: to.StringPtr("/SharedGalleries/galleryUniqueName/Images/myGalleryImageName"),
 			},
 			Properties: &test.SharedGalleryImageProperties{
-				HyperVGeneration: test.HyperVGeneration("V1").ToPtr(),
+				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
 				Identifier: &test.GalleryImageIdentifier{
 					Offer:     to.StringPtr("myOfferName"),
 					Publisher: to.StringPtr("myPublisherName"),
@@ -20611,7 +20611,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		},
 		})
@@ -20673,7 +20673,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("7f3edf91-cb34-4a3e-971a-177dc3dd43cb"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
@@ -20724,7 +20724,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		},
 		})
@@ -20778,7 +20778,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("14d10b45-ced7-42ef-a406-50a3df2cea7d"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
@@ -20841,7 +20841,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		},
 		})
@@ -20904,7 +20904,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("60b6cd59-600b-4e02-b717-521b07aa94bf"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
@@ -20969,7 +20969,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 							},
 						}},
 				},
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		},
 		})
@@ -21039,7 +21039,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("c948cccb-bbfa-4516-a250-c28abc4d0c15"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
@@ -21127,7 +21127,7 @@ func TestCloudServices_Update(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 			Tags: map[string]*string{
 				"Documentation": to.StringPtr("RestAPI"),
@@ -21249,7 +21249,7 @@ func TestCloudServices_Get(t *testing.T) {
 						}},
 				},
 				UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-				UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 			},
 		}
 		if !reflect.DeepEqual(exampleRes, res.CloudService) {
@@ -21416,7 +21416,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 									}},
 							},
 							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-							UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+							UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 						},
 					}},
 			}
@@ -21518,7 +21518,7 @@ func TestCloudServices_List(t *testing.T) {
 									}},
 							},
 							UniqueID:    to.StringPtr("4ccb4323-4740-4545-bb81-780b27375947"),
-							UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
+							UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
 						},
 					}},
 			}

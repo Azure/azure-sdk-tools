@@ -33,11 +33,11 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 			Location: to.StringPtr("<location>"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOption("Empty").ToPtr(),
+					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
 				},
 				DiskAccessID:        to.StringPtr("<disk-access-id>"),
 				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: test.NetworkAccessPolicy("AllowPrivate").ToPtr(),
+				NetworkAccessPolicy: test.NetworkAccessPolicyAllowPrivate.ToPtr(),
 			},
 		},
 		nil)

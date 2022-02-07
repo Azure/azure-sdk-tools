@@ -12,18 +12,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json
 func ExampleCloudServicesClient_BeginCreateOrUpdate() {
@@ -34,53 +27,53 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginCreateOrUpdate(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &test.CloudService{
-Location: to.StringPtr("<location>"),
-Properties: &test.CloudServiceProperties{
-Configuration: to.StringPtr("<configuration>"),
-NetworkProfile: &test.CloudServiceNetworkProfile{
-LoadBalancerConfigurations: []*test.LoadBalancerConfiguration{
-{
-Name: to.StringPtr("<name>"),
-Properties: &test.LoadBalancerConfigurationProperties{
-FrontendIPConfigurations: []*test.LoadBalancerFrontendIPConfiguration{
-{
-Name: to.StringPtr("<name>"),
-Properties: &test.LoadBalancerFrontendIPConfigurationProperties{
-PublicIPAddress: &test.SubResource{
-ID: to.StringPtr("<id>"),
-},
-},
-}},
-},
-}},
-},
-PackageURL: to.StringPtr("<package-url>"),
-RoleProfile: &test.CloudServiceRoleProfile{
-Roles: []*test.CloudServiceRoleProfileProperties{
-{
-Name: to.StringPtr("<name>"),
-SKU: &test.CloudServiceRoleSKU{
-Name: to.StringPtr("<name>"),
-Capacity: to.Int64Ptr(1),
-Tier: to.StringPtr("<tier>"),
-},
-},
-{
-Name: to.StringPtr("<name>"),
-SKU: &test.CloudServiceRoleSKU{
-Name: to.StringPtr("<name>"),
-Capacity: to.Int64Ptr(1),
-Tier: to.StringPtr("<tier>"),
-},
-}},
-},
-UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
-},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &test.CloudService{
+			Location: to.StringPtr("<location>"),
+			Properties: &test.CloudServiceProperties{
+				Configuration: to.StringPtr("<configuration>"),
+				NetworkProfile: &test.CloudServiceNetworkProfile{
+					LoadBalancerConfigurations: []*test.LoadBalancerConfiguration{
+						{
+							Name: to.StringPtr("<name>"),
+							Properties: &test.LoadBalancerConfigurationProperties{
+								FrontendIPConfigurations: []*test.LoadBalancerFrontendIPConfiguration{
+									{
+										Name: to.StringPtr("<name>"),
+										Properties: &test.LoadBalancerFrontendIPConfigurationProperties{
+											PublicIPAddress: &test.SubResource{
+												ID: to.StringPtr("<id>"),
+											},
+										},
+									}},
+							},
+						}},
+				},
+				PackageURL: to.StringPtr("<package-url>"),
+				RoleProfile: &test.CloudServiceRoleProfile{
+					Roles: []*test.CloudServiceRoleProfileProperties{
+						{
+							Name: to.StringPtr("<name>"),
+							SKU: &test.CloudServiceRoleSKU{
+								Name:     to.StringPtr("<name>"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("<tier>"),
+							},
+						},
+						{
+							Name: to.StringPtr("<name>"),
+							SKU: &test.CloudServiceRoleSKU{
+								Name:     to.StringPtr("<name>"),
+								Capacity: to.Int64Ptr(1),
+								Tier:     to.StringPtr("<tier>"),
+							},
+						}},
+				},
+				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
+			},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,8 +84,6 @@ UpgradeMode: test.CloudServiceUpgradeMode("Auto").ToPtr(),
 	log.Printf("Response result: %#v\n", res.CloudServicesClientCreateOrUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
 func ExampleCloudServicesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -102,14 +93,14 @@ func ExampleCloudServicesClient_BeginUpdate() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginUpdate(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginUpdateOptions{Parameters: &test.CloudServiceUpdate{
-Tags: map[string]*string{
-"Documentation": to.StringPtr("RestAPI"),
-},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginUpdateOptions{Parameters: &test.CloudServiceUpdate{
+			Tags: map[string]*string{
+				"Documentation": to.StringPtr("RestAPI"),
+			},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,8 +111,6 @@ Tags: map[string]*string{
 	log.Printf("Response result: %#v\n", res.CloudServicesClientUpdateResult)
 }
 
-
-
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
 func ExampleCloudServicesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -131,9 +120,9 @@ func ExampleCloudServicesClient_BeginDelete() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDelete(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -142,8 +131,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json
 func ExampleCloudServicesClient_Get() {
@@ -154,16 +141,14 @@ func ExampleCloudServicesClient_Get() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	res, err := client.Get(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServicesClientGetResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
 func ExampleCloudServicesClient_GetInstanceView() {
@@ -174,16 +159,14 @@ func ExampleCloudServicesClient_GetInstanceView() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	res, err := client.GetInstanceView(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServicesClientGetInstanceViewResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
 func ExampleCloudServicesClient_ListAll() {
@@ -195,20 +178,18 @@ func ExampleCloudServicesClient_ListAll() {
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	pager := client.ListAll(nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json
 func ExampleCloudServicesClient_List() {
@@ -219,22 +200,20 @@ func ExampleCloudServicesClient_List() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	pager := client.List("<resource-group-name>",
-nil)
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json
 func ExampleCloudServicesClient_BeginStart() {
@@ -245,9 +224,9 @@ func ExampleCloudServicesClient_BeginStart() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginStart(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -256,8 +235,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json
 func ExampleCloudServicesClient_BeginPowerOff() {
@@ -268,9 +245,9 @@ func ExampleCloudServicesClient_BeginPowerOff() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginPowerOff(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -279,8 +256,6 @@ nil)
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json
 func ExampleCloudServicesClient_BeginRestart() {
@@ -291,14 +266,14 @@ func ExampleCloudServicesClient_BeginRestart() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRestart(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginRestartOptions{Parameters: &test.RoleInstances{
-RoleInstances: []*string{
-to.StringPtr("ContosoFrontend_IN_0"),
-to.StringPtr("ContosoBackend_IN_1")},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginRestartOptions{Parameters: &test.RoleInstances{
+			RoleInstances: []*string{
+				to.StringPtr("ContosoFrontend_IN_0"),
+				to.StringPtr("ContosoBackend_IN_1")},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -307,8 +282,6 @@ to.StringPtr("ContosoBackend_IN_1")},
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json
 func ExampleCloudServicesClient_BeginReimage() {
@@ -319,14 +292,14 @@ func ExampleCloudServicesClient_BeginReimage() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginReimage(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginReimageOptions{Parameters: &test.RoleInstances{
-RoleInstances: []*string{
-to.StringPtr("ContosoFrontend_IN_0"),
-to.StringPtr("ContosoBackend_IN_1")},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginReimageOptions{Parameters: &test.RoleInstances{
+			RoleInstances: []*string{
+				to.StringPtr("ContosoFrontend_IN_0"),
+				to.StringPtr("ContosoBackend_IN_1")},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -335,8 +308,6 @@ to.StringPtr("ContosoBackend_IN_1")},
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json
 func ExampleCloudServicesClient_BeginRebuild() {
@@ -347,14 +318,14 @@ func ExampleCloudServicesClient_BeginRebuild() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginRebuild(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginRebuildOptions{Parameters: &test.RoleInstances{
-RoleInstances: []*string{
-to.StringPtr("ContosoFrontend_IN_0"),
-to.StringPtr("ContosoBackend_IN_1")},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginRebuildOptions{Parameters: &test.RoleInstances{
+			RoleInstances: []*string{
+				to.StringPtr("ContosoFrontend_IN_0"),
+				to.StringPtr("ContosoBackend_IN_1")},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -363,8 +334,6 @@ to.StringPtr("ContosoBackend_IN_1")},
 		log.Fatal(err)
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json
 func ExampleCloudServicesClient_BeginDeleteInstances() {
@@ -375,14 +344,14 @@ func ExampleCloudServicesClient_BeginDeleteInstances() {
 	ctx := context.Background()
 	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
 	poller, err := client.BeginDeleteInstances(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-&test.CloudServicesClientBeginDeleteInstancesOptions{Parameters: &test.RoleInstances{
-RoleInstances: []*string{
-to.StringPtr("ContosoFrontend_IN_0"),
-to.StringPtr("ContosoBackend_IN_1")},
-},
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		&test.CloudServicesClientBeginDeleteInstancesOptions{Parameters: &test.RoleInstances{
+			RoleInstances: []*string{
+				to.StringPtr("ContosoFrontend_IN_0"),
+				to.StringPtr("ContosoBackend_IN_1")},
+		},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -391,5 +360,3 @@ to.StringPtr("ContosoBackend_IN_1")},
 		log.Fatal(err)
 	}
 }
-
-

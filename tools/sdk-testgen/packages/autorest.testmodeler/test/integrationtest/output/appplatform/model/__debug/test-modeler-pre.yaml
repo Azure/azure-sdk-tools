@@ -82,14 +82,14 @@ schemas:
           name: Boolean
           description: Indicates whether the operation is a data action
       protocol: {}
-    - &ref_194
+    - &ref_195
       type: boolean
       language:
         default:
           name: Boolean
           description: Optional. If set to true, then zero will be returned for time duration where no metric is emitted/published.
       protocol: {}
-    - &ref_197
+    - &ref_198
       type: boolean
       language:
         default:
@@ -197,7 +197,7 @@ schemas:
           name: DeploymentSettingsMemoryInGB
           description: Required Memory size in GB, basic tier should be in range (1, 2), standard tier should be in range (1, 8)
       protocol: {}
-    - &ref_213
+    - &ref_215
       type: integer
       apiVersions:
         - version: 2020-11-01-preview
@@ -207,7 +207,7 @@ schemas:
           name: SkuCapacityMinimum
           description: Gets or sets the minimum.
       protocol: {}
-    - &ref_214
+    - &ref_216
       type: integer
       apiVersions:
         - version: 2020-11-01-preview
@@ -217,7 +217,7 @@ schemas:
           name: SkuCapacityMaximum
           description: Gets or sets the maximum.
       protocol: {}
-    - &ref_215
+    - &ref_217
       type: integer
       apiVersions:
         - version: 2020-11-01-preview
@@ -1162,7 +1162,7 @@ schemas:
           name: DeploymentInstanceStartTime
           description: Start time of the deployment instance
       protocol: {}
-    - &ref_253
+    - &ref_255
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1180,7 +1180,7 @@ schemas:
           name: DeploymentResourceCollectionNextLink
           description: "URL client should use to fetch the next page (per server side paging).\r\nIt's null for now, added for future use."
       protocol: {}
-    - &ref_255
+    - &ref_257
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1252,7 +1252,7 @@ schemas:
           name: OperationDisplayDescription
           description: Localized friendly description for the operation
       protocol: {}
-    - &ref_182
+    - &ref_183
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1261,7 +1261,7 @@ schemas:
           name: OperationDetailOrigin
           description: Origin of the operation
       protocol: {}
-    - &ref_183
+    - &ref_184
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1270,7 +1270,7 @@ schemas:
           name: LogSpecificationName
           description: Name of the log
       protocol: {}
-    - &ref_184
+    - &ref_185
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1279,7 +1279,7 @@ schemas:
           name: LogSpecificationDisplayName
           description: Localized friendly display name of the log
       protocol: {}
-    - &ref_185
+    - &ref_186
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1288,7 +1288,7 @@ schemas:
           name: LogSpecificationBlobDuration
           description: Blob duration of the log
       protocol: {}
-    - &ref_186
+    - &ref_187
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1297,7 +1297,7 @@ schemas:
           name: MetricSpecificationName
           description: Name of the metric
       protocol: {}
-    - &ref_187
+    - &ref_188
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1306,7 +1306,7 @@ schemas:
           name: MetricSpecificationDisplayName
           description: Localized friendly display name of the metric
       protocol: {}
-    - &ref_188
+    - &ref_189
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1315,7 +1315,7 @@ schemas:
           name: MetricSpecificationDisplayDescription
           description: Localized friendly description of the metric
       protocol: {}
-    - &ref_189
+    - &ref_190
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1324,7 +1324,7 @@ schemas:
           name: MetricSpecificationUnit
           description: Unit that makes sense for the metric
       protocol: {}
-    - &ref_190
+    - &ref_191
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1333,7 +1333,7 @@ schemas:
           name: MetricSpecificationCategory
           description: Name of the metric category that the metric belongs to. A metric can only belong to a single category.
       protocol: {}
-    - &ref_191
+    - &ref_192
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1342,7 +1342,7 @@ schemas:
           name: MetricSpecificationAggregationType
           description: 'Only provide one value for this field. Valid values: Average, Minimum, Maximum, Total, Count.'
       protocol: {}
-    - &ref_192
+    - &ref_193
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1351,7 +1351,7 @@ schemas:
           name: MetricSpecificationSupportedAggregationTypesItem
           description: ''
       protocol: {}
-    - &ref_193
+    - &ref_194
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1360,7 +1360,7 @@ schemas:
           name: MetricSpecificationSupportedTimeGrainTypesItem
           description: ''
       protocol: {}
-    - &ref_195
+    - &ref_196
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1369,7 +1369,7 @@ schemas:
           name: MetricDimensionName
           description: Name of the dimension
       protocol: {}
-    - &ref_196
+    - &ref_197
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1378,7 +1378,16 @@ schemas:
           name: MetricDimensionDisplayName
           description: Localized friendly display name of the dimension
       protocol: {}
-    - &ref_198
+    - &ref_199
+      type: string
+      apiVersions:
+        - version: 2020-11-01-preview
+      language:
+        default:
+          name: MetricSpecificationSourceMdmNamespace
+          description: Name of the MDM namespace. Optional.
+      protocol: {}
+    - &ref_200
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1387,7 +1396,7 @@ schemas:
           name: AvailableOperationsNextLink
           description: "URL client should use to fetch the next page (per server side paging).\r\nIt's null for now, added for future use."
       protocol: {}
-    - &ref_208
+    - &ref_210
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1396,7 +1405,7 @@ schemas:
           name: SupportedRuntimeVersion
           description: The detailed version (major.minor) of the platform.
       protocol: {}
-    - &ref_210
+    - &ref_212
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1405,7 +1414,7 @@ schemas:
           name: ResourceSkuResourceType
           description: Gets the type of resource the SKU applies to.
       protocol: {}
-    - &ref_211
+    - &ref_213
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1414,7 +1423,7 @@ schemas:
           name: ResourceSkuName
           description: Gets the name of SKU.
       protocol: {}
-    - &ref_212
+    - &ref_214
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1423,7 +1432,7 @@ schemas:
           name: ResourceSkuTier
           description: Gets the tier of SKU.
       protocol: {}
-    - &ref_217
+    - &ref_219
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1432,7 +1441,7 @@ schemas:
           name: ResourceSkuLocationsItem
           description: ''
       protocol: {}
-    - &ref_218
+    - &ref_220
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1441,7 +1450,7 @@ schemas:
           name: ResourceSkuLocationInfoLocation
           description: Gets location of the SKU
       protocol: {}
-    - &ref_219
+    - &ref_221
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1450,7 +1459,7 @@ schemas:
           name: ResourceSkuLocationInfoZonesItem
           description: ''
       protocol: {}
-    - &ref_220
+    - &ref_222
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1459,7 +1468,7 @@ schemas:
           name: ResourceSkuZoneDetailsNameItem
           description: ''
       protocol: {}
-    - &ref_221
+    - &ref_223
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1468,7 +1477,7 @@ schemas:
           name: ResourceSkuCapabilitiesName
           description: Gets an invariant to describe the feature.
       protocol: {}
-    - &ref_222
+    - &ref_224
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1477,7 +1486,7 @@ schemas:
           name: ResourceSkuCapabilitiesValue
           description: Gets an invariant if the feature is measured by quantity.
       protocol: {}
-    - &ref_224
+    - &ref_226
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1486,7 +1495,7 @@ schemas:
           name: ResourceSkuRestrictionsValuesItem
           description: ''
       protocol: {}
-    - &ref_225
+    - &ref_227
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1495,7 +1504,7 @@ schemas:
           name: ResourceSkuRestrictionInfoLocationsItem
           description: ''
       protocol: {}
-    - &ref_226
+    - &ref_228
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1504,7 +1513,7 @@ schemas:
           name: ResourceSkuRestrictionInfoZonesItem
           description: ''
       protocol: {}
-    - &ref_228
+    - &ref_230
       type: string
       apiVersions:
         - version: 2020-11-01-preview
@@ -1880,7 +1889,23 @@ schemas:
           name: DeploymentResourceStatus
           description: Status of the Deployment
       protocol: {}
-    - &ref_206
+    - &ref_182
+      choices:
+        - value: Internal
+          language:
+            default:
+              name: Internal
+              description: ''
+      type: choice
+      apiVersions:
+        - version: 2020-11-01-preview
+      choiceType: *ref_0
+      language:
+        default:
+          name: ActionType
+          description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
+      protocol: {}
+    - &ref_208
       choices:
         - value: Java_8
           language:
@@ -1906,7 +1931,7 @@ schemas:
           name: SupportedRuntimeValue
           description: The raw value which could be passed to deployment CRUD operations.
       protocol: {}
-    - &ref_207
+    - &ref_209
       choices:
         - value: Java
           language:
@@ -1927,7 +1952,7 @@ schemas:
           name: SupportedRuntimePlatform
           description: 'The platform of this runtime version (possible values: "Java" or ".NET").'
       protocol: {}
-    - &ref_216
+    - &ref_218
       choices:
         - value: None
           language:
@@ -1953,7 +1978,7 @@ schemas:
           name: SkuScaleType
           description: Gets or sets the type of the scale.
       protocol: {}
-    - &ref_223
+    - &ref_225
       choices:
         - value: Location
           language:
@@ -1974,7 +1999,7 @@ schemas:
           name: ResourceSkuRestrictionsType
           description: 'Gets the type of restrictions. Possible values include: ''Location'', ''Zone'''
       protocol: {}
-    - &ref_227
+    - &ref_229
       choices:
         - value: QuotaId
           language:
@@ -1996,7 +2021,7 @@ schemas:
           description: 'Gets the reason for restriction. Possible values include: ''QuotaId'', ''NotAvailableForSubscription'''
       protocol: {}
   constants:
-    - &ref_275
+    - &ref_277
       type: constant
       value:
         value: 2020-11-01-preview
@@ -2006,7 +2031,7 @@ schemas:
           name: ApiVersion20201101Preview
           description: Api Version (2020-11-01-preview)
       protocol: {}
-    - &ref_279
+    - &ref_281
       type: constant
       value:
         value: application/json
@@ -2172,7 +2197,7 @@ schemas:
                                                 apiVersions:
                                                   - version: 2020-11-01-preview
                                                 properties:
-                                                  - schema: &ref_243
+                                                  - schema: &ref_245
                                                       type: array
                                                       apiVersions:
                                                         - version: 2020-11-01-preview
@@ -2189,7 +2214,7 @@ schemas:
                                                                 name: name
                                                                 description: Name of the repository
                                                             protocol: {}
-                                                          - schema: &ref_241
+                                                          - schema: &ref_243
                                                               type: array
                                                               apiVersions:
                                                                 - version: 2020-11-01-preview
@@ -2222,7 +2247,7 @@ schemas:
                                                                 name: label
                                                                 description: Label of the repository
                                                             protocol: {}
-                                                          - schema: &ref_242
+                                                          - schema: &ref_244
                                                               type: array
                                                               apiVersions:
                                                                 - version: 2020-11-01-preview
@@ -2326,7 +2351,7 @@ schemas:
                                                         name: label
                                                         description: Label of the repository
                                                     protocol: {}
-                                                  - schema: &ref_244
+                                                  - schema: &ref_246
                                                       type: array
                                                       apiVersions:
                                                         - version: 2020-11-01-preview
@@ -3009,7 +3034,7 @@ schemas:
                                             name: subjectName
                                             description: The subject name of certificate.
                                         protocol: {}
-                                      - schema: &ref_249
+                                      - schema: &ref_251
                                           type: array
                                           apiVersions:
                                             - version: 2020-11-01-preview
@@ -3295,7 +3320,7 @@ schemas:
                                             name: createdTime
                                             description: Date time when the resource is created
                                         protocol: {}
-                                      - schema: &ref_252
+                                      - schema: &ref_254
                                           type: array
                                           apiVersions:
                                             - version: 2020-11-01-preview
@@ -3622,7 +3647,7 @@ schemas:
                         apiVersions:
                           - version: 2020-11-01-preview
                         properties:
-                          - schema: &ref_236
+                          - schema: &ref_238
                               type: array
                               apiVersions:
                                 - version: 2020-11-01-preview
@@ -3660,7 +3685,7 @@ schemas:
                           name: outboundIPs
                           description: Desired outbound IP resources for Azure Spring Cloud instance.
                       protocol: {}
-                    - schema: &ref_239
+                    - schema: &ref_241
                         type: array
                         apiVersions:
                           - version: 2020-11-01-preview
@@ -3685,7 +3710,7 @@ schemas:
                                   name: port
                                   description: The port of required traffic
                               protocol: {}
-                            - schema: &ref_237
+                            - schema: &ref_239
                                 type: array
                                 apiVersions:
                                   - version: 2020-11-01-preview
@@ -3702,7 +3727,7 @@ schemas:
                                   name: ips
                                   description: The ip list of required traffic
                               protocol: {}
-                            - schema: &ref_238
+                            - schema: &ref_240
                                 type: array
                                 apiVersions:
                                   - version: 2020-11-01-preview
@@ -3827,7 +3852,7 @@ schemas:
     - *ref_122
     - *ref_4
     - *ref_6
-    - &ref_282
+    - &ref_284
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -3858,7 +3883,7 @@ schemas:
                     name: target
                     description: The target of the particular error. For example, the name of the property in error.
                 protocol: {}
-              - schema: &ref_240
+              - schema: &ref_242
                   type: array
                   apiVersions:
                     - version: 2020-11-01-preview
@@ -3905,7 +3930,7 @@ schemas:
           namespace: ''
       protocol: {}
     - *ref_130
-    - &ref_293
+    - &ref_295
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -3955,7 +3980,7 @@ schemas:
           description: Test keys payload
           namespace: ''
       protocol: {}
-    - &ref_294
+    - &ref_296
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -3985,7 +4010,7 @@ schemas:
     - *ref_139
     - *ref_140
     - *ref_5
-    - &ref_319
+    - &ref_321
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -3997,7 +4022,7 @@ schemas:
               name: isValid
               description: Indicate if the config server settings are valid
           protocol: {}
-        - schema: &ref_246
+        - schema: &ref_248
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4020,7 +4045,7 @@ schemas:
                       name: uri
                       description: The uri of the config server settings error record
                   protocol: {}
-                - schema: &ref_245
+                - schema: &ref_247
                     type: array
                     apiVersions:
                       - version: 2020-11-01-preview
@@ -4076,12 +4101,12 @@ schemas:
     - *ref_149
     - *ref_150
     - *ref_151
-    - &ref_345
+    - &ref_347
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_247
+        - schema: &ref_249
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4114,7 +4139,7 @@ schemas:
           description: Object that includes an array of App resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_349
+    - &ref_351
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4145,12 +4170,12 @@ schemas:
       protocol: {}
     - *ref_99
     - *ref_155
-    - &ref_377
+    - &ref_379
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_248
+        - schema: &ref_250
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4185,12 +4210,12 @@ schemas:
       protocol: {}
     - *ref_100
     - *ref_157
-    - &ref_390
+    - &ref_392
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_250
+        - schema: &ref_252
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4223,7 +4248,7 @@ schemas:
           description: Collection compose of certificate resources list and a possible link for next page.
           namespace: ''
       protocol: {}
-    - &ref_302
+    - &ref_304
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4254,7 +4279,7 @@ schemas:
           description: Name availability parameters payload
           namespace: ''
       protocol: {}
-    - &ref_305
+    - &ref_307
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4292,12 +4317,12 @@ schemas:
       protocol: {}
     - *ref_101
     - *ref_164
-    - &ref_412
+    - &ref_414
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_251
+        - schema: &ref_253
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4330,7 +4355,7 @@ schemas:
           description: Collection compose of a custom domain resources list and a possible link for next page.
           namespace: ''
       protocol: {}
-    - &ref_350
+    - &ref_352
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4353,7 +4378,7 @@ schemas:
           description: Custom domain validate payload.
           namespace: ''
       protocol: {}
-    - &ref_355
+    - &ref_357
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4387,12 +4412,12 @@ schemas:
     - *ref_170
     - *ref_171
     - *ref_172
-    - &ref_436
+    - &ref_438
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_254
+        - schema: &ref_256
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4425,7 +4450,7 @@ schemas:
           description: Object that includes an array of App resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_457
+    - &ref_459
       type: object
       apiVersions:
         - version: 2020-11-01-preview
@@ -4448,12 +4473,12 @@ schemas:
           description: Log file URL payload
           namespace: ''
       protocol: {}
-    - &ref_306
+    - &ref_308
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_256
+        - schema: &ref_258
             type: array
             apiVersions:
               - version: 2020-11-01-preview
@@ -4486,16 +4511,16 @@ schemas:
           description: Object that includes an array of Service resources and a possible link for next set
           namespace: ''
       protocol: {}
-    - &ref_458
+    - &ref_460
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_262
+        - schema: &ref_264
             type: array
             apiVersions:
               - version: 2020-11-01-preview
-            elementType: &ref_199
+            elementType: &ref_201
               type: object
               apiVersions:
                 - version: 2020-11-01-preview
@@ -4514,7 +4539,7 @@ schemas:
                       name: isDataAction
                       description: Indicates whether the operation is a data action
                   protocol: {}
-                - schema: &ref_200
+                - schema: &ref_202
                     type: object
                     apiVersions:
                       - version: 2020-11-01-preview
@@ -4564,46 +4589,54 @@ schemas:
                       description: Display of the operation
                   protocol: {}
                 - schema: *ref_182
+                  readOnly: true
+                  serializedName: actionType
+                  language:
+                    default:
+                      name: actionType
+                      description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
+                  protocol: {}
+                - schema: *ref_183
                   serializedName: origin
                   language:
                     default:
                       name: origin
                       description: Origin of the operation
                   protocol: {}
-                - schema: &ref_201
+                - schema: &ref_203
                     type: object
                     apiVersions:
                       - version: 2020-11-01-preview
                     properties:
-                      - schema: &ref_202
+                      - schema: &ref_204
                           type: object
                           apiVersions:
                             - version: 2020-11-01-preview
                           properties:
-                            - schema: &ref_257
+                            - schema: &ref_259
                                 type: array
                                 apiVersions:
                                   - version: 2020-11-01-preview
-                                elementType: &ref_203
+                                elementType: &ref_205
                                   type: object
                                   apiVersions:
                                     - version: 2020-11-01-preview
                                   properties:
-                                    - schema: *ref_183
+                                    - schema: *ref_184
                                       serializedName: name
                                       language:
                                         default:
                                           name: name
                                           description: Name of the log
                                       protocol: {}
-                                    - schema: *ref_184
+                                    - schema: *ref_185
                                       serializedName: displayName
                                       language:
                                         default:
                                           name: displayName
                                           description: Localized friendly display name of the log
                                       protocol: {}
-                                    - schema: *ref_185
+                                    - schema: *ref_186
                                       serializedName: blobDuration
                                       language:
                                         default:
@@ -4631,62 +4664,62 @@ schemas:
                                   name: logSpecifications
                                   description: Specifications of the Log for Azure Monitoring
                               protocol: {}
-                            - schema: &ref_261
+                            - schema: &ref_263
                                 type: array
                                 apiVersions:
                                   - version: 2020-11-01-preview
-                                elementType: &ref_204
+                                elementType: &ref_206
                                   type: object
                                   apiVersions:
                                     - version: 2020-11-01-preview
                                   properties:
-                                    - schema: *ref_186
+                                    - schema: *ref_187
                                       serializedName: name
                                       language:
                                         default:
                                           name: name
                                           description: Name of the metric
                                       protocol: {}
-                                    - schema: *ref_187
+                                    - schema: *ref_188
                                       serializedName: displayName
                                       language:
                                         default:
                                           name: displayName
                                           description: Localized friendly display name of the metric
                                       protocol: {}
-                                    - schema: *ref_188
+                                    - schema: *ref_189
                                       serializedName: displayDescription
                                       language:
                                         default:
                                           name: displayDescription
                                           description: Localized friendly description of the metric
                                       protocol: {}
-                                    - schema: *ref_189
+                                    - schema: *ref_190
                                       serializedName: unit
                                       language:
                                         default:
                                           name: unit
                                           description: Unit that makes sense for the metric
                                       protocol: {}
-                                    - schema: *ref_190
+                                    - schema: *ref_191
                                       serializedName: category
                                       language:
                                         default:
                                           name: category
                                           description: Name of the metric category that the metric belongs to. A metric can only belong to a single category.
                                       protocol: {}
-                                    - schema: *ref_191
+                                    - schema: *ref_192
                                       serializedName: aggregationType
                                       language:
                                         default:
                                           name: aggregationType
                                           description: 'Only provide one value for this field. Valid values: Average, Minimum, Maximum, Total, Count.'
                                       protocol: {}
-                                    - schema: &ref_258
+                                    - schema: &ref_260
                                         type: array
                                         apiVersions:
                                           - version: 2020-11-01-preview
-                                        elementType: *ref_192
+                                        elementType: *ref_193
                                         language:
                                           default:
                                             name: MetricSpecificationSupportedAggregationTypes
@@ -4698,11 +4731,11 @@ schemas:
                                           name: supportedAggregationTypes
                                           description: Supported aggregation types
                                       protocol: {}
-                                    - schema: &ref_259
+                                    - schema: &ref_261
                                         type: array
                                         apiVersions:
                                           - version: 2020-11-01-preview
-                                        elementType: *ref_193
+                                        elementType: *ref_194
                                         language:
                                           default:
                                             name: MetricSpecificationSupportedTimeGrainTypes
@@ -4714,37 +4747,37 @@ schemas:
                                           name: supportedTimeGrainTypes
                                           description: Supported time grain types
                                       protocol: {}
-                                    - schema: *ref_194
+                                    - schema: *ref_195
                                       serializedName: fillGapWithZero
                                       language:
                                         default:
                                           name: fillGapWithZero
                                           description: Optional. If set to true, then zero will be returned for time duration where no metric is emitted/published.
                                       protocol: {}
-                                    - schema: &ref_260
+                                    - schema: &ref_262
                                         type: array
                                         apiVersions:
                                           - version: 2020-11-01-preview
-                                        elementType: &ref_205
+                                        elementType: &ref_207
                                           type: object
                                           apiVersions:
                                             - version: 2020-11-01-preview
                                           properties:
-                                            - schema: *ref_195
+                                            - schema: *ref_196
                                               serializedName: name
                                               language:
                                                 default:
                                                   name: name
                                                   description: Name of the dimension
                                               protocol: {}
-                                            - schema: *ref_196
+                                            - schema: *ref_197
                                               serializedName: displayName
                                               language:
                                                 default:
                                                   name: displayName
                                                   description: Localized friendly display name of the dimension
                                               protocol: {}
-                                            - schema: *ref_197
+                                            - schema: *ref_198
                                               serializedName: toBeExportedForShoebox
                                               language:
                                                 default:
@@ -4771,6 +4804,13 @@ schemas:
                                         default:
                                           name: dimensions
                                           description: Dimensions of the metric
+                                      protocol: {}
+                                    - schema: *ref_199
+                                      serializedName: sourceMdmNamespace
+                                      language:
+                                        default:
+                                          name: sourceMdmNamespace
+                                          description: Name of the MDM namespace. Optional.
                                       protocol: {}
                                   serializationFormats:
                                     - json
@@ -4846,7 +4886,7 @@ schemas:
               name: value
               description: Collection of available operation details
           protocol: {}
-        - schema: *ref_198
+        - schema: *ref_200
           serializedName: nextLink
           language:
             default:
@@ -4863,42 +4903,42 @@ schemas:
           description: Available operations of the service
           namespace: ''
       protocol: {}
-    - *ref_199
-    - *ref_200
     - *ref_201
     - *ref_202
     - *ref_203
     - *ref_204
     - *ref_205
-    - &ref_459
+    - *ref_206
+    - *ref_207
+    - &ref_461
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_263
+        - schema: &ref_265
             type: array
             apiVersions:
               - version: 2020-11-01-preview
-            elementType: &ref_209
+            elementType: &ref_211
               type: object
               apiVersions:
                 - version: 2020-11-01-preview
               properties:
-                - schema: *ref_206
+                - schema: *ref_208
                   serializedName: value
                   language:
                     default:
                       name: value
                       description: The raw value which could be passed to deployment CRUD operations.
                   protocol: {}
-                - schema: *ref_207
+                - schema: *ref_209
                   serializedName: platform
                   language:
                     default:
                       name: platform
                       description: 'The platform of this runtime version (possible values: "Java" or ".NET").'
                   protocol: {}
-                - schema: *ref_208
+                - schema: *ref_210
                   serializedName: version
                   language:
                     default:
@@ -4937,48 +4977,48 @@ schemas:
           description: ''
           namespace: ''
       protocol: {}
-    - *ref_209
-    - &ref_460
+    - *ref_211
+    - &ref_462
       type: object
       apiVersions:
         - version: 2020-11-01-preview
       properties:
-        - schema: &ref_274
+        - schema: &ref_276
             type: array
             apiVersions:
               - version: 2020-11-01-preview
-            elementType: &ref_229
+            elementType: &ref_231
               type: object
               apiVersions:
                 - version: 2020-11-01-preview
               properties:
-                - schema: *ref_210
+                - schema: *ref_212
                   serializedName: resourceType
                   language:
                     default:
                       name: resourceType
                       description: Gets the type of resource the SKU applies to.
                   protocol: {}
-                - schema: *ref_211
+                - schema: *ref_213
                   serializedName: name
                   language:
                     default:
                       name: name
                       description: Gets the name of SKU.
                   protocol: {}
-                - schema: *ref_212
+                - schema: *ref_214
                   serializedName: tier
                   language:
                     default:
                       name: tier
                       description: Gets the tier of SKU.
                   protocol: {}
-                - schema: &ref_230
+                - schema: &ref_232
                     type: object
                     apiVersions:
                       - version: 2020-11-01-preview
                     properties:
-                      - schema: *ref_213
+                      - schema: *ref_215
                         required: true
                         serializedName: minimum
                         language:
@@ -4986,7 +5026,7 @@ schemas:
                             name: minimum
                             description: Gets or sets the minimum.
                         protocol: {}
-                      - schema: *ref_214
+                      - schema: *ref_216
                         required: false
                         serializedName: maximum
                         language:
@@ -4994,7 +5034,7 @@ schemas:
                             name: maximum
                             description: Gets or sets the maximum.
                         protocol: {}
-                      - schema: *ref_215
+                      - schema: *ref_217
                         required: false
                         serializedName: default
                         language:
@@ -5002,7 +5042,7 @@ schemas:
                             name: default
                             description: Gets or sets the default.
                         protocol: {}
-                      - schema: *ref_216
+                      - schema: *ref_218
                         required: false
                         serializedName: scaleType
                         language:
@@ -5026,11 +5066,11 @@ schemas:
                       name: capacity
                       description: Gets the capacity of SKU.
                   protocol: {}
-                - schema: &ref_264
+                - schema: &ref_266
                     type: array
                     apiVersions:
                       - version: 2020-11-01-preview
-                    elementType: *ref_217
+                    elementType: *ref_219
                     language:
                       default:
                         name: ResourceSkuLocations
@@ -5042,27 +5082,27 @@ schemas:
                       name: locations
                       description: Gets the set of locations that the SKU is available.
                   protocol: {}
-                - schema: &ref_269
+                - schema: &ref_271
                     type: array
                     apiVersions:
                       - version: 2020-11-01-preview
-                    elementType: &ref_231
+                    elementType: &ref_233
                       type: object
                       apiVersions:
                         - version: 2020-11-01-preview
                       properties:
-                        - schema: *ref_218
+                        - schema: *ref_220
                           serializedName: location
                           language:
                             default:
                               name: location
                               description: Gets location of the SKU
                           protocol: {}
-                        - schema: &ref_265
+                        - schema: &ref_267
                             type: array
                             apiVersions:
                               - version: 2020-11-01-preview
-                            elementType: *ref_219
+                            elementType: *ref_221
                             language:
                               default:
                                 name: ResourceSkuLocationInfoZones
@@ -5074,20 +5114,20 @@ schemas:
                               name: zones
                               description: Gets list of availability zones where the SKU is supported.
                           protocol: {}
-                        - schema: &ref_268
+                        - schema: &ref_270
                             type: array
                             apiVersions:
                               - version: 2020-11-01-preview
-                            elementType: &ref_232
+                            elementType: &ref_234
                               type: object
                               apiVersions:
                                 - version: 2020-11-01-preview
                               properties:
-                                - schema: &ref_266
+                                - schema: &ref_268
                                     type: array
                                     apiVersions:
                                       - version: 2020-11-01-preview
-                                    elementType: *ref_220
+                                    elementType: *ref_222
                                     language:
                                       default:
                                         name: ResourceSkuZoneDetailsName
@@ -5099,23 +5139,23 @@ schemas:
                                       name: name
                                       description: "Gets the set of zones that the SKU is available in with the\r\nspecified capabilities."
                                   protocol: {}
-                                - schema: &ref_267
+                                - schema: &ref_269
                                     type: array
                                     apiVersions:
                                       - version: 2020-11-01-preview
-                                    elementType: &ref_233
+                                    elementType: &ref_235
                                       type: object
                                       apiVersions:
                                         - version: 2020-11-01-preview
                                       properties:
-                                        - schema: *ref_221
+                                        - schema: *ref_223
                                           serializedName: name
                                           language:
                                             default:
                                               name: name
                                               description: Gets an invariant to describe the feature.
                                           protocol: {}
-                                        - schema: *ref_222
+                                        - schema: *ref_224
                                           serializedName: value
                                           language:
                                             default:
@@ -5185,27 +5225,27 @@ schemas:
                       name: locationInfo
                       description: Gets a list of locations and availability zones in those locations where the SKU is available.
                   protocol: {}
-                - schema: &ref_273
+                - schema: &ref_275
                     type: array
                     apiVersions:
                       - version: 2020-11-01-preview
-                    elementType: &ref_234
+                    elementType: &ref_236
                       type: object
                       apiVersions:
                         - version: 2020-11-01-preview
                       properties:
-                        - schema: *ref_223
+                        - schema: *ref_225
                           serializedName: type
                           language:
                             default:
                               name: type
                               description: 'Gets the type of restrictions. Possible values include: ''Location'', ''Zone'''
                           protocol: {}
-                        - schema: &ref_270
+                        - schema: &ref_272
                             type: array
                             apiVersions:
                               - version: 2020-11-01-preview
-                            elementType: *ref_224
+                            elementType: *ref_226
                             language:
                               default:
                                 name: ResourceSkuRestrictionsValues
@@ -5217,16 +5257,16 @@ schemas:
                               name: values
                               description: "Gets the value of restrictions. If the restriction type is set to\r\nlocation. This would be different locations where the SKU is restricted."
                           protocol: {}
-                        - schema: &ref_235
+                        - schema: &ref_237
                             type: object
                             apiVersions:
                               - version: 2020-11-01-preview
                             properties:
-                              - schema: &ref_271
+                              - schema: &ref_273
                                   type: array
                                   apiVersions:
                                     - version: 2020-11-01-preview
-                                  elementType: *ref_225
+                                  elementType: *ref_227
                                   language:
                                     default:
                                       name: ResourceSkuRestrictionInfoLocations
@@ -5238,11 +5278,11 @@ schemas:
                                     name: locations
                                     description: Gets locations where the SKU is restricted
                                 protocol: {}
-                              - schema: &ref_272
+                              - schema: &ref_274
                                   type: array
                                   apiVersions:
                                     - version: 2020-11-01-preview
-                                  elementType: *ref_226
+                                  elementType: *ref_228
                                   language:
                                     default:
                                       name: ResourceSkuRestrictionInfoZones
@@ -5270,7 +5310,7 @@ schemas:
                               name: restrictionInfo
                               description: Gets the information about the restriction where the SKU cannot be used.
                           protocol: {}
-                        - schema: *ref_227
+                        - schema: *ref_229
                           serializedName: reasonCode
                           language:
                             default:
@@ -5319,7 +5359,7 @@ schemas:
               name: value
               description: Collection of resource SKU
           protocol: {}
-        - schema: *ref_228
+        - schema: *ref_230
           serializedName: nextLink
           language:
             default:
@@ -5336,16 +5376,14 @@ schemas:
           description: Object that includes an array of Azure Spring Cloud SKU and a possible link for next set
           namespace: ''
       protocol: {}
-    - *ref_229
-    - *ref_230
     - *ref_231
     - *ref_232
     - *ref_233
     - *ref_234
     - *ref_235
-  arrays:
     - *ref_236
     - *ref_237
+  arrays:
     - *ref_238
     - *ref_239
     - *ref_240
@@ -5361,29 +5399,29 @@ schemas:
     - *ref_250
     - *ref_251
     - *ref_252
-    - &ref_431
-      type: array
-      apiVersions:
-        - version: 2020-11-01-preview
-      elementType: *ref_253
-      language:
-        default:
-          name: ArrayOfGet5ItemsItem
-          description: Array of Get5ItemsItem
-      protocol: {}
+    - *ref_253
     - *ref_254
-    - &ref_437
+    - &ref_433
       type: array
       apiVersions:
         - version: 2020-11-01-preview
       elementType: *ref_255
       language:
         default:
+          name: ArrayOfGet5ItemsItem
+          description: Array of Get5ItemsItem
+      protocol: {}
+    - *ref_256
+    - &ref_439
+      type: array
+      apiVersions:
+        - version: 2020-11-01-preview
+      elementType: *ref_257
+      language:
+        default:
           name: ArrayOfGet4ItemsItem
           description: Array of Get4ItemsItem
       protocol: {}
-    - *ref_256
-    - *ref_257
     - *ref_258
     - *ref_259
     - *ref_260
@@ -5401,8 +5439,10 @@ schemas:
     - *ref_272
     - *ref_273
     - *ref_274
+    - *ref_275
+    - *ref_276
 globalParameters:
-  - &ref_278
+  - &ref_280
     schema: *ref_1
     implementation: Client
     required: true
@@ -5416,7 +5456,7 @@ globalParameters:
     protocol:
       http:
         in: path
-  - &ref_276
+  - &ref_278
     schema: *ref_0
     clientDefaultValue: https://management.azure.com
     implementation: Client
@@ -5432,8 +5472,8 @@ globalParameters:
     protocol:
       http:
         in: uri
-  - &ref_277
-    schema: *ref_275
+  - &ref_279
+    schema: *ref_277
     implementation: Client
     origin: modelerfour:synthesized/api-version
     required: true
@@ -5451,10 +5491,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_280
+          - *ref_279
+          - *ref_280
+          - &ref_282
             schema: *ref_1
             implementation: Method
             required: true
@@ -5466,7 +5506,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_281
+          - &ref_283
             schema: *ref_1
             implementation: Method
             required: true
@@ -5480,7 +5520,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -5503,8 +5543,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_280
-          - *ref_281
+          - *ref_282
+          - *ref_283
         responses:
           - schema: *ref_3
             language:
@@ -5519,7 +5559,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -5586,10 +5626,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_284
+          - *ref_279
+          - *ref_280
+          - &ref_286
             schema: *ref_1
             implementation: Method
             required: true
@@ -5601,7 +5641,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_285
+          - &ref_287
             schema: *ref_1
             implementation: Method
             required: true
@@ -5615,7 +5655,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_283
+              - &ref_285
                 schema: *ref_3
                 implementation: Method
                 required: true
@@ -5627,7 +5667,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -5640,7 +5680,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_283
+              - *ref_285
             language:
               default:
                 name: ''
@@ -5654,8 +5694,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_284
-          - *ref_285
+          - *ref_286
+          - *ref_287
         responses:
           - schema: *ref_3
             language:
@@ -5694,7 +5734,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -5995,10 +6035,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_286
+          - *ref_279
+          - *ref_280
+          - &ref_288
             schema: *ref_1
             implementation: Method
             required: true
@@ -6010,7 +6050,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_287
+          - &ref_289
             schema: *ref_1
             implementation: Method
             required: true
@@ -6024,7 +6064,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6047,8 +6087,8 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_286
-          - *ref_287
+          - *ref_288
+          - *ref_289
         responses:
           - language:
               default:
@@ -6067,7 +6107,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6103,10 +6143,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_289
+          - *ref_279
+          - *ref_280
+          - &ref_291
             schema: *ref_1
             implementation: Method
             required: true
@@ -6118,7 +6158,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_290
+          - &ref_292
             schema: *ref_1
             implementation: Method
             required: true
@@ -6132,7 +6172,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_288
+              - &ref_290
                 schema: *ref_3
                 implementation: Method
                 required: true
@@ -6144,7 +6184,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6157,7 +6197,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_288
+              - *ref_290
             language:
               default:
                 name: ''
@@ -6171,8 +6211,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_289
-          - *ref_290
+          - *ref_291
+          - *ref_292
         responses:
           - schema: *ref_3
             language:
@@ -6199,7 +6239,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6304,6 +6344,11 @@ operationGroups:
                       tier: Standard
                     tags:
                       key1: value1
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -6315,10 +6360,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_291
+          - *ref_279
+          - *ref_280
+          - &ref_293
             schema: *ref_1
             implementation: Method
             required: true
@@ -6330,7 +6375,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_292
+          - &ref_294
             schema: *ref_1
             implementation: Method
             required: true
@@ -6344,7 +6389,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6367,10 +6412,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_291
-          - *ref_292
+          - *ref_293
+          - *ref_294
         responses:
-          - schema: *ref_293
+          - schema: *ref_295
             language:
               default:
                 name: ''
@@ -6383,7 +6428,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6419,10 +6464,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_296
+          - *ref_279
+          - *ref_280
+          - &ref_298
             schema: *ref_1
             implementation: Method
             required: true
@@ -6434,7 +6479,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_297
+          - &ref_299
             schema: *ref_1
             implementation: Method
             required: true
@@ -6448,8 +6493,8 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_295
-                schema: *ref_294
+              - &ref_297
+                schema: *ref_296
                 implementation: Method
                 required: true
                 language:
@@ -6460,7 +6505,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6473,7 +6518,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_295
+              - *ref_297
             language:
               default:
                 name: ''
@@ -6487,10 +6532,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_296
-          - *ref_297
+          - *ref_298
+          - *ref_299
         responses:
-          - schema: *ref_293
+          - schema: *ref_295
             language:
               default:
                 name: ''
@@ -6503,7 +6548,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6541,10 +6586,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_298
+          - *ref_279
+          - *ref_280
+          - &ref_300
             schema: *ref_1
             implementation: Method
             required: true
@@ -6556,7 +6601,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_299
+          - &ref_301
             schema: *ref_1
             implementation: Method
             required: true
@@ -6570,7 +6615,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6593,8 +6638,8 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_298
-          - *ref_299
+          - *ref_300
+          - *ref_301
         responses:
           - language:
               default:
@@ -6605,7 +6650,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6635,10 +6680,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_300
+          - *ref_279
+          - *ref_280
+          - &ref_302
             schema: *ref_1
             implementation: Method
             required: true
@@ -6650,7 +6695,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_301
+          - &ref_303
             schema: *ref_1
             implementation: Method
             required: true
@@ -6664,7 +6709,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6687,10 +6732,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_300
-          - *ref_301
+          - *ref_302
+          - *ref_303
         responses:
-          - schema: *ref_293
+          - schema: *ref_295
             language:
               default:
                 name: ''
@@ -6703,7 +6748,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6739,10 +6784,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_304
+          - *ref_279
+          - *ref_280
+          - &ref_306
             schema: *ref_1
             implementation: Method
             required: true
@@ -6756,8 +6801,8 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_303
-                schema: *ref_302
+              - &ref_305
+                schema: *ref_304
                 implementation: Method
                 required: true
                 language:
@@ -6768,7 +6813,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6781,7 +6826,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_303
+              - *ref_305
             language:
               default:
                 name: ''
@@ -6795,9 +6840,9 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_304
+          - *ref_306
         responses:
-          - schema: *ref_305
+          - schema: *ref_307
             language:
               default:
                 name: ''
@@ -6810,7 +6855,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6846,12 +6891,12 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
+          - *ref_279
+          - *ref_280
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6875,7 +6920,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_306
+          - schema: *ref_308
             language:
               default:
                 name: ''
@@ -6888,7 +6933,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -6958,10 +7003,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_307
+          - *ref_279
+          - *ref_280
+          - &ref_309
             schema: *ref_1
             implementation: Method
             required: true
@@ -6975,7 +7020,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -6998,9 +7043,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_307
+          - *ref_309
         responses:
-          - schema: *ref_306
+          - schema: *ref_308
             language:
               default:
                 name: ''
@@ -7013,7 +7058,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7091,10 +7136,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_308
+          - *ref_279
+          - *ref_280
+          - &ref_310
             schema: *ref_1
             implementation: Method
             required: true
@@ -7106,7 +7151,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_309
+          - &ref_311
             schema: *ref_1
             implementation: Method
             required: true
@@ -7120,7 +7165,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7143,8 +7188,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_308
-          - *ref_309
+          - *ref_310
+          - *ref_311
         responses:
           - schema: *ref_96
             language:
@@ -7159,7 +7204,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7201,10 +7246,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_311
+          - *ref_279
+          - *ref_280
+          - &ref_313
             schema: *ref_1
             implementation: Method
             required: true
@@ -7216,7 +7261,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_312
+          - &ref_314
             schema: *ref_1
             implementation: Method
             required: true
@@ -7230,7 +7275,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_310
+              - &ref_312
                 schema: *ref_96
                 implementation: Method
                 required: true
@@ -7242,7 +7287,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7255,7 +7300,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_310
+              - *ref_312
             language:
               default:
                 name: ''
@@ -7269,8 +7314,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_311
-          - *ref_312
+          - *ref_313
+          - *ref_314
         responses:
           - schema: *ref_96
             language:
@@ -7297,7 +7342,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7363,10 +7408,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_314
+          - *ref_279
+          - *ref_280
+          - &ref_316
             schema: *ref_1
             implementation: Method
             required: true
@@ -7378,7 +7423,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_315
+          - &ref_317
             schema: *ref_1
             implementation: Method
             required: true
@@ -7392,7 +7437,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_313
+              - &ref_315
                 schema: *ref_96
                 implementation: Method
                 required: true
@@ -7404,7 +7449,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7417,7 +7462,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_313
+              - *ref_315
             language:
               default:
                 name: ''
@@ -7431,8 +7476,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_314
-          - *ref_315
+          - *ref_316
+          - *ref_317
         responses:
           - schema: *ref_96
             language:
@@ -7459,7 +7504,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7514,6 +7559,11 @@ operationGroups:
                             - /
                           uri: https://github.com/fake-user/fake-repository.git
                       provisioningState: Updating
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -7525,10 +7575,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_317
+          - *ref_279
+          - *ref_280
+          - &ref_319
             schema: *ref_1
             implementation: Method
             required: true
@@ -7540,7 +7590,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_318
+          - &ref_320
             schema: *ref_1
             implementation: Method
             required: true
@@ -7554,7 +7604,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_316
+              - &ref_318
                 schema: *ref_138
                 implementation: Method
                 required: true
@@ -7566,7 +7616,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7579,7 +7629,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_316
+              - *ref_318
             language:
               default:
                 name: ''
@@ -7593,10 +7643,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_317
-          - *ref_318
+          - *ref_319
+          - *ref_320
         responses:
-          - schema: *ref_319
+          - schema: *ref_321
             language:
               default:
                 name: ''
@@ -7608,7 +7658,7 @@ operationGroups:
                   - application/json
                 statusCodes:
                   - '200'
-          - schema: *ref_319
+          - schema: *ref_321
             language:
               default:
                 name: ''
@@ -7621,7 +7671,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7653,6 +7703,11 @@ operationGroups:
                     isValid: true
                 '202':
                   body: {}
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: location
@@ -7671,10 +7726,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_320
+          - *ref_279
+          - *ref_280
+          - &ref_322
             schema: *ref_1
             implementation: Method
             required: true
@@ -7686,7 +7741,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_321
+          - &ref_323
             schema: *ref_1
             implementation: Method
             required: true
@@ -7700,7 +7755,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7723,8 +7778,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_320
-          - *ref_321
+          - *ref_322
+          - *ref_323
         responses:
           - schema: *ref_97
             language:
@@ -7739,7 +7794,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7780,10 +7835,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_323
+          - *ref_279
+          - *ref_280
+          - &ref_325
             schema: *ref_1
             implementation: Method
             required: true
@@ -7795,7 +7850,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_324
+          - &ref_326
             schema: *ref_1
             implementation: Method
             required: true
@@ -7809,7 +7864,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_322
+              - &ref_324
                 schema: *ref_97
                 implementation: Method
                 required: true
@@ -7821,7 +7876,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7834,7 +7889,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_322
+              - *ref_324
             language:
               default:
                 name: ''
@@ -7848,8 +7903,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_323
-          - *ref_324
+          - *ref_325
+          - *ref_326
         responses:
           - schema: *ref_97
             language:
@@ -7876,7 +7931,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -7937,10 +7992,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_326
+          - *ref_279
+          - *ref_280
+          - &ref_328
             schema: *ref_1
             implementation: Method
             required: true
@@ -7952,7 +8007,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_327
+          - &ref_329
             schema: *ref_1
             implementation: Method
             required: true
@@ -7966,7 +8021,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_325
+              - &ref_327
                 schema: *ref_97
                 implementation: Method
                 required: true
@@ -7978,7 +8033,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -7991,7 +8046,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_325
+              - *ref_327
             language:
               default:
                 name: ''
@@ -8005,8 +8060,8 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_326
-          - *ref_327
+          - *ref_328
+          - *ref_329
         responses:
           - schema: *ref_97
             language:
@@ -8033,7 +8088,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8083,6 +8138,11 @@ operationGroups:
                       appInsightsSamplingRate: 10
                       provisioningState: Updating
                       traceEnabled: true
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -8101,10 +8161,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_328
+          - *ref_279
+          - *ref_280
+          - &ref_330
             schema: *ref_1
             implementation: Method
             required: true
@@ -8116,7 +8176,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_329
+          - &ref_331
             schema: *ref_1
             implementation: Method
             required: true
@@ -8128,7 +8188,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_330
+          - &ref_332
             schema: *ref_1
             implementation: Method
             required: true
@@ -8140,7 +8200,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_331
+          - &ref_333
             schema: *ref_1
             implementation: Method
             language:
@@ -8153,7 +8213,7 @@ operationGroups:
                 in: query
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -8176,10 +8236,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_328
-          - *ref_329
           - *ref_330
           - *ref_331
+          - *ref_332
+          - *ref_333
         responses:
           - schema: *ref_98
             language:
@@ -8194,7 +8254,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8232,13 +8292,13 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Succeeded
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
         language:
@@ -8249,10 +8309,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_333
+          - *ref_279
+          - *ref_280
+          - &ref_335
             schema: *ref_1
             implementation: Method
             required: true
@@ -8264,7 +8324,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_334
+          - &ref_336
             schema: *ref_1
             implementation: Method
             required: true
@@ -8276,7 +8336,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_335
+          - &ref_337
             schema: *ref_1
             implementation: Method
             required: true
@@ -8290,7 +8350,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_332
+              - &ref_334
                 schema: *ref_98
                 implementation: Method
                 required: true
@@ -8302,7 +8362,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -8315,7 +8375,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_332
+              - *ref_334
             language:
               default:
                 name: ''
@@ -8329,9 +8389,9 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_333
-          - *ref_334
           - *ref_335
+          - *ref_336
+          - *ref_337
         responses:
           - schema: *ref_98
             language:
@@ -8370,7 +8430,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8397,11 +8457,11 @@ operationGroups:
                     fqdn: myapp.mydomain.com
                     httpsOnly: false
                     persistentDisk:
-                      mountPath: mypersistentdisk
+                      mountPath: /mypersistentdisk
                       sizeInGB: 2
                     public: true
                     temporaryDisk:
-                      mountPath: mytemporarydisk
+                      mountPath: /mytemporarydisk
                       sizeInGB: 2
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
@@ -8423,13 +8483,13 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Succeeded
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
                 '201':
@@ -8448,13 +8508,13 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Creating
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
                 '202':
@@ -8473,13 +8533,13 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Updating
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
           x-ms-long-running-operation: true
@@ -8493,10 +8553,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_336
+          - *ref_279
+          - *ref_280
+          - &ref_338
             schema: *ref_1
             implementation: Method
             required: true
@@ -8508,7 +8568,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_337
+          - &ref_339
             schema: *ref_1
             implementation: Method
             required: true
@@ -8520,7 +8580,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_338
+          - &ref_340
             schema: *ref_1
             implementation: Method
             required: true
@@ -8534,7 +8594,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -8557,9 +8617,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_336
-          - *ref_337
           - *ref_338
+          - *ref_339
+          - *ref_340
         responses:
           - language:
               default:
@@ -8586,7 +8646,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8622,10 +8682,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_340
+          - *ref_279
+          - *ref_280
+          - &ref_342
             schema: *ref_1
             implementation: Method
             required: true
@@ -8637,7 +8697,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_341
+          - &ref_343
             schema: *ref_1
             implementation: Method
             required: true
@@ -8649,7 +8709,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_342
+          - &ref_344
             schema: *ref_1
             implementation: Method
             required: true
@@ -8663,7 +8723,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_339
+              - &ref_341
                 schema: *ref_98
                 implementation: Method
                 required: true
@@ -8675,7 +8735,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -8688,7 +8748,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_339
+              - *ref_341
             language:
               default:
                 name: ''
@@ -8702,9 +8762,9 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_340
-          - *ref_341
           - *ref_342
+          - *ref_343
+          - *ref_344
         responses:
           - schema: *ref_98
             language:
@@ -8731,7 +8791,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8761,11 +8821,11 @@ operationGroups:
                     fqdn: myapp.mydomain.com
                     httpsOnly: false
                     persistentDisk:
-                      mountPath: mypersistentdisk
+                      mountPath: /mypersistentdisk
                       sizeInGB: 2
                     public: true
                     temporaryDisk:
-                      mountPath: mytemporarydisk
+                      mountPath: /mytemporarydisk
                       sizeInGB: 2
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
@@ -8787,13 +8847,13 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Succeeded
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
                 '202':
@@ -8812,15 +8872,20 @@ operationGroups:
                       fqdn: myapp.mydomain.com
                       httpsOnly: false
                       persistentDisk:
-                        mountPath: mypersistentdisk
+                        mountPath: /mypersistentdisk
                         sizeInGB: 2
                         usedInGB: 1
                       provisioningState: Updating
                       public: true
                       temporaryDisk:
-                        mountPath: mytemporarydisk
+                        mountPath: /mytemporarydisk
                         sizeInGB: 2
                       url: myapp.myservice.azuremicroservices.io
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -8832,10 +8897,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_343
+          - *ref_279
+          - *ref_280
+          - &ref_345
             schema: *ref_1
             implementation: Method
             required: true
@@ -8847,7 +8912,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_344
+          - &ref_346
             schema: *ref_1
             implementation: Method
             required: true
@@ -8861,7 +8926,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -8884,10 +8949,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_343
-          - *ref_344
+          - *ref_345
+          - *ref_346
         responses:
-          - schema: *ref_345
+          - schema: *ref_347
             language:
               default:
                 name: ''
@@ -8900,7 +8965,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -8938,13 +9003,13 @@ operationGroups:
                           fqdn: myapp.mydomain.com
                           httpsOnly: false
                           persistentDisk:
-                            mountPath: mypersistentdisk
+                            mountPath: /mypersistentdisk
                             sizeInGB: 2
                             usedInGB: 1
                           provisioningState: Succeeded
                           public: true
                           temporaryDisk:
-                            mountPath: mytemporarydisk
+                            mountPath: /mytemporarydisk
                             sizeInGB: 2
                           url: myapp.myservice.azuremicroservices.io
           x-ms-pageable:
@@ -8959,10 +9024,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_346
+          - *ref_279
+          - *ref_280
+          - &ref_348
             schema: *ref_1
             implementation: Method
             required: true
@@ -8974,7 +9039,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_347
+          - &ref_349
             schema: *ref_1
             implementation: Method
             required: true
@@ -8986,7 +9051,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_348
+          - &ref_350
             schema: *ref_1
             implementation: Method
             required: true
@@ -9000,7 +9065,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9023,11 +9088,11 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_346
-          - *ref_347
           - *ref_348
+          - *ref_349
+          - *ref_350
         responses:
-          - schema: *ref_349
+          - schema: *ref_351
             language:
               default:
                 name: ''
@@ -9040,7 +9105,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9075,10 +9140,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_352
+          - *ref_279
+          - *ref_280
+          - &ref_354
             schema: *ref_1
             implementation: Method
             required: true
@@ -9090,7 +9155,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_353
+          - &ref_355
             schema: *ref_1
             implementation: Method
             required: true
@@ -9102,7 +9167,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_354
+          - &ref_356
             schema: *ref_1
             implementation: Method
             required: true
@@ -9116,8 +9181,8 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_351
-                schema: *ref_350
+              - &ref_353
+                schema: *ref_352
                 implementation: Method
                 required: true
                 language:
@@ -9128,7 +9193,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9141,7 +9206,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_351
+              - *ref_353
             language:
               default:
                 name: ''
@@ -9155,11 +9220,11 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_352
-          - *ref_353
           - *ref_354
+          - *ref_355
+          - *ref_356
         responses:
-          - schema: *ref_355
+          - schema: *ref_357
             language:
               default:
                 name: ''
@@ -9172,7 +9237,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9215,10 +9280,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_356
+          - *ref_279
+          - *ref_280
+          - &ref_358
             schema: *ref_1
             implementation: Method
             required: true
@@ -9230,7 +9295,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_357
+          - &ref_359
             schema: *ref_1
             implementation: Method
             required: true
@@ -9242,7 +9307,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_358
+          - &ref_360
             schema: *ref_1
             implementation: Method
             required: true
@@ -9254,7 +9319,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_359
+          - &ref_361
             schema: *ref_1
             implementation: Method
             required: true
@@ -9268,7 +9333,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9291,10 +9356,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_356
-          - *ref_357
           - *ref_358
           - *ref_359
+          - *ref_360
+          - *ref_361
         responses:
           - schema: *ref_99
             language:
@@ -9309,7 +9374,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9358,10 +9423,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_361
+          - *ref_279
+          - *ref_280
+          - &ref_363
             schema: *ref_1
             implementation: Method
             required: true
@@ -9373,7 +9438,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_362
+          - &ref_364
             schema: *ref_1
             implementation: Method
             required: true
@@ -9385,7 +9450,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_363
+          - &ref_365
             schema: *ref_1
             implementation: Method
             required: true
@@ -9397,7 +9462,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_364
+          - &ref_366
             schema: *ref_1
             implementation: Method
             required: true
@@ -9411,7 +9476,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_360
+              - &ref_362
                 schema: *ref_99
                 implementation: Method
                 required: true
@@ -9423,7 +9488,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9436,7 +9501,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_360
+              - *ref_362
             language:
               default:
                 name: ''
@@ -9450,10 +9515,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_361
-          - *ref_362
           - *ref_363
           - *ref_364
+          - *ref_365
+          - *ref_366
         responses:
           - schema: *ref_99
             language:
@@ -9492,7 +9557,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9590,10 +9655,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_365
+          - *ref_279
+          - *ref_280
+          - &ref_367
             schema: *ref_1
             implementation: Method
             required: true
@@ -9605,7 +9670,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_366
+          - &ref_368
             schema: *ref_1
             implementation: Method
             required: true
@@ -9617,7 +9682,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_367
+          - &ref_369
             schema: *ref_1
             implementation: Method
             required: true
@@ -9629,7 +9694,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_368
+          - &ref_370
             schema: *ref_1
             implementation: Method
             required: true
@@ -9643,7 +9708,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9666,10 +9731,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_365
-          - *ref_366
           - *ref_367
           - *ref_368
+          - *ref_369
+          - *ref_370
         responses:
           - language:
               default:
@@ -9696,7 +9761,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9733,10 +9798,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_370
+          - *ref_279
+          - *ref_280
+          - &ref_372
             schema: *ref_1
             implementation: Method
             required: true
@@ -9748,7 +9813,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_371
+          - &ref_373
             schema: *ref_1
             implementation: Method
             required: true
@@ -9760,7 +9825,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_372
+          - &ref_374
             schema: *ref_1
             implementation: Method
             required: true
@@ -9772,7 +9837,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_373
+          - &ref_375
             schema: *ref_1
             implementation: Method
             required: true
@@ -9786,7 +9851,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_369
+              - &ref_371
                 schema: *ref_99
                 implementation: Method
                 required: true
@@ -9798,7 +9863,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9811,7 +9876,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_369
+              - *ref_371
             language:
               default:
                 name: ''
@@ -9825,10 +9890,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_370
-          - *ref_371
           - *ref_372
           - *ref_373
+          - *ref_374
+          - *ref_375
         responses:
           - schema: *ref_99
             language:
@@ -9855,7 +9920,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -9923,6 +9988,11 @@ operationGroups:
                       resourceName: my-cosmosdb-1
                       resourceType: Microsoft.DocumentDB
                       updatedAt: '2019-01-01T12:34:56.000Z'
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -9934,10 +10004,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_374
+          - *ref_279
+          - *ref_280
+          - &ref_376
             schema: *ref_1
             implementation: Method
             required: true
@@ -9949,7 +10019,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_375
+          - &ref_377
             schema: *ref_1
             implementation: Method
             required: true
@@ -9961,7 +10031,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_376
+          - &ref_378
             schema: *ref_1
             implementation: Method
             required: true
@@ -9975,7 +10045,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -9998,11 +10068,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_374
-          - *ref_375
           - *ref_376
+          - *ref_377
+          - *ref_378
         responses:
-          - schema: *ref_377
+          - schema: *ref_379
             language:
               default:
                 name: ''
@@ -10015,7 +10085,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10075,10 +10145,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_378
+          - *ref_279
+          - *ref_280
+          - &ref_380
             schema: *ref_1
             implementation: Method
             required: true
@@ -10090,7 +10160,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_379
+          - &ref_381
             schema: *ref_1
             implementation: Method
             required: true
@@ -10102,7 +10172,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_380
+          - &ref_382
             schema: *ref_1
             implementation: Method
             required: true
@@ -10116,7 +10186,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10139,9 +10209,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_378
-          - *ref_379
           - *ref_380
+          - *ref_381
+          - *ref_382
         responses:
           - schema: *ref_100
             language:
@@ -10156,7 +10226,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10205,10 +10275,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_382
+          - *ref_279
+          - *ref_280
+          - &ref_384
             schema: *ref_1
             implementation: Method
             required: true
@@ -10220,7 +10290,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_383
+          - &ref_385
             schema: *ref_1
             implementation: Method
             required: true
@@ -10232,7 +10302,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_384
+          - &ref_386
             schema: *ref_1
             implementation: Method
             required: true
@@ -10246,7 +10316,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_381
+              - &ref_383
                 schema: *ref_100
                 implementation: Method
                 required: true
@@ -10258,7 +10328,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10271,7 +10341,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_381
+              - *ref_383
             language:
               default:
                 name: ''
@@ -10285,9 +10355,9 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_382
-          - *ref_383
           - *ref_384
+          - *ref_385
+          - *ref_386
         responses:
           - schema: *ref_100
             language:
@@ -10326,7 +10396,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10421,10 +10491,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_385
+          - *ref_279
+          - *ref_280
+          - &ref_387
             schema: *ref_1
             implementation: Method
             required: true
@@ -10436,7 +10506,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_386
+          - &ref_388
             schema: *ref_1
             implementation: Method
             required: true
@@ -10448,7 +10518,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_387
+          - &ref_389
             schema: *ref_1
             implementation: Method
             required: true
@@ -10462,7 +10532,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10485,9 +10555,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_385
-          - *ref_386
           - *ref_387
+          - *ref_388
+          - *ref_389
         responses:
           - language:
               default:
@@ -10514,7 +10584,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10550,10 +10620,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_388
+          - *ref_279
+          - *ref_280
+          - &ref_390
             schema: *ref_1
             implementation: Method
             required: true
@@ -10565,7 +10635,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_389
+          - &ref_391
             schema: *ref_1
             implementation: Method
             required: true
@@ -10579,7 +10649,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10602,10 +10672,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_388
-          - *ref_389
+          - *ref_390
+          - *ref_391
         responses:
-          - schema: *ref_390
+          - schema: *ref_392
             language:
               default:
                 name: ''
@@ -10618,7 +10688,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10679,10 +10749,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_391
+          - *ref_279
+          - *ref_280
+          - &ref_393
             schema: *ref_1
             implementation: Method
             required: true
@@ -10694,7 +10764,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_392
+          - &ref_394
             schema: *ref_1
             implementation: Method
             required: true
@@ -10706,7 +10776,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_393
+          - &ref_395
             schema: *ref_1
             implementation: Method
             required: true
@@ -10718,7 +10788,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_394
+          - &ref_396
             schema: *ref_1
             implementation: Method
             required: true
@@ -10732,7 +10802,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10755,10 +10825,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_391
-          - *ref_392
           - *ref_393
           - *ref_394
+          - *ref_395
+          - *ref_396
         responses:
           - schema: *ref_101
             language:
@@ -10773,7 +10843,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -10813,10 +10883,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_396
+          - *ref_279
+          - *ref_280
+          - &ref_398
             schema: *ref_1
             implementation: Method
             required: true
@@ -10828,7 +10898,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_397
+          - &ref_399
             schema: *ref_1
             implementation: Method
             required: true
@@ -10840,7 +10910,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_398
+          - &ref_400
             schema: *ref_1
             implementation: Method
             required: true
@@ -10852,7 +10922,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_399
+          - &ref_401
             schema: *ref_1
             implementation: Method
             required: true
@@ -10866,7 +10936,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_395
+              - &ref_397
                 schema: *ref_101
                 implementation: Method
                 required: true
@@ -10878,7 +10948,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -10891,7 +10961,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_395
+              - *ref_397
             language:
               default:
                 name: ''
@@ -10905,10 +10975,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_396
-          - *ref_397
           - *ref_398
           - *ref_399
+          - *ref_400
+          - *ref_401
         responses:
           - schema: *ref_101
             language:
@@ -10947,7 +11017,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11012,10 +11082,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_400
+          - *ref_279
+          - *ref_280
+          - &ref_402
             schema: *ref_1
             implementation: Method
             required: true
@@ -11027,7 +11097,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_401
+          - &ref_403
             schema: *ref_1
             implementation: Method
             required: true
@@ -11039,7 +11109,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_402
+          - &ref_404
             schema: *ref_1
             implementation: Method
             required: true
@@ -11051,7 +11121,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_403
+          - &ref_405
             schema: *ref_1
             implementation: Method
             required: true
@@ -11065,7 +11135,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11088,10 +11158,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_400
-          - *ref_401
           - *ref_402
           - *ref_403
+          - *ref_404
+          - *ref_405
         responses:
           - language:
               default:
@@ -11118,7 +11188,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11155,10 +11225,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_405
+          - *ref_279
+          - *ref_280
+          - &ref_407
             schema: *ref_1
             implementation: Method
             required: true
@@ -11170,7 +11240,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_406
+          - &ref_408
             schema: *ref_1
             implementation: Method
             required: true
@@ -11182,7 +11252,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_407
+          - &ref_409
             schema: *ref_1
             implementation: Method
             required: true
@@ -11194,7 +11264,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_408
+          - &ref_410
             schema: *ref_1
             implementation: Method
             required: true
@@ -11208,7 +11278,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_404
+              - &ref_406
                 schema: *ref_101
                 implementation: Method
                 required: true
@@ -11220,7 +11290,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11233,7 +11303,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_404
+              - *ref_406
             language:
               default:
                 name: ''
@@ -11247,10 +11317,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_405
-          - *ref_406
           - *ref_407
           - *ref_408
+          - *ref_409
+          - *ref_410
         responses:
           - schema: *ref_101
             language:
@@ -11277,7 +11347,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11322,6 +11392,11 @@ operationGroups:
                       appName: myapp
                       certName: mycert
                       thumbprint: 934367bf1c97033f877db0f15cb1b586957d3133
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -11333,10 +11408,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_409
+          - *ref_279
+          - *ref_280
+          - &ref_411
             schema: *ref_1
             implementation: Method
             required: true
@@ -11348,7 +11423,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_410
+          - &ref_412
             schema: *ref_1
             implementation: Method
             required: true
@@ -11360,7 +11435,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_411
+          - &ref_413
             schema: *ref_1
             implementation: Method
             required: true
@@ -11374,7 +11449,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11397,11 +11472,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_409
-          - *ref_410
           - *ref_411
+          - *ref_412
+          - *ref_413
         responses:
-          - schema: *ref_412
+          - schema: *ref_414
             language:
               default:
                 name: ''
@@ -11414,7 +11489,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11466,10 +11541,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_413
+          - *ref_279
+          - *ref_280
+          - &ref_415
             schema: *ref_1
             implementation: Method
             required: true
@@ -11481,7 +11556,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_414
+          - &ref_416
             schema: *ref_1
             implementation: Method
             required: true
@@ -11493,7 +11568,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_415
+          - &ref_417
             schema: *ref_1
             implementation: Method
             required: true
@@ -11505,7 +11580,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_416
+          - &ref_418
             schema: *ref_1
             implementation: Method
             required: true
@@ -11519,7 +11594,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11542,10 +11617,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_413
-          - *ref_414
           - *ref_415
           - *ref_416
+          - *ref_417
+          - *ref_418
         responses:
           - schema: *ref_102
             language:
@@ -11560,7 +11635,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11622,10 +11697,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_418
+          - *ref_279
+          - *ref_280
+          - &ref_420
             schema: *ref_1
             implementation: Method
             required: true
@@ -11637,7 +11712,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_419
+          - &ref_421
             schema: *ref_1
             implementation: Method
             required: true
@@ -11649,7 +11724,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_420
+          - &ref_422
             schema: *ref_1
             implementation: Method
             required: true
@@ -11661,7 +11736,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_421
+          - &ref_423
             schema: *ref_1
             implementation: Method
             required: true
@@ -11675,7 +11750,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_417
+              - &ref_419
                 schema: *ref_102
                 implementation: Method
                 required: true
@@ -11687,7 +11762,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11700,7 +11775,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_417
+              - *ref_419
             language:
               default:
                 name: ''
@@ -11714,10 +11789,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_418
-          - *ref_419
           - *ref_420
           - *ref_421
+          - *ref_422
+          - *ref_423
         responses:
           - schema: *ref_102
             language:
@@ -11756,7 +11831,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -11902,10 +11977,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_422
+          - *ref_279
+          - *ref_280
+          - &ref_424
             schema: *ref_1
             implementation: Method
             required: true
@@ -11917,7 +11992,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_423
+          - &ref_425
             schema: *ref_1
             implementation: Method
             required: true
@@ -11929,7 +12004,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_424
+          - &ref_426
             schema: *ref_1
             implementation: Method
             required: true
@@ -11941,7 +12016,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_425
+          - &ref_427
             schema: *ref_1
             implementation: Method
             required: true
@@ -11955,7 +12030,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -11978,10 +12053,10 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_422
-          - *ref_423
           - *ref_424
           - *ref_425
+          - *ref_426
+          - *ref_427
         responses:
           - language:
               default:
@@ -12008,7 +12083,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12045,10 +12120,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_427
+          - *ref_279
+          - *ref_280
+          - &ref_429
             schema: *ref_1
             implementation: Method
             required: true
@@ -12060,7 +12135,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_428
+          - &ref_430
             schema: *ref_1
             implementation: Method
             required: true
@@ -12072,7 +12147,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_429
+          - &ref_431
             schema: *ref_1
             implementation: Method
             required: true
@@ -12084,7 +12159,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_430
+          - &ref_432
             schema: *ref_1
             implementation: Method
             required: true
@@ -12098,7 +12173,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - &ref_426
+              - &ref_428
                 schema: *ref_102
                 implementation: Method
                 required: true
@@ -12110,7 +12185,7 @@ operationGroups:
                   http:
                     in: body
                     style: json
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12123,7 +12198,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_426
+              - *ref_428
             language:
               default:
                 name: ''
@@ -12137,10 +12212,10 @@ operationGroups:
                   - application/json
                 uri: '{$host}'
         signatureParameters:
-          - *ref_427
-          - *ref_428
           - *ref_429
           - *ref_430
+          - *ref_431
+          - *ref_432
         responses:
           - schema: *ref_102
             language:
@@ -12167,7 +12242,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12260,6 +12335,11 @@ operationGroups:
                       name: S0
                       capacity: 1
                       tier: Standard
+                  headers:
+                    Azure-AsyncOperation: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationResults/00000000-0000-0000-0000-000000000000/Spring/default?api-version=2020-11-01-preview
+                    Location: >-
+                      https://management.azure.com/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.AppPlatform/locations/eastus/operationStatus/default/operationId/00000000-0000-0000-0000-000000000000?api-version=2020-11-01-preview
           x-ms-long-running-operation: true
           x-ms-long-running-operation-options:
             final-state-via: azure-async-operation
@@ -12271,10 +12351,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_432
+          - *ref_279
+          - *ref_280
+          - &ref_434
             schema: *ref_1
             implementation: Method
             required: true
@@ -12286,7 +12366,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_433
+          - &ref_435
             schema: *ref_1
             implementation: Method
             required: true
@@ -12298,7 +12378,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_434
+          - &ref_436
             schema: *ref_1
             implementation: Method
             required: true
@@ -12310,8 +12390,8 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_435
-            schema: *ref_431
+          - &ref_437
+            schema: *ref_433
             implementation: Method
             language:
               default:
@@ -12325,7 +12405,7 @@ operationGroups:
                 style: form
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12348,12 +12428,12 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_432
-          - *ref_433
           - *ref_434
           - *ref_435
+          - *ref_436
+          - *ref_437
         responses:
-          - schema: *ref_436
+          - schema: *ref_438
             language:
               default:
                 name: ''
@@ -12366,7 +12446,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12432,10 +12512,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_438
+          - *ref_279
+          - *ref_280
+          - &ref_440
             schema: *ref_1
             implementation: Method
             required: true
@@ -12447,7 +12527,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_439
+          - &ref_441
             schema: *ref_1
             implementation: Method
             required: true
@@ -12459,8 +12539,8 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_440
-            schema: *ref_437
+          - &ref_442
+            schema: *ref_439
             implementation: Method
             language:
               default:
@@ -12474,7 +12554,7 @@ operationGroups:
                 style: form
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12497,11 +12577,11 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_438
-          - *ref_439
           - *ref_440
+          - *ref_441
+          - *ref_442
         responses:
-          - schema: *ref_436
+          - schema: *ref_438
             language:
               default:
                 name: ''
@@ -12514,7 +12594,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12580,10 +12660,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_441
+          - *ref_279
+          - *ref_280
+          - &ref_443
             schema: *ref_1
             implementation: Method
             required: true
@@ -12595,7 +12675,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_442
+          - &ref_444
             schema: *ref_1
             implementation: Method
             required: true
@@ -12607,7 +12687,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_443
+          - &ref_445
             schema: *ref_1
             implementation: Method
             required: true
@@ -12619,7 +12699,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_444
+          - &ref_446
             schema: *ref_1
             implementation: Method
             required: true
@@ -12633,7 +12713,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12656,10 +12736,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_441
-          - *ref_442
           - *ref_443
           - *ref_444
+          - *ref_445
+          - *ref_446
         responses:
           - language:
               default:
@@ -12678,7 +12758,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12716,10 +12796,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_445
+          - *ref_279
+          - *ref_280
+          - &ref_447
             schema: *ref_1
             implementation: Method
             required: true
@@ -12731,7 +12811,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_446
+          - &ref_448
             schema: *ref_1
             implementation: Method
             required: true
@@ -12743,7 +12823,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_447
+          - &ref_449
             schema: *ref_1
             implementation: Method
             required: true
@@ -12755,7 +12835,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_448
+          - &ref_450
             schema: *ref_1
             implementation: Method
             required: true
@@ -12769,7 +12849,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12792,10 +12872,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_445
-          - *ref_446
           - *ref_447
           - *ref_448
+          - *ref_449
+          - *ref_450
         responses:
           - language:
               default:
@@ -12814,7 +12894,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12852,10 +12932,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_449
+          - *ref_279
+          - *ref_280
+          - &ref_451
             schema: *ref_1
             implementation: Method
             required: true
@@ -12867,7 +12947,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_450
+          - &ref_452
             schema: *ref_1
             implementation: Method
             required: true
@@ -12879,7 +12959,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_451
+          - &ref_453
             schema: *ref_1
             implementation: Method
             required: true
@@ -12891,7 +12971,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_452
+          - &ref_454
             schema: *ref_1
             implementation: Method
             required: true
@@ -12905,7 +12985,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -12928,10 +13008,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_449
-          - *ref_450
           - *ref_451
           - *ref_452
+          - *ref_453
+          - *ref_454
         responses:
           - language:
               default:
@@ -12950,7 +13030,7 @@ operationGroups:
                 statusCodes:
                   - '202'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -12988,10 +13068,10 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
-          - &ref_453
+          - *ref_279
+          - *ref_280
+          - &ref_455
             schema: *ref_1
             implementation: Method
             required: true
@@ -13003,7 +13083,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_454
+          - &ref_456
             schema: *ref_1
             implementation: Method
             required: true
@@ -13015,7 +13095,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_455
+          - &ref_457
             schema: *ref_1
             implementation: Method
             required: true
@@ -13027,7 +13107,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_456
+          - &ref_458
             schema: *ref_1
             implementation: Method
             required: true
@@ -13041,7 +13121,7 @@ operationGroups:
                 in: path
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -13064,12 +13144,12 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_453
-          - *ref_454
           - *ref_455
           - *ref_456
+          - *ref_457
+          - *ref_458
         responses:
-          - schema: *ref_457
+          - schema: *ref_459
             language:
               default:
                 name: ''
@@ -13090,7 +13170,7 @@ operationGroups:
                 statusCodes:
                   - '204'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -13133,11 +13213,11 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
+          - *ref_278
+          - *ref_279
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -13161,7 +13241,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_458
+          - schema: *ref_460
             language:
               default:
                 name: ''
@@ -13174,7 +13254,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -13225,11 +13305,11 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
+          - *ref_278
+          - *ref_279
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -13253,7 +13333,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_459
+          - schema: *ref_461
             language:
               default:
                 name: ''
@@ -13266,7 +13346,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''
@@ -13311,12 +13391,12 @@ operationGroups:
       - apiVersions:
           - version: 2020-11-01-preview
         parameters:
-          - *ref_276
-          - *ref_277
           - *ref_278
+          - *ref_279
+          - *ref_280
         requests:
           - parameters:
-              - schema: *ref_279
+              - schema: *ref_281
                 implementation: Method
                 origin: modelerfour:synthesized/accept
                 required: true
@@ -13340,7 +13420,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_460
+          - schema: *ref_462
             language:
               default:
                 name: ''
@@ -13353,7 +13433,7 @@ operationGroups:
                 statusCodes:
                   - '200'
         exceptions:
-          - schema: *ref_282
+          - schema: *ref_284
             language:
               default:
                 name: ''

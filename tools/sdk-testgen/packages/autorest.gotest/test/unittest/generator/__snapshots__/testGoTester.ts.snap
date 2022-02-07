@@ -1103,9 +1103,9 @@ Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 },
 Identity: &armsignalr.ManagedIdentity{
-Type: armsignalr.ManagedIdentityType(\\"SystemAssigned\\").ToPtr(),
+Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
 },
-Kind: armsignalr.ServiceKind(\\"SignalR\\").ToPtr(),
+Kind: armsignalr.ServiceKindSignalR.ToPtr(),
 Properties: &armsignalr.SignalRProperties{
 Cors: &armsignalr.SignalRCorsSettings{
 AllowedOrigins: []*string{
@@ -1114,41 +1114,41 @@ to.StringPtr(\\"https://bar.com\\")},
 },
 Features: []*armsignalr.SignalRFeature{
 {
-Flag: armsignalr.FeatureFlags(\\"ServiceMode\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"Serverless\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableConnectivityLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"True\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableMessagingLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"False\\"),
 }},
 NetworkACLs: &armsignalr.SignalRNetworkACLs{
-DefaultAction: armsignalr.ACLAction(\\"Deny\\").ToPtr(),
+DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ServerConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
 Name: to.StringPtr(\\"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ClientConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
 },
 },
 Upstream: &armsignalr.ServerlessUpstreamSettings{
 Templates: []*armsignalr.UpstreamTemplate{
 {
 Auth: &armsignalr.UpstreamAuthSettings{
-Type: armsignalr.UpstreamAuthType(\\"ManagedIdentity\\").ToPtr(),
+Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
 ManagedIdentity: &armsignalr.ManagedIdentitySettings{
 Resource: to.StringPtr(\\"api://example\\"),
 },
@@ -1166,7 +1166,7 @@ ClientCertEnabled: to.BoolPtr(false),
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
 Capacity: to.Int32Ptr(1),
-Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
+Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
 },
 },
 })
@@ -1205,9 +1205,9 @@ Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 },
 Identity: &armsignalr.ManagedIdentity{
-Type: armsignalr.ManagedIdentityType(\\"SystemAssigned\\").ToPtr(),
+Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
 },
-Kind: armsignalr.ServiceKind(\\"SignalR\\").ToPtr(),
+Kind: armsignalr.ServiceKindSignalR.ToPtr(),
 Properties: &armsignalr.SignalRProperties{
 Cors: &armsignalr.SignalRCorsSettings{
 AllowedOrigins: []*string{
@@ -1216,41 +1216,41 @@ to.StringPtr(\\"https://bar.com\\")},
 },
 Features: []*armsignalr.SignalRFeature{
 {
-Flag: armsignalr.FeatureFlags(\\"ServiceMode\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"Serverless\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableConnectivityLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"True\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableMessagingLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"False\\"),
 }},
 NetworkACLs: &armsignalr.SignalRNetworkACLs{
-DefaultAction: armsignalr.ACLAction(\\"Deny\\").ToPtr(),
+DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ServerConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
 Name: to.StringPtr(resourceName + \\".1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ClientConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
 },
 },
 Upstream: &armsignalr.ServerlessUpstreamSettings{
 Templates: []*armsignalr.UpstreamTemplate{
 {
 Auth: &armsignalr.UpstreamAuthSettings{
-Type: armsignalr.UpstreamAuthType(\\"ManagedIdentity\\").ToPtr(),
+Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
 ManagedIdentity: &armsignalr.ManagedIdentitySettings{
 Resource: to.StringPtr(\\"api://example\\"),
 },
@@ -1268,7 +1268,7 @@ ClientCertEnabled: to.BoolPtr(false),
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
 Capacity: to.Int32Ptr(1),
-Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
+Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
 },
 },
 })

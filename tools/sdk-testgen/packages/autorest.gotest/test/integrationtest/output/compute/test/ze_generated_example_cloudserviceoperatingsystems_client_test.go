@@ -12,18 +12,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
@@ -34,16 +24,14 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	ctx := context.Background()
 	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	res, err := client.GetOSVersion(ctx,
-"<location>",
-"<os-version-name>",
-nil)
+		"<location>",
+		"<os-version-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsClientGetOSVersionResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
@@ -54,22 +42,20 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	ctx := context.Background()
 	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	pager := client.ListOSVersions("<location>",
-nil)
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
@@ -80,16 +66,14 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	ctx := context.Background()
 	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	res, err := client.GetOSFamily(ctx,
-"<location>",
-"<os-family-name>",
-nil)
+		"<location>",
+		"<os-family-name>",
+		nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Response result: %#v\n", res.CloudServiceOperatingSystemsClientGetOSFamilyResult)
 }
-
-
 
 // x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
@@ -100,19 +84,17 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 	ctx := context.Background()
 	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
 	pager := client.ListOSFamilies("<location>",
-nil)
+		nil)
 	for {
-        nextResult := pager.NextPage(ctx)
+		nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-        if !nextResult {
-            break
-        }
+		if !nextResult {
+			break
+		}
 		for _, v := range pager.PageResponse().Value {
-            log.Printf("Pager result: %#v\n", v)
+			log.Printf("Pager result: %#v\n", v)
 		}
 	}
 }
-
-

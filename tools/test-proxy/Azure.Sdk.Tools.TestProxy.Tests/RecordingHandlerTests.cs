@@ -187,7 +187,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.StopRecording(recordingId);
 
             // then verify that the session level is NOT reset.
-
             Assert.Single(testRecordingHandler.Sanitizers);
             Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers.First());
         }
@@ -195,49 +194,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestResetExtensionsFailsWithActiveSessions()
         {
-            // with multiple active sessions, if fire a generalized reset, this should 400.
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
-            //var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            var assertion = Assert.Throws<HttpException>(
+                () => testRecordingHandler.SetDefaultExtensions()
+            );
 
-            //testRecordingHandler.Sanitizers.Clear();
-            //testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
-            //testRecordingHandler.Transforms.Clear();
-            //testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
-            //testRecordingHandler.SetDefaultExtensions();
-            //var session = testRecordingHandler.RecordingSessions.First().Value;
-
-            //Assert.Single(session.ModifiableSession.AdditionalSanitizers);
-            //Assert.IsType<GeneralRegexSanitizer>(session.ModifiableSession.AdditionalSanitizers[0]);
-
-            //_checkDefaultExtensions(testRecordingHandler);
+            Assert.StartsWith("There are a total of 1 active sessions. Remove these sessions before hitting Admin/Reset.", assertion.Message);
         }
-
-        [Fact]
-        public void TestResetExtensionsSucceedsOnSingleTargetedSession()
-        {
-            // if we have multiple sessions active, if we send a reset at a specific recordingId we should not throw.
-
-            //RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            //var httpContext = new DefaultHttpContext();
-            //testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
-            //var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-
-            //testRecordingHandler.Sanitizers.Clear();
-            //testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
-            //testRecordingHandler.Transforms.Clear();
-            //testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
-            //testRecordingHandler.SetDefaultExtensions();
-            //var session = testRecordingHandler.RecordingSessions.First().Value;
-
-            //Assert.Single(session.ModifiableSession.AdditionalSanitizers);
-            //Assert.IsType<GeneralRegexSanitizer>(session.ModifiableSession.AdditionalSanitizers[0]);
-
-            //_checkDefaultExtensions(testRecordingHandler);
-        }
-
 
         [Fact]
         public async Task TestInMemoryPurgesSucessfully()

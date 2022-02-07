@@ -8,7 +8,7 @@ Follow the [guide](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 ### Activate the Python environment
 
 Run `'az --version'` to get which python environment is used in your computer, for instance:
-![az-version.png](doc/pic/az-version.png)
+![az-version.png](pic/az-version.png)
 
 According to above output, you know the CLI is using Python virtual environment c:\ZZ\projects\codegen\venv_mock, saying it's YOUR_VENV.
 Then you need to activate this venv:

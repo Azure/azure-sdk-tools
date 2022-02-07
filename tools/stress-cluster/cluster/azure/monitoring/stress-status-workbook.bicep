@@ -121,8 +121,8 @@ var workbookContent = {
       type: 3
       content: {
         version: 'KqlItem/1.0'
-        query: 'let StatusTable = KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and PodCreationTimeStamp {TimeRange}\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n        and ContainerStatusReason in ("Completed", "Error")\r\n        and "{ShowErrorsOnly}" contains ContainerStatusReason\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp asc;\r\n\r\nlet FailTrend = StatusTable\r\n| extend IsError=iff(ContainerStatusReason=="Error", 1, 0)\r\n| summarize FailTrend=make_list(IsError, 10) by TestName, Namespace;\r\n\r\nStatusTable\r\n| summarize arg_max(TimeGenerated, *) by TestName\r\n| join (FailTrend) on TestName, Namespace\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp desc\r\n| extend Duration=strcat(replace_string(replace_string(tostring(format_timespan(TimeGenerated - PodCreationTimeStamp, \'d-HH:mm\')), \'-\', \'d \'), \':\', \'hr \'), \'m\')\r\n| where extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])) in ({TestNameParameter})\r\n| project TestName,\r\n        Namespace,\r\n        StartTime=format_datetime(PodCreationTimeStamp, \'MM-dd-yyyy HH:mm\'),\r\n        Status=ContainerStatusReason,\r\n        Duration,\r\n        FailTrend\r\n'
-        size: 0
+        query: 'let StatusTable = KubePodInventory\r\n| where ControllerKind =~ "Job"\r\n        and PodCreationTimeStamp {TimeRange}\r\n        and Namespace !in ("kube-system", "stress-infra")\r\n        and ContainerStatusReason in ("Completed", "Error")\r\n        and "{ShowErrorsOnly}" contains ContainerStatusReason\r\n| summarize arg_max(TimeGenerated, *)\r\n        by extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0]))\r\n| extend TestName = replace_regex(ControllerName,  \'-[[:digit:]]+\', \'\')\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp asc;\r\n\r\nlet FailTrend = StatusTable\r\n| extend IsError=iff(ContainerStatusReason=="Error", 1, 0)\r\n| summarize FailTrend=make_list(IsError, 10) by TestName, Namespace;\r\n\r\nStatusTable\r\n| summarize arg_max(TimeGenerated, *) by TestName, Namespace\r\n| join (FailTrend) on TestName, Namespace\r\n| sort by Namespace asc, TestName asc, PodCreationTimeStamp desc\r\n| extend Duration=strcat(replace_string(replace_string(tostring(format_timespan(TimeGenerated - PodCreationTimeStamp, \'d-HH:mm\')), \'-\', \'d \'), \':\', \'hr \'), \'m\')\r\n| where extractjson(\'$.controller-uid\', tostring(parse_json(PodLabel)[0])) in ({TestNameParameter})\r\n| project TestName,\r\n        Namespace,\r\n        StartTime=format_datetime(PodCreationTimeStamp, \'MM-dd-yyyy HH:mm\'),\r\n        Status=ContainerStatusReason,\r\n        Duration,\r\n        FailTrend\r\n'
+        size: 3
         title: 'Stress Test Status'
         timeContext: {
           durationMs: 0
@@ -172,6 +172,9 @@ var workbookContent = {
         }
       }
       name: 'query - 0'
+      styleSettings: {
+        showBorder: true
+      }
     }
   ]
   isLocked: false

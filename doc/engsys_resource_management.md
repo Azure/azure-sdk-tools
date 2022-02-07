@@ -22,7 +22,7 @@ Currently, the automation will inspect resource groups and role assignments only
 
 ### Resource Groups
 
-NOTE: Development resources should only be created in the `Azure SDK Developer Playground` subscription. The other
+**NOTE:** Development resources should only be created in the `Azure SDK Developer Playground` subscription. The other
 subscriptions are intended to be used for CI resources and not manual testing.
 
 The automation will delete all resource groups in managed subscriptions multiple times DAILY, unless they meet at least one of the following criteria:
@@ -61,7 +61,7 @@ Resource groups which do not satisfy at least one of the above criteria will hav
 24 hour duration to mark them for deletion and give any test pipelines that are actively using the resources time to
 complete.
 
-**For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.**
+**NOTE:** For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.
 
 ### Role Assignments
 

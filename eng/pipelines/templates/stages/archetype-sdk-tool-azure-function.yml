@@ -18,6 +18,16 @@ stages:
             displayName: Tools
             inputs:
               version: '3.1.201'
+          - task: AzureCLI@2
+            name: Refresh_Service_connection
+            displayName: 'Refresh Service Connection'
+            inputs:
+              azureSubscription: '${{ parameters.StagingEnvironmentName }}'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                az --version
+                az account show
           - pwsh: |
               dotnet build tools/${{ parameters.ToolName }} --configuration Release
             displayName: Build
@@ -31,16 +41,6 @@ stages:
             displayName: Upload
             artifact: artifacts
             condition: succeededOrFailed()
-          - task: AzureCLI@2
-            name: Refresh_Service_connection
-            displayName: 'Refresh Service Connection'
-            inputs:
-              azureSubscription: '${{ parameters.StagingEnvironmentName }}'
-              scriptType: ps
-              scriptLocation: inlineScript
-              inlineScript: |
-                az --version
-                az account show
 
     - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
       - stage: Staging

@@ -12,6 +12,10 @@ import java.util.function.Consumer;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
+/**
+ * Reviews annotations used throughout the source code to ensure that they do not come from our list of known
+ * 'bad' annotations. If we detect one being used, we provide feedback to the user about their options.
+ */
 public class BadAnnotationDiagnosticRule implements DiagnosticRule {
 
     private List<BadAnnotation> badAnnotations;

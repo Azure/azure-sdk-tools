@@ -6,8 +6,13 @@ import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.ERROR;
@@ -17,32 +22,34 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
  * This diagnostic ensures that builder traits are applied correctly against client builders.
  */
 public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
-    private final Map<String, List<TraitMethod>> traits;
+    private static final String ANNOTATION_SERVICE_CLIENT_BUILDER = "ServiceClientBuilder";
+
+    private final Map<String, TraitClass> traits;
 
     public BuilderTraitsDiagnosticRule() {
         traits = new HashMap<>();
-        traits.put("AzureKeyCredentialTrait", Arrays.asList(
+        traits.put("AzureKeyCredentialTrait", new TraitClass(
             new TraitMethod("credential", "AzureKeyCredential")
         ));
-        traits.put("AzureNamedKeyCredentialTrait", Arrays.asList(
+        traits.put("AzureNamedKeyCredentialTrait", new TraitClass(
             new TraitMethod("credential", "AzureNamedKeyCredential")
         ));
-        traits.put("AzureSasCredentialTrait", Arrays.asList(
+        traits.put("AzureSasCredentialTrait", new TraitClass(
             new TraitMethod("credential", "AzureSasCredential")
         ));
-        traits.put("TokenCredentialTrait", Arrays.asList(
+        traits.put("TokenCredentialTrait", new TraitClass(
             new TraitMethod("credential", "TokenCredential")
         ));
-        traits.put("ConfigurationTrait", Arrays.asList(
+        traits.put("ConfigurationTrait", new TraitClass(
             new TraitMethod("configuration", "Configuration")
         ));
-        traits.put("ConnectionStringTrait", Arrays.asList(
+        traits.put("ConnectionStringTrait", new TraitClass(
             new TraitMethod("connectionString", "String")
         ));
-        traits.put("EndpointTrait", Arrays.asList(
+        traits.put("EndpointTrait", new TraitClass(
             new TraitMethod("endpoint", "String")
         ));
-        traits.put("HttpTrait", Arrays.asList(
+        traits.put("HttpTrait", new TraitClass(TraitClass.BUILDER_PROTOCOL_HTTP,
             new TraitMethod("httpClient", "HttpClient"),
             new TraitMethod("pipeline", "HttpPipeline"),
             new TraitMethod("addPolicy", "HttpPipelinePolicy"),
@@ -50,7 +57,7 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
             new TraitMethod("httpLogOptions", "HttpLogOptions"),
             new TraitMethod("clientOptions", "ClientOptions")
         ));
-        traits.put("AmqpTrait", Arrays.asList(
+        traits.put("AmqpTrait", new TraitClass(TraitClass.BUILDER_PROTOCOL_AMQP,
             new TraitMethod("retryOptions", "AmqpRetryOptions"),
             new TraitMethod("transportType", "AmqpTransportType"),
             new TraitMethod("proxyOptions", "ProxyOptions"),
@@ -68,12 +75,35 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
         //     suggesting to use the trait.
 
         cu.getTypes().forEach(type -> {
-            if (!type.isAnnotationPresent("ServiceClientBuilder")) return;
+            Optional<AnnotationExpr> serviceClientBuilderAnnotation = type.getAnnotationByName(ANNOTATION_SERVICE_CLIENT_BUILDER);
+
+            if (!serviceClientBuilderAnnotation.isPresent()) return;
 
             // iterate through trait-by-trait
-            for (Map.Entry<String, List<TraitMethod>> trait : traits.entrySet()) {
+            for (Map.Entry<String, TraitClass> trait : traits.entrySet()) {
                 String traitName = trait.getKey();
-                List<TraitMethod> traitMethods = trait.getValue();
+                TraitClass traitClass = trait.getValue();
+                List<TraitMethod> traitMethods = traitClass.methods;
+
+                // check if the ServiceClientBuilder 'protocol' annotation property matches the TraitClass builderProtocol
+                // value. We only do this for TraitClass instances whose builderProtocol != N/A (which means the trait
+                // is protocol-agnostic
+                if (!traitClass.builderProtocol.equals(TraitClass.BUILDER_PROTOCOL_NOT_APPLICABLE)) {
+                    AnnotationExpr annotationExpr = serviceClientBuilderAnnotation.get();
+                    String builderProtocol = TraitClass.BUILDER_PROTOCOL_NOT_APPLICABLE;
+                    if (annotationExpr.isNormalAnnotationExpr()) {
+                        builderProtocol = annotationExpr.asNormalAnnotationExpr().getPairs()
+                                .stream()
+                                .filter(mvp -> mvp.getNameAsString().equals("protocol"))
+                                .map(mvp -> mvp.getValue().toString())
+                                .findFirst()
+                                .orElse(TraitClass.BUILDER_PROTOCOL_NOT_APPLICABLE);
+                    }
+
+                    if (!builderProtocol.equals(traitClass.builderProtocol)) {
+                        continue;
+                    }
+                }
 
                 for (TraitMethod traitMethod : traitMethods) {
                     String methodName = traitMethod.methodName;
@@ -123,6 +153,24 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
                 }
             }
         });
+    }
+
+    private static class TraitClass {
+        static final String BUILDER_PROTOCOL_NOT_APPLICABLE = "N/A";
+        static final String BUILDER_PROTOCOL_HTTP = "ServiceClientProtocol.HTTP";
+        static final String BUILDER_PROTOCOL_AMQP = "ServiceClientProtocol.AMQP";
+
+        private final String builderProtocol;
+        private final List<TraitMethod> methods;
+
+        public TraitClass(TraitMethod... methods) {
+            this(BUILDER_PROTOCOL_NOT_APPLICABLE, methods);
+        }
+
+        public TraitClass(String builderProtocol, TraitMethod... methods) {
+            this.builderProtocol = builderProtocol;
+            this.methods = Arrays.asList(methods);
+        }
     }
 
     private static class TraitMethod {

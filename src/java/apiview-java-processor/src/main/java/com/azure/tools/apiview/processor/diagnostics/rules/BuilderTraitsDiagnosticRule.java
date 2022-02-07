@@ -25,7 +25,7 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
             new TraitMethod("credential", "AzureKeyCredential")
         ));
         traits.put("AzureNamedKeyCredentialTrait", Arrays.asList(
-            new TraitMethod("credential", "AzureNamedKeyCredentialTrait")
+            new TraitMethod("credential", "AzureNamedKeyCredential")
         ));
         traits.put("AzureSasCredentialTrait", Arrays.asList(
             new TraitMethod("credential", "AzureSasCredential")
@@ -39,17 +39,22 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
         traits.put("ConnectionStringTrait", Arrays.asList(
             new TraitMethod("connectionString", "String")
         ));
+        traits.put("EndpointTrait", Arrays.asList(
+            new TraitMethod("endpoint", "String")
+        ));
         traits.put("HttpTrait", Arrays.asList(
             new TraitMethod("httpClient", "HttpClient"),
             new TraitMethod("pipeline", "HttpPipeline"),
             new TraitMethod("addPolicy", "HttpPipelinePolicy"),
             new TraitMethod("retryOptions", "RetryOptions"),
-            new TraitMethod("httpLogOptions", "HttpLogOptions")
+            new TraitMethod("httpLogOptions", "HttpLogOptions"),
+            new TraitMethod("clientOptions", "ClientOptions")
         ));
         traits.put("AmqpTrait", Arrays.asList(
             new TraitMethod("retryOptions", "AmqpRetryOptions"),
             new TraitMethod("transportType", "AmqpTransportType"),
-            new TraitMethod("proxyOptions", "ProxyOptions")
+            new TraitMethod("proxyOptions", "ProxyOptions"),
+            new TraitMethod("clientOptions", "ClientOptions")
         ));
     }
 

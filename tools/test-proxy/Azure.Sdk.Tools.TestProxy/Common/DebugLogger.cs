@@ -43,7 +43,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public static bool CheckLogLevel(LogLevel level)
         {
-            return logger.IsEnabled(LogLevel.Debug);
+            var result = logger?.IsEnabled(LogLevel.Debug);
+
+            if (result.HasValue)
+            {
+                return result.Value;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>

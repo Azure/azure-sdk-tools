@@ -84,16 +84,25 @@ By default, the server will listen on the following port mappings:
 | http | 5000 |
 | https | 5001 |
 
-### Use custom port for http and https
-
-
 #### Environment Variable
 
 Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:
 
-```powershell
+```
+powershell
 $env:ASPNETCORE_URLS="http://*:3331"  // Set custom port for http only
 $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both http and https
+```
+
+#### Input arguments
+
+Use command line argument `http-port` and `https-port` to select a custom port to be used. This configuration will override the environment configuration.  For example, if the environment configuration sets both http and https ports and the argument `http-port` is used, then, only the https will be used from the env configuration, and the http will be set with input argument.
+
+```
+powershell
+test-proxy --http-port 1989 --https-port 1031
+```
+
 ## Environment Variables
 
 The test-proxy is integrated with the following environment variables.

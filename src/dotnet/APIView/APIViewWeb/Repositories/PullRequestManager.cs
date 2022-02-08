@@ -12,7 +12,6 @@ using ApiView;
 using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using APIViewWeb.Respositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;

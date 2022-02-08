@@ -24,11 +24,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
-                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
+                await _recordingHandler.StartPlaybackAsync(recordingId, Response, RecordingType.InMemory);
             }
             else if(!String.IsNullOrEmpty(file))
             {
-                await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
+                await _recordingHandler.StartPlaybackAsync(file, Response, RecordingType.FilePersisted);
             }
             else
             {

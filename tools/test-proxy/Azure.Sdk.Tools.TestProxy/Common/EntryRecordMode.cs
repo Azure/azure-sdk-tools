@@ -3,7 +3,7 @@
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
-    public enum EntryRecordModel
+    public enum EntryRecordMode
     {
         Record,
         DontRecord,

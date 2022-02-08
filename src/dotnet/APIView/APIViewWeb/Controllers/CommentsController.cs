@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,14 @@ namespace APIViewWeb.Controllers
     public class CommentsController: Controller
     {
         private readonly CommentsManager _commentsManager;
+        private readonly ReviewManager _reviewManager;
+        private readonly NotificationManager _notificationManager;
 
-        public CommentsController(CommentsManager commentsManager)
+        public CommentsController(CommentsManager commentsManager, ReviewManager reviewManager, NotificationManager notificationManager)
         {
             _commentsManager = commentsManager;
+            _reviewManager = reviewManager;
+            _notificationManager = notificationManager;
         }
 
         [HttpPost]
@@ -27,7 +32,11 @@ namespace APIViewWeb.Controllers
             comment.Comment = commentText;
 
             await _commentsManager.AddCommentAsync(User, comment);
-
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (review != null)
+            {
+                await _notificationManager.SubscribeAsync(review,User);
+            }
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }
 

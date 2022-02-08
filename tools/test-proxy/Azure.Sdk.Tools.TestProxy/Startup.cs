@@ -12,10 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
-using System.Collections.Generic;
-using System.Reflection.Metadata;
 
 namespace Azure.Sdk.Tools.TestProxy
 {

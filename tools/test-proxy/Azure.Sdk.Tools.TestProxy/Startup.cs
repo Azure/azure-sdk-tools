@@ -14,11 +14,16 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
     public sealed class Startup
     {
+        private const int HttpDefaultPort = 5000;
+        private const int HttpsDefaultPort = 5001;
+
         internal static int RequestsRecorded;
         internal static int RequestsPlayedBack;
 
@@ -37,6 +42,39 @@ namespace Azure.Sdk.Tools.TestProxy
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
+        private static string[] resolvePorts(int inputHttpPort, int inputHttpsPort)
+        {
+            var httpFinalPort = HttpDefaultPort;
+            var httpsFinalPort = HttpsDefaultPort;
+            var portConfigFromEnv = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+            if (portConfigFromEnv != null)
+            {
+                foreach (var portConfig in portConfigFromEnv.Split(';'))
+                {
+                    // let app fail if index 2 is our of bounds.
+                    // expected portConfig is in the form of <squema>:<host>:<port>
+                    var port = portConfig.Split(":")[2]; 
+                    if (portConfig.ToLower().Contains("https"))
+                    {
+                        httpsFinalPort = int.Parse(port);
+                    }
+                    else if (portConfig.ToLower().Contains("http"))
+                    {
+                        httpFinalPort = int.Parse(port);
+                    }
+                }
+            }
+            if (inputHttpPort != HttpDefaultPort)
+            {
+                httpFinalPort = inputHttpPort;
+            }
+            if (inputHttpsPort != HttpsDefaultPort)
+            {
+                httpsFinalPort = inputHttpsPort;
+            }
+            return new string[] { "http://*:" + httpFinalPort.ToString(), "https://*:" + httpsFinalPort.ToString() };
+        }
+
         /// <summary>
         /// test-proxy
         /// </summary>
@@ -45,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="version">Flag. Invoke to get the version of the tool.</param>
         /// <param name="httpPort">Port to use for HTTP endpoint. Default to use 5000</param>
         /// <param name="httpsPort">Port to use for HTTPs endpoint. Default to use 5001</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false, int httpPort = 5000, int httpsPort = 5001)
+        public static void Main(bool insecure = false, string storageLocation = null, bool version = false, int httpPort = HttpDefaultPort, int httpsPort = HttpsDefaultPort)
         {
             if (version)
             {
@@ -71,14 +109,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var host = Host.CreateDefaultBuilder();
 
-            var httpAddressUrl = "http://localhost:" + httpPort.ToString();
-            var httpsAddressUrl = "https://localhost:" + httpsPort.ToString();
-
             host.ConfigureWebHostDefaults(
                 builder =>
                 {
                     builder.UseStartup<Startup>();
-                    builder.UseUrls(httpAddressUrl, httpsAddressUrl);
+                    builder.UseUrls(resolvePorts(httpPort, httpsPort));
+
                 });
 
             host.Build().Run();

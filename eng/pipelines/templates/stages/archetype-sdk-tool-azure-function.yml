@@ -27,7 +27,8 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 az --version
-                az account show
+                az resource list
+
           - pwsh: |
               dotnet build tools/${{ parameters.ToolName }} --configuration Release
             displayName: Build

@@ -25,7 +25,9 @@ namespace Azure.Sdk.Tools.TestProxy
         #region constructor and common variables
         public string CurrentBranch = "master";
         public string RepoPath;
-        private const string SkipRecordingHeader = "x-recording-skip";
+        private const string SkipRecordingHeaderKey = "x-recording-skip";
+        private const string SkipRecordingRequestBody = "request-body";
+        private const string SkipRecordingRequestResponse = "request-response";
 
         public RecordingHandler(string targetDirectory)
         {
@@ -189,20 +191,21 @@ namespace Azure.Sdk.Tools.TestProxy
         private static EntryRecordMode GetRecordMode(HttpRequest request)
         {
             EntryRecordMode mode = EntryRecordMode.Record;
-            if (request.Headers.TryGetValue(SkipRecordingHeader, out var values))
+            if (request.Headers.TryGetValue(SkipRecordingHeaderKey, out var values))
             {
                 if (values.Count != 1)
                 {
                     throw new HttpException(
                         HttpStatusCode.BadRequest,
-                        $"'{SkipRecordingHeader}' should contain a single value set to either 'request-body' or 'request-response'");
+                        $"'{SkipRecordingHeaderKey}' should contain a single value set to either '{SkipRecordingRequestBody}' or " +
+                        $"'{SkipRecordingRequestResponse}'");
                 }
                 string skipMode = values.First();
-                if (skipMode.Equals("request-response", StringComparison.OrdinalIgnoreCase))
+                if (skipMode.Equals(SkipRecordingRequestResponse, StringComparison.OrdinalIgnoreCase))
                 {
                     mode = EntryRecordMode.DontRecord;
                 }
-                else if (skipMode.Equals("request-body", StringComparison.OrdinalIgnoreCase))
+                else if (skipMode.Equals(SkipRecordingRequestBody, StringComparison.OrdinalIgnoreCase))
                 {
                     mode = EntryRecordMode.RecordWithoutRequestBody;
                 }
@@ -210,8 +213,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     throw new HttpException(
                         HttpStatusCode.BadRequest,
-                        $"{skipMode} is not a supported value for header '{SkipRecordingHeader}'." +
-                        "It should be either omitted from the request headers, or set to either 'request-body' or 'request-response'");
+                        $"{skipMode} is not a supported value for header '{SkipRecordingHeaderKey}'." +
+                        $"It should be either omitted from the request headers, or set to either '{SkipRecordingRequestBody}' " +
+                        $"or '{SkipRecordingRequestResponse}'");
                 }
             }
 

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using APIViewWeb.Filters;
-using APIViewWeb.Respositories;
+using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;

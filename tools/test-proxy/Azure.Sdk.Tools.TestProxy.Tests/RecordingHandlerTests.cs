@@ -9,7 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -190,7 +196,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             var key = recordingHandler.InMemorySessions.Keys.First();
 
-            await recordingHandler.StartPlayback(key, httpContext.Response, Common.RecordingType.InMemory);
+            await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
             recordingHandler.StopPlayback(playbackSession, true);
 
@@ -204,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             var key = recordingHandler.InMemorySessions.Keys.First();
 
-            await recordingHandler.StartPlayback(key, httpContext.Response, Common.RecordingType.InMemory);
+            await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
             recordingHandler.StopPlayback(playbackSession, false);
 
@@ -221,7 +227,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingHandler = new RecordingHandler(tmpPath);
 
-            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
+            await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
             var entry = playbackSession.Value.Session.Entries.First();
@@ -237,7 +243,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var pathToRecording = "Test.RecordEntries/oauth_request.json";
             var recordingHandler = new RecordingHandler(currentPath);
 
-            await recordingHandler.StartPlayback(pathToRecording, httpContext.Response);
+            await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response);
 
             var playbackSession = recordingHandler.PlaybackSessions.First();
             var entry = playbackSession.Value.Session.Entries.First();
@@ -293,6 +299,115 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async Task TestCanSkipRecordingRequestBody()
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/skip_body";
+            var recordingHandler = new RecordingHandler(currentPath);
+            var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            CreateRecordModeRequest(httpContext, "request-body");
+
+            var mockClient = new HttpClient(new MockHttpHandler());
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+            recordingHandler.StopRecording(sessionId);
+
+            try
+            {
+                using var fileStream = File.Open(fullPathToRecording, FileMode.Open);
+                using var doc = JsonDocument.Parse(fileStream);
+                var record = RecordSession.Deserialize(doc.RootElement);
+                var entry = record.Entries.First();
+                Assert.Null(entry.Request.Body);
+                Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
+            }
+        }
+
+        [Fact]
+        public async Task TestCanSkipRecordingEntireRequestResponse()
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/skip_entry";
+            var recordingHandler = new RecordingHandler(currentPath);
+            var fullPathToRecording = Path.Combine(currentPath, pathToRecording) + ".json";
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            CreateRecordModeRequest(httpContext, "request-response");
+
+            var mockClient = new HttpClient(new MockHttpHandler());
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+
+            httpContext = new DefaultHttpContext();
+            // send a second request that SHOULD be recorded
+            CreateRecordModeRequest(httpContext);
+            httpContext.Request.Headers.Remove("x-recording-skip");
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+
+            recordingHandler.StopRecording(sessionId);
+
+            try
+            {
+                using var fileStream = File.Open(fullPathToRecording, FileMode.Open);
+                using var doc = JsonDocument.Parse(fileStream);
+                var record = RecordSession.Deserialize(doc.RootElement);
+                Assert.Single(record.Entries);
+                var entry = record.Entries.First();
+                Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
+                Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
+            }
+        }
+
+        [Theory]
+        [InlineData("invalid value")]
+        [InlineData("")]
+        [InlineData("request-body", "request-response")]
+        public async Task TestInvalidRecordModeThrows(params string[] values)
+        {
+            var currentPath = Directory.GetCurrentDirectory();
+            var httpContext = new DefaultHttpContext();
+            var pathToRecording = "recordings/invalid_record_mode";
+            var recordingHandler = new RecordingHandler(currentPath);
+
+            recordingHandler.StartRecording(pathToRecording, httpContext.Response);
+            var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            CreateRecordModeRequest(httpContext, new StringValues(values));
+
+            var mockClient = new HttpClient(new MockHttpHandler());
+            HttpException resultingException = await Assert.ThrowsAsync<HttpException>(
+                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient)
+            );
+            Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
+        }
+
+        private static void CreateRecordModeRequest(DefaultHttpContext context, StringValues mode = default)
+        {
+            context.Request.Headers["x-recording-skip"] = mode;
+            context.Request.Headers["x-recording-upstream-base-uri"] = "https://contoso.net";
+            context.Request.ContentType = "application/json";
+            context.Request.Method = "PUT";
+            context.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
+            // content length must be set for the body to be parsed in SetMatcher
+            context.Request.ContentLength = context.Request.Body.Length;
+        }
+
+        [Fact]
         public async Task TestLoadNonexistentAbsoluteRecording()
         {
             var tmpPath = Path.GetTempPath();
@@ -304,7 +419,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(tmpPath);
 
             var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
-               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+               async () => await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response)
             );
             Assert.Contains($"{recordingPath} does not exist", resultingException.Message);
         }
@@ -319,7 +434,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(currentPath);
 
             var resultingException = await Assert.ThrowsAsync<TestRecordingMismatchException>(
-               async () => await recordingHandler.StartPlayback(pathToRecording, httpContext.Response)
+               async () => await recordingHandler.StartPlaybackAsync(pathToRecording, httpContext.Response)
             );
             Assert.Contains($"{pathToRecording} does not exist", resultingException.Message);
         }
@@ -392,7 +507,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             httpContext.Response.Body = new MemoryStream();
 
-            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await recordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             
             Dictionary<string, string> results = JsonConvert.DeserializeObject<Dictionary<string, string>>(
                 TestHelpers.GenerateStringFromStream(httpContext.Response.Body)
@@ -409,7 +524,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var startHttpContext = new DefaultHttpContext();
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
-            await recordingHandler.StartPlayback("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
+            await recordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request.json", startHttpContext.Response);
         }
 
         [Fact]
@@ -423,6 +538,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var entry = await RecordingHandler.CreateEntryAsync(request);
             Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
+        }
+    }
+
+    internal class MockHttpHandler : HttpMessageHandler
+    {
+        public const string DefaultResponse = "default response";
+
+        public MockHttpHandler()
+        {
+        }
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(DefaultResponse)
+            });
         }
     }
 }

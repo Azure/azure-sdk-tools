@@ -18,7 +18,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 
-namespace APIViewWeb.Respositories
+namespace APIViewWeb.Repositories
 {
     public class ReviewManager
     {

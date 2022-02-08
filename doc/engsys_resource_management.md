@@ -6,6 +6,8 @@ improve our overall security risks and manage costs.
 
   * [Managing Development and Testing Resources](#managing-development-and-testing-resources)
      * [Resource Groups](#resource-groups)
+        * [Quick Start Creating Resources](#quick-start-creating-resources)
+        * [Full Resource Management Specification](#full-resource-management-specification)
      * [Role Assignments](#role-assignments)
 
 ## Managing Development and Testing Resources
@@ -24,6 +26,24 @@ Currently, the automation will inspect resource groups and role assignments only
 
 **NOTE:** Development resources should only be created in the `Azure SDK Developer Playground` subscription. The other
 subscriptions are intended to be used for CI resources and not manual testing.
+
+#### Quick Start Creating Resources
+
+*To create temporary resources for testing:*
+
+Create a resource group to contain all testing resources. The resource group will be deleted after approximately 24-28 hours.
+If you need the group for a little more time, add/update a tag named `DeleteAfter` with a new date by running the below powershell script:
+
+```
+./eng/common/TestResources/Update-TestResources.ps1 -ResourceGroupName <rg name> -DeleteAfterHours 120
+```
+
+*To create long-lived resources:*
+
+Create a resource group to contain all testing resources. The resource group name should start with your Microsoft alias.
+Valid group name examples: `myalias`, `myalias-feature-101-testing`.
+
+#### Full Resource Management Specification
 
 The automation will delete all resource groups in managed subscriptions multiple times DAILY, unless they meet at least one of the following criteria:
 

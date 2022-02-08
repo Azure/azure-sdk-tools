@@ -95,10 +95,10 @@ $env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both
 
 #### Input arguments
 
-Use command line argument `http-port` and `https-port` to select a custom port to be used. This configuration will override the environment configuration.  For example, if the environment configuration sets both http and https ports and the argument `http-port` is used, then, only the https will be used from the env configuration, and the http will be set with input argument.
+Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
 
 ```powershell
-test-proxy --http-port 1989 --https-port 1031
+test-proxy --urls "http://localhost:9000;https://localhost:9001"
 ```
 
 ## Environment Variables

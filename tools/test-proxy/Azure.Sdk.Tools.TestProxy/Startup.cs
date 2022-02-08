@@ -18,9 +18,6 @@ namespace Azure.Sdk.Tools.TestProxy
 {
     public sealed class Startup
     {
-        private const int HttpDefaultPort = 5000;
-        private const int HttpsDefaultPort = 5001;
-
         internal static int RequestsRecorded;
         internal static int RequestsPlayedBack;
 

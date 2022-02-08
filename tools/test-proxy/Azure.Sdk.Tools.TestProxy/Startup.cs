@@ -70,10 +70,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var host = Host.CreateDefaultBuilder(args);
 
             host.ConfigureWebHostDefaults(
-                builder =>
-                {
-                    builder.UseStartup<Startup>();
-                });
+                builder => builder.UseStartup<Startup>());
 
             host.Build().Run();
 

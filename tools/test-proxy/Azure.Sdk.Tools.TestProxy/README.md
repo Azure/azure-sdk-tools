@@ -196,6 +196,10 @@ Given that reccordings are _not traditionally accessible_ to the client code, th
 
 An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
 
+#### Customizing what gets recorded
+
+Some tests send large request bodies that are not meaningful and should not be stored in the session records. In order to disable storing the request body for a specific request, add the request header "x-recording-skip" and set the value to "request-body". This header can also be used to skip an entire request/response pair from being included in the recording - this is useful for cleanup code that you might have as part of your test. To skip the request/response pair, set the "x-recording-skip" header value to "request-response". Note that the "x-recording-skip" should only be specified when in `Record` mode. As a result, any request that would use the "request-response" value when in `Record` mode should not be sent when in `Playback` mode. For requests that use "request-body" in `Record` mode, you should either null out the body of the request before sending to the test proxy when in `Playback` mode, or you can set a `CustomDefaultMatcher` with `compareBodies = false`.
+
 ## How do I use the test-proxy to play a recording back?
 
 ### Start playback

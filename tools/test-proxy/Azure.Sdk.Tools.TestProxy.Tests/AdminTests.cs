@@ -238,7 +238,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
@@ -382,7 +382,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
@@ -569,7 +569,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             var apiVersion = "2016-03-21";
             httpContext.Request.Headers["x-api-version"] = apiVersion;

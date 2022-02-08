@@ -14,11 +14,11 @@ You are also recommended to install other packages for authentication and core f
 go get github.com/Azure/azure-sdk-for-go/sdk/azcore
 go get github.com/Azure/azure-sdk-for-go/sdk/azidentity
 ```
-> **_NOTE:_** If your are not familiar with the usage of Azure SDK for GO, you can refer to the [quickstart](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/new-version-quickstart.md).
+> **_NOTE:_** If your are not familiar with the usage of Azure SDK for GO, you can refer to the [quickstart](https://aka.ms/azsdk/go/mgmt).
 
-### Create fake credential for authorization
+### Create mock credential for authorization
 
-As mock server will accept all the request without authorization, you can create a fake credential for future use.
+As Mock Service Host will accept all the request without authorization, you can create a mock credential for future use.
 
 ```go
 import (
@@ -39,7 +39,7 @@ func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestO
 
 ### Create client option for Mock Service Host
 
-Before you create client and send request, you need to create an option to change the enpoint to the Mock Server Host and skip insecure TLS connection verification as the Mock Service Host using a self-signed certificate.
+Before you create client and send request, you need to create an option to change the enpoint target to Mock Service Host and skip insecure TLS connection verification as the Mock Service Host using a self-signed certificate.
 
 ```go
 import (
@@ -164,7 +164,7 @@ Below is sample steps for geneartion and mock usage for RP [agrifood](https://gi
 # mkdir main && cd main              // create main package for test
 ```
 
-Add the following code to the `main.go` file to send `Create Extension` request to Mock Server Host.
+Add the following code to the `main.go` file to send `Create Extension` request to Mock Service Host.
 
 ```go
 package main
@@ -233,7 +233,7 @@ Name - provider.extension
 
 ### Testing
 
-Testcases are also generated for the client, you can run the end-to-end test case with Mock server in one command.
+Testcases are also generated for the client, you can run the end-to-end test case with Mock Service Host in one command.
 The test file is located at `<output-folder>\zz_generated_mock_test.go`
 
 - Example: agrifood

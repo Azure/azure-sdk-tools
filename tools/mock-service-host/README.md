@@ -10,7 +10,7 @@ The Mock Service Host works as a mock server for ARM FrontDoor Service. It suppo
 
 # The Behaviour of Mock Service Host
 
-The mock service could be run in your local environment. After started, it will listen to the following endpoints by default:
+The Mock Service Host could be run in your local environment. After started, it will listen to the following endpoints by default:
 
 -   https://localhost:8441, stateful.
 -   http://localhost:8442, stateless http.
@@ -35,7 +35,7 @@ Stateful:
 
 Stateless:
 
--   Mock Service Host will return a valid mocked response for each valid call of GET/List.
+-   Mock service host will return a valid mocked response for each valid call of GET/List.
 
 # Getting Started
 
@@ -43,19 +43,19 @@ Stateless:
 
 - [Nodejs](https://nodejs.org/en/download/) 14.15 or above
 
-## Start Mock Service Host
+## Run Mock Service Host
 
-### Install Mock Server Host
+### Install Mock Service Host
 
-You need to create a workspace for the config and cache of Mock Server Host and then use `npm install` to get the latest Mock Server Host.
+You need to create a workspace to place the config and cache of Mock Service Host and then use `npm install` to get the latest version.
 ```shell
 # mkdir <MY_WORKSPACE> && cd <MY_WORKSPACE>
 # npm install @azure-tools/mock-service-host
 ```
 
-### Configure mock-service-host running environment to use your local swagger
+### Configure Mock Service Host's running environment to use your local swagger
 
-The Azrue Rest Api Spec repo is a companion repo of Mock Server Host. By default, the Mock Server Host downloads [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to the cache folder and loads the target Resource provider based on configuration. You can ask it to load all RPs by add config file '.env' under your workspace.
+The Azrue Rest Api Spec repo is a companion repo of Mock Service Host. By default, the Mock Service Host downloads [the public azure swagger repo](https://github.com/Azure/azure-rest-api-specs) to the cache folder and loads the target Resource provider based on configuration. You can ask it to load all RPs by add config file '.env' under your workspace.
 
 ```
 +-- <MY_WORKSPACE>/
@@ -72,7 +72,7 @@ specRetrievalGitCommitID=6023d2b16a66b70c7a870a003c2e3f6750eacd70
 validationPathsPattern=specification/*/resource-manager/*/**/*.json
 ```
 
-Change specRetrievalGitUrl and specRetrievalGitBranch if you are not using the public swagger main branch. Change specRetrievalGitCommitID if you are not using the branch head. And you can specify a filter rule to enable only your own RP's json files to accelerate the loading speed of mock-service-host. For instance:
+Change specRetrievalGitUrl and specRetrievalGitBranch if you are not using the public swagger main branch. Change specRetrievalGitCommitID if you are not using the branch head. And you can specify a filter rule to enable only your own RP's json files to accelerate the loading speed of Mock Service Host. For instance:
 
 ```
 validationPathsPattern=specification/mediaservices/resource-manager/Microsoft.Media/**/*.json
@@ -90,11 +90,11 @@ Common trouble shootings for starting the web server:
 -   Make sure all ports used in Mock Service Host haven't been used by other processes.
 -   Try to use sudo/"run as administrator" if failed to start listening.
 
-It takes up to two minutes to load all swagger files in the azure-rest-api-specs repo after the mock server started. When loading finished, a log with "validator initialized" is shown in the console.
+It takes up to two minutes to load all swagger files in the `azure-rest-api-specs` repo after the Mock Service Host started. When loading finished, a log with "validator initialized" is shown in the console.
 
 ## Consume Mock Service Host
 
-You can use different client tool/lib to consume the mock server after the mock server is started.
+You can use different client tool/lib to consume the Mock Service Host after it is started.
 
 - [Azure SDK for GO](doc/consume_with_go.md)
 - [Azure CLI](doc/consume_with_cli.md)
@@ -108,7 +108,7 @@ You can create a file .env to customize the configurations used at runtime. The 
 |   +-- .env                 // configuration files
 ```
 
-## Customize mock-service-host listen ports
+## Customize Mock Service Host listen ports
 
 Bellow options in .env are available to configure the server to listen specific local TCP ports.
 
@@ -132,7 +132,7 @@ specRetrievalGitBranch=main
 
 ## Consume a local swagger repo
 
-Instead of download swagger repo from git remotely, you can configure the mock server to load your local swagger files:
+Instead of download swagger repo from git remotely, you can configure the Mock Service Host to load your local swagger files:
 
 ```
 specRetrievalMethod=filesystem

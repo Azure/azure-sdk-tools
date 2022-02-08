@@ -23,7 +23,7 @@ or
 
 ### Trust the certificate of Mock Service Host in Python environment
 
-The Mock Service Host is using a self-signed certificate which will be appended into the file **cacert.pem** in your Python environment.
+The Mock Service Host use a self-signed certificate which will be appended into the file **cacert.pem** in your Python environment.
 
 ```shell
  cat .ssh/localhost-ca.crt >> <YOUR_VENV>/lib/python3.8/site-packages/certifi/cacert.pem       // for LINUX/mac
@@ -130,7 +130,7 @@ Below is sample steps for generate CLI extension for RP [guestconfiguration](htt
 
 ### Testing
 
-Testcases are also generated for the CLI extension, you can run the end-to-end test case with Mock server in one command.
+Testcases are also generated for the CLI extension, you can run the end-to-end test case with Mock Service Host in one command.
 The test file is located at `<output-folder>\src\<extension-name>\azext_<extension-name>\tests\cmdlet\test_positive.py`
 - Example: guestconfiguration
 Taking RP guestconfiguration as example, the test can be run with below command:

@@ -186,13 +186,19 @@
                     <span class="dropdown-item checkbox">
                         <label>
                             <input type="checkbox" checked="checked" id="show-comments-checkbox">
-                            &nbsp;Show comments
+                            &nbsp;Show Comments
+                        </label>
+                    </span>
+                    <span class="dropdown-item checkbox">
+                        <label>
+                            <input type="checkbox" checked="checked" id="show-system-comments-checkbox">
+                            &nbsp;Show System Comments
                         </label>
                     </span>
                     <span class="dropdown-item" id="show-documentation-component">
                         <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
                         <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
-                            <label>&nbsp;Show documentation</label>
+                            <label>&nbsp;Show Documentation</label>
                         </a>
                     </span>
                     <span class="dropdown-item checkbox">
@@ -206,7 +212,7 @@
                         <span class="dropdown-item">
                             <input asp-for="@Model.ShowDiffOnly" class="show-diffonly-checkbox">
                             <a class="text-dark show-diffonly" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: !Model.ShowDiffOnly)>
-                                <label>&nbsp;Show only diff</label>
+                                <label>&nbsp;Show Only Diff</label>
                             </a>
                         </span>
                     }

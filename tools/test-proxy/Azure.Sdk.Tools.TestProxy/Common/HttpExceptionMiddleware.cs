@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -44,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if(e is TestRecordingMismatchException)
                 {
                     response.Headers.Add("x-request-mismatch", "true");
-                    response.Headers.Add("x-request-mismatch-error", e.Message);
+                    response.Headers.Add("x-request-mismatch-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
                 }
                 
                 var bodyObj = new

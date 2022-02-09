@@ -3,8 +3,8 @@
 
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,7 +17,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class HttpRequestInteractions
     {
-
         public static JsonProperty GetProp(string name, JsonElement jsonElement)
         {
             return jsonElement.EnumerateObject()

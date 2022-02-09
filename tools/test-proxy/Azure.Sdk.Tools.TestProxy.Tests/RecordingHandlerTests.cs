@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         [Flags]
         enum CheckSkips
@@ -64,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-test-presence"] = "This header has a value";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -81,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -100,7 +103,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -180,13 +183,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Transforms.Clear();
             testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.SetDefaultExtensions();
+            testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
-            Assert.Single(session.ModifiableSession.AdditionalSanitizers);
-            Assert.IsType<GeneralRegexSanitizer>(session.ModifiableSession.AdditionalSanitizers[0]);
+            // check that the individual session had reset sanitizers
+            Assert.Empty(session.ModifiableSession.AdditionalSanitizers);
 
-            _checkDefaultExtensions(testRecordingHandler);
+            // stop the recording to clear out the session cache
+            testRecordingHandler.StopRecording(recordingId);
+
+            // then verify that the session level is NOT reset.
+            Assert.Single(testRecordingHandler.Sanitizers);
+            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers.First());
+        }
+
+        [Fact]
+        public void TestResetExtensionsFailsWithActiveSessions()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            testRecordingHandler.StartRecording("recordingings/cool.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            var assertion = Assert.Throws<HttpException>(
+                () => testRecordingHandler.SetDefaultExtensions()
+            );
+
+            Assert.StartsWith("There are a total of 1 active sessions. Remove these sessions before hitting Admin/Reset.", assertion.Message);
         }
 
         [Fact]

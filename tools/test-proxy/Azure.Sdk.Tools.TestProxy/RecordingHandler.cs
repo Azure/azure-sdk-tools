@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -131,6 +132,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
+            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
+
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
@@ -374,6 +377,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
+            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
+
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
@@ -511,6 +516,49 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
+                var countPlayback = PlaybackSessions.Count;
+                var countInMem = InMemorySessions.Count;
+                var countRecording = RecordingSessions.Count;
+                var countTotal = countPlayback + countInMem + countRecording;
+
+                if (countTotal > 0)
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append($"There are a total of {countTotal} active sessions. Remove these sessions before hitting Admin/Reset." + Environment.NewLine);
+
+                    if(countPlayback > 0)
+                    {
+                        sb.Append("Active Playback Sessions: [");
+                        lock (PlaybackSessions)
+                        {
+                            sb.Append(string.Join(", ", PlaybackSessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    if (countInMem > 0)
+                    {
+                        sb.Append("Active InMem Sessions: [");
+                        lock (InMemorySessions)
+                        {
+                            sb.Append(string.Join(", ", InMemorySessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    if (countRecording > 0)
+                    {
+                        sb.Append($"{countRecording} Active Recording Sessions: [");
+                        lock (RecordingSessions)
+                        {
+                            sb.Append(string.Join(", ", RecordingSessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());               
+                }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
                     new RecordedTestSanitizer()

@@ -69,7 +69,7 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
-The test-proxy resolves the its storage location via:
+The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
@@ -83,6 +83,23 @@ By default, the server will listen on the following port mappings:
 |-|-|
 | http | 5000 |
 | https | 5001 |
+
+#### Environment Variable
+
+Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:
+
+```powershell
+$env:ASPNETCORE_URLS="http://*:3331"  // Set custom port for http only
+$env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both http and https
+```
+
+#### Input arguments
+
+Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+
+```powershell
+test-proxy --urls "http://localhost:9000;https://localhost:9001"
+```
 
 ## Environment Variables
 

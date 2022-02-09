@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -43,7 +42,8 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
         /// <param name="version">Flag. Invoke to get the version of the tool.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
+        /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
+        public static void Main(bool insecure = false, string storageLocation = null, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder();
+            var host = Host.CreateDefaultBuilder(args);
 
             host.ConfigureWebHostDefaults(
                 builder => builder.UseStartup<Startup>());

@@ -4,52 +4,54 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from tkinter import Variable
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
-from apistubgen-tests import (
-    FakeTypedDict, FakeObject
+from apistubgen.tests import (
+    FakeTypedDict as FakeTypedDict,
+    FakeObject as FakeObject,
+    PublicPrivateClass as PublicPrivateClass
 )
 
 
 class TestClassParsing:
     
+    pkg_namespace = "apistubgen.tests._api_view_tests"
+
+    def _check_nodes(self, nodes, checks):
+        assert len(nodes) == len(checks)
+        for (i, node) in enumerate(nodes):
+            (check_class, check_name, check_type) = checks[i]
+            assert isinstance(node, check_class)
+            actual_name = node.name
+            assert actual_name == check_name
+            if not check_class == FunctionNode:
+                actual_type = node.type
+                assert actual_type == check_type
+
+
     def test_typed_dict_class(self):
-        class_node = ClassNode("test", None, FakeTypedDict, "test")
-        assert len(class_node.child_nodes) == 3
-        for node in class_node.child_nodes:
-            assert isinstance(node, KeyNode)
-
-        node1 = class_node.child_nodes[0]
-        assert node1.name == '"age"'
-        assert node1.type == "int"
-
-        node2 = class_node.child_nodes[1]
-        assert node2.name == '"name"'
-        assert node2.type == "str"
-
-        node3 = class_node.child_nodes[2]
-        assert node3.name == '"union"'
-        assert node3.type == "Union[bool, tests.class_parsing_test.FakeObject, PetEnum]"
-
+        class_node = ClassNode("test", None, FakeTypedDict, self.pkg_namespace)
+        self._check_nodes(class_node.child_nodes, [
+            (KeyNode, '"age"', "int"),
+            (KeyNode, '"name"', "str"),
+            (KeyNode, '"union"', f"Union[bool, {self.pkg_namespace}.FakeObject, PetEnum]")
+        ])
 
     def test_object(self):
-        class_node = ClassNode("test", None, FakeObject, "test")
-        assert len(class_node.child_nodes) == 4
+        class_node = ClassNode("test", None, FakeObject, self.pkg_namespace)
+        self._check_nodes(class_node.child_nodes, [
+            (VariableNode, "PUBLIC_CONST", "str"),
+            (VariableNode, "age", "int"),
+            (VariableNode, "name", "str"),
+            (VariableNode, "union", "Union[bool, PetEnum]"),
+            (FunctionNode, "__init__", None)
+        ])
 
-        node1 = class_node.child_nodes[0]
-        assert isinstance(node1, VariableNode)
-        assert node1.name == "age"
-        assert node1.type == "int"
-
-        node2 = class_node.child_nodes[1]
-        assert isinstance(node2, VariableNode)
-        assert node2.name == "name"
-        assert node2.type == "str"
-
-        node3 = class_node.child_nodes[2]
-        assert isinstance(node3, VariableNode)
-        assert node3.name == "union"
-        assert node3.type == "Union[bool, PetEnum]"
-
-        node4 = class_node.child_nodes[3]
-        assert isinstance(node4, FunctionNode)
-        assert node4.name == "__init__"
+    def test_public_private(self):
+        class_node = ClassNode("test", None, PublicPrivateClass, self.pkg_namespace)
+        self._check_nodes(class_node.child_nodes, [
+            (VariableNode, "public_dict", "dict"),
+            (VariableNode, "public_var", "str"),
+            (FunctionNode, "__init__", None),
+            (FunctionNode, "public_func", None)
+        ])

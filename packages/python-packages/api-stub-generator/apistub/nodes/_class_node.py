@@ -103,7 +103,6 @@ class ClassNode(NodeEntityBase):
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
             return function_module and function_module.startswith(self.pkg_root_namespace)
-
         return False
 
     def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
@@ -290,5 +289,3 @@ class ClassNode(NodeEntityBase):
             print("class {}".format(self.full_name))
             for c in self.child_nodes:
                 c.print_errors()
-
-

@@ -169,10 +169,11 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 			// skip adding methods on unexported receivers
 			return
 		}
-		sig = "(" + f.Recv.List[0].Names[0].Name + " "
-		sig += receiver
-		// CP: changed to space, was a period before
-		sig += ") "
+		name := ""
+		if len(f.Recv.List[0].Names) != 0 {
+			name = f.Recv.List[0].Names[0].Name + " "
+		}
+		sig = fmt.Sprintf("(%s%s) ", name, receiver)
 	}
 	sig += f.Name.Name
 	c.Funcs[sig] = pkg.buildFunc(f.Type)
@@ -292,14 +293,20 @@ func getCtorName(s string) string {
 
 // getReceiverName returns the components of the receiver on a method signature
 // i.e.: (c *Foo) Bar(s string) will return "c" and "Foo".
-func getReceiverName(s string) (receiverVar string, receiver string) {
+func getReceiverName(s string) (string, string) {
+	name, typ := "", ""
 	if strings.HasPrefix(s, "(") {
-		parts := strings.Split(s[:strings.Index(s, ")")], " ")
-		receiverVar = parts[0][1:]
-		receiver = parts[1]
-		return
+		parts := strings.Split(s[1:strings.Index(s, ")")], " ")
+		if len(parts) == 2 {
+			// most common case e.g. (c *Foo)
+			name = parts[0]
+			typ = parts[1]
+		} else {
+			// unnamed receiver e.g. (*Foo)
+			typ = parts[0]
+		}
 	}
-	return "", ""
+	return name, typ
 }
 
 // getMethodName expects a method signature in the param s and removes the receiver portion of the

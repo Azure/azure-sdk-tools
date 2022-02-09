@@ -18,7 +18,7 @@ ENV \
     ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
 
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
-COPY --from=build /usr/share/dotnet/sdk/6.0.101/DotnetTools/dotnet-dev-certs/6.0.1-servicing.21567.14/tools/net6.0/any/ /dotnet-dev-certs
+COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0.2-servicing.22064.12/tools/net6.0/any/ /dotnet-dev-certs
 
 # prep the machine dev certificate
 COPY docker_build/$CERT_IMPORT_SH docker_build/dotnet-devcert.pfx docker_build/dotnet-devcert.crt $CERT_FOLDER/

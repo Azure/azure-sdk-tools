@@ -5,57 +5,8 @@
 # --------------------------------------------------------------------------
 
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
-
-from enum import Enum, EnumMeta
-from typing import TypedDict, Union
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
-
-
-class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
-    """A test enum
-    """
-    DOG = "dog"
-    CAT = "cat"
-
-
-class FakeObject(object):
-    """ Fake Object
-    :ivar str name: Name
-    :ivar int age: Age
-    :ivar union: Union
-    :vartype union: Union[bool, PetEnum]
-    """
-    def __init__(self, name: str, age: int, union: Union[bool, PetEnum]):
-        self.name = name
-        self.age = age
-        self.union = union
-
-    # This should be ignored
-    _SOME_THING = {
-        "cat": "hat"
-    }
-
-
-FakeTypedDict = TypedDict(
-    'FakeTypedDict',
-    name=str,
-    age=int,
-    union=Union[bool, FakeObject, PetEnum]
+from apistubgen-tests import (
+    FakeTypedDict, FakeObject
 )
 
 

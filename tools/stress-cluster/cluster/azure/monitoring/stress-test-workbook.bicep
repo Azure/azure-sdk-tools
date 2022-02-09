@@ -170,6 +170,7 @@ var workbookContent = {
               version: 'KqlItem/1.0'
               query: 'KubePodInventory\r\n| extend ContainerId = split(ContainerName, \'/\')\r\n| extend PodUid = ContainerId[0]\r\n| where PodUid in ({PodUidParameter})\r\n| extend ContainerHumanName = ContainerId[1]\r\n// Ensure window function (prev()) checks state changes against correct groupings\r\n| sort by Name, ContainerName, TimeGenerated\r\n// Only show container state changes and the first element of each ContainerName group\r\n| where prev(ContainerStatus) != ContainerStatus or prev(ContainerName) != ContainerName\r\n| sort by TimeGenerated, ContainerCreationTimeStamp\r\n| project-reorder TimeGenerated, Name, PodStatus, ContainerHumanName, ContainerStatus, Computer, PodCreationTimeStamp, PodStartTime, ContainerCreationTimeStamp, * asc\r\n'
               size: 1
+              showAnalytics: true
               title: 'Pod/Container Events'
               timeContext: {
                 durationMs: 14400000
@@ -284,6 +285,7 @@ var workbookContent = {
         version: 'KqlItem/1.0'
         query: 'let containerData = KubePodInventory\r\n| where Namespace != "kube-system" and Namespace != "stress-infra"\r\n| where PodUid in ({PodUidParameter})\r\n| extend Container = tostring(split(ContainerName, \'/\')[1])\r\n| distinct Name, Container, ContainerID;\r\nlet containerIDs = containerData | project ContainerID;\r\nContainerLog\r\n| project ContainerID, LogEntry, TimeGenerated\r\n| join kind=inner (containerData) on ContainerID\r\n| extend Pod=Name\r\n| project TimeGenerated, Pod, Container, LogEntry\r\n| sort by TimeGenerated desc'
         size: 0
+        showAnalytics: true
         title: 'Container Logs'
         timeContext: {
           durationMs: 14400000

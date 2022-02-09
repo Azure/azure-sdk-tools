@@ -308,11 +308,12 @@ form.comment {
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
+    left: 21px;
 }
 
 .line-comment-button-cell {
     user-select: none;
-    width: 1em;
+    max-width: 0px;
     white-space: normal;
     positon: sticky;
     left: 0px;

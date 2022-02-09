@@ -16,7 +16,10 @@ namespace PipelineGenerator.Conventions
 
         public override string GetDefinitionName(SdkComponent component)
         {
-            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - ci" : $"{Context.Prefix} - {component.Name} - ci.{component.Variant}";
+            var baseName = component.Variant == null
+                            ? $"{Context.Prefix} - {component.Name}"
+                            : $"{Context.Prefix} - {component.Name} - {component.Variant}";
+            return baseName + " - ci";
         }
 
         public override string SearchPattern => "ci.yml";

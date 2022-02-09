@@ -18,7 +18,10 @@ namespace PipelineGenerator.Conventions
 
         public override string GetDefinitionName(SdkComponent component)
         {
-            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - tests" : $"{Context.Prefix} - {component.Name} - tests.{component.Variant}";
+            var baseName = component.Variant == null
+                            ? $"{Context.Prefix} - {component.Name}"
+                            : $"{Context.Prefix} - {component.Name} - {component.Variant}";
+            return baseName + " - tests";
         }
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)

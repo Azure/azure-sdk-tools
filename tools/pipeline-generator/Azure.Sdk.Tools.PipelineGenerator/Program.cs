@@ -119,6 +119,10 @@ namespace PipelineGenerator
                     var upLogger = serviceProvider.GetService<ILogger<UnifiedPipelineConvention>>();
                     return new UnifiedPipelineConvention(upLogger, context);
 
+                case "upweekly":
+                    var upWeeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyUnifiedPipelineConvention>>();
+                    return new WeeklyUnifiedPipelineConvention(upWeeklyTestLogger, context);
+
                 case "tests":
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);

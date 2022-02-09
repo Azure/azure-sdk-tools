@@ -2,6 +2,10 @@
 
 ## Version 0.2.10 (Unreleased)
 Added support for TypedDict classes.
+Added support to parse defaults from docstrings. Example
+  syntax: "A value, defaults to foo."
+  Also supports older, non-recommended syntax, such as:
+  "A value. Default value is foo."
 
 ## Version 0.2.9 (Unreleased)
 Fixed issue where Python 3-style type hints stopped displaying

@@ -294,19 +294,50 @@
                                 </td>
                             </tr>
                             <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                <th scope="col" class="border-top-0 pl-4"><small class="ml-4">NAME</small></th>
+                                <th scope="col" class="border-top-0"><small class="ml-4">NAME</small></th>
                                 <th scope="col" class="border-top-0"><small>CREATOR</small></th>
                                 <th scope="col" class="border-top-0"><small>UPDATED</small></th>
                                 <th scope="col" class="border-top-0"><small>TYPE</small></th>
-                                <th scope="col" class="border-top-0"><small>LANGUAGE</small></th>
                                 <th class="border-top-0"></th>
                             </tr>
                             @foreach (var reviewData in packageGroup.reviews)
                             {
                                 var truncationIndex = @Math.Min(@reviewData.ReviewDisplayName.Length, 100);
                                 <tr class="package-data-row @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                    <td class="border-right pl-4">
-                                        <a class="review-name ml-4" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
+                                    <td class="border-right align-middle pl-4 pt-0 pb-0">
+                                         @if (reviewData.Language != null)
+                                        {
+                                            @switch (reviewData.Language.ToLower())
+                                            {
+                                                case "c#":
+                                                    <i class="devicon-csharp-plain language-icon"></i>
+                                                    break;
+                                                case "javascript":
+                                                    <i class="devicon-javascript-plain language-icon"></i>
+                                                    break;
+                                                case "python":
+                                                    <i class="devicon-python-plain language-icon"></i>
+                                                    break;
+                                                case "c":
+                                                    <i class="devicon-c-plain language-icon"></i>
+                                                    break;
+                                                case "c++":
+                                                    <i class="devicon-cplusplus-plain language-icon"></i>
+                                                    break;
+                                                case "go":
+                                                    <i class="devicon-go-original-wordmark language-icon"></i>
+                                                    break;
+                                                case "java":
+                                                    <i class="devicon-java-plain language-icon"></i>
+                                                    break;
+                                                case "swift":
+                                                    <i class="devicon-swift-plain language-icon"></i>
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
                                         @if (reviewData.IsApproved == true)
                                         {
                                             <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
@@ -320,9 +351,6 @@
                                     </td>
                                     <td class="border-right align-middle">
                                         <span>@reviewData.FilterType.ToString()</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <span>@reviewData.Language</span>
                                     </td>
                                     <td>
                                         @if (reviewData.Author == User.GetGitHubLogin())

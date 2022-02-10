@@ -14,7 +14,9 @@
                     @Model.Review.ServiceName
                     <span>&nbsp;|&nbsp;</span>
                 }
-                <small class="text-muted">@Model.Review.PackageDisplayName&nbsp;&nbsp;<span class="badge badge-info"><em>@Model.Review.Language</em></span></small>
+                <small class="text-muted">@Model.Review.PackageDisplayName&nbsp;&nbsp;
+                    <span class="badge badge-info"><em>@Model.Review.Language</em></span>
+                </small>
             </h3>
         </div>
     </div>
@@ -38,7 +40,7 @@
                                 }
                                 else
                                 {
-                                    <option value="@urlValue" data-subtext="@review.Language">@review.DisplayName</option>
+                                    <option value="@urlValue" data-subtext="Type: @review.FilterType | Language: @review.Language | Author: @review.Author">@review.DisplayName</option>
                                 }
                             }
                         </select>

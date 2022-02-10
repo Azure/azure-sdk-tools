@@ -466,7 +466,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
                     new RecordedTestSanitizer(),
-                    new OAuthResponseSanitizer()
+                    new BodyKeySanitizer("$..access_token"),
+                    new BodyKeySanitizer("$..refresh_token")
                 };
 
                 Transforms = new List<ResponseTransform>

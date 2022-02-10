@@ -32,11 +32,14 @@ parameters:
   - name: DocValidationImageId
     type: string
     default: ''
+  - name: DocRepoLocation
+    type: string
+    default: 'docs'
 steps:
 - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml
 
 - pwsh: |
-    Write-Host "###vso[task.setvariable variable=DocRepoLocation]${{ parameters.WorkingDirectory }}/doc"
+    Write-Host "###vso[task.setvariable variable=DocRepoLocation]${{ parameters.WorkingDirectory }}/${{ parameters.DocRepoLocation }}"
   displayName: Set $(DocRepoLocation)
 
 - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml

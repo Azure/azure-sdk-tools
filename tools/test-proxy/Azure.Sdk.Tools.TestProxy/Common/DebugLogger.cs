@@ -56,6 +56,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         }
 
         /// <summary>
+        /// Simple access to the logging api. Accepts a simple message (preformatted) and logs to information logger.
+        /// </summary>
+        /// <param name="details">The content which should be logged.</param>
+        public static void LogInformation(string details)
+        {
+            logger.LogInformation(details);
+        }
+
+
+        /// <summary>
         /// Simple access to the logging api. Accepts a simple message (preformatted) and logs to debug logger.
         /// </summary>
         /// <param name="details">The content which should be logged.</param>

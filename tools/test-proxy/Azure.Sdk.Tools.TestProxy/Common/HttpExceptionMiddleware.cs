@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     Status = e.StatusCode.ToString()
                 };
 
-                DebugLogger.LogDebug(e.Message);
+                DebugLogger.LogInformation(e.Message);
 
                 var body = JsonSerializer.Serialize(bodyObj);
                 await context.Response.WriteAsync(body);

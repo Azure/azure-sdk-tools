@@ -19,14 +19,21 @@ namespace PipelineGenerator.Conventions
         }
 
         private const string ReportBuildStatusKey = "reportBuildStatus";
+
         private Dictionary<string, BuildDefinitionReference> pipelineReferences;
 
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
-
         public abstract string SearchPattern { get; }
+        public abstract string PipelineNameSuffix { get; }
 
-        public abstract string GetDefinitionName(SdkComponent component);
+        public string GetDefinitionName(SdkComponent component)
+        {
+            var baseName = component.Variant == null
+                            ? $"{Context.Prefix} - {component.Name}"
+                            : $"{Context.Prefix} - {component.Name} - {component.Variant}";
+            return baseName + PipelineNameSuffix;
+        }
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {

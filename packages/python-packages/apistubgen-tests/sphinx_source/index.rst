@@ -7,10 +7,11 @@ Welcome to APIView Tests's documentation!
 =========================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+  :maxdepth: 5
+  :glob:
+  :caption: Documentation
 
-
+  apistubgen.rst
 
 Indices and tables
 ==================

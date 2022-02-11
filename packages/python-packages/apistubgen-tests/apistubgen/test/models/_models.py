@@ -29,15 +29,17 @@ class _CaseInsensitiveEnumMeta(EnumMeta):
 
 
 class DocstringClass:
-    """ A class for testing docstring behavior. """
+    """A class for testing docstring behavior.
+    """
 
     def docstring_with_default_formal(self, value, another):
-        """ Docstring containing a formal default.
+        """Docstring containing a formal default.
+
         :param value: Some dummy value, defaults
-        to "cat". Extra text.
+         to "cat". Extra text.
         :type value: str
         :param another: Something else, defaults
-        to dog. Extra text.
+         to dog. Extra text.
         :type value: str
         :rtype: str
         """
@@ -52,7 +54,8 @@ class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
 
 
 class FakeObject(object):
-    """ Fake Object
+    """Fake Object
+
     :ivar str name: Name
     :ivar int age: Age
     :ivar union: Union
@@ -81,7 +84,8 @@ FakeTypedDict = TypedDict(
 
 @dataclass
 class FakeInventoryItemDataClass:
-    """ Class for testing @dataclass """
+    """Class for testing @dataclass
+    """
     name: str
     unit_price: float
     quantity_on_hand: int = 0

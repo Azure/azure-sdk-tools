@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
             var opsAuthToken = "";
             try
             {
+                // This is aad scope of opensource rest API.
                 string[] scopes = new string[]
                 {
                     "api://5bc5e692-fe67-4053-8d49-9e2863718bfb/.default"

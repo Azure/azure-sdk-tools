@@ -905,32 +905,27 @@ func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestO
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "scenario/zt_generated_signalR_test.go": "//go:build go1.16
+  "scenario_test/signalr/zt_generated_signalr_test.go": "//go:build go1.16
 // +build go1.16
 
 
 
-package armsignalr_test
+package signalr_test
 
 import (
 	\\"context\\"
-	\\"log\\"
-	\\"net/http\\"
-	\\"os\\"
-	\\"runtime/debug\\"
 	\\"testing\\"
 
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
-	\\"golang.org/x/net/http2\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/internal/recording\\"
+    \\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager//armsignalr/scenario_test\\"
 )
 import (
 	\\"encoding/json\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources\\"
 	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/signalr/armsignalr\\"
-	\\"github.com/Azure/azure-sdk-for-go/sdk/resources/armresources\\"
 	\\"reflect\\"
 	\\"time\\"
 )
@@ -940,48 +935,97 @@ import (
 var (
 	ctx            context.Context
 	cred           azcore.TokenCredential
-	con            *arm.Connection
-	err            error
+    pathToPackage  = \\"sdk/resourcemanager//armsignalr/scenario_test/signalr/testdata\\"
+	options        *arm.ClientOptions
 	resourceGroup	*armresources.ResourceGroup
     resourceName = \\"signalrswaggertest4\\"
-    location  string
-    resourceGroupName  string
-    subscriptionId  string
-    name string
+    location = scenario_test.GetEnv(\\"LOCATION\\", \\"eastus\\")
+    resourceGroupName = scenario_test.GetEnv(\\"RESOURCE_GROUP_NAME\\", \\"\\")
+    subscriptionId = scenario_test.GetEnv(\\"SUBSCRIPTION_ID\\", scenario_test.GetEnv(\\"AZURE_SUBSCRIPTION_ID\\", \\"\\"))
 )
+
+func TestSignalr(t *testing.T) {
+    // Setup for test
+	scenario_test.StartRecording(t, pathToPackage)
+	ctx = context.Background()
+	options = scenario_test.CreateArmOptions(t)
+	cred = scenario_test.CreateCred(t, ctx, options)
+	resourceGroup = scenario_test.CreateResourceGroup(t, ctx, cred, subscriptionId, location, options)
+	resourceGroupName = *resourceGroup.Name
+	// Clenup for test
+	t.Cleanup(func() {
+		scenario_test.DeleteResourceGroup(t, ctx, cred, subscriptionId, resourceGroupName, options)
+		scenario_test.StopRecording(t)
+	})
+	prepare(t)
+	scenarioMicrosoftSignalrserviceBasicCrud(t)
+	cleanup(t)
+}
+
+func prepare(t *testing.T) {
+}
+
+
 func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
-    resourceName := \\"$(resourceName)\\"
-	// From step Generate_Unique_Name
-	{
-	var deploymentExtend *armresources.DeploymentExtended
-	deploymentExtend, err = createDeployment(ctx, \\"Generate_Unique_Name\\", getAnyJson([]byte(\`{\\"$schema\\":\\"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\\",\\"contentVersion\\":\\"1.0.0.0\\",\\"outputs\\":{\\"name\\":{\\"type\\":\\"string\\",\\"value\\":\\"[variables('name').value]\\"},\\"resourceName\\":{\\"type\\":\\"string\\",\\"value\\":\\"[variables('name').value]\\"}},\\"resources\\":[],\\"variables\\":{\\"name\\":{\\"type\\":\\"string\\",\\"metadata\\":{\\"description\\":\\"Name of the SignalR service.\\"},\\"value\\":\\"[concat('sw',uniqueString(resourceGroup().id))]\\"}}}\`)), getAnyJson([]byte(\`{}\`)))
-	if err != nil {
-		t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-	}
-	resourceName = deploymentExtend.Properties.Outputs[\\"resourceName\\"].(map[string]interface{})[\\"value\\"].(string)
-	}
+    resourceName := resourceName
+// From step Generate_Unique_Name
+{
+    template := map[string]interface{}{
+\\"$schema\\": \\"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\\",
+\\"contentVersion\\": \\"1.0.0.0\\",
+\\"outputs\\":map[string]interface{}{
+\\"name\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"value\\": \\"[variables('name').value]\\",
+},
+\\"resourceName\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"value\\": \\"[variables('name').value]\\",
+},
+},
+\\"resources\\":[]interface{}{
+},
+\\"variables\\":map[string]interface{}{
+\\"name\\":map[string]interface{}{
+\\"type\\": \\"string\\",
+\\"metadata\\":map[string]interface{}{
+\\"description\\": \\"Name of the SignalR service.\\",
+},
+\\"value\\": \\"[concat('sw',uniqueString(resourceGroup().id))]\\",
+},
+},
+}
+    params := map[string]interface{}{
+    }
+    deploymentExtend, err := scenario_test.CreateDeployment(ctx, cred, options, subscriptionId, resourceGroupName, \\"Generate_Unique_Name\\", template, params)
+    if err != nil {
+        t.Fatalf(\\"Deployment error: %v\\", err)
+    }
+    name = deploymentExtend.Properties.Outputs[\\"name\\"].(map[string]interface{})[\\"value\\"].(string)
+    resourceName = deploymentExtend.Properties.Outputs[\\"resourceName\\"].(map[string]interface{})[\\"value\\"].(string)
+    }
 
     
-	// From step SignalR_CheckNameAvailability
-			SignalRClient := armsignalr.NewSignalRClient(subscriptionId)
-	{
-			signalRCheckNameAvailabilityResponse, err := SignalRClient.CheckNameAvailability(ctx,
+// From step SignalR_CheckNameAvailability
+signalRClient := armsignalr.NewSignalRClient(subscriptionId, cred, options)
+{
+                signalRCheckNameAvailabilityResponse, err := signalRClient.CheckNameAvailability(ctx,
 location,
 &armsignalr.SignalRCheckNameAvailabilityOptions{Parameters: &armsignalr.NameAvailabilityParameters{
 Name: to.StringPtr(\\"my-signalr-service\\"),
 Type: to.StringPtr(\\"Microsoft.SignalRService/SignalR\\"),
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRCheckNameAvailabilityResponse.SignalRCheckNameAvailabilityResult)
-	}
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            t.Logf(\\"Response result: %#v\\\\n\\", signalRCheckNameAvailabilityResponse.SignalRClientCheckNameAvailabilityResult)
+    }
 
     
-	// From step SignalR_CreateOrUpdate
-	{
-			signalRCreateOrUpdatePollerResponse, err := SignalRClient.BeginCreateOrUpdate(ctx,
+// From step SignalR_CreateOrUpdate
+{
+                signalRCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginCreateOrUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -990,9 +1034,9 @@ Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 },
 Identity: &armsignalr.ManagedIdentity{
-Type: armsignalr.ManagedIdentityType(\\"SystemAssigned\\").ToPtr(),
+Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
 },
-Kind: armsignalr.ServiceKind(\\"SignalR\\").ToPtr(),
+Kind: armsignalr.ServiceKindSignalR.ToPtr(),
 Properties: &armsignalr.SignalRProperties{
 Cors: &armsignalr.SignalRCorsSettings{
 AllowedOrigins: []*string{
@@ -1001,41 +1045,41 @@ to.StringPtr(\\"https://bar.com\\")},
 },
 Features: []*armsignalr.SignalRFeature{
 {
-Flag: armsignalr.FeatureFlags(\\"ServiceMode\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"Serverless\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableConnectivityLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"True\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableMessagingLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"False\\"),
 }},
 NetworkACLs: &armsignalr.SignalRNetworkACLs{
-DefaultAction: armsignalr.ACLAction(\\"Deny\\").ToPtr(),
+DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ServerConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
 Name: to.StringPtr(\\"mySignalRService.1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ClientConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
 },
 },
 Upstream: &armsignalr.ServerlessUpstreamSettings{
 Templates: []*armsignalr.UpstreamTemplate{
 {
 Auth: &armsignalr.UpstreamAuthSettings{
-Type: armsignalr.UpstreamAuthType(\\"ManagedIdentity\\").ToPtr(),
+Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
 ManagedIdentity: &armsignalr.ManagedIdentitySettings{
 Resource: to.StringPtr(\\"api://example\\"),
 },
@@ -1053,37 +1097,54 @@ ClientCertEnabled: to.BoolPtr(false),
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
 Capacity: to.Int32Ptr(1),
-Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
+Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
 },
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		response, err := signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", response.SignalRCreateOrUpdateResult)
-	}
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            var response armsignalr.SignalRClientCreateOrUpdateResponse
+            if recording.GetRecordMode() == recording.PlaybackMode {
+                for {
+                    _, err = signalRCreateOrUpdatePollerResponse.Poller.Poll(ctx)
+                    if err != nil {
+                        t.Fatalf(\\"Request error: %v\\", err)
+                    }
+                    if signalRCreateOrUpdatePollerResponse.Poller.Done() {
+                        response, err = signalRCreateOrUpdatePollerResponse.Poller.FinalResponse(ctx)
+                        if err != nil {
+                            t.Fatalf(\\"Request error: %v\\", err)
+                        }
+                        break
+                    }
+                }
+            } else {
+                response, err = signalRCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+                if err != nil {
+                    t.Fatalf(\\"Request error: %v\\", err)
+                }
+            }
+            t.Logf(\\"Response result: %#v\\\\n\\", response.SignalRClientCreateOrUpdateResult)
+    }
 
     
-	// From step SignalR_Get
-	{
-			signalRGetResponse, err := SignalRClient.Get(ctx,
+// From step SignalR_Get
+{
+                signalRGetResponse, err := signalRClient.Get(ctx,
 resourceGroupName,
 resourceName,
 nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRGetResponse.SignalRGetResult)
-	}
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            t.Logf(\\"Response result: %#v\\\\n\\", signalRGetResponse.SignalRClientGetResult)
+    }
 
     
-	// From step SignalR_Update
-	{
-			signalRUpdatePollerResponse, err := SignalRClient.BeginUpdate(ctx,
+// From step SignalR_Update
+{
+                signalRUpdatePollerResponse, err := signalRClient.BeginUpdate(ctx,
 resourceGroupName,
 resourceName,
 &armsignalr.SignalRBeginUpdateOptions{Parameters: &armsignalr.SignalRResource{
@@ -1092,9 +1153,9 @@ Tags: map[string]*string{
 \\"key1\\": to.StringPtr(\\"value1\\"),
 },
 Identity: &armsignalr.ManagedIdentity{
-Type: armsignalr.ManagedIdentityType(\\"SystemAssigned\\").ToPtr(),
+Type: armsignalr.ManagedIdentityTypeSystemAssigned.ToPtr(),
 },
-Kind: armsignalr.ServiceKind(\\"SignalR\\").ToPtr(),
+Kind: armsignalr.ServiceKindSignalR.ToPtr(),
 Properties: &armsignalr.SignalRProperties{
 Cors: &armsignalr.SignalRCorsSettings{
 AllowedOrigins: []*string{
@@ -1103,41 +1164,41 @@ to.StringPtr(\\"https://bar.com\\")},
 },
 Features: []*armsignalr.SignalRFeature{
 {
-Flag: armsignalr.FeatureFlags(\\"ServiceMode\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsServiceMode.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"Serverless\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableConnectivityLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableConnectivityLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"True\\"),
 },
 {
-Flag: armsignalr.FeatureFlags(\\"EnableMessagingLogs\\").ToPtr(),
+Flag: armsignalr.FeatureFlagsEnableMessagingLogs.ToPtr(),
 Properties: map[string]*string{
 },
 Value: to.StringPtr(\\"False\\"),
 }},
 NetworkACLs: &armsignalr.SignalRNetworkACLs{
-DefaultAction: armsignalr.ACLAction(\\"Deny\\").ToPtr(),
+DefaultAction: armsignalr.ACLActionDeny.ToPtr(),
 PrivateEndpoints: []*armsignalr.PrivateEndpointACL{
 {
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ServerConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeServerConnection.ToPtr()},
 Name: to.StringPtr(resourceName + \\".1fa229cd-bf3f-47f0-8c49-afb36723997e\\"),
 }},
 PublicNetwork: &armsignalr.NetworkACL{
 Allow: []*armsignalr.SignalRRequestType{
-armsignalr.SignalRRequestType(\\"ClientConnection\\").ToPtr()},
+armsignalr.SignalRRequestTypeClientConnection.ToPtr()},
 },
 },
 Upstream: &armsignalr.ServerlessUpstreamSettings{
 Templates: []*armsignalr.UpstreamTemplate{
 {
 Auth: &armsignalr.UpstreamAuthSettings{
-Type: armsignalr.UpstreamAuthType(\\"ManagedIdentity\\").ToPtr(),
+Type: armsignalr.UpstreamAuthTypeManagedIdentity.ToPtr(),
 ManagedIdentity: &armsignalr.ManagedIdentitySettings{
 Resource: to.StringPtr(\\"api://example\\"),
 },
@@ -1155,185 +1216,330 @@ ClientCertEnabled: to.BoolPtr(false),
 SKU: &armsignalr.ResourceSKU{
 Name: to.StringPtr(\\"Standard_S1\\"),
 Capacity: to.Int32Ptr(1),
-Tier: armsignalr.SignalRSKUTier(\\"Standard\\").ToPtr(),
+Tier: armsignalr.SignalRSKUTierStandard.ToPtr(),
 },
 },
 })
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		response, err := signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", response.SignalRUpdateResult)
-	}
-
-    
-	// From step SignalR_ListKeys
-	{
-			signalRListKeysResponse, err := SignalRClient.ListKeys(ctx,
-resourceGroupName,
-resourceName,
-nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-        log.Printf(\\"Response result: %#v\\\\n\\", signalRListKeysResponse.SignalRListKeysResult)
-	}
-
-    
-	// From step Usages_List
-			UsagesClient := armsignalr.NewUsagesClient(subscriptionId)
-	{
-		usagesListPager := UsagesClient.List(location,
-nil)
-		for usagesListPager.NextPage(ctx) {
-			if err := usagesListPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range usagesListPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_ListByResourceGroup
-	{
-		signalRListByResourceGroupPager := SignalRClient.ListByResourceGroup(resourceGroupName,
-nil)
-		for signalRListByResourceGroupPager.NextPage(ctx) {
-			if err := signalRListByResourceGroupPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range signalRListByResourceGroupPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_ListBySubscription
-	{
-		signalRListBySubscriptionPager := SignalRClient.ListBySubscription(nil)
-		for signalRListBySubscriptionPager.NextPage(ctx) {
-			if err := signalRListBySubscriptionPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range signalRListBySubscriptionPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step Operations_List
-			OperationsClient := armsignalr.NewOperationsClient()
-	{
-		operationsListPager := OperationsClient.List(nil)
-		for operationsListPager.NextPage(ctx) {
-			if err := operationsListPager.Err(); err != nil {
-				t.Fatalf(\\"failed to advance page: %v\\\\n %v\\", err, string(debug.Stack()))
-			}
-			for _, v := range operationsListPager.PageResponse().Value {
-                log.Printf(\\"Pager result: %#v\\\\n\\", v)
-			}
-		}
-	}
-
-    
-	// From step SignalR_Delete
-	{
-			signalRDeletePollerResponse, err := SignalRClient.BeginDelete(ctx,
-resourceGroupName,
-resourceName,
-nil)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-		_, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
-		if err != nil {
-			t.Fatalf(\\"%v\\\\n %v\\", err, string(debug.Stack()))
-		}
-	}
-}
-
-func prepare() {
-}
-
-func TestSignalr(t *testing.T) {
-	setUp()
-	scenarioMicrosoftSignalrserviceBasicCrud(t)
-	tearDown()
-}
-
-func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            var response armsignalr.SignalRClientUpdateResponse
+            if recording.GetRecordMode() == recording.PlaybackMode {
+                for {
+                    _, err = signalRUpdatePollerResponse.Poller.Poll(ctx)
+                    if err != nil {
+                        t.Fatalf(\\"Request error: %v\\", err)
+                    }
+                    if signalRUpdatePollerResponse.Poller.Done() {
+                        response, err = signalRUpdatePollerResponse.Poller.FinalResponse(ctx)
+                        if err != nil {
+                            t.Fatalf(\\"Request error: %v\\", err)
+                        }
+                        break
+                    }
+                }
+            } else {
+                response, err = signalRUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+                if err != nil {
+                    t.Fatalf(\\"Request error: %v\\", err)
+                }
+            }
+            t.Logf(\\"Response result: %#v\\\\n\\", response.SignalRClientUpdateResult)
     }
-    return fallback
+
+    
+// From step SignalR_ListKeys
+{
+                signalRListKeysResponse, err := signalRClient.ListKeys(ctx,
+resourceGroupName,
+resourceName,
+nil)
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            t.Logf(\\"Response result: %#v\\\\n\\", signalRListKeysResponse.SignalRClientListKeysResult)
+    }
+
+    
+// From step Usages_List
+usagesClient := armsignalr.NewUsagesClient(subscriptionId, cred, options)
+{
+            usagesListPager := usagesClient.List(location,
+nil)
+            for usagesListPager.NextPage(ctx) {
+                if err := usagesListPager.Err(); err != nil {
+                    t.Fatalf(\\"Failed to advance page: %v\\", err)
+                }
+                for _, v := range usagesListPager.PageResponse().Value {
+                    t.Logf(\\"Pager result: %#v\\\\n\\", v)
+                }
+            }
+    }
+
+    
+// From step SignalR_ListByResourceGroup
+{
+            signalRListByResourceGroupPager := signalRClient.ListByResourceGroup(resourceGroupName,
+nil)
+            for signalRListByResourceGroupPager.NextPage(ctx) {
+                if err := signalRListByResourceGroupPager.Err(); err != nil {
+                    t.Fatalf(\\"Failed to advance page: %v\\", err)
+                }
+                for _, v := range signalRListByResourceGroupPager.PageResponse().Value {
+                    t.Logf(\\"Pager result: %#v\\\\n\\", v)
+                }
+            }
+    }
+
+    
+// From step SignalR_ListBySubscription
+{
+            signalRListBySubscriptionPager := signalRClient.ListBySubscription(nil)
+            for signalRListBySubscriptionPager.NextPage(ctx) {
+                if err := signalRListBySubscriptionPager.Err(); err != nil {
+                    t.Fatalf(\\"Failed to advance page: %v\\", err)
+                }
+                for _, v := range signalRListBySubscriptionPager.PageResponse().Value {
+                    t.Logf(\\"Pager result: %#v\\\\n\\", v)
+                }
+            }
+    }
+
+    
+// From step Operations_List
+operationsClient := armsignalr.NewOperationsClient(cred, options)
+{
+            operationsListPager := operationsClient.List(nil)
+            for operationsListPager.NextPage(ctx) {
+                if err := operationsListPager.Err(); err != nil {
+                    t.Fatalf(\\"Failed to advance page: %v\\", err)
+                }
+                for _, v := range operationsListPager.PageResponse().Value {
+                    t.Logf(\\"Pager result: %#v\\\\n\\", v)
+                }
+            }
+    }
+
+    
+// From step SignalR_Delete
+{
+                signalRDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
+resourceGroupName,
+resourceName,
+nil)
+            if err != nil {
+                t.Fatalf(\\"Request error: %v\\", err)
+            }
+            if recording.GetRecordMode() == recording.PlaybackMode {
+                for {
+                    _, err = signalRDeletePollerResponse.Poller.Poll(ctx)
+                    if err != nil {
+                        t.Fatalf(\\"Request error: %v\\", err)
+                    }
+                    if signalRDeletePollerResponse.Poller.Done() {
+                        _, err = signalRDeletePollerResponse.Poller.FinalResponse(ctx)
+                        if err != nil {
+                            t.Fatalf(\\"Request error: %v\\", err)
+                        }
+                        break
+                    }
+                }
+            } else {
+                _, err = signalRDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+                if err != nil {
+                    t.Fatalf(\\"Request error: %v\\", err)
+                }
+            }
+    }
 }
 
-func createResourceGroup(ctx context.Context, connection *arm.Connection) (*armresources.ResourceGroup, error) {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
+func cleanup(t *testing.T) {
+}",
+  "scenario_test/zt_generated_scenario_test_util.go": "//go:build go1.16
+// +build go1.16
 
+
+
+package scenario_test
+
+import (
+	\\"context\\"
+	\\"fmt\\"
+	\\"math/rand\\"
+	\\"net/http\\"
+	\\"os\\"
+	\\"testing\\"
+	\\"time\\"
+
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azcore/to\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/azidentity\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/internal/recording\\"
+	\\"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources\\"
+)
+
+type recordingPolicy struct {
+	options recording.RecordingOptions
+	t       *testing.T
+}
+
+func (r recordingPolicy) Host() string {
+	if r.options.UseHTTPS {
+		return \\"localhost:5001\\"
+	}
+	return \\"localhost:5000\\"
+}
+
+func (r recordingPolicy) Scheme() string {
+	if r.options.UseHTTPS {
+		return \\"https\\"
+	}
+	return \\"http\\"
+}
+
+func NewRecordingPolicy(t *testing.T, o *recording.RecordingOptions) policy.Policy {
+	if o == nil {
+		o = &recording.RecordingOptions{UseHTTPS: true}
+	}
+	p := &recordingPolicy{options: *o, t: t}
+	return p
+}
+
+func (p *recordingPolicy) Do(req *policy.Request) (resp *http.Response, err error) {
+	if recording.GetRecordMode() != \\"live\\" && !recording.IsLiveOnly(p.t) {
+		oriSchema := req.Raw().URL.Scheme
+		oriHost := req.Raw().URL.Host
+		req.Raw().URL.Scheme = p.Scheme()
+		req.Raw().URL.Host = p.Host()
+		req.Raw().Host = p.Host()
+
+		req.Raw().Header.Set(recording.UpstreamURIHeader, fmt.Sprintf(\\"%v://%v\\", oriSchema, oriHost))
+		req.Raw().Header.Set(recording.ModeHeader, recording.GetRecordMode())
+		req.Raw().Header.Set(recording.IDHeader, recording.GetRecordingId(p.t))
+
+		resp, err = req.Next()
+		if resp != nil {
+			resp.Request.URL.Scheme = oriSchema
+			resp.Request.URL.Host = oriHost
+		}
+		return resp, err
+	} else {
+		return req.Next()
+	}
+}
+
+func StartRecording(t *testing.T, pathToPackage string) {
+	err := recording.ResetProxy(nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to add uuid sanitizer: %v\\", err)
+	}
+	err = recording.AddGeneralRegexSanitizer(\\"00000000-0000-0000-0000-000000000000\\", \`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\`, nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to add uuid sanitizer: %v\\", err)
+	}
+	err = recording.AddGeneralRegexSanitizer(\\"go-scenario-test-recording\\", \`go-scenario-test-\\\\d+\`, nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to add resource group name sanitizer: %v\\", err)
+	}
+	err = recording.AddOAuthResponseSanitizer(nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to add oauth response sanitizer: %v\\", err)
+	}
+	err = recording.Start(t, pathToPackage, nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to start recording: %v\\", err)
+	}
+}
+
+func StopRecording(t *testing.T) {
+	err := recording.Stop(t, nil)
+	if err != nil {
+		t.Fatalf(\\"Failed to stop recording: %v\\", err)
+	}
+}
+
+func CreateArmOptions(t *testing.T) *arm.ClientOptions {
+	p := NewRecordingPolicy(t, &recording.RecordingOptions{UseHTTPS: true})
+	client, err := recording.GetHTTPClient(t)
+	if err != nil {
+		t.Fatalf(\\"Failed to create recording client: %v\\", err)
+	}
+	return &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			PerCallPolicies: []policy.Policy{p},
+			Transport:       client,
+		},
+	}
+}
+
+func CreateCred(t *testing.T, ctx context.Context, options *arm.ClientOptions) azcore.TokenCredential {
+	var cred azcore.TokenCredential
+	var err error
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		cred = &FakeCredential{}
+	} else {
+		cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{ClientOptions: options.ClientOptions})
+		if err != nil {
+			t.Fatalf(\\"Failed to create credential: %v\\", err)
+		}
+	}
+	return cred
+}
+
+func CreateResourceGroup(t *testing.T, ctx context.Context, cred azcore.TokenCredential, subscriptionId, location string, options *arm.ClientOptions) *armresources.ResourceGroup {
+	rand.Seed(time.Now().UnixNano())
+	resourceGroupName := fmt.Sprintf(\\"go-scenario-test-%d\\", rand.Intn(1000))
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, options)
 	param := armresources.ResourceGroup{
 		Location: to.StringPtr(location),
 	}
-
 	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
-		return nil, err
+		t.Fatalf(\\"Failed to create resource group: %v\\", err)
 	}
-
-	return resp.ResourceGroup, nil
+	t.Logf(\\"Resource group created: id - %s name - %s\\", *resp.ResourceGroup.ID, *resp.ResourceGroup.Name)
+	return &resp.ResourceGroup
 }
 
-func deleteResourceGroup(ctx context.Context, connection *arm.Connection) error {
-	rgClient := armresources.NewResourceGroupsClient(connection, subscriptionId)
-
+func DeleteResourceGroup(t *testing.T, ctx context.Context, cred azcore.TokenCredential, subscriptionId, resourceGroupName string, options *arm.ClientOptions) {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, options)
 	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
-		return err
+		t.Fatalf(\\"Failed to delete resource group: %v\\", err)
 	}
-	if _, err := poller.PollUntilDone(ctx, 10*time.Second); err != nil {
-		return err
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		for {
+			_, err = poller.Poller.Poll(ctx)
+			if err != nil {
+				t.Fatalf(\\"Failed to delete resource group: %v\\", err)
+			}
+			if poller.Poller.Done() {
+				_, err = poller.Poller.FinalResponse(ctx)
+				if err != nil {
+					t.Fatalf(\\"Failed to delete resource group: %v\\", err)
+				}
+				break
+			}
+		}
+	} else {
+		if _, err = poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+			t.Fatalf(\\"Failed to delete resource group: %v\\", err)
+		}
 	}
-
-	return nil
+	t.Logf(\\"Resource group deleted\\")
 }
 
-func setUp() {
-	ctx = context.Background()
-    location = getEnv(\\"LOCATION\\", \\"westus\\")
-    resourceGroupName = getEnv(\\"RESOURCE_GROUP_NAME\\", \\"scenarioTestTempGroup\\")
-    subscriptionId = getEnv(\\"SUBSCRIPTION_ID\\", \\"00000000-00000000-00000000-00000000\\")
-
-	cred, err = azidentity.NewEnvironmentCredential(nil)
-	if err != nil {
-		panic(err)
+func GetEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
 	}
-
-	con = arm.NewDefaultConnection(cred, &arm.ConnectionOptions{
-		Logging: azcore.LogOptions{
-			IncludeBody: true,
-		},
-	})
-	resourceGroup, err := createResourceGroup(ctx, con)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf(\\"Resource Group %s created\\", *resourceGroup.ID)
-    prepare()
+	return fallback
 }
 
-func tearDown() {
-	deleteResourceGroup(ctx, con)
-}
-
-func createDeployment(ctx context.Context, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
-	deployClient := armresources.NewDeploymentsClient(con, subscriptionId)
+func CreateDeployment(ctx context.Context, cred azcore.TokenCredential, options *arm.ClientOptions, subscriptionId, resourceGroupName, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, options)
 	poller, err := deployClient.BeginCreateOrUpdate(
 		ctx,
 		resourceGroupName,
@@ -1345,24 +1551,41 @@ func createDeployment(ctx context.Context, deploymentName string, template, para
 				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
 			},
 		},
-		&armresources.DeploymentsBeginCreateOrUpdateOptions{},
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	res, err := poller.PollUntilDone(ctx, 10*time.Second)
-	if err != nil {
-		return nil, err
+	var res armresources.DeploymentsClientCreateOrUpdateResponse
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		for {
+			_, err = poller.Poller.Poll(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if poller.Poller.Done() {
+				res, err = poller.Poller.FinalResponse(ctx)
+				if err != nil {
+					return nil, err
+				}
+				break
+			}
+		}
+	} else {
+		res, err = poller.PollUntilDone(ctx, 10*time.Second)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	return res.DeploymentExtended, nil
+	return &res.DeploymentExtended, nil
 }
 
-func getAnyJson(customJSON []byte) map[string]interface{} {
-	var anyJson map[string]interface{}
-	_ = json.Unmarshal(customJSON, &anyJson)
-	return anyJson
-}",
+type FakeCredential struct {
+}
+
+func (c *FakeCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: \\"FakeToken\\", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
+}
+",
 }
 `;

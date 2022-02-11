@@ -1,6 +1,14 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+This log was last generated on Fri, 11 Feb 2022 09:47:39 GMT and should not be manually modified.
+
+## 2.0.0
+Fri, 11 Feb 2022 09:47:39 GMT
+
+### Breaking changes
+
+- Add scenario test generation support.
+- Add recording support to scenario test.
 
 ## 1.3.0
 Wed, 12 Jan 2022 09:10:46 GMT

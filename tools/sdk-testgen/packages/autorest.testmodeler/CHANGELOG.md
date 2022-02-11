@@ -1,6 +1,17 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+This log was last generated on Fri, 11 Feb 2022 09:47:39 GMT and should not be manually modified.
+
+## 2.1.0
+Fri, 11 Feb 2022 09:47:39 GMT
+
+### Minor changes
+
+- Refine scenario test modeler.
+
+### Patches
+
+- Fix newline platform compatibility problem.
 
 ## 2.0.0
 Wed, 12 Jan 2022 09:10:46 GMT

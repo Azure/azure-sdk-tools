@@ -38,13 +38,9 @@ export interface ExampleExtension {
     'x-ms-original-file'?: string;
 }
 
-export type TestStepModel = {
-    outputVariableNames: string[];
-};
+export type StepArmTemplateModel = StepArmTemplate;
 
-export type StepArmTemplateModel = StepArmTemplate & TestStepModel;
-
-export type StepRestCallModel = StepRestCall & TestStepModel & { exampleModel: ExampleModel };
+export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel };
 
 /**
  * Generally a test group should be generated into one test source file.
@@ -391,30 +387,18 @@ export class TestCodeModeler {
     }
 
     public initiateArmTemplate(testDef: TestDefinitionModel, stepModel: StepArmTemplateModel) {
-        stepModel.outputVariableNames = [];
-        for (const templateOutput of Object.keys(stepModel.armTemplatePayload.outputs || {})) {
-            if (_.has(testDef.variables, templateOutput) || _.has(stepModel.variables, templateOutput)) {
-                stepModel.outputVariableNames.push(templateOutput);
-            }
-
-            if (testDef.outputVariableNames.indexOf(templateOutput) < 0) {
-                testDef.outputVariableNames.push(templateOutput);
-            }
-        }
-
+        testDef.useArmTemplate = true;
         const scriptContentKey = 'scriptContent';
         for (const resource of stepModel.armTemplatePayload?.resources || []) {
             const scriptContentValue = resource.properties?.[scriptContentKey];
             if (scriptContentValue && typeof scriptContentValue === 'string') {
-                if (process.platform.toLowerCase().startsWith('win')) {
-                    // align new line character for scriptContent across win/os/linux
-                    resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
-                }
+                // align new line character for scriptContent across win/os/linux
+                resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
             }
         }
     }
 
-    public initiateRestCall(testDef: TestDefinitionModel, step: StepRestCallModel) {
+    public initiateRestCall(step: StepRestCallModel) {
         const operationInfo = this.findOperationByOperationId(step.operationId);
         if (operationInfo) {
             const { operation, operationGroup } = operationInfo;
@@ -435,12 +419,6 @@ export class TestCodeModeler {
                 );
             }
 
-            for (const outputVariableName of Object.keys(step.outputVariables || {})) {
-                if (testDef.outputVariableNames.indexOf(outputVariableName) < 0) {
-                    testDef.outputVariableNames.push(outputVariableName);
-                }
-            }
-
             // Remove oav operation to save size of codeModel.
             // Don't do this if oav operation is used in future.
             if (Object.prototype.hasOwnProperty.call(step, 'operation')) {
@@ -454,25 +432,33 @@ export class TestCodeModeler {
         testDef.useArmTemplate = false;
         testDef.outputVariableNames = [];
 
-        const allSteps: Step[] = [...testDef.prepareSteps];
+        for (const step of testDef.prepareSteps) {
+            this.processStep(step, codeModelRestcallOnly, testDef);
+        }
+
         for (const scenario of testDef.scenarios as TestScenarioModel[]) {
-            allSteps.push(...scenario.steps);
+            for (const step of scenario.steps) {
+                this.processStep(step, codeModelRestcallOnly, testDef);
+            }
             this.initiateOavVariables(scenario);
         }
-        allSteps.push(...testDef.cleanUpSteps);
 
-        for (const step of allSteps) {
-            this.initiateOavVariables(step);
-            if (step.type === OavStepType.restCall) {
-                const stepModel = step as StepRestCallModel;
-                this.initiateRestCall(testDef, stepModel);
-                if (codeModelRestcallOnly && !stepModel.exampleModel) {
-                    throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
-                }
-            } else if (step.type === OavStepType.armTemplate) {
-                testDef.useArmTemplate = true;
-                this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
+        for (const step of testDef.cleanUpSteps) {
+            this.processStep(step, codeModelRestcallOnly, testDef);
+        }
+    }
+
+    private processStep(step: Step, codeModelRestcallOnly: boolean, testDef: TestDefinitionModel) {
+        this.initiateOavVariables(step);
+        if (step.type === OavStepType.restCall) {
+            const stepModel = step as StepRestCallModel;
+            this.initiateRestCall(stepModel);
+            if (codeModelRestcallOnly && !stepModel.exampleModel) {
+                throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
             }
+        } else if (step.type === OavStepType.armTemplate) {
+            testDef.useArmTemplate = true;
+            this.initiateArmTemplate(testDef, step);
         }
     }
 
@@ -514,24 +500,26 @@ export class TestCodeModeler {
     }
 
     public async loadAvailableTestResources(fileRoot: string, loader: ApiScenarioLoader) {
-        const scenariosFolder = 'scenarios';
+        const scenariosFolders = ['scenarios', 'test-scenarios'];
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
-            const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
-            // currently loadAvailableTestResources only support scenario scanning from local file system
-            if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
-                for (const scenarioFile of fs.readdirSync(scenarioPath)) {
-                    if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
-                        continue;
-                    }
-                    const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
-                    try {
-                        const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
+            for (const scenariosFolder of scenariosFolders) {
+                const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
+                // currently loadAvailableTestResources only support scenario scanning from local file system
+                if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
+                    for (const scenarioFile of fs.readdirSync(scenarioPath)) {
+                        if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
+                            continue;
+                        }
+                        const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
+                        try {
+                            const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
-                        this.initiateTestDefinition(testDef, codemodelRestCallOnly);
-                        this.codeModel.testModel.scenarioTests.push(testDef);
-                    } catch {
-                        console.warn(`${scenarioPathName} is not a valid api scenario`);
+                            this.initiateTestDefinition(testDef, codemodelRestCallOnly);
+                            this.codeModel.testModel.scenarioTests.push(testDef);
+                        } catch (e) {
+                            console.warn(`${scenarioPathName} is not a valid api scenario`);
+                        }
                     }
                 }
             }

@@ -12,7 +12,7 @@ export type FileCallback = (path: string, rows: string[]) => void;
 
 const extension = new AutoRestExtension();
 
-extension.Add('go-tester', goTester);
-extension.Add('go-linter', goLinter);
+extension.add('go-tester', goTester);
+extension.add('go-linter', goLinter);
 
-extension.Run();
+extension.run();

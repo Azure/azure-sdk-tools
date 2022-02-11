@@ -127,7 +127,7 @@ namespace PipelineGenerator
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);
 
-                case "weekly":
+                case "testsweekly":
                     var weeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyIntegrationTestingPipelineConvention>>();
                     return new WeeklyIntegrationTestingPipelineConvention(weeklyTestLogger, context);
 

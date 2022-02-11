@@ -10,19 +10,12 @@ namespace PipelineGenerator.Conventions
 {
     public class IntegrationTestingPipelineConvention : PipelineConvention
     {
-        public override string SearchPattern => "tests.yml";
-
         public IntegrationTestingPipelineConvention(ILogger logger, PipelineGenerationContext context) : base(logger, context)
         {
         }
 
-        public override string GetDefinitionName(SdkComponent component)
-        {
-            var baseName = component.Variant == null
-                            ? $"{Context.Prefix} - {component.Name}"
-                            : $"{Context.Prefix} - {component.Name} - {component.Variant}";
-            return baseName + " - tests";
-        }
+        public override string SearchPattern => "tests.yml";
+        public override string PipelineNameSuffix => " - tests";
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

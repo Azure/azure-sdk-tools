@@ -7,13 +7,14 @@
 # --------------------------------------------------------------------------
 
 from ._version import VERSION
-from ._api_view_tests import (
-    FakeInventoryItemDataClass, FakeObject, FakeTypedDict, PetEnum, PublicPrivateClass
+from .api_view_tests import (
+    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict, PetEnum, PublicPrivateClass
 )
 
 __version__ = VERSION
 
 __all__ = [
+    "DocstringClass",
     "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",

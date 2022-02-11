@@ -28,6 +28,22 @@ class _CaseInsensitiveEnumMeta(EnumMeta):
             raise AttributeError(name)
 
 
+class DocstringClass:
+    """ A class for testing docstring behavior. """
+
+    def docstring_with_default_formal(self, value, another):
+        """ Docstring containing a formal default.
+        :param value: Some dummy value, defaults
+        to "cat". Extra text.
+        :type value: str
+        :param another: Something else, defaults
+        to dog. Extra text.
+        :type value: str
+        :rtype: str
+        """
+        return f"{value} {another}"
+
+
 class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
     """A test enum
     """

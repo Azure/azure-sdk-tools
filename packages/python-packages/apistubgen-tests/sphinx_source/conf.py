@@ -9,10 +9,10 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +22,7 @@ copyright = '2022, Microsoft'
 author = 'Microsoft'
 
 # The full version, including alpha/beta/rc tags
-release = '[]'
+release = '0.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,6 +32,10 @@ release = '[]'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -47,8 +51,10 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['_build']
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -64,3 +70,16 @@ html_static_path = ['_static']
 
 
 # -- Extension configuration -------------------------------------------------
+autoclass_content = 'both'
+
+autodoc_member_order = 'groupwise'
+
+source_parsers = {
+   '.md': 'recommonmark.parser.CommonMarkParser',
+}
+
+# The suffix of source filenames.
+source_suffix = ['.rst', '.md']
+
+# The master toctree document.
+master_doc = 'index'

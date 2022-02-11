@@ -1,0 +1,231 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package scenario_test
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+)
+
+type recordingPolicy struct {
+	options recording.RecordingOptions
+	t       *testing.T
+}
+
+func (r recordingPolicy) Host() string {
+	if r.options.UseHTTPS {
+		return "localhost:5001"
+	}
+	return "localhost:5000"
+}
+
+func (r recordingPolicy) Scheme() string {
+	if r.options.UseHTTPS {
+		return "https"
+	}
+	return "http"
+}
+
+func NewRecordingPolicy(t *testing.T, o *recording.RecordingOptions) policy.Policy {
+	if o == nil {
+		o = &recording.RecordingOptions{UseHTTPS: true}
+	}
+	p := &recordingPolicy{options: *o, t: t}
+	return p
+}
+
+func (p *recordingPolicy) Do(req *policy.Request) (resp *http.Response, err error) {
+	if recording.GetRecordMode() != "live" && !recording.IsLiveOnly(p.t) {
+		oriSchema := req.Raw().URL.Scheme
+		oriHost := req.Raw().URL.Host
+		req.Raw().URL.Scheme = p.Scheme()
+		req.Raw().URL.Host = p.Host()
+		req.Raw().Host = p.Host()
+
+		req.Raw().Header.Set(recording.UpstreamURIHeader, fmt.Sprintf("%v://%v", oriSchema, oriHost))
+		req.Raw().Header.Set(recording.ModeHeader, recording.GetRecordMode())
+		req.Raw().Header.Set(recording.IDHeader, recording.GetRecordingId(p.t))
+
+		resp, err = req.Next()
+		if resp != nil {
+			resp.Request.URL.Scheme = oriSchema
+			resp.Request.URL.Host = oriHost
+		}
+		return resp, err
+	} else {
+		return req.Next()
+	}
+}
+
+func StartRecording(t *testing.T, pathToPackage string) {
+	err := recording.ResetProxy(nil)
+	if err != nil {
+		t.Fatalf("Failed to add uuid sanitizer: %v", err)
+	}
+	err = recording.AddGeneralRegexSanitizer("00000000-0000-0000-0000-000000000000", `[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`, nil)
+	if err != nil {
+		t.Fatalf("Failed to add uuid sanitizer: %v", err)
+	}
+	err = recording.AddGeneralRegexSanitizer("go-scenario-test-recording", `go-scenario-test-\d+`, nil)
+	if err != nil {
+		t.Fatalf("Failed to add resource group name sanitizer: %v", err)
+	}
+	err = recording.AddOAuthResponseSanitizer(nil)
+	if err != nil {
+		t.Fatalf("Failed to add oauth response sanitizer: %v", err)
+	}
+	err = recording.Start(t, pathToPackage, nil)
+	if err != nil {
+		t.Fatalf("Failed to start recording: %v", err)
+	}
+}
+
+func StopRecording(t *testing.T) {
+	err := recording.Stop(t, nil)
+	if err != nil {
+		t.Fatalf("Failed to stop recording: %v", err)
+	}
+}
+
+func CreateArmOptions(t *testing.T) *arm.ClientOptions {
+	p := NewRecordingPolicy(t, &recording.RecordingOptions{UseHTTPS: true})
+	client, err := recording.GetHTTPClient(t)
+	if err != nil {
+		t.Fatalf("Failed to create recording client: %v", err)
+	}
+	return &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			PerCallPolicies: []policy.Policy{p},
+			Transport:       client,
+		},
+	}
+}
+
+func CreateCred(t *testing.T, ctx context.Context, options *arm.ClientOptions) azcore.TokenCredential {
+	var cred azcore.TokenCredential
+	var err error
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		cred = &FakeCredential{}
+	} else {
+		cred, err = azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{ClientOptions: options.ClientOptions})
+		if err != nil {
+			t.Fatalf("Failed to create credential: %v", err)
+		}
+	}
+	return cred
+}
+
+func CreateResourceGroup(t *testing.T, ctx context.Context, cred azcore.TokenCredential, subscriptionId, location string, options *arm.ClientOptions) *armresources.ResourceGroup {
+	rand.Seed(time.Now().UnixNano())
+	resourceGroupName := fmt.Sprintf("go-scenario-test-%d", rand.Intn(1000))
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, options)
+	param := armresources.ResourceGroup{
+		Location: to.StringPtr(location),
+	}
+	resp, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		t.Fatalf("Failed to create resource group: %v", err)
+	}
+	t.Logf("Resource group created: id - %s name - %s", *resp.ResourceGroup.ID, *resp.ResourceGroup.Name)
+	return &resp.ResourceGroup
+}
+
+func DeleteResourceGroup(t *testing.T, ctx context.Context, cred azcore.TokenCredential, subscriptionId, resourceGroupName string, options *arm.ClientOptions) {
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, options)
+	poller, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		t.Fatalf("Failed to delete resource group: %v", err)
+	}
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		for {
+			_, err = poller.Poller.Poll(ctx)
+			if err != nil {
+				t.Fatalf("Failed to delete resource group: %v", err)
+			}
+			if poller.Poller.Done() {
+				_, err = poller.Poller.FinalResponse(ctx)
+				if err != nil {
+					t.Fatalf("Failed to delete resource group: %v", err)
+				}
+				break
+			}
+		}
+	} else {
+		if _, err = poller.PollUntilDone(ctx, 10*time.Second); err != nil {
+			t.Fatalf("Failed to delete resource group: %v", err)
+		}
+	}
+	t.Logf("Resource group deleted")
+}
+
+func GetEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func CreateDeployment(ctx context.Context, cred azcore.TokenCredential, options *arm.ClientOptions, subscriptionId, resourceGroupName, deploymentName string, template, params map[string]interface{}) (de *armresources.DeploymentExtended, err error) {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, options)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		armresources.Deployment{
+			Properties: &armresources.DeploymentProperties{
+				Template:   template,
+				Parameters: params,
+				Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			},
+		},
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	var res armresources.DeploymentsClientCreateOrUpdateResponse
+	if recording.GetRecordMode() == recording.PlaybackMode {
+		for {
+			_, err = poller.Poller.Poll(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if poller.Poller.Done() {
+				res, err = poller.Poller.FinalResponse(ctx)
+				if err != nil {
+					return nil, err
+				}
+				break
+			}
+		}
+	} else {
+		res, err = poller.PollUntilDone(ctx, 10*time.Second)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &res.DeploymentExtended, nil
+}
+
+type FakeCredential struct {
+}
+
+func (c *FakeCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: "FakeToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
+}

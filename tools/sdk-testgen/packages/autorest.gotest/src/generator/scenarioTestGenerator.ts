@@ -138,7 +138,14 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                         if (t.properties['arguments']) {
                             t.properties['arguments'] = this.getStringValue(t.properties['arguments']);
                         }
+                        if (t['identity']) {
+                            delete t['identity'];
+                        }
                     });
+                }
+
+                if (step.armTemplatePayload.parameters && step.armTemplatePayload.parameters['userAssignedIdentity']) {
+                    delete step.armTemplatePayload.parameters['userAssignedIdentity'];
                 }
 
                 // template parse
@@ -206,30 +213,37 @@ export class ScenarioTestDataRender extends MockTestDataRender {
 
 export class ScenarioTestCodeGenerator extends BaseCodeGenerator {
     public generateCode(extraParam: Record<string, unknown> = {}): void {
-        for (const testDef of this.context.codeModel.testModel.scenarioTests) {
-            const file = path.basename(testDef._filePath);
-            const filename = file.split('.').slice(0, -1).join('.');
-            this.renderAndWrite(
-                { ...testDef, testCaseName: Helper.capitalize(Helper.toCamelCase(filename)), allVariables: [] },
-                'scenarioTest.go.njk',
-                `scenario_test/${filename.toLowerCase()}/${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_test.go`,
-                extraParam,
-                {
-                    toSnakeCase: Helper.toSnakeCase,
-                    uncapitalize: Helper.uncapitalize,
-                    toCamelCase: Helper.toCamelCase,
-                    capitalize: Helper.capitalize,
-                    quotedEscapeString: Helper.quotedEscapeString,
-                    genVariableName: (typeName: string) => {
-                        // This function generate variable instance name from variable type name
-                        // For instance:
-                        //   1) VirtualMachineResponse  --> virtualMachineResponse
-                        //   2) armCompute.VirtualMachineResponse  --> virtualMachineResponse   // remove package name
-                        //   3) *VirtualMachineResponse  --> virtualMachineResponse  // remove char of pointer.
-                        return Helper.uncapitalize(typeName.split('.').join('*').split('*').pop());
+        if (this.context.codeModel.testModel.scenarioTests.length > 0) {
+            this.renderAndWrite({}, 'scenarioUtil.go.njk', `scenario_test/${this.getFilePrefix(Config.testFilePrefix)}scenario_test_util.go`, extraParam);
+            for (const testDef of this.context.codeModel.testModel.scenarioTests) {
+                const file = path.basename(testDef._filePath);
+                const filename = file.split('.').slice(0, -1).join('.');
+                const rpRegex = /(\/|\\)(?<rpName>[^/\\]+)(\/|\\)(arm[^/\\]+)/;
+                const execResult = rpRegex.exec(this.context.testConfig.getValue(Config.outputFolder));
+                extraParam['rpName'] = execResult?.groups ? execResult.groups['rpName'] : '';
+                extraParam['testPackageName'] = filename.toLowerCase();
+                this.renderAndWrite(
+                    { ...testDef, testCaseName: Helper.capitalize(Helper.toCamelCase(filename)), allVariables: [] },
+                    'scenarioTest.go.njk',
+                    `scenario_test/${filename.toLowerCase()}/${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_test.go`,
+                    extraParam,
+                    {
+                        toSnakeCase: Helper.toSnakeCase,
+                        uncapitalize: Helper.uncapitalize,
+                        toCamelCase: Helper.toCamelCase,
+                        capitalize: Helper.capitalize,
+                        quotedEscapeString: Helper.quotedEscapeString,
+                        genVariableName: (typeName: string) => {
+                            // This function generate variable instance name from variable type name
+                            // For instance:
+                            //   1) VirtualMachineResponse  --> virtualMachineResponse
+                            //   2) armCompute.VirtualMachineResponse  --> virtualMachineResponse   // remove package name
+                            //   3) *VirtualMachineResponse  --> virtualMachineResponse  // remove char of pointer.
+                            return Helper.uncapitalize(typeName.split('.').join('*').split('*').pop());
+                        },
                     },
-                },
-            );
+                );
+            }
         }
     }
 }

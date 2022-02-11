@@ -271,7 +271,7 @@ describe('GoTestGenerator from RP signalR', () => {
         const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
         scenarioTestCodeGenerator.generateCode({});
 
-        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length);
+        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length + 1);
         expect(outputs).toMatchSnapshot();
     });
 });

@@ -392,10 +392,8 @@ export class TestCodeModeler {
         for (const resource of stepModel.armTemplatePayload?.resources || []) {
             const scriptContentValue = resource.properties?.[scriptContentKey];
             if (scriptContentValue && typeof scriptContentValue === 'string') {
-                if (process.platform.toLowerCase().startsWith('win')) {
-                    // align new line character for scriptContent across win/os/linux
-                    resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
-                }
+                // align new line character for scriptContent across win/os/linux
+                resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
             }
         }
     }

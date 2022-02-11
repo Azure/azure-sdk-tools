@@ -2,6 +2,23 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.1.0",
+      "tag": "@autorest/testmodeler_v2.1.0",
+      "date": "Fri, 11 Feb 2022 09:47:39 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Refine scenario test modeler."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Fix newline platform compatibility problem."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.0.0",
       "tag": "@autorest/testmodeler_v2.0.0",
       "date": "Wed, 12 Jan 2022 09:10:46 GMT",

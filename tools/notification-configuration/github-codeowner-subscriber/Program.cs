@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                 var gitHubServiceLogger = loggerFactory.CreateLogger<GitHubService>();
                 var gitHubService = new GitHubService(gitHubServiceLogger);
                 var credential = new ClientSecretCredential(aadTenantVar, aadAppIdVar, aadAppSecretVar);
-                var githubToAadResolver = new GitHubToAadConverter(
+                var githubToAadResolver = new GitHubToAADConverter(
                     credential,
                     loggerFactory.CreateLogger<GitHubNameResolver>()
                 );

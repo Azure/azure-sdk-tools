@@ -16,16 +16,7 @@ namespace APIViewWeb.Repositories
 
         public void UpdateUserPreference(UserPreferenceModel preference)
         {
-            if (_cache.TryGetValue(preference.UserName, out var _preference))
-            {
-                _cache.Set(preference.UserName, preference);
-            }
-            else
-            {
-                _cache.CreateEntry(preference.UserName)
-                .SetSlidingExpiration(TimeSpan.FromHours(2))
-                .SetValue(preference);
-            }
+            _cache.Set(preference.UserName, preference);
         }
 
         public string GetLangauge(string userName)
@@ -37,14 +28,14 @@ namespace APIViewWeb.Repositories
             return "All";
         }
 
-        public ReviewType GetFilterType(string userName)
+        public ReviewType GetFilterType(string userName, ReviewType defaultType = ReviewType.Automatic)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
                 return _preference.FilterType;
             }
 
-            return ReviewType.Automatic;
+            return defaultType;
         }
     }
 }

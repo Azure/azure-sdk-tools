@@ -121,7 +121,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
-            var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin());
+            var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
             ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();
         }

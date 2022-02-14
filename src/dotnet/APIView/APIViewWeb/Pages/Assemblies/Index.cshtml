@@ -276,8 +276,7 @@
                                 <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
                                     <i class="fas fa-angle-right"></i>
                                 </button>
-                                <span>@serviceGroup.ServiceName</span>
-                                <span class="badge badge-info ml-1">@serviceGroup.packages.Values.Sum(x => x.reviews.Count)</span>
+                                <span>@serviceGroup.ServiceName</span>                                
                             </td>
                         </tr>
                         @foreach (var packageGroup in serviceGroup.packages.Values)
@@ -290,7 +289,6 @@
                                         <i class="fas fa-angle-right"></i>
                                     </button>
                                     <span>@packageGroup.PackageDisplayName</span>
-                                    <span class="badge badge-info ml-1">@packageGroup.reviews.Count</span>
                                 </td>
                             </tr>
                             <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">

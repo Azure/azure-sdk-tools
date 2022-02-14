@@ -84,16 +84,21 @@ namespace APIViewWeb
             return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName, ReviewType? filterType = null)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = false");
             queryStringBuilder.Append(" AND r.ServiceName = @serviceName");
             queryStringBuilder.Append(" AND r.PackageDisplayName = @packageDisplayName");
+            if (filterType != null && filterType != ReviewType.All)
+            {
+                queryStringBuilder.Append(" AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
+            }
 
             var reviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@serviceName", serviceName)
-                .WithParameter("@packageDisplayName", packageDisplayName);
+                .WithParameter("@packageDisplayName", packageDisplayName)
+                .WithParameter("@filterType", filterType);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)
@@ -101,7 +106,7 @@ namespace APIViewWeb
                 var result = await itemQueryIterator.ReadNextAsync();
                 reviews.AddRange(result.Resource);
             }
-            return reviews.OrderByDescending(r => r.LastUpdated);
+            return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
     }
 }

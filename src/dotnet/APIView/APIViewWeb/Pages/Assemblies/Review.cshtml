@@ -36,7 +36,7 @@
                                 });
                                 if (review.ReviewId == Model.Review.ReviewId)
                                 {
-                                    <option selected value="@urlValue" data-subtext="@review.Language">@review.DisplayName</option>
+                                    <option selected value="@urlValue" data-subtext="Type: @review.FilterType | Language: @review.Language | Author: @review.Author">@review.DisplayName</option>
                                 }
                                 else
                                 {

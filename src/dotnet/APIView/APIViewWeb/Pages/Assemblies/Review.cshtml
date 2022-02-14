@@ -6,17 +6,48 @@
 }
 
 <div class="container-fluid">
-    <div class="row mt-2 mb-1 pl-1">
+    <div class="row mt-2 mb-0 pl-1">
         <div class="col">
-            <h3>
+            <h3 class="mb-0">
                 @if (Model.Review.ServiceName != null)
                 {
                     @Model.Review.ServiceName
                     <span>&nbsp;|&nbsp;</span>
                 }
-                <small class="text-muted">@Model.Review.PackageDisplayName&nbsp;&nbsp;
-                    <span class="badge badge-info"><em>@Model.Review.Language</em></span>
-                </small>
+                <small class="text-muted">@Model.Review.PackageDisplayName</small>
+                @if (Model.Review.Language != null)
+                {
+                    @switch (Model.Review.Language.ToLower())
+                    {
+                        case "c#":
+                            <span><img class="mx-1" src="~/icons/csharp-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "javascript":
+                            <span><img class="mx-1" src="~/icons/javascript-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "python":
+                            <span><img class="mx-1" src="~/icons/python-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "c":
+                            <span><img class="mx-1" src="~/icons/c-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "c++":
+                            <span><img class="mx-1" src="~/icons/cplusplus-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "go":
+                            <span><img class="mx-1" src="~/icons/go-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "java":
+                            <span><img class="mx-1" src="~/icons/java-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        case "swift":
+                            <span><img class="mx-1" src="~/icons/swift-original.svg" width="40" alt="@Model.Review.Language"></span>
+                            break;
+                        default:
+                            <span class="badge badge-info"><em>@Model.Review.Language</em></span>
+                            break;
+                    }
+                }
             </h3>
         </div>
     </div>

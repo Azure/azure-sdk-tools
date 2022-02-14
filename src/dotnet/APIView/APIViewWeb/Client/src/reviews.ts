@@ -172,16 +172,15 @@
     }
     else 
     {
-      packageDataRows.each(function(index, value) {
-        let langColumn = value.children[4];
-        if (langColumn && langColumn.firstElementChild && langColumn.firstElementChild.textContent && 
-          !langColumn.firstElementChild.textContent.match(RegExp(filterText)))
+      packageDataRows.each(function (index, value) {
+        let langImageAlt = value.children[0].children[0].getAttribute("alt");
+        if (langImageAlt != null && langImageAlt.match(RegExp(filterText)))
         {
-          $(this).addClass('hidden-row-via-filter');
+          $(this).removeClass('hidden-row-via-filter');
         }
         else
         {
-          $(this).removeClass('hidden-row-via-filter');
+          $(this).addClass('hidden-row-via-filter');
         }
       });
     }

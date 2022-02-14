@@ -524,7 +524,7 @@ namespace APIViewWeb.Repositories
 
         public async void UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "Allll");
             await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {

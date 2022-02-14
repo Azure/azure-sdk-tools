@@ -70,7 +70,12 @@ class FunctionNode(NodeEntityBase):
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
-        code = inspect.getsource(self.obj).strip()
+        try:
+            code = inspect.getsource(self.obj).strip()
+        except OSError:
+            # skip functions with no source code
+            self.is_async = False
+            return
         
         for line in code.splitlines():
             # skip decorators

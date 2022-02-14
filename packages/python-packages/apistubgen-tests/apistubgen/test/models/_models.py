@@ -32,7 +32,7 @@ class DocstringClass:
     """A class for testing docstring behavior.
     """
 
-    def docstring_with_default_formal(self, value, another):
+    def docstring_with_default_formal(self, value, another, some_class, **kwargs) -> str:
         """Docstring containing a formal default.
 
         :param value: Some dummy value, defaults
@@ -40,10 +40,12 @@ class DocstringClass:
         :type value: str
         :param another: Something else, defaults
          to dog. Extra text.
-        :type value: str
+        :type another: str
+        :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
+        :type some_class: class
         :rtype: str
         """
-        return f"{value} {another}"
+        return f"{value} {another} {some_class}"
 
 
 class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):

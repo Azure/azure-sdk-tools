@@ -524,7 +524,7 @@ namespace APIViewWeb.Repositories
 
         public async void UpdateReviewBackground()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "Allll");
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
             await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
@@ -645,9 +645,9 @@ namespace APIViewWeb.Repositories
             return response.Values.ToList();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
         {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName);
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
     }
 }

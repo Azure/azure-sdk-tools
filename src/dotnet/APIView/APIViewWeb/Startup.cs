@@ -82,6 +82,7 @@ namespace APIViewWeb
             services.AddSingleton<NotificationManager>();
             services.AddSingleton<PullRequestManager>();
             services.AddSingleton<PackageNameManager>();
+            services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

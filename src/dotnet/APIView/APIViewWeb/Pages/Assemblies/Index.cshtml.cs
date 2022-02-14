@@ -12,10 +12,12 @@ namespace APIViewWeb.Pages.Assemblies
     public class IndexPageModel : PageModel
     {
         private readonly ReviewManager _manager;
+        private readonly UserPreferenceCache _preferenceCache;
 
-        public IndexPageModel(ReviewManager manager)
+        public IndexPageModel(ReviewManager manager, UserPreferenceCache preferenceCache)
         {
             _manager = manager;
+            _preferenceCache = preferenceCache;
         }
 
         [FromForm]
@@ -31,7 +33,7 @@ namespace APIViewWeb.Pages.Assemblies
         public string Language { get; set; } = "All";
 
         [BindProperty(SupportsGet = true)]
-        public ReviewType FilterType { get; set; } = ReviewType.All;
+        public ReviewType FilterType { get; set; } = ReviewType.Automatic;
 
         public IEnumerable<ReviewModel> Assemblies { get; set; } = new List<ReviewModel>();
 
@@ -39,6 +41,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync()
         {
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
+                UserName = User.GetGitHubLogin(),
+                FilterType = this.FilterType,
+                Language = this.Language,
+            });
+
             reviewServices = await _manager.GetReviewsByServicesAsync(FilterType);
         }
 

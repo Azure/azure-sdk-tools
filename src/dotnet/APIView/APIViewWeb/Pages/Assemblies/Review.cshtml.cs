@@ -26,16 +26,21 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly NotificationManager _notificationManager;
 
+        private readonly UserPreferenceCache _preferenceCache;
+
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
-            NotificationManager notificationManager)
+            NotificationManager notificationManager,
+            UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
+            _preferenceCache = preferenceCache;
+
         }
 
         public ReviewModel Review { get; set; }
@@ -116,7 +121,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
-            ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName);
+            var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
+            ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();
         }
 

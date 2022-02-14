@@ -11,9 +11,9 @@ using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.Identity.Client;
-using Microsoft.VisualStudio.Services.Identity;
 using System.Threading;
 using System.Linq;
+using MicrosoftIdentityAlias = Microsoft.VisualStudio.Services.Identity;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Services
 {
@@ -255,7 +255,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<Identity> GetUserFromId(Guid id)
+        public async Task<MicrosoftIdentityAlias.Identity> GetUserFromId(Guid id)
         {
             var client = await GetClientAsync<IdentityHttpClient>();
 

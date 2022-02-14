@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Identity;
 
 namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
 {
@@ -23,12 +24,9 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
         /// <param name="organization">Azure DevOps organization name</param>
         /// <param name="project">Azure DevOps project name</param>
         /// <param name="devOpsTokenVar">Personal Access Token environment variable name</param>
-        /// <param name="aadAppIdVar">AAD App ID environment variable name (Kusto access)</param>
-        /// <param name="aadAppSecretVar">AAD App Secret environment variable name (Kusto access)</param>
-        /// <param name="aadTenantVar">AAD Tenant environment variable name (Kusto access)</param>
-        /// <param name="kustoUrlVar">Kusto URL environment variable name</param>
-        /// <param name="kustoDatabaseVar">Kusto DB environment variable name</param>
-        /// <param name="kustoTableVar">Kusto Table environment variable name</param>
+        /// <param name="aadAppIdVar">AAD App ID environment variable name (OpensourceAPI access)</param>
+        /// <param name="aadAppSecretVar">AAD App Secret environment variable name (OpensourceAPI access)</param>
+        /// <param name="aadTenantVar">AAD Tenant environment variable name (OpensourceAPI access)</param>
         /// <param name="pathPrefix">Azure DevOps path prefix (e.g. "\net")</param>
         /// <param name="dryRun">Do not persist changes</param>
         /// <returns></returns>
@@ -39,9 +37,6 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
             string aadAppIdVar,
             string aadAppSecretVar,
             string aadTenantVar,
-            string kustoUrlVar,
-            string kustoDatabaseVar,
-            string kustoTableVar,
             string pathPrefix = "",
             bool dryRun = false
             )
@@ -52,22 +47,16 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
             }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
-                var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(
-                    Environment.GetEnvironmentVariable(devOpsTokenVar),
+                var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(devOpsTokenVar,
                     $"https://dev.azure.com/{organization}/",
                     loggerFactory.CreateLogger<AzureDevOpsService>()
                 );
                 
                 var gitHubServiceLogger = loggerFactory.CreateLogger<GitHubService>();
                 var gitHubService = new GitHubService(gitHubServiceLogger);
-
-                var githubNameResolver = new GitHubNameResolver(
-                    Environment.GetEnvironmentVariable(aadAppIdVar),
-                    Environment.GetEnvironmentVariable(aadAppSecretVar),
-                    Environment.GetEnvironmentVariable(aadTenantVar),
-                    Environment.GetEnvironmentVariable(kustoUrlVar),
-                    Environment.GetEnvironmentVariable(kustoDatabaseVar),
-                    Environment.GetEnvironmentVariable(kustoTableVar),
+                var credential = new ClientSecretCredential(aadTenantVar, aadAppIdVar, aadAppSecretVar);
+                var githubToAadResolver = new GitHubToAADConverter(
+                    credential,
                     loggerFactory.CreateLogger<GitHubNameResolver>()
                 );
 
@@ -136,9 +125,8 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                         logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                         // Get set of team members in the CODEOWNERS file
-                        var contactResolutionTasks = codeOwnerEntry.Owners
-                            .Select(contact => githubNameResolver.GetInternalUserPrincipal(contact));
-                        var codeownerPrincipals = await Task.WhenAll(contactResolutionTasks);
+                        var codeownerPrincipals = codeOwnerEntry.Owners
+                            .Select(contact => githubToAadResolver.GetUserPrincipalNameFromGithub(contact));
 
                         var codeownersDescriptorsTasks = codeownerPrincipals
                             .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))

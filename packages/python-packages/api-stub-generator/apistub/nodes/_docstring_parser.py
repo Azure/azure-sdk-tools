@@ -7,12 +7,8 @@ from ._argtype import ArgType
 line_tag_regex = re.compile(r"^\s*:([^:]+):(.*)")
 
 default_patterns = [
-    # without quotes, cannot use period.
-    re.compile(r"\s+Default\s+value\s+is\s+([^\".]+)"),
-    re.compile(r",\s+defaults\s+to\s+([^\".]+)."),
-    # permits using . inside double quotes
-    re.compile(r"\s+Default\s+value\s+is\s+\"(.+)\""),
-    re.compile(r",\s+defaults\s+to\s+\"(.+)\"")
+    re.compile(r"\s+Default\s+value\s+is\s+([^\s]+)"),
+    re.compile(r",\s+defaults\s+to\s+([^\s]+)"),
 ]
 
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
@@ -60,7 +56,12 @@ class DocstringParser:
         for pattern in default_patterns:
             match = pattern.search(text)
             if match:
-                return match[1]
+                value = match[1]
+                if value.endswith("."):
+                    value = value[:-1]
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                return value
         return None
 
     def _sanitize_type(self, value):

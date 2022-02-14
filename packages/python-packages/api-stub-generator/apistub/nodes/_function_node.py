@@ -229,7 +229,7 @@ class FunctionNode(NodeEntityBase):
                 if not docstring_match:
                     continue
                 signature_arg.argtype = docstring_match.argtype or signature_arg.argtype
-                signature_arg.default = signature_arg.default if signature_arg.default is not None else docstring_match.default
+                signature_arg.default = docstring_match.default or signature_arg.default
 
             # Update keyword argument metadata from the docstring; otherwise, stick with
             # what was parsed from the signature.

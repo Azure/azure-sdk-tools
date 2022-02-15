@@ -108,8 +108,8 @@ class ClassNode(NodeEntityBase):
 
     def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
         # Add any public class level variables
-        _allowed_types = [str, int, dict, list, float, bool]
-        if not any(isinstance(child_obj, x) for x in _allowed_types):
+        allowed_types = (str, int, dict, list, float, bool)
+        if not isinstance(child_obj, allowed_types):
             return
 
         # if variable is already present in parsed list then just update the value

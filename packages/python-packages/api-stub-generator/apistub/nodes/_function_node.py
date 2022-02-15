@@ -70,7 +70,12 @@ class FunctionNode(NodeEntityBase):
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
-        code = inspect.getsource(self.obj).strip()
+        try:
+            code = inspect.getsource(self.obj).strip()
+        except OSError:
+            # skip functions with no source code
+            self.is_async = False
+            return
         
         for line in code.splitlines():
             # skip decorators
@@ -224,7 +229,7 @@ class FunctionNode(NodeEntityBase):
                 if not docstring_match:
                     continue
                 signature_arg.argtype = docstring_match.argtype or signature_arg.argtype
-                signature_arg.default = signature_arg.default if signature_arg.default is not None else docstring_match.default
+                signature_arg.default = docstring_match.default or signature_arg.default
 
             # Update keyword argument metadata from the docstring; otherwise, stick with
             # what was parsed from the signature.

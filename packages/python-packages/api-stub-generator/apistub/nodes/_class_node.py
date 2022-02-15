@@ -2,9 +2,8 @@ import logging
 import inspect
 from enum import Enum
 import operator
-from typing import TypedDict
 
-from ._base_node import NodeEntityBase
+from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
 from ._enum_node import EnumNode
 from ._key_node import KeyNode
@@ -107,6 +106,24 @@ class ClassNode(NodeEntityBase):
 
         return False
 
+    def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
+        # Add any public class level variables
+        allowed_types = (str, int, dict, list, float, bool)
+        if not isinstance(child_obj, allowed_types):
+            return
+
+        # if variable is already present in parsed list then just update the value
+        var_match = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
+        if var_match:
+            if value:
+                var_match[0].value = value
+            if type_string:
+                var_match[0].type = type_string
+        else:
+            self.child_nodes.append(
+                VariableNode(self.namespace, self, name, type_string, value, False)
+            )
+
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
@@ -117,6 +134,8 @@ class ClassNode(NodeEntityBase):
         # Find any ivar from docstring
         self._parse_ivars()
 
+        is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
+
         # find members in node
         for name, child_obj in inspect.getmembers(self.obj):
             if inspect.isbuiltin(child_obj):
@@ -124,49 +143,44 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    self.child_nodes.append(
-                        FunctionNode(self.namespace, self, child_obj)
-                    )
-            elif self.is_enum and isinstance(child_obj, self.obj):
+                    try:
+                        self.child_nodes.append(
+                            FunctionNode(self.namespace, self, child_obj)
+                        )
+                    except OSError:
+                        # Don't create entries for things that don't have source
+                        pass
+            elif name == "__annotations__":
+                for (item_name, item_type) in child_obj.items():
+                    if item_name.startswith("_"):
+                        continue
+                    if is_typeddict and inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                        self.child_nodes.append(
+                            KeyNode(self.namespace, self, item_name, item_type)
+                        )
+                    else:
+                        type_string = get_qualified_name(item_type, self.namespace)
+                        self._handle_class_variable(child_obj, item_name, type_string=type_string)
+
+            # now that we've looked at the specific dunder properties we are
+            # willing to include, anything with a leading underscore should be ignored.
+            if name.startswith("_"):
+                continue
+
+            if self.is_enum and isinstance(child_obj, self.obj):
                 # Enum values will be of parent instance type
                 child_obj.__name__ = name
-                self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
+                self.child_nodes.append(
+                    EnumNode(self.namespace, self, child_obj)
+                )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
                     self.child_nodes.append(
                         PropertyNode(self.namespace, self, name, child_obj)
                     )
-            elif isinstance(child_obj, dict):
-                # TypedDict names are "__annotations__"
-                if name.startswith("_") and not name == "__annotations__":
-                    continue
-                for (item_name, item_type) in child_obj.items():
-                    if inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
-                        self.child_nodes.append(
-                            KeyNode(self.namespace, self, item_name, item_type)
-                        )
-                    else:
-                        self.child_nodes.append(
-                            PropertyNode(self.namespace, self, item_name, child_obj)
-                        )
-            elif not name.startswith("_") and (
-                isinstance(child_obj, str) or isinstance(child_obj, int)
-            ):
-                # Add any public class level variables
-                # if variable is already present  in parsed list then just update the value
-                var_nodes = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
-                if var_nodes:
-                    var_nodes[0].value = str(child_obj)
-                else:
-                    # Assumption here is that class level variables are either str or int constants
-                    self.child_nodes.append(
-                        (
-                            VariableNode(
-                                self.namespace, self, name, None, str(child_obj), False
-                            )
-                        )
-                    )
+            else:
+                self._handle_class_variable(child_obj, name, value=str(child_obj))
 
     def _parse_ivars(self):
         # This method will add instance variables by parsing docstring

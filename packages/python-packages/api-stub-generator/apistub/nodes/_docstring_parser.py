@@ -6,6 +6,11 @@ from ._argtype import ArgType
 
 line_tag_regex = re.compile(r"^\s*:([^:]+):(.*)")
 
+default_patterns = [
+    re.compile(r"\s+Default\s+value\s+is\s+([^\s]+)"),
+    re.compile(r",\s+defaults\s+to\s+([^\s]+)"),
+]
+
 docstring_types = ["param", "type", "paramtype", "keyword", "rtype"]
 
 docstring_type_keywords = ["type", "vartype", "paramtype"]
@@ -47,13 +52,25 @@ class DocstringParser:
 
         return self._sanitize_type(ret_val)
 
+    def _extract_default(self, text):
+        for pattern in default_patterns:
+            match = pattern.search(text)
+            if match:
+                value = match[1]
+                if value.endswith("."):
+                    value = value[:-1]
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                return value
+        return None
+
     def _sanitize_type(self, value):
         # strip unnecessary quotes from type strings
         for char in ['"', "'", "`"]:
             value = value.replace(char, "")
         return value
 
-    def _process_arg_tuple(self, tag, line1, line2):
+    def _process_arg_tuple(self, tag, line1, line2, default):
         # When two items are found, it is either the name
         # or the type. Example:
         # :param name: The name of the thing.
@@ -63,7 +80,7 @@ class DocstringParser:
         # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
-            arg = ArgType(name=label, argtype=None)
+            arg = ArgType(name=label, argtype=None, default=default)
             self._update_arg(arg, keyword)
             return (arg, True)
         elif keyword in docstring_type_keywords:
@@ -82,12 +99,12 @@ class DocstringParser:
             logging.error(f"Unexpected keyword {keyword}.")
             return None
 
-    def _process_arg_triple(self, tag):
+    def _process_arg_triple(self, tag, default):
         # When three items are found, all necessary info is found
         # and there can only be one simple type
         # Example: :param str name: The name of the thing.
         (keyword, typename, name) = tag
-        arg = ArgType(name=name, argtype=typename)
+        arg = ArgType(name=name, argtype=typename, default=default)
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
@@ -109,6 +126,19 @@ class DocstringParser:
         else:
             logging.error(f"Unexpected keyword: {keyword}")
 
+    """ From a given starting line number, find where the docstring
+        description logically ends.
+    """
+    def _find_end_line(self, lines, start_at):
+        # special case where the line being examined is the last line
+        if start_at + 1 == len(lines):
+            return start_at
+        remaining = lines[start_at + 1:]
+        for (idx, line) in enumerate(remaining):
+            if line_tag_regex.match(line):
+                return start_at + idx + 1
+        return start_at + len(remaining)
+
     def _parse(self):
         """Parses a docstring into an object."""
         if not self.docstring:
@@ -122,10 +152,13 @@ class DocstringParser:
             if not tag_match:
                 continue
 
+            end_line = self._find_end_line(lines, line_no)
+            default = self._extract_default(" ".join(lines[line_no: end_line]))
+
             (tag, line1) = tag_match.groups()
             split_tag = tag.split()
             if len(split_tag) == 3:
-                self._process_arg_triple(split_tag)
+                self._process_arg_triple(split_tag, default)
                 continue
 
             # retrieve next line, if available
@@ -135,7 +168,7 @@ class DocstringParser:
                 line2 = None
 
             if len(split_tag) == 2:
-                self._process_arg_tuple(split_tag, line1.strip(), line2)
+                self._process_arg_tuple(split_tag, line1.strip(), line2, default)
             elif len(split_tag) == 1 and split_tag[0] == "rtype":
                 self.ret_type = self._process_return_type(line1.strip(), line2)
 

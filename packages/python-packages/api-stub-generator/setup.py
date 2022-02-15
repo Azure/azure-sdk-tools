@@ -34,7 +34,7 @@ setup(
         "charset-normalizer"
     ],
     python_requires=">=3.4.0",
-    entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},
+    entry_points={"console_scripts": ["main=apistub:console_entry_point",]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",

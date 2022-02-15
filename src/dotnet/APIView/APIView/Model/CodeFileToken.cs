@@ -18,6 +18,8 @@
 
         public CodeFileTokenKind Kind { get; set; }
 
+        public string CrossLanguageDefId { get; set; }
+
         public override string ToString()
         {
             return $"{Value} ({Kind})";

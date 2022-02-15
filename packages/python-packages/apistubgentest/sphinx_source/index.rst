@@ -11,7 +11,7 @@ Welcome to APIView Tests's documentation!
   :glob:
   :caption: Documentation
 
-  apistubgen.rst
+  apistubgentest.rst
 
 Indices and tables
 ==================

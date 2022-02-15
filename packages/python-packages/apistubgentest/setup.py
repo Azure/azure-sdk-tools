@@ -12,7 +12,7 @@ from io import open
 from setuptools import find_packages, setup
 
 # Change the PACKAGE_NAME only to change folder and different name
-PACKAGE_NAME = "apistubgen"
+PACKAGE_NAME = "apistubgentest"
 PACKAGE_PPRINT_NAME = "ApiView"
 
 # a-b-c => a/b/c
@@ -22,7 +22,7 @@ namespace_name = PACKAGE_NAME.replace('-', '.')
 
 
 # Version extraction inspired from 'requests'
-with open(os.path.join(package_folder_path, 'test', '_version.py')) as fd:
+with open(os.path.join(package_folder_path, '_version.py')) as fd:
     version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 

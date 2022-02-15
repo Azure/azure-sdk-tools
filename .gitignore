@@ -292,7 +292,7 @@ PublishScripts/
 **/[Pp]ackages/*
 !packages/java-packages/
 !packages/python-packages/
-packages/python-packages/apistubgen-tests/_build/
+packages/python-packages/apistubgentest/_build/
 !tools/sdk-testgen/packages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/

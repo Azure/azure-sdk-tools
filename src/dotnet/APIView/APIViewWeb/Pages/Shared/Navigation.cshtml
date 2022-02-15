@@ -15,7 +15,7 @@
                     <span class="icon icon-unknown">&nbsp;&nbsp;</span>
                 }
 
-                <a href="#@item.NavigationId" title="@(item.Text)">@(item.Text.Replace("/subscriptions/{subscriptionId}", "/S/{sid}").Replace("/resourceGroups/{resourceGroupName}/", "/RG/{rgn}"))</a>
+                <a href="#@item.NavigationId" title="@(item.Text)">@item.Text</a>
 
                 <partial name="Shared/Navigation" model="item.ChildItems"/>
             </li>

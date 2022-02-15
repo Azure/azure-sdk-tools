@@ -26,13 +26,14 @@ namespace APIViewWeb
         // squatting on `.json`.  We'll have to fix this before we ask anyone
         // to use ApiView for swagger files.
         public override string Extension => ".swagger";
+        
 
         // I don't really know what this is doing, but the other language
         // services do the same.  It'd probably be worth making this the default
         // implementation if everyone needs to copy it as-is.
         public override bool CanUpdate(string versionString) => false;
 
-        public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) =>
+        public async Task<CodeFile> GetCodeFileInternalAsync(string originalName, Stream stream, bool runAnalysis) => 
          SwaggerVisitor.GenerateCodeListing(originalName, await JsonDocument.ParseAsync(stream));
 
         /// <summary>
@@ -473,6 +474,8 @@ namespace APIViewWeb
             /// </summary>
             /// <param name="name">Display name of the child.</param>
             /// <param name="navigationId">Navigation ID of the child.</param>
+            /// <param name="longText"></param>
+            /// <param name="navigationIdPrefix"></param>
             /// <returns>The child node.</returns>
             public SwaggerTree Add(string name, string navigationId, string longText = null)
             {
@@ -526,9 +529,10 @@ namespace APIViewWeb
             /// <returns>An ApiView CodeFile.</returns>
             public static CodeFile GenerateCodeListing(string originalName, JsonDocument document)
             {
+                var navigationIdPrefix = $"{originalName}"; 
                 // Process the document
                 SwaggerVisitor visitor = new();
-                visitor.Visit(document.RootElement, visitor._nav);
+                visitor.Visit(document.RootElement, visitor._nav, navigationIdPrefix);
 
                 // Ensure we're looking at OpenAPI 2.0
                 if (GetString(document, "swagger") != "2.0")
@@ -552,15 +556,16 @@ namespace APIViewWeb
             /// </summary>
             /// <param name="element">The JSON value.</param>
             /// <param name="nav">Optional document navigation info.</param>
-            private void Visit(JsonElement element, SwaggerTree nav = null)
+            /// <param name="navigationIdPrefix"></param>
+            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "")
             {
                 switch (element.ValueKind)
                 {
                     case JsonValueKind.Object:
-                        VisitObject(element, nav);
+                        VisitObject(element, nav, navigationIdPrefix);
                         break;
                     case JsonValueKind.Array:
-                        VisitArray(element);
+                        VisitArray(element, navigationIdPrefix);
                         break;
                     case JsonValueKind.False:
                     case JsonValueKind.Null:
@@ -580,7 +585,8 @@ namespace APIViewWeb
             /// </summary>
             /// <param name="obj">The JSON object.</param>
             /// <param name="nav">Optional document navigation info.</param>
-            private void VisitObject(JsonElement obj, SwaggerTree nav)
+            /// <param name="navigationIdPrefix"></param>
+            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix)
             {
                 bool multiLine = !FitsOnOneLine(obj);
                 using (_writer.Scope("{ ", " }", multiLine))
@@ -612,7 +618,10 @@ namespace APIViewWeb
                         _writer.Write(CodeFileTokenKind.MemberName, property.Name);
 
                         // Create an ID for this property
-                        string id = string.Join('-', _path).TrimStart('#');
+                        
+                        var idPrefix = navigationIdPrefix.Length==0? "": $"{navigationIdPrefix}_";
+                        
+                        string id = $"{idPrefix}{string.Join('-', _path).TrimStart('#')}";
                         _writer.AnnotateDefinition(id);
 
                         // Optionally add a navigation tree node
@@ -631,7 +640,7 @@ namespace APIViewWeb
 
                         // Visit the value
                         _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
-                        Visit(property.Value, next);
+                        Visit(property.Value, next, navigationIdPrefix);
 
                         // Make $refs linked
                         if (property.Name == "$ref" &&
@@ -651,7 +660,8 @@ namespace APIViewWeb
             /// Generate the listing for an array.
             /// </summary>
             /// <param name="array">The array.</param>
-            private void VisitArray(JsonElement array)
+            /// <param name="navigationIdPrefix"></param>
+            private void VisitArray(JsonElement array, string navigationIdPrefix)
             {
                 bool multiLine = !FitsOnOneLine(array);
                 using (_writer.Scope("[ ", " ]", multiLine))
@@ -666,7 +676,7 @@ namespace APIViewWeb
                             if (multiLine) { _writer.WriteLine(); }
                         }
                         _path.Add(index.ToString());
-                        Visit(child);
+                        Visit(child, null, navigationIdPrefix);
                         _path.RemoveAt(_path.Count - 1);
                         index++;
                     }

@@ -30,7 +30,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="ExactFormatting\*.cs" />
-    <ProjectReference Include="..\APIViewWeb\APIViewWeb.csproj" />
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 

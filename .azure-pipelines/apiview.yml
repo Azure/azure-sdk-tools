@@ -41,6 +41,7 @@ variables:
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
+  PythonParserTestPackagePath: 'packages/python-packages/apistubgentest'
   ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
@@ -100,7 +101,7 @@ stages:
           - task: UsePythonVersion@0
 
           - script: |
-              pip install $(PythonParserPackagePath) $(ProtocolParserPackagePath)
+              pip install $(PythonParserPackagePath) $(ProtocolParserPackagePath) $(PythonParserTestPackagePath)
               pip install virtualenv aiohttp chardet trio
             displayName: 'Setup Python Environment'
 
@@ -187,7 +188,10 @@ stages:
               publishTestResults: false
 
           - script: |
-              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              cd $(Build.SourcesDirectory)/$(PythonParserTestPackagePath)
+              pip install .
+              cd ..
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)              
               pip install tox
               tox
             displayName: 'Test Python Package Parser'

@@ -6,7 +6,7 @@
 
 from tkinter import Variable
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
-from apistubgen.tests import (
+from apistubgentest.models import (
     FakeTypedDict as FakeTypedDict,
     FakeObject as FakeObject,
     PublicPrivateClass as PublicPrivateClass
@@ -15,7 +15,7 @@ from apistubgen.tests import (
 
 class TestClassParsing:
     
-    pkg_namespace = "apistubgen.tests._api_view_tests"
+    pkg_namespace = "apistubgentest.models._models"
 
     def _check_nodes(self, nodes, checks):
         assert len(nodes) == len(checks)

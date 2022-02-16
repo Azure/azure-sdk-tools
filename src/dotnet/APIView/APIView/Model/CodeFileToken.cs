@@ -8,6 +8,7 @@
             NavigateToId = null;
             Kind = kind;
             DefinitionId = null;
+            CrossLanguageDefId = null;
         }
 
         public string DefinitionId { get; set; }

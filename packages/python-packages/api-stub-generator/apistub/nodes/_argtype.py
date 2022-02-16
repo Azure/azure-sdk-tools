@@ -21,13 +21,6 @@ class ArgType:
         self.default = default
         self.function_node = func_node
 
-
-    def set_function_node(self, func_node):
-        # Function node which is parent node can set it's refernce once docstring parser creates Argtype objects
-        # This function node will be used to report any error found in arg while generating token.
-        self.function_node = func_node
-
-
     def generate_tokens(self, apiview, function_id, add_line_marker):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ApiVersion apiview: The ApiView

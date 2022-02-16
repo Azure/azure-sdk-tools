@@ -185,7 +185,7 @@ class FunctionNode(NodeEntityBase):
             # Add separator to differentiate pos_arg and keyword args
             self.args["*"] = ArgType("*")
             for argname, arg in sorted(self.kw_args.items()):
-                arg.set_function_node(self)
+                arg.function_node = self
                 self.args[argname] = arg
 
         # re-append "**kwargs" to the end of the arguments list

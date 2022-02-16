@@ -93,18 +93,16 @@ class ModuleNode(NodeEntityBase):
         """
         if self.child_nodes:
             navigation = Navigation(self.namespace_id, self.namespace_id)
-            navigation.set_tag(NavigationTag(Kind.type_module))
+            navigation.tag = NavigationTag(Kind.type_module)
             # Generate child navigation for each child nodes
             for c in filter(filter_function, self.child_nodes):
                 child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.set_tag(NavigationTag(Kind.type_method))
+                child_nav.tag = NavigationTag(Kind.type_method)
                 navigation.add_child(child_nav)
 
             for c in filter(filter_class, self.child_nodes):
                 child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.set_tag(
-                    NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
-                )
+                child_nav.tag = NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
                 navigation.add_child(child_nav)
             return navigation
 

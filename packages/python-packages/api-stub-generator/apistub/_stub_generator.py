@@ -116,7 +116,7 @@ class StubGenerator:
 
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
-        if apiview.Diagnostics:
+        if apiview.diagnostics:
             # Show error report in console
             if not self.hide_report:
                 print("************************** Error Report **************************")
@@ -176,7 +176,7 @@ class StubGenerator:
 
         self.module_dict = {}
         nodeindex = NodeIndex()
-        apiview = ApiView(nodeindex, package_name, version, namespace)
+        apiview = ApiView(nodeindex, package_name, namespace)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -192,7 +192,7 @@ class StubGenerator:
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
-        navigation.set_tag(NavigationTag(Kind.type_package))
+        navigation.tag = NavigationTag(Kind.type_package)
         apiview.add_navigation(navigation)
 
         # Generate tokens

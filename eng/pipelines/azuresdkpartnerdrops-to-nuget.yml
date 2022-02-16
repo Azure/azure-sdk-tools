@@ -1,0 +1,25 @@
+parameters:
+- name: PartnerDropsBlobPath
+  type: string
+  default: ''
+- name: PartnerDropsSubscription
+  type: string
+  default: ''
+- name: PartnerDropsStorageName
+  type: string
+  default: ''
+- name: PartnerDropsContainerName
+  type: string
+  default: ''
+- name: PartnerDropsBlobPrefix
+  type: string
+  default: ''
+
+extends:
+  template: /eng/pipelines/templates/steps/azuresdkpartnerdrops-to-nugetfeed.yml
+  parameters:
+    PartnerDropsBlobPath: ${{ parameters.PartnerDropsBlobPath }}
+    PartnerDropsSubscription: ${{ parameters.PartnerDropsSubscription }}
+    PartnerDropsStorageName: ${{ parameters.PartnerDropsStorageName }}
+    PartnerDropsContainerName: ${{ parameters.PartnerDropsContainerName }}
+    PartnerDropsBlobPrefix: ${{ parameters.PartnerDropsBlobPrefix }}

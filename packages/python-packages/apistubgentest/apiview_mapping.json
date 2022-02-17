@@ -1,6 +1,6 @@
 {
     "CrossLanguageDefinitionId": {
-        "DocstringClass.docstring_with_formal_default": "Docstring_DocstringWithFormalDefault",
+        "DocstringClass.docstring_with_default_formal": "Docstring_DocstringWithFormalDefault",
         "DocstringClass": "Formal_Model_Id"
     }
 }

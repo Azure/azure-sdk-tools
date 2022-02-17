@@ -10,7 +10,7 @@ class TestApiView:
 
     def _count_newlines(self, apiview):
         newline_count = 0
-        for token in apiview.Tokens[::-1]:
+        for token in apiview.tokens[::-1]:
             if token.kind == TokenKind.Newline:
                 newline_count += 1
             else:

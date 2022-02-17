@@ -91,7 +91,16 @@ class StubGenerator:
         self.filter_namespace = ''
         if args.filter_namespace:
             self.filter_namespace = args.filter_namespace
-            
+
+
+    def load_mapping(self) -> dict:
+        # FIXME: Will need to address this!
+        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
+            return {}
+        mapping_path = os.path.join(self.pkg_path, "apiview_mapping.json")
+        with open(mapping_path, "r") as json_file:
+            mapping = json.load(json_file)
+            return mapping.get("CrossLanguageDefinitionId", None) or {}
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
@@ -176,7 +185,7 @@ class StubGenerator:
 
         self.module_dict = {}
         nodeindex = NodeIndex()
-        apiview = ApiView(nodeindex, package_name, namespace)
+        apiview = ApiView(nodeindex, package_name, namespace, cross_language_map=self.load_mapping())
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 

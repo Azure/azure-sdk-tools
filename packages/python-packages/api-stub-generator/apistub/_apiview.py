@@ -28,7 +28,7 @@ class ApiView:
     :param str: ver_string
     """
 
-    def __init__(self, nodeindex, pkg_name="", namespace = ""):
+    def __init__(self, nodeindex, pkg_name="", namespace = "", cross_language_map=None):
         self.name = pkg_name
         self.version = 0
         self.version_string = ""
@@ -40,6 +40,7 @@ class ApiView:
         self.namespace = namespace
         self.nodeindex = nodeindex
         self.package_name = pkg_name
+        self.cross_language_map = cross_language_map
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
@@ -110,9 +111,10 @@ class ApiView:
         token.definition_id = text
         self.add_token(token)
 
-    def add_text(self, id, text):
+    def add_text(self, id, text, cross_language_id=None):
         token = Token(text, TokenKind.Text)
         token.definition_id = id
+        token.cross_language_definition_id = cross_language_id
         self.add_token(token)
 
     def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
@@ -202,6 +204,12 @@ class ApiView:
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
 
+    def _cross_language_id(self, namespace, name):
+        if name.startswith(namespace):
+            key = name[len(namespace) + 1:]
+        else:
+            key = name
+        return self.cross_language_map.get(key, None)
 
 class APIViewEncoder(JSONEncoder):
     """Encoder to generate json for APIview object
@@ -230,6 +238,8 @@ class APIViewEncoder(JSONEncoder):
                     del obj_dict["DefinitionId"]
                 if not obj.navigate_to_id:
                     del obj_dict["NavigateToId"]
+                if not obj.cross_language_definition_id:
+                    del obj_dict["CrossLanguageDefinitionId"]
             elif isinstance(obj, Diagnostic):
                 obj_dict = {self._snake_to_pascal(k):v for k, v in obj.__dict__.items()}
                 if not obj.help_link_uri:

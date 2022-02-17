@@ -81,28 +81,8 @@
         {%- if example.checkResponse and not example.isPageable%}
             t.Logf("Response result: %#v\n", {{resVariable}}.{%- if example.isMultiRespOperation %}Value{%- else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{%- endif %})
 
-            {%- for outputVariableName, variableProperties in step.outputVariables%}
-                {%- if loop.first %}
-
-                var respBody interface{}
-                byteBody, err := json.Marshal({{resVariable}}.{%- if example.isMultiRespOperation %}Value{%- else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{%- endif %})
-                if err != nil {
-                    t.Fatalf("Marshall response body failed: %v", err)
-                }
-                err = json.Unmarshal(byteBody, &respBody)
-                if err != nil {
-                    t.Fatalf("Unmarshall response body to JSON failed: %v", err)
-                }
-                {%- endif %}
-                pointer, err {%- if loop.first %}:{%- endif %}= jsonpointer.New("{{variableProperties.fromResponse}}")
-                if err != nil {
-                    t.Fatalf("Unable to create Jsonpointer for {{variableProperties.fromResponse}} : %v",  err)
-                }
-                tmp, _, err {%- if loop.first %}:{%- endif %}= pointer.Get(respBody)
-                if err != nil {
-                    t.Fatalf("Get JsonPointer failed {{variableProperties.fromResponse}} in %v: %v", byteBody[:], err)
-                }
-                {{outputVariableName}} = tmp.(string)
+            {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}.{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
             {%- endfor %}
         {%- endif %}
     {%- elif step.type == "armTemplateDeployment" %}

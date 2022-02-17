@@ -13,7 +13,9 @@ import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
-import { StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+import { OutputVariableModelKind, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+import { Schema } from '@autorest/codemodel/dist/model/common/schema';
+import { Language, Languages } from '@autorest/codemodel';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     parentVariables: Record<string, string> = {};
@@ -118,9 +120,24 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 const example = (step as StepRestCallModel).exampleModel as GoExampleModel;
                 // request and response parse
                 this.fillExampleOutput(example);
+
+                // response output variable convert
                 if (step.outputVariables && Object.keys(step.outputVariables).length > 0) {
-                    this.context.importManager.add('github.com/go-openapi/jsonpointer');
                     example.checkResponse = true;
+                    for (const [variableName, variableConfig] of Object.entries((step as StepRestCallModel).outputVariablesModel)) {
+                        let isPtr = false;
+                        for (let i = 0; i < variableConfig.length; i++) {
+                            if (variableConfig[i].kind === OutputVariableModelKind.object) {
+                                variableConfig[i].languageName = (variableConfig[i].value as Languages).go.name;
+                                isPtr = !(variableConfig[i].value as Languages).go?.byValue;
+                            }else if (variableConfig[i].kind === OutputVariableModelKind.index){
+                                variableConfig[i].languageName =`[${variableConfig[i].value}]`;
+                            }else if (variableConfig[i].kind === OutputVariableModelKind.key){
+                                variableConfig[i].languageName =`["${variableConfig[i].value}"]`;
+                            }
+                        }
+                        step.outputVariables[variableName]['isPtr'] = isPtr;
+                    }
                 }
                 break;
             }

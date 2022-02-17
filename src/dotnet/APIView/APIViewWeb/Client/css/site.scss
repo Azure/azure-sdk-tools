@@ -19,9 +19,6 @@
 -------------------------------------------------- */
 $gray-light: #f6f8fa;
 
-// Change breadcrumb divider
-$breadcrumb-divider: quote(">");
-
 a.navbar-brand
 {
     white-space: normal;
@@ -650,12 +647,4 @@ mark {
 .rounded-left-0 {
     border-top-left-radius: 0px !important;
     border-bottom-left-radius: 0px !important;
-}
-
-.language-icon {
-    font-size: 1.5em;
-    vertical-align: middle;
-    color: #686868;
-    margin-right: 4px;
-    margin-left: 3px;
 }

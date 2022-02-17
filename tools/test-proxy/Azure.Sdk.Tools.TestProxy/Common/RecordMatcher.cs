@@ -62,7 +62,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "sec-ch-ua-platform",
             "Referrer",
             "Referer",
-            "Origin"
+            "Origin",
+            "Content-Length"
         };
 
         /// <summary>

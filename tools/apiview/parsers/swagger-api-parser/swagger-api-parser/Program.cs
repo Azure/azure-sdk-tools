@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.CommandLine;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ApiView;
 using APIView;
 using APIViewWeb;
@@ -31,7 +32,15 @@ namespace swagger_api_parser
             }
         }
 
-        private static NavigationItem[] RebuildNavigation(IEnumerable<NavigationItem> navigation, string swaggerFileName)
+        static string GetResourceProviderFromPath(string path)
+        {
+            const string resourceProviderPattern = "/providers/(:?[^{/]+)";
+            var match = Regex.Match(path, resourceProviderPattern, RegexOptions.RightToLeft);
+            return match.Success ? match.Groups[1].Value : null;
+        }
+
+        private static NavigationItem[] RebuildNavigation(IEnumerable<NavigationItem> navigation,
+            string swaggerFileName)
         {
             var result = new List<NavigationItem>();
 
@@ -39,16 +48,15 @@ namespace swagger_api_parser
             {
                 Text = "general", NavigationId = $"{swaggerFileName}_-swagger",
             };
-            
+
             var operationIdNavigationItem = new NavigationItem()
             {
                 Text = "operationIds", NavigationId = $"{swaggerFileName}_-swagger",
             };
-            
-            var pathNavigationItem = new NavigationItem()
-            {
-                Text = "paths", NavigationId = $"{swaggerFileName}_-paths",
-            };
+
+            var pathNavigationItem = new NavigationItem() {Text = "paths", NavigationId = $"{swaggerFileName}_-paths",};
+
+            var aggregatedPaths = new Dictionary<string, NavigationItem[]>();
 
             string[] generalKeys = new string[]
             {
@@ -62,18 +70,39 @@ namespace swagger_api_parser
                     generalNavigationItem.ChildItems =
                         generalNavigationItem.ChildItems.Concat(new NavigationItem[] {item}).ToArray();
                 }
-                else if(item.Text.Equals("paths"))
-                {   
+                else if (item.Text.Equals("paths"))
+                {
+                    // extract operationIds from path 
                     foreach (var path in item.ChildItems)
                     {
                         foreach (var operationIdItem in path.ChildItems)
                         {
                             operationIdNavigationItem.ChildItems =
-                                operationIdNavigationItem.ChildItems.Concat(new NavigationItem[] {operationIdItem}).ToArray();
+                                operationIdNavigationItem.ChildItems.Concat(new NavigationItem[] {operationIdItem})
+                                    .ToArray();
                         }
 
+                        var resourceProvider = GetResourceProviderFromPath(path.Text);
                         path.ChildItems = Array.Empty<NavigationItem>();
-                        pathNavigationItem.ChildItems = pathNavigationItem.ChildItems.Concat(new NavigationItem[]{path}).ToArray();;
+                        if (resourceProvider == null)
+                        {
+                            // If there is no resource provider, add the path to the general paths. Do need to add the path to aggregatedPath.
+                            pathNavigationItem.ChildItems = pathNavigationItem.ChildItems
+                                .Concat(new NavigationItem[] {path}).ToArray();
+                            continue;
+                        }
+
+                        // For Azure management API the API path is too long to present, To resolve this issue, we need to add the path to the aggregated paths.
+                        var index = path.Text.LastIndexOf(resourceProvider, StringComparison.Ordinal);
+                        var apiPath = path.Text[..(index + resourceProvider.Length)];
+                        if (aggregatedPaths.TryGetValue(apiPath, out NavigationItem[] existing))
+                        {
+                            aggregatedPaths[apiPath] = existing.Concat(new NavigationItem[] {path}).ToArray();
+                        }
+                        else
+                        {
+                            aggregatedPaths.Add(apiPath, new NavigationItem[] {path});
+                        }
                     }
                 }
                 else
@@ -81,6 +110,25 @@ namespace swagger_api_parser
                     result.Add(item);
                 }
             }
+
+            foreach (var (aggregatedPath, pathItems) in aggregatedPaths)
+            {
+                var parentNavigationItem = new NavigationItem()
+                {
+                    Text = aggregatedPath, NavigationId = $"{swaggerFileName}_-paths",
+                };
+
+                foreach (var path in pathItems)
+                {
+                    path.Text = path.Text[aggregatedPath.Length..];
+                    parentNavigationItem.ChildItems =
+                        parentNavigationItem.ChildItems.Concat(new NavigationItem[] {path}).ToArray();
+                }
+
+                pathNavigationItem.ChildItems = pathNavigationItem.ChildItems
+                    .Concat(new NavigationItem[] {parentNavigationItem}).ToArray();
+            }
+
 
             result.Insert(0, generalNavigationItem);
             result.Insert(1, pathNavigationItem);

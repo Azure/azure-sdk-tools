@@ -61,7 +61,7 @@ namespace swagger_api_parser
             string[] generalKeys = new string[]
             {
                 "swagger", "host", "info", "basePath", "schemes", "consumes", "produces", "securityDefinitions",
-                "security"
+                "security", "x-ms-parameterized-host"
             };
             foreach (var item in navigation)
             {

@@ -11,8 +11,8 @@ export async function getChangedPackageDirectory(root: string = './') {
   const files = gitStatus.files;
   for (const file of files) {
     const filePath = file.path;
-      if (filePath.match(/sdk\/[^\/]*\/arm-.*/)) {
-      const packageDirectory = /sdk\/[^\/]*\/arm-[^\/]*/.exec(filePath);
+      if (filePath.match(/sdk\/[^\/]*\/(arm-.*)|(.*-rest)/)) {
+      const packageDirectory = /sdk\/[^\/]*\/(arm-[^\/]*)|(.*-rest)/.exec(filePath);
       if (packageDirectory) {
         changedPackageDirectories.add(packageDirectory[0]);
       }

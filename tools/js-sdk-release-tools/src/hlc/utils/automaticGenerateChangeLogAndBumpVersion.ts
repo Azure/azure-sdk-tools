@@ -1,13 +1,13 @@
-import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../changelog/extractMetaData";
-import {Changelog, changelogGenerator} from "../changelog/changelogGenerator";
+import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../../changelog/extractMetaData";
+import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator";
 import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2,
     makeChangesForReleasingTrack2
 } from "./modifyChangelogFileAndBumpVersion";
-import {logger} from "../utils/logger";
-import {getLatestStableVersion, getNewVersion, isBetaVersion} from "../utils/version";
+import {logger} from "../../utils/logger";
+import {getLatestStableVersion, getNewVersion, isBetaVersion} from "../../utils/version";
 import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 
 const fs = require('fs');

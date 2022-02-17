@@ -9,11 +9,11 @@ import {
     getPackageNameFromReadmeMd,
     getPackagePathFromReadmePath,
     validPackageName
-} from "./llc/utils";
-import {generateSampleReadmeMd, modifyExistingReadmeMd} from "./llc/generateSampleReadmeMd";
+} from "./llc/utils/utils";
+import {generateSampleReadmeMd, modifyExistingReadmeMd} from "./llc/utils/generateSampleReadmeMd";
 import * as fs from "fs";
 import * as path from "path";
-import {buildGeneratedCodes, generateCodes} from "./llc/llcCore";
+import {buildGeneratedCodes, generateCodes} from "./llc/generateRLCInTerminal/generateRLCInTerminal";
 
 const shell = require('shelljs');
 

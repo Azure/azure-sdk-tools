@@ -107,7 +107,7 @@ namespace APIViewWeb
             /// could be a single tab character or four space characters).  The
             /// default value is four space characters.
             /// </summary>
-            public string IndentText { get; set; } = "    ";
+            public string IndentText { get; set; } = "  ";
 
             /// <summary>
             /// Gets the depth of the current indent level.
@@ -475,7 +475,6 @@ namespace APIViewWeb
             /// <param name="name">Display name of the child.</param>
             /// <param name="navigationId">Navigation ID of the child.</param>
             /// <param name="longText"></param>
-            /// <param name="navigationIdPrefix"></param>
             /// <returns>The child node.</returns>
             public SwaggerTree Add(string name, string navigationId, string longText = null)
             {
@@ -647,7 +646,7 @@ namespace APIViewWeb
                             property.Value.ValueKind == JsonValueKind.String &&
                             property.Value.GetString().StartsWith("#/")) // Ignore external docs
                         {
-                            _writer.AnnotateLink(property.Value.GetString().TrimStart('#').Replace('/', '-'), CodeFileTokenKind.StringLiteral);
+                            _writer.AnnotateLink($"{idPrefix}{property.Value.GetString().TrimStart('#').Replace('/', '-')}", CodeFileTokenKind.StringLiteral);
                         }
 
                         // Remove the property from the current path

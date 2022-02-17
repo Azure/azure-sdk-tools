@@ -31,11 +31,71 @@ namespace swagger_api_parser
             }
         }
 
+        private static NavigationItem[] RebuildNavigation(IEnumerable<NavigationItem> navigation, string swaggerFileName)
+        {
+            var result = new List<NavigationItem>();
+
+            var generalNavigationItem = new NavigationItem()
+            {
+                Text = "general", NavigationId = $"{swaggerFileName}_-swagger",
+            };
+            
+            var operationIdNavigationItem = new NavigationItem()
+            {
+                Text = "operationIds", NavigationId = $"{swaggerFileName}_-swagger",
+            };
+            
+            var pathNavigationItem = new NavigationItem()
+            {
+                Text = "paths", NavigationId = $"{swaggerFileName}_-paths",
+            };
+
+            string[] generalKeys = new string[]
+            {
+                "swagger", "host", "info", "basePath", "schemes", "consumes", "produces", "securityDefinitions",
+                "security"
+            };
+            foreach (var item in navigation)
+            {
+                if (generalKeys.Contains(item.Text))
+                {
+                    generalNavigationItem.ChildItems =
+                        generalNavigationItem.ChildItems.Concat(new NavigationItem[] {item}).ToArray();
+                }
+                else if(item.Text.Equals("paths"))
+                {   
+                    foreach (var path in item.ChildItems)
+                    {
+                        foreach (var operationIdItem in path.ChildItems)
+                        {
+                            operationIdNavigationItem.ChildItems =
+                                operationIdNavigationItem.ChildItems.Concat(new NavigationItem[] {operationIdItem}).ToArray();
+                        }
+
+                        path.ChildItems = Array.Empty<NavigationItem>();
+                        pathNavigationItem.ChildItems = pathNavigationItem.ChildItems.Concat(new NavigationItem[]{path}).ToArray();;
+                    }
+                }
+                else
+                {
+                    result.Add(item);
+                }
+            }
+
+            result.Insert(0, generalNavigationItem);
+            result.Insert(1, pathNavigationItem);
+            result.Insert(result.Count(), operationIdNavigationItem);
+            return result.ToArray();
+        }
+
         public async Task GenerateCodeFile(string outputFile)
         {
             CodeFile result = new CodeFile
             {
-                Language = "Swagger", VersionString = "0", Name = outputFile, PackageName = outputFile,
+                Language = "Swagger",
+                VersionString = "0",
+                Name = outputFile,
+                PackageName = outputFile,
                 Tokens = new CodeFileToken[] { },
                 Navigation = new NavigationItem[] { }
             };
@@ -43,26 +103,27 @@ namespace swagger_api_parser
 
             foreach (var (swaggerFileName, codeFile) in this.originalResult)
             {
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(swaggerFileName); 
+                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(swaggerFileName);
                 result.Tokens = result.Tokens.Concat(codeFile.Tokens).Select(it => it).ToArray();
-                
+
                 // Add file name as top level to navigation
                 var navigation = new NavigationItem
                 {
                     Text = swaggerFileName,
                     LongText = null,
                     NavigationId = $"{swaggerFileName}_-swagger",
-                    ChildItems = codeFile.Navigation.Select(it => it).ToArray()
+                    ChildItems = RebuildNavigation(codeFile.Navigation, swaggerFileName)
                 };
-                result.Navigation = result.Navigation.Concat(new NavigationItem[] { navigation }).ToArray();
+                result.Navigation = result.Navigation.Concat(new NavigationItem[] {navigation}).ToArray();
             }
 
             Console.WriteLine($"Writing {outputFile}");
             var outputFilePath = Path.GetFullPath(outputFile);
-            await using ( var fileWriteStream = File.Open(outputFilePath, FileMode.Create))
+            await using (var fileWriteStream = File.Open(outputFilePath, FileMode.Create))
             {
                 await result.SerializeAsync(fileWriteStream);
             }
+
             Console.WriteLine("finished");
         }
     }
@@ -75,25 +136,25 @@ namespace swagger_api_parser
             var swaggers = new Argument<IEnumerable<string>>("swaggers",
                 "The input swaggers file. Can be a single file or multiple files separated by space.");
 
-            var output = new Option<string>(name: "--output", description: "The output file path.", getDefaultValue: ()=> "swagger.json");
-            var cmd = new RootCommand {swaggers, output };
+            var output = new Option<string>(name: "--output", description: "The output file path.",
+                getDefaultValue: () => "swagger.json");
+            var cmd = new RootCommand {swaggers, output};
 
             cmd.Description = "Parse swagger file into codefile.";
 
             cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile) =>
             {
                 var enumerable = swaggerFiles as string[] ?? swaggerFiles.ToArray();
-                if(!enumerable.Any())
+                if (!enumerable.Any())
                 {
                     Console.WriteLine("No swagger files specified. For usage, run with --help");
                     return;
                 }
-                
+
                 await HandleGenerateCodeFile(enumerable, outputFile);
             }, swaggers, output);
-            
-            return Task.FromResult(cmd.Invoke(args));
 
+            return Task.FromResult(cmd.Invoke(args));
         }
 
         static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output)

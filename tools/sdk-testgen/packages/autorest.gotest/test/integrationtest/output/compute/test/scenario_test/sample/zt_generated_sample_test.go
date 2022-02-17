@@ -12,7 +12,6 @@ import (
 	"context"
 	"testing"
 
-	"encoding/json"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -21,7 +20,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager//test/scenario_test"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
-	"github.com/go-openapi/jsonpointer"
 )
 
 var (
@@ -125,25 +123,7 @@ func scenarioMicrosoftSignalrserviceBasicCrud(t *testing.T) {
 			t.Fatalf("Request error: %v", err)
 		}
 		t.Logf("Response result: %#v\n", proximityPlacementGroupsClientCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
-
-		var respBody interface{}
-		byteBody, err := json.Marshal(proximityPlacementGroupsClientCreateOrUpdateResponse.ProximityPlacementGroupsClientCreateOrUpdateResult)
-		if err != nil {
-			t.Fatalf("Marshall response body failed: %v", err)
-		}
-		err = json.Unmarshal(byteBody, &respBody)
-		if err != nil {
-			t.Fatalf("Unmarshall response body to JSON failed: %v", err)
-		}
-		pointer, err := jsonpointer.New("/id")
-		if err != nil {
-			t.Fatalf("Unable to create Jsonpointer for /id : %v", err)
-		}
-		tmp, _, err := pointer.Get(respBody)
-		if err != nil {
-			t.Fatalf("Get JsonPointer failed /id in %v: %v", byteBody[:], err)
-		}
-		fakeScenarioVar = tmp.(string)
+		fakeScenarioVar = *proximityPlacementGroupsClientCreateOrUpdateResponse.ID
 	}
 
 	// From step Delete-proximity_placement_group

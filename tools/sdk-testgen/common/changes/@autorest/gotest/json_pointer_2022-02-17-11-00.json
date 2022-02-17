@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "Change output variable value fetch method according to new testmodeler.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

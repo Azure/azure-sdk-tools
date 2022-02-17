@@ -86,13 +86,13 @@ namespace swagger_api_parser
                         path.ChildItems = Array.Empty<NavigationItem>();
                         if (resourceProvider == null)
                         {
-                            // If there is no resource provider, add the path to the general paths. Do need to add the path to aggregatedPath.
+                            // If there is no resource provider, add the path to the paths directly.
                             pathNavigationItem.ChildItems = pathNavigationItem.ChildItems
                                 .Concat(new NavigationItem[] {path}).ToArray();
                             continue;
                         }
 
-                        // For Azure management API the API path is too long to present, To resolve this issue, we need to add the path to the aggregated paths.
+                        // For Azure management plane API the API path is too long to present, To resolve this issue, we need to add the path to the aggregated paths.
                         var index = path.Text.LastIndexOf(resourceProvider, StringComparison.Ordinal);
                         var apiPath = path.Text[..(index + resourceProvider.Length)];
                         if (aggregatedPaths.TryGetValue(apiPath, out NavigationItem[] existing))

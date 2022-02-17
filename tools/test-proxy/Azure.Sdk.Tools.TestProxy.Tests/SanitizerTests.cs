@@ -613,6 +613,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
         }
 
+        [Fact]
+        public void BodyStringSanitizerIgnoresNonTextualBodies()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var bodyStringSanitizer = new BodyStringSanitizer("content");
+            session.Session.Sanitize(bodyStringSanitizer);
+
+            Assert.Equal(content, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
         [Theory]
         [InlineData("/v2.0/", "<oath-v2>", "Test.RecordEntries/oauth_request.json")]
         [InlineData("https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010", "<partofpath>", "Test.RecordEntries/request_with_subscriptionid.json")]

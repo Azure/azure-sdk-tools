@@ -45,19 +45,36 @@ function changeReadmeMd(packageFolderPath: string) {
 
 }
 
+let oriTsConfig;
+let oriPackageJson;
+let oriApiExtractor;
+
 function changeConfigOfTest(azureSDKForJSRepoRoot: string, changedPackageDirectory: string, mode: string) {
-    const tsConfig = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), {encoding: 'utf-8'}));
-    const packageJson = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), {encoding: 'utf-8'}));
-    const apiExtractor = JSON.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), {encoding: 'utf-8'}));
+    let tsConfig;
+    let packageJson;
+    let apiExtractor;
     if (mode === 'change') {
+        const tsConfigFile = fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), {encoding: 'utf-8'});
+        const packageJsonFile = fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), {encoding: 'utf-8'});
+        const apiExtractorFile = fs.readFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), {encoding: 'utf-8'})
+
+        oriTsConfig = JSON.parse(tsConfigFile);
+        oriPackageJson = JSON.parse(packageJsonFile);
+        oriApiExtractor = JSON.parse(apiExtractorFile);
+
+        tsConfig = JSON.parse(tsConfigFile);
+        packageJson = JSON.parse(packageJsonFile);
+        apiExtractor = JSON.parse(apiExtractorFile);
+
         tsConfig['include'] = ["./src/**/*.ts"];
         packageJson['module'] = "./dist-esm/index.js";
         apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
-    } else if (mode === 'revert') {
-        tsConfig['include'] = ["./src/**/*.ts", "./test/**/*.ts"];
-        packageJson['module'] = "./dist-esm/src/index.js";
-        apiExtractor['mainEntryPointFilePath'] = "./dist-esm/src/index.d.ts";
+    }  else if (mode === 'revert') {
+        tsConfig = oriTsConfig;
+        packageJson = oriPackageJson;
+        apiExtractor = oriApiExtractor;
     }
+
     fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'tsconfig.json'), JSON.stringify(tsConfig, undefined, '  '), {encoding: 'utf-8'});
     fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'package.json'), JSON.stringify(packageJson, undefined, '  '), {encoding: 'utf-8'});
     fs.writeFileSync(path.join(azureSDKForJSRepoRoot, changedPackageDirectory, 'api-extractor.json'), JSON.stringify(apiExtractor, undefined, '  '), {encoding: 'utf-8'});

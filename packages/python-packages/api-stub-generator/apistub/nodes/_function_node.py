@@ -335,11 +335,10 @@ class FunctionNode(NodeEntityBase):
             apiview.add_keyword("async", False, True)
 
         apiview.add_keyword("def", False, True)
-        cross_lang_id = apiview._cross_language_id(self.namespace, self.full_name)
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
             self.namespace_id, self.full_name if self.is_module_level else self.name,
-            cross_language_id=cross_lang_id
+            add_cross_language_id=True
         )
         # Add parameters
         self._generate_signature_token(apiview)

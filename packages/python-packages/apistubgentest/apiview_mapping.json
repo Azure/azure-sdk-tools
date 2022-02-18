@@ -1,6 +1,6 @@
 {
     "CrossLanguageDefinitionId": {
-        "DocstringClass.docstring_with_default_formal": "Docstring_DocstringWithFormalDefault",
-        "DocstringClass": "Formal_Model_Id"
+        "apistubgentest.models.DocstringClass.docstring_with_default_formal": "Docstring_DocstringWithFormalDefault",
+        "apistubgentest.models.DocstringClass": "Formal_Model_Id"
     }
 }

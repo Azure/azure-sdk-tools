@@ -22,7 +22,6 @@ __all__ = [
 
 def console_entry_point():
     stub_generator = StubGenerator()
-    stub_generator.load_mapping()
     apiview = stub_generator.generate_tokens()
     json_tokens = stub_generator.serialize(apiview)
     # Write to JSON file

@@ -10,23 +10,19 @@ import sys
 import os
 import argparse
 
-import inspect
 import io
 import importlib
-import json
 import logging
-import pkgutil
 import shutil
 import ast
 import textwrap
-import re
-import typing
 import tempfile
 from subprocess import check_call
 import zipfile
 
 
 from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._metadata_map import MetadataMap
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -70,7 +66,6 @@ class StubGenerator:
             "--filter-namespace",
             help=("Generate Api view only for a specific namespace"),
         )
-        
 
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
@@ -79,7 +74,6 @@ class StubGenerator:
         elif not os.path.exists(args.temp_path):
             logging.error("Temp path [{0}] is invalid".format(args.temp_path))
             exit(1)
-
 
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
@@ -91,16 +85,6 @@ class StubGenerator:
         self.filter_namespace = ''
         if args.filter_namespace:
             self.filter_namespace = args.filter_namespace
-
-
-    def load_mapping(self) -> dict:
-        # FIXME: Will need to address this!
-        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
-            return {}
-        mapping_path = os.path.join(self.pkg_path, "apiview_mapping.json")
-        with open(mapping_path, "r") as json_file:
-            mapping = json.load(json_file)
-            return mapping.get("CrossLanguageDefinitionId", None) or {}
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
@@ -185,7 +169,8 @@ class StubGenerator:
 
         self.module_dict = {}
         nodeindex = NodeIndex()
-        apiview = ApiView(nodeindex, package_name, namespace, cross_language_map=self.load_mapping())
+        mapping = MetadataMap(pkg_root_path)
+        apiview = ApiView(nodeindex, package_name, namespace, metadata_map=mapping)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 

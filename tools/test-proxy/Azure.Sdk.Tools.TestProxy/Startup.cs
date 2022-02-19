@@ -87,7 +87,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     })
                 );
 
-            host.Build().Run();
+            var app = host.Build();
+
+            var config = app.Services.GetRequiredService<IConfiguration>();
+
+            foreach (var c in config.AsEnumerable())
+            {
+                Console.WriteLine("Dumping Resolved Configuration Values:");
+                Console.WriteLine(c.Key + " = " + c.Value);
+            }
+
+            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();

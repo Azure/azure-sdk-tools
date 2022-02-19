@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.14 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.102-alpine3.14 AS build
 
 # copy the code
 COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
@@ -15,7 +15,11 @@ ENV \
     ASPNETCORE_ENVIRONMENT=Development \
     # this override allows the tool server to listen to traffic over the docker bridge.
     # default URL of localhost:5000 or localhost:50001 are not usable from outside the container
-    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001"
+    ASPNETCORE_URLS="http://0.0.0.0:5000;https://0.0.0.0:5001" \
+    Logging__Console__FormatterName= \
+    Logging__LogLevel__Default=Information \
+    Logging__LogLevel__Microsoft=Information
+
 
 # dotnet-dev-certs tool is not included in aspnet image, so manually copy from sdk image
 COPY --from=build /usr/share/dotnet/sdk/6.0.102/DotnetTools/dotnet-dev-certs/6.0.2-servicing.22064.12/tools/net6.0/any/ /dotnet-dev-certs

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <LangVersion>9</LangVersion>
+    <LangVersion>latest</LangVersion>
     <RootNamespace>APIViewWeb</RootNamespace>
     <AssemblyName>APIViewWeb</AssemblyName>
     <UserSecretsId>79cceff6-d533-4370-a0ee-f3321a343907</UserSecretsId>

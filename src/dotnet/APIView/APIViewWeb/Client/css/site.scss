@@ -38,6 +38,16 @@ html {
     }
 }
 
+// Enable clear button in search input
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-left: .4em;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+    cursor: pointer;
+  }
+
 .border-top {
     border-top: 1px solid #e5e5e5;
 }
@@ -295,11 +305,12 @@ form.comment {
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
+    left: 21px;
 }
 
 .line-comment-button-cell {
     user-select: none;
-    width: 1em;
+    max-width: 0px;
     white-space: normal;
     positon: sticky;
     left: 0px;
@@ -411,7 +422,7 @@ form.comment {
 #review-left {
     // Override values from bootstrap
     max-width: none;
-    min-width: 130px;
+    min-width: 10px;
 }
 
 #review-right {
@@ -587,4 +598,53 @@ mark {
 
 .apiview-logo {
     width: 30px;
+}
+
+#reviews-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bottom-right-floating {
+    position:fixed;
+    z-index: 10;
+    bottom:130px;
+    right:70px;
+}
+
+.btn-circle {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    text-align: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.btn-circle-xl {
+    width: 100px;
+    height: 100px;
+    line-height: 1.2rem;
+    font-weight: bold;
+    font-size: 1.0rem;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+// Use to implement review row grouping
+.hidden-row {
+    display: none;
+}
+
+.hidden-row-via-filter {
+    display: none;
+}
+
+.bootstraps-select-label {
+    padding: 4px 5px 3px 2px;
+}
+
+.rounded-left-0 {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
 }

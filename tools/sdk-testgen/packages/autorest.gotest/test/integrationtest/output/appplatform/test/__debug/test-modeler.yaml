@@ -36961,11 +36961,11 @@ testModel:
                   fromResponse: /uploadUrl
               outputVariablesModel:
                 relativePath:
-                  - kind: object
-                    value: *ref_1445
+                  - type: object
+                    languages: *ref_1445
                 uploadUrl:
-                  - kind: object
-                    value: *ref_1446
+                  - type: object
+                    languages: *ref_1446
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)

@@ -240,11 +240,21 @@ export class ExampleModel {
 }
 
 export class OutputVariableModel {
-    languageName: string;
-    public constructor(public kind: OutputVariableModelKind, public value: number | string | Languages) {}
+    index?: number;
+    key?: string;
+    languages?: Languages;
+    public constructor(public type: OutputVariableModelType, value: number | string | Languages) {
+        if (typeof value === 'number') {
+            this.index = value;
+        } else if (typeof value === 'string') {
+            this.key = value;
+        } else {
+            this.languages = value;
+        }
+    }
 }
 
-export enum OutputVariableModelKind {
+export enum OutputVariableModelType {
     index = 'index',
     key = 'key',
     object = 'object',
@@ -443,7 +453,7 @@ export class TestCodeModeler {
                             const index = parseInt(valuePart);
                             if (!isNaN(index)) {
                                 // Number token get index value from array. We just need to record the index value.
-                                step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelKind.index, index));
+                                step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.index, index));
                                 // If the value is from an defined array, then update the current schema. If the value is from an any/anyObject param, then left schema to be undefined.
                                 if (currentSchema?.type === SchemaType.Array) {
                                     currentSchema = (currentSchema as ArraySchema).elementType;
@@ -457,7 +467,7 @@ export class TestCodeModeler {
                                     // Look up param in object
                                     for (const property of (currentSchema as ObjectSchema).properties) {
                                         if (property.serializedName === valuePart) {
-                                            step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelKind.object, property.language));
+                                            step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
                                             currentSchema = property.schema;
                                             found = true;
                                             break;
@@ -469,7 +479,7 @@ export class TestCodeModeler {
                                             for (const parentObject of (currentSchema as ObjectSchema).parents?.all) {
                                                 for (const property of (parentObject as ObjectSchema).properties) {
                                                     if (property.serializedName === valuePart) {
-                                                        step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelKind.object, property.language));
+                                                        step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
                                                         currentSchema = property.schema;
                                                         found = true;
                                                         break;
@@ -480,7 +490,7 @@ export class TestCodeModeler {
                                     }
                                 } else {
                                     // String token get param value from any/anyObject.
-                                    step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelKind.key, valuePart));
+                                    step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.key, valuePart));
                                     currentSchema = undefined;
                                 }
                             }

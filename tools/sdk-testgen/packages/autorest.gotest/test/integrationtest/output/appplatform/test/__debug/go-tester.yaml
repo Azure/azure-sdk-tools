@@ -41252,13 +41252,13 @@ testModel:
                   isPtr: true
               outputVariablesModel:
                 relativePath:
-                  - kind: object
+                  - type: object
                     languageName: RelativePath
-                    value: *ref_1309
+                    languages: *ref_1309
                 uploadUrl:
-                  - kind: object
+                  - type: object
                     languageName: UploadURL
-                    value: *ref_1310
+                    languages: *ref_1310
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)

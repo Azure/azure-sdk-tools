@@ -10,12 +10,11 @@ import { Config } from '../common/constant';
 import { GoExampleModel } from '../common/model';
 import { GoHelper } from '../util/goHelper';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
+import { Languages } from '@autorest/codemodel';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 import { OutputVariableModelKind, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
-import { Schema } from '@autorest/codemodel/dist/model/common/schema';
-import { Language, Languages } from '@autorest/codemodel';
+import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     parentVariables: Record<string, string> = {};
@@ -130,10 +129,10 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                             if (variableConfig[i].kind === OutputVariableModelKind.object) {
                                 variableConfig[i].languageName = (variableConfig[i].value as Languages).go.name;
                                 isPtr = !(variableConfig[i].value as Languages).go?.byValue;
-                            }else if (variableConfig[i].kind === OutputVariableModelKind.index){
-                                variableConfig[i].languageName =`[${variableConfig[i].value}]`;
-                            }else if (variableConfig[i].kind === OutputVariableModelKind.key){
-                                variableConfig[i].languageName =`["${variableConfig[i].value}"]`;
+                            } else if (variableConfig[i].kind === OutputVariableModelKind.index) {
+                                variableConfig[i].languageName = `[${variableConfig[i].value}]`;
+                            } else if (variableConfig[i].kind === OutputVariableModelKind.key) {
+                                variableConfig[i].languageName = `["${variableConfig[i].value}"]`;
                             }
                         }
                         step.outputVariables[variableName]['isPtr'] = isPtr;

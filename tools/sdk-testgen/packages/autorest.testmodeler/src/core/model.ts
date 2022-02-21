@@ -18,7 +18,6 @@ import {
     SchemaResponse,
     SchemaType,
     codeModelSchema,
-    Language,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
@@ -41,7 +40,7 @@ export interface ExampleExtension {
 
 export type StepArmTemplateModel = StepArmTemplate;
 
-export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, Array<OutputVariableModel>> };
+export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
 /**
  * Generally a test group should be generated into one test source file.

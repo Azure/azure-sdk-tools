@@ -63,7 +63,7 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
             "build:node": "tsc -p . && dev-tool run bundle",
             "build:samples": "echo Obsolete.",
             "build:test": "tsc -p . && dev-tool run bundle",
-            "build": "npm run clean && tsc -p . && dev-tool run bundle && api-extractor run --local",
+            "build": "npm run clean && tsc -p . && dev-tool run bundle && mkdirp ./review && api-extractor run --local",
             "build:debug": "tsc -p . && dev-tool run bundle && api-extractor run --local",
             "check-format": "prettier --list-different --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"samples-dev/**/*.ts\" \"*.{js,json}\"",
             "clean": "rimraf dist dist-browser dist-esm test-dist dist-test temp types *.tgz *.log",
@@ -137,22 +137,45 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
         if (paginateHelper.includes('@azure/core-paging')) {
             content['dependencies']['@azure/core-paging'] = keyVaultAdminPackageJson['dependencies']['@azure/core-paging'];
         }
-        if (paginateHelper.includes('@azure-rest/core-client-paging')) {
-            if (packageName !== '@azure-rest/agrifood-farming') {
-                const agrifoodPackageJson = JSON.parse(fs.readFileSync(path.join(sdkRepo, 'sdk', 'agrifood', 'agrifood-farming-rest', 'package.json'), {encoding: 'utf-8'}));
-                content['dependencies']['@azure-rest/core-client-paging'] = agrifoodPackageJson['dependencies']['@azure-rest/core-client-paging'];
-            } else {
-                content['dependencies']['@azure-rest/core-client-paging'] = '1.0.0-beta.1';
+    } else {
+        for (const file of fs.readdirSync(path.join(packagePath, 'src'))) {
+            if (fs.lstatSync(path.join(packagePath, 'src', file)).isDirectory()) {
+                if (fs.existsSync(path.join(packagePath, 'src', file, 'paginateHelper.ts'))) {
+                    const paginateHelper = fs.readFileSync(path.join(packagePath, 'src', file, 'paginateHelper.ts'));
+                    if (paginateHelper.includes('@azure/core-paging')) {
+                        content['dependencies']['@azure/core-paging'] = keyVaultAdminPackageJson['dependencies']['@azure/core-paging'];
+                    }
+                }
             }
         }
     }
     if (fs.existsSync(path.join(packagePath, 'src', 'pollingHelper.ts'))) {
         content['dependencies']['@azure/core-lro'] = keyVaultAdminPackageJson['dependencies']['@azure/core-lro'];
+    } else {
+        for (const file of fs.readdirSync(path.join(packagePath, 'src'))) {
+            if (fs.lstatSync(path.join(packagePath, 'src', file)).isDirectory()) {
+                if (fs.existsSync(path.join(packagePath, 'src', file, 'pollingHelper.ts'))) {
+                    const paginateHelper = fs.readFileSync(path.join(packagePath, 'src', 'pollingHelper.ts'));
+                    if (paginateHelper.includes('@azure/core-paging')) {
+                        content['dependencies']['@azure/core-lro'] = keyVaultAdminPackageJson['dependencies']['@azure/core-lro'];
+                    }
+                }
+            }
+        }
     }
-    const readme = fs.readFileSync(path.join(packagePath, 'swagger', 'README.md'), {encoding: 'utf-8'});
-    const match = /package-version: "*([0-9a-z-.]+)/.exec(readme);
-    if (!!match && match.length === 2) {
-        content.version = match[1];
+
+    if (fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
+        const readme = fs.readFileSync(path.join(packagePath, 'swagger', 'README.md'), {encoding: 'utf-8'});
+        const match = /package-version: "*([0-9a-z-.]+)/.exec(readme);
+        if (!!match && match.length === 2) {
+            content.version = match[1];
+        }
+    } else if (fs.existsSync(path.join(packagePath, 'package.json'))) {
+        const oriPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), 'utf-8'));
+        content.version = oriPackageJson.version;
+    } else {
+        content.version = '1.0.0-beta.1';
     }
+
     fs.writeFileSync(path.join(packagePath, 'package.json'), JSON.stringify(content, undefined, '  '));
 }

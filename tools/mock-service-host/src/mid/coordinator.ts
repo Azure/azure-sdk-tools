@@ -1,5 +1,4 @@
 import * as Constants from 'oav/dist/lib/util/constants'
-import * as lodash from 'lodash'
 import * as oav from 'oav'
 import * as path from 'path'
 import { AzureExtensions, Headers, LRO_CALLBACK } from '../common/constants'
@@ -32,6 +31,7 @@ import {
 } from '../common/utils'
 import { get_locations, get_tenants } from './specials'
 import { inject, injectable } from 'inversify'
+import _ from 'lodash'
 
 export enum ValidatorStatus {
     NotInitialized = 'Validator not initialized',
@@ -58,18 +58,31 @@ export class Coordinator {
         this.resourcePool = new ResourcePool(this.config.cascadeEnabled)
     }
 
-    private findResponse(responses: Record<string, any>, status: number): [number, any] {
-        let nearest = undefined
-        for (const code in responses) {
-            if (
-                nearest === undefined ||
-                Math.abs(nearest - status) > Math.abs(parseInt(code) - status)
-            ) {
-                nearest = parseInt(code)
+    private findResponse(
+        responses: Record<string, any>,
+        status: number,
+        exactly = true
+    ): [number, any] {
+        if (exactly) {
+            for (const code in responses) {
+                if (status.toString() === code) {
+                    return [status, _.cloneDeep(responses[status.toString()].body)]
+                }
             }
+            throw new NoResponse(status.toString())
+        } else {
+            let nearest = undefined
+            for (const code in responses) {
+                if (
+                    nearest === undefined ||
+                    Math.abs(nearest - status) > Math.abs(parseInt(code) - status)
+                ) {
+                    nearest = parseInt(code)
+                }
+            }
+            if (nearest) return [nearest, _.cloneDeep(responses[nearest.toString()].body)]
+            throw new NoResponse(status.toString())
         }
-        if (nearest) return [nearest, responses[nearest.toString()].body]
-        throw new NoResponse(status.toString())
     }
 
     private search(
@@ -282,10 +295,71 @@ export class Coordinator {
                 throw new HasChildResource(req.url)
             }
         } else {
-            const [code, _ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
+            let code, ret
+            if (lroCallback !== null || req.query?.[LRO_CALLBACK] === 'true') {
+                // for the lro operaion
+                if (req.query?.[LRO_CALLBACK] === 'true') {
+                    // lro callback, try to get 204 response first
+                    try {
+                        // if 202 response exist, need to return 204 response
+                        this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
+                        try {
+                            ;[code, ret] = this.findResponse(
+                                exampleResponses,
+                                HttpStatusCode.NO_CONTENT
+                            )
+                        } catch (error) {
+                            // if no 204 response, mock a response
+                            code = HttpStatusCode.NO_CONTENT
+                            ret = undefined
+                        }
+                    } catch (error) {
+                        // otherwise, need to return 200 success response
+                        try {
+                            ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            // set status to succeed to stop polling
+                            if (typeof ret === 'object' && !Array.isArray(ret)) {
+                                ret.status = 'Succeeded'
+                            }
+                        } catch (error) {
+                            // if no 200 response, mock a response
+                            code = HttpStatusCode.OK
+                            ret = { status: 'Succeeded' }
+                        }
+                    }
+                } else {
+                    // lro first call, try to get 201 first
+                    try {
+                        ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.CREATED)
+                        res.setHeader('Azure-AsyncOperation', lroCallback)
+                        res.setHeader('Retry-After', 1)
+                    } catch (error) {
+                        // if no 201 response, then try to get 202
+                        try {
+                            ;[code, ret] = this.findResponse(
+                                exampleResponses,
+                                HttpStatusCode.ACCEPTED
+                            )
+                            res.setHeader('Location', lroCallback)
+                            res.setHeader('Retry-After', 1)
+                        } catch (error) {
+                            // last, get 200 related response
+                            ;[code, ret] = this.findResponse(
+                                exampleResponses,
+                                HttpStatusCode.OK,
+                                false
+                            )
+                            res.setHeader('Azure-AsyncOperation', lroCallback)
+                            res.setHeader('Retry-After', 1)
+                        }
+                    }
+                }
+            } else {
+                // for normal operation, try to get 200 response
+                ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
+            }
 
             const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
-            let ret = _ret
             if (typeof ret === 'object') {
                 if (!Array.isArray(ret)) {
                     // simplified paging
@@ -310,18 +384,6 @@ export class Coordinator {
                         false
                     )
                 }
-            }
-
-            if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
-                res.setHeader('Azure-AsyncOperation', lroCallback)
-                res.setHeader('Retry-After', 1)
-            }
-            if (
-                req.query?.[LRO_CALLBACK] === 'true' &&
-                typeof ret === 'object' &&
-                !Array.isArray(ret)
-            ) {
-                ret.status = 'Succeeded'
             }
 
             res.set(code, ret)

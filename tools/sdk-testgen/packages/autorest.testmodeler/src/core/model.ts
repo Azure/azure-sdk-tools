@@ -40,7 +40,7 @@ export interface ExampleExtension {
 
 export type StepArmTemplateModel = StepArmTemplate;
 
-export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel };
+export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
 /**
  * Generally a test group should be generated into one test source file.
@@ -239,6 +239,27 @@ export class ExampleModel {
     }
 }
 
+export class OutputVariableModel {
+    index?: number;
+    key?: string;
+    languages?: Languages;
+    public constructor(public type: OutputVariableModelType, value: number | string | Languages) {
+        if (typeof value === 'number') {
+            this.index = value;
+        } else if (typeof value === 'string') {
+            this.key = value;
+        } else {
+            this.languages = value;
+        }
+    }
+}
+
+export enum OutputVariableModelType {
+    index = 'index',
+    key = 'key',
+    object = 'object',
+}
+
 export class TestCodeModeler {
     public static instance: TestCodeModeler;
     public testConfig: TestConfig;
@@ -417,6 +438,65 @@ export class TestCodeModeler {
                     operation,
                     operationGroup,
                 );
+
+                // Change outputVariables' json point to model.
+                if (step.outputVariables) {
+                    step.outputVariablesModel = {};
+                    for (const [variableName, variableConfig] of Object.entries(step.outputVariables)) {
+                        // JsonPointer use '/' to seperate the token and only can point to one value. Token is a number or a string.
+                        const valueParts = variableConfig.fromResponse.split('/');
+                        // The root schema is from the http body. We only get value from the '200' response for now.
+                        let currentSchema = step.exampleModel.responses['200'].body.schema;
+                        step.outputVariablesModel[variableName] = [];
+                        for (let i = 1; i < valueParts.length; i++) {
+                            const valuePart = valueParts[i];
+                            const index = parseInt(valuePart);
+                            if (!isNaN(index)) {
+                                // Number token get index value from array. We just need to record the index value.
+                                step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.index, index));
+                                // If the value is from an defined array, then update the current schema. If the value is from an any/anyObject param, then left schema to be undefined.
+                                if (currentSchema?.type === SchemaType.Array) {
+                                    currentSchema = (currentSchema as ArraySchema).elementType;
+                                } else {
+                                    currentSchema = undefined;
+                                }
+                            } else {
+                                if (currentSchema?.type === SchemaType.Object) {
+                                    // String token get param value from object.
+                                    let found = false;
+                                    // Look up param in object
+                                    for (const property of (currentSchema as ObjectSchema).properties) {
+                                        if (property.serializedName === valuePart) {
+                                            step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
+                                            currentSchema = property.schema;
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!found) {
+                                        // Continue to look up in parent object
+                                        if ((currentSchema as ObjectSchema).parents) {
+                                            for (const parentObject of (currentSchema as ObjectSchema).parents?.all) {
+                                                for (const property of (parentObject as ObjectSchema).properties) {
+                                                    if (property.serializedName === valuePart) {
+                                                        step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
+                                                        currentSchema = property.schema;
+                                                        found = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // String token get param value from any/anyObject.
+                                    step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.key, valuePart));
+                                    currentSchema = undefined;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Remove oav operation to save size of codeModel.

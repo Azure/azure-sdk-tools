@@ -15224,6 +15224,7 @@ testModel:
                 nameAvailable: false
                 reason: AlreadyExists
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 location: $(location)
@@ -15988,6 +15989,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -16558,6 +16560,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -17318,6 +17321,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -17427,6 +17431,7 @@ testModel:
               exampleName: SignalR_ListKeys
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -17486,6 +17491,7 @@ testModel:
               exampleName: SignalR_RegenerateKey
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -17537,6 +17543,7 @@ testModel:
               exampleName: SignalR_Restart
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -17676,6 +17683,7 @@ testModel:
                     limit: 100
                     unit: Count
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 location: $(location)
@@ -18195,6 +18203,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -18709,6 +18718,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 subscriptionId: $(subscriptionId)
@@ -18803,6 +18813,7 @@ testModel:
                     isDataAction: false
                     properties: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
               requestUpdate: []
@@ -18854,6 +18865,7 @@ testModel:
               exampleName: SignalR_Delete
               expectedResponse: *ref_693
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)

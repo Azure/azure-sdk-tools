@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.2.0",
+      "tag": "@autorest/testmodeler_v2.2.0",
+      "date": "Tue, 22 Feb 2022 10:58:11 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add support for json pointer modeler for output variable of scenario test."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.1.0",
       "tag": "@autorest/testmodeler_v2.1.0",
       "date": "Fri, 11 Feb 2022 09:47:39 GMT",

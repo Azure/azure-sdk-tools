@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Fri, 11 Feb 2022 09:47:39 GMT and should not be manually modified.
+This log was last generated on Tue, 22 Feb 2022 10:58:11 GMT and should not be manually modified.
+
+## 2.2.0
+Tue, 22 Feb 2022 10:58:11 GMT
+
+### Minor changes
+
+- Add support for json pointer modeler for output variable of scenario test.
 
 ## 2.1.0
 Fri, 11 Feb 2022 09:47:39 GMT

@@ -12,7 +12,6 @@ import (
 	"context"
 	"testing"
 
-	"encoding/json"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -21,7 +20,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager//test/scenario_test"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
-	"github.com/go-openapi/jsonpointer"
 )
 
 var (
@@ -1212,34 +1210,8 @@ func scenarioSpring(t *testing.T) {
 			t.Fatalf("Request error: %v", err)
 		}
 		t.Logf("Response result: %#v\n", appsClientGetResourceUploadURLResponse.AppsClientGetResourceUploadURLResult)
-
-		var respBody interface{}
-		byteBody, err := json.Marshal(appsClientGetResourceUploadURLResponse.AppsClientGetResourceUploadURLResult)
-		if err != nil {
-			t.Fatalf("Marshall response body failed: %v", err)
-		}
-		err = json.Unmarshal(byteBody, &respBody)
-		if err != nil {
-			t.Fatalf("Unmarshall response body to JSON failed: %v", err)
-		}
-		pointer, err := jsonpointer.New("/relativePath")
-		if err != nil {
-			t.Fatalf("Unable to create Jsonpointer for /relativePath : %v", err)
-		}
-		tmp, _, err := pointer.Get(respBody)
-		if err != nil {
-			t.Fatalf("Get JsonPointer failed /relativePath in %v: %v", byteBody[:], err)
-		}
-		relativePath = tmp.(string)
-		pointer, err = jsonpointer.New("/uploadUrl")
-		if err != nil {
-			t.Fatalf("Unable to create Jsonpointer for /uploadUrl : %v", err)
-		}
-		tmp, _, err = pointer.Get(respBody)
-		if err != nil {
-			t.Fatalf("Get JsonPointer failed /uploadUrl in %v: %v", byteBody[:], err)
-		}
-		uploadUrl = tmp.(string)
+		relativePath = *appsClientGetResourceUploadURLResponse.RelativePath
+		uploadUrl = *appsClientGetResourceUploadURLResponse.UploadURL
 	}
 
 	// From step Upload_File

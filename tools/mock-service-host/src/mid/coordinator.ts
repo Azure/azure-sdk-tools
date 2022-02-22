@@ -361,12 +361,8 @@ export class Coordinator {
 
             const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
             if (typeof ret === 'object') {
-                if (!Array.isArray(ret)) {
-                    // simplified paging
-                    ret = lodash.omit(ret, 'nextLink')
-                } else {
-                    ret = replacePropertyValue('nextLink', null, ret)
-                }
+                // simplified paging
+                ret = replacePropertyValue('nextLink', null, ret)
 
                 // simplified LRO
                 ret = replacePropertyValue('provisioningState', 'Succeeded', ret)

@@ -4,8 +4,31 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from pydoc import Doc
 from apistub.nodes import DocstringParser
 
+
+docstring_default_legacy = """
+:param value: Some dummy value. Default value
+  is "cat". Extra text.
+:type value: str
+:param another: Something else. Default value
+  is dog. Extra text.
+:type value: str
+:param some_class: Some kind of class type. Default value is :py:class:`apistubgen.test.models.FakeObject`.
+:type some_class: class
+"""
+
+docstring_default_formal = """
+:param value: Some dummy value, defaults
+  to "cat". Extra text.
+:type value: str
+:param another: Something else, defaults
+  to dog. Extra text.
+:type value: str
+:param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
+:type some_class: class
+"""
 
 docstring_standard_return_type = """
 Dummy docstring to verify standard return types and param types
@@ -217,3 +240,15 @@ class TestDocstringParser:
         # for "everything else" we don't set a default from the docstring
         # instead we will seek the default from the signature inspection
         assert parser.default_for("documents") is None
+
+    def test_docstring_defaults_formal(self):
+        parser = DocstringParser(docstring_default_formal)
+        assert parser.default_for("value") == "cat"
+        assert parser.default_for("another") == "dog"
+        assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"
+
+    def test_docstring_defaults_legacy(self):
+        parser = DocstringParser(docstring_default_legacy)
+        assert parser.default_for("value") == "cat"
+        assert parser.default_for("another") == "dog"
+        assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"

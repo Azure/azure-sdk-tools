@@ -11,6 +11,7 @@ stages:
 
   jobs:
   - job: Run
+    timeoutInMinutes: 120
     strategy:
       # Running all entries simultaneously causes "Service Unavailable" errors
       maxParallel: 2
@@ -76,23 +77,13 @@ stages:
             --organization $(Organization) `
             --project $(Project) `
             --path-prefix "\$(PathPrefix)" `
-            --dev-ops-token-var DEVOPS_TOKEN `
-            --aad-app-id-var APP_ID `
-            --aad-app-secret-var APP_SECRET `
-            --aad-tenant-var AAD_TENANT `
-            --kusto-url-var KUSTO_URL `
-            --kusto-database-var KUSTO_DB `
-            --kusto-table-var KUSTO_TABLE `
+            --dev-ops-token-var $(azure-sdk-notification-tools-pat) `
+            --aad-app-id-var $(opensource-aad-app-id) `
+            --aad-app-secret-var $(opensource-aad-secret) `
+            --aad-tenant-var $(opensource-aad-tenant-id) `
             $(AdditionalParameters)
         displayName: 'Run GitHub CODEOWNER Subscriber'
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
-          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
-          APP_ID: $(notification-aad-app-id)
-          APP_SECRET: $(notification-aad-secret)
-          AAD_TENANT: $(notification-aad-tenant)
-          KUSTO_URL: $(notification-kusto-url)
-          KUSTO_DB: $(notification-kusto-db)
-          KUSTO_TABLE: $(notification-kusto-table)

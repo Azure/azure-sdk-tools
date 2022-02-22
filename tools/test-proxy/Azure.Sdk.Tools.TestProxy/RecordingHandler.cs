@@ -399,7 +399,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
-                transform.Transform(match);
+                transform.Transform(incomingRequest, match);
             }
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);

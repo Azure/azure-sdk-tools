@@ -20,7 +20,18 @@
         }
     </td>
     <td class="code @lineClass">
-        <span class="code-inner">@Html.Raw(Model.CodeLine.DisplayString)</span>
+        @if (Model.Kind == DiffLineKind.Removed)
+        {
+            <span class="code-inner">&nbsp;-&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+        }
+        else if(Model.Kind == DiffLineKind.Added)
+        {
+            <span class="code-inner">&nbsp;+&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+        }
+        else 
+        {
+            <span class="code-inner">&nbsp;&nbsp;&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+        }
     </td>
 </tr>
 @if (Model.Diagnostics.Any())

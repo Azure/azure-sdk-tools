@@ -28,6 +28,26 @@ class _CaseInsensitiveEnumMeta(EnumMeta):
             raise AttributeError(name)
 
 
+class DocstringClass:
+    """A class for testing docstring behavior.
+    """
+
+    def docstring_with_default_formal(self, value, another, some_class, **kwargs) -> str:
+        """Docstring containing a formal default.
+
+        :param value: Some dummy value, defaults
+         to "cat". Extra text.
+        :type value: str
+        :param another: Something else, defaults
+         to dog. Extra text.
+        :type another: str
+        :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
+        :type some_class: class
+        :rtype: str
+        """
+        return f"{value} {another} {some_class}"
+
+
 class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
     """A test enum
     """
@@ -36,7 +56,8 @@ class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
 
 
 class FakeObject(object):
-    """ Fake Object
+    """Fake Object
+
     :ivar str name: Name
     :ivar int age: Age
     :ivar union: Union
@@ -65,7 +86,8 @@ FakeTypedDict = TypedDict(
 
 @dataclass
 class FakeInventoryItemDataClass:
-    """ Class for testing @dataclass """
+    """Class for testing @dataclass
+    """
     name: str
     unit_price: float
     quantity_on_hand: int = 0

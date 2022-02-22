@@ -649,5 +649,31 @@ namespace APIViewWeb.Repositories
         {
             return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
+
+        public async Task AutoArchiveReviews(int archiveAfterMonths)
+        {
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            // Find all inactive reviews
+            reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
+            foreach (var review in reviews)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Archiving Review " + review.ReviewId };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    review.IsClosed = true;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    _telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
+        }
     }
 }

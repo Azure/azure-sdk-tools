@@ -13,6 +13,7 @@ namespace APIViewWeb.HostedServices
     {
         private bool _isDisabled = false;
         private ReviewManager _reviewManager;
+        private int _autoArchiveInactiveGracePeriod; // This is inactive duration in months
 
         public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
         {
@@ -23,6 +24,12 @@ namespace APIViewWeb.HostedServices
             {
                 _isDisabled = true;
             }
+
+            var gracePeriod = configuration["ArchiveReviewGracePeriodInMonths"];
+            if (String.IsNullOrEmpty(gracePeriod) || !int.TryParse(gracePeriod, out _autoArchiveInactiveGracePeriod))
+            {
+                _autoArchiveInactiveGracePeriod = 4;
+            }
         }
 
         public Task StartAsync(CancellationToken stoppingToken)
@@ -31,7 +38,8 @@ namespace APIViewWeb.HostedServices
             {
                 _reviewManager.UpdateReviewBackground();
             }
-            return Task.CompletedTask;
+
+            return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriod);
         }
 
         public Task StopAsync(CancellationToken stoppingToken)
@@ -40,5 +48,15 @@ namespace APIViewWeb.HostedServices
         }
 
         public void Dispose(){}
+
+        private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAFter)
+        {
+            do
+            {
+                await _reviewManager.AutoArchiveReviews(archiveAFter);
+                await Task.Delay(6 * 60 * 60000, stoppingToken);
+            }
+            while (!stoppingToken.IsCancellationRequested);
+        }
     }
 }

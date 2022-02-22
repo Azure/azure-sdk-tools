@@ -3,7 +3,7 @@ import { Config } from './common/config'
 import { Container } from 'inversify'
 import { Coordinator } from './mid/coordinator'
 import { InjectableTypes } from './lib/injectableTypes'
-import { InversifyExpressServer } from 'inversify-express-utils'
+import { InversifyExpressServer, getRouteInfo } from 'inversify-express-utils'
 import { ResponseGenerator } from './mid/responser'
 import { SpecRetrievalMethod } from './common/environment'
 import { SpecRetriever } from './lib/specRetriever'
@@ -13,10 +13,11 @@ import { config } from './common'
 import { getHttpServer, getHttpsServer } from './webserver/httpServerConstructor'
 import { logger } from './common/utils'
 
+// The route order for express using inversify is completely opposite with native express. So the controller should import as LIFO order.
 /*eslint-disable */
-import './webserver/validateAndMockController'
-import './webserver/authServerController'
 import './webserver/metadataController'
+import './webserver/authServerController'
+import './webserver/validateAndMockController'
 /*eslint-enable */
 
 class MockApp {
@@ -97,6 +98,8 @@ class MockApp {
             app.use(this.logResponseBody)
         })
         const serverInstance = server.build()
+        const routeInfo = getRouteInfo(this.container)
+        console.log(`Route info: ${routeInfo}`)
 
         const httpsServer = getHttpsServer(serverInstance)
         httpsServer.listen(config.httpsPortStateful, () => {

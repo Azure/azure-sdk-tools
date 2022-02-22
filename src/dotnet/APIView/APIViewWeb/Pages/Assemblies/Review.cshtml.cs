@@ -246,9 +246,10 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null)
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
+            routingData["revisionId"] = revisionId;
             routingData["diffRevisionId"] = diffRevisionId;
             routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();

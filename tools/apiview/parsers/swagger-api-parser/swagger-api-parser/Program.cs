@@ -166,11 +166,8 @@ namespace swagger_api_parser
 
             Console.WriteLine($"Writing {outputFile}");
             var outputFilePath = Path.GetFullPath(outputFile);
-            await using (var fileWriteStream = File.Open(outputFilePath, FileMode.Create))
-            {
-                await result.SerializeAsync(fileWriteStream);
-            }
-
+            await using FileStream fileWriteStream = File.Open(outputFilePath, FileMode.Create);
+            await result.SerializeAsync(fileWriteStream);
             Console.WriteLine("finished");
         }
     }

@@ -7,4 +7,6 @@ param (
     [string] $DestinationDirectory
 )
 
-azcopy cp "${SourceBlobPath}?${SASKey}" "${DestinationDirectory}" --recursive=true
+Write-Host "Copying from $SourceBlobPath to $DestinationDirectory ..."
+$Source = $SourceBlobPath + $SASKey
+& azcopy cp $Source $DestinationDirectory --recursive

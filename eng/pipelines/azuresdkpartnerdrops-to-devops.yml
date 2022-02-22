@@ -1,17 +1,5 @@
 parameters:
-- name: PartnerDropsBlobPath
-  type: string
-  default: ''
-- name: PartnerDropsSubscription
-  type: string
-  default: ''
-- name: PartnerDropsStorageName
-  type: string
-  default: ''
-- name: PartnerDropsContainerName
-  type: string
-  default: ''
-- name: PartnerDropsBlobPrefix
+- name: PartnerDropsBlobSourceSuffix
   type: string
   default: ''
 - name: DevOpsFeedID
@@ -20,11 +8,7 @@ parameters:
   default: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
 
 extends:
-  template: /eng/pipelines/templates/steps/azuresdkpartnerdrops-to-nugetfeed.yml
+  template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
   parameters:
-    PartnerDropsBlobPath: ${{ parameters.PartnerDropsBlobPath }}
-    PartnerDropsSubscription: ${{ parameters.PartnerDropsSubscription }}
-    PartnerDropsStorageName: ${{ parameters.PartnerDropsStorageName }}
-    PartnerDropsContainerName: ${{ parameters.PartnerDropsContainerName }}
-    PartnerDropsBlobPrefix: ${{ parameters.PartnerDropsBlobPrefix }}
     DevOpsFeedID: ${{ parameters.DevOpsFeedID }}
+    PartnerDropsBlobSourceSuffix: ${{ parameters.PartnerDropsBlobSourceSuffix }}

@@ -42,10 +42,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = statusCode;
                 response.ContentType = "application/json;";
 
-                if(e is TestRecordingMismatchException)
+                var encodedException = Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message));
+
+                if (e is TestRecordingMismatchException)
                 {
                     response.Headers.Add("x-request-mismatch", "true");
-                    response.Headers.Add("x-request-mismatch-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
+                    response.Headers.Add("x-request-mismatch-error", encodedException);
+                }
+                else
+                {
+                    response.Headers.Add("x-request-known-exception", "true");
+                    response.Headers.Add("x-request-known-exception-error", encodedException);
                 }
                 
                 var bodyObj = new
@@ -67,6 +74,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.Clear();
                 response.StatusCode = unexpectedStatusCode;
                 response.ContentType = "application/json";
+
+                response.Headers.Add("x-request-exception", "true");
+                response.Headers.Add("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
 
                 var bodyObj = new
                 {

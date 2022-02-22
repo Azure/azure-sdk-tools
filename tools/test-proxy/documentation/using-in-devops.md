@@ -65,7 +65,7 @@ When diagnosing failures that "only occur in CI" or on platforms where there is 
 
 ![image](https://user-images.githubusercontent.com/45376673/153307363-521d271c-980e-425b-876a-212fb1e5e7a3.png)
 
-- Name: `Default__Logging__LogLevel`
+- Name: `Logging__LogLevel__Default`
 - Value: `Debug` (or any value from [the .NET LogLevel Enum](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.loglevel?view=dotnet-plat-ext-6.0))
 
 ![image](https://user-images.githubusercontent.com/45376673/153307105-28ce55eb-73f6-47d7-b181-eaf189b3bfdc.png)

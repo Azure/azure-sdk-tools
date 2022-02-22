@@ -158,7 +158,6 @@ namespace swagger_api_parser
                 var navigation = new NavigationItem
                 {
                     Text = swaggerFileName,
-                    LongText = null,
                     NavigationId = $"{swaggerFileName}_-swagger",
                     ChildItems = RebuildNavigation(codeFile.Navigation, swaggerFileName)
                 };

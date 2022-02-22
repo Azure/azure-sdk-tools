@@ -7,8 +7,6 @@ namespace APIView
     {
         public string Text { get; set; }
 
-        public string LongText { get; set; }
-
         public string NavigationId { get; set; }
 
         public NavigationItem[] ChildItems { get; set; } = Array.Empty<NavigationItem>();

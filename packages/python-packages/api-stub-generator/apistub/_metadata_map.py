@@ -16,12 +16,13 @@ by the stub generator.
 """
 class MetadataMap:
 
-    def __init__(self, pkg_path):
-        # FIXME: Will need to address this!
-        if pkg_path.endswith(".whl") or pkg_path.endswith(".zip"):
-            self.cross_language_map = {}
-            return
-        mapping_path = os.path.join(pkg_path, MAPPING_FILE_NAME)
+    def __init__(self, pkg_path, mapping_path=None):
+        if not mapping_path:
+            if pkg_path.endswith(".whl") or pkg_path.endswith(".zip"):
+                self.cross_language_map = {}
+                return
+            mapping_path = os.path.join(pkg_path, MAPPING_FILE_NAME)
+
         try:
             with open(mapping_path, "r") as json_file:
                 mapping = json.load(json_file)

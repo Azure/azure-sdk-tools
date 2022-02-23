@@ -49,6 +49,11 @@ class StubGenerator:
             help=("Path to generate json file with parsed tokens"),
         )
         parser.add_argument(
+            "--mapping-path",
+            default=None,
+            help=("Path to the 'apiview_mapping.json' file.")
+        )
+        parser.add_argument(
             "--verbose",
             help=("Enable verbose logging"),
             default=False,
@@ -78,6 +83,7 @@ class StubGenerator:
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.mapping_path = args.mapping_path
         self.hide_report = args.hide_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
@@ -169,7 +175,7 @@ class StubGenerator:
 
         self.module_dict = {}
         nodeindex = NodeIndex()
-        mapping = MetadataMap(pkg_root_path)
+        mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
         apiview = ApiView(nodeindex, package_name, namespace, metadata_map=mapping)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))

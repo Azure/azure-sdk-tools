@@ -37,9 +37,10 @@ namespace APIViewWeb.HostedServices
             if (!_isDisabled)
             {
                 _reviewManager.UpdateReviewBackground();
+                return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriod);
             }
 
-            return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriod);
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken stoppingToken)
@@ -49,11 +50,12 @@ namespace APIViewWeb.HostedServices
 
         public void Dispose(){}
 
-        private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAFter)
+        private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAfter)
         {
             do
             {
-                await _reviewManager.AutoArchiveReviews(archiveAFter);
+                await _reviewManager.AutoArchiveReviews(archiveAfter);
+                // Wait 6 hours before running archive task again
                 await Task.Delay(6 * 60 * 60000, stoppingToken);
             }
             while (!stoppingToken.IsCancellationRequested);

@@ -46,7 +46,7 @@ stages:
             inputs:
               version: '${{ coalesce( parameters.DotNetCoreVersion, variables.DotNetCoreVersion) }}'
 
-          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
+          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release /p:Version=$(Build.BuildNumber)'
             displayName: 'Build and Package'
             workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
             env:

@@ -301,20 +301,8 @@ export class Coordinator {
                 if (req.query?.[LRO_CALLBACK] === 'true') {
                     // lro callback, try to get 204 response first
                     try {
-                        // if 202 response exist, need to return 204 response
-                        this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
-                        try {
-                            ;[code, ret] = this.findResponse(
-                                exampleResponses,
-                                HttpStatusCode.NO_CONTENT
-                            )
-                        } catch (error) {
-                            // if no 204 response, mock a response
-                            code = HttpStatusCode.NO_CONTENT
-                            ret = undefined
-                        }
-                    } catch (error) {
-                        // otherwise, need to return 200 success response
+                        // if 201 response exist, need to return 200 response
+                        this.findResponse(exampleResponses, HttpStatusCode.CREATED)
                         try {
                             ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
                             // set status to succeed to stop polling
@@ -325,6 +313,37 @@ export class Coordinator {
                             // if no 200 response, mock a response
                             code = HttpStatusCode.OK
                             ret = { status: 'Succeeded' }
+                        }
+                    } catch (error) {
+                        try {
+                            // if 202 response exist, need to return 204 response
+                            this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
+                            try {
+                                ;[code, ret] = this.findResponse(
+                                    exampleResponses,
+                                    HttpStatusCode.NO_CONTENT
+                                )
+                            } catch (error) {
+                                // if no 204 response, mock a response
+                                code = HttpStatusCode.NO_CONTENT
+                                ret = undefined
+                            }
+                        } catch (error) {
+                            // otherwise, need to return 200 success response
+                            try {
+                                ;[code, ret] = this.findResponse(
+                                    exampleResponses,
+                                    HttpStatusCode.OK
+                                )
+                                // set status to succeed to stop polling
+                                if (typeof ret === 'object' && !Array.isArray(ret)) {
+                                    ret.status = 'Succeeded'
+                                }
+                            } catch (error) {
+                                // if no 200 response, mock a response
+                                code = HttpStatusCode.OK
+                                ret = { status: 'Succeeded' }
+                            }
                         }
                     }
                 } else {

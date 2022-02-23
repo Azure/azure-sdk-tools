@@ -15,7 +15,7 @@ from ._argtype import ArgType
 VALIDATION_REQUIRED_DUNDER = ["__init__",]
 KWARG_NOT_REQUIRED_METHODS = ["close",]
 TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
-REGEX_ITEM_PAGED = "~[\w.]*\.([\w]*)\s?[\[\(][^\n]*[\]\)]"
+REGEX_ITEM_PAGED = "(~[\w.]*\.)?([\w]*)\s?[\[\(][^\n]*[\]\)]"
 PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
 # Methods that are implementation of known interface should be excluded from lint check
 # for e.g. get, update, keys

@@ -21,6 +21,13 @@ parameters:
   - name: TestPostSteps
     type: object
     default: []
+  - name: DockerDeployments
+    type: object
+    default: []
+  - name: DockerTagPrefix
+    type: string
+    default: '1.0.0-dev'
+
 variables:
   - template: ../variables/globals.yml
   - name: Warn
@@ -86,8 +93,24 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
+      - template: /eng/pipelines/publish-docker-image.yml
+        parameters:
+          DockerDeployments: ${{ parameters.DockerDeployments }}
+          Publish: false
+          ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: PublishDockerImages
+      displayName: Publish Docker Images
+      dependsOn: BuildTestAndPackage
+      jobs:
+        - template: /eng/pipelines/publish-docker-image.yml
+          parameters:
+            DockerDeployments: ${{ parameters.DockerDeployments }}
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -49,9 +50,10 @@ namespace Azure.Sdk.Tools.TestProxy
             if (version)
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var nameVersion = assembly.GetName().Version;
+                var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+                var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine(nameVersion);
+                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }

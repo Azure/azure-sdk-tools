@@ -97,13 +97,6 @@ stages:
           ImageTag: "1.0.0-dev$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: Publish Docker Images
-      - template: pipelines/publish-docker-image.yml
-        parameters:
-          DockerDeployments: ${{ parameters.DockerDeployments }}
-          ImageTag: "1.0.0-dev$(Build.BuildNumber)"
-
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net

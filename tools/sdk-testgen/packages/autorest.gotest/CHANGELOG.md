@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Tue, 22 Feb 2022 10:58:11 GMT and should not be manually modified.
+This log was last generated on Thu, 24 Feb 2022 05:54:42 GMT and should not be manually modified.
+
+## 2.1.1
+Thu, 24 Feb 2022 05:54:42 GMT
+
+### Patches
+
+- Fix param render bug for resource deployment step in api scenario.
 
 ## 2.1.0
 Tue, 22 Feb 2022 10:58:11 GMT

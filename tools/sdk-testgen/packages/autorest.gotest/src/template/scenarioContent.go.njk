@@ -94,8 +94,8 @@
     template := {{step.armTemplateOutput}}
     params := map[string]interface{}{
         {%- for k, v in step.armTemplatePayload.parameters %}
-        {%- if v.defaultValue === "$("  + k + ")" and k !== "userAssignedIdentity" %}
-    "{{k}}": {{k}},
+        {%- if v.defaultValue === "$("  + k + ")" %}
+    "{{k}}": map[string]interface{}{ "value": {{k}},},
         {%- endif %}
         {%- endfor %}
     }

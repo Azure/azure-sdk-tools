@@ -37,7 +37,7 @@ var (
     location = scenario_test.GetEnv("LOCATION", "eastus")
     {%- elif variable === "subscriptionId" %}
     subscriptionId = scenario_test.GetEnv("SUBSCRIPTION_ID", scenario_test.GetEnv("AZURE_SUBSCRIPTION_ID", ""))
-    {%- elif variable !== "userAssignedIdentity" %}
+    {%- else %}
     {{variable}} = scenario_test.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
     {%- endif %}
 {%- endif %}

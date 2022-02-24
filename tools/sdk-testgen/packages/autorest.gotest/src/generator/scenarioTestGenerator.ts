@@ -153,14 +153,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                         if (t.properties['arguments']) {
                             t.properties['arguments'] = this.getStringValue(t.properties['arguments']);
                         }
-                        if (t['identity']) {
-                            delete t['identity'];
-                        }
                     });
-                }
-
-                if (step.armTemplatePayload.parameters && step.armTemplatePayload.parameters['userAssignedIdentity']) {
-                    delete step.armTemplatePayload.parameters['userAssignedIdentity'];
                 }
 
                 // template parse

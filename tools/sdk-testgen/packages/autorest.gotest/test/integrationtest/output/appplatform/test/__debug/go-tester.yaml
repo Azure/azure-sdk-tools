@@ -33727,6 +33727,14 @@ testModel:
 
             "parameters":map[string]interface{}{
 
+            "userAssignedIdentity":map[string]interface{}{
+
+            "type": "string",
+
+            "defaultValue": "$(userAssignedIdentity)",
+
+            },
+
             "utcValue":map[string]interface{}{
 
             "type": "string",
@@ -33746,6 +33754,20 @@ testModel:
             "type": "Microsoft.Resources/deploymentScripts",
 
             "apiVersion": "2020-10-01",
+
+            "identity":map[string]interface{}{
+
+            "type": "UserAssigned",
+
+            "userAssignedIdentities":map[string]interface{}{
+
+            "[parameters('userAssignedIdentity')]":map[string]interface{}{
+
+            },
+
+            },
+
+            },
 
             "kind": "AzurePowerShell",
 
@@ -33805,6 +33827,9 @@ testModel:
             $schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
             contentVersion: 1.0.0.0
             parameters:
+              userAssignedIdentity:
+                type: string
+                defaultValue: $(userAssignedIdentity)
               utcValue:
                 type: string
                 defaultValue: '[utcNow()]'
@@ -33812,6 +33837,10 @@ testModel:
               - name: delete_cname_record
                 type: Microsoft.Resources/deploymentScripts
                 apiVersion: '2020-10-01'
+                identity:
+                  type: UserAssigned
+                  userAssignedIdentities:
+                    '[parameters(''userAssignedIdentity'')]': {}
                 kind: AzurePowerShell
                 location: '[resourceGroup().location]'
                 properties:
@@ -33974,6 +34003,14 @@ testModel:
 
             "parameters":map[string]interface{}{
 
+            "userAssignedIdentity":map[string]interface{}{
+
+            "type": "string",
+
+            "defaultValue": "$(userAssignedIdentity)",
+
+            },
+
             "utcValue":map[string]interface{}{
 
             "type": "string",
@@ -33993,6 +34030,20 @@ testModel:
             "type": "Microsoft.Resources/deploymentScripts",
 
             "apiVersion": "2020-10-01",
+
+            "identity":map[string]interface{}{
+
+            "type": "UserAssigned",
+
+            "userAssignedIdentities":map[string]interface{}{
+
+            "[parameters('userAssignedIdentity')]":map[string]interface{}{
+
+            },
+
+            },
+
+            },
 
             "kind": "AzurePowerShell",
 
@@ -34062,6 +34113,9 @@ testModel:
             $schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
             contentVersion: 1.0.0.0
             parameters:
+              userAssignedIdentity:
+                type: string
+                defaultValue: $(userAssignedIdentity)
               utcValue:
                 type: string
                 defaultValue: '[utcNow()]'
@@ -34069,6 +34123,10 @@ testModel:
               - name: Add_Dns_Cname_Record
                 type: Microsoft.Resources/deploymentScripts
                 apiVersion: '2020-10-01'
+                identity:
+                  type: UserAssigned
+                  userAssignedIdentities:
+                    '[parameters(''userAssignedIdentity'')]': {}
                 kind: AzurePowerShell
                 location: '[resourceGroup().location]'
                 properties:
@@ -41277,11 +41335,14 @@ testModel:
             - &ref_1608
               type: armTemplateDeployment
               armTemplate: ''
-              armTemplateOutput: "map[string]interface{}{\n\"$schema\": \"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\",\n\"contentVersion\": \"1.0.0.0\",\n\"parameters\":map[string]interface{}{\n\"utcValue\":map[string]interface{}{\n\"type\": \"string\",\n\"defaultValue\": \"[utcNow()]\",\n},\n},\n\"resources\":[]interface{}{\nmap[string]interface{}{\n\"name\": \"Upload_File\",\n\"type\": \"Microsoft.Resources/deploymentScripts\",\n\"apiVersion\": \"2020-10-01\",\n\"kind\": \"AzurePowerShell\",\n\"location\": \"[resourceGroup().location]\",\n\"properties\":map[string]interface{}{\n\"azPowerShellVersion\": \"6.2\",\n\"cleanupPreference\": \"OnSuccess\",\n\"environmentVariables\":[]interface{}{\nmap[string]interface{}{\n\"name\": \"uploadUrl\",\n\"secureValue\": uploadUrl,\n},\nmap[string]interface{}{\n\"name\": \"blobUrl\",\n\"secureValue\": blobUrl,\n},\n},\n\"forceUpdateTag\": \"[parameters('utcValue')]\",\n\"retentionInterval\": \"P1D\",\n\"scriptContent\": \"$uploadUri = ${Env:uploadUrl}\\n$blobUri = ${Env:blobUrl}\\n$localFilePath = '/tmp/temp.file'\\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\\n\t$DownLoadTask\\n}\\n\\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\\n\t$UploadTask\\n}\\n\\nConnect-AzAccount -Identity\\nDownloadJarFromBlob $blobUri $localFilePath\\nUploadToFileShare $uploadUri $localFilePath\",\n\"timeout\": \"PT1H\",\n},\n},\n},\n}"
+              armTemplateOutput: "map[string]interface{}{\n\"$schema\": \"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#\",\n\"contentVersion\": \"1.0.0.0\",\n\"parameters\":map[string]interface{}{\n\"userAssignedIdentity\":map[string]interface{}{\n\"type\": \"string\",\n\"defaultValue\": \"$(userAssignedIdentity)\",\n},\n\"utcValue\":map[string]interface{}{\n\"type\": \"string\",\n\"defaultValue\": \"[utcNow()]\",\n},\n},\n\"resources\":[]interface{}{\nmap[string]interface{}{\n\"name\": \"Upload_File\",\n\"type\": \"Microsoft.Resources/deploymentScripts\",\n\"apiVersion\": \"2020-10-01\",\n\"identity\":map[string]interface{}{\n\"type\": \"UserAssigned\",\n\"userAssignedIdentities\":map[string]interface{}{\n\"[parameters('userAssignedIdentity')]\":map[string]interface{}{\n},\n},\n},\n\"kind\": \"AzurePowerShell\",\n\"location\": \"[resourceGroup().location]\",\n\"properties\":map[string]interface{}{\n\"azPowerShellVersion\": \"6.2\",\n\"cleanupPreference\": \"OnSuccess\",\n\"environmentVariables\":[]interface{}{\nmap[string]interface{}{\n\"name\": \"uploadUrl\",\n\"secureValue\": uploadUrl,\n},\nmap[string]interface{}{\n\"name\": \"blobUrl\",\n\"secureValue\": blobUrl,\n},\n},\n\"forceUpdateTag\": \"[parameters('utcValue')]\",\n\"retentionInterval\": \"P1D\",\n\"scriptContent\": \"$uploadUri = ${Env:uploadUrl}\\n$blobUri = ${Env:blobUrl}\\n$localFilePath = '/tmp/temp.file'\\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\\n\t$DownLoadTask\\n}\\n\\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\\n\t$UploadTask\\n}\\n\\nConnect-AzAccount -Identity\\nDownloadJarFromBlob $blobUri $localFilePath\\nUploadToFileShare $uploadUri $localFilePath\",\n\"timeout\": \"PT1H\",\n},\n},\n},\n}"
               armTemplatePayload:
                 $schema: https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#
                 contentVersion: 1.0.0.0
                 parameters:
+                  userAssignedIdentity:
+                    type: string
+                    defaultValue: $(userAssignedIdentity)
                   utcValue:
                     type: string
                     defaultValue: '[utcNow()]'
@@ -41289,6 +41350,10 @@ testModel:
                   - name: Upload_File
                     type: Microsoft.Resources/deploymentScripts
                     apiVersion: '2020-10-01'
+                    identity:
+                      type: UserAssigned
+                      userAssignedIdentities:
+                        '[parameters(''userAssignedIdentity'')]': {}
                     kind: AzurePowerShell
                     location: '[resourceGroup().location]'
                     properties:

@@ -40,20 +40,23 @@ steps:
         command: push
         tags: ${{ parameters.ImageTag }}
 
-    - ${{ each stableTag in parameters.DockerDeploymentConfig.stableTags }}:
-      - task: Docker@2
-        displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        inputs:
-          command: build
-          Dockerfile: ${{ parameters.DockerDeploymentConfig.dockerFile }}
-          tags: ${{ stableTag }}
-          arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
+    - pwsh: |
+        Write-Host "${{ parameters.DockerDeploymentConfig.stableTags }}"
 
-      - task: Docker@2
-        displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-        inputs:
-          containerRegistry: ${{ parameters.ContainerRegistry }}
-          repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
-          command: push
-          tags: ${{ stableTag }}
+    # - ${{ each stableTag in parameters.DockerDeploymentConfig.stableTags }}:
+    #   - task: Docker@2
+    #     displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+    #     inputs:
+    #       command: build
+    #       Dockerfile: ${{ parameters.DockerDeploymentConfig.dockerFile }}
+    #       tags: ${{ stableTag }}
+    #       arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
+
+    #   - task: Docker@2
+    #     displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+    #     condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    #     inputs:
+    #       containerRegistry: ${{ parameters.ContainerRegistry }}
+    #       repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
+    #       command: push
+    #       tags: ${{ stableTag }}

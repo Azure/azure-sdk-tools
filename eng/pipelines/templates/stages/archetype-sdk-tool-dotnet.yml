@@ -91,10 +91,10 @@ stages:
               mergeTestResults: true
 
       - template: pipelines/publish-docker-image.yml
-          parameters:
-            DockerDeployments: ${{ parameters.DockerDeployments }}
-            Publish: false
-            ImageTag: "1.0.0-dev$(Build.BuildNumber)"
+        parameters:
+          DockerDeployments: ${{ parameters.DockerDeployments }}
+          Publish: false
+          ImageTag: "1.0.0-dev$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: Publish Docker Images

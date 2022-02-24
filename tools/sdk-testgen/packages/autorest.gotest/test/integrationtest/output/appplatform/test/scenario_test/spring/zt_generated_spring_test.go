@@ -41,6 +41,7 @@ var (
 	mysqlKey                   = scenario_test.GetEnv("MYSQL_KEY", "")
 	resourceGroupName          = scenario_test.GetEnv("RESOURCE_GROUP_NAME", "")
 	subscriptionId             = scenario_test.GetEnv("SUBSCRIPTION_ID", scenario_test.GetEnv("AZURE_SUBSCRIPTION_ID", ""))
+	userAssignedIdentity       = scenario_test.GetEnv("USER_ASSIGNED_IDENTITY", "")
 )
 
 func TestSpring(t *testing.T) {
@@ -142,6 +143,10 @@ func prepare(t *testing.T) {
 			"$schema":        "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 			"contentVersion": "1.0.0.0",
 			"parameters": map[string]interface{}{
+				"userAssignedIdentity": map[string]interface{}{
+					"type":         "string",
+					"defaultValue": "$(userAssignedIdentity)",
+				},
 				"utcValue": map[string]interface{}{
 					"type":         "string",
 					"defaultValue": "[utcNow()]",
@@ -152,8 +157,14 @@ func prepare(t *testing.T) {
 					"name":       "Add_Dns_Cname_Record",
 					"type":       "Microsoft.Resources/deploymentScripts",
 					"apiVersion": "2020-10-01",
-					"kind":       "AzurePowerShell",
-					"location":   "[resourceGroup().location]",
+					"identity": map[string]interface{}{
+						"type": "UserAssigned",
+						"userAssignedIdentities": map[string]interface{}{
+							"[parameters('userAssignedIdentity')]": map[string]interface{}{},
+						},
+					},
+					"kind":     "AzurePowerShell",
+					"location": "[resourceGroup().location]",
 					"properties": map[string]interface{}{
 						"azPowerShellVersion": "6.2",
 						"cleanupPreference":   "OnSuccess",
@@ -183,7 +194,9 @@ func prepare(t *testing.T) {
 				},
 			},
 		}
-		params := map[string]interface{}{}
+		params := map[string]interface{}{
+			"userAssignedIdentity": map[string]interface{}{"value": userAssignedIdentity},
+		}
 		_, err := scenario_test.CreateDeployment(ctx, cred, options, subscriptionId, resourceGroupName, "Add_Dns_Cname_Record", template, params)
 		if err != nil {
 			t.Fatalf("Deployment error: %v", err)
@@ -1220,6 +1233,10 @@ func scenarioSpring(t *testing.T) {
 			"$schema":        "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 			"contentVersion": "1.0.0.0",
 			"parameters": map[string]interface{}{
+				"userAssignedIdentity": map[string]interface{}{
+					"type":         "string",
+					"defaultValue": "$(userAssignedIdentity)",
+				},
 				"utcValue": map[string]interface{}{
 					"type":         "string",
 					"defaultValue": "[utcNow()]",
@@ -1230,8 +1247,14 @@ func scenarioSpring(t *testing.T) {
 					"name":       "Upload_File",
 					"type":       "Microsoft.Resources/deploymentScripts",
 					"apiVersion": "2020-10-01",
-					"kind":       "AzurePowerShell",
-					"location":   "[resourceGroup().location]",
+					"identity": map[string]interface{}{
+						"type": "UserAssigned",
+						"userAssignedIdentities": map[string]interface{}{
+							"[parameters('userAssignedIdentity')]": map[string]interface{}{},
+						},
+					},
+					"kind":     "AzurePowerShell",
+					"location": "[resourceGroup().location]",
 					"properties": map[string]interface{}{
 						"azPowerShellVersion": "6.2",
 						"cleanupPreference":   "OnSuccess",
@@ -1253,7 +1276,9 @@ func scenarioSpring(t *testing.T) {
 				},
 			},
 		}
-		params := map[string]interface{}{}
+		params := map[string]interface{}{
+			"userAssignedIdentity": map[string]interface{}{"value": userAssignedIdentity},
+		}
 		_, err := scenario_test.CreateDeployment(ctx, cred, options, subscriptionId, resourceGroupName, "Upload_File", template, params)
 		if err != nil {
 			t.Fatalf("Deployment error: %v", err)
@@ -1740,6 +1765,10 @@ func cleanup(t *testing.T) {
 			"$schema":        "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 			"contentVersion": "1.0.0.0",
 			"parameters": map[string]interface{}{
+				"userAssignedIdentity": map[string]interface{}{
+					"type":         "string",
+					"defaultValue": "$(userAssignedIdentity)",
+				},
 				"utcValue": map[string]interface{}{
 					"type":         "string",
 					"defaultValue": "[utcNow()]",
@@ -1750,8 +1779,14 @@ func cleanup(t *testing.T) {
 					"name":       "delete_cname_record",
 					"type":       "Microsoft.Resources/deploymentScripts",
 					"apiVersion": "2020-10-01",
-					"kind":       "AzurePowerShell",
-					"location":   "[resourceGroup().location]",
+					"identity": map[string]interface{}{
+						"type": "UserAssigned",
+						"userAssignedIdentities": map[string]interface{}{
+							"[parameters('userAssignedIdentity')]": map[string]interface{}{},
+						},
+					},
+					"kind":     "AzurePowerShell",
+					"location": "[resourceGroup().location]",
 					"properties": map[string]interface{}{
 						"azPowerShellVersion": "6.2",
 						"cleanupPreference":   "OnSuccess",
@@ -1777,7 +1812,9 @@ func cleanup(t *testing.T) {
 				},
 			},
 		}
-		params := map[string]interface{}{}
+		params := map[string]interface{}{
+			"userAssignedIdentity": map[string]interface{}{"value": userAssignedIdentity},
+		}
 		_, err := scenario_test.CreateDeployment(ctx, cred, options, subscriptionId, resourceGroupName, "delete_cname_record", template, params)
 		if err != nil {
 			t.Fatalf("Deployment error: %v", err)

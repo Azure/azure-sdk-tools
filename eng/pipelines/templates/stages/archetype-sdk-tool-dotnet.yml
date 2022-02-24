@@ -21,6 +21,10 @@ parameters:
   - name: TestPostSteps
     type: object
     default: []
+  - name: DockerDeployments
+    type: object
+    default: []
+
 variables:
   - template: ../variables/globals.yml
   - name: Warn
@@ -85,6 +89,20 @@ stages:
               testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
               testResultsFormat: 'VSTest'
               mergeTestResults: true
+
+  - stage: Build Docker Images
+    - template: pipelines/publish-docker-image.yml
+      parameters:
+        DockerDeployments: ${{ parameters.DockerDeployments }}
+        Publish: false
+        ImageTag: "1.0.0-dev$(Build.BuildNumber)"
+
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: Publish Docker Images
+      - template: pipelines/publish-docker-image.yml
+        parameters:
+          DockerDeployments: ${{ parameters.DockerDeployments }}
+          ImageTag: "1.0.0-dev$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools

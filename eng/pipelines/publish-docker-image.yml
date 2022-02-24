@@ -44,6 +44,7 @@ jobs:
             - ${{ each stableTag in config.stableTags }}:
               - task: Docker@2
                 displayName: Build ${{ config.name }}:${{ stableTag }}
+                condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
                 inputs:
                   command: build
                   Dockerfile: ${{ config.dockerFile }}

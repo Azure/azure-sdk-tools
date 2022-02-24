@@ -8,7 +8,7 @@ import {generateReadmeMd} from "./generateReadmeMd";
 import {generateTest} from "./generateTest";
 import {generateKarmaConfig} from "./generateKarmaConfig";
 import {generateSample} from "./generateSample";
-import {modifyOrGenerateCiYaml} from "../../utils/changeCiYaml";
+import {modifyOrGenerateCiYml} from "../../utils/changeCiYaml";
 import {changeRushJson} from "../../utils/changeRushJson";
 import {getRelativePackagePath} from "./utils";
 
@@ -23,6 +23,6 @@ export async function generateExtraFiles(packagePath: string, packageName: strin
     await generateTest(packagePath);
     await generateKarmaConfig(packagePath);
     await generateSample(packagePath);
-    await modifyOrGenerateCiYaml(sdkRepo, packagePath, packageName, false);
+    await modifyOrGenerateCiYml(sdkRepo, packagePath, packageName, false);
     await changeRushJson(sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 }

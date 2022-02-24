@@ -3,14 +3,15 @@ import {execSync} from "child_process";
 
 import fs from "fs";
 import * as path from "path";
-import {getChangedPackageDirectory} from "../utils/git";
+import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git";
 import {generateChangelogAndBumpVersion} from "./utils/automaticGenerateChangeLogAndBumpVersion";
 import {Changelog} from "../changelog/changelogGenerator";
 import {changeRushJson} from "../utils/changeRushJson";
-import {modifyOrGenerateCiYaml} from "../utils/changeCiYaml";
-import {SwaggerSdkAutomationOutputPackageInfo} from "../common-types/swaggerSdkAutomation";
+import {modifyOrGenerateCiYml} from "../utils/changeCiYaml";
 import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample";
 import {changeReadmeMd} from "./utils/changeReadmeMd";
+import {RunningEnvironment} from "../utils/runningEnvironment";
+import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -22,6 +23,7 @@ export async function generateMgmt(options: {
     additionalArgs?: string;
     outputJson?: any;
     swaggerRepoUrl?: string;
+    runningEnvironment?: RunningEnvironment;
 }) {
     logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
 
@@ -52,22 +54,8 @@ export async function generateMgmt(options: {
     const changedPackageDirectories: Set<string> = await getChangedPackageDirectory();
     for (const changedPackageDirectory of changedPackageDirectories) {
         const packagePath: string = path.join(options.sdkRepo, changedPackageDirectory);
-        const swaggerSdkAutomationOutputPackageInfo: SwaggerSdkAutomationOutputPackageInfo = {
-            "packageName": "",
-            "path": [
-                'rush.json',
-                'common/config/rush/pnpm-lock.yaml'
-            ],
-            "readmeMd": [
-                options.readmeMd
-            ],
-            "changelog": {
-                "content": "",
-                "hasBreakingChange": false
-            },
-            "artifacts": [],
-            "result": "succeeded"
-        };
+        let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd);
+
         try {
             logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
@@ -78,34 +66,6 @@ export async function generateMgmt(options: {
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Hlc);
 
-            logger.logGreen(`rush update`);
-            execSync('rush update', {stdio: 'inherit'});
-            logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
-            execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
-            logger.logGreen('Generating Changelog and Bumping Version...');
-            const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
-            logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
-            if (options.outputJson) {
-                swaggerSdkAutomationOutputPackageInfo.packageName = packageJson.name;
-                if (changelog) {
-                    swaggerSdkAutomationOutputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                    swaggerSdkAutomationOutputPackageInfo.changelog.content = changelog.displayChangeLog();
-                    const breakingChangeItems = changelog.getBreakingChangeItems();
-                    if (!!breakingChangeItems && breakingChangeItems.length > 0) {
-                        swaggerSdkAutomationOutputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
-                    }
-                    const newPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
-                    const newVersion = newPackageJson['version'];
-                    swaggerSdkAutomationOutputPackageInfo['version'] = newVersion;
-                }
-                swaggerSdkAutomationOutputPackageInfo.path.push(path.dirname(changedPackageDirectory));
-                for (const file of fs.readdirSync(packagePath)) {
-                    if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
-                        swaggerSdkAutomationOutputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
-                    }
-                }
-            }
             const metaInfo: any = {
                 commit: options.gitCommitId,
                 readme: options.readmeMd,
@@ -118,17 +78,59 @@ export async function generateMgmt(options: {
             if (options.use) {
                 metaInfo['use'] = options.use;
             }
+
             fs.writeFileSync(path.join(packagePath, '_meta.json'), JSON.stringify(metaInfo, undefined, '  '), {encoding: 'utf-8'});
-            modifyOrGenerateCiYaml(options.sdkRepo, changedPackageDirectory, packageJson.name, true);
+            modifyOrGenerateCiYml(options.sdkRepo, changedPackageDirectory, packageName, true);
+
+            logger.logGreen(`rush update`);
+            execSync('rush update', {stdio: 'inherit'});
+            logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+            execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+            logger.logGreen('Generating Changelog and Bumping Version...');
+            const changelog: Changelog | undefined = await generateChangelogAndBumpVersion(changedPackageDirectory);
+            logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
+            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+
             changeReadmeMd(packagePath);
 
+            // @ts-ignore
+            if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
+                outputPackageInfo.packageName = packageJson.name;
+                if (changelog) {
+                    outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
+                    outputPackageInfo.changelog.content = changelog.displayChangeLog();
+                    const breakingChangeItems = changelog.getBreakingChangeItems();
+                    if (!!breakingChangeItems && breakingChangeItems.length > 0) {
+                        outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
+                    }
+                    const newPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
+                    const newVersion = newPackageJson['version'];
+                    outputPackageInfo['version'] = newVersion;
+                }
+                if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
+                    outputPackageInfo.packageFolder = changedPackageDirectory;
+                }
+
+                outputPackageInfo.path.push(changedPackageDirectory);
+                for (const file of await getChangedCiYmlFilesInSpecificFolder(path.dirname(changedPackageDirectory))) {
+                    outputPackageInfo.path.push(file);
+                }
+
+                for (const file of fs.readdirSync(packagePath)) {
+                    if (file.startsWith('azure-arm') && file.endsWith('.tgz')) {
+                        outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
+                    }
+                }
+            }
         } catch (e) {
             logger.logError('Error:');
             logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
-            swaggerSdkAutomationOutputPackageInfo.result = 'failed';
+            if (outputPackageInfo) {
+                outputPackageInfo.result = 'failed';
+            }
         } finally {
-            if (options.outputJson) {
-                options.outputJson.packages.push(swaggerSdkAutomationOutputPackageInfo);
+            if (options.outputJson && outputPackageInfo) {
+                options.outputJson.packages.push(outputPackageInfo);
             }
             changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Hlc);
         }

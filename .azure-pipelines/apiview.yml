@@ -189,7 +189,7 @@ stages:
           - script: |
               cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
               pip install tox
-              tox
+              tox -e pytest,stubgen
             displayName: 'Test Python Package Parser'
 
           - task: PublishTestResults@2

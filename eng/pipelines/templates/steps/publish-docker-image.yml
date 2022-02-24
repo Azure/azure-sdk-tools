@@ -15,6 +15,9 @@ parameters:
   - name: ContainerRegistry
     type: string
     default: 'azsdkengsys'
+  - name: Publish
+    type: boolean
+    default: true
 
 steps:
   - ${{ if parameters.DockerDeploymentConfig.prepareScript }}:
@@ -30,29 +33,30 @@ steps:
       tags: ${{ parameters.ImageTag }}
       arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ parameters.ImageTag }}'
 
-  - task: Docker@2
-    displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ parameters.ImageTag }}
-    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-    inputs:
-      containerRegistry: ${{ parameters.ContainerRegistry }}
-      repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
-      command: push
-      tags: ${{ parameters.ImageTag }}
+  - ${{ if parameters.publish }}:
+    - task: Docker@2
+      displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ parameters.ImageTag }}
+      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+      inputs:
+        containerRegistry: ${{ parameters.ContainerRegistry }}
+        repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
+        command: push
+        tags: ${{ parameters.ImageTag }}
 
-  - ${{ if parameters.DockerDeploymentConfig.stableTags }}:
-    - ${{ each stableTag in parameters.DockerDeploymentConfig.stableTags }}:
-      - task: Docker@2
-        displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        inputs:
+    - ${{ if parameters.DockerDeploymentConfig.stableTags }}:
+      - ${{ each stableTag in parameters.DockerDeploymentConfig.stableTags }}:
+        - task: Docker@2
+          displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+          inputs:
             command: build
             Dockerfile: ${{ parameters.DockerDeploymentConfig.dockerFile }}
             tags: ${{ stableTag }}
             arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
 
-      - task: Docker@2
-        displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-        inputs:
+        - task: Docker@2
+          displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+          inputs:
             containerRegistry: ${{ parameters.ContainerRegistry }}
             repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
             command: push

@@ -74,7 +74,7 @@ jobs:
       pool:
         vmImage: ${{ config.pool }}
       steps:
-        - template: ../pipelines/steps/publish-docker-image.yml
+        - template: ../pipelines/templates/steps/publish-docker-image.yml
           parameters:
             DockerDeploymentConfig: ${{ config }}
             ImageTag: $(build.buildid)

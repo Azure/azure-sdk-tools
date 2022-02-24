@@ -6,6 +6,7 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+from cgitb import text
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 from typing import TypedDict, Union
@@ -114,3 +115,11 @@ class PublicPrivateClass:
 
     def public_func(self, **kwargs) -> str:
         return ""
+
+
+class RequiredKwargObject:
+
+    def __init__(self, *, name: str, age: int, other: str = ""):
+        self.name = name
+        self.age = age
+        self.other = other

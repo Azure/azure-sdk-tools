@@ -9,7 +9,8 @@ from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict as FakeTypedDict,
     FakeObject as FakeObject,
-    PublicPrivateClass as PublicPrivateClass
+    PublicPrivateClass as PublicPrivateClass,
+    RequiredKwargObject
 )
 
 
@@ -55,3 +56,7 @@ class TestClassParsing:
             (FunctionNode, "__init__", None),
             (FunctionNode, "public_func", None)
         ])
+
+    def test_required_kwargs(self):
+        class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
+        # TODO: Checks here!

@@ -7,7 +7,8 @@
 # --------------------------------------------------------------------------
 
 from ._models import (
-    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict, PetEnum, PublicPrivateClass
+    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict, PetEnum, PublicPrivateClass,
+    RequiredKwargObject
 )
 
 
@@ -17,5 +18,6 @@ __all__ = (
     "FakeObject",
     "FakeTypedDict",
     "PetEnum",
-    "PublicPrivateClass"
+    "PublicPrivateClass",
+    "RequiredKwargObject"
 )

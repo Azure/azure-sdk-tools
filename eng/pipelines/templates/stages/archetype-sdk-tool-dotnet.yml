@@ -90,7 +90,7 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-      - template: pipelines/publish-docker-image.yml
+      - template: /eng/pipelines/publish-docker-image.yml
         parameters:
           DockerDeployments: ${{ parameters.DockerDeployments }}
           Publish: false

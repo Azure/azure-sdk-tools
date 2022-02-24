@@ -17,7 +17,6 @@ parameters:
       default: 'azsdkengsys' 
 
 steps:
-    steps:
     - ${{ if DockerDeploymentConfig.prepareScript }}:
         - pwsh: |
             ./${{ DockerDeploymentConfig.prepareScript }}

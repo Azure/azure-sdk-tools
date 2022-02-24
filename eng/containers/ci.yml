@@ -67,14 +67,9 @@ variables:
     value: $(build.buildid)
   - template: ../pipelines/templates/variables/globals.yml
 
-jobs:
-  - ${{ each config in parameters.DockerDeployments }}:
-    - job: container_build_${{ config.name }}
-      displayName: Deploy ${{ config.name }} Image
-      pool:
-        vmImage: ${{ config.pool }}
-      steps:
-        - template: ../pipelines/templates/steps/publish-docker-image.yml
-          parameters:
-            DockerDeploymentConfig: ${{ config }}
-            ImageTag: $(build.buildid)
+extends:
+  template: ../pipelines/publish-docker-image.yml
+  parameters:
+    DockerDeployments: ${{ parameters.DockerDeployments }}
+    ImageTag: $(imageTag)
+

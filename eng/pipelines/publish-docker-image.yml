@@ -1,0 +1,59 @@
+parameters:
+  - name: DockerDeployments
+    type: object
+    default: []
+  - name: ImageTag
+    type: string
+  - name: ContainerRegistry
+    type: string
+    default: 'azsdkengsys'
+  - name: Publish
+    type: boolean
+    default: true
+
+jobs:
+  - ${{ each config in parameters.DockerDeployments }}:
+    - job: container_build_${{ config.name }}
+      displayName: Deploy ${{ config.name }} Image
+      pool:
+        vmImage: ${{ config.pool }}
+      steps:
+        - ${{ if config.prepareScript }}:
+          - pwsh: |
+              ./${{ config.prepareScript }}
+            displayName: "Run prep script"
+        - task: Docker@2
+          displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
+          inputs:
+            command: build
+            Dockerfile: ${{ config.dockerFile }}
+            tags: ${{ parameters.ImageTag }}
+            arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}'
+
+        - ${{ if parameters.Publish }}:
+          - task: Docker@2
+            displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              containerRegistry: $(containerRegistry)
+              repository: ${{ config.dockerRepo }}
+              command: push
+              tags: ${{ parameters.ImageTag }}
+
+          - ${{ each stableTag in config.stableTags }}:
+            - task: Docker@2
+              displayName: Build ${{ config.name }}:${{ stableTag }}
+              inputs:
+                command: build
+                Dockerfile: ${{ config.dockerFile }}
+                tags: ${{ stableTag }}
+                arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+
+            - task: Docker@2
+              displayName: Push ${{ config.name }}:${{ stableTag }}
+              condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+              inputs:
+                containerRegistry: $(containerRegistry)
+                repository: ${{ config.dockerRepo }}
+                command: push
+                tags: ${{ stableTag }}

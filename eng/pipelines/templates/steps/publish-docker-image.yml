@@ -1,0 +1,60 @@
+Additional sample inputs can be found in `eng/containers/ci.yml`.
+# default:
+#   - name: test_proxy_linux
+#     pool: 'ubuntu-20.04'
+#     dockerRepo: 'engsys/testproxy-lin'
+#     prepareScript: tools/test-proxy/docker/prepare.ps1
+#     dockerFile: 'tools/test-proxy/docker/dockerfile'
+#     stableTags:
+#     - 'latest'
+parameters:
+    - name: DockerDeploymentConfig
+      type: object
+    - name: ImageTag
+      type: string
+    - name: ContainerRegistry
+      type: string 
+      default: 'azsdkengsys' 
+
+steps:
+    steps:
+    - ${{ if DockerDeploymentConfig.prepareScript }}:
+        - pwsh: |
+            ./${{ DockerDeploymentConfig.prepareScript }}
+        displayName: "Run prep script"
+
+    - task: Docker@2
+        displayName: Build ${{ DockerDeploymentConfig.name }}:$(imageTag)
+        inputs:
+        command: build
+        Dockerfile: ${{ DockerDeploymentConfig.dockerFile }}
+        tags: $(imageTag)
+        arguments: '-t $(containerRegistry).azurecr.io/${{ DockerDeploymentConfig.dockerRepo }}:$(imageTag)'
+
+    - task: Docker@2
+        displayName: Push ${{ DockerDeploymentConfig.name }}:$(imageTag)
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+        containerRegistry: $(containerRegistry)
+        repository: ${{ DockerDeploymentConfig.dockerRepo }}
+        command: push
+        tags: $(imageTag)
+
+    - ${{ each stableTag in DockerDeploymentConfig.stableTags }}:
+        - task: Docker@2
+        displayName: Build ${{ DockerDeploymentConfig.name }}:${{ stableTag }}
+        inputs:
+            command: build
+            Dockerfile: ${{ DockerDeploymentConfig.dockerFile }}
+            tags: ${{ stableTag }}
+            arguments: '-t $(containerRegistry).azurecr.io/${{ DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
+
+        - task: Docker@2
+        displayName: Push ${{ DockerDeploymentConfig.name }}:${{ stableTag }}
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+        inputs:
+            containerRegistry: $(containerRegistry)
+            repository: ${{ DockerDeploymentConfig.dockerRepo }}
+            command: push
+            tags: ${{ stableTag }}

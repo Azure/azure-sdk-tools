@@ -74,43 +74,7 @@ jobs:
       pool:
         vmImage: ${{ config.pool }}
       steps:
-        - ${{ if config.prepareScript }}:
-          - pwsh: |
-              ./${{ config.prepareScript }}
-            displayName: "Run prep script"
-
-        - task: Docker@2
-          displayName: Build ${{ config.name }}:$(imageTag)
-          inputs:
-            command: build
-            Dockerfile: ${{ config.dockerFile }}
-            tags: $(imageTag)
-            arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:$(imageTag)'
-
-        - task: Docker@2
-          displayName: Push ${{ config.name }}:$(imageTag)
-          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-          inputs:
-            containerRegistry: $(containerRegistry)
-            repository: ${{ config.dockerRepo }}
-            command: push
-            tags: $(imageTag)
-
-        - ${{ each stableTag in config.stableTags }}:
-          - task: Docker@2
-            displayName: Build ${{ config.name }}:${{ stableTag }}
-            inputs:
-              command: build
-              Dockerfile: ${{ config.dockerFile }}
-              tags: ${{ stableTag }}
-              arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
-
-          - task: Docker@2
-            displayName: Push ${{ config.name }}:${{ stableTag }}
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-            inputs:
-              containerRegistry: $(containerRegistry)
-              repository: ${{ config.dockerRepo }}
-              command: push
-              tags: ${{ stableTag }}
+        - template: /eng/pipelines/steps/publish-docker-image.yml
+          parameters:
+            DockerDeploymentConfig: ${{ config }}
+            ImageTag: $(build.buildid)

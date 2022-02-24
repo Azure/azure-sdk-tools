@@ -105,6 +105,7 @@ stages:
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: PublishDockerImages
       displayName: Publish Docker Images
+      dependsOn: BuildAndTest
       jobs:
         - template: /eng/pipelines/publish-docker-image.yml
           parameters:

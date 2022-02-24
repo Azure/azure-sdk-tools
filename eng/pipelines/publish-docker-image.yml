@@ -23,7 +23,7 @@ parameters:
 jobs:
   - ${{ each config in parameters.DockerDeployments }}:
     - job: container_build_${{ config.name }}
-      displayName: Deploy ${{ config.name }} Image
+      displayName: Build ${{ config.name }} Image
       pool:
         vmImage: ${{ config.pool }}
       steps:
@@ -37,14 +37,14 @@ jobs:
             command: build
             Dockerfile: ${{ config.dockerFile }}
             tags: ${{ parameters.ImageTag }}
-            arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}'
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}'
 
         - ${{ if parameters.Publish }}:
           - task: Docker@2
             displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
             condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
             inputs:
-              containerRegistry: $(containerRegistry)
+              containerRegistry: ${{ parameters.ContainerRegistry }}
               repository: ${{ config.dockerRepo }}
               command: push
               tags: ${{ parameters.ImageTag }}
@@ -58,13 +58,13 @@ jobs:
                   command: build
                   Dockerfile: ${{ config.dockerFile }}
                   tags: ${{ stableTag }}
-                  arguments: '-t $(containerRegistry).azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+                  arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
 
               - task: Docker@2
                 displayName: Push ${{ config.name }}:${{ stableTag }}
                 condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
                 inputs:
-                  containerRegistry: $(containerRegistry)
+                  containerRegistry: ${{ parameters.ContainerRegistry }}
                   repository: ${{ config.dockerRepo }}
                   command: push
                   tags: ${{ stableTag }}

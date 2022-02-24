@@ -7,53 +7,53 @@
 #     dockerFile: 'tools/test-proxy/docker/dockerfile'
 #     stableTags:
 #     - 'latest'
+
 parameters:
-    - name: DockerDeploymentConfig
-      type: object
-    - name: ImageTag
-      type: string
-    - name: ContainerRegistry
-      type: string 
-      default: 'azsdkengsys' 
+  - name: DockerDeploymentConfig
+    type: object
+  - name: ImageTag
+    type: string
+  - name: ContainerRegistry
+    type: string
+    default: 'azsdkengsys'
 
 steps:
-    - ${{ if parameters.DockerDeploymentConfig.prepareScript }}:
-        - pwsh: |
-            ./${{ parameters.DockerDeploymentConfig.prepareScript }}
-        displayName: "Run prep script"
+  - ${{ if parameters.DockerDeploymentConfig.prepareScript }}:
+    - pwsh: |
+        ./${{ parameters.DockerDeploymentConfig.prepareScript }}
+      displayName: "Run prep script"
 
     - task: Docker@2
-        displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:$(imageTag)
-        inputs:
+      displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ parameters.ImageTag }}
+      inputs:
         command: build
         Dockerfile: ${{ parameters.DockerDeploymentConfig.dockerFile }}
-        tags: $(imageTag)
-        arguments: '-t $(containerRegistry).azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:$(imageTag)'
+        tags: ${{ parameters.ImageTag }}
+        arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ parameters.ImageTag }}'
 
     - task: Docker@2
-        displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:$(imageTag)
-        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-        inputs:
-        containerRegistry: $(containerRegistry)
+      displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ parameters.ImageTag }}
+      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+      inputs:
+        containerRegistry: ${{ parameters.ContainerRegistry }}
         repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
         command: push
-        tags: $(imageTag)
+        tags: ${{ parameters.ImageTag }}
 
     - ${{ each stableTag in parameters.DockerDeploymentConfig.stableTags }}:
         - task: Docker@2
-        displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        inputs:
+          displayName: Build ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+          inputs:
             command: build
             Dockerfile: ${{ parameters.DockerDeploymentConfig.dockerFile }}
             tags: ${{ stableTag }}
-            arguments: '-t $(containerRegistry).azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ parameters.DockerDeploymentConfig.dockerRepo }}:${{ stableTag }}'
 
         - task: Docker@2
-        displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
-        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-
-        inputs:
-            containerRegistry: $(containerRegistry)
+          displayName: Push ${{ parameters.DockerDeploymentConfig.name }}:${{ stableTag }}
+          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+          inputs:
+            containerRegistry: ${{ parameters.ContainerRegistry }}
             repository: ${{ parameters.DockerDeploymentConfig.dockerRepo }}
             command: push
             tags: ${{ stableTag }}

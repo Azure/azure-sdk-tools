@@ -24,6 +24,9 @@ parameters:
   - name: DockerDeployments
     type: object
     default: []
+  - name: DockerTagPrefix
+    type: string
+    default: '1.0.0-dev'
 
 variables:
   - template: ../variables/globals.yml
@@ -94,7 +97,7 @@ stages:
         parameters:
           DockerDeployments: ${{ parameters.DockerDeployments }}
           Publish: false
-          ImageTag: "1.0.0-dev$(Build.BuildNumber)"
+          ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
@@ -110,4 +113,4 @@ stages:
         - template: /eng/pipelines/publish-docker-image.yml
           parameters:
             DockerDeployments: ${{ parameters.DockerDeployments }}
-            ImageTag: "1.0.0-dev$(Build.BuildNumber)"
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

@@ -59,12 +59,12 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
         },
         "scripts": {
             "audit": "node ../../../common/scripts/rush-audit.js && rimraf node_modules package-lock.json && npm i --package-lock-only 2>&1 && npm audit",
-            "build:browser": "tsc -p . && cross-env ONLY_BROWSER=true rollup -c 2>&1",
-            "build:node": "tsc -p . && cross-env ONLY_NODE=true rollup -c 2>&1",
+            "build:browser": "tsc -p . && dev-tool run bundle",
+            "build:node": "tsc -p . && dev-tool run bundle",
             "build:samples": "echo Obsolete.",
-            "build:test": "tsc -p . && rollup -c 2>&1",
-            "build": "npm run clean && tsc -p . && rollup -c 2>&1 && mkdirp ./review && api-extractor run --local",
-            "build:debug": "tsc -p . && rollup -c 2>&1 && api-extractor run --local",
+            "build:test": "tsc -p . && dev-tool run bundle",
+            "build": "npm run clean && tsc -p . && dev-tool run bundle && mkdirp ./review && api-extractor run --local",
+            "build:debug": "tsc -p . && dev-tool run bundle && api-extractor run --local",
             "check-format": "prettier --list-different --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.ts\" \"test/**/*.ts\" \"samples-dev/**/*.ts\" \"*.{js,json}\"",
             "clean": "rimraf dist dist-browser dist-esm test-dist dist-test temp types *.tgz *.log",
             "execute:samples": "dev-tool samples run samples-dev",
@@ -83,13 +83,12 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
             "unit-test:browser": "cross-env karma start --single-run",
             "unit-test:node": "cross-env mocha -r esm --require ts-node/register --reporter ../../../common/tools/mocha-multi-reporter.js --timeout 1200000 --full-trace \"test/{,!(browser)/**/}*.spec.ts\"",
             "unit-test": "npm run unit-test:node && npm run unit-test:browser",
-            "docs": "typedoc --excludePrivate --excludeExternals  --out ./dist/docs ./src",
         },
         "sideEffects": false,
         "autoPublish": false,
         "dependencies": {
             "@azure/core-auth": "^1.3.0",
-            "@azure-rest/core-client": "1.0.0-beta.7",
+            "@azure-rest/core-client": "1.0.0-beta.9",
             "@azure/core-rest-pipeline": "^1.1.0",
             "@azure/logger": "^1.0.0",
             "tslib": "^2.2.0"
@@ -99,6 +98,7 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
             "@azure/eslint-plugin-azure-sdk": "^3.0.0",
             "@azure/identity": "^2.0.1",
             "@azure-tools/test-recorder": "^1.0.0",
+            "@azure-tools/test-credential": "^1.0.0",
             "@microsoft/api-extractor": "^7.18.11",
             "@types/chai": "^4.1.6",
             "@types/mocha": "^7.0.2",
@@ -122,14 +122,12 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
             "karma-sourcemap-loader": "^0.3.8",
             "karma": "^6.2.0",
             "mkdirp": "^1.0.4",
-            "mocha-junit-reporter": "^1.18.0",
+            "mocha-junit-reporter": "^2.0.0",
             "mocha": "^7.1.1",
-            "nyc": "^14.0.0",
-            "prettier": "2.2.1",
+            "nyc": "^15.0.0",
+            "prettier": "2.5.1",
             "rimraf": "^3.0.0",
-            "rollup": "^1.16.3",
             "source-map-support": "^0.5.9",
-            "typedoc": "0.15.2",
             "typescript": "~4.2.0"
         }
     };
@@ -139,22 +137,45 @@ export function generatePackageJson(packagePath, packageName, sdkRepo) {
         if (paginateHelper.includes('@azure/core-paging')) {
             content['dependencies']['@azure/core-paging'] = keyVaultAdminPackageJson['dependencies']['@azure/core-paging'];
         }
-        if (paginateHelper.includes('@azure-rest/core-client-paging')) {
-            if (packageName !== '@azure-rest/agrifood-farming') {
-                const agrifoodPackageJson = JSON.parse(fs.readFileSync(path.join(sdkRepo, 'sdk', 'agrifood', 'agrifood-farming-rest', 'package.json'), {encoding: 'utf-8'}));
-                content['dependencies']['@azure-rest/core-client-paging'] = agrifoodPackageJson['dependencies']['@azure-rest/core-client-paging'];
-            } else {
-                content['dependencies']['@azure-rest/core-client-paging'] = '1.0.0-beta.1';
+    } else {
+        for (const file of fs.readdirSync(path.join(packagePath, 'src'))) {
+            if (fs.lstatSync(path.join(packagePath, 'src', file)).isDirectory()) {
+                if (fs.existsSync(path.join(packagePath, 'src', file, 'paginateHelper.ts'))) {
+                    const paginateHelper = fs.readFileSync(path.join(packagePath, 'src', file, 'paginateHelper.ts'));
+                    if (paginateHelper.includes('@azure/core-paging')) {
+                        content['dependencies']['@azure/core-paging'] = keyVaultAdminPackageJson['dependencies']['@azure/core-paging'];
+                    }
+                }
             }
         }
     }
     if (fs.existsSync(path.join(packagePath, 'src', 'pollingHelper.ts'))) {
         content['dependencies']['@azure/core-lro'] = keyVaultAdminPackageJson['dependencies']['@azure/core-lro'];
+    } else {
+        for (const file of fs.readdirSync(path.join(packagePath, 'src'))) {
+            if (fs.lstatSync(path.join(packagePath, 'src', file)).isDirectory()) {
+                if (fs.existsSync(path.join(packagePath, 'src', file, 'pollingHelper.ts'))) {
+                    const paginateHelper = fs.readFileSync(path.join(packagePath, 'src', 'pollingHelper.ts'));
+                    if (paginateHelper.includes('@azure/core-paging')) {
+                        content['dependencies']['@azure/core-lro'] = keyVaultAdminPackageJson['dependencies']['@azure/core-lro'];
+                    }
+                }
+            }
+        }
     }
-    const readme = fs.readFileSync(path.join(packagePath, 'swagger', 'README.md'), {encoding: 'utf-8'});
-    const match = /package-version: "*([0-9a-z-.]+)/.exec(readme);
-    if (!!match && match.length === 2) {
-        content.version = match[1];
+
+    if (fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
+        const readme = fs.readFileSync(path.join(packagePath, 'swagger', 'README.md'), {encoding: 'utf-8'});
+        const match = /package-version: "*([0-9a-z-.]+)/.exec(readme);
+        if (!!match && match.length === 2) {
+            content.version = match[1];
+        }
+    } else if (fs.existsSync(path.join(packagePath, 'package.json'))) {
+        const oriPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), 'utf-8'));
+        content.version = oriPackageJson.version;
+    } else {
+        content.version = '1.0.0-beta.1';
     }
+
     fs.writeFileSync(path.join(packagePath, 'package.json'), JSON.stringify(content, undefined, '  '));
 }

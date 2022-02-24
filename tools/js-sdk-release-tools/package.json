@@ -1,18 +1,19 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "1.0.12",
+  "version": "2.0.0",
   "description": "",
   "scripts": {
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
-    "build": "tsc",
+    "build": "rimraf dist && tsc -p .",
     "prepack": "npm run build"
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
     "hlc-code-gen": "./dist/hlcCodeGenCli.js",
-    "hlc-code-gen-for-pipeline": "./dist/hlcCodegenForPipelineCli.js",
-    "rlc-code-gen": "./dist/llcCodegenCli.js"
+    "hlc-code-gen-for-pipeline": "./dist/autoGenerateInPipeline.js",
+    "code-gen-pipeline": "./dist/autoGenerateInPipeline.js",
+    "rlc-code-gen": "./dist/rlcCodegenCli.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -33,5 +34,8 @@
     "tslib": "^1.9.3",
     "url-join": "^4.0.1",
     "yaml": "^1.10.2"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2"
   }
 }

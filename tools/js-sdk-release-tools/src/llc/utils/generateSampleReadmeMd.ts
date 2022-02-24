@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import {getConfigFromReadmeMd, getInputFromCommand, getInputFromCommandWithDefaultValue, getLatestCodegen} from "./utils";
-import {logger} from "../utils/logger";
+import {logger} from "../../utils/logger";
 
 async function writeReadmeMd(packageName: string, packagePath: string, options: any) {
     const sampleReadme = `# Azure Sample Readme for RLC

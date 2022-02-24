@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import {logger} from "../utils/logger";
+import {logger} from "../../utils/logger";
 import {createFolderIfNotExist} from "./utils";
 
 function generateEnvFile(packagePath) {

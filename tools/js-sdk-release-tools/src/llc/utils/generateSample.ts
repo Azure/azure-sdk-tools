@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import {logger} from "../utils/logger";
+import {logger} from "../../utils/logger";
 
 function generateSampleDev(packagePath) {
     if (fs.existsSync(path.join(packagePath, 'samples-dev'))) {
@@ -12,7 +12,8 @@ function generateSampleDev(packagePath) {
 
 /**
  * This sample demonstrates how get a list of collections
- *
+ * @summary gets a list of typedefs for entities
+ * @azsdk-weight 40
  */
 
 import dotenv from "dotenv";
@@ -55,7 +56,4 @@ export function generateSample(packagePath) {
     if (!fs.existsSync(path.join(packagePath, 'samples', 'v1'))) {
         fs.mkdirSync(path.join(packagePath, 'samples', 'v1'));
     }
-    // TODO there will be sample test in codegen
-    //generateJsSample(packagePath);
-    //generateTsSample(packagePath);
 }

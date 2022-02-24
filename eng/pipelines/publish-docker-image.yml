@@ -1,3 +1,12 @@
+# Additional sample inputs can be found in `eng/containers/ci.yml`, but here is one here.
+# default:
+# - name: test_proxy_linux
+#   pool: 'ubuntu-20.04'
+#   dockerRepo: 'engsys/testproxy-lin'
+#   prepareScript: tools/test-proxy/docker/prepare.ps1
+#   dockerFile: 'tools/test-proxy/docker/dockerfile'
+#   stableTags:
+#   - 'latest'
 parameters:
   - name: DockerDeployments
     type: object

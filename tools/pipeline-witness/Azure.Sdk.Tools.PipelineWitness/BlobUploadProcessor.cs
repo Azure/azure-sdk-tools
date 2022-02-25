@@ -310,52 +310,48 @@
                     return;
                 }
 
-                using var tempFile = new DisposableTempFile();
+                var messagesWriter = new StringBuilder();
+                var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
+                var lastTimeStamp = log.CreatedOn;
 
-                await using (var messagesWriter = new StreamWriter(File.OpenWrite(tempFile.Path)))
+                for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
                 {
-                    var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
-                    var lastTimeStamp = log.CreatedOn;
+                    var line = logLines[lineNumber - 1];
+                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+                    var timestamp = match.Success
+                        ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
+                            System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                        : lastTimeStamp;
 
-                    for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
+                    var message = match.Success ? match.Groups[2].Value : line;
+
+                    if (timestamp == null)
                     {
-                        var line = logLines[lineNumber - 1];
-                        var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-                        var timestamp = match.Success
-                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                            : lastTimeStamp;
-
-                        var message = match.Success ? match.Groups[2].Value : line;
-
-                        if (timestamp == null)
-                        {
-                            throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
-                        }
-
-                        await messagesWriter.WriteLineAsync(JsonConvert.SerializeObject(
-                            new
-                            {
-                                OrganizationName = account,
-                                ProjectId = build.Project?.Id,
-                                ProjectName = build.Project?.Name,
-                                BuildDefinitionId = build.Definition?.Id,
-                                BuildDefinitionPath = build.Definition?.Path,
-                                BuildDefinitionName = build.Definition?.Name,
-                                BuildId = build.Id,
-                                LogId = log.Id,
-                                LineNumber = lineNumber,
-                                Length = message.Length,
-                                Timestamp = timestamp?.ToString(TimeFormat),
-                                Message = message,
-                                EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
-                            }, jsonSettings));
-
-                        lastTimeStamp = timestamp;
+                        throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
                     }
+
+                    messagesWriter.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project?.Id,
+                            ProjectName = build.Project?.Name,
+                            BuildDefinitionId = build.Definition?.Id,
+                            BuildDefinitionPath = build.Definition?.Path,
+                            BuildDefinitionName = build.Definition?.Name,
+                            BuildId = build.Id,
+                            LogId = log.Id,
+                            LineNumber = lineNumber,
+                            Length = message.Length,
+                            Timestamp = timestamp?.ToString(TimeFormat),
+                            Message = message,
+                            EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
+                        }, jsonSettings));
+
+                    lastTimeStamp = timestamp;
                 }
 
-                await blobClient.UploadAsync(tempFile.Path);
+                await blobClient.UploadAsync(new BinaryData(messagesWriter.ToString()));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {

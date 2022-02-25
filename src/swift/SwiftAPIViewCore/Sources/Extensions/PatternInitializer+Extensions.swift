@@ -41,13 +41,20 @@ extension PatternInitializer {
             return TypeModel(from: typeInfo)
         }
         if case let literalExpression as LiteralExpression = initializerExpression {
-            // TODO: Revisit this
             return TypeModel(name: literalExpression.kind.textDescription)
+        }
+        if case let functionExpression as FunctionCallExpression = initializerExpression {
+            return TypeModel(name: functionExpression.postfixExpression.textDescription)
         }
         SharedLogger.fail("Unsupported pattern: \(self)")
     }
 
     var defaultValue: String? {
-        return initializerExpression?.textDescription
+        guard let initExpr = initializerExpression else { return nil }
+        if case is LiteralExpression = initExpr {
+            return initExpr.textDescription
+        }
+        // ignore function expressions
+        return nil
     }
 }

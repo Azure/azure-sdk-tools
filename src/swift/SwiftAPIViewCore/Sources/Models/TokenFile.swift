@@ -479,6 +479,9 @@ class TokenFile: Codable {
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
+        case let .getterSetterBlock(ident, typeAnno, _):
+            typeModel = TypeModel(from: typeAnno)
+            name = ident.textDescription
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
             // the willSetDidSet block is irrelevant from an API perspective
             // so we ignore it.
@@ -725,6 +728,7 @@ class TokenFile: Codable {
         whitespace()
         for (idx, item) in typeInheritance.typeInheritanceList.enumerated() {
             let typeModel = TypeModel(from: item)
+            typeModel.useShorthand = false
             handle(typeModel: typeModel, defId: defId)
             if idx != typeInheritance.typeInheritanceList.count - 1 {
                 punctuation(",")
@@ -846,16 +850,22 @@ class TokenFile: Codable {
             whitespace()
         }
         if source.isArray {
-            punctuation("[")
+            if !source.useShorthand {
+                text("Array")
+            }
+            source.useShorthand ? punctuation("[") : punctuation("<")
             handle(typeModel: source.arguments!.first!, defId: defId)
-            punctuation("]")
+            source.useShorthand ? punctuation("]") : punctuation(">")
         } else if source.isDict {
-            punctuation("[")
+            if !source.useShorthand {
+                text("Dictionary")
+            }
+            source.useShorthand ? punctuation("[") : punctuation("<")
             handle(typeModel: source.arguments!.first!, defId: defId)
-            punctuation(":")
+            source.useShorthand ? punctuation(":") : punctuation(",")
             whitespace()
             handle(typeModel: source.arguments!.last!, defId: defId)
-            punctuation("]")
+            source.useShorthand ? punctuation("]") : punctuation(">")
         } else if source.isTuple {
             guard let arguments = source.arguments else {
                 SharedLogger.fail("Tuples must have arguments.")

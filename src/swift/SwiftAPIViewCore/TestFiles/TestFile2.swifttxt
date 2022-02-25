@@ -87,3 +87,10 @@ public class AsyncEnabledObject {
         return ""
     }
 }
+
+public struct DictLikeThing: Dictionary<String, String> {
+    public var calcProperty: String {
+        get { self["test"] }
+        set { self["test"] = newValue }
+    }
+}

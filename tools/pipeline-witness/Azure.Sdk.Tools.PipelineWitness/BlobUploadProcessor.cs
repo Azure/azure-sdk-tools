@@ -73,11 +73,6 @@
                 throw new ArgumentNullException(nameof(build));
             }
 
-            if (timeline == null)
-            {
-                throw new ArgumentNullException(nameof(timeline));
-            }
-
             if (build.Project == null)
             {
                 throw new ArgumentException("build.Project is null", nameof(build));
@@ -110,13 +105,27 @@
 
             await UploadTestRunBlobsAsync(account, build);
 
-            await UploadTimelineBlobAsync(account, build, timeline);
+            if (timeline == null)
+            {
+                logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+            }
+            else
+            {
+                await UploadTimelineBlobAsync(account, build, timeline);
+            }
 
             var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
-            foreach (var log in logs)
+            if (logs == null)
             {
-                await UploadLogLinesBlobAsync(account, build, log);
+                logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+            }
+            else
+            {
+                foreach (var log in logs)
+                {
+                    await UploadLogLinesBlobAsync(account, build, log);
+                }
             }
         }
 

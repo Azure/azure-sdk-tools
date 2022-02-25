@@ -107,7 +107,7 @@
 
             if (timeline == null)
             {
-                logger.LogWarning("No timeline available for build {BuildId}", build.Id);
+                logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
             }
             else
             {
@@ -118,7 +118,7 @@
 
             if (logs == null)
             {
-                logger.LogWarning("No logs available for build {BuildId}", build.Id);
+                logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
             }
             else
             {

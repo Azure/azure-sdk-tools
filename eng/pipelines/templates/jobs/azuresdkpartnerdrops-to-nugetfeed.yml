@@ -1,0 +1,113 @@
+
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20211215.1
+
+parameters:
+  - name: BuildToolsRepoPath
+    type: string
+    default: '$(Build.SourcesDirectory)/azure-sdk-build-tools'
+  - name: ArtifactsPath
+    type: string
+    default: '$(System.DefaultWorkingDirectory)/artifacts'
+  - name: PartnerDropsBlobBase
+    type: string
+    default: 'https://azuresdkpartnerdrops.blob.core.windows.net/drops'
+  - name: PartnerDropsBlobSourceSuffix
+    type: string
+    default: ''
+  - name: NugetVersion
+    type: string
+    default: '5.4.x'
+  - name: DevOpsFeedID
+    type: string
+    default: ''
+  - name: PartnerDropsSubscription
+    type: string
+    default: 'azuresdkpartnerdrops-kv Secrets'
+  - name: PartnerDropsStorageName
+    type: string
+    default: 'azuresdkpartnerdrops'
+  - name: PartnerDropsContainerName
+    type: string
+    default: 'drops-signed'
+  - name: PartnerDropsBlobDestPrefix
+    type: string
+    default: '$(Release.DefinitionName)\$(Release.ReleaseId)-$(Release.AttemptNumber)'
+
+jobs:
+  - job: AzurePartnerDropsToNuget
+    pool:
+      name: azsdk-pool-mms-win-2019-general
+      vmImage: MMS2019
+
+    steps:
+      - checkout: self
+      - checkout: azure-sdk-build-tools
+
+      - task: Powershell@2
+        inputs:
+          filePath: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/copy-from-blobstorage.ps1
+          arguments: >
+            -SourceBlobPath '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}'
+            -ApplicationId $(azuresdkpartnerdrops-application-id)
+            -DestinationDirectory '${{ parameters.ArtifactsPath }}'
+          pwsh: true
+        displayName: 'Copy from AzureSdkPartnerDrops'
+        env:
+          AZCOPY_SPA_CLIENT_SECRET: $(azuresdkpartnerdrops-service-principal-key)
+        condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
+
+      - ${{ if ne(variables['SkipSigning'], 'true') }}:
+        - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
+          parameters:
+            PackagesPath: ${{ parameters.ArtifactsPath }}
+            BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
+
+      - task: MSBuild@1
+        displayName: 'Upload Symbols'
+        inputs:
+          solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
+          msbuildArguments: >
+            /p:PackagesPath=${{ parameters.ArtifactsPath }}
+            /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat)
+            /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat)
+            /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)
+        condition: and(succeeded(), ne(variables['SkipPublishSymbols'], 'true'))
+
+      - task: NuGetToolInstaller@1
+        displayName: 'Use NuGet ${{ parameters.NugetVersion }}'
+        inputs:
+          versionSpec: ${{ parameters.NugetVersion }}
+        condition: and(succeeded(), ne(variables['SkipPublishToNuget'], 'true'))
+
+      - ${{ if ne(parameters.DevOpsFeedID, '') }}:
+        - task: NuGetCommand@2
+          displayName: 'Publish to DevOps Feed'
+          inputs:
+            command: push
+            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+            publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+
+      - ${{ if eq(parameters.DevOpsFeedID, '') }}:
+        - task: NuGetCommand@2
+          displayName: 'Publish to Nuget'
+          inputs:
+            command: push
+            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+            nuGetFeedType: external
+            publishFeedCredentials: Nuget.org
+
+        - task: AzureFileCopy@2
+          displayName: 'Copy Signed Files to Blob'
+          inputs:
+            SourcePath: '${{ parameters.ArtifactsPath }}'
+            azureSubscription: '${{ parameters.PartnerDropsSubscription }}'
+            Destination: AzureBlob
+            storage: '${{ parameters.PartnerDropsStorageName }}'
+            ContainerName: '${{ parameters.PartnerDropsContainerName }}'
+            BlobPrefix: '${{ parameters.PartnerDropsBlobDestPrefix }}'
+          condition: and(succeeded(), ne(variables['SkipCopySignedFilestoBlob'], 'true'))

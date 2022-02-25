@@ -1,0 +1,14 @@
+parameters:
+- name: PartnerDropsBlobSourceSuffix
+  type: string
+  default: ''
+- name: DevOpsFeedID
+  type: string
+  # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+  default: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+
+extends:
+  template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
+  parameters:
+    DevOpsFeedID: ${{ parameters.DevOpsFeedID }}
+    PartnerDropsBlobSourceSuffix: ${{ parameters.PartnerDropsBlobSourceSuffix }}

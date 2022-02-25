@@ -2,8 +2,16 @@ parameters:
 - name: PartnerDropsBlobSourceSuffix
   type: string
   default: ''
+- name: ShouldSign
+  type: string
+  default: true
+- name: ShouldPublish
+  type: string
+  default: true
 
 extends:
   template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
   parameters:
     PartnerDropsBlobSourceSuffix: ${{ parameters.PartnerDropsBlobSourceSuffix }}
+    ShouldSign: ${{ parameters.ShouldSign }}
+    ShouldPublish: ${{ parameters.ShouldPublish }}

@@ -48,11 +48,14 @@ jobs:
       - checkout: self
       - checkout: azure-sdk-build-tools
 
-      - pwsh: |
-          azcopy login --service-principal --application-id $(azuresdkpartnerdrops-application-id)
-          $SourceBlob = "${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}"
-          Write-Host "Copying from $SourceBlob to ${{ parameters.ArtifactsPath }} ..."
-          azcopy cp "${SourceBlob}/*" "${{ parameters.ArtifactsPath }}" --recursive=true
+      - task: Powershell@2
+        inputs:
+          filePath: $(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/copy-from-blobstorage.ps1
+          arguments: >
+            -SourceBlobPath '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}'
+            -ApplicationId $(azuresdkpartnerdrops-application-id)
+            -DestinationDirectory '${{ parameters.ArtifactsPath }}'
+          pwsh: true
         displayName: 'Copy from AzureSdkPartnerDrops'
         env:
           AZCOPY_SPA_CLIENT_SECRET: $(azuresdkpartnerdrops-service-principal-key)

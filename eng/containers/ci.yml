@@ -29,7 +29,6 @@ trigger:
   paths:
     include:
     - eng/containers/
-    - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/
     - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
@@ -41,7 +40,6 @@ pr:
   paths:
     include:
     - eng/containers/
-    - tools/test-proxy/docker/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/
     - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/

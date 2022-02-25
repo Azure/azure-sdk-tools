@@ -33,6 +33,7 @@ class TypeModel {
     var isImplicitlyUnwrapped: Bool
     var isArray: Bool
     var isDict: Bool
+    var useShorthand: Bool
     var isTuple: Bool
     var isInOut: Bool
     var genericArgumentList: [TypeModel]?
@@ -40,12 +41,13 @@ class TypeModel {
     var arguments: [TypeModel]?
     var returnType: TypeModel?
 
-    init(name: String, isOptional: Bool = false, isImplicitlyUnwrapped: Bool = false, isArray: Bool = false, isDict: Bool = false, isTuple: Bool = false, isInOut: Bool = false, genericArgumentList: [TypeModel]? = nil, attributes: Attributes? = nil, arguments: [TypeModel]? = nil, returnType: TypeModel? = nil) {
+    init(name: String, isOptional: Bool = false, isImplicitlyUnwrapped: Bool = false, isArray: Bool = false, isDict: Bool = false, useShorthand: Bool = true, isTuple: Bool = false, isInOut: Bool = false, genericArgumentList: [TypeModel]? = nil, attributes: Attributes? = nil, arguments: [TypeModel]? = nil, returnType: TypeModel? = nil) {
         self.name = name
         self.isOptional = isOptional
         self.isImplicitlyUnwrapped = isImplicitlyUnwrapped
         self.isArray = isArray
         self.isDict = isDict
+        self.useShorthand = useShorthand
         self.isTuple = isTuple
         self.isInOut = isInOut
         self.genericArgumentList = genericArgumentList

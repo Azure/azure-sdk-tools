@@ -26,6 +26,7 @@
     "@azure-tools/openapi-tools-common": "^1.2.2",
     "@types/mkdirp": "^1.0.2",
     "@types/mockjs": "^1.0.3",
+    "@types/prettyjson": "0.0.30",
     "convict": "^6.0.0",
     "cross-env": "^5.2.0",
     "dotenv": "^7.0.0",
@@ -37,6 +38,7 @@
     "mockjs": "^1.1.0",
     "oauth2-mock-server": "^3.1.0",
     "oav": "~2.10.2",
+    "prettyjson": "^1.2.5",
     "reflect-metadata": "^0.1.13",
     "simple-git": "^2.38.0",
     "winston": "^3.3.3"

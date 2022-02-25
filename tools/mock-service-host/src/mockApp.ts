@@ -1,4 +1,5 @@
 import bodyParser = require('body-parser')
+import * as prettyjson from 'prettyjson'
 import { Config } from './common/config'
 import { Container } from 'inversify'
 import { Coordinator } from './mid/coordinator'
@@ -99,7 +100,7 @@ class MockApp {
         })
         const serverInstance = server.build()
         const routeInfo = getRouteInfo(this.container)
-        console.log(`Route info: ${routeInfo}`)
+        console.log(prettyjson.render({ routes: routeInfo }))
 
         const httpsServer = getHttpsServer(serverInstance)
         httpsServer.listen(config.httpsPortStateful, () => {

@@ -1,6 +1,9 @@
 {
     "version": "2.0",
     "logging": {
+        "logLevel": {
+            "Azure.Sdk.Tools.PipelineWitness": "Trace"
+        },
         "applicationInsights": {
             "samplingSettings": {
                 "isEnabled": true,

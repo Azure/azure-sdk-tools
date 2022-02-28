@@ -306,8 +306,10 @@ export class Coordinator {
                         try {
                             ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
                             // set status to succeed to stop polling
-                            if (typeof ret === 'object' && !Array.isArray(ret)) {
+                            if (ret) {
                                 ret.status = 'Succeeded'
+                            } else {
+                                ret = { status: 'Succeeded' }
                             }
                         } catch (error) {
                             // if no 200 response, mock a response
@@ -316,17 +318,30 @@ export class Coordinator {
                         }
                     } catch (error) {
                         try {
-                            // if 202 response exist, need to return 204 response
+                            // if 202 response exist, need to return 200/204 response
                             this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
                             try {
                                 ;[code, ret] = this.findResponse(
                                     exampleResponses,
-                                    HttpStatusCode.NO_CONTENT
+                                    HttpStatusCode.OK
                                 )
+                                // set status to succeed to stop polling
+                                if (ret) {
+                                    ret.status = 'Succeeded'
+                                } else {
+                                    ret = { status: 'Succeeded' }
+                                }
                             } catch (error) {
-                                // if no 204 response, mock a response
-                                code = HttpStatusCode.NO_CONTENT
-                                ret = undefined
+                                try {
+                                    ;[code, ret] = this.findResponse(
+                                        exampleResponses,
+                                        HttpStatusCode.NO_CONTENT
+                                    )
+                                } catch (error) {
+                                    // if no 200/204 response, mock a response
+                                    code = HttpStatusCode.NO_CONTENT
+                                    ret = undefined
+                                }
                             }
                         } catch (error) {
                             // otherwise, need to return 200 success response
@@ -336,8 +351,10 @@ export class Coordinator {
                                     HttpStatusCode.OK
                                 )
                                 // set status to succeed to stop polling
-                                if (typeof ret === 'object' && !Array.isArray(ret)) {
+                                if (ret) {
                                     ret.status = 'Succeeded'
+                                } else {
+                                    ret = { status: 'Succeeded' }
                                 }
                             } catch (error) {
                                 // if no 200 response, mock a response
@@ -351,7 +368,7 @@ export class Coordinator {
                     try {
                         ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.CREATED)
                         res.setHeader('Azure-AsyncOperation', lroCallback)
-                        res.setHeader('Retry-After', 1)
+                        res.setHeader('Retry-After', 0)
                     } catch (error) {
                         // if no 201 response, then try to get 202
                         try {
@@ -360,7 +377,7 @@ export class Coordinator {
                                 HttpStatusCode.ACCEPTED
                             )
                             res.setHeader('Location', lroCallback)
-                            res.setHeader('Retry-After', 1)
+                            res.setHeader('Retry-After', 0)
                         } catch (error) {
                             // last, get 200 related response
                             ;[code, ret] = this.findResponse(
@@ -369,13 +386,13 @@ export class Coordinator {
                                 false
                             )
                             res.setHeader('Azure-AsyncOperation', lroCallback)
-                            res.setHeader('Retry-After', 1)
+                            res.setHeader('Retry-After', 0)
                         }
                     }
                 }
             } else {
                 // for normal operation, try to get 200 response
-                ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                ;[code, ret] = this.findResponse(exampleResponses, HttpStatusCode.OK, false)
             }
 
             const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
@@ -408,8 +425,13 @@ export class Coordinator {
     async findLROGet(req: VirtualServerRequest): Promise<string> {
         const [uri, query] = `${req.url}&${LRO_CALLBACK}=true`.split('?')
         const uriPath = uri.split('/')
+        const oriLen = uriPath.length
         let firstloop = true
         while (uriPath.length > 0) {
+            // if trackback for two part without found, then throw `no cooresponding get method` error
+            if (oriLen - uriPath.length > 4) {
+                break
+            }
             if (firstloop || uriPath.length % 2 === 1) {
                 let hostAndPort = req.headers?.host as string
                 if (hostAndPort.indexOf(':') < 0) {

@@ -166,7 +166,7 @@ The usage of helm charts allows for two primary scenarios:
 
 ### Layout
 
-The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):
+The basic layout for a stress test is the following (see [`examples/stress_deployment_example`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-deployment-example) for an example):
 
 ```
 <stress test root directory>

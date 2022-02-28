@@ -73,7 +73,7 @@ jobs:
             PackagesPath: ${{ parameters.ArtifactsPath }}
             BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
-      - ${{ if eq(parameters.ShouldPublish, 'true') }}:
+      - ${{ if eq(parameters.ShouldPublish, true) }}:
         - task: MSBuild@1
           displayName: 'Upload Symbols'
           inputs:

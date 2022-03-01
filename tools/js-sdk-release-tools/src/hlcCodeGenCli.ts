@@ -6,7 +6,7 @@ import {generateMgmt} from "./hlc/generateMgmt";
 
 const shell = require('shelljs');
 
-async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, useDebugger?: boolean, additionalArgs?: string) {
+async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);
     if (!regexResult || regexResult.length !== 3) {
         logger.logError(`Cannot Parse readme file path: ${absoluteReadmeMd}`);

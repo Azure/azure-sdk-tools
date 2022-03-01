@@ -2,6 +2,12 @@ parameters:
 - name: PartnerDropsBlobSourceSuffix
   type: string
   default: ''
+- name: ShouldSign
+  type: string
+  default: true
+- name: ShouldPublish
+  type: string
+  default: true
 - name: DevOpsFeedID
   type: string
   # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
@@ -12,3 +18,5 @@ extends:
   parameters:
     DevOpsFeedID: ${{ parameters.DevOpsFeedID }}
     PartnerDropsBlobSourceSuffix: ${{ parameters.PartnerDropsBlobSourceSuffix }}
+    ShouldSign: ${{ parameters.ShouldSign }}
+    ShouldPublish: ${{ parameters.ShouldPublish }}

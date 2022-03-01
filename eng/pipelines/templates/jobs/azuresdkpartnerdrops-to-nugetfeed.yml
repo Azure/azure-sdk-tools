@@ -37,6 +37,12 @@ parameters:
   - name: PartnerDropsBlobDestPrefix
     type: string
     default: '$(Release.DefinitionName)\$(Release.ReleaseId)-$(Release.AttemptNumber)'
+  - name: ShouldSign
+    type: boolean
+    default: true
+  - name: ShouldPublish
+    type: boolean
+    default: true
 
 jobs:
   - job: AzurePartnerDropsToNuget
@@ -61,53 +67,52 @@ jobs:
           AZCOPY_SPA_CLIENT_SECRET: $(azuresdkpartnerdrops-service-principal-key)
         condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
 
-      - ${{ if ne(variables['SkipSigning'], 'true') }}:
+      - ${{ if eq(parameters.ShouldSign, true) }}:
         - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
           parameters:
             PackagesPath: ${{ parameters.ArtifactsPath }}
             BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
-      - task: MSBuild@1
-        displayName: 'Upload Symbols'
+      - ${{ if eq(parameters.ShouldPublish, true) }}:
+        - task: MSBuild@1
+          displayName: 'Upload Symbols'
+          inputs:
+            solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
+            msbuildArguments: >
+              /p:PackagesPath=${{ parameters.ArtifactsPath }}
+              /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat)
+              /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat)
+              /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)
+
+        - task: NuGetToolInstaller@1
+          displayName: 'Use NuGet ${{ parameters.NugetVersion }}'
+          inputs:
+            versionSpec: ${{ parameters.NugetVersion }}
+
+        - ${{ if ne(parameters.DevOpsFeedID, '') }}:
+          - task: NuGetCommand@2
+            displayName: 'Publish to DevOps Feed'
+            inputs:
+              command: push
+              packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+              publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+
+        - ${{ if eq(parameters.DevOpsFeedID, '') }}:
+          - task: NuGetCommand@2
+            displayName: 'Publish to Nuget'
+            inputs:
+              command: push
+              packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+              nuGetFeedType: external
+              publishFeedCredentials: Nuget.org
+
+      - task: AzureFileCopy@2
+        displayName: 'Copy Signed Files to Blob'
         inputs:
-          solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
-          msbuildArguments: >
-            /p:PackagesPath=${{ parameters.ArtifactsPath }}
-            /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat)
-            /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat)
-            /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)
-        condition: and(succeeded(), ne(variables['SkipPublishSymbols'], 'true'))
-
-      - task: NuGetToolInstaller@1
-        displayName: 'Use NuGet ${{ parameters.NugetVersion }}'
-        inputs:
-          versionSpec: ${{ parameters.NugetVersion }}
-        condition: and(succeeded(), ne(variables['SkipPublishToNuget'], 'true'))
-
-      - ${{ if ne(parameters.DevOpsFeedID, '') }}:
-        - task: NuGetCommand@2
-          displayName: 'Publish to DevOps Feed'
-          inputs:
-            command: push
-            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
-            publishVstsFeed: ${{ parameters.DevOpsFeedID }}
-
-      - ${{ if eq(parameters.DevOpsFeedID, '') }}:
-        - task: NuGetCommand@2
-          displayName: 'Publish to Nuget'
-          inputs:
-            command: push
-            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
-            nuGetFeedType: external
-            publishFeedCredentials: Nuget.org
-
-        - task: AzureFileCopy@2
-          displayName: 'Copy Signed Files to Blob'
-          inputs:
-            SourcePath: '${{ parameters.ArtifactsPath }}'
-            azureSubscription: '${{ parameters.PartnerDropsSubscription }}'
-            Destination: AzureBlob
-            storage: '${{ parameters.PartnerDropsStorageName }}'
-            ContainerName: '${{ parameters.PartnerDropsContainerName }}'
-            BlobPrefix: '${{ parameters.PartnerDropsBlobDestPrefix }}'
-          condition: and(succeeded(), ne(variables['SkipCopySignedFilestoBlob'], 'true'))
+          SourcePath: '${{ parameters.ArtifactsPath }}'
+          azureSubscription: '${{ parameters.PartnerDropsSubscription }}'
+          Destination: AzureBlob
+          storage: '${{ parameters.PartnerDropsStorageName }}'
+          ContainerName: '${{ parameters.PartnerDropsContainerName }}'
+          BlobPrefix: '${{ parameters.PartnerDropsBlobDestPrefix }}'
+        condition: and(succeeded(), ne(variables['SkipCopySignedFilestoBlob'], 'true'))

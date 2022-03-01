@@ -67,7 +67,7 @@ jobs:
           AZCOPY_SPA_CLIENT_SECRET: $(azuresdkpartnerdrops-service-principal-key)
         condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
 
-      - ${{ if eq(parameters.ShouldSign, 'true') }}:
+      - ${{ if eq(parameters.ShouldSign, true) }}:
         - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
           parameters:
             PackagesPath: ${{ parameters.ArtifactsPath }}

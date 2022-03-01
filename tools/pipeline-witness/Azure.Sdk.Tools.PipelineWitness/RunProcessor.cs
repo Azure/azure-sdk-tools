@@ -67,6 +67,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
             var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
 
+            if (build.StartTime == null || build.FinishTime == null)
+            {
+                this.logger.LogWarning("Skipping build with null start or finish time");
+                return;
+            }
+
             double agentDurationInSeconds = 0;
             double queueDurationInSeconds = 0;
 
@@ -81,14 +87,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     let jobStartTime = job.Min(jobRecord => jobRecord.StartTime)
                     let jobFinishTime = job.Max(jobRecord => jobRecord.FinishTime)
                     let agentDuration = jobFinishTime - jobStartTime
-                    select agentDuration.Value.TotalSeconds).Sum();
+                    select agentDuration?.TotalSeconds ?? 0).Sum();
 
                 queueDurationInSeconds = (from taskRecord in timeline.Records
                     where taskRecord.RecordType == "Task"
                     where taskRecord.Name == "Initialize job"
                     join jobRecord in timeline.Records on taskRecord.ParentId equals jobRecord.Id
                     let queueDuration = taskRecord.StartTime - jobRecord.StartTime
-                    select queueDuration.Value.TotalSeconds).Sum();
+                    select queueDuration?.TotalSeconds ?? 0).Sum();
             }
 
             var run = new Run()

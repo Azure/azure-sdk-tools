@@ -13,7 +13,7 @@ namespace APIViewWeb.HostedServices
     {
         private bool _isDisabled = false;
         private ReviewManager _reviewManager;
-        private int _autoArchiveInactiveGracePeriod; // This is inactive duration in months
+        private int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
 
         public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
         {
@@ -26,9 +26,9 @@ namespace APIViewWeb.HostedServices
             }
 
             var gracePeriod = configuration["ArchiveReviewGracePeriodInMonths"];
-            if (String.IsNullOrEmpty(gracePeriod) || !int.TryParse(gracePeriod, out _autoArchiveInactiveGracePeriod))
+            if (String.IsNullOrEmpty(gracePeriod) || !int.TryParse(gracePeriod, out _autoArchiveInactiveGracePeriodMonths))
             {
-                _autoArchiveInactiveGracePeriod = 4;
+                _autoArchiveInactiveGracePeriodMonths = 4;
             }
         }
 
@@ -37,7 +37,7 @@ namespace APIViewWeb.HostedServices
             if (!_isDisabled)
             {
                 _reviewManager.UpdateReviewBackground();
-                return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriod);
+                return ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
             }
 
             return Task.CompletedTask;

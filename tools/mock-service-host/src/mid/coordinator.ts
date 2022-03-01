@@ -156,7 +156,7 @@ export class Coordinator {
         req: VirtualServerRequest,
         res: VirtualServerResponse,
         profile: Record<string, any>
-    ): Promise<void> {
+    ) {
         const fullUrl = req.protocol + '://' + req.headers?.host + req.url
         const liveRequest = {
             url: fullUrl,

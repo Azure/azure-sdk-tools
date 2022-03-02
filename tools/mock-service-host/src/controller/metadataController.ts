@@ -4,13 +4,9 @@ import { InjectableTypes } from '../lib/injectableTypes'
 import { container } from '../container'
 import { logger } from '../common/utils'
 
-export function mockMetadataEndpoints(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-) {
+export function mockMetadataEndpoints(req: express.Request, res: express.Response) {
     logger.info('fetching metadata')
-    res.locals['result'] = {
+    res.status(200).json({
         galleryEndpoint: '',
         graphEndpoint: 'https://graph.chinacloudapi.cn/',
         // "graphEndpoint": "https://localhost:8443",
@@ -24,20 +20,17 @@ export function mockMetadataEndpoints(
                 'https://management.chinacloudapi.cn/'
             ]
         }
-    }
-    next()
+    })
 }
 
-export function getstatus(req: express.Request, res: express.Response, next: express.NextFunction) {
+export function getstatus(req: express.Request, res: express.Response) {
     const coordinator = container.get<Coordinator>(InjectableTypes.Coordinator)
-    res.locals['result'] = coordinator.ValidatorStatus
-    next()
+    res.status(200).json({ status: coordinator.ValidatorStatus })
 }
 
-export function shutdown(req: express.Request, res: express.Response, next: express.NextFunction) {
+export function shutdown(req: express.Request, res: express.Response) {
     setTimeout(() => {
         process.exit()
     }, 1000)
-    res.locals['result'] = 'shut down'
-    next()
+    res.status(200).json({ result: 'shut down' })
 }

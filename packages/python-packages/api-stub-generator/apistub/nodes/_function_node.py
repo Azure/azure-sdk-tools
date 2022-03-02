@@ -121,7 +121,7 @@ class FunctionNode(NodeEntityBase):
         """
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args["cls"] = ArgType(name="cls", default=Parameter.empty, keyword=None)
+            self.args["cls"] = ArgType(name="cls", argtype=None, default=Parameter.empty, keyword=None)
 
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
@@ -130,7 +130,7 @@ class FunctionNode(NodeEntityBase):
         # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
         for argname, argvalues in params.items():
-            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self)
+            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=None)
 
             # Store handle to kwarg object to replace it later
             if argvalues.kind == Parameter.VAR_KEYWORD:
@@ -180,7 +180,7 @@ class FunctionNode(NodeEntityBase):
         # add keyword args
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
-            self.args["*"] = ArgType("*", default=Parameter.empty, keyword=None)
+            self.args["*"] = ArgType("*", default=Parameter.empty, argtype=None, keyword=None)
             for argname, arg in sorted(self.kw_args.items()):
                 arg.function_node = self
                 self.args[argname] = arg

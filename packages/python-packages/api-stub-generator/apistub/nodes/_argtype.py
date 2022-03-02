@@ -25,7 +25,7 @@ class ArgType:
             self.is_required = False
             self.default = str(default) if default is not None else "..."
 
-        if argtype and not self.is_required and not keyword == "ivar" and not argtype.startswith("Optional"):
+        if argtype and not self.is_required and not keyword in ["ivar", "param"] and not argtype.startswith("Optional"):
             self.argtype = f"Optional[{argtype}]"
         else:
             self.argtype = argtype

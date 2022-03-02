@@ -379,6 +379,7 @@ export class Coordinator {
             const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
             if (typeof ret === 'object') {
                 // simplified paging
+                // TODO: need to pair to spec to remove only the pager outer nextLink
                 ret = replacePropertyValue('nextLink', null, ret)
 
                 // simplified LRO

@@ -59,5 +59,8 @@ class TestClassParsing:
 
     def test_required_kwargs(self):
         class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
-        # TODO: Checks here!
-        test = "best"
+        kwargs = class_node.child_nodes[0].kw_args
+        assert len(kwargs) == 3
+        assert kwargs["name"].is_required == True
+        assert kwargs["age"].is_required == True
+        assert kwargs["other"].is_required == False

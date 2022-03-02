@@ -93,7 +93,7 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-      - ${{ if parameters.DockerDeployments }}:
+      - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
         - template: /eng/pipelines/publish-docker-image.yml
           parameters:
             DockerDeployments: ${{ parameters.DockerDeployments }}

@@ -92,7 +92,7 @@ def get_qualified_name(obj, namespace):
         # strip the module name if it isn't the namespace (example: typing)
         value = value[len(module_name) +1:]
 
-    if args:
+    if args and "[" not in value:
         arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"
     return value

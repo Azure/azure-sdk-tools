@@ -229,7 +229,7 @@ class ClassNode(NodeEntityBase):
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.namespace_id, self.full_name)
+        apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
 
         # Add inherited base classes
         if self.base_class_names:

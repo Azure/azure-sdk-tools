@@ -10,23 +10,19 @@ import sys
 import os
 import argparse
 
-import inspect
 import io
 import importlib
-import json
 import logging
-import pkgutil
 import shutil
 import ast
 import textwrap
-import re
-import typing
 import tempfile
 from subprocess import check_call
 import zipfile
 
 
 from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._metadata_map import MetadataMap
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -53,6 +49,11 @@ class StubGenerator:
             help=("Path to generate json file with parsed tokens"),
         )
         parser.add_argument(
+            "--mapping-path",
+            default=None,
+            help=("Path to the 'apiview_mapping.json' file.")
+        )
+        parser.add_argument(
             "--verbose",
             help=("Enable verbose logging"),
             default=False,
@@ -70,7 +71,6 @@ class StubGenerator:
             "--filter-namespace",
             help=("Generate Api view only for a specific namespace"),
         )
-        
 
         args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
@@ -80,10 +80,10 @@ class StubGenerator:
             logging.error("Temp path [{0}] is invalid".format(args.temp_path))
             exit(1)
 
-
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.mapping_path = args.mapping_path
         self.hide_report = args.hide_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
@@ -91,7 +91,6 @@ class StubGenerator:
         self.filter_namespace = ''
         if args.filter_namespace:
             self.filter_namespace = args.filter_namespace
-            
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
@@ -116,7 +115,7 @@ class StubGenerator:
 
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
-        if apiview.Diagnostics:
+        if apiview.diagnostics:
             # Show error report in console
             if not self.hide_report:
                 print("************************** Error Report **************************")
@@ -176,7 +175,8 @@ class StubGenerator:
 
         self.module_dict = {}
         nodeindex = NodeIndex()
-        apiview = ApiView(nodeindex, package_name, version, namespace)
+        mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
+        apiview = ApiView(nodeindex, package_name, namespace, metadata_map=mapping)
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -192,7 +192,7 @@ class StubGenerator:
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
-        navigation.set_tag(NavigationTag(Kind.type_package))
+        navigation.tag = NavigationTag(Kind.type_package)
         apiview.add_navigation(navigation)
 
         # Generate tokens

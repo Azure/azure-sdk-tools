@@ -6,6 +6,8 @@ Added support to parse defaults from docstrings. Example
   syntax: "A value, defaults to foo."
   Also supports older, non-recommended syntax, such as:
   "A value. Default value is foo."
+Add support for "CrossLanguageDefinitionId" and a --mapping-path
+  parameter to supply the necessary mapping file.
 
 ## Version 0.2.9 (Unreleased)
 Fixed issue where Python 3-style type hints stopped displaying

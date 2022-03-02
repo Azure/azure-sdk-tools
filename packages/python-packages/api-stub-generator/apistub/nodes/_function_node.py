@@ -185,7 +185,7 @@ class FunctionNode(NodeEntityBase):
             # Add separator to differentiate pos_arg and keyword args
             self.args["*"] = ArgType("*")
             for argname, arg in sorted(self.kw_args.items()):
-                arg.set_function_node(self)
+                arg.function_node = self
                 self.args[argname] = arg
 
         # re-append "**kwargs" to the end of the arguments list
@@ -337,7 +337,8 @@ class FunctionNode(NodeEntityBase):
         apiview.add_keyword("def", False, True)
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
-            self.namespace_id, self.full_name if self.is_module_level else self.name
+            self.namespace_id, self.full_name if self.is_module_level else self.name,
+            add_cross_language_id=True
         )
         # Add parameters
         self._generate_signature_token(apiview)

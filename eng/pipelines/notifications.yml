@@ -90,4 +90,4 @@ stages:
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
           OPENSOURCE_AAD_APP_ID: $(opensource-aad-app-id)
           OPENSOURCE_AAD_APP_SECRET: $(opensource-aad-secret)
-          OPENSOURCE_AAD_TENANT_ID: $(opensource-aad-tenant-id
+          OPENSOURCE_AAD_TENANT_ID: $(opensource-aad-tenant-id)

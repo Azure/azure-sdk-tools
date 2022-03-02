@@ -93,11 +93,12 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-      - template: /eng/pipelines/publish-docker-image.yml
-        parameters:
-          DockerDeployments: ${{ parameters.DockerDeployments }}
-          Publish: false
-          ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+      - ${{ if parameters.DockerDeployments }}:
+        - template: /eng/pipelines/publish-docker-image.yml
+          parameters:
+            DockerDeployments: ${{ parameters.DockerDeployments }}
+            Publish: false
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools

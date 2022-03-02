@@ -162,9 +162,8 @@ stages:
 
         steps:
 
-          - task: UsePythonVersion@0
-            displayName: 'Use Python $(PythonVersion)'
-            inputs:
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
               versionSpec: '$(PythonVersion)'
 
           - task: DotNetCoreInstaller@2

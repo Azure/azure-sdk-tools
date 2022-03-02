@@ -35,6 +35,7 @@ pr:
 variables:
   DotNetCoreVersion: '5.x'
   DotNetRuntimeVersion: '3.1.x'
+  PythonVersion: '3.10.1'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
@@ -96,10 +97,13 @@ stages:
               mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
               goals: 'clean package'
 
-          # Below 3 steps to package Python 3.9 is temporary work around until we have sandboxing ready
-          - task: UsePythonVersion@0
+            # Below 3 steps to package Python 3.10 is temporary work around until we have sandboxing ready
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '$(PythonVersion)'
 
           - script: |
+              python --version
               pip install $(PythonParserPackagePath) $(ProtocolParserPackagePath)
               pip install virtualenv aiohttp chardet trio
             displayName: 'Setup Python Environment'
@@ -158,10 +162,9 @@ stages:
 
         steps:
 
-          - task: UsePythonVersion@0
-            displayName: 'Use Python 3.10'
-            inputs:
-              versionSpec: 3.10
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '$(PythonVersion)'
 
           - task: DotNetCoreInstaller@2
             displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'

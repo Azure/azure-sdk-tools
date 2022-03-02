@@ -63,15 +63,38 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var projectClient = vssConnection.GetClient<ProjectHttpClient>();
 
             var project = await projectClient.GetProject(projectGuid.ToString());
-            var build = await buildClient.GetBuildAsync(projectGuid, runId);
-            var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
-            var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
+
+            Build build = null;
+
+            try
+            {
+                build = await buildClient.GetBuildAsync(projectGuid, runId);
+            }
+            catch (BuildNotFoundException)
+            {
+            }
+
+            if (build == null)
+            {
+                this.logger.LogWarning("Unable to process run due to missing build");
+                return;
+            }
+
+            if (build.Deleted)
+            {
+                this.logger.LogWarning("Skipping deleted build");
+                return;
+            }
+
 
             if (build.StartTime == null || build.FinishTime == null)
             {
                 this.logger.LogWarning("Skipping build with null start or finish time");
                 return;
             }
+
+            var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
+            var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
 
             double agentDurationInSeconds = 0;
             double queueDurationInSeconds = 0;

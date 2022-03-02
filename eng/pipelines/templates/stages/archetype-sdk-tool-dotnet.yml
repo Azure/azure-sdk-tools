@@ -93,11 +93,12 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
-      - template: /eng/pipelines/publish-docker-image.yml
-        parameters:
-          DockerDeployments: ${{ parameters.DockerDeployments }}
-          Publish: false
-          ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+      - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
+        - template: /eng/pipelines/publish-docker-image.yml
+          parameters:
+            DockerDeployments: ${{ parameters.DockerDeployments }}
+            Publish: false
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
@@ -105,7 +106,7 @@ stages:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
 
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+  - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: PublishDockerImages
       displayName: Publish Docker Images
       dependsOn: BuildTestAndPackage

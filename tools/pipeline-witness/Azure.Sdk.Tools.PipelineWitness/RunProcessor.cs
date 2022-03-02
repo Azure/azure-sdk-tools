@@ -64,6 +64,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             var project = await projectClient.GetProject(projectGuid.ToString());
 
+            // Avoid unhandled BuildNotFoundException by folding it into the following null check.
             Build build = null;
 
             try

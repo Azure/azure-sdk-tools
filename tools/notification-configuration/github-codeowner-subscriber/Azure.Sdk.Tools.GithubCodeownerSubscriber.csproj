@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj" />
-    <ProjectReference Include="..\..\identity-resolution\identity-resolution\identity-resolution.csproj" />
+    <ProjectReference Include="..\..\identity-resolution\identity-resolution.csproj" />
   </ItemGroup>
 
 </Project>

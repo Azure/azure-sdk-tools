@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         /// <param name="logger">Logger</param>
         public GitHubToAADConverter(
             ClientSecretCredential credential,
-            ILogger<GitHubNameResolver> logger)
+            ILogger<GitHubToAADConverter> logger)
         {
             this.logger = logger;
             var opsAuthToken = "";
@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         }
 
         private readonly HttpClient client;
-        private readonly ILogger<GitHubNameResolver> logger;
+        private readonly ILogger<GitHubToAADConverter> logger;
 
         /// <summary>
         /// Get the user principal name from github. User principal name is in format of ms email.

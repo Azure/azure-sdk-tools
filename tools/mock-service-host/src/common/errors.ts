@@ -19,6 +19,7 @@ export enum HttpStatusCode {
     HAS_CHILD_RESOURCE = 458,
     NO_RESPONSE_DEFINED = 459,
     LRO_CALLBACK_NOT_FOUND = 460,
+    WRONG_EXAMPLE_RESPONSE = 461,
     // ----- end of mock-service-host error codes -----
     INTERNAL_SERVER = 500
 }
@@ -119,5 +120,11 @@ export class LroCallbackNotFound extends OperationalError {
             "Can't find a GET operation nearby this lro operation to work as callback url",
             detail
         )
+    }
+}
+
+export class WrongExampleResponse extends OperationalError {
+    constructor(detail = '') {
+        super(HttpStatusCode.WRONG_EXAMPLE_RESPONSE, 'Wrong response example for operation', detail)
     }
 }

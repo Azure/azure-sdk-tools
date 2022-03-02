@@ -60,3 +60,4 @@ class TestClassParsing:
     def test_required_kwargs(self):
         class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
         # TODO: Checks here!
+        test = "best"

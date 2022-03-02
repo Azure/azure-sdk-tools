@@ -80,7 +80,7 @@ class DocstringParser:
         # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
-            arg = ArgType(name=label, argtype=None, default=default)
+            arg = ArgType(name=label, argtype=None, default=default, keyword=keyword)
             self._update_arg(arg, keyword)
             return (arg, True)
         elif keyword in docstring_type_keywords:
@@ -104,7 +104,7 @@ class DocstringParser:
         # and there can only be one simple type
         # Example: :param str name: The name of the thing.
         (keyword, typename, name) = tag
-        arg = ArgType(name=name, argtype=typename, default=default)
+        arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword)
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
@@ -119,6 +119,7 @@ class DocstringParser:
             # show kwarg is optional by setting default to "..."
             # also wrap the type in Optional[] so it aligns with
             # optionals identified in type hints.
+            # FIXME: A keyword-only arg can be required.
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
                 arg.argtype = f"Optional[{arg.argtype}]"

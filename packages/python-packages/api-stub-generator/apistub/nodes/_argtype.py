@@ -1,4 +1,4 @@
-import logging
+import inspect
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
@@ -10,15 +10,25 @@ TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls", "*", ]
 
 class ArgType:
     """Represents Argument type
-    :param str name: Name of the argument
-    :param str argtype: Type of the argument. for e.g. str, int, BlobBlock
-    :param str default: Default value for the argument, If any
+    :param str name: Name of the argument.
+    :param str argtype: Type of the argument (e.g. str, int, BlobBlock).
+    :param str default: Default value for the argument, If any.
+    :param str keyword: The keyword for the arg type.
+    :param FunctionNode func_node: The function node this belongs to.
     """
-
-    def __init__(self, name, argtype=None, default=None, func_node = None):
+    def __init__(self, name, *, argtype, default, keyword, func_node=None):
         self.argname = name
-        self.argtype = argtype
-        self.default = default
+        if default == inspect._empty or default == inspect.Parameter.empty:
+            self.is_required = True
+            self.default = None
+        else:
+            self.is_required = False
+            self.default = str(default) if default is not None else "..."
+
+        if argtype and not self.is_required and not keyword == "ivar" and not argtype.startswith("Optional"):
+            self.argtype = f"Optional[{argtype}]"
+        else:
+            self.argtype = argtype
         self.function_node = func_node
 
     def generate_tokens(self, apiview, function_id, add_line_marker):

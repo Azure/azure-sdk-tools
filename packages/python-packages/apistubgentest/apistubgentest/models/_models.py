@@ -118,8 +118,14 @@ class PublicPrivateClass:
 
 
 class RequiredKwargObject:
+    """A class with required kwargs.
+    
+    :keyword str name: Required. The name.
+    :keyword int age: Required. The age.
+    :keyword str other: Some optional thing.
+    """
 
-    def __init__(self, *, name: str, age: int, other: str = ""):
+    def __init__(self, *, name: str, age: int, other: str = None):
         self.name = name
         self.age = age
         self.other = other

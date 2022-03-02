@@ -120,7 +120,14 @@ class ClassNode(NodeEntityBase):
                 var_match[0].type = type_string
         else:
             self.child_nodes.append(
-                VariableNode(self.namespace, self, name, type_string, value, False)
+                VariableNode(
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=name,
+                    type_name=type_string,
+                    value=value,
+                    is_ivar=False
+                )
             )
 
     def _inspect(self):
@@ -190,7 +197,12 @@ class ClassNode(NodeEntityBase):
             docstring_parser = DocstringParser(docstring)
             for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, key, var.argtype, None, True
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=key,
+                    type_name=var.argtype,
+                    value=None,
+                    is_ivar=True
                 )
                 self.child_nodes.append(ivar_node)
 

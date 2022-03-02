@@ -121,7 +121,7 @@ class FunctionNode(NodeEntityBase):
         """
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args["cls"] = ArgType("cls")
+            self.args["cls"] = ArgType(name="cls", default=Parameter.empty, keyword=None)
 
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
@@ -130,10 +130,7 @@ class FunctionNode(NodeEntityBase):
         # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
         for argname, argvalues in params.items():
-            arg = ArgType(argname, get_qualified_name(argvalues.annotation, self.namespace), "", self)
-            # set default value if available
-            if argvalues.default != Parameter.empty:
-                arg.default = str(argvalues.default)
+            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self)
 
             # Store handle to kwarg object to replace it later
             if argvalues.kind == Parameter.VAR_KEYWORD:
@@ -142,7 +139,7 @@ class FunctionNode(NodeEntityBase):
             if argvalues.kind == Parameter.KEYWORD_ONLY:
                 # Keyword-only args with "None" default are displayed as "..."
                 # to match logic in docstring parsing
-                if arg.default == "None":
+                if arg.default == None and not arg.is_required:
                     arg.default = "..."
                 self.kw_args[arg.argname] = arg
             elif argvalues.kind == Parameter.VAR_POSITIONAL:
@@ -183,7 +180,7 @@ class FunctionNode(NodeEntityBase):
         # add keyword args
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
-            self.args["*"] = ArgType("*")
+            self.args["*"] = ArgType("*", default=Parameter.empty, keyword=None)
             for argname, arg in sorted(self.kw_args.items()):
                 arg.function_node = self
                 self.args[argname] = arg
@@ -239,8 +236,9 @@ class FunctionNode(NodeEntityBase):
                 if not docstring_match:
                     continue
                 remaining_docstring_kwargs.remove(argname)
-                kw_arg.argtype = docstring_match.argtype or kw_arg.argtype
-                kw_arg.default = kw_arg.default if kw_arg.default is not None else docstring_match.default
+                if not kw_arg.is_required:
+                    kw_arg.argtype = kw_arg.argtype or docstring_match.argtype 
+                    kw_arg.default = kw_arg.default or docstring_match.default
             
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:

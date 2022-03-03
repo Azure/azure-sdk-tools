@@ -246,18 +246,34 @@ namespace APIViewWeb.Repositories
         private async Task<ReviewModel> GetBaseLineReview(string Language, string packageName, PullRequestModel pullRequestModel, bool forceBaseline = false)
         {
             // Get  previously cloned review for this pull request or automatically generated master review for package
-            ReviewModel review;
+            ReviewModel review = null;
             if (pullRequestModel.ReviewId != null && !forceBaseline)
             {
                 review = await _reviewsRepository.GetReviewAsync(pullRequestModel.ReviewId);
             }
-            else
+            
+            if (review == null)
             {
                 var autoReview = await _reviewsRepository.GetMasterReviewForPackageAsync(Language, packageName);
                 review = CloneReview(autoReview);
                 review.Author = pullRequestModel.Author;
             }
             return review;
+        }
+
+        private ReviewModel CreateReviewForNewPackage(PullRequestModel pullRequestModel)
+        {
+            var review = new ReviewModel()
+            {
+                Author = pullRequestModel.Author,
+                CreationDate = DateTime.Now,
+                Name = pullRequestModel.PackageName,
+                IsClosed = false,
+                FilterType = ReviewType.PullRequest,
+                ReviewId = IdHelper.GenerateId()
+            };
+
+            return review
         }
 
         private ReviewModel CloneReview(ReviewModel review)

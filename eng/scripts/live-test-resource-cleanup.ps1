@@ -10,7 +10,7 @@
 #Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'}
 #Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'}
 
-[CmdletBinding(DefaultParameterSetName = 'Default', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
+[CmdletBinding(DefaultParameterSetName = 'Interactive', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param (
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
@@ -21,22 +21,24 @@ param (
     [string] $ProvisionerApplicationSecret,
 
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'Interactive', Mandatory = $false)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $TenantId,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $false)]
-    [ValidateNotNullOrEmpty()]
-    [string] $Environment = "AzureCloud",
-
-    [Parameter(Mandatory = $false)]
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'Interactive', Mandatory = $false)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $SubscriptionId,
 
     [Parameter()]
-    [int] $DeleteAfterHours = 24,
+    [ValidateNotNullOrEmpty()]
+    [string] $Environment = "AzureCloud",
+
+    [Parameter(ParameterSetName = 'Interactive')]
+    [switch] $Login,
 
     [Parameter()]
-    [switch] $Login,
+    [int] $DeleteAfterHours = 24,
 
     [Parameter()]
     [switch] $Force,
@@ -185,30 +187,39 @@ function DeleteOrUpdateResourceGroups() {
   }
 }
 
-if (!(Get-AzContext) -and !$Login) {
-  Write-Error "Caller must be logged in via `Connect-AzAccount` or -Login parameter must be set."
-  exit 1
-}
-
-if ($Login) {
-  Write-Verbose "Logging in"
-
+function Login() {
   if ($PSCmdlet.ParameterSetName -eq "Provisioner") {
+    Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
     Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment
-  } else {
+    Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
+  } elseif ($Login) {
+    Write-Verbose "Logging in with interactive user"
     Connect-AzAccount
+  } elseif (Get-AzContext) {
+    Write-Verbose "Using existing account"
+  } else {
+    $errMsg = 'User context not found. Please re-run script with "-Login" to login, ' +
+              'or run "Connect-AzAccount -UseDeviceAuthentication" if interactive login is not available.'
+    Write-Error $errMsg
+    exit 1
   }
 }
 
-$originalSubscription = (Get-AzContext).Subscription.Id
-if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-  Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
+function Main() {
+  Login
+
+  $originalSubscription = (Get-AzContext).Subscription.Id
+  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+    Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
+  }
+
+  DeleteOrUpdateResourceGroups
+
+  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+    Select-AzSubscription -Subscription $originalSubscription -Confirm:$false
+  }
 }
 
-DeleteOrUpdateResourceGroups
-
-if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-  Select-AzSubscription -Subscription $originalSubscription -Confirm:$false
-}
+Main

@@ -5,10 +5,10 @@
 
 # This script implements the resource management guidelines documented at https://github.com/Azure/azure-sdk-tools/blob/main/doc/engsys_resource_management.md
 
-#Requires -Version 6.0
+#Requires -Version 7.0
 #Requires -PSEdition Core
-#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'}
-#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'}
+#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='5.3.1'}
+#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='2.7.2'}
 
 [CmdletBinding(DefaultParameterSetName = 'Interactive', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param (
@@ -21,12 +21,12 @@ param (
     [string] $ProvisionerApplicationSecret,
 
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'Interactive', Mandatory = $false)]
+    [Parameter(ParameterSetName = 'Interactive')]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $TenantId,
 
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'Interactive', Mandatory = $false)]
+    [Parameter(ParameterSetName = 'Interactive')]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $SubscriptionId,
 
@@ -46,6 +46,8 @@ param (
     [Parameter(ValueFromRemainingArguments = $true)]
     $IgnoreUnusedArguments
 )
+
+Set-StrictMode -Version 3
 
 &"$PSScriptRoot/../common/scripts/Import-AzModules.ps1"
 
@@ -83,12 +85,27 @@ function IsValidAlias
     return $false;
 }
 
+function GetTag([object]$ResourceGroup, [string]$Key) {
+  if (!$ResourceGroup.Tags) {
+    return $null
+  }
 
-function HasValidOwnerTag() {
-  if (!$ResourceGroup.Tags.Owners) {
+  foreach ($tagKey in $ResourceGroup.Tags.Keys) {
+    # Compare case-insensitive
+    if ($tagKey -like $Key) {
+      return $ResourceGroup.Tags[$tagKey]
+    }
+  }
+
+  return $null
+}
+
+function HasValidOwnerTag([object]$ResourceGroup) {
+  $ownerTag = GetTag $ResourceGroup "Owners"
+  if (!$ownerTag) {
     return $false
   }
-  $owners = $ResourceGroup.Tags.Owners -split "[;, ]"
+  $owners = $ownerTag -split "[;, ]"
   $hasValidOwner = $false
   $invalidOwners = @()
   foreach ($owner in $owners) {
@@ -102,15 +119,31 @@ function HasValidOwnerTag() {
     Write-Warning " Resource group '$($ResourceGroup.ResourceGroupName)' has invalid owner tags: $($invalidOwners -join ',')"
   }
   if ($hasValidOwner) {
-      Write-Host " Skipping tagged exception resource group '$($ResourceGroup.ResourceGroupName)' with owners '$owners'"
-      return $true
+    Write-Host " Skipping tagged resource group '$($ResourceGroup.ResourceGroupName)' with owners '$owners'"
+    return $true
   }
   return $false
 }
 
+function HasValidAliasInName([object]$ResourceGroup) {
+    # check compliance (formatting first, then validate alias) and skip if compliant
+    if ($ResourceGroup.ResourceGroupName `
+      -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" `
+      -and (IsValidAlias -Alias $matches[2]))
+    {
+      Write-Host " Skipping resource group '$($resourceGroup.ResourceGroupName)' starting with valid alias '$($matches[2])'"
+      return $true
+    }
+    return $false
+}
+
 function HasExpiredDeleteAfterTag([object]$ResourceGroup) {
-  $deleteDate = $ResourceGroup.Tags.DeleteAfter -as [DateTime]  # null if not exists
-  return $deleteDate -and [datetime]::UtcNow -gt $deleteDate
+  $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
+  if ($deleteAfter) {
+    $deleteDate = $deleteAfter -as [DateTime]
+    return $deleteDate -and [datetime]::UtcNow -gt $deleteDate
+  }
+  return $false
 }
 
 function FindOrCreateDeleteAfterTag {
@@ -119,10 +152,11 @@ function FindOrCreateDeleteAfterTag {
     [object]$ResourceGroup
   )
 
-  if (!$ResourceGroup.Tags.DeleteAfter -as [datetime]) {
+  $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
+  if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
-    Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$(ResourceGroup.ResourceGroupName)'"
-    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Update Group")) {
+    Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
+    if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Update Group DeleteAfter tag")) {
       $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
     }
   }
@@ -145,6 +179,8 @@ function DeleteOrUpdateResourceGroups() {
   foreach ($rg in $allGroups) {
     if (HasExpiredDeleteAfterTag $rg) {
       $toDelete += $rg
+    } elseif (HasValidAliasInName $rg) {
+      continue
     } elseif (HasValidOwnerTag $rg -or HasDeleteLock $rg) {
       continue
     } else {
@@ -162,7 +198,8 @@ function DeleteOrUpdateResourceGroups() {
   Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
   foreach ($rg in $toDelete)
   {
-    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) (UTC: $($rg.Tags.DeleteAfter))", "Delete Group")) {
+    $deleteAfter = GetTag $rg "DeleteAfter"
+    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
       # Add purgeable resources that will be deleted with the resource group to the collection.
       $purgeableResourcesFromRG = Get-PurgeableGroupResources $rg.ResourceGroupName
 
@@ -172,10 +209,13 @@ function DeleteOrUpdateResourceGroups() {
       }
       Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
       Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
-      Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+      # Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
     }
   }
 
+  if (!$purgeableResources.Count) {
+    return
+  }
   if ($Force -or $PSCmdlet.ShouldProcess("$($purgeableResources.VaultName)", "Delete Purgeable Resources")) {
     # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
     Write-Host "Attempting to purge $($purgeableResources.Count) resources."
@@ -196,7 +236,14 @@ function Login() {
     Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
   } elseif ($Login) {
     Write-Verbose "Logging in with interactive user"
-    Connect-AzAccount
+    $cmd = "Connect-AzAccount"
+    if ($TenantId) {
+        $cmd += " -TenantId $TenantId"
+    }
+    if ($SubscriptionId) {
+        $cmd += " -SubscriptionId $SubscriptionId"
+    }
+    Invoke-Expression $cmd
   } elseif (Get-AzContext) {
     Write-Verbose "Using existing account"
   } else {

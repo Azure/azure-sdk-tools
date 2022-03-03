@@ -98,9 +98,9 @@ namespace APIViewWeb.Repositories
                 if (codeFile != null)
                 {
                     var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel);
-                    var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
                     if (apiDiff != "")
                     {
+                        var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
                         if (existingComment != null)
                         {
                             await _githubClient.Issue.Comment.Update(repoInfo[0], repoInfo[1], existingComment.Id, apiDiff);

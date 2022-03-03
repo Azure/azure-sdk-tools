@@ -12,6 +12,7 @@ import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/change
 import {changeReadmeMd} from "./utils/changeReadmeMd";
 import {RunningEnvironment} from "../utils/runningEnvironment";
 import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
+import {getReleaseTool} from "./utils/getReleaseTool";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -70,7 +71,8 @@ export async function generateMgmt(options: {
                 commit: options.gitCommitId,
                 readme: options.readmeMd,
                 autorest_command: cmd,
-                repository_url: options.swaggerRepoUrl ? `${options.swaggerRepoUrl}.git` : 'https://github.com/Azure/azure-rest-api-specs.git'
+                repository_url: options.swaggerRepoUrl ? `${options.swaggerRepoUrl}.git` : 'https://github.com/Azure/azure-rest-api-specs.git',
+                release_tool: getReleaseTool()
             };
             if (options.tag) {
                 metaInfo['tag'] = options.tag;

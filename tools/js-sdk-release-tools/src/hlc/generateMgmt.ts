@@ -91,7 +91,7 @@ export async function generateMgmt(options: {
             logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
 
-            changeReadmeMd(packagePath);
+            await changeReadmeMd(packagePath);
 
             // @ts-ignore
             if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {

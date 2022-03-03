@@ -19,7 +19,7 @@ import {
     SchemaType,
     codeModelSchema,
 } from '@autorest/codemodel';
-import { AutorestExtensionHost, startSession } from '@autorest/extension-base';
+import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
 import { Scenario, ScenarioDefinition, Step, StepArmTemplate, StepRestCall } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
@@ -112,7 +112,14 @@ export class ExampleValue {
         );
     }
 
-    public static createInstance(rawValue: any, usedProperties: Set<string[]>, schema: Schema, language: Languages, searchDescents = true): ExampleValue {
+    public static createInstance(
+        session: Session<TestCodeModel>,
+        rawValue: any,
+        usedProperties: Set<string[]>,
+        schema: Schema,
+        language: Languages,
+        searchDescents = true,
+    ): ExampleValue {
         const instance = new ExampleValue(schema, language);
         if (!schema) {
             instance.rawValue = rawValue;
@@ -120,14 +127,14 @@ export class ExampleValue {
         }
 
         function addParentValue(parent: ComplexSchema) {
-            const parentValue = ExampleValue.createInstance(rawValue, usedProperties, parent, parent.language, false);
+            const parentValue = ExampleValue.createInstance(session, rawValue, usedProperties, parent, parent.language, false);
             if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
                 instance.parentsValue[parent.language.default.name] = parentValue;
             }
         }
 
         if (schema.type === SchemaType.Array && Array.isArray(rawValue)) {
-            instance.elements = rawValue.map((x) => this.createInstance(x, new Set(), (schema as ArraySchema).elementType, undefined));
+            instance.elements = rawValue.map((x) => this.createInstance(session, x, new Set(), (schema as ArraySchema).elementType, undefined));
         } else if (schema.type === SchemaType.Object && rawValue === Object(rawValue)) {
             const childSchema: ComplexSchema = searchDescents ? Helper.findInDescents(schema as ObjectSchema, rawValue) : schema;
             instance.schema = childSchema;
@@ -140,6 +147,7 @@ export class ExampleValue {
                         const value = Helper.queryByPath(rawValue, property.flattenedNames);
                         if (value.length === 1) {
                             instance.properties[property.serializedName] = this.createInstance(
+                                session,
                                 value[0],
                                 Helper.filterPathsByPrefix(usedProperties, property.flattenedNames),
                                 property.schema,
@@ -152,6 +160,7 @@ export class ExampleValue {
                 } else {
                     if (Object.prototype.hasOwnProperty.call(rawValue, property.serializedName) && !Helper.pathIsIncluded(usedProperties, [property.serializedName])) {
                         instance.properties[property.serializedName] = this.createInstance(
+                            session,
                             rawValue[property.serializedName],
                             Helper.filterPathsByPrefix(usedProperties, [property.serializedName]),
                             property.schema,
@@ -186,7 +195,7 @@ export class ExampleValue {
             instance.properties = {};
             for (const [key, value] of Object.entries(rawValue)) {
                 if (!Helper.pathIsIncluded(usedProperties, [key])) {
-                    instance.properties[key] = this.createInstance(value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined);
+                    instance.properties[key] = this.createInstance(session, value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined);
                     usedProperties.add([key]);
                 }
             }
@@ -202,9 +211,9 @@ export class ExampleParameter {
     parameter: Parameter;
     exampleValue: ExampleValue;
 
-    public constructor(parameter: Parameter, rawValue: any) {
+    public constructor(session: Session<TestCodeModel>, parameter: Parameter, rawValue: any) {
         this.parameter = parameter;
-        this.exampleValue = ExampleValue.createInstance(rawValue, new Set(), parameter?.schema, parameter.language);
+        this.exampleValue = ExampleValue.createInstance(session, rawValue, new Set(), parameter?.schema, parameter.language);
     }
 }
 
@@ -212,10 +221,10 @@ export class ExampleResponse {
     body?: ExampleValue;
     headers?: Record<string, any>;
 
-    public static createInstance(rawResponse: ExampleExtensionResponse, schema: Schema, language: Languages): ExampleResponse {
+    public static createInstance(session: Session<TestCodeModel>, rawResponse: ExampleExtensionResponse, schema: Schema, language: Languages): ExampleResponse {
         const instance = new ExampleResponse();
         if (rawResponse.body !== undefined) {
-            instance.body = ExampleValue.createInstance(rawResponse.body, new Set(), schema, language);
+            instance.body = ExampleValue.createInstance(session, rawResponse.body, new Set(), schema, language);
         }
         instance.headers = rawResponse.headers;
         return instance;
@@ -276,7 +285,13 @@ export class TestCodeModeler {
         return TestCodeModeler.instance;
     }
 
-    private createExampleModel(exampleExtension: ExampleExtension, exampleName, operation: Operation, operationGroup: OperationGroup): ExampleModel {
+    private createExampleModel(
+        session: Session<TestCodeModel>,
+        exampleExtension: ExampleExtension,
+        exampleName,
+        operation: Operation,
+        operationGroup: OperationGroup,
+    ): ExampleModel {
         const allParameters = Helper.allParameters(operation);
         const parametersInExample = exampleExtension.parameters;
         const exampleModel = new ExampleModel(exampleName, operation, operationGroup);
@@ -288,7 +303,7 @@ export class TestCodeModeler {
             const t = Helper.getFlattenedNames(parameter);
             const paramRawData = parameter.protocol?.http?.in === 'body' ? Helper.queryBodyParameter(parametersInExample, t) : Helper.queryByPath(parametersInExample, t);
             if (paramRawData.length === 1) {
-                const exampleParameter = new ExampleParameter(parameter, paramRawData[0]);
+                const exampleParameter = new ExampleParameter(session, parameter, paramRawData[0]);
                 if (parameter.implementation === ImplementationLocation.Method) {
                     exampleModel.methodParameters.push(exampleParameter);
                 } else if (parameter.implementation === ImplementationLocation.Client) {
@@ -312,7 +327,7 @@ export class TestCodeModeler {
             const exampleExtensionResponse = response;
             const schemaResponse = findResponseSchema(statusCode);
             if (schemaResponse) {
-                exampleModel.responses[statusCode] = ExampleResponse.createInstance(exampleExtensionResponse, schemaResponse.schema, schemaResponse.language);
+                exampleModel.responses[statusCode] = ExampleResponse.createInstance(session, exampleExtensionResponse, schemaResponse.schema, schemaResponse.language);
             }
         }
         return exampleModel;
@@ -324,7 +339,7 @@ export class TestCodeModeler {
         }
     }
 
-    public genMockTests() {
+    public genMockTests(session: Session<TestCodeModel>) {
         this.initiateTests();
         if (!this.testConfig.getValue(Config.useExampleModel)) {
             return;
@@ -335,13 +350,15 @@ export class TestCodeModeler {
                 // TODO: skip non-json http bodys for now. Need to validate example type with body schema to support it.
                 const mediaTypes = operation.requests[0]?.protocol?.http?.mediaTypes;
                 if (mediaTypes && mediaTypes.indexOf('application/json') < 0) {
-                    console.warn(`genMockTests: MediaTypes ${operation.requests[0]?.protocol?.http?.mediaTypes} in operation ${operationId} is not supported!`);
+                    session.warning(`genMockTests: MediaTypes ${operation.requests[0]?.protocol?.http?.mediaTypes} in operation ${operationId} is not supported!`, [
+                        'Test Modeler',
+                    ]);
                     return;
                 }
                 const exampleGroup = new ExampleGroup(operationGroup, operation, operationId);
                 for (const [exampleName, rawValue] of Object.entries(operation.extensions?.[ExtensionName.xMsExamples] ?? {})) {
                     if (!this.testConfig.isDisabledExample(exampleName)) {
-                        exampleGroup.examples.push(this.createExampleModel(rawValue as ExampleExtension, exampleName, operation, operationGroup));
+                        exampleGroup.examples.push(this.createExampleModel(session, rawValue as ExampleExtension, exampleName, operation, operationGroup));
                     }
                 }
                 this.codeModel.testModel.mockTest.exampleGroups.push(exampleGroup);
@@ -419,12 +436,13 @@ export class TestCodeModeler {
         }
     }
 
-    public initiateRestCall(step: StepRestCallModel) {
+    public initiateRestCall(session, step: StepRestCallModel) {
         const operationInfo = this.findOperationByOperationId(step.operationId);
         if (operationInfo) {
             const { operation, operationGroup } = operationInfo;
             if (this.testConfig.getValue(Config.useExampleModel)) {
                 step.exampleModel = this.createExampleModel(
+                    session,
                     {
                         parameters: step.requestParameters,
                         responses: {
@@ -507,32 +525,32 @@ export class TestCodeModeler {
         }
     }
 
-    public initiateTestDefinition(testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
+    public initiateTestDefinition(session: Session<TestCodeModel>, testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
         this.initiateOavVariables(testDef);
         testDef.useArmTemplate = false;
         testDef.outputVariableNames = [];
 
         for (const step of testDef.prepareSteps) {
-            this.processStep(step, codeModelRestcallOnly, testDef);
+            this.processStep(session, step, codeModelRestcallOnly, testDef);
         }
 
         for (const scenario of testDef.scenarios as TestScenarioModel[]) {
             for (const step of scenario.steps) {
-                this.processStep(step, codeModelRestcallOnly, testDef);
+                this.processStep(session, step, codeModelRestcallOnly, testDef);
             }
             this.initiateOavVariables(scenario);
         }
 
         for (const step of testDef.cleanUpSteps) {
-            this.processStep(step, codeModelRestcallOnly, testDef);
+            this.processStep(session, step, codeModelRestcallOnly, testDef);
         }
     }
 
-    private processStep(step: Step, codeModelRestcallOnly: boolean, testDef: TestDefinitionModel) {
+    private processStep(session: Session<TestCodeModel>, step: Step, codeModelRestcallOnly: boolean, testDef: TestDefinitionModel) {
         this.initiateOavVariables(step);
         if (step.type === OavStepType.restCall) {
             const stepModel = step as StepRestCallModel;
-            this.initiateRestCall(stepModel);
+            this.initiateRestCall(session, stepModel);
             if (codeModelRestcallOnly && !stepModel.exampleModel) {
                 throw new Error(`Can't find operationId ${step.operationId}[step ${step.exampleName}] in codeModel!`);
             }
@@ -542,7 +560,7 @@ export class TestCodeModeler {
         }
     }
 
-    public async loadTestResources() {
+    public async loadTestResources(session: Session<TestCodeModel>) {
         try {
             const fileRoot = this.testConfig.getSwaggerFolder();
             const loader = ApiScenarioLoader.create({
@@ -553,33 +571,32 @@ export class TestCodeModeler {
             });
 
             if (Array.isArray(this.testConfig.config[Config.testResources])) {
-                await this.loadTestResourcesFromConfig(fileRoot, loader);
+                await this.loadTestResourcesFromConfig(session, fileRoot, loader);
             } else {
-                await this.loadAvailableTestResources(fileRoot, loader);
+                await this.loadAvailableTestResources(session, fileRoot, loader);
             }
         } catch (error) {
-            console.warn('Exception occured when load test resource scenario!');
-            console.warn(`${__filename} - FAILURE  ${JSON.stringify(error)} ${error.stack}`);
+            session.warning('Exception occured when load test resource scenario: ${error.stack}', ['Test Modeler']);
         }
     }
 
-    public async loadTestResourcesFromConfig(fileRoot: string, loader: ApiScenarioLoader) {
+    public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string, loader: ApiScenarioLoader) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
             if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
                 try {
                     const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
-                    this.initiateTestDefinition(testDef);
+                    this.initiateTestDefinition(session, testDef);
                     this.codeModel.testModel.scenarioTests.push(testDef);
                 } catch (error) {
-                    console.warn(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`);
+                    session.warning(`Exception occured when load testdef ${testResource[Config.test]}: ${error}`, ['Test Modeler']);
                 }
             } else {
-                console.warn(`Unexisted test resource scenario file: ${testResource[Config.test]}`);
+                session.warning(`Unexisted test resource scenario file: ${testResource[Config.test]}`, ['Test Modeler']);
             }
         }
     }
 
-    public async loadAvailableTestResources(fileRoot: string, loader: ApiScenarioLoader) {
+    public async loadAvailableTestResources(session: Session<TestCodeModel>, fileRoot: string, loader: ApiScenarioLoader) {
         const scenariosFolders = ['scenarios', 'test-scenarios'];
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
@@ -595,10 +612,10 @@ export class TestCodeModeler {
                         try {
                             const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
-                            this.initiateTestDefinition(testDef, codemodelRestCallOnly);
+                            this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
                             this.codeModel.testModel.scenarioTests.push(testDef);
-                        } catch (e) {
-                            console.warn(`${scenarioPathName} is not a valid api scenario`);
+                        } catch (error) {
+                            session.warning(`${scenarioPathName} is not a valid api scenario: ${error.stack}`, ['Test Modeler']);
                         }
                     }
                 }

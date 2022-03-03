@@ -22,8 +22,8 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
     // const codemodel = await session.readFile('code-model-v4.yaml')
 
     const codeModel = TestCodeModeler.createInstance(session.model, config);
-    codeModel.genMockTests();
-    await codeModel.loadTestResources();
+    codeModel.genMockTests(session);
+    await codeModel.loadTestResources(session);
 
     await Helper.outputToModelerfour(host, session);
     if (config.getValue(Config.exportCodemodel)) {

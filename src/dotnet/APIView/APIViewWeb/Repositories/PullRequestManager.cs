@@ -167,6 +167,11 @@ namespace APIViewWeb.Repositories
             var renderedCodeFile = new RenderedCodeFile(codeFile);
             if (await IsReviewSame(review, renderedCodeFile))
             {
+                //Do not update the comment if review was already created and it matches with current revision.
+                if (pullRequestModel.ReviewId != null)
+                    return "";
+
+                //Baseline review was not created earlier or this is the first commit of PR
                 stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
                 return stringBuilder.ToString();
             }
@@ -179,7 +184,12 @@ namespace APIViewWeb.Repositories
                 review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
                 review.ReviewId = pullRequestModel.ReviewId;
                 if (await IsReviewSame(review, renderedCodeFile))
-                    return "";
+                {
+                    // We will run into this if some one makes unintended API changes in a PR and then reverts it back.
+                    // We must clear previous comment and update it to show no changes found.
+                    stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
+                    return stringBuilder.ToString();
+                }
             }
 
             var newRevision = new ReviewRevisionModel()

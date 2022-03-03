@@ -23,6 +23,9 @@
     //     InheritanceInfoEnd = 18
 
     "Name": "ClassLibrary1", // Would be displayed in review list
+    "Language": "Json",
+    "ServiceName": "Service1",
+    "PackageDisplayName": "Package Display Name1",
     "Tokens": [
         {
             "DefinitionId": null, // Allows token to be navigated to, should be unique, used as ID for comment thread

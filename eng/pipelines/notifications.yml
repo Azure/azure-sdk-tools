@@ -78,7 +78,7 @@ stages:
 
       - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
         displayName: 'Build and Package'
-        workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+        workingDirectory: $(Build.SourcesDirectory)
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1

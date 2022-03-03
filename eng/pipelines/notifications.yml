@@ -49,13 +49,13 @@ stages:
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
           workingDirectory: '$(Agent.BuildDirectory)'
 
-      - task: DotNetCoreCLI@2
-        displayName: 'Install CodeOwners Subscriber'
-        inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeOwnersSubscriberVersion)" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
-          workingDirectory: '$(Agent.BuildDirectory)'
+      # - task: DotNetCoreCLI@2
+      #   displayName: 'Install CodeOwners Subscriber'
+      #   inputs:
+      #     command: custom
+      #     custom: 'tool'
+      #     arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeOwnersSubscriberVersion)" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
+      #     workingDirectory: '$(Agent.BuildDirectory)'
 
       - pwsh: |
           notification-creator `
@@ -71,9 +71,21 @@ stages:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core sdk ${{ coalesce( "", variables.DotNetCoreVersion) }}'
+        inputs:
+          version: '${{ coalesce( "", variables.DotNetCoreVersion) }}'
+
+      - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
+        displayName: 'Build and Package'
+        workingDirectory: $(Build.SourcesDirectory)/${{parameters.ToolDirectory}}
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          DOTNET_MULTILEVEL_LOOKUP: 0
 
       - pwsh: |
-          github-codeowner-subscriber `
+          dotnet run `
             --organization $(Organization) `
             --project $(Project) `
             --path-prefix "\$(PathPrefix)" `
@@ -83,6 +95,7 @@ stages:
             --aad-tenant-var OPENSOURCE_AAD_TENANT_ID `
             $(AdditionalParameters)
         displayName: 'Run GitHub CODEOWNER Subscriber'
+        workingDirectory: $(System.DefaultWorkingDirectory)/tools/notification-configuration/github-codeowner-subscriber
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1

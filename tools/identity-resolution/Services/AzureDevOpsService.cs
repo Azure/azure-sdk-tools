@@ -14,6 +14,10 @@ using Microsoft.VisualStudio.Services.Identity.Client;
 using System.Threading;
 using System.Linq;
 using MicrosoftIdentityAlias = Microsoft.VisualStudio.Services.Identity;
+using System.Net.Http;
+using Polly.Extensions.Http;
+using Polly.Retry;
+using Polly;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Services
 {
@@ -26,12 +30,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         private readonly ILogger<AzureDevOpsService> logger;
         private Dictionary<Type, VssHttpClientBase> clientCache = new Dictionary<Type, VssHttpClientBase>();
         private SemaphoreSlim clientCacheSemaphore = new SemaphoreSlim(1);
+        private static AsyncRetryPolicy retryPolicy;
 
         public static AzureDevOpsService CreateAzureDevOpsService(string token, string url, ILogger<AzureDevOpsService> logger)
         {
             var devOpsCreds = new VssBasicCredential("nobody", token);
             var devOpsConnection = new VssConnection(new Uri(url), devOpsCreds);
             var result = new AzureDevOpsService(devOpsConnection, logger);
+            var pauseBetweenFailures = TimeSpan.FromSeconds(2);
+            retryPolicy = Policy
+                .Handle<HttpRequestException>()
+                .WaitAndRetryAsync(3, i => pauseBetweenFailures);
 
             return result;
         }
@@ -79,9 +88,13 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             var client = await GetClientAsync<BuildHttpClient>();
 
             logger.LogInformation("GetScheduledPipelinesAsync ProjectName = {0} PathPrefix = {1}", projectName, pathPrefix);
-            var definitions = await client.GetFullDefinitionsAsync2(project: projectName, path: pathPrefix);
 
-            return definitions;
+            await retryPolicy.ExecuteAsync(async () =>
+            {
+                return await client.GetFullDefinitionsAsync2(project: projectName, path: pathPrefix);
+            });
+
+            return null;
         }
 
         /// <summary>
@@ -328,6 +341,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             logger.LogInformation("UpdateSubscriptionAsync Id = {0}", subscriptionId);
             var result = await client.UpdateSubscriptionAsync(updateParameters, subscriptionId);
             return result;
+        }
+
+        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2,
+                                                                            retryAttempt)));
         }
     }
 }

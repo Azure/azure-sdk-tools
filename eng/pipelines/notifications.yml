@@ -72,9 +72,9 @@ stages:
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
       - task: UseDotNet@2
-        displayName: 'Use .NET Core sdk ${{ coalesce( "", variables.DotNetCoreVersion) }}'
+        displayName: 'Use .NET Core sdk ${{ coalesce( '', variables.DotNetCoreVersion) }}'
         inputs:
-          version: '${{ coalesce( "", variables.DotNetCoreVersion) }}'
+          version: '${{ coalesce('', variables.DotNetCoreVersion) }}'
 
       - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
         displayName: 'Build and Package'

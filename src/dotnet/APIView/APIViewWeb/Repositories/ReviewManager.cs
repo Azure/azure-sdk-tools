@@ -252,7 +252,7 @@ namespace APIViewWeb.Repositories
             bool runAnalysis,
             MemoryStream memoryStream)
         {
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 

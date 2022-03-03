@@ -24,6 +24,7 @@ namespace APIViewWeb.Repositories
     public class PullRequestManager
     {
         static readonly string REVIEW_DIFF_URL = "https://apiview.dev/Assemblies/Review/{ReviewId}?diffOnly=True&diffRevisionId={NewRevision}";
+        static readonly string ISSUE_COMMENT_PACKAGE_IDENTIFIER = "**API change check for `<PKG-NAME>`**";
         static readonly GitHubClient _githubClient = new GitHubClient(new Octokit.ProductHeaderValue("apiview"));
         readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
@@ -99,7 +100,15 @@ namespace APIViewWeb.Repositories
                     var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel);
                     if (apiDiff != "")
                     {
-                        await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);
+                        var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
+                        if (existingComment != null)
+                        {
+                            await _githubClient.Issue.Comment.Update(repoInfo[0], repoInfo[1], existingComment.Id, apiDiff);
+                        }
+                        else
+                        {
+                            await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);
+                        }                        
                     }                    
                 }
                 else
@@ -117,6 +126,19 @@ namespace APIViewWeb.Repositories
             }
         }
 
+        private async Task<IssueComment> GetExistingCommentForPackage(string packageName, string repoOwner, string repoName, int pr)
+        {
+            var comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
+            if (comments != null)
+            {
+                // Check for comment created for current package.
+                // GitHub issue comment unfortunately doesn't have any key to verify. So we need to check actual body to find the comment.
+                var commentBody = ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", packageName);
+                return comments.Where(c => c.Body.Contains(commentBody)).LastOrDefault();
+            }
+            return null;
+        }
+
         private async Task<bool> IsReviewSame(ReviewModel review, RenderedCodeFile renderedCodeFile)
         {
             foreach (var revision in review.Revisions.Reverse())
@@ -131,6 +153,9 @@ namespace APIViewWeb.Repositories
 
         public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile, int prNumber, string originalFileName, MemoryStream memoryStream, PullRequestModel pullRequestModel)
         {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append(ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", codeFile.PackageName));
+            stringBuilder.Append(Environment.NewLine).Append(Environment.NewLine);
             // Get automatically generated master review for package or previously cloned review for this pull request
             var review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel);
             if (review == null)
@@ -141,7 +166,16 @@ namespace APIViewWeb.Repositories
             // Check if API surface level matches with any revisions
             var renderedCodeFile = new RenderedCodeFile(codeFile);
             if (await IsReviewSame(review, renderedCodeFile))
-                return "";
+            {
+                //Do not update the comment if review was already created and it matches with current revision.
+                if (pullRequestModel.ReviewId != null)
+                    return "";
+
+                //Baseline review was not created earlier or this is the first commit of PR
+                stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
+                return stringBuilder.ToString();
+            }
+                
 
             if(pullRequestModel.ReviewId != null)
             {
@@ -150,7 +184,12 @@ namespace APIViewWeb.Repositories
                 review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
                 review.ReviewId = pullRequestModel.ReviewId;
                 if (await IsReviewSame(review, renderedCodeFile))
-                    return "";
+                {
+                    // We will run into this if some one makes unintended API changes in a PR and then reverts it back.
+                    // We must clear previous comment and update it to show no changes found.
+                    stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
+                    return stringBuilder.ToString();
+                }
             }
 
             var newRevision = new ReviewRevisionModel()
@@ -159,7 +198,7 @@ namespace APIViewWeb.Repositories
                 Label = "Created for PR " + prNumber
             };
 
-            var stringBuilder = new StringBuilder();
+            
             var diffUrl = REVIEW_DIFF_URL.Replace("{ReviewId}",review.ReviewId).Replace("{NewRevision}", review.Revisions.Last().RevisionId);
             stringBuilder.Append($"API changes have been detected in `{codeFile.PackageName}`. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
             // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review

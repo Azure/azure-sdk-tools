@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Thu, 24 Feb 2022 05:54:42 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Mar 2022 02:23:21 GMT and should not be manually modified.
+
+## 2.1.2
+Thu, 03 Mar 2022 02:23:21 GMT
+
+### Patches
+
+- Upgrade to latest testmodeler.
 
 ## 2.1.1
 Thu, 24 Feb 2022 05:54:42 GMT

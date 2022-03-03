@@ -175,7 +175,7 @@ describe('GoTestGenerator from RP agrifood', () => {
                 configDefaults,
             ),
         );
-        testCodeModel.genMockTests();
+        testCodeModel.genMockTests(undefined);
     });
 
     afterEach(() => {

@@ -77,20 +77,19 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             if (build == null)
             {
-                this.logger.LogWarning("Unable to process run due to missing build");
+                this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
                 return;
             }
 
             if (build.Deleted)
             {
-                this.logger.LogWarning("Skipping deleted build");
+                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
                 return;
             }
 
-
             if (build.StartTime == null || build.FinishTime == null)
             {
-                this.logger.LogWarning("Skipping build with null start or finish time");
+                this.logger.LogWarning("Skipping build with null start or finish time. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
                 return;
             }
 

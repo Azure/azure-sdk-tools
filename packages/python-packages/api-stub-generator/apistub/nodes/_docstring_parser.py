@@ -1,6 +1,7 @@
 from collections import OrderedDict
-import re
+import inspect
 import logging
+import re
 from ._argtype import ArgType
 
 
@@ -62,7 +63,7 @@ class DocstringParser:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
                 return value
-        return None
+        return inspect.Parameter.empty
 
     def _sanitize_type(self, value):
         # strip unnecessary quotes from type strings

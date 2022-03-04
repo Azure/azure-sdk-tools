@@ -119,7 +119,7 @@ class PublicPrivateClass:
 
 class RequiredKwargObject:
     """A class with required kwargs.
-    
+    :param str id: An id. Required.
     :keyword str name: Required. The name.
     :keyword int age: Required. The age.
     :keyword str other: Some optional thing.

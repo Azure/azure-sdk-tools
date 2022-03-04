@@ -130,19 +130,17 @@ class FunctionNode(NodeEntityBase):
         # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
         self.kw_args = OrderedDict()
         for argname, argvalues in params.items():
-            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=None)
+            kind = argvalues.kind
+            keyword = "keyword" if kind == Parameter.KEYWORD_ONLY else None
+            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
 
             # Store handle to kwarg object to replace it later
-            if argvalues.kind == Parameter.VAR_KEYWORD:
+            if kind == Parameter.VAR_KEYWORD:
                 arg.argname = f"**{argname}"
 
-            if argvalues.kind == Parameter.KEYWORD_ONLY:
-                # Keyword-only args with "None" default are displayed as "..."
-                # to match logic in docstring parsing
-                if arg.default == None and not arg.is_required:
-                    arg.default = "..."
+            if kind == Parameter.KEYWORD_ONLY:
                 self.kw_args[arg.argname] = arg
-            elif argvalues.kind == Parameter.VAR_POSITIONAL:
+            elif kind == Parameter.VAR_POSITIONAL:
                 # to work with docstring parsing, the key must
                 # not have the * in it.
                 arg.argname = f"*{argname}"

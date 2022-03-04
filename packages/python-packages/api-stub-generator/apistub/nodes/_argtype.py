@@ -21,9 +21,12 @@ class ArgType:
         if default == inspect.Parameter.empty:
             self.is_required = True
             self.default = None
+        elif default is None:
+            self.is_required = False
+            self.default = "..." if keyword == "keyword" else "None"
         else:
             self.is_required = False
-            self.default = str(default) if default is not None else "..."
+            self.default = str(default)
 
         if argtype and not self.is_required and not keyword in ["ivar", "param"] and not argtype.startswith("Optional"):
             self.argtype = f"Optional[{argtype}]"

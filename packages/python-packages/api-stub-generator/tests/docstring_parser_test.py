@@ -208,6 +208,7 @@ class TestDocstringParser:
         })
 
     def test_return_builtin_return_type(self):
+
         self._test_return_type(docstring_standard_return_type, "str")
 
     def test_return_union_return_type(self):
@@ -237,7 +238,7 @@ class TestDocstringParser:
         parser = DocstringParser(docstring_multi_complex_type)
         # optional keyword-arguments are documented with "..."
         assert parser.default_for("country_hint") == "..."
-        assert parser.default_for("documents") == "..."
+        assert parser.default_for("documents") == None
 
     def test_docstring_defaults_formal(self):
         parser = DocstringParser(docstring_default_formal)

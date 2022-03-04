@@ -79,7 +79,7 @@ class TestFunctionParsing:
         assert arg.argname == "*vars"
         # the type annotation comes ONLY from the docstring. The Python2 type hint is not used!
         assert arg.argtype == "str"
-        assert arg.default == "..."
+        assert arg.default == None
 
     def test_default_values(self):
         func_node = FunctionNode("test", None, TestClass.with_default_values, "test")

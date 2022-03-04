@@ -192,7 +192,7 @@ class StubGenerator:
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
-        navigation.tag = NavigationTag(Kind.type_package)
+        navigation.tags = NavigationTag(Kind.type_package)
         apiview.add_navigation(navigation)
 
         # Generate tokens

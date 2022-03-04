@@ -35,7 +35,7 @@ pr:
 variables:
   DotNetCoreVersion: '5.x'
   DotNetRuntimeVersion: '3.1.x'
-  PythonVersion: '3.10.1'
+  PythonVersion: '3.10.2'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'

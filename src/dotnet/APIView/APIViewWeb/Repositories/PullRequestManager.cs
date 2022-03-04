@@ -161,20 +161,33 @@ namespace APIViewWeb.Repositories
 
         public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile, int prNumber, string originalFileName, MemoryStream memoryStream, PullRequestModel pullRequestModel, string reviewUrlPrefix)
         {
-            var stringBuilder = new StringBuilder();
-            stringBuilder.Append(ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", codeFile.PackageName));
-            stringBuilder.Append(Environment.NewLine).Append(Environment.NewLine);
-
             var newRevision = new ReviewRevisionModel()
             {
                 Author = pullRequestModel.Author,
                 Label = "Created for PR " + prNumber
             };
-
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append(ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", codeFile.PackageName));
+            stringBuilder.Append(Environment.NewLine).Append(Environment.NewLine);
             // Get automatically generated master review for package or previously cloned review for this pull request
             var review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel);
             // If base line review is available from main branch then create a diff
-            if (review != null)
+            if (review == null)
+            {
+                // If base line is not available (possible if package is new or request coming from SDK automation)
+                review = new ReviewModel()
+                {
+                    Author = pullRequestModel.Author,
+                    CreationDate = DateTime.Now,
+                    Name = pullRequestModel.PackageName,
+                    IsClosed = false,
+                    FilterType = ReviewType.PullRequest,
+                    ReviewId = IdHelper.GenerateId()
+                };
+                var reviewUrl = reviewUrlPrefix + review.ReviewId;
+                stringBuilder.Append($"API review is created for `{codeFile.PackageName}`. You can review APIs [here]({reviewUrl}).").Append(Environment.NewLine);
+            }
+            else
             {
                 // Check if API surface level matches with any revisions
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
@@ -188,7 +201,6 @@ namespace APIViewWeb.Repositories
                     stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
                     return stringBuilder.ToString();
                 }
-
 
                 if (pullRequestModel.ReviewId != null)
                 {
@@ -209,21 +221,6 @@ namespace APIViewWeb.Repositories
                 stringBuilder.Append($"API changes have been detected in `{codeFile.PackageName}`. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
                 // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review
                 await GetFormattedDiff(renderedCodeFile, review.Revisions.Last(), stringBuilder);
-            }
-            else
-            {
-                // If base line is not available (possible if package is new or request coming from SDK automation)
-                review = new ReviewModel()
-                {
-                    Author = pullRequestModel.Author,
-                    CreationDate = DateTime.Now,
-                    Name = pullRequestModel.PackageName,
-                    IsClosed = false,
-                    FilterType = ReviewType.PullRequest,
-                    ReviewId = IdHelper.GenerateId()
-                };
-                var reviewUrl = reviewUrlPrefix + review.ReviewId;
-                stringBuilder.Append($"API review is created for `{codeFile.PackageName}`. You can review APIs [here]({reviewUrl}).").Append(Environment.NewLine);
             }
 
             var reviewCodeFileModel = await _reviewManager.CreateReviewCodeFileModel(newRevision.RevisionId, memoryStream, codeFile);

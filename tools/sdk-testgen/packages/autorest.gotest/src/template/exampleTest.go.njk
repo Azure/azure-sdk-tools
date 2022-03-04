@@ -18,7 +18,7 @@ import (
 {% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/{{example.originalFile}}
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/{{example.originalFile}}
 func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

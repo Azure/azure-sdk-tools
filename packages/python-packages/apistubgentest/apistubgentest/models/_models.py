@@ -129,3 +129,12 @@ class RequiredKwargObject:
         self.name = name
         self.age = age
         self.other = other
+
+
+class ObjectWithDefaults:
+
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, some_obj: PublicPrivateClass = PublicPrivateClass()):
+        self.name = name
+        self.age = age
+        self.is_awesome = is_awesome
+        self.some_obj = some_obj

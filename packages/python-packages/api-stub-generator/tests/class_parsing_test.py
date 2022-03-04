@@ -7,9 +7,11 @@
 from tkinter import Variable
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
-    FakeTypedDict as FakeTypedDict,
-    FakeObject as FakeObject,
-    PublicPrivateClass as PublicPrivateClass
+    FakeTypedDict,
+    FakeObject,
+    ObjectWithDefaults,
+    PublicPrivateClass,
+    RequiredKwargObject
 )
 
 
@@ -27,7 +29,6 @@ class TestClassParsing:
             if not check_class == FunctionNode:
                 actual_type = node.type
                 assert actual_type == check_type
-
 
     def test_typed_dict_class(self):
         class_node = ClassNode("test", None, FakeTypedDict, self.pkg_namespace)
@@ -55,3 +56,25 @@ class TestClassParsing:
             (FunctionNode, "__init__", None),
             (FunctionNode, "public_func", None)
         ])
+
+    def test_required_kwargs(self):
+        class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
+        kwargs = class_node.child_nodes[0].kw_args
+        args = class_node.child_nodes[0].args
+        assert args["id"].is_required == True
+        assert args["id"].default is None
+        assert args["**kwargs"].argtype == "Any"
+
+        assert len(kwargs) == 3
+        assert kwargs["name"].is_required == True
+        assert kwargs["age"].is_required == True
+        assert kwargs["other"].is_required == False
+
+    def test_default_values(self):
+        class_node = ClassNode("test", None, ObjectWithDefaults, self.pkg_namespace)
+        assert len(class_node.child_nodes) == 1
+        init_args = class_node.child_nodes[0].args
+        assert init_args["name"].default == "Bob"
+        assert init_args["age"].default == "21"
+        assert init_args["is_awesome"].default == "True"
+        assert init_args["pet"].default == "PetEnum.DOG"

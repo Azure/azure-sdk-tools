@@ -6,9 +6,10 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+from cgitb import text
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
-from typing import TypedDict, Union
+from typing import Any, TypedDict, Union
 
 
 class _CaseInsensitiveEnumMeta(EnumMeta):
@@ -114,3 +115,27 @@ class PublicPrivateClass:
 
     def public_func(self, **kwargs) -> str:
         return ""
+
+
+class RequiredKwargObject:
+    """A class with required kwargs.
+    :param str id: An id. Required.
+    :keyword str name: Required. The name.
+    :keyword int age: Required. The age.
+    :keyword str other: Some optional thing.
+    """
+
+    def __init__(self, id: str, *, name: str, age: int, other: str = None, **kwargs: "Any"):
+        self.id = id
+        self.name = name
+        self.age = age
+        self.other = other
+
+
+class ObjectWithDefaults:
+
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.dog):
+        self.name = name
+        self.age = age
+        self.is_awesome = is_awesome
+        self.pet = pet

@@ -207,13 +207,16 @@ namespace APIViewWeb.Repositories
                     // If baseline review was already created and if APIs in current commit doesn't match any of the revisions in generated review then create new baseline using main branch and compare again.
                     // If APIs are still different, find the diff against latest baseline.
                     review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel, true);
-                    review.ReviewId = pullRequestModel.ReviewId;
-                    if (await IsReviewSame(review, renderedCodeFile))
+                    if (review != null)
                     {
-                        // We will run into this if some one makes unintended API changes in a PR and then reverts it back.
-                        // We must clear previous comment and update it to show no changes found.
-                        stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
-                        return stringBuilder.ToString();
+                        review.ReviewId = pullRequestModel.ReviewId;
+                        if (await IsReviewSame(review, renderedCodeFile))
+                        {
+                            // We will run into this if some one makes unintended API changes in a PR and then reverts it back.
+                            // We must clear previous comment and update it to show no changes found.
+                            stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
+                            return stringBuilder.ToString();
+                        }
                     }
                 }
 

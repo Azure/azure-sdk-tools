@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Thu, 03 Mar 2022 02:23:21 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Mar 2022 05:50:36 GMT and should not be manually modified.
+
+## 2.1.3
+Thu, 03 Mar 2022 05:50:36 GMT
+
+### Patches
+
+- Change response usage in examples.
 
 ## 2.1.2
 Thu, 03 Mar 2022 02:23:21 GMT

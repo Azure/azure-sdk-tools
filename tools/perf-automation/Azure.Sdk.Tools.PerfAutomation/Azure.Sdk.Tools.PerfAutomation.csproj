@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Version>0.1.0</Version>
 
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>

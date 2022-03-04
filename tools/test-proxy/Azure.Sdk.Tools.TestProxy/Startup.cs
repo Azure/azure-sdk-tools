@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.TestProxy
             TargetLocation = resolveRepoLocation(storageLocation);
 
             var statusThread = PrintStatus(
-                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
+                () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
             var host = Host.CreateDefaultBuilder(args);

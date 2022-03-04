@@ -1,8 +1,5 @@
 # Release History
 
-## Version 0.2.11 (Unreleased)
-Added version consistency check.
-
 ## Version 0.2.10 (Unreleased)
 Added support for TypedDict classes.
 Added support to parse defaults from docstrings. Example

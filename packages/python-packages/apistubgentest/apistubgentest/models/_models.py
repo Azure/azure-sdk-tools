@@ -9,7 +9,7 @@
 from cgitb import text
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
-from typing import TypedDict, Union
+from typing import Any, TypedDict, Union
 
 
 class _CaseInsensitiveEnumMeta(EnumMeta):
@@ -125,7 +125,7 @@ class RequiredKwargObject:
     :keyword str other: Some optional thing.
     """
 
-    def __init__(self, id: str, *, name: str, age: int, other: str = None):
+    def __init__(self, id: str, *, name: str, age: int, other: str = None, **kwargs: "Any"):
         self.id = id
         self.name = name
         self.age = age

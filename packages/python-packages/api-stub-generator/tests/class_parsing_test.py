@@ -63,6 +63,7 @@ class TestClassParsing:
         args = class_node.child_nodes[0].args
         assert args["id"].is_required == True
         assert args["id"].default is None
+        assert args["**kwargs"].argtype == "Any"
 
         assert len(kwargs) == 3
         assert kwargs["name"].is_required == True

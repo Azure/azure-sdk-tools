@@ -88,7 +88,7 @@ def get_qualified_name(obj, namespace):
     value = name_regex.search(name).group(0)
     if module_name and module_name.startswith(namespace):
         value = f"{module_name}.{name}"
-    elif value.startswith(module_name):
+    elif module_name and value.startswith(module_name):
         # strip the module name if it isn't the namespace (example: typing)
         value = value[len(module_name) +1:]
 

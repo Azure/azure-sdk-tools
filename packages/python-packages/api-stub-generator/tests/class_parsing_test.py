@@ -60,6 +60,10 @@ class TestClassParsing:
     def test_required_kwargs(self):
         class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
         kwargs = class_node.child_nodes[0].kw_args
+        args = class_node.child_nodes[0].args
+        assert args["id"].is_required == True
+        assert args["id"].default is None
+
         assert len(kwargs) == 3
         assert kwargs["name"].is_required == True
         assert kwargs["age"].is_required == True
@@ -72,4 +76,4 @@ class TestClassParsing:
         assert init_args["name"].default == "Bob"
         assert init_args["age"].default == "21"
         assert init_args["is_awesome"].default == "True"
-        assert init_args["some_obj"].default == "PublicPrivateClass"
+        assert init_args["pet"].default == "PetEnum.DOG"

@@ -125,7 +125,8 @@ class RequiredKwargObject:
     :keyword str other: Some optional thing.
     """
 
-    def __init__(self, *, name: str, age: int, other: str = None):
+    def __init__(self, id: str, *, name: str, age: int, other: str = None):
+        self.id = id
         self.name = name
         self.age = age
         self.other = other
@@ -133,8 +134,8 @@ class RequiredKwargObject:
 
 class ObjectWithDefaults:
 
-    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, some_obj: PublicPrivateClass = PublicPrivateClass()):
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.dog):
         self.name = name
         self.age = age
         self.is_awesome = is_awesome
-        self.some_obj = some_obj
+        self.pet = pet

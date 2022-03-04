@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
 func ExampleVirtualMachineRunCommandsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -46,7 +46,7 @@ func ExampleVirtualMachineRunCommandsClient_List() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
 func ExampleVirtualMachineRunCommandsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -68,7 +68,7 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 	_ = res.VirtualMachineRunCommandsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
 func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -117,7 +117,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 	_ = res.VirtualMachineRunCommandsClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
 func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -152,7 +152,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 	_ = res.VirtualMachineRunCommandsClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
 func ExampleVirtualMachineRunCommandsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -178,7 +178,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginDelete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
 func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -201,7 +201,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 	_ = res.VirtualMachineRunCommandsClientGetByVirtualMachineResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
 func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

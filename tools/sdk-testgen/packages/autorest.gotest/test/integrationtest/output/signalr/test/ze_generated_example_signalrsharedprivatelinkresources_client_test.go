@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
 func ExampleSignalRSharedPrivateLinkResourcesClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -47,7 +47,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_List() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
 func ExampleSignalRSharedPrivateLinkResourcesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -70,7 +70,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_Get() {
 	_ = res.SignalRSharedPrivateLinkResourcesClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
 func ExampleSignalRSharedPrivateLinkResourcesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -105,7 +105,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginCreateOrUpdate() {
 	_ = res.SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
 func ExampleSignalRSharedPrivateLinkResourcesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

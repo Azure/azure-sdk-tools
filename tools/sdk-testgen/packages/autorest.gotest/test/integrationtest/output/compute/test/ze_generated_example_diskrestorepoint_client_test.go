@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
 func ExampleDiskRestorePointClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -39,7 +39,7 @@ func ExampleDiskRestorePointClient_Get() {
 	_ = res.DiskRestorePointClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
 func ExampleDiskRestorePointClient_ListByRestorePoint() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

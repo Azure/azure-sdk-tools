@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
 func ExampleMonitoringSettingsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -40,7 +40,7 @@ func ExampleMonitoringSettingsClient_Get() {
 	_ = res.MonitoringSettingsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
 func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -74,7 +74,7 @@ func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 	_ = res.MonitoringSettingsClientUpdatePutResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
 func ExampleMonitoringSettingsClient_BeginUpdatePatch() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

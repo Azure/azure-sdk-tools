@@ -17,7 +17,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
 func ExampleVirtualMachineScaleSetRollingUpgradesClient_BeginStartExtensionUpgrade() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

@@ -16,7 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
 func ExampleSSHPublicKeysClient_Create() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -44,7 +44,7 @@ func ExampleSSHPublicKeysClient_Create() {
 	_ = res.SSHPublicKeysClientCreateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
 func ExampleSSHPublicKeysClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -66,7 +66,7 @@ func ExampleSSHPublicKeysClient_Get() {
 	_ = res.SSHPublicKeysClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
 func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

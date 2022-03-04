@@ -16,7 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
 func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -48,7 +48,7 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 	_ = res.AvailabilitySetsClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
 func ExampleAvailabilitySetsClient_ListBySubscription() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

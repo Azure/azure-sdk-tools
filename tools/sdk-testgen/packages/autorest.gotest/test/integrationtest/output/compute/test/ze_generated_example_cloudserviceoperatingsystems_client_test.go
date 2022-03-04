@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -37,7 +37,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 	_ = res.CloudServiceOperatingSystemsClientGetOSVersionResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -65,7 +65,7 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
 func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -87,7 +87,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 	_ = res.CloudServiceOperatingSystemsClientGetOSFamilyResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
 func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

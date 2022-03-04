@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
 func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -48,7 +48,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	_ = res.DiskAccessesClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
 func ExampleDiskAccessesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -81,7 +81,7 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	_ = res.DiskAccessesClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
 func ExampleDiskAccessesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -103,7 +103,7 @@ func ExampleDiskAccessesClient_Get() {
 	_ = res.DiskAccessesClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
 func ExampleDiskAccessesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -128,7 +128,7 @@ func ExampleDiskAccessesClient_BeginDelete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
 func ExampleDiskAccessesClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -156,7 +156,7 @@ func ExampleDiskAccessesClient_ListByResourceGroup() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
 func ExampleDiskAccessesClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -183,7 +183,7 @@ func ExampleDiskAccessesClient_List() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
 func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -205,7 +205,7 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	_ = res.DiskAccessesClientGetPrivateLinkResourcesResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
 func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -241,7 +241,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	_ = res.DiskAccessesClientUpdateAPrivateEndpointConnectionResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
 func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -264,7 +264,7 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	_ = res.DiskAccessesClientGetAPrivateEndpointConnectionResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
 func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -290,7 +290,7 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
 func ExampleDiskAccessesClient_ListPrivateEndpointConnections() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

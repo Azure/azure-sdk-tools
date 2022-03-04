@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
 func ExampleDisksClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -56,7 +56,7 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 	_ = res.DisksClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
 func ExampleDisksClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -89,7 +89,7 @@ func ExampleDisksClient_BeginUpdate() {
 	_ = res.DisksClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
 func ExampleDisksClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -111,7 +111,7 @@ func ExampleDisksClient_Get() {
 	_ = res.DisksClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
 func ExampleDisksClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -139,7 +139,7 @@ func ExampleDisksClient_ListByResourceGroup() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
 func ExampleDisksClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

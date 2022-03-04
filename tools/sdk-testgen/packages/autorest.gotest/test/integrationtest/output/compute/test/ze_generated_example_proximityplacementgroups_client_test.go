@@ -16,7 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
 func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -44,7 +44,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 	_ = res.ProximityPlacementGroupsClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
 func ExampleProximityPlacementGroupsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -71,7 +71,7 @@ func ExampleProximityPlacementGroupsClient_Update() {
 	_ = res.ProximityPlacementGroupsClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
 func ExampleProximityPlacementGroupsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -91,7 +91,7 @@ func ExampleProximityPlacementGroupsClient_Delete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
 func ExampleProximityPlacementGroupsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -113,7 +113,7 @@ func ExampleProximityPlacementGroupsClient_Get() {
 	_ = res.ProximityPlacementGroupsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
 func ExampleProximityPlacementGroupsClient_ListBySubscription() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -140,7 +140,7 @@ func ExampleProximityPlacementGroupsClient_ListBySubscription() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
 func ExampleProximityPlacementGroupsClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

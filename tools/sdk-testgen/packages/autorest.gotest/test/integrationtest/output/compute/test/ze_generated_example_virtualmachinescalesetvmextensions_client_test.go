@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -81,7 +81,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 	_ = res.VirtualMachineScaleSetVMExtensionsClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -121,7 +121,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 	_ = res.VirtualMachineScaleSetVMExtensionsClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -148,7 +148,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -172,7 +172,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 	_ = res.VirtualMachineScaleSetVMExtensionsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
 func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

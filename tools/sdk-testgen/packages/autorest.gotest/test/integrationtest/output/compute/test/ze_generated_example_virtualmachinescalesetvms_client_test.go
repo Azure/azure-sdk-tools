@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
 func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -44,7 +44,7 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
 func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -67,7 +67,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 	_ = res.VirtualMachineScaleSetVMsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
 func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -90,7 +90,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 	_ = res.VirtualMachineScaleSetVMsClientGetInstanceViewResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
 func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -113,7 +113,7 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 	_ = res.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
 func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -134,7 +134,7 @@ func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
 func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

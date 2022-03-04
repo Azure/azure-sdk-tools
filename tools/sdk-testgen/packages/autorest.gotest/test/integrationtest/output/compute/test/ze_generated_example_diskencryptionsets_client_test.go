@@ -18,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
 func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -57,7 +57,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 	_ = res.DiskEncryptionSetsClientCreateOrUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
 func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -96,7 +96,7 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 	_ = res.DiskEncryptionSetsClientUpdateResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
 func ExampleDiskEncryptionSetsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -118,7 +118,7 @@ func ExampleDiskEncryptionSetsClient_Get() {
 	_ = res.DiskEncryptionSetsClientGetResult
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
 func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -143,7 +143,7 @@ func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
 func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -171,7 +171,7 @@ func ExampleDiskEncryptionSetsClient_ListByResourceGroup() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
 func ExampleDiskEncryptionSetsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -198,7 +198,7 @@ func ExampleDiskEncryptionSetsClient_List() {
 	}
 }
 
-// Generated with x-ms-examples file: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
 func ExampleDiskEncryptionSetsClient_ListAssociatedResources() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {

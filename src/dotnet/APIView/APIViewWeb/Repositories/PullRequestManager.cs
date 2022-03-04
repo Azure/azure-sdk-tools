@@ -164,14 +164,13 @@ namespace APIViewWeb.Repositories
             var newRevision = new ReviewRevisionModel()
             {
                 Author = pullRequestModel.Author,
-                Label = "Created for PR " + prNumber
+                Label = $"Created for PR {prNumber}"
             };
             var stringBuilder = new StringBuilder();
             stringBuilder.Append(ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", codeFile.PackageName));
             stringBuilder.Append(Environment.NewLine).Append(Environment.NewLine);
             // Get automatically generated master review for package or previously cloned review for this pull request
             var review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel);
-            // If base line review is available from main branch then create a diff
             if (review == null)
             {
                 // If base line is not available (possible if package is new or request coming from SDK automation)

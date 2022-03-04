@@ -18,12 +18,12 @@ class ArgType:
     """
     def __init__(self, name, *, argtype, default, keyword, func_node=None):
         self.argname = name
-        if default == inspect._empty or default == inspect.Parameter.empty:
+        if default == inspect.Parameter.empty:
             self.is_required = True
             self.default = None
         else:
             self.is_required = False
-            self.default = str(default) if default is not None else "..."
+            self.default = default if default is not None else "..."
 
         if argtype and not self.is_required and not keyword in ["ivar", "param"] and not argtype.startswith("Optional"):
             self.argtype = f"Optional[{argtype}]"

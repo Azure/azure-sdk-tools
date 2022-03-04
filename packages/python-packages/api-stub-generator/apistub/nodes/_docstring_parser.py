@@ -119,7 +119,10 @@ class DocstringParser:
             # show kwarg is optional by setting default to "..."
             # also wrap the type in Optional[] so it aligns with
             # optionals identified in type hints.
-            # FIXME: A keyword-only arg can be required.
+            # NOTE: docstring parser assumes all keyword arguments
+            # are optional. Signature parsing takes precedence and
+            # can tell the difference between required and optional
+            # keyword aguments.
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
                 arg.argtype = f"Optional[{arg.argtype}]"

@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('i', "iterations", Default = 1)]
             public int Iterations { get; set; }
 
-            [Option('l', "languages")]
+            [Option('l', "languages", HelpText = "List of languages (separated by spaces)")]
             public IEnumerable<Language> Languages { get; set; }
 
             [Option('v', "languageVersions", HelpText = "Regex of language versions to run")]

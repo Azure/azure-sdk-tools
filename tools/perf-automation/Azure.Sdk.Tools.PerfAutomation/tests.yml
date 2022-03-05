@@ -206,6 +206,7 @@ Services:
       - Azure.Storage.Files.Shares: source
     Java:
       Project: sdk/storage/azure-storage-perf
+      PrimaryPackage: azure-storage-file-share
       PackageVersions: *java-storage-package-versions
       AdditionalArguments:
         warmup: 15
@@ -247,6 +248,7 @@ Services:
       - Azure.Storage.Files.DataLake: source
     Java:
       Project: sdk/storage/azure-storage-perf
+      PrimaryPackage: azure-storage-file-datalake
       PackageVersions: *java-storage-package-versions
       AdditionalArguments:
         warmup: 15

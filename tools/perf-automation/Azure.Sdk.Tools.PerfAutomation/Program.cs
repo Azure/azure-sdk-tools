@@ -191,7 +191,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                             AdditionalArguments = p.Value.AdditionalArguments,
                             PackageVersions = p.Value.PackageVersions.Where(d => d.Keys.Concat(d.Values).Any(s =>
                                 String.IsNullOrEmpty(options.PackageVersions) || Regex.IsMatch(s, options.PackageVersions)
-                            ))
+                            )),
+                            PrimaryPackage = p.Value.PrimaryPackage,
                         }),
                     Tests = s.Tests
                         .Where(t => String.IsNullOrEmpty(options.Tests) || Regex.IsMatch(t.Test, options.Tests, RegexOptions.IgnoreCase))

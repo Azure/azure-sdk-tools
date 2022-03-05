@@ -3,19 +3,19 @@
     DefaultVersions:
     - netcoreapp3.1
     OptionalVersions:
-    - net5.0
+    - net6.0
 
   Java:
     DefaultVersions:
-    - 1.8.0_292
+    - 1.8.0_312
     OptionalVersions:
     - 17+35
 
   JS:
     DefaultVersions:
-    - 14.18.1
+    - 14.19.0
     OptionalVersions:
-    - 16.11.1
+    - 16.14.0
   
   Python:
     DefaultVersions:

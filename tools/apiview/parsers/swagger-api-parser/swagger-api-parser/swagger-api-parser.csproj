@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageVersion>1.0.0-dev.0.1</PackageVersion>
     <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>swaggerAPIParser</ToolCommandName>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,3 +1,6 @@
 *.swagger
 *codeFile.json
 fixtures/*
+*.nupkg
+nuget.config
+nupkg/*

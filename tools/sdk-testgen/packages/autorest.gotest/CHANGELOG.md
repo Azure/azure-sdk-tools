@@ -1,6 +1,13 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Thu, 03 Mar 2022 05:50:36 GMT and should not be manually modified.
+This log was last generated on Mon, 07 Mar 2022 02:56:30 GMT and should not be manually modified.
+
+## 2.1.4
+Mon, 07 Mar 2022 02:56:30 GMT
+
+### Patches
+
+- Fix wrong generation for output variable with chain invoke.
 
 ## 2.1.3
 Thu, 03 Mar 2022 05:50:36 GMT

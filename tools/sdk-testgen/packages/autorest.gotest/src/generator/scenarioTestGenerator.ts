@@ -126,7 +126,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                         let isPtr = false;
                         for (let i = 0; i < variableConfig.length; i++) {
                             if (variableConfig[i].type === OutputVariableModelType.object) {
-                                variableConfig[i]['languageName'] = variableConfig[i].languages.go.name;
+                                variableConfig[i]['languageName'] = `.${variableConfig[i].languages.go.name}`;
                                 isPtr = !variableConfig[i].languages.go?.byValue;
                             } else if (variableConfig[i].type === OutputVariableModelType.index) {
                                 variableConfig[i]['languageName'] = `[${variableConfig[i].index}]`;

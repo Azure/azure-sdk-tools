@@ -54,10 +54,14 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         self.errors = []
+        # This is the name obtained by NodeEntityBase from __name__.
+        # We must preserve it to detect the mismatch and issue a warning.
+        self._name = self.name
+        self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
@@ -81,7 +85,7 @@ class ClassNode(NodeEntityBase):
             logging.debug("Checking if class implements {}".format(c))
             if all(map(is_implemented, ABSTRACT_CLASS_METHODS[c])):
                 logging.debug("Class {0} implements {1}".format(self.name, c))
-                self.implements.append(c)
+                self.implements.append(c)   
 
         # Hide all methods for implemented ABC classes/ implements
         methods_to_hide = []
@@ -242,6 +246,8 @@ class ClassNode(NodeEntityBase):
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
         apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
+        if self._name != self.name:
+            apiview.add_diagnostic(f"Alias '{self.name}' does not match __name__ '{self._name}'.", self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:

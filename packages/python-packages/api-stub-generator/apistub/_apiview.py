@@ -5,6 +5,7 @@ import importlib
 import inspect
 import platform
 
+from ._node_index import NodeIndex
 from ._token import Token
 from ._token_kind import TokenKind
 from ._version import VERSION
@@ -23,12 +24,12 @@ SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. 
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
-    :param NodeIndex: nodeindex
-    :param str: pkg_name
-    :param str: ver_string
+    :param str pkg_name: The package name.
+    :param str namespace: The package namespace.
+    :param MetadataMap metadata_map: A metadata mapping object.
     """
 
-    def __init__(self, nodeindex, pkg_name="", namespace = "", metadata_map=None):
+    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None):
         self.name = pkg_name
         self.version = 0
         self.version_string = ""
@@ -38,7 +39,7 @@ class ApiView:
         self.diagnostics = []
         self.indent = 0    
         self.namespace = namespace
-        self.nodeindex = nodeindex
+        self.node_index = NodeIndex()
         self.package_name = pkg_name
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
@@ -148,7 +149,7 @@ class ApiView:
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.value = type_full_name.split(".")[-1]
-        navigate_to_id = self.nodeindex.get_id(type_full_name)
+        navigate_to_id = self.node_index.get_id(type_full_name)
         if navigate_to_id:
             token.navigate_to_id = navigate_to_id
         elif type_name.startswith("~") and line_id:

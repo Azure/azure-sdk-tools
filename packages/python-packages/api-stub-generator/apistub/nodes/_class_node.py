@@ -85,7 +85,7 @@ class ClassNode(NodeEntityBase):
             logging.debug("Checking if class implements {}".format(c))
             if all(map(is_implemented, ABSTRACT_CLASS_METHODS[c])):
                 logging.debug("Class {0} implements {1}".format(self.name, c))
-                self.implements.append(c)   
+                self.implements.append(c)
 
         # Hide all methods for implemented ABC classes/ implements
         methods_to_hide = []
@@ -147,7 +147,13 @@ class ClassNode(NodeEntityBase):
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
 
         # find members in node
-        for name, child_obj in inspect.getmembers(self.obj):
+        # enums with duplicate values are screened out by "getmembers" so
+        # we must rely on __members__ instead.
+        if hasattr(self.obj, "__members__"):
+            members = self.obj.__members__.items()
+        else:
+            members = inspect.getmembers(self.obj)
+        for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
@@ -178,10 +184,8 @@ class ClassNode(NodeEntityBase):
                 continue
 
             if self.is_enum and isinstance(child_obj, self.obj):
-                # Enum values will be of parent instance type
-                child_obj.__name__ = name
                 self.child_nodes.append(
-                    EnumNode(self.namespace, self, child_obj)
+                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):

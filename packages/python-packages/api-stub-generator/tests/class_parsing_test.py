@@ -5,11 +5,12 @@
 # --------------------------------------------------------------------------
 
 from tkinter import Variable
-from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
+from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode, EnumNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,
     ObjectWithDefaults,
+    PetEnum,
     PublicPrivateClass,
     RequiredKwargObject,
     SomeAwesomelyNamedObject
@@ -83,3 +84,9 @@ class TestClassParsing:
     def test_model_aliases(self):
         class_node = ClassNode(name="SomeAwesomelyNamedObject", namespace="test", parent_node=None, obj=SomeAwesomelyNamedObject, pkg_root_namespace=self.pkg_namespace)
         assert class_node.name == "SomeAwesomelyNamedObject"
+
+    def test_enum(self):
+        class_node = ClassNode(name="PetEnum", namespace="test", parent_node=None, obj=PetEnum, pkg_root_namespace=self.pkg_namespace)
+        assert len(class_node.child_nodes) == 3
+        names = [x.name for x in class_node.child_nodes]
+        assert names == ["CAT", "DEFAULT", "DOG"]

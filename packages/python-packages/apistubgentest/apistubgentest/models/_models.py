@@ -54,6 +54,7 @@ class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
     """
     DOG = "dog"
     CAT = "cat"
+    DEFAULT = "cat"
 
 
 class FakeObject(object):

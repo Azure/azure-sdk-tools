@@ -25,9 +25,11 @@ if __name__ == '__main__':
     version_path = os.path.join(stub_gen_path, 'apistub', '_version.py')
 
     with open(changelog_path, 'r') as changelog_file:
+        logging.warning(f'Changelog path: {changelog_path}')
         latest = re.findall(r'## Version (\d+.\d+.\d+)', changelog_file.read())[0]
 
     with open(version_path, 'r') as version_file:
+        logging.warning(f'Version path: {version_path}')
         version = re.findall(r'VERSION = "(\d+.\d.+.\d+)"', version_file.read())[0]
 
     if version != latest:

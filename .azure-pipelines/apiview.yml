@@ -190,6 +190,10 @@ stages:
               publishTestResults: false
 
           - script: |
+              python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+            displayName: 'Verify Python APIView version consistency'
+
+          - script: |
               cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
               pip install tox
               tox -e pytest,stubgen

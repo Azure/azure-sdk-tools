@@ -568,7 +568,16 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        public async Task<CodeFile> GetCodeFile(string repoName, string buildId, string artifactName, string packageName, string originalFileName, string codeFileName, MemoryStream memoryStream)
+        public async Task<CodeFile> GetCodeFile(string repoName,
+            string buildId,
+            string artifactName,
+            string packageName,
+            string originalFileName,
+            string codeFileName,
+            MemoryStream originalFileStream,
+            string baselineCodeFileName = "",
+            MemoryStream baselineStream = null
+            )
         {
             Stream stream = null;
             CodeFile codeFile = null;
@@ -576,7 +585,7 @@ namespace APIViewWeb.Repositories
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
                 stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
-                codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, memoryStream);
+                codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, originalFileStream);
             }
             else
             {
@@ -587,11 +596,16 @@ namespace APIViewWeb.Repositories
                     var fileName = Path.GetFileName(entry.Name);
                     if (fileName == originalFileName)
                     {
-                        await entry.Open().CopyToAsync(memoryStream);
+                        await entry.Open().CopyToAsync(originalFileStream);
                     }
-                    else if (fileName == codeFileName)
+
+                    if (fileName == codeFileName)
                     {
                         codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                    }
+                    else if (fileName == baselineCodeFileName)
+                    {
+                        await entry.Open().CopyToAsync(baselineStream);
                     }
                 }
             }

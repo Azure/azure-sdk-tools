@@ -136,14 +136,14 @@ namespace swagger_api_parser
             return result.ToArray();
         }
 
-        public async Task GenerateCodeFile(string outputFile)
+        public async Task GenerateCodeFile(string outputFile, string packageName)
         {
             CodeFile result = new CodeFile
             {
                 Language = "Swagger",
                 VersionString = "0",
-                Name = outputFile,
-                PackageName = outputFile,
+                Name = packageName,
+                PackageName = packageName,
                 Tokens = new CodeFileToken[] { },
                 Navigation = new NavigationItem[] { }
             };
@@ -182,11 +182,16 @@ namespace swagger_api_parser
 
             var output = new Option<string>(name: "--output", description: "The output file path.",
                 getDefaultValue: () => "swagger.json");
-            var cmd = new RootCommand {swaggers, output};
+            
+            var packageName = new Option<string>(name: "--package-name",
+                description: "The package name for the generated code file.",
+                getDefaultValue: () => "swagger");
+            
+            var cmd = new RootCommand {swaggers, output, packageName};
 
             cmd.Description = "Parse swagger file into codefile.";
 
-            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile) =>
+            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile, string package) =>
             {
                 var enumerable = swaggerFiles as string[] ?? swaggerFiles.ToArray();
                 if (!enumerable.Any())
@@ -195,13 +200,13 @@ namespace swagger_api_parser
                     return;
                 }
 
-                await HandleGenerateCodeFile(enumerable, outputFile);
-            }, swaggers, output);
+                await HandleGenerateCodeFile(enumerable, outputFile, package);
+            }, swaggers, output, packageName);
 
             return Task.FromResult(cmd.Invoke(args));
         }
 
-        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output)
+        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName)
         {
             var swaggerFilePaths = swaggers as string[] ?? swaggers.ToArray();
             var swaggerCodeFileRender = new SwaggerCodeFileMerger();
@@ -221,7 +226,7 @@ namespace swagger_api_parser
                 swaggerCodeFileRender.AppendResult(swaggerFileName, cf);
             }
 
-            await swaggerCodeFileRender.GenerateCodeFile(output);
+            await swaggerCodeFileRender.GenerateCodeFile(output, packageName);
         }
     }
 }

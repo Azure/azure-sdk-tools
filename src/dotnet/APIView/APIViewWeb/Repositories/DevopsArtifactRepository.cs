@@ -31,7 +31,7 @@ namespace APIViewWeb.Repositories
             var downloadUrl = await GetDownloadArtifactUrl(repoName, buildId, artifactName);
             if (!string.IsNullOrEmpty(downloadUrl))
             {
-                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
+                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=%2F" + filePath;
                 _devopsClient.DefaultRequestHeaders.Accept.Clear();
                 _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
                 _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);

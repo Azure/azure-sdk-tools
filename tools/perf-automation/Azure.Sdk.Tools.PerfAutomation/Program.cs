@@ -48,14 +48,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Delimiter = ", ",
         };
 
-        public class CommonOptions
-        {
-            [Option("input-file", Default = "tests.yml")]
-            public string InputFile { get; set; }
-        }
-
         [Verb("run", HelpText = "Run perf tests and collect results")]
-        public class RunOptions : CommonOptions
+        public class RunOptions
         {
             [Option('a', "arguments", HelpText = "Regex of arguments to run")]
             public string Arguments { get; set; }
@@ -68,6 +62,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option('n', "dry-run")]
             public bool DryRun { get; set; }
+
+            [Option("input-file", Default = "tests.yml")]
+            public string InputFile { get; set; }
 
             [Option("insecure", HelpText = "Allow untrusted SSL certs")]
             public bool Insecure { get; set; }
@@ -112,21 +109,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             public string Tests { get; set; }
         }
 
-        [Verb("update", HelpText = "Update language and package versions")]
-        public class UpdateOptions : CommonOptions
-        {
-        }
-
-        [Verb("csv", HelpText = "Generate CSV from results.json files")]
-        public class CsvOptions
-        {
-            [Option('i', "input-folder", Default = "results")]
-            public string InputFolder { get; set; }
-
-            [Option('o', "output-file", Default = "results/results.csv")]
-            public string OutputFile { get; set; }
-        }
-
         public static async Task Main(string[] args)
         {
             var parser = new CommandLine.Parser(settings =>
@@ -140,8 +122,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             await parserResult.MapResult(
                 (RunOptions options) => Run(options),
-                (UpdateOptions options) => Update(options),
-                (CsvOptions options) => Csv(options),
                 errors => DisplayHelp(parserResult)
             );
         }
@@ -476,78 +456,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             using (var csvWriter = new CsvWriter(streamWriter, CsvConfiguration))
             {
                 await csvWriter.WriteRecordsAsync(resultSummaries);
-            }
-        }
-
-        private static async Task Update(UpdateOptions options)
-        {
-            await Task.CompletedTask;
-        }
-
-        private static async Task Csv(CsvOptions options)
-        {
-            var serializer = new Serializer();
-            Console.WriteLine("=== Options ===");
-            serializer.Serialize(Console.Out, options);
-            Console.WriteLine();
-
-            var csvResults = new List<CsvResult>();
-
-            foreach (var inputFile in Directory.EnumerateFiles(options.InputFolder, "*.json", SearchOption.AllDirectories))
-            {
-                Console.WriteLine(inputFile);
-
-                List<Result> results;
-                using (var stream = File.OpenRead(inputFile))
-                {
-                    results = await JsonSerializer.DeserializeAsync<List<Result>>(stream, JsonOptions);
-                }
-
-                foreach (var result in results)
-                {
-                    var csvResult = new CsvResult
-                    {
-                        Service = result.Service,
-                        Test = result.Test,
-                        Language = result.Language,
-                        OperationsPerSecondMax = result.OperationsPerSecondMax
-                    };
-
-                    csvResult.PackageVersions =
-                        String.Join(",", result.PackageVersions.Select(kvp => String.Join(":", kvp.Key, kvp.Value)));
-
-                    var sizeMatch = Regex.Match(result.Arguments, @"--size\s+(\d+)");
-                    if (sizeMatch.Success)
-                    {
-                        csvResult.Size = long.Parse(sizeMatch.Groups[1].Value);
-                    }
-
-                    var countMatch = Regex.Match(result.Arguments, @"--count\s+(\d+)");
-                    if (countMatch.Success)
-                    {
-                        csvResult.Count = int.Parse(countMatch.Groups[1].Value);
-                    }
-
-                    var parallelMatch = Regex.Match(result.Arguments, @"--parallel\s+(\d+)");
-                    if (parallelMatch.Success)
-                    {
-                        csvResult.Parallel = int.Parse(parallelMatch.Groups[1].Value);
-                    }
-
-                    csvResults.Add(csvResult);
-                }
-            }
-
-            var outputFile = Util.GetUniquePath(options.OutputFile);
-
-            using (var consoleWriter = new CsvWriter(Console.Out, CultureInfo.InvariantCulture))
-            {
-                await consoleWriter.WriteRecordsAsync(csvResults);
-            }
-
-            using (var outputFileWriter = new CsvWriter(new StreamWriter(outputFile), CultureInfo.InvariantCulture))
-            {
-                await outputFileWriter.WriteRecordsAsync(csvResults);
             }
         }
 

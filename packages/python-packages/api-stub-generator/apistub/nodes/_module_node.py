@@ -18,13 +18,13 @@ class ModuleNode(NodeEntityBase):
     """ModuleNode represents module level node and all it's children
     :param str: namespace
     :param module: module
-    :param dict: nodeindex
+    :param dict: node_index
     """
 
-    def __init__(self, namespace, module, nodeindex, pkg_root_namespace):
+    def __init__(self, namespace, module, node_index, pkg_root_namespace):
         super().__init__(namespace, None, module)
         self.namespace_id = self.generate_id()
-        self.nodeindex = nodeindex
+        self.node_index = node_index
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
@@ -42,14 +42,20 @@ class ModuleNode(NodeEntityBase):
                 continue
 
             if inspect.isclass(member_obj):
-                class_node = ClassNode(self.namespace, self, member_obj, self.pkg_root_namespace)
+                class_node = ClassNode(
+                    name=name,
+                    namespace=self.namespace,
+                    parent_node=self,
+                    obj=member_obj,
+                    pkg_root_namespace=self.pkg_root_namespace
+                )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
-                self.nodeindex.add(key, class_node)
+                self.node_index.add(key, class_node)
                 self.child_nodes.append(class_node)
             elif inspect.isroutine(member_obj):
                 func_node = FunctionNode(self.namespace, self, member_obj, True)
                 key = "{0}.{1}".format(self.namespace, func_node.name)
-                self.nodeindex.add(key, func_node)
+                self.node_index.add(key, func_node)
                 self.child_nodes.append(func_node)
             else:
                 logging.debug("Skipping unknown type member in module: {}".format(name))

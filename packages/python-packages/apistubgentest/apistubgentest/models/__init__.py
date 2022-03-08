@@ -8,7 +8,8 @@
 
 from ._models import (
     DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict, ObjectWithDefaults,
-    PetEnum, PublicPrivateClass, RequiredKwargObject
+    PetEnum, PublicPrivateClass, RequiredKwargObject,
+    SomePoorlyNamedObject as SomeAwesomelyNamedObject
 )
 
 
@@ -20,5 +21,6 @@ __all__ = (
     "ObjectWithDefaults",
     "PetEnum",
     "PublicPrivateClass",
-    "RequiredKwargObject"
+    "RequiredKwargObject",
+    "SomeAwesomelyNamedObject"
 )

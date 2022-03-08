@@ -54,6 +54,7 @@ class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
     """
     DOG = "dog"
     CAT = "cat"
+    DEFAULT = "cat"
 
 
 class FakeObject(object):
@@ -139,3 +140,8 @@ class ObjectWithDefaults:
         self.age = age
         self.is_awesome = is_awesome
         self.pet = pet
+
+class SomePoorlyNamedObject:
+
+    def __init__(self, name: str):
+        self.name = name

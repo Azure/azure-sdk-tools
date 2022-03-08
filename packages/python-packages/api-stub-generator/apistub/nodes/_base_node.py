@@ -1,6 +1,5 @@
 from inspect import Parameter
 import re
-from typing import Optional
 
 keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")

@@ -31,48 +31,47 @@ logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
-    def __init__(self):
-        parser = argparse.ArgumentParser(
-            description="Parse a python package and generate json token file to be supplied to API review tool"
-        )
-        parser.add_argument(
-            "--pkg-path", required=True, help=("Package root path"),
-        )
-        parser.add_argument(
-            "--temp-path", 
-            help=("Temp path to extract package"),
-            default=tempfile.gettempdir(),
-        )
-        parser.add_argument(
-            "--out-path",
-            default=os.getcwd(),
-            help=("Path to generate json file with parsed tokens"),
-        )
-        parser.add_argument(
-            "--mapping-path",
-            default=None,
-            help=("Path to the 'apiview_mapping.json' file.")
-        )
-        parser.add_argument(
-            "--verbose",
-            help=("Enable verbose logging"),
-            default=False,
-            action="store_true",
-        )
+    def __init__(self, args=None):
+        if not args:
+            parser = argparse.ArgumentParser(
+                description="Parse a python package and generate json token file to be supplied to API review tool"
+            )
+            parser.add_argument(
+                "--pkg-path", required=True, help=("Package root path"),
+            )
+            parser.add_argument(
+                "--temp-path", 
+                help=("Temp path to extract package"),
+                default=tempfile.gettempdir(),
+            )
+            parser.add_argument(
+                "--out-path",
+                default=os.getcwd(),
+                help=("Path to generate json file with parsed tokens"),
+            )
+            parser.add_argument(
+                "--mapping-path",
+                default=None,
+                help=("Path to the 'apiview_mapping.json' file.")
+            )
+            parser.add_argument(
+                "--verbose",
+                help=("Enable verbose logging"),
+                default=False,
+                action="store_true",
+            )
+            parser.add_argument(
+                "--hide-report",
+                help=("Hide diagnostic report"),
+                default=False,
+                action="store_true",
+            )
+            parser.add_argument(
+                "--filter-namespace",
+                help=("Generate Api view only for a specific namespace"),
+            )
+            args = parser.parse_args()
 
-        parser.add_argument(
-            "--hide-report",
-            help=("Hide diagnostic report"),
-            default=False,
-            action="store_true",
-        )
-
-        parser.add_argument(
-            "--filter-namespace",
-            help=("Generate Api view only for a specific namespace"),
-        )
-
-        args = parser.parse_args()
         if not os.path.exists(args.pkg_path):
             logging.error("Package path [{}] is invalid".format(args.pkg_path))
             exit(1)
@@ -174,9 +173,12 @@ class StubGenerator:
         from apistub.nodes._module_node import ModuleNode
 
         self.module_dict = {}
-        nodeindex = NodeIndex()
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
-        apiview = ApiView(nodeindex, package_name, namespace, metadata_map=mapping)
+        apiview = ApiView(
+            pkg_name=package_name,
+            namespace=namespace,
+            metadata_map=mapping
+        )
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -188,7 +190,7 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, nodeindex, namespace)
+            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
@@ -258,26 +260,6 @@ class StubGenerator:
     def _install_package(self, pkg_name):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
         check_call(commands, timeout = 60)
-
-
-class NodeIndex:
-    """Maintains name to navigation ID"""
-    def __init__(self):
-        self.index = {}
-
-    def add(self, name, node):
-        if name in self.index:
-            raise ValueError("Index already has {} node".format(name))
-        self.index[name] = node
-
-    def get(self, name):
-        return self.index.get(name, None)
-
-    def get_id(self, name):
-        node = self.get(name)
-        if node and hasattr(node, "namespace_id"):
-            return node.namespace_id
-        return None
 
 
 def parse_setup_py(setup_path):

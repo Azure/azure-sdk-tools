@@ -5,13 +5,15 @@
 # --------------------------------------------------------------------------
 
 from tkinter import Variable
-from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
+from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode, EnumNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,
     ObjectWithDefaults,
+    PetEnum,
     PublicPrivateClass,
-    RequiredKwargObject
+    RequiredKwargObject,
+    SomeAwesomelyNamedObject
 )
 
 
@@ -31,7 +33,7 @@ class TestClassParsing:
                 assert actual_type == check_type
 
     def test_typed_dict_class(self):
-        class_node = ClassNode("test", None, FakeTypedDict, self.pkg_namespace)
+        class_node = ClassNode(name="FakeTypedDict", namespace="test", parent_node=None, obj=FakeTypedDict, pkg_root_namespace=self.pkg_namespace)
         self._check_nodes(class_node.child_nodes, [
             (KeyNode, '"age"', "int"),
             (KeyNode, '"name"', "str"),
@@ -39,7 +41,7 @@ class TestClassParsing:
         ])
 
     def test_object(self):
-        class_node = ClassNode("test", None, FakeObject, self.pkg_namespace)
+        class_node = ClassNode(name="FakeObject", namespace="test", parent_node=None, obj=FakeObject, pkg_root_namespace=self.pkg_namespace)
         self._check_nodes(class_node.child_nodes, [
             (VariableNode, "PUBLIC_CONST", "str"),
             (VariableNode, "age", "int"),
@@ -49,7 +51,7 @@ class TestClassParsing:
         ])
 
     def test_public_private(self):
-        class_node = ClassNode("test", None, PublicPrivateClass, self.pkg_namespace)
+        class_node = ClassNode(name="PublicPrivateClass", namespace="test", parent_node=None, obj=PublicPrivateClass, pkg_root_namespace=self.pkg_namespace)
         self._check_nodes(class_node.child_nodes, [
             (VariableNode, "public_dict", "dict"),
             (VariableNode, "public_var", "str"),
@@ -58,7 +60,7 @@ class TestClassParsing:
         ])
 
     def test_required_kwargs(self):
-        class_node = ClassNode("test", None, RequiredKwargObject, self.pkg_namespace)
+        class_node = ClassNode(name="RequiredKwargObject", namespace="test", parent_node=None, obj=RequiredKwargObject, pkg_root_namespace=self.pkg_namespace)
         kwargs = class_node.child_nodes[0].kw_args
         args = class_node.child_nodes[0].args
         assert args["id"].is_required == True
@@ -71,10 +73,20 @@ class TestClassParsing:
         assert kwargs["other"].is_required == False
 
     def test_default_values(self):
-        class_node = ClassNode("test", None, ObjectWithDefaults, self.pkg_namespace)
+        class_node = ClassNode(name="ObjectWithDefaults", namespace="test", parent_node=None, obj=ObjectWithDefaults, pkg_root_namespace=self.pkg_namespace)
         assert len(class_node.child_nodes) == 1
         init_args = class_node.child_nodes[0].args
         assert init_args["name"].default == "Bob"
         assert init_args["age"].default == "21"
         assert init_args["is_awesome"].default == "True"
         assert init_args["pet"].default == "PetEnum.DOG"
+
+    def test_model_aliases(self):
+        class_node = ClassNode(name="SomeAwesomelyNamedObject", namespace="test", parent_node=None, obj=SomeAwesomelyNamedObject, pkg_root_namespace=self.pkg_namespace)
+        assert class_node.name == "SomeAwesomelyNamedObject"
+
+    def test_enum(self):
+        class_node = ClassNode(name="PetEnum", namespace="test", parent_node=None, obj=PetEnum, pkg_root_namespace=self.pkg_namespace)
+        assert len(class_node.child_nodes) == 3
+        names = [x.name for x in class_node.child_nodes]
+        assert names == ["CAT", "DEFAULT", "DOG"]

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -27,7 +28,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var uniquePaths = extensions.Select(e => $"{prefix}{e}");
 
             int index = 0;
-            while (uniquePaths.Any(p => File.Exists(p))) {
+            while (uniquePaths.Any(p => File.Exists(p)))
+            {
                 index++;
                 uniquePaths = extensions.Select(e => $"{prefix}.{index}{e}");
             }
@@ -43,8 +45,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
         };
 
         // TODO: We should usually not throw on error, since it prevents extracting StandardOutput and StandardError
-        public static async Task<ProcessResult> RunAsync(string filename, string arguments, string workingDirectory,
-            StringBuilder outputBuilder = null, StringBuilder errorBuilder = null, bool throwOnError = true)
+        public static async Task<ProcessResult> RunAsync(
+            string filename,
+            string arguments,
+            string workingDirectory,
+            IDictionary<string, string> environmentVariables = null,
+            StringBuilder outputBuilder = null,
+            StringBuilder errorBuilder = null,
+            bool throwOnError = true
+            )
         {
             if (IsWindows && _requiresShellOnWindows.Contains(filename))
             {
@@ -52,10 +61,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 filename = "cmd";
             }
 
+            if (environmentVariables != null)
+            {                
+                Log.WriteLine($"[{workingDirectory}] Env: {JsonSerializer.Serialize(environmentVariables)}");
+            }
+
             var result = await ProcessUtil.RunAsync(
                 filename,
                 arguments,
                 workingDirectory: workingDirectory,
+                environmentVariables: environmentVariables,
                 throwOnError: false,
                 log: true,
                 captureOutput: true,

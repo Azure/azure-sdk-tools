@@ -11,18 +11,24 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Java;
 
-        private string perfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+        private string PerfCoreProjectFile => Path.Combine(WorkingDirectory, "common", "perf-test-core", "pom.xml");
+
+        private static readonly Dictionary<string, string> _buildEnvironment = new Dictionary<string, string>()
+        {
+            // Prevents error "InvocationTargetException: Java heap space" in azure-storage-file-datalake when compiling azure-storage-perf
+            { "MAVEN_OPTS", "-Xmx1024m" },
+        };
 
         public override async Task<(string output, string error, string context)> SetupAsync(
             string project, string languageVersion, IDictionary<string, string> packageVersions)
         {
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
-            UpdatePackageVersions(perfCoreProjectFile, packageVersions);
+            UpdatePackageVersions(PerfCoreProjectFile, packageVersions);
             UpdatePackageVersions(projectFile, packageVersions);
 
             var result = await Util.RunAsync("mvn", $"clean package -T1C -am -Denforcer.skip=true -DskipTests=true -Dmaven.javadoc.skip=true --pl {project}",
-                WorkingDirectory);
+                WorkingDirectory, environmentVariables: _buildEnvironment);
 
             /*
             [11:27:11.796] [INFO] Building jar: C:\Git\java\sdk\storage\azure-storage-perf\target\azure-storage-perf-1.0.0-beta.1-jar-with-dependencies.jar
@@ -94,7 +100,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var projectFile = Path.Combine(WorkingDirectory, project, "pom.xml");
 
             // Restore backups
-            File.Move(perfCoreProjectFile + ".bak", perfCoreProjectFile, overwrite: true);
+            File.Move(PerfCoreProjectFile + ".bak", PerfCoreProjectFile, overwrite: true);
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
 
             return Task.CompletedTask;

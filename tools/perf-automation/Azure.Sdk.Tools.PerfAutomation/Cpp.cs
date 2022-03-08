@@ -40,11 +40,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             await Util.RunAsync(
                 "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
-                buildDirectory, outputBuilder, errorBuilder);
+                buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             var result = await Util.RunAsync(
                 "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
-                buildDirectory, outputBuilder, errorBuilder);
+                buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             // Find path to perf test executable
             var exeFileName = Util.IsWindows ? $"{project}.exe" : project;

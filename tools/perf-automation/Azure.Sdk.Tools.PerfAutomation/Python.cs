@@ -29,16 +29,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var systemPython = Util.IsWindows ? "python" : "python" + Regex.Match(languageVersion, @"^\d+\.\d+").Value;
 
             // Create venv
-            await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             var python = Path.Combine(env, _envBin, "python");
             var pip = Path.Combine(env, _envBin, "pip");
 
             // Install test tools
-            // await Util.RunAsync(pip, $"install -r {WorkingDirectory}/eng/test_tools.txt", projectDirectory, outputBuilder, errorBuilder);
+            // await Util.RunAsync(pip, $"install -r {WorkingDirectory}/eng/test_tools.txt", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder: errorBuilder);
 
             // Install dev reqs
-            await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder, errorBuilder);
+            await Util.RunAsync(pip, "install -r dev_requirements.txt", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             // TODO: Support multiple packages if possible.  Maybe by force installing?
             foreach (var v in packageVersions)
@@ -48,11 +48,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 if (packageVersion == Program.PackageVersionSource)
                 {
-                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
                 }
                 else
                 {
-                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", projectDirectory, outputBuilder, errorBuilder);
+                    await Util.RunAsync(pip, $"install {packageName}=={packageVersion}", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
                 }
             }
 
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var perfstress = Path.Combine(env, _envBin, "perfstress");
 
             var runtimePackageVersions = new Dictionary<string, string>(packageVersions.Count);
-            var freezeResult = await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder, errorBuilder);
+            var freezeResult = await Util.RunAsync(pip, "freeze", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             foreach (var package in packageVersions.Keys)
             {
                 // Package: azure-core==1.12.0
@@ -85,8 +85,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 perfstress,
                 $"{testName} {arguments}",
                 Path.Combine(projectDirectory, "tests"),
-                outputBuilder,
-                errorBuilder
+                outputBuilder: outputBuilder,
+                errorBuilder: errorBuilder
             );
 
             // TODO: Why does Python perf framework write to StdErr instead of StdOut?

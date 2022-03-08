@@ -4,8 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from tkinter import Variable
-from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode, EnumNode
+from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,

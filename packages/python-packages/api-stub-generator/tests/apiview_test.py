@@ -13,6 +13,7 @@ import tempfile
 class StubGenTestArgs:
     pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'apistubgentest'))
     temp_path = tempfile.gettempdir()
+    source_url = None
     out_path = None
     mapping_path = None
     hide_report = None

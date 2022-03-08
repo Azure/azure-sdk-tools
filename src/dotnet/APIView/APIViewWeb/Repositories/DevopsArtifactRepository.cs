@@ -21,9 +21,6 @@ namespace APIViewWeb.Repositories
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
-            _devopsClient.DefaultRequestHeaders.Accept.Clear();
-            _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string format= "file")
@@ -32,9 +29,7 @@ namespace APIViewWeb.Repositories
             if (!string.IsNullOrEmpty(downloadUrl))
             {
                 downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=%2F" + filePath;
-                _devopsClient.DefaultRequestHeaders.Accept.Clear();
-                _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-                _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
+                SetDevopdsClientHeaders();
                 var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
@@ -42,12 +37,17 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
+        private void SetDevopdsClientHeaders()
         {
-            var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
             _devopsClient.DefaultRequestHeaders.Accept.Clear();
             _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
+        }
+
+        private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
+        {
+            var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
+            SetDevopdsClientHeaders();
             var response = await _devopsClient.GetAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

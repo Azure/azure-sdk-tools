@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -236,7 +235,7 @@ namespace APIViewWeb.Repositories
             {
                 // If base line is not available (possible if package is new or request coming from SDK automation)
                 review = CreateNewReview(pullRequestModel);
-                // If request passed code file for baseline 
+                // If request passes code file for baseline 
                 if (baselineCodeFile != null)
                 {
                     var baseline = await CreateBaselineRevision(baselineCodeFile,baseLineStream,pullRequestModel,baselineFileName);

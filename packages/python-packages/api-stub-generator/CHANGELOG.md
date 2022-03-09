@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.2.10 (Unreleased)
+## Version 0.2.10 (2022-03-09)
 Added support for TypedDict classes.
 Added support to parse defaults from docstrings. Example
   syntax: "A value, defaults to foo."

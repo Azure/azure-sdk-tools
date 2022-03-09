@@ -37,7 +37,7 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        private void SetDevopdsClientHeaders()
+        private void SetDevopsClientHeaders()
         {
             _devopsClient.DefaultRequestHeaders.Accept.Clear();
             _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));

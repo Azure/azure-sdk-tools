@@ -29,7 +29,7 @@ namespace APIViewWeb.Repositories
             if (!string.IsNullOrEmpty(downloadUrl))
             {
                 downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=%2F" + filePath;
-                SetDevopdsClientHeaders();
+                SetDevopsClientHeaders();
                 var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
@@ -37,7 +37,7 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        private void SetDevopdsClientHeaders()
+        private void SetDevopsClientHeaders()
         {
             _devopsClient.DefaultRequestHeaders.Accept.Clear();
             _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
@@ -47,7 +47,7 @@ namespace APIViewWeb.Repositories
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
         {
             var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
-            SetDevopdsClientHeaders();
+            SetDevopsClientHeaders();
             var response = await _devopsClient.GetAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

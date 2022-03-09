@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
@@ -246,7 +246,7 @@ namespace APIViewWeb.Repositories
                 // If request passes code file for baseline 
                 if (baselineCodeFile != null)
                 {
-                    var baseline = await CreateBaselineRevision(baselineCodeFile,baseLineStream,pullRequestModel,baselineFileName);
+                    var baseline = await CreateBaselineRevision(baselineCodeFile, baseLineStream, pullRequestModel, baselineFileName);
                     review.Revisions.Add(baseline);
                 }
                 var reviewUrl = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);

@@ -238,7 +238,7 @@ namespace APIViewWeb.Repositories
                 // If request passes code file for baseline 
                 if (baselineCodeFile != null)
                 {
-                    var baseline = await CreateBaselineRevision(baselineCodeFile,baseLineStream,pullRequestModel,baselineFileName);
+                    var baseline = await CreateBaselineRevision(baselineCodeFile, baseLineStream, pullRequestModel, baselineFileName);
                     review.Revisions.Add(baseline);
                 }
                 var reviewUrl = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);

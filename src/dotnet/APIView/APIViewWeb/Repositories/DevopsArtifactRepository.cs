@@ -29,7 +29,7 @@ namespace APIViewWeb.Repositories
             if (!string.IsNullOrEmpty(downloadUrl))
             {
                 downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=%2F" + filePath;
-                SetDevopdsClientHeaders();
+                SetDevopsClientHeaders();
                 var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();

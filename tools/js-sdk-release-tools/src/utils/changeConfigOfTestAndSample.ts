@@ -19,9 +19,9 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
     let tsConfig;
     let packageJson;
     let apiExtractor;
+    const packageJsonFile = fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'});
     if (mode === ChangeModel.Change) {
         const tsConfigFile = fs.readFileSync(path.join(packagePath, 'tsconfig.json'), {encoding: 'utf-8'});
-        const packageJsonFile = fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'});
         const apiExtractorFile = fs.readFileSync(path.join(packagePath, 'api-extractor.json'), {encoding: 'utf-8'})
 
         oriTsConfig = JSON.parse(tsConfigFile);
@@ -42,7 +42,8 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
 
     }  else if (mode === ChangeModel.Revert) {
         tsConfig = oriTsConfig;
-        packageJson = oriPackageJson;
+        packageJson = JSON.parse(packageJsonFile);
+        packageJson['module']  = oriPackageJson['module'];
         apiExtractor = oriApiExtractor;
     }
 

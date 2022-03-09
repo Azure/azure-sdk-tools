@@ -451,18 +451,22 @@ cd <stress test search directory>
 
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
     -Login `
-    -PushImages `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -PushImages
 ```
 
 To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
 made).
 
 ```
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
+```
+
+To run multiple instances of the same test in parallel, add a different namespace override 
+for each test deployment. If not specified, it will default to the shell username when run locally.
+
+```
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -Namespace my-test-instance-2 `
 ```
 
 You can check the progress/status of your installation via:

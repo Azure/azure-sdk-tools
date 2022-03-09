@@ -150,7 +150,10 @@ class ClassNode(NodeEntityBase):
         # enums with duplicate values are screened out by "getmembers" so
         # we must rely on __members__ instead.
         if hasattr(self.obj, "__members__"):
-            members = self.obj.__members__.items()
+            try:
+                members = self.obj.__members__.items()
+            except AttributeError:
+                members = inspect.getmembers(self.obj)
         else:
             members = inspect.getmembers(self.obj)
         for name, child_obj in members:

@@ -648,3 +648,8 @@ mark {
     border-top-left-radius: 0px !important;
     border-bottom-left-radius: 0px !important;
 }
+
+.comment-thread-anchor {
+    visibility: hidden;
+    scroll-margin-top: calc(50px + 1.7em);
+}

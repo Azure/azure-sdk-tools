@@ -52,13 +52,10 @@ stages:
       vmImage: ubuntu-20.04
 
     steps:
+      - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
+
       # Register the dogfood environment to clean up any custom subscriptions in it
       - template: /eng/common/TestResources/setup-environments.yml
-
-      - pwsh: |
-          . $(System.DefaultWorkingDirectory)/eng/common/scripts/Helpers/PSModule-Helpers.ps1
-          Install-ModuleIfNotInstalled "Az.Accounts" "2.7.2" | Import-Module
-        displayName: Install Az.Accounts Module
 
       - ${{ each subscription in parameters.Subscriptions }}:
         - template: ./live-test-cleanup-template.yml

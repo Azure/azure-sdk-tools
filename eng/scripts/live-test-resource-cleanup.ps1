@@ -5,10 +5,10 @@
 
 # This script implements the resource management guidelines documented at https://github.com/Azure/azure-sdk-tools/blob/main/doc/engsys_resource_management.md
 
-#Requires -Version 7.0
+#Requires -Version 6.0
 #Requires -PSEdition Core
-#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='5.3.1'}
-#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='2.7.2'}
+#Requires -Modules @{ModuleName='Az.Accounts'; ModuleVersion='1.6.4'}
+#Requires -Modules @{ModuleName='Az.Resources'; ModuleVersion='1.8.0'}
 
 [CmdletBinding(DefaultParameterSetName = 'Interactive', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param (
@@ -19,6 +19,14 @@ param (
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string] $ProvisionerApplicationSecret,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+    [string] $OpensourceApiApplicationId,
+
+    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string] $OpensourceApiApplicationSecret,
 
     [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
     [Parameter(ParameterSetName = 'Interactive')]
@@ -34,14 +42,17 @@ param (
     [ValidateNotNullOrEmpty()]
     [string] $Environment = "AzureCloud",
 
-    [Parameter(ParameterSetName = 'Interactive')]
-    [switch] $Login,
-
     [Parameter()]
     [int] $DeleteAfterHours = 24,
 
     [Parameter()]
+    [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist",
+
+    [Parameter()]
     [switch] $Force,
+
+    [Parameter(ParameterSetName = 'Interactive')]
+    [switch] $Login,
 
     [Parameter(ValueFromRemainingArguments = $true)]
     $IgnoreUnusedArguments
@@ -49,12 +60,15 @@ param (
 
 Set-StrictMode -Version 3
 
-&"$PSScriptRoot/../common/scripts/Import-AzModules.ps1"
-
 # Import resource management helpers and override its Log function.
 . "$PSScriptRoot/../common/scripts/Helpers/Resource-Helpers.ps1"
+# Import helpers for querying repos.opensource.microsoft.com API
+. "$PSScriptRoot/../common/scripts/Helpers/Metadata-Helpers.ps1"
 
 $OwnerAliasCache = @{}
+$Exceptions = [System.Collections.Generic.HashSet[String]]@()
+$ShouldCheckAllowList = Test-Path $AllowListPath
+$IsProvisionerApp = $PSCmdlet.ParameterSetName -eq "Provisioner"
 
 function Log($Message) {
   Write-Host $Message
@@ -71,6 +85,22 @@ function IsValidAlias
       return $OwnerAliasCache[$Alias]
     }
 
+    # AAD apps require a higher level of permission requiring admin consent to query the MS Graph list API
+    # https://docs.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http#permissions
+    # The Get-AzAdUser call uses the list API under the hood (`/users/$filter=<alias>`)
+    # and for some reason the Get API (`/user/<id or user principal name>`) also returns 401
+    # with User.Read and User.ReadBasic.All permissions when called with an AAD app.
+    # For this reason, skip trying to query MS Graph directly in provisioner mode.
+    # The owner alias cache should already be pre-populated with all user records from the
+    # github -> ms alias mapping retrieved via the repos.opensource.microsoft.com API, however
+    # this will not include any security groups, in the case an owner tag does not contain
+    # individual user aliases.
+    if ($IsProvisionerApp) {
+      Write-Host "Skipping MS Graph alias lookup for '$Alias' due to permissions. Owner aliases not registered with github will be treated as invalid."
+      $OwnerAliasCache[$Alias] = $false
+      return $false
+    }
+
     $domains = @("microsoft.com", "ntdev.microsoft.com")
 
     foreach ($domain in $domains) {
@@ -83,6 +113,21 @@ function IsValidAlias
     $OwnerAliasCache[$Alias] = $false
 
     return $false;
+}
+
+function AddGithubUsersToAliasCache() {
+  Write-Host "Fetching github -> microsoft alias mappings"
+  $users = GetAllGithubUsers $TenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+  if (!$users) {
+    Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
+    exit 1
+  }
+  foreach ($user in $users) {
+    if ($user.aad.alias) {
+      $OwnerAliasCache[$user.aad.alias] = $true
+    }
+  }
+  Write-Host "Cached $($OwnerAliasCache.Count) github+microsoft user records."
 }
 
 function GetTag([object]$ResourceGroup, [string]$Key) {
@@ -131,19 +176,47 @@ function HasValidAliasInName([object]$ResourceGroup) {
       -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" `
       -and (IsValidAlias -Alias $matches[2]))
     {
-      Write-Host " Skipping resource group '$($resourceGroup.ResourceGroupName)' starting with valid alias '$($matches[2])'"
+      Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches[2])'"
       return $true
     }
     return $false
 }
 
-function HasExpiredDeleteAfterTag([object]$ResourceGroup) {
-  $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
-  if ($deleteAfter) {
+function GetDeleteAfterTag([object]$ResourceGroup) {
+  return GetTag $ResourceGroup "DeleteAfter"
+}
+
+function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
+  if ($DeleteAfter) {
     $deleteDate = $deleteAfter -as [DateTime]
     return $deleteDate -and [datetime]::UtcNow -gt $deleteDate
   }
   return $false
+}
+
+function HasException([object]$ResourceGroup) {
+    if ($Exceptions.Count) {
+        if ($Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
+            Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
+            return $true
+        }
+        return $false
+    }
+    if ($ShouldCheckAllowList) {
+        $lines = Get-Content $AllowListPath
+        foreach ($line in $lines) {
+            if ($line -and !$line.StartsWith("#")) {
+                $Exceptions.Add($line.Trim())
+            }
+        }
+        # If allow list is empty or only contains comments, disable allow list checking
+        if (!$Exceptions.Count) {
+            $ShouldCheckAllowList = $false
+            return $false
+        }
+        return HasException $ResourceGroup
+    }
+    return $false
 }
 
 function FindOrCreateDeleteAfterTag {
@@ -155,8 +228,8 @@ function FindOrCreateDeleteAfterTag {
   $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
-    Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Update Group DeleteAfter tag")) {
+      Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
       $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
     }
   }
@@ -170,6 +243,10 @@ function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
 
+  if ($IsProvisionerApp) {
+    AddGithubUsersToAliasCache
+  }
+
   Write-Verbose "Fetching groups"
   $allGroups = @(Get-AzResourceGroup)
   $toDelete = @()
@@ -177,15 +254,23 @@ function DeleteOrUpdateResourceGroups() {
   Write-Host "Total Resource Groups: $($allGroups.Count)"
 
   foreach ($rg in $allGroups) {
-    if (HasExpiredDeleteAfterTag $rg) {
-      $toDelete += $rg
-    } elseif (HasValidAliasInName $rg) {
+    if (HasException $rg) {
       continue
-    } elseif (HasValidOwnerTag $rg -or HasDeleteLock $rg) {
-      continue
-    } else {
-      $toUpdate += $rg
     }
+    $deleteAfter = GetDeleteAfterTag $rg
+    if ($deleteAfter) {
+        if (HasExpiredDeleteAfterTag $deleteAfter) {
+          $toDelete += $rg
+        }
+        continue
+    }
+    if (HasValidAliasInName $rg) {
+      continue
+    }
+    if (HasValidOwnerTag $rg -or HasDeleteLock $rg) {
+      continue
+    }
+    $toUpdate += $rg
   }
 
   foreach ($rg in $toUpdate) {
@@ -209,7 +294,7 @@ function DeleteOrUpdateResourceGroups() {
       }
       Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
       Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
-      # Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+      Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
     }
   }
 
@@ -232,8 +317,8 @@ function Login() {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
-    Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment
-    Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
+    Connect-AzAccount -Force -Tenant $TenantId -Credential $provisionerCredential -ServicePrincipal -Environment $Environment -WhatIf:$false
+    Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
   } elseif ($Login) {
     Write-Verbose "Logging in with interactive user"
     $cmd = "Connect-AzAccount"
@@ -254,19 +339,15 @@ function Login() {
   }
 }
 
-function Main() {
-  Login
+Login
 
-  $originalSubscription = (Get-AzContext).Subscription.Id
-  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-    Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false
-  }
-
-  DeleteOrUpdateResourceGroups
-
-  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-    Select-AzSubscription -Subscription $originalSubscription -Confirm:$false
-  }
+$originalSubscription = (Get-AzContext).Subscription.Id
+if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+  Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
 }
 
-Main
+DeleteOrUpdateResourceGroups
+
+if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+  Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+}

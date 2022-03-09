@@ -12,6 +12,9 @@ steps:
       SubscriptionConfigurations: ${{ parameters.SubscriptionConfigurations }}
 
   - pwsh: |
+      eng/common/scripts/Import-AzModules.ps1
+      Import-Module Az.Accounts
+
       $subscriptionConfiguration = @'
         $(SubscriptionConfiguration)
       '@ | ConvertFrom-Json -AsHashtable

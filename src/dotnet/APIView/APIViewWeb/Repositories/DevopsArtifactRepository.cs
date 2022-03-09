@@ -47,7 +47,7 @@ namespace APIViewWeb.Repositories
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName)
         {
             var artifactGetReq = GetArtifactRestAPIForRepo(repoName).Replace("{buildId}", buildId).Replace("{artifactName}", artifactName);
-            SetDevopdsClientHeaders();
+            SetDevopsClientHeaders();
             var response = await _devopsClient.GetAsync(artifactGetReq);
             response.EnsureSuccessStatusCode();
             var buildResource = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

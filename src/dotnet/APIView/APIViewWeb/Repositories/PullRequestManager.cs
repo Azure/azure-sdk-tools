@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -37,6 +38,7 @@ namespace APIViewWeb.Repositories
         private readonly DevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
+        private HashSet<string> _whitelistBotAccounts;
 
         public PullRequestManager(
             IAuthorizationService authorizationService,
@@ -59,6 +61,12 @@ namespace APIViewWeb.Repositories
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
+            _whitelistBotAccounts = new HashSet<string>();
+            var botWhitelist = _configuration["whitelisted-bot-github-accounts"];
+            if (!string.IsNullOrEmpty(botWhitelist))
+            {
+                _whitelistBotAccounts.UnionWith(botWhitelist.Split(","));
+            }
         }
 
 
@@ -428,16 +436,20 @@ namespace APIViewWeb.Repositories
 
         private async Task AssertPullRequestCreatorPermission(PullRequestModel prModel)
         {
-            var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
-            var orgNames = orgs.Select(o => o.Login);
-            var result = await _authorizationService.AuthorizeAsync(
-                null,
-                orgNames,
-                new[] { PullRequestPermissionRequirement.Instance });
-            if (!result.Succeeded)
+            // White list bot accounts to create API reviews from PR automatically
+            if (_whitelistBotAccounts.Contains(prModel.Author))
             {
-                _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}.");
-                throw new AuthorizationFailedException();
+                var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
+                var orgNames = orgs.Select(o => o.Login);
+                var result = await _authorizationService.AuthorizeAsync(
+                    null,
+                    orgNames,
+                    new[] { PullRequestPermissionRequirement.Instance });
+                if (!result.Succeeded)
+                {
+                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}.");
+                    throw new AuthorizationFailedException();
+                }
             }
         }
     }

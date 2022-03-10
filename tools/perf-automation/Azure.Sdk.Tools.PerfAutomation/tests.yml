@@ -291,10 +291,10 @@ Services:
     Java:
       Project: sdk/keyvault/azure-security-keyvault-perf
       PackageVersions:
-      - azure-security-keyvault-certificates: 4.2.2
-        azure-security-keyvault-keys: 4.3.2
-        azure-security-keyvault-secrets: 4.3.2
-        reactor-core: 3.4.8
+      - azure-security-keyvault-certificates: 4.2.3
+        azure-security-keyvault-keys: 4.3.3
+        azure-security-keyvault-secrets: 4.3.3
+        reactor-core: 3.4.9
       - azure-security-keyvault-certificates: source
         azure-security-keyvault-keys: source
         azure-security-keyvault-secrets: source
@@ -307,7 +307,7 @@ Services:
     Python:
       Project: sdk/keyvault/azure-keyvault-secrets
       PackageVersions:
-      - azure-keyvault-secrets: 4.2.0
+      - azure-keyvault-secrets: 4.3.0
       - azure-keyvault-secrets: source
   Tests:
   - Test: get-secret

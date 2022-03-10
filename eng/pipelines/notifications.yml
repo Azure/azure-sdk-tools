@@ -61,14 +61,14 @@ stages:
       #     arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeOwnersSubscriberVersion)" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
       #     workingDirectory: '$(Agent.BuildDirectory)'
 
-      - pwsh: |
-         dotnet run `
-          --organization $(Organization) `
-          --project $(Project) `
-          --path-prefix "\$(PathPrefix)" `
-          --token-variable-name DEVOPS_TOKEN `
-          --selection-strategy Scheduled `
-          $(AdditionalParameters)
+
+      - script: "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --token-variable-name DEVOPS_TOKEN
+          --selection-strategy Scheduled
+          $(AdditionalParameters)"
 
         displayName: 'Run Team/Notification Creator'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/
@@ -77,7 +77,6 @@ stages:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
- 
       - pwsh: |
           dotnet run `
             --organization $(Organization) `

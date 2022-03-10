@@ -1,7 +1,8 @@
 parameters:
-- name: PartnerDropsBlobSourceSuffix
+- name: BlobPath
+  displayName: 'Relative Path in Partner Drops Blob Container'
   type: string
-  default: ''
+  default: '<team>/dotnet/<version>'
 - name: ShouldSign
   type: string
   default: true
@@ -12,6 +13,6 @@ parameters:
 extends:
   template: /eng/pipelines/templates/jobs/azuresdkpartnerdrops-to-nugetfeed.yml
   parameters:
-    PartnerDropsBlobSourceSuffix: ${{ parameters.PartnerDropsBlobSourceSuffix }}
+    PartnerDropsBlobSourceSuffix: ${{ parameters.BlobPath }}
     ShouldSign: ${{ parameters.ShouldSign }}
     ShouldPublish: ${{ parameters.ShouldPublish }}

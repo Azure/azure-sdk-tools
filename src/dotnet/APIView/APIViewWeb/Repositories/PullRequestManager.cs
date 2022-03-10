@@ -38,7 +38,7 @@ namespace APIViewWeb.Repositories
         private readonly DevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
-        private HashSet<string> _whitelistBotAccounts;
+        private HashSet<string> _allowedListBotAccounts;
 
         public PullRequestManager(
             IAuthorizationService authorizationService,
@@ -61,11 +61,11 @@ namespace APIViewWeb.Repositories
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
-            _whitelistBotAccounts = new HashSet<string>();
-            var botWhitelist = _configuration["whitelisted-bot-github-accounts"];
-            if (!string.IsNullOrEmpty(botWhitelist))
+            _allowedListBotAccounts = new HashSet<string>();
+            var botAllowedList = _configuration["allowedList-bot-github-accounts"];
+            if (!string.IsNullOrEmpty(botAllowedList))
             {
-                _whitelistBotAccounts.UnionWith(botWhitelist.Split(","));
+                _allowedListBotAccounts.UnionWith(botAllowedList.Split(","));
             }
         }
 
@@ -437,7 +437,7 @@ namespace APIViewWeb.Repositories
         private async Task AssertPullRequestCreatorPermission(PullRequestModel prModel)
         {
             // White list bot accounts to create API reviews from PR automatically
-            if (_whitelistBotAccounts.Contains(prModel.Author))
+            if (!_allowedListBotAccounts.Contains(prModel.Author))
             {
                 var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
                 var orgNames = orgs.Select(o => o.Login);

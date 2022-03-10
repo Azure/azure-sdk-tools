@@ -62,13 +62,13 @@ stages:
       #     workingDirectory: '$(Agent.BuildDirectory)'
 
       - pwsh: |
-         "dotnet run --
-          --organization $(Organization)
-          --project $(Project)
-          --path-prefix "\$(PathPrefix)"
-          --token-variable-name DEVOPS_TOKEN
-          --selection-strategy Scheduled
-          $(AdditionalParameters)"
+         dotnet run `
+          --organization $(Organization) `
+          --project $(Project) `
+          --path-prefix "\$(PathPrefix)" `
+          --token-variable-name DEVOPS_TOKEN `
+          --selection-strategy Scheduled `
+          $(AdditionalParameters)
 
         displayName: 'Run Team/Notification Creator'
         workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/

@@ -28,7 +28,11 @@ namespace APIViewWeb.Repositories
             var downloadUrl = await GetDownloadArtifactUrl(repoName, buildId, artifactName);
             if (!string.IsNullOrEmpty(downloadUrl))
             {
-                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=%2F" + filePath;
+                if (!filePath.StartsWith("/"))
+                {
+                    filePath = "/" + filePath;
+                }
+                downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
                 SetDevopsClientHeaders();
                 var downloadResp = await _devopsClient.GetAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();

@@ -290,6 +290,7 @@ Services:
       - Azure.Security.KeyVault.Secrets: source
     Java:
       Project: sdk/keyvault/azure-security-keyvault-perf
+      PrimaryPackage: azure-security-keyvault-secrets
       PackageVersions:
       - azure-security-keyvault-certificates: 4.2.3
         azure-security-keyvault-keys: 4.3.3

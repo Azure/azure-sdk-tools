@@ -3,9 +3,7 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
-from inspect import Parameter
 
-from charset_normalizer import api
 from ._docstring_parser import DocstringParser
 from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -121,7 +119,7 @@ class FunctionNode(NodeEntityBase):
         """
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args["cls"] = ArgType(name="cls", argtype=None, default=Parameter.empty, keyword=None)
+            self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
 
         # Find signature to find positional args and return type
         sig = inspect.signature(self.obj)
@@ -131,16 +129,16 @@ class FunctionNode(NodeEntityBase):
         self.kw_args = OrderedDict()
         for argname, argvalues in params.items():
             kind = argvalues.kind
-            keyword = "keyword" if kind == Parameter.KEYWORD_ONLY else None
+            keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
             arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
 
             # Store handle to kwarg object to replace it later
-            if kind == Parameter.VAR_KEYWORD:
+            if kind == inspect.Parameter.VAR_KEYWORD:
                 arg.argname = f"**{argname}"
 
-            if kind == Parameter.KEYWORD_ONLY:
+            if kind == inspect.Parameter.KEYWORD_ONLY:
                 self.kw_args[arg.argname] = arg
-            elif kind == Parameter.VAR_POSITIONAL:
+            elif kind == inspect.Parameter.VAR_POSITIONAL:
                 # to work with docstring parsing, the key must
                 # not have the * in it.
                 arg.argname = f"*{argname}"
@@ -178,7 +176,7 @@ class FunctionNode(NodeEntityBase):
         # add keyword args
         if self.kw_args:
             # Add separator to differentiate pos_arg and keyword args
-            self.args["*"] = ArgType("*", default=Parameter.empty, argtype=None, keyword=None)
+            self.args["*"] = ArgType("*", default=inspect.Parameter.empty, argtype=None, keyword=None)
             for argname, arg in sorted(self.kw_args.items()):
                 arg.function_node = self
                 self.args[argname] = arg

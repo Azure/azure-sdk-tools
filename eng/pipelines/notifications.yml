@@ -40,14 +40,18 @@ stages:
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
 
     steps:
-
-      - task: DotNetCoreCLI@2
-        displayName: 'Install Notification Creator'
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
         inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
-          workingDirectory: '$(Agent.BuildDirectory)'
+          version: '$(DotNetCoreVersion)'
+
+      # - task: DotNetCoreCLI@2
+      #   displayName: 'Install Notification Creator'
+      #   inputs:
+      #     command: custom
+      #     custom: 'tool'
+      #     arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
+      #     workingDirectory: '$(Agent.BuildDirectory)'
 
       # - task: DotNetCoreCLI@2
       #   displayName: 'Install CodeOwners Subscriber'
@@ -58,24 +62,22 @@ stages:
       #     workingDirectory: '$(Agent.BuildDirectory)'
 
       - pwsh: |
-          notification-creator `
-            --organization $(Organization) `
-            --project $(Project) `
-            --path-prefix "\$(PathPrefix)" `
-            --token-variable-name DEVOPS_TOKEN `
-            --selection-strategy Scheduled `
-            $(AdditionalParameters)
+         "dotnet run --
+          --organization $(Organization)
+          --project $(Project)
+          --path-prefix \"\\$(PathPrefix)\"
+          --token-variable-name DEVOPS_TOKEN
+          --selection-strategy Scheduled
+          $(AdditionalParameters)"
+
         displayName: 'Run Team/Notification Creator'
+        workingDirectory: $(Build.SourcesDirectory)/tools/notification-configuration/notification-creator/
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-        inputs:
-          version: '$(DotNetCoreVersion)'
-
+ 
       - pwsh: |
           dotnet run `
             --organization $(Organization) `

@@ -69,7 +69,7 @@ def get_qualified_name(obj, namespace):
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
     if hasattr(obj, "__args__"):
-        for arg in getattr(obj, "__args__"):
+        for arg in obj.__args__ or []:
             arg_string = str(arg)
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)

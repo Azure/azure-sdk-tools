@@ -6,27 +6,19 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from cgitb import text
+from azure.core import CaseInsensitiveEnumMeta
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
+from six import with_metaclass
 from typing import Any, TypedDict, Union
 
 
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
+class PublicCaseInsensitiveEnumMeta(EnumMeta):
+    def __getitem__(self, name: str):
+        pass
 
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+    def __getattr__(cls, name: str):
+        pass
 
 
 class DocstringClass:
@@ -49,7 +41,23 @@ class DocstringClass:
         return f"{value} {another} {some_class}"
 
 
-class PetEnum(str, Enum, metaclass=_CaseInsensitiveEnumMeta):
+class PetEnumPy2Metaclass(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)):
+    """A test enum for Py2 way of doing case-insensitive enum
+    """
+    DOG = "dog"
+    CAT = "cat"
+    DEFAULT = "cat"
+
+
+class PetEnumPy3Metaclass(str, Enum, metaclass = CaseInsensitiveEnumMeta):
+    """A test enum for Py3 way of doing case-insensitive enum
+    """
+    DOG = "dog"
+    CAT = "cat"
+    DEFAULT = "cat"
+
+
+class PetEnum(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
     """A test enum
     """
     DOG = "dog"
@@ -135,7 +143,7 @@ class RequiredKwargObject:
 
 class ObjectWithDefaults:
 
-    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.dog):
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.DOG):
         self.name = name
         self.age = age
         self.is_awesome = is_awesome

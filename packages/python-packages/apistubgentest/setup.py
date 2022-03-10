@@ -42,6 +42,14 @@ setup(
     long_description_content_type='text/markdown',
     license='MIT License',
     author='Microsoft Corporation',
+    install_requires=[
+        "aiohttp",
+        "azure-core",
+        "pytest",
+        "sphinx",
+        "sphinx_rtd_theme",
+        "recommonmark"
+    ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python',

@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 settings.HelpWriter = null;
             });
 
-            var parserResult = parser.ParseArguments<RunOptions, UpdateOptions, CsvOptions>(args);
+            var parserResult = parser.ParseArguments<RunOptions>(args);
 
             await parserResult.MapResult(
                 (RunOptions options) => Run(options),

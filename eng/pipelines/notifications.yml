@@ -65,7 +65,7 @@ stages:
          "dotnet run --
           --organization $(Organization)
           --project $(Project)
-          --path-prefix \"\\$(PathPrefix)\"
+          --path-prefix "\$(PathPrefix)"
           --token-variable-name DEVOPS_TOKEN
           --selection-strategy Scheduled
           $(AdditionalParameters)"

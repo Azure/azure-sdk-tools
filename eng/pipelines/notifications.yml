@@ -74,15 +74,7 @@ stages:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
         inputs:
-          version: $(DotNetCoreVersion)
-
-      - script: 'dotnet pack /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) -c Release'
-        displayName: 'Build and Package'
-        workingDirectory: $(Build.SourcesDirectory)
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
+          version: '$(DotNetCoreVersion)'
 
       - pwsh: |
           dotnet run `

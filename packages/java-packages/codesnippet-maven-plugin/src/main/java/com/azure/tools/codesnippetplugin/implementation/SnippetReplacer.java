@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -24,11 +23,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class SnippetReplacer {
-    private static final String SNIPPET_ID_CAPTURE = "\\s+([a-zA-Z0-9.#\\-_]+)\\s*";
+    private static final String SNIPPET_ID_CAPTURE = "\\s*([a-zA-Z0-9.#\\-_]+)\\s*";
     private static final Pattern SNIPPET_DEF_BEGIN = Pattern.compile(String.format("\\s*//\\s*BEGIN:%s", SNIPPET_ID_CAPTURE));
     private static final Pattern SNIPPET_DEF_END = Pattern.compile(String.format("\\s*//\\s*END:%s", SNIPPET_ID_CAPTURE));
-    private static final Pattern SNIPPET_SRC_CALL_BEGIN = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s+src_embed%s-->", SNIPPET_ID_CAPTURE));
-    private static final Pattern SNIPPET_SRC_CALL_END = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s+end%s-->", SNIPPET_ID_CAPTURE));
+    private static final Pattern SNIPPET_SRC_CALL_BEGIN = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s*src_embed%s-->", SNIPPET_ID_CAPTURE));
+    private static final Pattern SNIPPET_SRC_CALL_END = Pattern.compile(String.format("(\\s*)\\*?\\s*<!--\\s*end%s-->", SNIPPET_ID_CAPTURE));
     private static final Pattern SNIPPET_README_CALL_BEGIN = Pattern.compile(String.format("(\\s*)?```(\\s*)?java%s", SNIPPET_ID_CAPTURE));
     private static final Pattern SNIPPET_README_CALL_END = Pattern.compile("(\\s*)?```\\s*");
     private static final Pattern WHITESPACE_EXTRACTION = Pattern.compile("(\\s*)(.*)");
@@ -39,19 +38,22 @@ public final class SnippetReplacer {
 
     // Ordering matters. If the ampersand (&) isn't done first it will double encode ampersands used in other
     // replacements.
-    private static final Map<Pattern, String> JAVADOC_REPLACEMENTS = new LinkedHashMap<Pattern, String>() {{
-        put(Pattern.compile("&"), "&amp;");
-        put(Pattern.compile("\""), "&quot;");
-        put(Pattern.compile(">"), "&gt;");
-        put(Pattern.compile("<"), "&lt;");
-        put(Pattern.compile("@"), "&#64;");
-        put(Pattern.compile("\\{"), "&#123;");
-        put(Pattern.compile("}"), "&#125;");
-        put(Pattern.compile("\\("), "&#40;");
-        put(Pattern.compile("\\)"), "&#41;");
-        put(Pattern.compile("/"), "&#47;");
-        put(Pattern.compile("\\\\"), "&#92;");
-    }};
+    private static final List<CodesnippetReplacement> CODESNIPPET_REPLACEMENTS;
+
+    static {
+        CODESNIPPET_REPLACEMENTS = new ArrayList<>();
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("&", "&amp;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("\"", "&quot;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement(">", "&gt;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("<", "&lt;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("@", "&#64;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("\\{", "&#123;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("}", "&#125;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("\\(", "&#40;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("\\)", "&#41;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("/", "&#47;"));
+        CODESNIPPET_REPLACEMENTS.add(new CodesnippetReplacement("\\\\", "&#92;"));
+    }
 
     /**
      * The "verification" operation encapsulated by this function is as follows.
@@ -60,7 +62,7 @@ public final class SnippetReplacer {
      * finding where updates are needed. 3. Report all discovered snippets in need of update as well as all bad snippet
      * calls
      *
-     * A "bad snippet call" is simply calling for a snippet whose Id has no definition.
+     * A "bad snippet call" is simply calling for a snippet whose ID has no definition.
      *
      * See {@link #updateCodesnippets(RootAndGlob, List, RootAndGlob, boolean, RootAndGlob, List, boolean, int, boolean, Log)}
      * for details on actually defining and calling snippets.
@@ -77,13 +79,13 @@ public final class SnippetReplacer {
     static List<CodesnippetError> verifyReadmeCodesnippets(Path file, Map<String, Codesnippet> snippetMap)
         throws IOException {
         return verifySnippets(file, SNIPPET_README_CALL_BEGIN, 3, SNIPPET_README_CALL_END, snippetMap, "", "", 0, "",
-            Collections.emptyMap(), Integer.MAX_VALUE, true);
+            Collections.emptyList(), Integer.MAX_VALUE, true);
     }
 
     static List<CodesnippetError> verifySourceCodeSnippets(Path file, Map<String, Codesnippet> snippetMap,
         int maxLineLength) throws IOException {
         return verifySnippets(file, SNIPPET_SRC_CALL_BEGIN, 2, SNIPPET_SRC_CALL_END, snippetMap, JAVADOC_PRE_FENCE,
-            JAVADOC_POST_FENCE, 1, "* ", JAVADOC_REPLACEMENTS, maxLineLength, false);
+            JAVADOC_POST_FENCE, 1, "* ", CODESNIPPET_REPLACEMENTS, maxLineLength, false);
     }
 
     /**
@@ -106,7 +108,7 @@ public final class SnippetReplacer {
      *
      * <p><strong>Calling a Snippet</strong></p>
      *
-     * From within a javadoc comment, embed an html comment &#47;* &lt;!-- src_embed
+     * From within a javadoc comment, embed an HTML comment &#47;* &lt;!-- src_embed
      * com.azure.data.applicationconfig.configurationclient.instantiation --&gt; ConfigurationClient configurationClient
      * = new ConfigurationClientBuilder&#40;&#41; .connectionString&#40;connectionString&#41; .buildClient&#40;&#41;;
      * &lt;!-- end com.azure.data.applicationconfig.configurationclient.instantiation --&gt; Other javadoc details
@@ -202,19 +204,19 @@ public final class SnippetReplacer {
     static List<CodesnippetError> updateReadmeCodesnippets(Path file, Map<String, Codesnippet> snippetMap)
         throws IOException {
         return updateSnippets(file, SNIPPET_README_CALL_BEGIN, SNIPPET_README_CALL_END, 3, snippetMap, "", "", 0, "",
-            Collections.emptyMap(), Integer.MAX_VALUE, true);
+            Collections.emptyList(), Integer.MAX_VALUE, true);
     }
 
     static List<CodesnippetError> updateSourceCodeSnippets(Path file, Map<String, Codesnippet> snippetMap,
         int maxLineLength) throws IOException {
         return updateSnippets(file, SNIPPET_SRC_CALL_BEGIN, SNIPPET_SRC_CALL_END, 2, snippetMap, JAVADOC_PRE_FENCE,
-            JAVADOC_POST_FENCE, 1, "* ", JAVADOC_REPLACEMENTS, maxLineLength, false);
+            JAVADOC_POST_FENCE, 1, "* ", CODESNIPPET_REPLACEMENTS, maxLineLength, false);
     }
 
     private static List<CodesnippetError> updateSnippets(Path file, Pattern beginRegex, Pattern endRegex,
         int snippetIdGroup, Map<String, Codesnippet> snippetMap, String preFence, String postFence, int prefixGroupNum,
-        String additionalLinePrefix, Map<Pattern, String> replacements, int maxLineLength,
-        boolean prependSnippetTagIdentation) throws IOException {
+        String additionalLinePrefix, List<CodesnippetReplacement> replacements, int maxLineLength,
+        boolean prependSnippetTagIndentation) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
 
         List<CodesnippetError> updateErrors = new ArrayList<>();
@@ -224,7 +226,7 @@ public final class SnippetReplacer {
         String lineSep = System.lineSeparator();
         String currentSnippetId = "";
 
-        int snippetTagIdentation = 0;
+        int snippetTagIndentation = 0;
         for (String line : lines) {
             Matcher begin = beginRegex.matcher(line);
             Matcher end = endRegex.matcher(line);
@@ -233,8 +235,8 @@ public final class SnippetReplacer {
                 modifiedLines.add(line);
                 modifiedLines.add(lineSep);
                 currentSnippetId = begin.group(snippetIdGroup);
-                if (prependSnippetTagIdentation) {
-                    snippetTagIdentation = begin.group(1).length();
+                if (prependSnippetTagIndentation) {
+                    snippetTagIndentation = begin.group(1).length();
                 }
                 inSnippet = true;
             } else if (end.matches()) {
@@ -254,13 +256,13 @@ public final class SnippetReplacer {
 
                     List<String> modifiedSnippets = new ArrayList<>();
 
-                    // We use this additional prefix because in src snippet cases we need to prespace
-                    // for readme snippet cases we DONT need the prespace at all.
+                    // We use this additional prefix because in src snippet cases we need to pre-space
+                    // for readme snippet cases we DON'T need the pre-space at all.
                     String linePrefix = prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
                     int longestSnippetLine = 0;
                     StringBuilder snippetIndentationBuilder = new StringBuilder();
-                    for (int i = 0; i < snippetTagIdentation; i++) {
+                    for (int i = 0; i < snippetTagIndentation; i++) {
                         snippetIndentationBuilder.append(" ");
                     }
                     String snippetIndentation = snippetIndentationBuilder.toString();
@@ -320,8 +322,8 @@ public final class SnippetReplacer {
 
     private static List<CodesnippetError> verifySnippets(Path file, Pattern beginRegex, int snippetIdGroup,
         Pattern endRegex, Map<String, Codesnippet> snippetMap, String preFence, String postFence, int prefixGroupNum,
-        String additionalLinePrefix, Map<Pattern, String> replacements, int maxLineLength,
-        boolean prependSnippetTagIdentation) throws IOException {
+        String additionalLinePrefix, List<CodesnippetReplacement> replacements, int maxLineLength,
+        boolean prependSnippetTagIndentation) throws IOException {
         List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
 
         boolean inSnippet = false;
@@ -330,7 +332,7 @@ public final class SnippetReplacer {
         List<CodesnippetError> verificationErrors = new ArrayList<>();
         String currentSnippetId = "";
 
-        int snippetTagIdentation = 0;
+        int snippetTagIndentation = 0;
         for (String line : lines) {
             Matcher begin = beginRegex.matcher(line);
             Matcher end = endRegex.matcher(line);
@@ -338,8 +340,8 @@ public final class SnippetReplacer {
             if (begin.matches()) {
                 currentSnippetId = begin.group(snippetIdGroup);
                 inSnippet = true;
-                if (prependSnippetTagIdentation) {
-                    snippetTagIdentation = begin.group(1).length();
+                if (prependSnippetTagIndentation) {
+                    snippetTagIndentation = begin.group(1).length();
                 }
                 currentSnippetSet = new ArrayList<>();
             } else if (end.matches()) {
@@ -355,13 +357,13 @@ public final class SnippetReplacer {
                     }
                     List<String> modifiedSnippets = new ArrayList<>();
 
-                    // We use this additional prefix because in src snippet cases we need to prespace
-                    // for readme snippet cases we DONT need the prespace at all.
+                    // We use this additional prefix because in src snippet cases we need to pre-space
+                    // for readme snippet cases we DON'T need the pre-space at all.
                     String linePrefix = prefixFunction(end, prefixGroupNum, additionalLinePrefix);
 
                     int longestSnippetLine = 0;
                     StringBuilder snippetIndentationBuilder = new StringBuilder();
-                    for (int i = 0; i < snippetTagIdentation; i++) {
+                    for (int i = 0; i < snippetTagIndentation; i++) {
                         snippetIndentationBuilder.append(" ");
                     }
                     String snippetIndentation = snippetIndentationBuilder.toString();
@@ -510,13 +512,13 @@ public final class SnippetReplacer {
         }
     }
 
-    private static String applyReplacements(String snippet, Map<Pattern, String> replacements) {
+    private static String applyReplacements(String snippet, List<CodesnippetReplacement> replacements) {
         if (replacements.isEmpty()) {
             return snippet;
         }
 
-        for (Map.Entry<Pattern, String> replacement : replacements.entrySet()) {
-            snippet = replacement.getKey().matcher(snippet).replaceAll(replacement.getValue());
+        for (CodesnippetReplacement replacement : replacements) {
+            snippet = replacement.replaceCodesnippet(snippet);
         }
 
         return snippet;

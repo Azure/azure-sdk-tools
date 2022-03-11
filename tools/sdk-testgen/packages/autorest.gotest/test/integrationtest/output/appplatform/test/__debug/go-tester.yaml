@@ -41311,11 +41311,11 @@ testModel:
               outputVariablesModel:
                 relativePath:
                   - type: object
-                    languageName: RelativePath
+                    languageName: .RelativePath
                     languages: *ref_1309
                 uploadUrl:
                   - type: object
-                    languageName: UploadURL
+                    languageName: .UploadURL
                     languages: *ref_1310
               requestParameters:
                 api-version: 2020-11-01-preview

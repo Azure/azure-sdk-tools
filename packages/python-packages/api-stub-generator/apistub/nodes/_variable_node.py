@@ -5,7 +5,7 @@ class VariableNode(NodeEntityBase):
     """Variable node represents class and instance variable defined in a class
     """
 
-    def __init__(self, namespace, parent_node, name, type_name, value, is_ivar):
+    def __init__(self, *, namespace, parent_node, name, type_name, value, is_ivar):
         super().__init__(namespace, parent_node, type_name)
         self.name = name
         self.type = type_name

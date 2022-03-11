@@ -18,12 +18,14 @@ import (
 {% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
 {%- for example in exampleGroup.examples %}
 {%- if loop.first %}
-// x-ms-original-file: {{example.originalFile}}
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/{{example.originalFile}}
 func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
 
@@ -34,12 +36,14 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to finish the request: %v", err)
+        return
 	}
 	{%- if example.isLRO %}
 	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to pull the result: %v", err)
+        return
 	}
 	{%- endif %}
 	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
@@ -48,12 +52,14 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
-            log.Printf("Pager result: %#v\n", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 	{%- else %}
@@ -64,17 +70,20 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
         nextResult := res.NextPage(ctx)
 		if err := res.Err(); err != nil {
 			log.Fatalf("failed to advance page: %v", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range res.PageResponse().{{example.pageableItemName}} {
-            log.Printf("Pager result: %#v\n", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
     {%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
-	log.Printf("Response result: %#v\n", res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{% endif %})
+    // TODO: use response item
+    _ = res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{% endif %}
 	{%- endif %}
 }
 {% endif %}

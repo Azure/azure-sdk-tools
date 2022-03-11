@@ -26,12 +26,14 @@ import (
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleExtensionsClient_Create() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.Create(ctx,
@@ -40,18 +42,21 @@ func ExampleExtensionsClient_Create() {
 \\"<resource-group-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Get(ctx,
@@ -60,19 +65,23 @@ func ExampleExtensionsClient_Get() {
 \\"<resource-group-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsClientGetResult)
+    // TODO: use response item
+    _ = res.ExtensionsClientGetResult
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleExtensionsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Update(ctx,
@@ -81,19 +90,23 @@ func ExampleExtensionsClient_Update() {
 \\"<resource-group-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.ExtensionsClientUpdateResult)
+    // TODO: use response item
+    _ = res.ExtensionsClientUpdateResult
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleExtensionsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.Delete(ctx,
@@ -102,18 +115,21 @@ func ExampleExtensionsClient_Delete() {
 \\"<resource-group-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleExtensionsClient_ListByFarmBeats() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
@@ -127,12 +143,14 @@ SkipToken: nil,
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().Value {
-            log.Printf(\\"Pager result: %#v\\\\n\\", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 }
@@ -163,12 +181,14 @@ import (
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsExtensionsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
 	pager := client.List(&armagfood.FarmBeatsExtensionsListOptions{FarmBeatsExtensionIDs: []string{},
@@ -181,33 +201,39 @@ MaxPageSize: nil,
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().Value {
-            log.Printf(\\"Pager result: %#v\\\\n\\", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsExtensionsClient(cred, nil)
 	res, err := client.Get(ctx,
 \\"<farm-beats-extension-id>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsExtensionsClientGetResult)
+    // TODO: use response item
+    _ = res.FarmBeatsExtensionsClientGetResult
 }
 
 
@@ -236,12 +262,14 @@ import (
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Get(ctx,
@@ -249,19 +277,23 @@ func ExampleFarmBeatsModelsClient_Get() {
 \\"<farm-beats-resource-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientGetResult)
+    // TODO: use response item
+    _ = res.FarmBeatsModelsClientGetResult
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.CreateOrUpdate(ctx,
@@ -276,19 +308,23 @@ Location: to.StringPtr(\\"<location>\\"),
 },
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientCreateOrUpdateResult)
+    // TODO: use response item
+    _ = res.FarmBeatsModelsClientCreateOrUpdateResult
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.Update(ctx,
@@ -302,19 +338,23 @@ Tags: map[string]*string{
 },
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.FarmBeatsModelsClientUpdateResult)
+    // TODO: use response item
+    _ = res.FarmBeatsModelsClientUpdateResult
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	_, err = client.Delete(ctx,
@@ -322,18 +362,21 @@ func ExampleFarmBeatsModelsClient_Delete() {
 \\"<farm-beats-resource-name>\\",
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_ListBySubscription() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListBySubscription(&armagfood.FarmBeatsModelsListBySubscriptionOptions{MaxPageSize: nil,
@@ -343,24 +386,28 @@ SkipToken: nil,
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().Value {
-            log.Printf(\\"Pager result: %#v\\\\n\\", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 }
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
 	pager := client.ListByResourceGroup(\\"<resource-group-name>\\",
@@ -371,12 +418,14 @@ SkipToken: nil,
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().Value {
-            log.Printf(\\"Pager result: %#v\\\\n\\", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 }
@@ -407,12 +456,14 @@ import (
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleLocationsClient_CheckNameAvailability() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewLocationsClient(\\"<subscription-id>\\", cred, nil)
 	res, err := client.CheckNameAvailability(ctx,
@@ -422,9 +473,11 @@ Type: to.StringPtr(\\"<type>\\"),
 },
 nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(\\"failed to finish the request: %v\\", err)
+        return
 	}
-	log.Printf(\\"Response result: %#v\\\\n\\", res.LocationsClientCheckNameAvailabilityResult)
+    // TODO: use response item
+    _ = res.LocationsClientCheckNameAvailabilityResult
 }
 
 
@@ -453,12 +506,14 @@ import (
 
 
 
-// x-ms-original-file: 
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/
 func ExampleOperationsClient_List() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
+        return
 	}
+
 	ctx := context.Background()
 	client := armagfood.NewOperationsClient(cred, nil)
 	pager := client.List(nil)
@@ -466,12 +521,14 @@ func ExampleOperationsClient_List() {
         nextResult := pager.NextPage(ctx)
 		if err := pager.Err(); err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
+            return
 		}
         if !nextResult {
             break
         }
 		for _, v := range pager.PageResponse().Value {
-            log.Printf(\\"Pager result: %#v\\\\n\\", v)
+            // TODO: use page item
+            _ = v
 		}
 	}
 }

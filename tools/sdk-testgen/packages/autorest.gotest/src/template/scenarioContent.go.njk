@@ -82,7 +82,7 @@
             t.Logf("Response result: %#v\n", {{resVariable}}.{%- if example.isMultiRespOperation %}Value{%- else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{%- endif %})
 
             {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
-                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}.{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
             {%- endfor %}
         {%- endif %}
     {%- elif step.type == "armTemplateDeployment" %}

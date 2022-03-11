@@ -35,7 +35,7 @@ pr:
 variables:
   DotNetCoreVersion: '5.x'
   DotNetRuntimeVersion: '3.1.x'
-  PythonVersion: '3.10.1'
+  PythonVersion: '3.10.2'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   TestProjectPath: 'src/dotnet/APIView/APIViewTest/APIViewTest.csproj'
@@ -188,6 +188,10 @@ stages:
               projects: '$(TestProjectPath)'
               arguments: --logger trx
               publishTestResults: false
+
+          - script: |
+              python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+            displayName: 'Verify Python APIView version consistency'
 
           - script: |
               cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)

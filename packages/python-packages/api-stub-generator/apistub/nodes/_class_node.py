@@ -54,10 +54,14 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         self.errors = []
+        # This is the name obtained by NodeEntityBase from __name__.
+        # We must preserve it to detect the mismatch and issue a warning.
+        self._name = self.name
+        self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
@@ -120,7 +124,14 @@ class ClassNode(NodeEntityBase):
                 var_match[0].type = type_string
         else:
             self.child_nodes.append(
-                VariableNode(self.namespace, self, name, type_string, value, False)
+                VariableNode(
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=name,
+                    type_name=type_string,
+                    value=value,
+                    is_ivar=False
+                )
             )
 
     def _inspect(self):
@@ -136,7 +147,16 @@ class ClassNode(NodeEntityBase):
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
 
         # find members in node
-        for name, child_obj in inspect.getmembers(self.obj):
+        # enums with duplicate values are screened out by "getmembers" so
+        # we must rely on __members__ instead.
+        if hasattr(self.obj, "__members__"):
+            try:
+                members = self.obj.__members__.items()
+            except AttributeError:
+                members = inspect.getmembers(self.obj)
+        else:
+            members = inspect.getmembers(self.obj)
+        for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
@@ -167,10 +187,8 @@ class ClassNode(NodeEntityBase):
                 continue
 
             if self.is_enum and isinstance(child_obj, self.obj):
-                # Enum values will be of parent instance type
-                child_obj.__name__ = name
                 self.child_nodes.append(
-                    EnumNode(self.namespace, self, child_obj)
+                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
@@ -190,7 +208,12 @@ class ClassNode(NodeEntityBase):
             docstring_parser = DocstringParser(docstring)
             for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, key, var.argtype, None, True
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=key,
+                    type_name=var.argtype,
+                    value=None,
+                    is_ivar=True
                 )
                 self.child_nodes.append(ivar_node)
 
@@ -230,6 +253,8 @@ class ClassNode(NodeEntityBase):
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
         apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
+        if self._name != self.name:
+            apiview.add_diagnostic(f"Alias '{self.name}' does not match __name__ '{self._name}'.", self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:

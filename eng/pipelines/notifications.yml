@@ -38,15 +38,12 @@ stages:
       Organization: azure-sdk
       Project: internal
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
-
     steps:
-      - task: DotNetCoreCLI@2
-        displayName: 'Install Notification Creator'
+      - task: UseDotNet@2
+        condition: eq(${{ parameters.SkipDotNetInstall }}, false)
+        displayName: 'Use .NET Core sdk 3.1.405'
         inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
-          workingDirectory: '$(Agent.BuildDirectory)'
+          version: '3.1.405'
 
       # - task: DotNetCoreCLI@2
       #   displayName: 'Install Notification Creator'

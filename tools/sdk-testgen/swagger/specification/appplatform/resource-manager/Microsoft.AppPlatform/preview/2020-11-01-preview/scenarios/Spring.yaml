@@ -3,16 +3,8 @@ scope: ResourceGroup
 variables:
   serviceName: test-scenario-instance
   appName: app01
-  ascDomainName: .azuremicroservices.io
-  dnsCname: asc
-  customDomainName:
-    type: string
   mysqlKey:
     type: secureString
-  dnsSubscriptionId:
-    type: string
-  dnsResourceGroup:
-    type: string
   blobUrl:
     type: secureString
   userAssignedIdentity:
@@ -25,20 +17,6 @@ prepareSteps:
   - step: Create_Application_Insight_Instance
     armTemplate: templates/create_application_insights_instance.json
 
-  - step: Add_Dns_Cname_Record
-    armDeploymentScript: ./templates/create_cname_record.ps1
-    environmentVariables:
-      - name: resourceGroupName
-        value: $(dnsResourceGroup)
-      - name: dnsZoneName
-        value: $(customDomainName)
-      - name: dnsCname
-        value: $(dnsCname)
-      - name: dnsCnameAlias
-        value: $(serviceName)$(ascDomainName)
-    variables:
-      subscriptionId: $(dnsSubscriptionId)
-      resourceGroupName: $(dnsResourceGroup)
 
 scenarios:
   - scenario: Spring
@@ -329,17 +307,3 @@ scenarios:
 
       - step: Operations_List
         exampleFile: ../examples/Operations_List.json
-
-cleanUpSteps:
-  - step: delete_cname_record
-    armDeploymentScript: ./templates/delete_cname_record.ps1
-    environmentVariables:
-    - name: resourceGroupName
-      value: $(dnsResourceGroup)
-    - name: dnsCname
-      value: $(dnsCname)
-    - name: dnsZoneName
-      value: $(customDomainName)
-    variables:
-      subscriptionId: $(dnsSubscriptionId)
-      resourceGroupName: $(dnsResourceGroup)

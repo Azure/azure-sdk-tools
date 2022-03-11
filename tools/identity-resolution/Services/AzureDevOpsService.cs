@@ -88,13 +88,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             var client = await GetClientAsync<BuildHttpClient>();
 
             logger.LogInformation("GetScheduledPipelinesAsync ProjectName = {0} PathPrefix = {1}", projectName, pathPrefix);
+            var definitions = await client.GetFullDefinitionsAsync2(project: projectName, path: pathPrefix);
 
-            await retryPolicy.ExecuteAsync(async () =>
-            {
-                return await client.GetFullDefinitionsAsync2(project: projectName, path: pathPrefix);
-            });
-
-            return null;
+            return definitions;
         }
 
         /// <summary>
@@ -109,13 +105,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             try
             {
                 logger.LogInformation("GetPipelineAsync ProjectName = {0} PipelineId = {1}", projectName, pipelineId);
-                result = await client.GetDefinitionAsync(projectName, pipelineId);
+                result = await Policy
+                  .Handle<TaskCanceledException>()
+                  .RetryAsync()
+                  .ExecuteAsync(() => client.GetDefinitionAsync(projectName, pipelineId));
             }
             catch (DefinitionNotFoundException)
             {
                 result = default;
             }
-
 
             return result;
         }
@@ -310,7 +308,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
             var client = await GetClientAsync<NotificationHttpClient>();
 
             logger.LogInformation("GetSubscriptionsAsync TargetId = {0}", targetId);
-            var result = await client.ListSubscriptionsAsync(targetId, queryFlags: SubscriptionQueryFlags.IncludeFilterDetails);
+            var result = await Policy
+                  .Handle<TimeoutException>()
+                  .RetryAsync()
+                  .ExecuteAsync(() => client.ListSubscriptionsAsync(targetId, queryFlags: SubscriptionQueryFlags.IncludeFilterDetails));
 
             return result;
         }

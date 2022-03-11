@@ -5,6 +5,8 @@ VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GithubCodeownerSubscriber", "Azure.Sdk.Tools.GithubCodeownerSubscriber.csproj", "{93397C8B-89F7-4C62-84FA-4CAFC5558584}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "identity-resolution", "..\..\identity-resolution\identity-resolution.csproj", "{9FD6909A-00D1-45EF-B503-37B81977FA3B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{93397C8B-89F7-4C62-84FA-4CAFC5558584}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93397C8B-89F7-4C62-84FA-4CAFC5558584}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93397C8B-89F7-4C62-84FA-4CAFC5558584}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FD6909A-00D1-45EF-B503-37B81977FA3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FD6909A-00D1-45EF-B503-37B81977FA3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FD6909A-00D1-45EF-B503-37B81977FA3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FD6909A-00D1-45EF-B503-37B81977FA3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -38,7 +38,7 @@ export interface ExampleExtension {
     'x-ms-original-file'?: string;
 }
 
-export type StepArmTemplateModel = StepArmTemplate;
+export type StepArmTemplateModel = StepArmTemplate & {armTemplatePayloadString: string;};
 
 export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
@@ -434,6 +434,9 @@ export class TestCodeModeler {
                 resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
             }
         }
+        if (stepModel.armTemplatePayload) {
+            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload)
+        }
     }
 
     public initiateRestCall(session, step: StepRestCallModel) {
@@ -556,7 +559,7 @@ export class TestCodeModeler {
             }
         } else if (step.type === OavStepType.armTemplate) {
             testDef.useArmTemplate = true;
-            this.initiateArmTemplate(testDef, step);
+            this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
         }
     }
 

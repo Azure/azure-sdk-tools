@@ -38,7 +38,7 @@ export interface ExampleExtension {
     'x-ms-original-file'?: string;
 }
 
-export type StepArmTemplateModel = StepArmTemplate & {armTemplatePayloadString: string;};
+export type StepArmTemplateModel = StepArmTemplate & { armTemplatePayloadString: string };
 
 export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
@@ -435,7 +435,7 @@ export class TestCodeModeler {
             }
         }
         if (stepModel.armTemplatePayload) {
-            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload)
+            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload);
         }
     }
 

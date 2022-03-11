@@ -208,9 +208,7 @@ Services:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-file-share
       PackageVersions: *java-storage-package-versions
-      AdditionalArguments:
-        warmup: 15
-        duration: 15
+      AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-file-share
       PackageVersions:
@@ -250,9 +248,7 @@ Services:
       Project: sdk/storage/azure-storage-perf
       PrimaryPackage: azure-storage-file-datalake
       PackageVersions: *java-storage-package-versions
-      AdditionalArguments:
-        warmup: 15
-        duration: 15
+      AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/storage/perf-tests/storage-file-datalake
       PackageVersions:
@@ -301,6 +297,7 @@ Services:
         azure-security-keyvault-keys: source
         azure-security-keyvault-secrets: source
         reactor-core: source
+      AdditionalArguments: *java-additional-arguments
     JS:
       Project: sdk/keyvault/perf-tests/keyvault-secrets
       PackageVersions:
@@ -338,7 +335,7 @@ Services:
     Net:
       Project: sdk/eventhub/Azure.Messaging.EventHubs/perf/Azure.Messaging.EventHubs.Perf.csproj
       PackageVersions:
-      - Azure.Messaging.EventHubs: 5.6.0
+      - Azure.Messaging.EventHubs: 5.6.1
       - Azure.Messaging.EventHubs: source
   Tests:
   - Test: publish-batches-to-gateway
@@ -353,7 +350,7 @@ Services:
     Net:
       Project: sdk/eventhub/Azure.Messaging.EventHubs.Processor/perf/Azure.Messaging.EventHubs.Processor.Perf.csproj
       PackageVersions:
-      - Azure.Messaging.EventHubs.Processor: 5.6.0
+      - Azure.Messaging.EventHubs.Processor: 5.6.1
       - Azure.Messaging.EventHubs.Processor: source
   Tests:
   - Test: process-event

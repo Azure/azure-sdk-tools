@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             using (var loggerFactory = LoggerFactory.Create(builder => {
-                builder.AddConsole(config => { config.IncludeScopes = true; }); 
+                builder.AddConsole(config => { config.IncludeScopes = true; });
             }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
@@ -52,12 +52,12 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                     $"https://dev.azure.com/{organization}/",
                     loggerFactory.CreateLogger<AzureDevOpsService>()
                 );
-                
+
                 var gitHubServiceLogger = loggerFactory.CreateLogger<GitHubService>();
                 var gitHubService = new GitHubService(gitHubServiceLogger);
                 var credential = new ClientSecretCredential(
-                    Environment.GetEnvironmentVariable(aadTenantVar), 
-                    Environment.GetEnvironmentVariable(aadAppIdVar), 
+                    Environment.GetEnvironmentVariable(aadTenantVar),
+                    Environment.GetEnvironmentVariable(aadAppIdVar),
                     Environment.GetEnvironmentVariable(aadAppSecretVar));
                 var githubToAadResolver = new GitHubToAADConverter(
                     credential,
@@ -145,7 +145,7 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
                         var teamContacts = await Task.WhenAll(teamContactTasks);
                         var teamDescriptors = teamContacts.Select(contact => contact.SubjectDescriptor.ToString());
                         var teamSet = new HashSet<string>(teamDescriptors);
-                        
+
                         // Synchronize contacts
                         var contactsToRemove = teamSet.Except(codeownersSet);
                         var contactsToAdd = codeownersSet.Except(teamSet);

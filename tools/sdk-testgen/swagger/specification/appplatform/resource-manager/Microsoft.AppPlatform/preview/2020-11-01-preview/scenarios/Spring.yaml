@@ -233,37 +233,6 @@ scenarios:
         variables:
           bindingName: mysql-binding
 
-      # CustomDomains         # depends on DNS
-      - step: Apps_ValidateDomain
-        exampleFile: ../examples/Apps_ValidateDomain.json
-        requestUpdate:
-          - replace: /validatePayload/name
-            value: $(customDomainName)
-
-      - step: CustomDomains_CreateOrUpdate
-        exampleFile: ../examples/CustomDomains_CreateOrUpdate.json
-        variables:
-          domainName: $(dnsCname).$(customDomainName)
-        resourceUpdate:
-          - replace: /properties
-            value: { "certName": "asc-certificate" }
-
-      - step: CustomDomains_Update
-        exampleFile: ../examples/CustomDomains_Update.json
-        variables:
-          domainName: $(dnsCname).$(customDomainName)
-        resourceUpdate:
-          - replace: /properties
-            value: { "certName": "asc-certificate" } # TODO: use another cert
-
-      - step: CustomDomains_Get
-        exampleFile: ../examples/CustomDomains_Get.json
-        variables:
-          domainName: $(dnsCname).$(customDomainName)
-
-      - step: CustomDomains_List
-        exampleFile: ../examples/CustomDomains_List.json
-
       # Deployments
       - step: Apps_GetResourceUploadUrl
         exampleFile: ../examples/Apps_GetResourceUploadUrl.json
@@ -338,11 +307,6 @@ scenarios:
         exampleFile: ../examples/Deployments_Delete.json
         variables:
           deploymentName: blue
-
-      - step: CustomDomains_Delete
-        exampleFile: ../examples/CustomDomains_Delete.json
-        variables:
-          domainName: $(dnsCname).$(customDomainName)
 
       - step: Apps_Delete
         variables:

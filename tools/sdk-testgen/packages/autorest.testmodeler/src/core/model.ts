@@ -85,7 +85,6 @@ export type TestScenarioModel = Scenario & {
 export type TestDefinitionModel = ScenarioDefinition & {
     useArmTemplate: boolean;
     requiredVariablesDefault: { [variable: string]: string };
-    outputVariableNames: string[];
 };
 export class ExampleValue {
     language: Languages;
@@ -531,7 +530,6 @@ export class TestCodeModeler {
     public initiateTestDefinition(session: Session<TestCodeModel>, testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
         this.initiateOavVariables(testDef);
         testDef.useArmTemplate = false;
-        testDef.outputVariableNames = [];
 
         for (const step of testDef.prepareSteps) {
             this.processStep(session, step, codeModelRestcallOnly, testDef);

@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -16,10 +17,15 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Record : ControllerBase
     {
+        private readonly ILogger _logger;
+
         private readonly RecordingHandler _recordingHandler;
-        public Record(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
-
-
+        public Record(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
+        {
+            _recordingHandler = recordingHandler;
+            _logger = loggerFactory.CreateLogger<Record>();
+        }
+        
         private static readonly HttpClient s_client = Startup.Insecure ?
             new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
             {
@@ -50,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequest(id, Request, Response, s_client);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, s_client);
         }
     }
 }

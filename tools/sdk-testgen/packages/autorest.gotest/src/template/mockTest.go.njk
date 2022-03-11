@@ -125,9 +125,9 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
         // Response check
         {
             exampleRes := {{example.responseOutput}}
-            {% if example.responseHasLROState %}
+            {%- if example.responseHasLROState %}
             exampleRes.Properties.ProvisioningState = {{packageName}}.ProvisioningStateSucceeded.ToPtr()
-            {% endif %}
+            {%- endif %}
             if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
                 exampleResJson, _ := json.Marshal(exampleRes)
                 mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})

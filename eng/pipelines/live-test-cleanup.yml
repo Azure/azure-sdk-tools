@@ -63,7 +63,18 @@ stages:
 
       - pwsh: |
           $subscriptionConfiguration = @'
-            $(sub-config-communication-int-test-resources)
+            $(sub-config-translation-int-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: Dogfood Translation - Resource Cleanup
+        continueOnError: true
+
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-communication-int-test-resources-common)
           '@ | ConvertFrom-Json -AsHashtable
 
           ./eng/scripts/live-test-resource-cleanup.ps1 `
@@ -103,6 +114,23 @@ stages:
           -Verbose
         displayName: AzureCloud Cosmos - Resource Cleanup
         continueOnError: true
+
+      - template: /eng/common/TestResources/build-test-resource-config.yml
+        parameters:
+          SubscriptionConfigurations:
+            - $(sub-config-azure-cloud-test-resources)
+            - $(sub-config-storage-test-resources-net)
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(SubscriptionConfiguration)
+          '@ | ConvertFrom-Json -AsHashtable
+
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
+          @subscriptionConfiguration `
+          -Verbose
+        displayName: AzureCloud Storage NET - Resource Cleanup
+        continueOnError: true
+
 
       - pwsh: |
           $subscriptionConfiguration = @'

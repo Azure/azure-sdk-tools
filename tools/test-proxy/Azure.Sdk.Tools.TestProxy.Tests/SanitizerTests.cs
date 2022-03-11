@@ -238,6 +238,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyRegexSanitizerIgnoresNonTextualBodies()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var bodyRegexSanitizer = new BodyRegexSanitizer(regex: ".*");
+            session.Session.Sanitize(bodyRegexSanitizer);
+
+            Assert.Equal(content, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
+        [Fact]
         public void BodyRegexSanitizerQuietlyExits()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/post_delete_get_content.json");
@@ -600,6 +613,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
         }
 
+        [Fact]
+        public void BodyStringSanitizerIgnoresNonTextualBodies()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+            var targetEntry = session.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Request.Body);
+
+            var bodyStringSanitizer = new BodyStringSanitizer("content");
+            session.Session.Sanitize(bodyStringSanitizer);
+
+            Assert.Equal(content, Encoding.UTF8.GetString(targetEntry.Request.Body));
+        }
+
         [Theory]
         [InlineData("/v2.0/", "<oath-v2>", "Test.RecordEntries/oauth_request.json")]
         [InlineData("https://management.azure.com/subscriptions/12345678-1234-1234-5678-123456789010", "<partofpath>", "Test.RecordEntries/request_with_subscriptionid.json")]
@@ -640,5 +666,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
         }
+
+
+        [Theory]
+        [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
+        [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
+        public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
+        {
+            var session = TestHelpers.LoadRecordSession(targetFile);
+            
+            var targetEntry = session.Session.Entries[0];
+            var matcher = new RecordMatcher();
+
+            var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
+            session.Session.Sanitize(sanitizer);
+
+            var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
+
+            Assert.DoesNotContain(regex, bodyString);
+            Assert.Contains(replacementValue, bodyString);
+        }
+
     }
 }

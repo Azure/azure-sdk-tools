@@ -37,8 +37,7 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber);
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent());
             return Ok();
         }
 
@@ -57,8 +56,7 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, originalFilePath, commitSha, repoName, packageName, pullRequestNumber, reviewFilePath);
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, originalFilePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: reviewFilePath);
             return Ok();
         }
 

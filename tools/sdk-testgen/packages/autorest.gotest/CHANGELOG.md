@@ -1,6 +1,49 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+This log was last generated on Mon, 07 Mar 2022 02:56:30 GMT and should not be manually modified.
+
+## 2.1.4
+Mon, 07 Mar 2022 02:56:30 GMT
+
+### Patches
+
+- Fix wrong generation for output variable with chain invoke.
+
+## 2.1.3
+Thu, 03 Mar 2022 05:50:36 GMT
+
+### Patches
+
+- Change response usage in examples.
+
+## 2.1.2
+Thu, 03 Mar 2022 02:23:21 GMT
+
+### Patches
+
+- Upgrade to latest testmodeler.
+
+## 2.1.1
+Thu, 24 Feb 2022 05:54:42 GMT
+
+### Patches
+
+- Fix param render bug for resource deployment step in api scenario.
+
+## 2.1.0
+Tue, 22 Feb 2022 10:58:11 GMT
+
+### Minor changes
+
+- Change output variable value fetch method according to new testmodeler.
+
+## 2.0.0
+Fri, 11 Feb 2022 09:47:39 GMT
+
+### Breaking changes
+
+- Add scenario test generation support.
+- Add recording support to scenario test.
 
 ## 1.3.0
 Wed, 12 Jan 2022 09:10:46 GMT

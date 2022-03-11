@@ -1,8 +1,10 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Concurrent;
@@ -25,6 +27,9 @@ namespace Azure.Sdk.Tools.TestProxy
         #region constructor and common variables
         public string CurrentBranch = "master";
         public string RepoPath;
+        private const string SkipRecordingHeaderKey = "x-recording-skip";
+        private const string SkipRecordingRequestBody = "request-body";
+        private const string SkipRecordingRequestResponse = "request-response";
 
         public RecordingHandler(string targetDirectory)
         {
@@ -126,8 +131,10 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task HandleRecordRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
+            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
+
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
@@ -142,18 +149,30 @@ namespace Azure.Sdk.Tools.TestProxy
             var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
 
 
-            byte[] body = new byte[]{};
+            byte[] body = Array.Empty<byte>();
 
             // HEAD requests do NOT have a body regardless of the value of the Content-Length header
-            if (incomingRequest.Method.ToUpperInvariant() != "HEAD") {
+            if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
+            {
                 body = DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
 
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
-            session.ModifiableSession.Session.Entries.Add(entry);
 
-            Interlocked.Increment(ref Startup.RequestsRecorded);
+            EntryRecordMode mode = GetRecordMode(incomingRequest);
+
+            if (mode != EntryRecordMode.DontRecord)
+            {
+                session.ModifiableSession.Session.Entries.Add(entry);
+
+                Interlocked.Increment(ref Startup.RequestsRecorded);
+            }
+
+            if (mode == EntryRecordMode.RecordWithoutRequestBody)
+            {
+                entry.Request.Body = null;
+            }
 
             outgoingResponse.StatusCode = (int)upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
@@ -171,6 +190,40 @@ namespace Azure.Sdk.Tools.TestProxy
                 outgoingResponse.ContentLength = bodyData.Length;
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
+        }
+
+        private static EntryRecordMode GetRecordMode(HttpRequest request)
+        {
+            EntryRecordMode mode = EntryRecordMode.Record;
+            if (request.Headers.TryGetValue(SkipRecordingHeaderKey, out var values))
+            {
+                if (values.Count != 1)
+                {
+                    throw new HttpException(
+                        HttpStatusCode.BadRequest,
+                        $"'{SkipRecordingHeaderKey}' should contain a single value set to either '{SkipRecordingRequestBody}' or " +
+                        $"'{SkipRecordingRequestResponse}'");
+                }
+                string skipMode = values.First();
+                if (skipMode.Equals(SkipRecordingRequestResponse, StringComparison.OrdinalIgnoreCase))
+                {
+                    mode = EntryRecordMode.DontRecord;
+                }
+                else if (skipMode.Equals(SkipRecordingRequestBody, StringComparison.OrdinalIgnoreCase))
+                {
+                    mode = EntryRecordMode.RecordWithoutRequestBody;
+                }
+                else
+                {
+                    throw new HttpException(
+                        HttpStatusCode.BadRequest,
+                        $"{skipMode} is not a supported value for header '{SkipRecordingHeaderKey}'." +
+                        $"It should be either omitted from the request headers, or set to either '{SkipRecordingRequestBody}' " +
+                        $"or '{SkipRecordingRequestResponse}'");
+                }
+            }
+
+            return mode;
         }
 
         private byte[] CompressBody(byte[] incomingBody, SortedDictionary<string, string[]> headers)
@@ -256,7 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region playback functionality
-        public async Task StartPlayback(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
+        public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted)
         {
             var id = Guid.NewGuid().ToString();
             ModifiableRecordSession session;
@@ -325,6 +378,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
+            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
+
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
@@ -345,7 +400,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
-                transform.Transform(match);
+                transform.Transform(incomingRequest, match);
             }
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
@@ -394,17 +449,26 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
             {
-                playbackSession.AdditionalSanitizers.Add(sanitizer);
+                lock (playbackSession)
+                {
+                    playbackSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                lock (recordingSession.ModifiableSession)
+                {
+                    recordingSession.ModifiableSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
             {
-                inMemSession.AdditionalSanitizers.Add(sanitizer);
+                lock (inMemSession)
+                {
+                    inMemSession.AdditionalSanitizers.Add(sanitizer);
+                }
             }
 
             if (inMemSession == null && recordingSession == (null, null) && playbackSession == null)
@@ -453,9 +517,54 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
+                var countPlayback = PlaybackSessions.Count;
+                var countInMem = InMemorySessions.Count;
+                var countRecording = RecordingSessions.Count;
+                var countTotal = countPlayback + countInMem + countRecording;
+
+                if (countTotal > 0)
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append($"There are a total of {countTotal} active sessions. Remove these sessions before hitting Admin/Reset." + Environment.NewLine);
+
+                    if(countPlayback > 0)
+                    {
+                        sb.Append("Active Playback Sessions: [");
+                        lock (PlaybackSessions)
+                        {
+                            sb.Append(string.Join(", ", PlaybackSessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    if (countInMem > 0)
+                    {
+                        sb.Append("Active InMem Sessions: [");
+                        lock (InMemorySessions)
+                        {
+                            sb.Append(string.Join(", ", InMemorySessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    if (countRecording > 0)
+                    {
+                        sb.Append($"{countRecording} Active Recording Sessions: [");
+                        lock (RecordingSessions)
+                        {
+                            sb.Append(string.Join(", ", RecordingSessions.Keys.ToArray()));
+                        }
+                        sb.Append("]. ");
+                    }
+
+                    throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());               
+                }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer()
+                    new RecordedTestSanitizer(),
+                    new BodyKeySanitizer("$..access_token"),
+                    new BodyKeySanitizer("$..refresh_token")
                 };
 
                 Transforms = new List<ResponseTransform>

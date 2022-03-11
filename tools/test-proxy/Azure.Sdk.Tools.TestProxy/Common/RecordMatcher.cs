@@ -62,14 +62,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "sec-ch-ua-platform",
             "Referrer",
             "Referer",
-            "Origin"
+            "Origin",
+            "Content-Length"
         };
 
         /// <summary>
         /// Query parameters whose values can change between recording and playback without causing URI matching
         /// to fail. The presence or absence of the query parameter itself is still respected in matching.
         /// </summary>
-        public HashSet<string> VolatileQueryParameters = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        public HashSet<string> IgnoredQueryParameters = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
         };
 
@@ -129,49 +130,49 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry));
         }
 
-        public virtual int CompareBodies(byte[] requestBody, byte[] responseBody, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, StringBuilder descriptionBuilder = null)
         {
             if (!_compareBodies)
             {
                 return 0;
             }
 
-            if (requestBody == null && responseBody == null)
+            if (requestBody == null && recordBody == null)
             {
                 return 0;
             }
 
             if (requestBody == null)
             {
-                descriptionBuilder?.AppendLine("Request has body but response doesn't");
+                descriptionBuilder?.AppendLine("Record has body but request doesn't");
                 return 1;
             }
 
-            if (responseBody == null)
+            if (recordBody == null)
             {
-                descriptionBuilder?.AppendLine("Response has body but request doesn't");
+                descriptionBuilder?.AppendLine("Request has body but record doesn't");
                 return 1;
             }
 
-            if (!requestBody.SequenceEqual(responseBody))
+            if (!requestBody.SequenceEqual(recordBody))
             {
                 if (descriptionBuilder != null)
                 {
-                    var minLength = Math.Min(requestBody.Length, responseBody.Length);
+                    var minLength = Math.Min(requestBody.Length, recordBody.Length);
                     int i;
                     for (i = 0; i < minLength - 1; i++)
                     {
-                        if (requestBody[i] != responseBody[i])
+                        if (requestBody[i] != recordBody[i])
                         {
                             break;
                         }
                     }
-                    descriptionBuilder.AppendLine($"Request and response bodies do not match at index {i}:");
+                    descriptionBuilder.AppendLine($"Request and record bodies do not match at index {i}:");
                     var before = Math.Max(0, i - 10);
                     var afterRequest = Math.Min(i + 20, requestBody.Length);
-                    var afterResponse = Math.Min(i + 20, responseBody.Length);
+                    var afterResponse = Math.Min(i + 20, recordBody.Length);
                     descriptionBuilder.AppendLine($"     request: \"{Encoding.UTF8.GetString(requestBody, before, afterRequest - before)}\"");
-                    descriptionBuilder.AppendLine($"     record:  \"{Encoding.UTF8.GetString(responseBody, before, afterResponse - before)}\"");
+                    descriptionBuilder.AppendLine($"     record:  \"{Encoding.UTF8.GetString(recordBody, before, afterResponse - before)}\"");
                 }
                 return 1;
             }
@@ -188,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 req.AppendQuery(
                     param,
-                    VolatileQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
+                    IgnoredQueryParameters.Contains(param) ? VolatileValue : queryParams[param]);
             }
         }
 

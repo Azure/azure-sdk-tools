@@ -211,8 +211,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     // fallback to generic string writing. Also, if the root is a string
                     // we don't want to write it directly, as this would make matching
                     // not work in libraries that allow passing JSON as a string.
+                    // Finally, if the root is a JSON null, but requestBody was not null, then that means the body actually contained
+                    // bytes for "null" and we should instead write it as a string.
                     if (document.RootElement.ValueKind != JsonValueKind.Array &&
-                        document.RootElement.ValueKind != JsonValueKind.String)
+                        document.RootElement.ValueKind != JsonValueKind.String &&
+                        document.RootElement.ValueKind != JsonValueKind.Null)
                     {
                         using var memoryStream = new MemoryStream();
                         // Settings of this writer should be in sync with the one used in deserialization

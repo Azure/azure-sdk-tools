@@ -14,7 +14,11 @@ export class GoHelper {
                 ret += this.obejctToString(value);
                 ret += `,\n`;
             } else if (_.isString(value)) {
-                ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
+                if (value.startsWith('<parsedVariable>')) {
+                    ret += `"${key}": ${value.substring('<parsedVariable>'.length)},\n`;
+                } else {
+                    ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
+                }
             } else if (value === null) {
                 ret += `"${key}": nil,\n`;
             } else if (_.isNumber(value)) {

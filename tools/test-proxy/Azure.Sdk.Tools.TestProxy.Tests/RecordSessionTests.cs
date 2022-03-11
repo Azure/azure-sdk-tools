@@ -25,6 +25,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("[{\"json\":\"value\"},{\"json\":\"value\"}]", "application/json")]
         [InlineData("\"\"", "application/json")]
         [InlineData("invalid json", "application/json")]
+        [InlineData("null", "application/json")]
+        [InlineData("\"null\"", "application/json")]
+        [InlineData(null, "application/json")]
+        [InlineData("{}", "application/json")]
+        [InlineData("[]", "application/json")]
+        [InlineData("19", "application/json")]
+        [InlineData("true", "application/json")]
+        [InlineData("false", "application/json")]
         [InlineData("{ \"json\": \"value\" }", "unknown")]
         [InlineData("multi\rline", "application/xml")]
         [InlineData("multi\r\nline", "application/xml")]
@@ -33,7 +41,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("true", "")]
         public void CanRoundtripSessionRecord(string body, string contentType)
         {
-            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+            byte[] bodyBytes = body != null ? Encoding.UTF8.GetBytes(body) : null;
 
             var session = new RecordSession();
             session.Variables["a"] = "value a";
@@ -213,7 +221,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "    <Some-Other-Header> is absent in record, value <V>" + Environment.NewLine +
                 "    <Extra-Header> is absent in request, value <Extra-Value>" + Environment.NewLine +
                 "Body differences:" + Environment.NewLine +
-                "Request and response bodies do not match at index 40:" + Environment.NewLine +
+                "Request and record bodies do not match at index 40:" + Environment.NewLine +
                 "     request: \"e and long.\"" + Environment.NewLine +
                 "     record:  \"e and long but it also doesn't\"" + Environment.NewLine,
                 exception.Message);
@@ -381,8 +389,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = new RecordMatcher();
             if (includeVolatile)
             {
-                matcher.VolatileQueryParameters.Add("VolatileParam1");
-                matcher.VolatileQueryParameters.Add("VolatileParam2");
+                matcher.IgnoredQueryParameters.Add("VolatileParam1");
+                matcher.IgnoredQueryParameters.Add("VolatileParam2");
             }
 
             var mockRequest = new RecordEntry()

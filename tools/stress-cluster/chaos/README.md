@@ -113,6 +113,7 @@ spec:
       containers:
       - name: <container name, pick anything>
         image: <container image name>
+        imagePullPolicy: Always
         command: ["test entrypoint command/binary"]
         args: [<args string array for your test command>]
       restartPolicy: Never
@@ -165,7 +166,7 @@ The usage of helm charts allows for two primary scenarios:
 
 ### Layout
 
-The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):
+The basic layout for a stress test is the following (see [`examples/stress_deployment_example`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-deployment-example) for an example):
 
 ```
 <stress test root directory>
@@ -244,12 +245,14 @@ for example usage.
 
 ### Stress Test Azure Resources
 
-Stress test resources can either be defined as azure bicep files, or an ARM template directly, provided there is
-a `chart/stress-test-resources.json` file in place before running `helm install`.
+Stress test resources can either be defined as azure bicep files, or an ARM template directly named
+`stress-test-resources.[json|bicep]`. If using bicep, the [stress test deploy
+script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1)
+will compile an ARM template named `stress-test-resources.json` from the bicep file.
 The stress test cluster and config boilerplate will handle running ARM deployments in an init container before
 stress test container startup.
 
-The bicep file should output at least the resource group name, which will be injected into the stress test env file.
+The bicep/ARM file should output at least the resource group name, which will be injected into the stress test env file.
 
 ```
 // Dummy parameter to handle defaults the script passes in
@@ -267,19 +270,9 @@ output RESOURCE_GROUP string = resourceGroup().name
 output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-A stress test package must include a `parameters.json` file as well, which can either be empty or contain parameters:
-
-```
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": { }
-}
-```
-
 ### Helm Chart Dependencies
 
-The `<chart root>/chart/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
+The `<chart root>/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
 ```
 apiVersion: v2
@@ -321,6 +314,7 @@ spec:
   containers:
     - name: deployment-example
       image: mcr.microsoft.com/azure-cli
+      imagePullPolicy: Always
       command: ['bash', '-c']
       args:
         - |
@@ -336,7 +330,7 @@ spec:
 
 The most common way of configuring stress against test jobs is via [Chaos Mesh](https://chaos-mesh.org/).
 
-Any chaos experiment manifests can be placed in the `<stress test directory>/chart/templates/`.
+Any chaos experiment manifests can be placed in the `<stress test directory>/templates/`.
 
 Chaos experiments can be targeted against test jobs via namespace and label selectors.
 
@@ -364,7 +358,7 @@ selector:
 For more detailed examples, see:
 
 - [Chaos Experiments](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment) docs for all possible types
-- `./examples/network_stress_example/chart/templates/network_loss.yaml` for an example network loss manifest within a helm chart
+- `./examples/network_stress_example/templates/network_loss.yaml` for an example network loss manifest within a helm chart
 - The [Faults via Dashboard section](#faults-via-dashboard) for generating the configs from the UI
 
 ### Scenarios and values.yaml
@@ -457,18 +451,22 @@ cd <stress test search directory>
 
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
     -Login `
-    -PushImages `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -PushImages
 ```
 
 To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
 made).
 
 ```
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
+```
+
+To run multiple instances of the same test in parallel, add a different namespace override 
+for each test deployment. If not specified, it will default to the shell username when run locally.
+
+```
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -Namespace my-test-instance-2 `
 ```
 
 You can check the progress/status of your installation via:

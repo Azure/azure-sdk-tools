@@ -69,7 +69,7 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
-The test-proxy resolves the its storage location via:
+The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
@@ -83,6 +83,23 @@ By default, the server will listen on the following port mappings:
 |-|-|
 | http | 5000 |
 | https | 5001 |
+
+#### Environment Variable
+
+Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:
+
+```powershell
+$env:ASPNETCORE_URLS="http://*:3331"  // Set custom port for http only
+$env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both http and https
+```
+
+#### Input arguments
+
+Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+
+```powershell
+test-proxy --urls "http://localhost:9000;https://localhost:9001"
+```
 
 ## Environment Variables
 
@@ -195,6 +212,10 @@ In the above example notice that there is an optional body. This is extremely us
 Given that reccordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
 
 An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
+
+#### Customizing what gets recorded
+
+Some tests send large request bodies that are not meaningful and should not be stored in the session records. In order to disable storing the request body for a specific request, add the request header "x-recording-skip" and set the value to "request-body". This header can also be used to skip an entire request/response pair from being included in the recording - this is useful for cleanup code that you might have as part of your test. To skip the request/response pair, set the "x-recording-skip" header value to "request-response". Note that the "x-recording-skip" should only be specified when in `Record` mode. As a result, any request that would use the "request-response" value when in `Record` mode should not be sent when in `Playback` mode. For requests that use "request-body" in `Record` mode, you should either null out the body of the request before sending to the test proxy when in `Playback` mode, or you can set a `CustomDefaultMatcher` with `compareBodies = false`.
 
 ## How do I use the test-proxy to play a recording back?
 
@@ -401,3 +422,26 @@ To connect to the docker on SSL, both the docker image and your local machine mu
 In the future, passing in a custom cert via a bound volume that contains your certificate will be a possibility as well.
 
 For additional reading on this process for trusting SSL certs locally, feel free to read up [here.](https://devblogs.microsoft.com/aspnet/configuring-https-in-asp-net-core-across-different-platforms/) The afore-mentioned [docker specific readme](../docker/README.md) also has details that are relevant.
+
+## Troubleshooting
+
+### Visual studio
+
+If you get the message dialog `The project doesn't know how to run the profile Azure.Sdk.Tools.TestProxy`, you can fix it by reviewing the next two things:
+
+#### ASP.NET and web development
+
+Run Visual Studio installer and make sure ASP.NET and web development is installed.
+
+![image](https://user-images.githubusercontent.com/24213737/152257876-be1ed946-20bc-47ff-83da-f9ae05db290a.png)
+
+Then, confirm in the right panel that `Development time IIS support` is not checked:
+
+![image](https://user-images.githubusercontent.com/24213737/152257948-c61e6876-eb36-4414-b8de-8c85aa0532bb.png)
+
+#### Windows IIS
+
+[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
+
+![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+

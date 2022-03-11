@@ -123,12 +123,7 @@ export class Helper {
                 return choiceValue;
             }
         }
-
-        if (schema.choices?.length > 0) {
-            console.warn(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
-            return schema.choices[0];
-        }
-        throw new Error(`${schema.language.default.name} has no choices!`);
+        throw new Error(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
     }
 
     public static execSync(command: string) {

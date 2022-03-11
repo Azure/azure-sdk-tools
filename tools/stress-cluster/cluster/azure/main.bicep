@@ -47,11 +47,20 @@ module appInsights 'monitoring/app-insights.bicep' = {
     }
 }
 
-module dashboard 'monitoring/workbook.bicep' = {
-    name: 'dashboard'
+module test_dashboard 'monitoring/stress-test-workbook.bicep' = {
+    name: 'test_dashboard'
     scope: group
     params: {
         workbookDisplayName: 'Azure SDK Stress Testing - ${groupSuffix}'
+        logAnalyticsResource: logWorkspace.outputs.id
+    }
+}
+
+module status_dashboard 'monitoring/stress-status-workbook.bicep' = {
+    name: 'status_dashboard'
+    scope: group
+    params: {
+        workbookDisplayName: 'Stress Status - ${groupSuffix}'
         logAnalyticsResource: logWorkspace.outputs.id
     }
 }
@@ -146,8 +155,10 @@ output APPINSIGHTS_KEY_SECRET_NAME string = appInsightsInstrumentationKeySecretN
 output DEBUG_STORAGE_KEY_SECRET_NAME string = debugStorageKeySecretName
 output DEBUG_STORAGE_ACCOUNT_SECRET_NAME string = debugStorageAccountSecretName
 output DEBUG_FILESHARE_NAME string = storage.outputs.fileShareName
-output DASHBOARD_RESOURCE string = dashboard.outputs.id
-output DASHBOARD_LINK string = 'https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/${dashboard.outputs.id}/workbook'
+output TEST_DASHBOARD_RESOURCE string = test_dashboard.outputs.id
+output TEST_DASHBOARD_LINK string = 'https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/${test_dashboard.outputs.id}/workbook'
+output STATUS_DASHBOARD_RESOURCE string = status_dashboard.outputs.id
+output STATUS_DASHBOARD_LINK string = 'https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/${status_dashboard.outputs.id}/workbook'
 output RESOURCE_GROUP string = group.name
 output SUBSCRIPTION_ID string = subscriptionId
 output TENANT_ID string = subscription().tenantId

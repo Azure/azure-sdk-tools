@@ -33,15 +33,15 @@ setup(
         "astroid",
         "charset-normalizer"
     ],
-    python_requires=">=3.4.0",
+    python_requires=">=3.7.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
-    ],
+    ]
 )

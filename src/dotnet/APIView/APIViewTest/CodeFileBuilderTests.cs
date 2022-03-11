@@ -65,7 +65,7 @@ namespace APIViewTest
             var codeModel = new CodeFileBuilder()
             {
                 SymbolOrderProvider = new NameSymbolOrderProvider()
-            }.Build(compilationFromDll, false);
+            }.Build(compilationFromDll, false, null);
             var formattedModel = new CodeFileRenderer().Render(codeModel);
             var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace APIViewWeb.Respositories
+namespace APIViewWeb.Repositories
 {
     internal class AuthorizationFailedException : Exception
     {

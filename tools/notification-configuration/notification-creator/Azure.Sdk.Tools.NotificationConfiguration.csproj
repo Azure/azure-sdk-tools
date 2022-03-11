@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\identity-resolution\identity-resolution\identity-resolution.csproj" />
+    <ProjectReference Include="..\..\identity-resolution\identity-resolution.csproj" />
   </ItemGroup>
 
 </Project>

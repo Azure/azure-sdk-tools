@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
@@ -18,7 +19,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 
-namespace APIViewWeb.Respositories
+namespace APIViewWeb.Repositories
 {
     public class ReviewManager
     {
@@ -39,7 +40,9 @@ namespace APIViewWeb.Respositories
 
         private readonly DevopsArtifactRepository _devopsArtifactRepository;
 
-        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+        private readonly PackageNameManager _packageNameManager;
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public ReviewManager(
             IAuthorizationService authorizationService,
@@ -49,7 +52,8 @@ namespace APIViewWeb.Respositories
             CosmosCommentsRepository commentsRepository,
             IEnumerable<LanguageService> languageServices,
             NotificationManager notificationManager,
-            DevopsArtifactRepository devopsArtifactRepository)
+            DevopsArtifactRepository devopsArtifactRepository,
+            PackageNameManager packageNameManager)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -59,6 +63,7 @@ namespace APIViewWeb.Respositories
             _languageServices = languageServices;
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsArtifactRepository;
+            _packageNameManager = packageNameManager;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis)
@@ -129,6 +134,14 @@ namespace APIViewWeb.Respositories
                     }
                 });
             }
+
+            if (review.PackageName != null && review.PackageDisplayName == null)
+            {
+                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                review.PackageDisplayName = p?.DisplayName;
+                review.ServiceName = p?.ServiceName;
+            }
+
             return review;
         }
 
@@ -164,7 +177,6 @@ namespace APIViewWeb.Respositories
                     }                    
                 }
             }
-
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -207,6 +219,13 @@ namespace APIViewWeb.Respositories
 
             review.Revisions.Add(revision);
 
+            if (review.PackageName != null)
+            {
+                var p = _packageNameManager.GetPackageDetails(review.PackageName);
+                review.PackageDisplayName = p?.DisplayName ?? review.PackageDisplayName;
+                review.ServiceName = p?.ServiceName ?? review.ServiceName;
+            }
+
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
 
@@ -233,7 +252,7 @@ namespace APIViewWeb.Respositories
             bool runAnalysis,
             MemoryStream memoryStream)
         {
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
@@ -300,7 +319,7 @@ namespace APIViewWeb.Respositories
 
         private LanguageService GetLanguageService(string language)
         {
-            return _languageServices.Single(service => service.Name == language);
+           return _languageServices.Single(service => service.Name == language);
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
@@ -506,6 +525,7 @@ namespace APIViewWeb.Respositories
         public async void UpdateReviewBackground()
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -522,6 +542,28 @@ namespace APIViewWeb.Respositories
                 finally
                 {
                     _telemetryClient.StopOperation(operation);
+                }
+            }
+        }
+
+        private async Task SyncPackageDisplayServiceName(IEnumerable<ReviewModel> reviews)
+        {
+            foreach (var review in reviews)
+            {
+                var newServiceName = review.ServiceName ?? "Other";
+                var newDisplayName = review.PackageDisplayName ?? "Other";
+                var pkg = _packageNameManager.GetPackageDetails(review.PackageName);
+                if (pkg != null)
+                {
+                    newServiceName = pkg.ServiceName;
+                    newDisplayName = pkg.DisplayName;
+                }
+
+                if (newServiceName != review.ServiceName || newDisplayName != review.PackageDisplayName)
+                {
+                    review.ServiceName = newServiceName;
+                    review.PackageDisplayName = newDisplayName;
+                    await _reviewsRepository.UpsertReviewAsync(review);
                 }
             }
         }
@@ -572,6 +614,66 @@ namespace APIViewWeb.Respositories
             using var memoryStream = new MemoryStream();
             var codeFile = await GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
+        }
+
+        public async Task<List<ServiceGroupModel>> GetReviewsByServicesAsync(ReviewType filterType)
+        {
+            SortedDictionary<string, ServiceGroupModel> response = new ();
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: filterType);
+            foreach (var review in reviews)
+            {
+                var packageDisplayName = review.PackageDisplayName ?? "Other";
+                var serviceName = review.ServiceName ?? "Other";
+                if (!response.ContainsKey(serviceName))
+                {
+                    response[serviceName] = new ServiceGroupModel()
+                    {
+                        ServiceName = serviceName
+                    };
+                }
+
+                var packageDict = response[serviceName].packages;
+                if (!packageDict.ContainsKey(packageDisplayName))
+                {
+                    packageDict[packageDisplayName] = new PackageGroupModel()
+                    {
+                        PackageDisplayName = packageDisplayName
+                    };
+                }
+                packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
+            }
+            return response.Values.ToList();
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
+        }
+
+        public async Task AutoArchiveReviews(int archiveAfterMonths)
+        {
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            // Find all inactive reviews
+            reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
+            foreach (var review in reviews)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Archiving Review " + review.ReviewId };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    review.IsClosed = true;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    _telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
         }
     }
 }

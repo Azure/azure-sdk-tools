@@ -1,5 +1,3 @@
-
-import os
 from apistub import console_entry_point
 
 if __name__ == "__main__":

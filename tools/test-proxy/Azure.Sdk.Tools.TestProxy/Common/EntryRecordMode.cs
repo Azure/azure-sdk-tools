@@ -1,0 +1,12 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+namespace Azure.Sdk.Tools.TestProxy.Common
+{
+    public enum EntryRecordMode
+    {
+        Record,
+        DontRecord,
+        RecordWithoutRequestBody
+    }
+}

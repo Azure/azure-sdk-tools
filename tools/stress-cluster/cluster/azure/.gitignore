@@ -1,0 +1,2 @@
+# Exclude bicep generated arm templates
+*.json

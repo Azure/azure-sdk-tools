@@ -2,12 +2,15 @@ import { ExampleParameter, ExampleValue, TestCodeModel, TestCodeModeler } from '
 import { Helper } from '../../../src/util/helper';
 import { MockTool } from '../../tools';
 import { SchemaType } from '@autorest/codemodel';
+import { Session } from '@autorest/extension-base';
 import { TestConfig } from '../../../src/common/testConfig';
 import { configDefaults } from '../../../src/common/constant';
 import { serialize } from '@azure-tools/codegen';
 
 describe('ExampleValue.createInstance(...)', () => {
     const codeModel = MockTool.createCodeModel();
+    const mockedSession: Session<TestCodeModel> = undefined;
+
     beforeAll(() => {
         TestCodeModeler.createInstance(
             codeModel as TestCodeModel,
@@ -28,7 +31,7 @@ describe('ExampleValue.createInstance(...)', () => {
     it('create with primitive schema', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = ExampleValue.createInstance(rawValue, new Set(), MockTool.createSchema(SchemaType.Any), MockTool.createLanguages());
+        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.Any), MockTool.createLanguages());
         expect(spyCreateInstance).toHaveBeenCalledTimes(1);
         expect(instance).toMatchSnapshot();
     });
@@ -36,7 +39,13 @@ describe('ExampleValue.createInstance(...)', () => {
     it('recursively call on array element schema', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = ExampleValue.createInstance(rawValue, new Set(), MockTool.createArraySchema(MockTool.createSchema(SchemaType.Integer)), MockTool.createLanguages());
+        const instance = ExampleValue.createInstance(
+            mockedSession,
+            rawValue,
+            new Set(),
+            MockTool.createArraySchema(MockTool.createSchema(SchemaType.Integer)),
+            MockTool.createLanguages(),
+        );
         expect(spyCreateInstance).toHaveBeenCalledTimes(rawValue.length + 1);
         expect(instance).toMatchSnapshot();
     });
@@ -49,6 +58,7 @@ describe('ExampleValue.createInstance(...)', () => {
         };
         const integerSchema = MockTool.createSchema(SchemaType.Integer);
         const instance = ExampleValue.createInstance(
+            mockedSession,
             rawValue,
             new Set(),
             MockTool.createSchema(SchemaType.Object, {
@@ -68,6 +78,7 @@ describe('ExampleValue.createInstance(...)', () => {
         };
         const integerSchema = MockTool.createSchema(SchemaType.Integer);
         const instance = ExampleValue.createInstance(
+            mockedSession,
             rawValue,
             new Set(),
             MockTool.createSchema(SchemaType.Dictionary, {
@@ -81,6 +92,8 @@ describe('ExampleValue.createInstance(...)', () => {
 });
 
 describe('ExampleParameter constructor(...)', () => {
+    const mockedSession: Session<TestCodeModel> = undefined;
+
     afterEach(() => {
         jest.restoreAllMocks();
     });
@@ -89,13 +102,15 @@ describe('ExampleParameter constructor(...)', () => {
         const integerSchema = MockTool.createSchema(SchemaType.Integer);
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = new ExampleParameter(MockTool.createParameter(integerSchema), rawValue);
+        const instance = new ExampleParameter(mockedSession, MockTool.createParameter(integerSchema), rawValue);
         expect(spyCreateInstance).toHaveBeenCalled();
         expect(instance).toMatchSnapshot();
     });
 });
 
 describe('TestCodeModel functions', () => {
+    const mockedSession: Session<TestCodeModel> = undefined;
+
     afterEach(() => {
         jest.restoreAllMocks();
     });
@@ -114,7 +129,7 @@ describe('TestCodeModel functions', () => {
                     configDefaults,
                 ),
             );
-            testCodeModel.genMockTests();
+            testCodeModel.genMockTests(mockedSession);
             expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
         });
     });
@@ -136,7 +151,7 @@ describe('TestCodeModel functions', () => {
                     configDefaults,
                 ),
             );
-            testCodeModel.genMockTests();
+            testCodeModel.genMockTests(mockedSession);
             expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
         });
     });
@@ -155,7 +170,7 @@ describe('TestCodeModel functions', () => {
                     configDefaults,
                 ),
             );
-            testCodeModel.genMockTests();
+            testCodeModel.genMockTests(mockedSession);
             expect(serialize(testCodeModel.codeModel.testModel.mockTest)).toMatchSnapshot();
         });
     });

@@ -232,6 +232,8 @@ export class MockTestDataRender extends BaseDataRender {
                     }
                 case SchemaType.AnyObject:
                     return 'nil';
+                case SchemaType.Any:
+                    return 'nil';
                 default:
                     return '';
             }
@@ -357,7 +359,12 @@ export class MockTestDataRender extends BaseDataRender {
         const goType = this.getLanguageName(schema);
         if (schema.type === SchemaType.Choice) {
             if ((schema as ChoiceSchema).choiceType.type === SchemaType.String) {
-                ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+                try {
+                    const choiceValue = Helper.findChoiceValue(schema as ChoiceSchema, rawValue);
+                    ret = this.context.packageName + '.' + this.getLanguageName(choiceValue);
+                } catch (error) {
+                    ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+                }
             } else {
                 ret = `${this.context.packageName}.${this.getLanguageName(schema)}(${rawValue})`;
             }

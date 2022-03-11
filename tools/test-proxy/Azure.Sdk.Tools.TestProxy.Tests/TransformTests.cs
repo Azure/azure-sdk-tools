@@ -92,6 +92,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async Task ApiTransformPullsFromRequest()
+        {
+            var headerTransform = new StorageRequestIdTransform();
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Transforms.Clear();
+            testRecordingHandler.Transforms.Add(headerTransform);
+
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/response_with_header_to_transform.json";
+            var requestEntry = TestHelpers.LoadRecordSession(targetFile).Session.Entries[0];
+            var fakeGuid = "not-a-guid";
+            requestEntry.Request.Headers["x-ms-client-request-id"] = new string[] { fakeGuid };
+
+            // start playback
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            // transform should apply
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(requestEntry);
+            HttpResponse response = new DefaultHttpContext().Response;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+            Assert.Equal(fakeGuid, response.Headers["x-ms-client-request-id"].ToString());
+        }
+
+        [Fact]
         public async Task CanApplyHeaderTransformWithCondition()
         {
             var headerTransform = new HeaderTransform(

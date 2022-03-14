@@ -46,14 +46,6 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
-        // Headers which must be set on HttpContent instead of HttpRequestMessage
-        private static readonly string[] s_contentRequestHeaders = new string[] {
-            "Content-Length",
-            "Content-Type",
-            "Content-Encoding",
-            "Content-MD5"
-        };
-
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
         public List<ResponseTransform> Transforms { get; set; }

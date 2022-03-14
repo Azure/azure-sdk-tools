@@ -618,13 +618,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     {
                         inContent = output.Headers.Contains(headerTuple.Item1);
                     }
-                    catch (Exception ex) { }
+                    catch (Exception) { }
 
                     try
                     {
                         inStandard = output.Content.Headers.Contains(headerTuple.Item1);
                     }
-                    catch (Exception ex) { }
+                    catch (Exception) { }
 
                     Assert.True(inContent || inStandard);
                 }

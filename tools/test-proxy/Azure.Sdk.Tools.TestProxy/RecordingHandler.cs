@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
                         throw new HttpException(
-                            HttpStatusCode.InternalServerError,
+                            HttpStatusCode.BadRequest,
                             $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
                         );
                     }

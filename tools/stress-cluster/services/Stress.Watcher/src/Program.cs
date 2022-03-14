@@ -53,9 +53,13 @@ namespace Stress.Watcher
             ArmClient armClient = new ArmClient(subscriptionId, new DefaultAzureCredential());
 
             var podEventHandler = new PodEventHandler(client, chaosClient, armClient, options.Namespace);
+            var jobEventHandler = new JobEventHandler(client, options.Namespace);
             
             var cts = new CancellationTokenSource();
-            await podEventHandler.Watch(cts.Token);
+
+            // await podEventHandler.Watch(cts.Token);
+            await jobEventHandler.Watch(cts.Token);
+            //await Task.WhenAll(podEventHandler.Watch(cts.Token), jobEventHandler.Watch(cts.Token));
         }
     }
 }

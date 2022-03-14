@@ -74,7 +74,7 @@ stages:
           DOTNET_MULTILEVEL_LOOKUP: 0
           DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
       - pwsh: |
-          dotnet run --`
+          dotnet run -- `
             --organization $(Organization) `
             --project $(Project) `
             --path-prefix "\$(PathPrefix)" `

@@ -38,7 +38,7 @@ export interface ExampleExtension {
     'x-ms-original-file'?: string;
 }
 
-export type StepArmTemplateModel = StepArmTemplate & { armTemplatePayloadString: string };
+export type StepArmTemplateModel = StepArmTemplate & { armTemplatePayloadString?: string };
 
 export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
@@ -433,7 +433,7 @@ export class TestCodeModeler {
                 resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
             }
         }
-        if (stepModel.armTemplatePayload) {
+        if (this.testConfig.getValue(Config.addArmTemplatePayloadString) && stepModel.armTemplatePayload) {
             stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload);
         }
     }

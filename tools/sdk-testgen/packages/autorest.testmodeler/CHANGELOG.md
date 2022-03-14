@@ -3,11 +3,11 @@
 This log was last generated on Fri, 11 Mar 2022 09:19:34 GMT and should not be manually modified.
 
 ## 2.2.2
-Fri, 11 Mar 2022 09:19:34 GMT
+Mon, 14 Mar 2022 09:19:34 GMT
 
 ### Patches
 
-- add armTemplatePayloadString in StepArmTemplateModel
+- add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString
 
 ## 2.2.1
 Thu, 03 Mar 2022 02:23:21 GMT

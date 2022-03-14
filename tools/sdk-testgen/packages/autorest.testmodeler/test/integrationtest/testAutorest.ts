@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
+import * as _ from 'lodash';
 import * as path from 'path';
 import { Helper } from '../../src/util/helper';
 import { exec } from 'child_process';
@@ -77,6 +78,10 @@ async function runSingleTest(swaggerDir: string, rp: string, extraOption: string
     return result;
 }
 
+const extraOptions: Record<string, string[]> = {
+    signalr: ['--testmodeler.add-armtemplate-payload-string'],
+};
+
 describe('Run autorest and compare the output', () => {
     beforeAll(async () => {
         //
@@ -103,7 +108,7 @@ describe('Run autorest and compare the output', () => {
             Helper.deleteFolderRecursive(tempOutputFolder);
             fs.mkdirSync(tempOutputFolder, { recursive: true });
 
-            const test = runSingleTest(swaggerDir, rp, [`--output-folder=${tempOutputFolder}`, '--debug'], outputFolder, tempOutputFolder);
+            const test = runSingleTest(swaggerDir, rp, [`--output-folder=${tempOutputFolder}`, '--debug', ..._.get(extraOptions, rp, [])], outputFolder, tempOutputFolder);
             allTests.push(test);
         }
         if ((process.env['PARALELL_TEST'] || 'false').toLowerCase() === 'true') {

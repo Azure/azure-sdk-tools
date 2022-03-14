@@ -7723,7 +7723,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
               responses:
                 '200':
                   body:
@@ -8027,7 +8027,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -8163,7 +8163,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
               responses:
                 '200':
                   body:
@@ -8553,7 +8553,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
               responses:
                 '202':
                   headers: &ref_1298
@@ -8822,7 +8822,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
               responses:
                 '200':
                   body:
@@ -9160,7 +9160,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
               responses:
                 '200':
                   body:
@@ -9397,7 +9397,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
               responses:
                 '200':
                   body:
@@ -9609,7 +9609,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
               responses:
                 '200': {}
         language:
@@ -9785,7 +9785,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
               responses:
                 '200':
                   body:
@@ -10005,7 +10005,7 @@ operationGroups:
                   type: Microsoft.AppPlatform/Spring
                 location: eastus
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
               responses:
                 '200':
                   body:
@@ -10183,7 +10183,7 @@ operationGroups:
               parameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
               responses:
                 '200':
                   body:
@@ -10422,7 +10422,7 @@ operationGroups:
                 api-version: 2020-11-01-preview
                 resourceGroupName: myResourceGroup
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
               responses:
                 '200':
                   body:
@@ -10694,7 +10694,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
               responses:
                 '200':
                   body:
@@ -10958,7 +10958,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
               responses:
                 '200':
                   body:
@@ -11283,7 +11283,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
               responses:
                 '200':
                   body:
@@ -11611,7 +11611,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
               responses:
                 '200':
                   body:
@@ -11893,7 +11893,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
               responses:
                 '200':
                   body:
@@ -12153,7 +12153,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
               responses:
                 '200':
                   body:
@@ -12473,7 +12473,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
               responses:
                 '200':
                   body:
@@ -12827,7 +12827,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
               responses:
                 '200':
                   body:
@@ -13126,7 +13126,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -13494,7 +13494,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -13790,7 +13790,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
               responses:
                 '200':
                   body:
@@ -14102,7 +14102,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
               responses:
                 '200':
                   body:
@@ -14364,7 +14364,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_GetResourceUploadUrl.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_GetResourceUploadUrl.json
               responses:
                 '200':
                   body:
@@ -14617,7 +14617,7 @@ operationGroups:
                 subscriptionId: 00000000-0000-0000-0000-000000000000
                 validatePayload:
                   name: mydomain.io
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
               responses:
                 '200':
                   body:
@@ -14881,7 +14881,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
               responses:
                 '200':
                   body:
@@ -15203,7 +15203,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -15568,7 +15568,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -15873,7 +15873,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
               responses:
                 '200':
                   body:
@@ -16189,7 +16189,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
               responses:
                 '200':
                   body:
@@ -16459,7 +16459,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
               responses:
                 '200':
                   body:
@@ -16759,7 +16759,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -17109,7 +17109,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -17335,7 +17335,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
               responses:
                 '200':
                   body:
@@ -17625,7 +17625,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
               responses:
                 '200':
                   body:
@@ -17932,7 +17932,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -18270,7 +18270,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -18570,7 +18570,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
               responses:
                 '200':
                   body:
@@ -18868,7 +18868,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
               responses:
                 '200':
                   body:
@@ -19148,7 +19148,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
               responses:
                 '200':
                   body:
@@ -19492,7 +19492,7 @@ operationGroups:
                   capacity: 1
                   tier: Standard
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -19896,7 +19896,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -20200,7 +20200,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
               responses:
                 '200':
                   body:
@@ -20580,7 +20580,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
               responses:
                 '200':
                   body:
@@ -20852,7 +20852,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
               responses:
                 '200':
                   body:
@@ -21128,7 +21128,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
               responses:
                 '200': {}
                 '202':
@@ -21398,7 +21398,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
               responses:
                 '200': {}
                 '202':
@@ -21668,7 +21668,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
               responses:
                 '200': {}
                 '202':
@@ -21942,7 +21942,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_GetLogFileUrl.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_GetLogFileUrl.json
               responses:
                 '200':
                   body:
@@ -22133,7 +22133,7 @@ operationGroups:
             Operations_List:
               parameters:
                 api-version: 2020-11-01-preview
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
               responses:
                 '200':
                   body:
@@ -22340,7 +22340,7 @@ operationGroups:
             RuntimeVersions_ListRuntimeVersions:
               parameters:
                 api-version: 2020-11-01-preview
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
               responses:
                 '200':
                   body:
@@ -22538,7 +22538,7 @@ operationGroups:
               parameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
               responses:
                 '200':
                   body:
@@ -31128,11 +31128,6 @@ testModel:
                     $Result = Remove-AzDnsRecordSet -RecordSet $RecordSet
                     $Result
                   timeout: PT1H
-          armTemplatePayloadString: >-
-            {"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","parameters":{"utcValue":{"type":"string","defaultValue":"[utcNow()]"},"userAssignedIdentity":{"type":"string","defaultValue":"$(userAssignedIdentity)"}},"resources":[{"type":"Microsoft.Resources/deploymentScripts","apiVersion":"2020-10-01","name":"delete_cname_record","location":"[resourceGroup().location]","kind":"AzurePowerShell","identity":{"type":"UserAssigned","userAssignedIdentities":{"[parameters('userAssignedIdentity')]":{}}},"properties":{"forceUpdateTag":"[parameters('utcValue')]","scriptContent":"$resourceGroupName
-            = ${Env:resourceGroupName}\n$dnsCNAME = ${Env:dnsCname}\n$dnsZoneName = ${Env:dnsZoneName}\n\nConnect-AzAccount -Identity\n\n$RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName
-            -ZoneName $dnsZoneName\n$Result = Remove-AzDnsRecordSet -RecordSet
-            $RecordSet\n$Result","environmentVariables":[{"name":"resourceGroupName","value":"$(dnsResourceGroup)"},{"name":"dnsCname","value":"asc"},{"name":"dnsZoneName","value":"$(customDomainName)"}],"timeout":"PT1H","cleanupPreference":"OnSuccess","retentionInterval":"P1D","azPowerShellVersion":"6.2"}}]}
           isCleanUpStep: true
           outputVariables: {}
           requiredVariables: []
@@ -31142,6 +31137,7 @@ testModel:
           variables:
             resourceGroupName: $(dnsResourceGroup)
             subscriptionId: $(dnsSubscriptionId)
+      outputVariableNames: []
       prepareSteps:
         - &ref_1703
           type: armTemplateDeployment
@@ -31160,9 +31156,6 @@ testModel:
             resources: []
             variables:
               serviceNameLong: '[concat(parameters(''serviceNamePrefix''), uniqueString(resourceGroup().id))]'
-          armTemplatePayloadString: >-
-            {"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","parameters":{"serviceNamePrefix":{"type":"string","defaultValue":"asc-"}},"variables":{"serviceNameLong":"[concat(parameters('serviceNamePrefix'),
-            uniqueString(resourceGroup().id))]"},"resources":[],"outputs":{"serviceName":{"type":"string","value":"[substring(variables('serviceNameLong'), 0, 12)]"}}}
           isPrepareStep: true
           outputVariables: {}
           requiredVariables: []
@@ -31197,11 +31190,6 @@ testModel:
                   Flow_Type: Redfield
                   Request_Source: CustomDeployment
                 tags: {}
-          armTemplatePayloadString: >-
-            {"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","parameters":{"name":{"type":"string","defaultValue":"asc-api-ai-instance","metadata":{"description":"Name
-            of Application Insights
-            resource."}}},"resources":[{"name":"[parameters('name')]","type":"microsoft.insights/components","location":"eastus","tags":{},"apiVersion":"2014-04-01","properties":{"ApplicationId":"[parameters('name')]","Application_Type":"web","Flow_Type":"Redfield","Request_Source":"CustomDeployment"}}],"outputs":{"insightsInstrumentationKey":{"value":"[reference(resourceId('Microsoft.Insights/components',
-            parameters('name')), '2014-04-01').InstrumentationKey]","type":"string"}}}
           isPrepareStep: true
           outputVariables: {}
           requiredVariables: []
@@ -31260,12 +31248,6 @@ testModel:
                     $RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName $dnsZoneName
                     $RecordSet
                   timeout: PT1H
-          armTemplatePayloadString: >-
-            {"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","parameters":{"utcValue":{"type":"string","defaultValue":"[utcNow()]"},"userAssignedIdentity":{"type":"string","defaultValue":"$(userAssignedIdentity)"}},"resources":[{"type":"Microsoft.Resources/deploymentScripts","apiVersion":"2020-10-01","name":"Add_Dns_Cname_Record","location":"[resourceGroup().location]","kind":"AzurePowerShell","identity":{"type":"UserAssigned","userAssignedIdentities":{"[parameters('userAssignedIdentity')]":{}}},"properties":{"forceUpdateTag":"[parameters('utcValue')]","scriptContent":"#
-            Copyright (c) 2021 Microsoft Corporation\n# \n# This software is released under the MIT License.\n# https://opensource.org/licenses/MIT\n$resourceGroupName = ${Env:resourceGroupName}\n$dnsCname = ${Env:dnsCname}\n$dnsZoneName =
-            ${Env:dnsZoneName}\n$dnsCnameAlias = ${Env:dnsCnameAlias}\nConnect-AzAccount -Identity\nNew-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ZoneName $dnsZoneName -ResourceGroupName $resourceGroupName -Ttl 3600 -DnsRecords
-            (New-AzDnsRecordConfig -Cname $dnsCnameAlias) -Overwrite\n$RecordSet = Get-AzDnsRecordSet -Name $dnsCname -RecordType CNAME -ResourceGroupName $resourceGroupName -ZoneName
-            $dnsZoneName\n$RecordSet","environmentVariables":[{"name":"resourceGroupName","value":"$(dnsResourceGroup)"},{"name":"dnsZoneName","value":"$(customDomainName)"},{"name":"dnsCname","value":"asc"},{"name":"dnsCnameAlias","value":"$(serviceName).azuremicroservices.io"}],"timeout":"PT1H","cleanupPreference":"OnSuccess","retentionInterval":"P1D","azPowerShellVersion":"6.2"}}]}
           isPrepareStep: true
           outputVariables: {}
           requiredVariables: []
@@ -37034,13 +37016,6 @@ testModel:
                       retentionInterval: P1D
                       scriptContent: "$uploadUri = ${Env:uploadUrl}\n$blobUri = ${Env:blobUrl}\n$localFilePath = '/tmp/temp.file'\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\n\t$DownLoadTask\n}\n\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\n\t$UploadTask\n}\n\nConnect-AzAccount -Identity\nDownloadJarFromBlob $blobUri $localFilePath\nUploadToFileShare $uploadUri $localFilePath"
                       timeout: PT1H
-              armTemplatePayloadString: >-
-                {"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","parameters":{"utcValue":{"type":"string","defaultValue":"[utcNow()]"},"userAssignedIdentity":{"type":"string","defaultValue":"$(userAssignedIdentity)"}},"resources":[{"type":"Microsoft.Resources/deploymentScripts","apiVersion":"2020-10-01","name":"Upload_File","location":"[resourceGroup().location]","kind":"AzurePowerShell","identity":{"type":"UserAssigned","userAssignedIdentities":{"[parameters('userAssignedIdentity')]":{}}},"properties":{"forceUpdateTag":"[parameters('utcValue')]","scriptContent":"$uploadUri
-                = ${Env:uploadUrl}\n$blobUri = ${Env:blobUrl}\n$localFilePath = '/tmp/temp.file'\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\n\t$BlobFile =
-                [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\n\t$DownLoadTask\n}\n\nfunction UploadToFileShare([string]$uploadUri,
-                [string]$localFilePath) {\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\n\t$UploadTask\n}\n\nConnect-AzAccount
-                -Identity\nDownloadJarFromBlob $blobUri $localFilePath\nUploadToFileShare $uploadUri
-                $localFilePath","environmentVariables":[{"name":"uploadUrl","secureValue":"$(uploadUrl)"},{"name":"blobUrl","secureValue":"$(blobUrl)"}],"timeout":"PT1H","cleanupPreference":"OnSuccess","retentionInterval":"P1D","azPowerShellVersion":"6.2"}}]}
               outputVariables: {}
               requiredVariables: []
               requiredVariablesDefault: {}

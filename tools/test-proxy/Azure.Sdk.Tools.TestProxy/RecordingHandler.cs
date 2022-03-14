@@ -259,7 +259,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody.ToArray();
         }
 
-        private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
+        public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
             var upstreamRequest = new HttpRequestMessage();
             upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
@@ -270,6 +270,13 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 IEnumerable<string> values = header.Value;
 
+                // can't handle PROXY_CONNECTION right now.
+                if (s_excludedRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // handle duplicates.
                 if (upstreamRequest.Headers.Contains(header.Key))
                 {
                     continue;

@@ -564,6 +564,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var entry = await RecordingHandler.CreateEntryAsync(request);
             Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
         }
+
+
+        [Theory]
+        [InlineData(new string[] { "hello" })]
+        public async Task TestCreateUpstreamRequestIncludesExpectedHeaders(string[] incomingHeaders)
+        {
+
+        }
+
     }
 
     internal class MockHttpHandler : HttpMessageHandler

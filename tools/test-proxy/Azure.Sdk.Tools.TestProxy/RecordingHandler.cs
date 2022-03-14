@@ -270,6 +270,11 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 IEnumerable<string> values = header.Value;
 
+                if (upstreamRequest.Headers.Contains(header.Key))
+                {
+                    continue;
+                }
+
                 if (!header.Key.StartsWith("x-recording"))
                 {
                     if (upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values))

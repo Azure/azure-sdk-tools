@@ -50,6 +50,8 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly string[] s_contentRequestHeaders = new string[] {
             "Content-Length",
             "Content-Type",
+            "Content-Encoding",
+            "Content-MD5"
         };
 
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
@@ -276,28 +278,20 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 IEnumerable<string> values = header.Value;
 
-                if (s_excludedRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                if (!header.Key.StartsWith("x-recording"))
                 {
-                    continue;
-                }
+                    if (upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values))
+                    {
+                        continue;
+                    }
 
-                try
-                {
-                    if (s_contentRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
+                        throw new HttpException(
+                            HttpStatusCode.InternalServerError,
+                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
+                        );
                     }
-                    else
-                    {
-                        if (!header.Key.StartsWith("x-recording"))
-                        {
-                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignore
                 }
             }
 

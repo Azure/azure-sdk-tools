@@ -276,12 +276,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     continue;
                 }
 
-                // handle duplicates.
-                if (upstreamRequest.Headers.Contains(header.Key))
-                {
-                    continue;
-                }
-
                 if (!header.Key.StartsWith("x-recording"))
                 {
                     if (upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values))

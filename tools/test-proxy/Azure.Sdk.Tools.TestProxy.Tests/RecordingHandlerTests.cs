@@ -600,7 +600,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("Content-Encoding:utf-8", "x-ms-version:2019-02-02", "RequestMethod:POST", "Content-Length:50")]
         public void TestCreateUpstreamRequestIncludesExpectedHeaders(params string[] incomingHeaders)
         {
-            var requestContext = _generateHttpRequestContext(incomingHeaders);
+            var requestContext = GenerateHttpRequestContext(incomingHeaders);
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var upstreamRequestContext = GenerateHttpRequestContext(incomingHeaders);
 

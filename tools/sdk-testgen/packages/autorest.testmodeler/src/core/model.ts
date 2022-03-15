@@ -434,7 +434,7 @@ export class TestCodeModeler {
             }
         }
         if (this.testConfig.getValue(Config.addArmTemplatePayloadString) && stepModel.armTemplatePayload) {
-            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload);
+            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload, null, '  ');
         }
     }
 

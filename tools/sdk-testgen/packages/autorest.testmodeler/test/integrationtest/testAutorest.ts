@@ -1,6 +1,6 @@
+import * as _ from 'lodash';
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as _ from 'lodash';
 import * as path from 'path';
 import { Helper } from '../../src/util/helper';
 import { exec } from 'child_process';

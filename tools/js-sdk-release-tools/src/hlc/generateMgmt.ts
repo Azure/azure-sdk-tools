@@ -105,10 +105,12 @@ export async function generateMgmt(options: {
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
                     }
-                    const newPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
-                    const newVersion = newPackageJson['version'];
-                    outputPackageInfo['version'] = newVersion;
                 }
+                
+                const newPackageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
+                const newVersion = newPackageJson['version'];
+                outputPackageInfo['version'] = newVersion;
+                
                 if (options.runningEnvironment === RunningEnvironment.SdkGeneration) {
                     outputPackageInfo.packageFolder = changedPackageDirectory;
                 }

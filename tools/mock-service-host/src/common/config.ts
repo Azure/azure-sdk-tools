@@ -16,6 +16,7 @@ export interface Config {
     specRetrievalGitAuthToken: string
     specRetrievalRefreshIntervalMilliseconds: number
     validationPathsPattern: string[]
+    excludedValidationPathsPattern: string[]
     enableExampleGeneration: boolean
     exampleGenerationFolder: string
     cascadeEnabled: boolean

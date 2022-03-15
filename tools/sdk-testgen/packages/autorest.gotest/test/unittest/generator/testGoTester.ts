@@ -9,6 +9,7 @@ import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generato
 import { MockTool } from '../../tools';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
+import { configDefaults } from '../../../src/common/constant';
 import { processRequest } from '../../../src/generator/goTester';
 
 describe('processRequest of go-tester', () => {
@@ -163,12 +164,18 @@ describe('GoTestGenerator from RP agrifood', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
         const codeModel = MockTool.createCodeModel();
-        testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-            testmodeler: {
-                'split-parents-value': true,
-            },
-        });
-        testCodeModel.genMockTests();
+        testCodeModel = TestCodeModeler.createInstance(
+            codeModel as TestCodeModel,
+            new TestConfig(
+                {
+                    testmodeler: {
+                        'split-parents-value': true,
+                    },
+                },
+                configDefaults,
+            ),
+        );
+        testCodeModel.genMockTests(undefined);
     });
 
     afterEach(() => {
@@ -181,7 +188,7 @@ describe('GoTestGenerator from RP agrifood', () => {
             outputs[filename] = output;
         });
 
-        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}, configDefaults));
         const mockTestDataRender = new MockTestDataRender(context);
         mockTestDataRender.renderData();
         const mockTestCodeGenerator = new MockTestCodeGenerator(context);
@@ -213,26 +220,37 @@ describe('GoTestGenerator from RP agrifood', () => {
 describe('GoTestGenerator from RP signalR', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
-        const codeModel = MockTool.loadCodeModel('signalR/test-modeler-pre.yaml');
-        const swaggerFolder = path.join(__dirname, '..', '..', 'swagger/specification/signalr/resource-manager/');
-        testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-            __parents: {
-                'Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
-                    ? `file:///${swaggerFolder}`
-                    : `file://${swaggerFolder}`,
-            },
-            'input-file': ['Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json'],
-            'test-resources': [
+        const codeModel = MockTool.loadCodeModel('signalR/test-modeler.yaml');
+        const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
+        testCodeModel = TestCodeModeler.createInstance(
+            codeModel as TestCodeModel,
+            new TestConfig(
                 {
-                    test: 'Microsoft.SignalRService/preview/2020-07-01-preview/test-scenarios/signalR.yaml',
+                    __parents: {
+                        'Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
+                            ? `file:///${swaggerFolder}`
+                            : `file://${swaggerFolder}`,
+                    },
+                    'input-file': ['Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json'],
+                    'test-resources': [
+                        {
+                            test: 'Microsoft.SignalRService/preview/2021-06-01-preview/scenarios/signalR.yaml',
+                        },
+                    ],
+                    testmodeler: {
+                        'split-parents-value': true,
+                    },
                 },
-            ],
-            testmodeler: {
-                'split-parents-value': true,
-            },
-        });
-        testCodeModel.genMockTests();
-        await testCodeModel.loadTestResources();
+                configDefaults,
+            ),
+        );
+        if (!process.platform.toLowerCase().startsWith('win')) {
+            for (const scenarios of testCodeModel.codeModel.testModel.scenarioTests || []) {
+                if (scenarios._filePath) {
+                    scenarios._filePath = scenarios._filePath.split('\\').join('/');
+                }
+            }
+        }
     });
 
     afterEach(() => {
@@ -245,7 +263,7 @@ describe('GoTestGenerator from RP signalR', () => {
             outputs[filename] = output;
         });
 
-        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}, configDefaults));
         const mockTestDataRender = new MockTestDataRender(context);
         mockTestDataRender.renderData();
         const scenarioTestDataRender = new ScenarioTestDataRender(context);
@@ -253,7 +271,7 @@ describe('GoTestGenerator from RP signalR', () => {
         const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
         scenarioTestCodeGenerator.generateCode({});
 
-        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length);
+        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length + 1);
         expect(outputs).toMatchSnapshot();
     });
 });

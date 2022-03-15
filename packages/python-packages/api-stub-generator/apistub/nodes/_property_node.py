@@ -21,7 +21,7 @@ class PropertyNode(NodeEntityBase):
     def _inspect(self):
         """Identify property name, type and readonly property
         """
-        if getattr(self.obj, "fset"):
+        if getattr(self.obj, "fset", None):
             self.read_only = False
 
         if hasattr(self.obj, "fget"):
@@ -41,7 +41,7 @@ class PropertyNode(NodeEntityBase):
                         self.type = docstring_parser.ret_type
                 except:
                     self.errors.append("Failed to find type of property {}".format(self.name))
-                    
+
         self.display_name = "{0}: {1}".format(self.name, self.type)
         if self.read_only:
             self.display_name += "   # Read-only"
@@ -57,7 +57,7 @@ class PropertyNode(NodeEntityBase):
         apiview.add_text(self.namespace_id, self.name)
         apiview.add_punctuation(":")
         apiview.add_space()
-        apiview.add_type(self.type)  # todo Pass navigation ID if it is internal type
+        apiview.add_type(self.type)  # TODO: Pass navigation ID if it is internal type
         if self.read_only:
             apiview.add_whitespace()
             apiview.add_literal("# Read-only")

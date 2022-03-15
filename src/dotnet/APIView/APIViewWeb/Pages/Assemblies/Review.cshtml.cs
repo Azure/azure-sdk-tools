@@ -8,7 +8,6 @@ using APIView;
 using APIView.DIff;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using APIViewWeb.Respositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -27,16 +26,21 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly NotificationManager _notificationManager;
 
+        private readonly UserPreferenceCache _preferenceCache;
+
         public ReviewPageModel(
             ReviewManager manager,
             BlobCodeFileRepository codeFileRepository,
             CommentsManager commentsManager,
-            NotificationManager notificationManager)
+            NotificationManager notificationManager,
+            UserPreferenceCache preferenceCache)
         {
             _manager = manager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
+            _preferenceCache = preferenceCache;
+
         }
 
         public ReviewModel Review { get; set; }
@@ -66,6 +70,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
+
+        public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
@@ -115,7 +121,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
             TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
-
+            var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
+            ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
             return Page();
         }
 
@@ -239,9 +246,10 @@ namespace APIViewWeb.Pages.Assemblies
             await _manager.ToggleApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
-        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null)
+        public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDocumentation = null, bool? showDiffOnly = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
+            routingData["revisionId"] = revisionId;
             routingData["diffRevisionId"] = diffRevisionId;
             routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();

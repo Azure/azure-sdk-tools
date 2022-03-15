@@ -1,8 +1,7 @@
 import * as Constants from 'oav/dist/lib/util/constants'
-import * as lodash from 'lodash'
 import * as oav from 'oav'
 import * as path from 'path'
-import { AzureExtensions, LRO_CALLBACK } from '../common/constants'
+import { AzureExtensions, Headers, LRO_CALLBACK } from '../common/constants'
 import { Config } from '../common/config'
 import {
     HasChildResource,
@@ -10,11 +9,12 @@ import {
     IntentionalError,
     LroCallbackNotFound,
     NoParentResource,
-    NoResponse,
     ResourceNotFound,
-    ValidationFail
+    ValidationFail,
+    WrongExampleResponse
 } from '../common/errors'
 import { InjectableTypes } from '../lib/injectableTypes'
+import { LiveValidationError } from 'oav/dist/lib/models'
 import { OperationMatch, OperationSearcher } from 'oav/dist/lib/liveValidation/operationSearcher'
 import { ResourcePool } from './resource'
 import { ResponseGenerator } from './responser'
@@ -25,11 +25,13 @@ import {
     getPath,
     getPureUrl,
     isManagementUrlLevel,
+    isNullOrUndefined,
     logger,
     replacePropertyValue
 } from '../common/utils'
 import { get_locations, get_tenants } from './specials'
 import { inject, injectable } from 'inversify'
+import _ from 'lodash'
 
 export enum ValidatorStatus {
     NotInitialized = 'Validator not initialized',
@@ -56,18 +58,29 @@ export class Coordinator {
         this.resourcePool = new ResourcePool(this.config.cascadeEnabled)
     }
 
-    private findResponse(responses: Record<string, any>, status: number): [number, any] {
-        let nearest = undefined
-        for (const code in responses) {
-            if (
-                nearest === undefined ||
-                Math.abs(nearest - status) > Math.abs(parseInt(code) - status)
-            ) {
-                nearest = parseInt(code)
+    private findResponse(
+        responses: Record<string, any>,
+        status: number,
+        exactly = true
+    ): [number, any] | undefined {
+        if (exactly) {
+            for (const code in responses) {
+                if (status.toString() === code) {
+                    return [status, _.cloneDeep(responses[status.toString()].body)]
+                }
             }
+        } else {
+            let nearest = undefined
+            for (const code in responses) {
+                if (
+                    nearest === undefined ||
+                    Math.abs(nearest - status) > Math.abs(parseInt(code) - status)
+                ) {
+                    nearest = parseInt(code)
+                }
+            }
+            if (nearest) return [nearest, _.cloneDeep(responses[nearest.toString()].body)]
         }
-        if (nearest) return [nearest, responses[nearest.toString()].body]
-        throw new NoResponse(status.toString())
     }
 
     private search(
@@ -126,6 +139,7 @@ export class Coordinator {
                 shouldClone: false
             },
             swaggerPathsPattern: this.config.validationPathsPattern,
+            excludedSwaggerPathsPattern: this.config.excludedValidationPathsPattern,
             directory: path.resolve(this.config.specRetrievalLocalRelativePath),
             isPathCaseSensitive: false
         }
@@ -140,7 +154,7 @@ export class Coordinator {
         req: VirtualServerRequest,
         res: VirtualServerResponse,
         profile: Record<string, any>
-    ): Promise<void> {
+    ) {
         const fullUrl = req.protocol + '://' + req.headers?.host + req.url
         const liveRequest = {
             url: fullUrl,
@@ -194,7 +208,7 @@ export class Coordinator {
     ): Record<string, any> | undefined {
         if (validationRequest.providerNamespace === 'microsoft.unknown') {
             const path = getPath(getPureUrl(req.url))
-            if (path.length === 2) {
+            if (path.length === 2 && path[0].toLowerCase() === 'subscriptions') {
                 // handle "/subscriptions/{subscriptionId}"
                 return {
                     [HttpStatusCode.OK]: {
@@ -279,50 +293,155 @@ export class Coordinator {
                 throw new HasChildResource(req.url)
             }
         } else {
-            const [code, _ret] = this.findResponse(exampleResponses, HttpStatusCode.OK)
-
-            let ret = _ret
-            if (typeof ret === 'object') {
-                if (!Array.isArray(ret)) {
-                    // simplified paging
-                    ret = lodash.omit(ret, 'nextLink')
+            let code, ret
+            // for the lro operaion
+            if (lroCallback !== null || req.query?.[LRO_CALLBACK] === 'true') {
+                if (req.query?.[LRO_CALLBACK] === 'true') {
+                    // lro callback
+                    // if 201 response exist, need to return 200 response
+                    if (this.findResponse(exampleResponses, HttpStatusCode.CREATED)) {
+                        const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                        if (result) {
+                            ;[code, ret] = result
+                            ret = this.setStatusToSuccess(ret)
+                        } else {
+                            // if no 200 response, throw exception
+                            throw new WrongExampleResponse()
+                        }
+                    } else {
+                        // if 202 response exist, need to return 200/204 response
+                        if (this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)) {
+                            const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            if (result) {
+                                ;[code, ret] = result
+                                ret = this.setStatusToSuccess(ret)
+                            } else {
+                                const result = this.findResponse(
+                                    exampleResponses,
+                                    HttpStatusCode.NO_CONTENT
+                                )
+                                if (result) {
+                                    ;[code, ret] = result
+                                    ret = this.setStatusToSuccess(ret)
+                                } else {
+                                    // if no 200/204 response, throw exception
+                                    throw new WrongExampleResponse()
+                                }
+                            }
+                        } else {
+                            // otherwise, need to return 200 response
+                            const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            if (result) {
+                                ;[code, ret] = result
+                                ret = this.setStatusToSuccess(ret)
+                            } else {
+                                // if no 200 response, throw exception
+                                throw new WrongExampleResponse()
+                            }
+                        }
+                    }
+                } else {
+                    // lro first call, try to get 201 first
+                    const result = this.findResponse(exampleResponses, HttpStatusCode.CREATED)
+                    if (result) {
+                        ;[code, ret] = result
+                        this.setAsyncHeader(res, lroCallback)
+                    } else {
+                        // if no 201 response, then try to get 202
+                        const result = this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
+                        if (result) {
+                            ;[code, ret] = result
+                            this.setLocationHeader(res, lroCallback)
+                        } else {
+                            // last, get 200 related response
+                            const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            if (result) {
+                                ;[code, ret] = result
+                                this.setAsyncHeader(res, lroCallback)
+                            } else {
+                                // if no 200 response, throw exception
+                                throw new WrongExampleResponse()
+                            }
+                        }
+                    }
                 }
+            } else {
+                // for normal operation, try to get a response
+                const result = this.findResponse(exampleResponses, HttpStatusCode.OK, false)
+                if (result) {
+                    ;[code, ret] = result
+                } else {
+                    // if no response, throw exception
+                    throw new WrongExampleResponse()
+                }
+            }
+
+            const isExampleResponse = !isNullOrUndefined(req.headers?.[Headers.ExampleId])
+            if (typeof ret === 'object') {
+                // simplified paging
+                // TODO: need to pair to spec to remove only the pager outer nextLink
+                ret = replacePropertyValue('nextLink', null, ret)
 
                 // simplified LRO
                 ret = replacePropertyValue('provisioningState', 'Succeeded', ret)
 
                 //set name
                 const path = getPath(getPureUrl(req.url))
-                ret = replacePropertyValue('name', path[path.length - 1], ret, (v) => {
-                    return typeof v === 'string' && v.match(/^a+$/) !== null
-                })
-            }
-
-            if (code !== HttpStatusCode.OK && code !== HttpStatusCode.NO_CONTENT && code < 300) {
-                res.setHeader('Azure-AsyncOperation', lroCallback)
-                res.setHeader('Retry-After', 1)
-            }
-            if (
-                req.query?.[LRO_CALLBACK] === 'true' &&
-                typeof ret === 'object' &&
-                !Array.isArray(ret)
-            ) {
-                ret.status = 'Succeeded'
+                if (!isExampleResponse) {
+                    ret = replacePropertyValue(
+                        'name',
+                        path[path.length - 1],
+                        ret,
+                        (v) => {
+                            return typeof v === 'string'
+                        },
+                        false
+                    )
+                }
             }
 
             res.set(code, ret)
         }
     }
 
+    private setStatusToSuccess(ret: any) {
+        // set status to succeed to stop polling
+        if (ret) {
+            ret.status = 'Succeeded'
+        } else {
+            ret = { status: 'Succeeded' }
+        }
+        return ret
+    }
+
+    private setAsyncHeader(res: VirtualServerResponse, lroCallback: string | null) {
+        // set Azure-AsyncOperation header
+        res.setHeader('Azure-AsyncOperation', lroCallback)
+        res.setHeader('Retry-After', 0)
+    }
+
+    private setLocationHeader(res: VirtualServerResponse, lroCallback: string | null) {
+        // set location header
+        res.setHeader('Location', lroCallback)
+        res.setHeader('Retry-After', 0)
+    }
+
     async findLROGet(req: VirtualServerRequest): Promise<string> {
         const [uri, query] = `${req.url}&${LRO_CALLBACK}=true`.split('?')
         const uriPath = uri.split('/')
+        const oriLen = uriPath.length
         let firstloop = true
         while (uriPath.length > 0) {
+            // if trackback for two part without found, then throw `no cooresponding get method` error
+            if (oriLen - uriPath.length > 4) {
+                break
+            }
             if (firstloop || uriPath.length % 2 === 1) {
-                const testingUrl = `${req.protocol}://${req.headers?.host}${uriPath.join(
-                    '/'
-                )}?${query}`
+                let hostAndPort = req.headers?.host as string
+                if (hostAndPort.indexOf(':') < 0) {
+                    hostAndPort = `${hostAndPort}:${req.localPort}`
+                }
+                const testingUrl = `${req.protocol}://${hostAndPort}${uriPath.join('/')}?${query}`
                 try {
                     const validationRequest = this.liveValidator.parseValidationRequest(
                         testingUrl,
@@ -332,7 +451,13 @@ export class Coordinator {
                     this.liveValidator.operationSearcher.search(validationRequest)
                     return testingUrl
                 } catch (error) {
-                    // don't has 'GET' verb for this url
+                    if (
+                        error instanceof LiveValidationError &&
+                        error?.code === Constants.ErrorCodes.MultipleOperationsFound.name
+                    ) {
+                        return testingUrl
+                    }
+                    console.info(error) // don't has 'GET' verb for this url
                 }
             }
             uriPath.splice(-1)
@@ -341,7 +466,7 @@ export class Coordinator {
         throw new LroCallbackNotFound(`Lro operation: ${req.method} ${req.url}`)
     }
 
-    async validate(liveRequest: oav.LiveRequest) {
+    private async validate(liveRequest: oav.LiveRequest) {
         return this.liveValidator.validateLiveRequest(liveRequest)
     }
 }

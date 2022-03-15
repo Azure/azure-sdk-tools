@@ -113,6 +113,19 @@ export const configSchema = convict<Config>({
         default: ['/specification/**/resource-manager/**/*.json'],
         env: 'validationPathsPattern'
     },
+    excludedValidationPathsPattern: {
+        doc: 'The pattern which excluded from the validationPathsPattern',
+        format: Array,
+        default: [
+            '**/examples/**/*',
+            '**/quickstart-templates/**/*',
+            '**/schema/**/*',
+            '**/live/**/*',
+            '**/wire-format/**/*',
+            '**/resource-manager/*/*/*/scenarios/**'
+        ],
+        env: 'excludedValidationPathsPattern'
+    },
     enableExampleGeneration: {
         doc: 'If true example files will not be generated along with each REST calling.',
         format: Boolean,

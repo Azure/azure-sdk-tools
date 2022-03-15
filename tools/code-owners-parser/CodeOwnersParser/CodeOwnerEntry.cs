@@ -18,8 +18,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         public const string PRLabelMoniker = "PRLabel";
         public const string ServiceLabelMoniker = "ServiceLabel";
         public const string MissingFolder = "#/<NotInRepo>/";
-
-        private static HttpClient client;
        
         public string PathExpression { get; set; } = "";
 
@@ -139,23 +137,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// </summary>
         public void FilterOutNonUserAliases()
         {
-            InitializeHttpClient();
             Owners.RemoveAll(r => !IsGitHubUserAlias(r));
         }
 
-        /// <summary>
-        /// Initialize singleton HttpClient for Github API calls.
-        /// </summary>
-        private static void InitializeHttpClient()
-        {
-            if (client == null)
-            {
-                client = new HttpClient();
-                client.BaseAddress = new Uri("https://api.github.com/");
-                client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("CodeOwnerRetriever", "1.0"));
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            }
-        }
 
         /// <summary>
         /// Helper method to check if it is valid github alias.
@@ -164,13 +148,15 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// <returns>True if it is a github alias, Otherwise false.</returns>
         private static bool IsGitHubUserAlias(string alias)
         {
-            var userUriStub = $"users/{alias}";
-            var response = client.GetAsync(userUriStub);
-            if (response.Result.IsSuccessStatusCode)
+            // We used to call the github users api but we often got 403 returned
+            // due to rate limiting. So instead we are approximating the check
+            // by check for a slash in the name if there is one then we will consider
+            // it to be a team instead of a users. 
+            if (alias.Contains('/'))
             {
-                return true;
+                return false;
             }
-            return false;
+            return true;
         }
     }
 }

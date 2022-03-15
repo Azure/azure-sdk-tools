@@ -68,17 +68,64 @@
             Build build,
             Timeline timeline)
         {
+            if (build == null)
+            {
+                throw new ArgumentNullException(nameof(build));
+            }
+
+            if (build.Project == null)
+            {
+                throw new ArgumentException("build.Project is null", nameof(build));
+            }
+
+            if (build.Definition == null)
+            {
+                throw new ArgumentException("build.Definition is null", nameof(build));
+            }
+
+            // QueueTime is used in blob paths and cannot be null
+            if (build.QueueTime == null)
+            {
+                throw new ArgumentException("build.QueueTime is null", nameof(build));
+            }
+
+            // FinishTime is used in blob paths and cannot be null
+            if (build.FinishTime == null)
+            {
+                throw new ArgumentException("build.FinishTime is null", nameof(build));
+            }
+
+            // Project name is used in blob paths and cannot be empty
+            if (string.IsNullOrWhiteSpace(build.Project.Name))
+            {
+                throw new ArgumentException("build.Project.Name is null or whitespace", nameof(build));
+            }
+
             await UploadBuildBlobAsync(account, build);
 
             await UploadTestRunBlobsAsync(account, build);
 
-            await UploadTimelineBlobAsync(account, build, timeline);
+            if (timeline == null)
+            {
+                logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+            }
+            else
+            {
+                await UploadTimelineBlobAsync(account, build, timeline);
+            }
 
             var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
-            foreach (var log in logs)
+            if (logs == null)
             {
-                await UploadLogLinesBlobAsync(account, build, log);
+                logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+            }
+            else
+            {
+                foreach (var log in logs)
+                {
+                    await UploadLogLinesBlobAsync(account, build, log);
+                }
             }
         }
 
@@ -98,20 +145,20 @@
                 var content = JsonConvert.SerializeObject(new
                 {
                     OrganizationName = account,
-                    ProjectId = build.Project.Id,
+                    ProjectId = build.Project?.Id,
                     BuildId = build.Id,
-                    DefinitionId = build.Definition.Id,
-                    RepositoryId = build.Repository.Id,
+                    DefinitionId = build.Definition?.Id,
+                    RepositoryId = build.Repository?.Id,
                     BuildNumber = build.BuildNumber,
                     BuildNumberRevision = build.BuildNumberRevision,
-                    DefinitionName = build.Definition.Name,
-                    DefinitionPath = build.Definition.Path,
-                    DefinitionProjectId = build.Definition.Project.Id,
-                    DefinitionProjectName = build.Definition.Project.Name,
-                    DefinitionProjectRevision = build.Definition.Project.Revision,
-                    DefinitionProjectState = build.Definition.Project.State,
-                    DefinitionRevision = build.Definition.Revision,
-                    DefinitionType = build.Definition.Type,
+                    DefinitionName = build.Definition?.Name,
+                    DefinitionPath = build.Definition?.Path,
+                    DefinitionProjectId = build.Definition?.Project?.Id,
+                    DefinitionProjectName = build.Definition?.Project?.Name,
+                    DefinitionProjectRevision = build.Definition?.Project?.Revision,
+                    DefinitionProjectState = build.Definition?.Project?.State,
+                    DefinitionRevision = build.Definition?.Revision,
+                    DefinitionType = build.Definition?.Type,
                     QueueTime = build.QueueTime,
                     StartTime = build.StartTime,
                     FinishTime = build.FinishTime,
@@ -125,7 +172,7 @@
                     LogsType = build.Logs?.Type,
                     OrchestrationPlanId = build.OrchestrationPlan?.PlanId,
                     Parameters = build.Parameters,
-                    PlanId = build.Plans.FirstOrDefault()?.PlanId,
+                    PlanId = build.Plans?.FirstOrDefault()?.PlanId,
                     Priority = build.Priority,
                     ProjectName = build.Project?.Name,
                     ProjectRevision = build.Project?.Revision,
@@ -174,19 +221,18 @@
         {
             try
             {
-                var blobPath =
-                    $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                if (timeline.Records == null)
+                {
+                    this.logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
+                    return;
+                }
+
+                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
                 var blobClient = this.buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
                     this.logger.LogInformation("Skipping existing timeline for build {BuildId}, change {ChangeId}", build.Id, timeline.ChangeId);
-                    return;
-                }
-
-                if (timeline.Records == null)
-                {
-                    this.logger.LogInformation("Skipping timeline with null Records property for build {BuildId}", build.Id);
                     return;
                 }
 
@@ -197,10 +243,14 @@
                         new
                         {
                             OrganizationName = account,
-                            ProjectId = build.Project.Id,
+                            ProjectId = build.Project?.Id,
+                            ProjectName = build.Project?.Name,
+                            BuildDefinitionId = build.Definition?.Id,
+                            BuildDefinitionPath = build.Definition?.Path,
+                            BuildDefinitionName = build.Definition?.Name,
                             BuildId = build.Id,
                             BuildTimelineId = timeline.Id,
-                            RepositoryId = build.Repository.Id,
+                            RepositoryId = build.Repository?.Id,
                             RecordId = record.Id,
                             ParentId = record.ParentId,
                             ChangeId = timeline.ChangeId,
@@ -247,77 +297,70 @@
 
         private async Task UploadLogLinesBlobAsync(string account, Build build, BuildLog log)
         {
-            // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries
-            var blobPath = $"{build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}-{log.Id}.jsonl";
-            var blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
-
-            if (await blobClient.ExistsAsync())
-            {
-                this.logger.LogInformation("Skipping existing log {LogId} for build {BuildId}", log.Id, build.Id);
-                return;
-            }
-
-            var tempFile = Path.GetTempFileName();
-
             try
             {
-                await using (var messagesWriter = new StreamWriter(File.OpenWrite(tempFile)))
+                // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries.
+                // i.e.  logs with a given buildid/logid are immutable and retries only add new logs.
+                var blobPath = $"{build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}-{log.Id}.jsonl";
+                var blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
                 {
-                    var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
-                    var lastTimeStamp = log.CreatedOn;
-
-                    for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
-                    {
-                        var line = logLines[lineNumber - 1];
-                        var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-                        var timestamp = match.Success
-                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                            : lastTimeStamp;
-
-                        var message = match.Success ? match.Groups[2].Value : line;
-
-                        if (timestamp == null)
-                        {
-                            throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
-                        }
-
-                        await messagesWriter.WriteLineAsync(JsonConvert.SerializeObject(
-                            new
-                            {
-                                OrganizationName = account,
-                                ProjectId = build.Project.Id,
-                                BuildId = build.Id,
-                                BuildDefinitionId = build.Definition.Id,
-                                LogId = log.Id,
-                                LineNumber = lineNumber,
-                                Length = message.Length,
-                                Timestamp = timestamp?.ToString(TimeFormat),
-                                Message = message,
-                                EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
-                            }, jsonSettings));
-
-                        lastTimeStamp = timestamp;
-                    }
+                    this.logger.LogInformation("Skipping existing log {LogId} for build {BuildId}", log.Id, build.Id);
+                    return;
                 }
 
-                await blobClient.UploadAsync(tempFile);
+                var messagesWriter = new StringBuilder();
+                var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
+                var lastTimeStamp = log.CreatedOn;
+
+                for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
+                {
+                    var line = logLines[lineNumber - 1];
+                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+                    var timestamp = match.Success
+                        ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
+                            System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                        : lastTimeStamp;
+
+                    var message = match.Success ? match.Groups[2].Value : line;
+
+                    if (timestamp == null)
+                    {
+                        throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
+                    }
+
+                    messagesWriter.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project?.Id,
+                            ProjectName = build.Project?.Name,
+                            BuildDefinitionId = build.Definition?.Id,
+                            BuildDefinitionPath = build.Definition?.Path,
+                            BuildDefinitionName = build.Definition?.Name,
+                            BuildId = build.Id,
+                            LogId = log.Id,
+                            LineNumber = lineNumber,
+                            Length = message.Length,
+                            Timestamp = timestamp?.ToString(TimeFormat),
+                            Message = message,
+                            EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
+                        }, jsonSettings));
+
+                    lastTimeStamp = timestamp;
+                }
+
+                await blobClient.UploadAsync(new BinaryData(messagesWriter.ToString()));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing blob for log {LogId} for build {BuildId}", log.Id, build.Id);
+                this.logger.LogInformation("Ignoring exception from existing blob for log {LogId} for build {BuildId}", log?.Id, build?.Id);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing log {LogId} for build {BuildId}", log.Id, build.Id);
+                this.logger.LogError(ex, "Error processing log {LogId} for build {BuildId}", log?.Id, build?.Id);
                 throw;
-            }
-            finally
-            {
-                if (File.Exists(tempFile))
-                {
-                    File.Delete(tempFile);
-                }
             }
         }
 
@@ -373,9 +416,12 @@
                 var content = JsonConvert.SerializeObject(new
                 {
                     OrganizationName = account,
-                    ProjectId = build.Project.Id,
+                    ProjectId = build.Project?.Id,
+                    ProjectName = build.Project?.Name,
+                    BuildDefinitionId = build.Definition?.Id,
+                    BuildDefinitionPath = build.Definition?.Path,
+                    BuildDefinitionName = build.Definition?.Name,
                     BuildId = build.Id,
-                    BuildDefinitionId = build.Definition.Id,
                     TestRunId = testRun.Id,
                     Title = testRun.Name,
                     StartedDate = testRun.StartedDate,
@@ -419,6 +465,5 @@
                 throw;
             }
         }
-
     }
 }

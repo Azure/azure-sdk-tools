@@ -49,7 +49,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0006 = new DiagnosticDescriptor(
             nameof(AZC0006),
             "DO provide constructor overloads that allow specifying additional options.",
-            "Client type should have public constructor with equivalent parameters taking a ClientOptions type as last argument",
+            "A client type should have a public constructor with equivalent parameters that takes a Azure.Core.ClientOptions-derived type as the last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-overloads"
         );
@@ -57,7 +57,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0007 = new DiagnosticDescriptor(
             nameof(AZC0007),
             "DO provide a minimal constructor that takes only the parameters required to connect to the service.",
-            "Client type should have public constructor with equivalent parameters not taking ClientOptions type as last argument",
+            "A client type should have a public constructor with equivalent parameters that doesn't take a Azure.Core.ClientOptions-derived type as the last argument",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal"
         );

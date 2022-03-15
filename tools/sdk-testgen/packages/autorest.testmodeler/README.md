@@ -7,7 +7,7 @@ https://github.com/Azure/azure-rest-api-specs
 ## How to Generate Test Model
 
 ```
-autorest --version=3.6.2 --use=<test model extension> --output-folder=<RP package path> --testmodeler.export-codemodel --clear-output-folder=false --debug <RP config md file path>
+autorest --version=3.7.3 --use=<test model extension> --output-folder=<RP package path> --testmodeler.export-codemodel --clear-output-folder=false --debug <RP config md file path>
 ```
 
 ## Configurations
@@ -20,7 +20,11 @@ Generate modeler files in [output-foler]/\_\_debuger for debug purpose.
 
 ### --testmodeler.mock.send-example-id
 
-In generated mock test, send swagger example-id to mock service host in each request. This implicitly ask the mock service host to verify request body by swagger example content.
+In generated mock test, send swagger example-id to mock service host in each request. This implicitly ask the mock service host to verify request body by swagger example content. Default true.
+
+### --testmodeler.mock.verify-response
+
+In generated mock test, response value will be verified with the example files. Default true.
 
 ### --testmodeler.mock.disabled-examples
 
@@ -46,6 +50,22 @@ testmodeler:
             location: eastus
 ```
 
+### --testmodeler.scenario.codemodel-restcall-only
+
+If there is no 'test-resources' defined in readme file and the readme is located in local file system, testmodeler will search all available api-scenario and try to load them as test scenario.
+In this context, option codemodel-restcall-only defined whether testmodeler abandon api-scenarios who contains restcall steps that can't be linked to an operation in codemodel.
+
+The default value of this option is true.
+
+### --testmodeler.use-example-model
+
+This options switch whether ExampleModel in generated in test model. While default to be true, it can be disabled like below:
+```
+testmodeler:
+    use-example-model: false
+```
+
+
 ## Autorest Pipeline Configurations
 
 ```yaml
@@ -55,10 +75,10 @@ try-require:
     - ./readme.test.md
     - ./readme.testmodeler.md
 
-version: 3.6.2
+version: 3.7.3
 
 use-extension:
-  "@autorest/modelerfour" : "4.21.1"
+  "@autorest/modelerfour" : "4.22.3"
 
 pipeline:
     test-modeler:

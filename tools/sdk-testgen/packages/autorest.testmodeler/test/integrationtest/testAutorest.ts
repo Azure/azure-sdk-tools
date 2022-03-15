@@ -23,7 +23,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.6.2 --use=' +
+        ' --version=3.7.3 --use=' +
         path.join(`${__dirname}`, '..', '..') +
         ' ' +
         readmePath +
@@ -88,13 +88,13 @@ describe('Run autorest and compare the output', () => {
 
     it('', async () => {
         jest.setTimeout(8 * 60 * 60 * 1000);
-        const swaggerDir = path.join(`${__dirname}`, '../swagger');
+        const swaggerDir = path.join(`${__dirname}`, '../../../../swagger');
         const outputDir = path.join(`${__dirname}`, 'output');
         const tempoutputDir = path.join(`${__dirname}`, 'tempoutput');
 
         let finalResult = true;
         const allTests: Array<Promise<boolean>> = [];
-        for (const rp of ['compute']) {
+        for (const rp of ['appplatform', 'compute', 'signalr']) {
             console.log('Start Processing: ' + rp);
 
             // Remove tmpoutput

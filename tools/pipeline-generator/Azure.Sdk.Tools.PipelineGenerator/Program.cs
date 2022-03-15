@@ -61,6 +61,7 @@ namespace PipelineGenerator
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
             var debugOption = app.Option("--debug", "Turn on debug level logging.", CommandOptionType.NoValue);
             var noScheduleOption = app.Option("--no-schedule", "Don't create any scheduled triggers.", CommandOptionType.NoValue);
+            var overwriteTriggersOption = app.Option("--overwrite-triggers", "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution).", CommandOptionType.NoValue);
 
             app.OnExecute(() =>
             {
@@ -83,6 +84,7 @@ namespace PipelineGenerator
                     openOption.HasValue(),
                     destroyOption.HasValue(),
                     noScheduleOption.HasValue(),
+                    overwriteTriggersOption.HasValue(),
                     cancellationTokenSource.Token
                     ).Result;
 
@@ -117,11 +119,15 @@ namespace PipelineGenerator
                     var upLogger = serviceProvider.GetService<ILogger<UnifiedPipelineConvention>>();
                     return new UnifiedPipelineConvention(upLogger, context);
 
+                case "upweekly":
+                    var upWeeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyUnifiedPipelineConvention>>();
+                    return new WeeklyUnifiedPipelineConvention(upWeeklyTestLogger, context);
+
                 case "tests":
                     var testLogger = serviceProvider.GetService<ILogger<IntegrationTestingPipelineConvention>>();
                     return new IntegrationTestingPipelineConvention(testLogger, context);
 
-                case "weekly":
+                case "testsweekly":
                     var weeklyTestLogger = serviceProvider.GetService<ILogger<WeeklyIntegrationTestingPipelineConvention>>();
                     return new WeeklyIntegrationTestingPipelineConvention(weeklyTestLogger, context);
 
@@ -146,6 +152,7 @@ namespace PipelineGenerator
             bool open,
             bool destroy,
             bool noSchedule,
+            bool overwriteTriggers,
             CancellationToken cancellationToken)
         {
             try
@@ -167,7 +174,8 @@ namespace PipelineGenerator
                     devOpsPathValue,
                     prefix,
                     whatIf,
-                    noSchedule
+                    noSchedule,
+                    overwriteTriggers
                     );
 
                 var pipelineConvention = GetPipelineConvention(convention, context);
@@ -180,6 +188,12 @@ namespace PipelineGenerator
                 }
 
                 logger.LogInformation("Found {0} components", components.Count());
+
+                if (HasPipelineDefinitionNameDuplicates(pipelineConvention, components))
+                {
+                    return ExitCondition.DuplicateComponentsFound;
+                }
+
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -235,6 +249,37 @@ namespace PipelineGenerator
             var scanDirectory = new DirectoryInfo(path);
             var components = scanner.Scan(scanDirectory, searchPattern);
             return components;
+        }
+
+        private bool HasPipelineDefinitionNameDuplicates(PipelineConvention convention, IEnumerable<SdkComponent> components)
+        {
+            var pipelineNames = new Dictionary<string, SdkComponent>();
+            var duplicates = new HashSet<SdkComponent>();
+
+            foreach (var component in components)
+            {
+                var definitionName = convention.GetDefinitionName(component);
+                if (pipelineNames.TryGetValue(definitionName, out var duplicate))
+                {
+                    duplicates.Add(duplicate);
+                    duplicates.Add(component);
+                }
+                else
+                {
+                    pipelineNames.Add(definitionName, component);
+                }
+            }
+
+            if (duplicates.Count > 0) {
+                logger.LogError("Found multiple pipeline definitions that will result in name collisions. This can happen when nested directory names are the same.");
+                logger.LogError("Suggested fix: add a 'variant' to the yaml filename, e.g. 'sdk/keyvault/internal/ci.yml' => 'sdk/keyvault/internal/ci.keyvault.yml'");
+                var paths = duplicates.Select(d => $"'{d.RelativeYamlPath}'");
+                logger.LogError($"Pipeline definitions affected: {String.Join(", ", paths)}");
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

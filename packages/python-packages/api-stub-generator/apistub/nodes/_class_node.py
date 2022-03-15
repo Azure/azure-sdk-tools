@@ -3,14 +3,16 @@ import inspect
 from enum import Enum
 import operator
 
-from ._base_node import NodeEntityBase
+from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
 from ._enum_node import EnumNode
+from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 
 
+find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
 find_instancefunc = (
     lambda x: isinstance(x, FunctionNode)
@@ -52,10 +54,14 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         self.errors = []
+        # This is the name obtained by NodeEntityBase from __name__.
+        # We must preserve it to detect the mismatch and issue a warning.
+        self._name = self.name
+        self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
@@ -101,8 +107,32 @@ class ClassNode(NodeEntityBase):
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
             return function_module and function_module.startswith(self.pkg_root_namespace)
-
         return False
+
+    def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
+        # Add any public class level variables
+        allowed_types = (str, int, dict, list, float, bool)
+        if not isinstance(child_obj, allowed_types):
+            return
+
+        # if variable is already present in parsed list then just update the value
+        var_match = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
+        if var_match:
+            if value:
+                var_match[0].value = value
+            if type_string:
+                var_match[0].type = type_string
+        else:
+            self.child_nodes.append(
+                VariableNode(
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=name,
+                    type_name=type_string,
+                    value=value,
+                    is_ivar=False
+                )
+            )
 
     def _inspect(self):
         # Inspect current class and it's members recursively
@@ -114,43 +144,60 @@ class ClassNode(NodeEntityBase):
         # Find any ivar from docstring
         self._parse_ivars()
 
+        is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
+
         # find members in node
-        for name, child_obj in inspect.getmembers(self.obj):
+        # enums with duplicate values are screened out by "getmembers" so
+        # we must rely on __members__ instead.
+        if hasattr(self.obj, "__members__"):
+            try:
+                members = self.obj.__members__.items()
+            except AttributeError:
+                members = inspect.getmembers(self.obj)
+        else:
+            members = inspect.getmembers(self.obj)
+        for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    self.child_nodes.append(
-                        FunctionNode(self.namespace, self, child_obj)
-                    )
-            elif self.is_enum and isinstance(child_obj, self.obj):
-                # Enum values will be of parent instance type
-                child_obj.__name__ = name
-                self.child_nodes.append(EnumNode(self.namespace, self, child_obj))
+                    try:
+                        self.child_nodes.append(
+                            FunctionNode(self.namespace, self, child_obj)
+                        )
+                    except OSError:
+                        # Don't create entries for things that don't have source
+                        pass
+            elif name == "__annotations__":
+                for (item_name, item_type) in child_obj.items():
+                    if item_name.startswith("_"):
+                        continue
+                    if is_typeddict and inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing":
+                        self.child_nodes.append(
+                            KeyNode(self.namespace, self, item_name, item_type)
+                        )
+                    else:
+                        type_string = get_qualified_name(item_type, self.namespace)
+                        self._handle_class_variable(child_obj, item_name, type_string=type_string)
+
+            # now that we've looked at the specific dunder properties we are
+            # willing to include, anything with a leading underscore should be ignored.
+            if name.startswith("_"):
+                continue
+
+            if self.is_enum and isinstance(child_obj, self.obj):
+                self.child_nodes.append(
+                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
+                )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
                     self.child_nodes.append(
                         PropertyNode(self.namespace, self, name, child_obj)
                     )
-            elif not name.startswith("_") and (
-                isinstance(child_obj, str) or isinstance(child_obj, int)
-            ):
-                # Add any public class level variables
-                # if variable is already present  in parsed list then just update the value
-                var_nodes = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
-                if var_nodes:
-                    var_nodes[0].value = str(child_obj)
-                else:
-                    # Assumption here is that class level variables are either str or int constants
-                    self.child_nodes.append(
-                        (
-                            VariableNode(
-                                self.namespace, self, name, None, str(child_obj), False
-                            )
-                        )
-                    )
+            else:
+                self._handle_class_variable(child_obj, name, value=str(child_obj))
 
     def _parse_ivars(self):
         # This method will add instance variables by parsing docstring
@@ -161,7 +208,12 @@ class ClassNode(NodeEntityBase):
             docstring_parser = DocstringParser(docstring)
             for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, key, var.argtype, None, True
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=key,
+                    type_name=var.argtype,
+                    value=None,
+                    is_ivar=True
                 )
                 self.child_nodes.append(ivar_node)
 
@@ -170,7 +222,8 @@ class ClassNode(NodeEntityBase):
         # properties, variables, Enums, dunder methods, class functions and instance methods
         # sort all elements based on name firstand then group them
         self.child_nodes.sort(key=operator.attrgetter("name"))
-        sorted_children = list(filter(find_props, self.child_nodes))
+        sorted_children = list(filter(find_keys, self.child_nodes))
+        sorted_children.extend(filter(find_props, self.child_nodes))
         sorted_children.extend(filter(find_var, self.child_nodes))
         sorted_children.extend(filter(find_enum, self.child_nodes))
         sorted_children.extend(filter(find_dunder_func, self.child_nodes))
@@ -199,7 +252,9 @@ class ClassNode(NodeEntityBase):
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.namespace_id, self.full_name)
+        apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
+        if self._name != self.name:
+            apiview.add_diagnostic(f"Alias '{self.name}' does not match __name__ '{self._name}'.", self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
@@ -212,6 +267,7 @@ class ClassNode(NodeEntityBase):
         if self.implements:
             apiview.add_keyword("implements", True, True)
             self._generate_token_for_collection(self.implements, apiview)
+        apiview.add_newline()
 
         # Generate token for child nodes
         if self.child_nodes:
@@ -220,20 +276,19 @@ class ClassNode(NodeEntityBase):
 
     def _generate_child_tokens(self, apiview):
         # Add members and methods
-        apiview.add_new_line()
         apiview.begin_group()
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
+            apiview.add_newline()
             apiview.add_whitespace()
             e.generate_tokens(apiview)
-            apiview.add_new_line()
-        apiview.add_new_line(1)
+            apiview.add_newline()
         for func in [
             x
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
+            apiview.set_blank_lines(1)
             func.generate_tokens(apiview)
-            apiview.add_new_line(1)
         apiview.end_group()
 
 
@@ -259,5 +314,3 @@ class ClassNode(NodeEntityBase):
             print("class {}".format(self.full_name))
             for c in self.child_nodes:
                 c.print_errors()
-
-

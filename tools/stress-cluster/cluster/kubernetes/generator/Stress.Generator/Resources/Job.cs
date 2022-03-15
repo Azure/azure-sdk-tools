@@ -26,6 +26,7 @@ spec:
   containers:
     - name: (( Name ))
       command: (( Command ))
+      imagePullPolicy: Always
       # Only override this if needed for local development, otherwise it will be calculated by deployment scripts.
       image: {{ default '' .Values.repository }}/(( ImageName )):{{ default 'v1' .Values.tag }}
       {{- include 'stress-test-addons.container-env' . | nindent 6 }}

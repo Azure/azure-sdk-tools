@@ -14,9 +14,15 @@ export class GoHelper {
                 ret += this.obejctToString(value);
                 ret += `,\n`;
             } else if (_.isString(value)) {
-                ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
+                if (value.startsWith('<parsedVariable>')) {
+                    ret += `"${key}": ${value.substring('<parsedVariable>'.length)},\n`;
+                } else {
+                    ret += `"${key}": ${Helper.quotedEscapeString(value)},\n`;
+                }
             } else if (value === null) {
                 ret += `"${key}": nil,\n`;
+            } else if (_.isNumber(value)) {
+                ret += `"${key}": float64(${value}),\n`;
             } else {
                 ret += `"${key}": ${value},\n`;
             }
@@ -30,12 +36,16 @@ export class GoHelper {
         for (const item of rawValue) {
             if (_.isArray(item)) {
                 ret += this.arrayToString(item);
-                `,\n`;
+                ret += `,\n`;
             } else if (_.isObject(item)) {
                 ret += this.obejctToString(item);
                 ret += `,\n`;
             } else if (_.isString(item)) {
                 ret += `${Helper.quotedEscapeString(item)},\n`;
+            } else if (item === null) {
+                ret += `nil,\n`;
+            } else if (_.isNumber(item)) {
+                ret += `float64(${item}),\n`;
             } else {
                 ret += `${item},\n`;
             }

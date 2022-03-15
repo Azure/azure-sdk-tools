@@ -1,6 +1,57 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 29 Nov 2021 06:10:09 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Mar 2022 02:23:21 GMT and should not be manually modified.
+
+## 2.2.1
+Thu, 03 Mar 2022 02:23:21 GMT
+
+### Patches
+
+- Use autorest session to log warning.
+
+## 2.2.0
+Tue, 22 Feb 2022 10:58:11 GMT
+
+### Minor changes
+
+- Add support for json pointer modeler for output variable of scenario test.
+
+## 2.1.0
+Fri, 11 Feb 2022 09:47:39 GMT
+
+### Minor changes
+
+- Refine scenario test modeler.
+
+### Patches
+
+- Fix newline platform compatibility problem.
+
+## 2.0.0
+Wed, 12 Jan 2022 09:10:46 GMT
+
+### Breaking changes
+
+- load api scenario with oav@2.11.3
+
+## 1.1.0
+Wed, 12 Jan 2022 02:19:25 GMT
+
+### Minor changes
+
+- Remove decode for query param in example model to be align with swagger example rule.
+- Refactor config get set method.
+
+### Patches
+
+- Upgrade to latest autorest/core.
+
+## 1.0.4
+Fri, 12 Dec 2021 07:35:05 GMT
+
+### Patches
+
+- Match body parameter case insensivly.
 
 ## 1.0.3
 Mon, 29 Nov 2021 06:10:09 GMT

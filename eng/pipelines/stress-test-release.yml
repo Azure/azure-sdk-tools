@@ -6,12 +6,9 @@ parameters:
   - name: Environment
     type: string
     default: prod
-  - name: SubscriptionOverride
-    type: string
-    default: ''
-  - name: ClusterGroupOverride
-    type: string
-    default: ''
+    values:
+    - prod
+    - test
   - name: TestRepository
     displayName: Stress Test Repository
     type: string
@@ -76,7 +73,10 @@ jobs:
     - task: AzureCLI@2
       displayName: Build and Deploy Stress Tests
       inputs:
-        azureSubscription: ${{ parameters.Subscription }}
+        ${{ if eq(parameters.Environment, 'prod') }}:
+          azureSubscription: Azure SDK Test Resources
+        ${{ if eq(parameters.Environment, 'test') }}:
+          azureSubscription: Azure SDK Developer Playground
         scriptType: pscore
         scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
         arguments:
@@ -85,8 +85,6 @@ jobs:
           -Environment '${{ parameters.Environment }}'
           -Repository '$(Agent.JobName)'
           -PushImages
-          -ClusterGroup '${{ parameters.ClusterGroupOverride }}'
           -Login
-          -Subscription '${{ parameters.SubscriptionOverride }}'
           -DeployId '$(Build.BuildNumber)'
           -CI

@@ -1,260 +1,377 @@
 ﻿@page
 @model APIViewWeb.Pages.Assemblies.IndexPageModel
 @using APIViewWeb
+@using System
+@using System.Text.RegularExpressions
 @{
     ViewData["Title"] = "Reviews";
 }
-
-<div class="row">
-    <div class="col my-2">
-        <div class="float-left mb-2">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModel">Create review</button>
-        </div>
-
-        <div class="float-left pl-2">
-            <input type="text" class="form-control" id="searchBox" placeholder="Filter by review name" autofocus>
-        </div>
-
-        <div class="btn-group float-left  pl-5">
-            <a class="btn btn-secondary" active-if='@Model.Language == "All"' asp-all-route-data=@Model.GetRoutingData(language: "All")>All</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "C"' asp-all-route-data=@Model.GetRoutingData(language: "C")>C</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "C#"' asp-all-route-data=@Model.GetRoutingData(language: "C#")>C#</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "C++"' asp-all-route-data=@Model.GetRoutingData(language: "C++")>C++</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Go"' asp-all-route-data=@Model.GetRoutingData(language: "Go")>Go</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Java"' asp-all-route-data=@Model.GetRoutingData(language: "Java")>Java</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "JavaScript"' asp-all-route-data=@Model.GetRoutingData(language: "JavaScript")>JS/TS</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Python"' asp-all-route-data=@Model.GetRoutingData(language: "Python")>Python</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Protocol"' asp-all-route-data=@Model.GetRoutingData(language: "Protocol")>Protocol</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Swift"' asp-all-route-data=@Model.GetRoutingData(language: "Swift")>Swift</a>
-            <a class="btn btn-secondary" active-if='@Model.Language == "Xml"' asp-all-route-data=@Model.GetRoutingData(language: "Xml")>Xml</a>
-        </div>
-
-        <div class="btn-group float-right">
-            <a class="btn btn-secondary" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
-            <a class="btn btn-secondary" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
-        </div>
-
-        <div class="btn-group float-right pr-5">
-            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
-            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
-            <a class="btn btn-secondary" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
-        </div>
-
-    </div>
-</div>
-
-
-<div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create review</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span aria-hidden="true">&times;</span>
+<nav class="navbar-light shadow-sm bg-light sticky-top">
+    <div class="container-fluid">
+        <div class="row mx-5 d-flex flex-row align-items-center">
+            <div class="col px-0 d-flex flex-wrap flex-sm-nowrap flex-row align-items-center">
+                <div class="input-group mr-2 my-2" style="min-width: 200px;">
+                    <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search by Review Name"></input>
+                </div>
+                <div class="mb-0 mr-2 my-2">
+                    <select id="reviews-table-language-filter" class="custom-select" style="width: auto;">
+                        <option value="">Filter by Language</option>
+                        <option value="">All</option>
+                        <option value="^C$">C</option>
+                        <option value="^C#$">C#</option>
+                        <option value="^C\+\+$">C++</option>
+                        <option value="^Go$">Go</option>
+                        <option value="^Java$">Java</option>
+                        <option value="^JavaScript$">JavaScript | TypeScript</option>
+                        <option value="^Python$">Python</option>
+                        <option value="^Protocol$">Protocol</option>
+                        <option value="^Swift$">Swift</option>
+                        <option value="^Xml$">Xml</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col px-0 my-2 d-flex flex-row-reverse">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-sm fa-sliders-h"></i>
+                        &nbsp; Options
                     </button>
+
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
+                        <form>
+                            <div class="dropdown-item">
+                                <div class="btn-group">
+                                    <a class="toggle-buttons-left btn btn-sm btn-light" active-if="!@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: false)>Open</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.Closed" asp-all-route-data=@Model.GetRoutingData(closed: true)>Closed</a>
+                                </div>
+                            </div>
+                            <div class="dropdown-item">
+                                <div class="btn-group">
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.All" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.All)>All</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Manual" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Manual)>Manual</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.Automatic" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.Automatic)>Automatic</a>
+                                    <a class="toggle-buttons-right btn btn-sm btn-light" active-if="@Model.FilterType == ReviewType.PullRequest" asp-all-route-data=@Model.GetRoutingData(filterType: ReviewType.PullRequest)>Pull Request Reviews</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <div class="custom-file">
-                            <input asp-for="Upload.Files" type="file" class="custom-file-input">
-                            <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Review</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <div class="custom-file">
+                                <input asp-for="Upload.Files" type="file" class="custom-file-input">
+                                <label asp-for="Upload.Files" class="custom-file-label">Select file to include in API review</label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input class="form-check-input" asp-for="Upload.RunAnalysis" checked>
-                            <label class="form-check-label">
-                                Run static analysis
-                            </label>
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Upload.RunAnalysis" checked>
+                                <label class="form-check-label">
+                                    Run static analysis
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
-                    </div>
-                    <div class="form-group">
-                        <label>What to upload:</label>
+                        <div class="form-group">
+                            <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
+                        </div>
+                        <div class="form-group">
+                            <label>What to upload:</label>
 
-                        <ul class="nav nav-pills mb-3">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#csharp-help">C#</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#java-help">Java</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#c-help">C</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#python-help">Python</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#js-help">JS/TS</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#cpp-help">C++</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#go-help">Go</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#protocol-help">Protocol</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#swift-help">Swift</a>
-                            </li>
-                        </ul>
-
-                        <!-- Tab panes -->
-                        <div class="tab-content mb-4">
-                            <div class="tab-pane active" id="csharp-help">
-                                <li>
-                                    Run
-                                    <code>dotnet pack</code>
+                            <ul class="nav nav-pills nav-fill mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#c-help">C</a>
                                 </li>
-                                Upload the resulting .nupkg file.
-                            </div>
-                            <div class="tab-pane" id="java-help">Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.</div>
-                            <div class="tab-pane" id="c-help">
-                                <ol>
-                                    <li>
-                                        Install clang 10 or later.
-                                    </li>
-                                    <li>
-                                        Run
-                                        <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\..\..\core\core\inc -I "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Tools\MSVC\14.26.28801\include\" > az_core.ast</code>
-                                    </li>
-                                    <li>
-                                        Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>
-                                    </li>
-                                    <li>
-                                        Upload the resulting archive.
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="python-help">
-                                <ol>
-                                    <li>
-                                        Generate wheel for the package.
-                                        <code>python setup.py bdist_wheel -d [dest_folder]</code>
-                                    </li>
-                                    <li>
-                                        Upload generated whl file
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="js-help">
-                                <ol>
-                                    <li>
-                                        Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>
-                                    </li>
-                                    <li>
-                                        Upload generated api.json file
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="cpp-help">
-                                <ol>
-                                    <li>
-                                        Install clang 10 or later. Your environment may require additional include directories.
-                                    </li>
-                                    <li>
-                                        Run
-                                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > Azure_Storage_Files_Datalake.ast</code>
-                                    </li>
-                                    <li>
-                                        Archive the file <code>Compress-Archive Azure_Storage_Files_Datalake.ast -DestinationPath Azure_Storage_Files_Datalake.zip</code>
-                                    </li>
-                                    <li>
-                                        Rename the file <code>Rename-Item Azure_Storage_Files_Datalake.zip -NewName  Azure_Storage_Files_Datalake.cppast</code>
-                                    </li>
-                                    <li>
-                                        Upload the resulting archive.
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="go-help">
-                                <ol>
-                                    <li>
-                                        Archive source module directory in which go.mod is present. <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
-                                    </li>
-                                    <li>
-                                        Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>
-                                    </li>
-                                    <li>
-                                        Upload the resulting archive.
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="protocol-help">
-                                <ol>
-                                    <li>
-                                        Upload generated yml file from autorest 
-                                    </li>
-                                </ol>
-                            </div>
-                            <div class="tab-pane" id="swift-help">
-                                <ol>
-                                    <li>
-                                        Generate JSON file for the source by running Swift APIView parser in XCode.
-                                        More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a> 
-                                    </li>
-                                    <li>
-                                        Upload generated JSON
-                                    </li>
-                                </ol>
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#csharp-help">C#</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#cpp-help">C++</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#go-help">Go</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#java-help">Java</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#js-help">JS/TS</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#python-help">Python</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#protocol-help">Protocol</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#swift-help">Swift</a>
+                                </li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content border rounded p-3">
+                                <div class="tab-pane active" id="csharp-help">
+                                    <ol>
+                                        <li>
+                                            Run
+                                            <code>dotnet pack</code>
+                                        </li>
+                                        Upload the resulting .nupkg file.
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="java-help">Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.</div>
+                                <div class="tab-pane" id="c-help">
+                                    <ol>
+                                        <li>
+                                            Install clang 10 or later.
+                                        </li>
+                                        <li>
+                                            Run
+                                            <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\..\..\core\core\inc -I "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Tools\MSVC\14.26.28801\include\" > az_core.ast</code>
+                                        </li>
+                                        <li>
+                                            Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>
+                                        </li>
+                                        <li>
+                                            Upload the resulting archive.
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="python-help">
+                                    <ol>
+                                        <li>
+                                            Generate wheel for the package.
+                                            <code>python setup.py bdist_wheel -d [dest_folder]</code>
+                                        </li>
+                                        <li>
+                                            Upload generated whl file
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="js-help">
+                                    <ol>
+                                        <li>
+                                            Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>
+                                        </li>
+                                        <li>
+                                            Upload generated api.json file
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="cpp-help">
+                                    <ol>
+                                        <li>
+                                            Install clang 10 or later. Your environment may require additional include directories.
+                                        </li>
+                                        <li>
+                                            Run
+                                            <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > Azure_Storage_Files_Datalake.ast</code>
+                                        </li>
+                                        <li>
+                                            Archive the file <code>Compress-Archive Azure_Storage_Files_Datalake.ast -DestinationPath Azure_Storage_Files_Datalake.zip</code>
+                                        </li>
+                                        <li>
+                                            Rename the file <code>Rename-Item Azure_Storage_Files_Datalake.zip -NewName  Azure_Storage_Files_Datalake.cppast</code>
+                                        </li>
+                                        <li>
+                                            Upload the resulting archive.
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="go-help">
+                                    <ol>
+                                        <li>
+                                            Archive source module directory in which go.mod is present. <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
+                                        </li>
+                                        <li>
+                                            Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>
+                                        </li>
+                                        <li>
+                                            Upload the resulting archive.
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="protocol-help">
+                                    <ol>
+                                        <li>
+                                            Upload generated yml file from autorest 
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="tab-pane" id="swift-help">
+                                    <ol>
+                                        <li>
+                                            Generate JSON file for the source by running Swift APIView parser in XCode.
+                                            More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a> 
+                                        </li>
+                                        <li>
+                                            Upload generated JSON
+                                        </li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Upload</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-right-floating">
+        <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small></br><i class="fas fa-plus"></i></br><small>REVIEW</small></button>
+    </div>
+
+    <div class="mx-5 mt-3 row">
+        <div class="col p-0 border rounded table-responsive">
+            <table id="reviews-table" class="table table-sm m-0" style="width:100%">
+                <thead>
+                    <tr>
+                        <th colspan="6">
+                            <span class="border-right px-1 pb-1">
+                                <button type="button" id="expand-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Groups">
+                                    <i class="fas fa-angle-right mr-1"></i>All
+                                </button>
+                                <button type="button" id="expand-all-service-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Service Groups">
+                                    <i class="fas fa-angle-right mr-1"></i>Service
+                                </button>
+                                <button type="button" id="collapse-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Collapse all Groups">
+                                    <i class="fas fa-angle-down mr-1"></i>All
+                                </button>
+                            </span>
+                            <span class="pl-2 pb-1">
+                                <button type="button" id="clear-all-filters" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Clear all Filters">
+                                    <i class="fas fa-ban mr-1"></i>Filters
+                                </button>
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var serviceGroup in Model.reviewServices)
+                    {
+                        var serviceGroupTag = @serviceGroup.ServiceName.ToLower().Replace(" ","-");
+                        @serviceGroupTag = @Regex.Replace(@serviceGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
+                        <tr id="@serviceGroupTag" class="service-group-row clickable animate__fadeIn animate__fadeOut">
+                            <td colspan="6" class="align-middle">
+                                <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
+                                    <i class="fas fa-angle-right"></i>
+                                </button>
+                                <span>@serviceGroup.ServiceName</span>                                
+                            </td>
+                        </tr>
+                        @foreach (var packageGroup in serviceGroup.packages.Values)
+                        {
+                            var packageGroupTag = @serviceGroupTag + '_' + @packageGroup.PackageDisplayName.ToLower().Replace(" ","-");
+                            @packageGroupTag = @Regex.Replace(@packageGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
+                            <tr id="@packageGroupTag" class="package-group-row @serviceGroupTag clickable hidden-row animate__fadeIn animate__fadeOut">
+                                <td colspan="6" class="align-middle pl-4">
+                                    <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
+                                        <i class="fas fa-angle-right"></i>
+                                    </button>
+                                    <span>@packageGroup.PackageDisplayName</span>
+                                </td>
+                            </tr>
+                            <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
+                                <th scope="col" class="border-top-0"><small class="ml-4">NAME</small></th>
+                                <th scope="col" class="border-top-0"><small>CREATOR</small></th>
+                                <th scope="col" class="border-top-0"><small>UPDATED</small></th>
+                                <th scope="col" class="border-top-0"><small>TYPE</small></th>
+                                <th class="border-top-0"></th>
+                            </tr>
+                            @foreach (var reviewData in packageGroup.reviews)
+                            {
+                                var truncationIndex = @Math.Min(@reviewData.ReviewDisplayName.Length, 100);
+                                <tr class="package-data-row @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
+                                    <td class="border-right align-middle pl-4 pt-0 pb-0">
+                                         @if (reviewData.Language != null)
+                                        {
+                                            @switch (reviewData.Language.ToLower())
+                                            {
+                                                case "c#":
+                                                    <img class="mx-1" src="~/icons/csharp-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "javascript":
+                                                    <img class="mx-1" src="~/icons/javascript-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "python":
+                                                    <img class="mx-1" src="~/icons/python-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "c":
+                                                    <img class="mx-1" src="~/icons/c-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "c++":
+                                                    <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "go":
+                                                    <img class="mx-1" src="~/icons/go-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "java":
+                                                    <img class="mx-1" src="~/icons/java-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                case "swift":
+                                                    <img class="mx-1" src="~/icons/swift-original.svg" alt="@reviewData.Language">
+                                                    break;
+                                                default:
+                                                    <img class="mx-1" src="~/icons/file-code.svg" alt="@reviewData.Language">
+                                                    break;
+                                            }
+                                        }
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
+                                        @if (reviewData.IsApproved == true)
+                                        {
+                                            <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
+                                        }
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <a username="@reviewData.Author">@reviewData.Author</a>
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <span data-placement="left" data-toggle="tooltip" title="@reviewData.LastUpdated" date="@reviewData.LastUpdated.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="border-right align-middle">
+                                        <span>@reviewData.FilterType.ToString()</span>
+                                    </td>
+                                    <td>
+                                        @if (reviewData.Author == User.GetGitHubLogin())
+                                        {
+                                            <a asp-page="./Delete" asp-route-id="@reviewData.id">
+                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
+                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<table class="table table-hover table-striped">
-    <thead class="thead-light">
-        <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Uploader</th>
-            <th></th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var assembly in Model.Assemblies)
-        {
-            <tr>
-                <td>
-                    <a class="review-name" asp-page="./Review" asp-route-id="@assembly.ReviewId">@assembly.DisplayName</a>
-                    @if (assembly.Revisions.LastOrDefault()?.IsApproved == true)
-                    {
-                        <label class="text-success">✔️</label>
-                    }
-                </td>
-                <td>
-                    <a username="@assembly.Author">@assembly.Author</a>
-                </td>
-                <td>
-                    <span date="@assembly.LastUpdated.ToLocalTime()"></span>
-                </td>
-                @if (assembly.Author == User.GetGitHubLogin())
-                {
-                    <td>
-                        <a asp-page="./Delete" asp-route-id="@assembly.ReviewId">Delete</a>
-                    </td>
-                }
-                else
-                {
-                    <td></td>
-                }
-            </tr>
-        }
-    </tbody>
-</table>
 

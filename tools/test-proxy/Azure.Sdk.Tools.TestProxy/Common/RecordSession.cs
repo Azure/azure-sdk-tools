@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 
@@ -10,6 +11,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RecordSession
     {
+        internal const string DateTimeOffsetNowVariableKey = "DateTimeOffsetNow";
+
         public List<RecordEntry> Entries { get; } = new List<RecordEntry>();
 
         public SortedDictionary<string, string> Variables { get; } = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -79,27 +82,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, RecordedTestSanitizer sanitizer, bool remove = true)
-        {
-            sanitizer.Sanitize(requestEntry);
-
-            lock (Entries)
-            {
-                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-                if (remove)
-                {
-                    Entries.Remove(entry);
-                }
-                return entry;
-            }
-        }
-
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
         {
             foreach(RecordedTestSanitizer sanitizer in sanitizers)
             {
                 sanitizer.Sanitize(requestEntry);
             }
+            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+            RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
             lock (Entries)
             {
@@ -108,6 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     Entries.Remove(entry);
                 }
+
                 return entry;
             }
         }
@@ -117,41 +108,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             lock (Entries)
             {
                 sanitizer.Sanitize(this);
-            }
-        }
-
-        public bool IsEquivalent(RecordSession session, RecordMatcher matcher)
-        {
-            if (session == null)
-            {
-                return false;
-            }
-
-            // The DateTimeOffsetNow variable is updated any time it's used so
-            // we only care that both sessions use it or both sessions don't.
-            var now = TestRecording.DateTimeOffsetNowVariableKey;
-            return session.Variables.TryGetValue(now, out string _) == Variables.TryGetValue(now, out string _) &&
-                   session.Variables.Where(v => v.Key != now).SequenceEqual(Variables.Where(v => v.Key != now)) &&
-                   session.Entries.SequenceEqual(Entries, new EntryEquivalentComparer(matcher));
-        }
-
-        private class EntryEquivalentComparer : IEqualityComparer<RecordEntry>
-        {
-            private readonly RecordMatcher _matcher;
-
-            public EntryEquivalentComparer(RecordMatcher matcher)
-            {
-                _matcher = matcher;
-            }
-
-            public bool Equals(RecordEntry x, RecordEntry y)
-            {
-                return _matcher.IsEquivalentRecord(x, y);
-            }
-
-            public int GetHashCode(RecordEntry obj)
-            {
-                return obj.GetHashCode();
             }
         }
     }

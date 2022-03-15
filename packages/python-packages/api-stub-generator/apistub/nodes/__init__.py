@@ -7,6 +7,7 @@ from ._docstring_parser import DocstringParser
 from ._typehint_parser import TypeHintParser
 from ._enum_node import EnumNode
 from ._function_node import FunctionNode
+from ._key_node import KeyNode
 from ._module_node import ModuleNode
 from ._property_node import PropertyNode
 from ._variable_node import VariableNode
@@ -21,6 +22,7 @@ __all__ = [
     "TypeHintParser",
     "EnumNode",
     "FunctionNode",
+    "KeyNode",
     "ModuleNode",
     "PropertyNode",
     "VariableNode",

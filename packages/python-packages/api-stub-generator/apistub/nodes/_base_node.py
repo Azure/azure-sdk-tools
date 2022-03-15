@@ -1,10 +1,15 @@
 from inspect import Parameter
+import re
+
+keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
+name_regex = re.compile(r"([^[]*)")
 
 class NodeEntityBase:
     """This is the base class for all node types
     :param str: namespace
         module name of the underlying object within this node
-    :param: parant_node
+    :param: parent_node
         Parent of current node. For e.g. Class Node in case instance member is current node
     :param: obj
         Python object that is represented by current node. For e.g. class, function, property
@@ -37,7 +42,6 @@ class NodeEntityBase:
             apiview.add_text("", self.display_name)
             apiview.begin_group()
             for c in self.child_nodes:
-                apiview.add_new_line()
                 c.generate_tokens(apiview)
             apiview.end_group()
 
@@ -60,7 +64,34 @@ def get_qualified_name(obj, namespace):
     module_name = ""
     if hasattr(obj, "__module__"):
         module_name = getattr(obj, "__module__")
-    if module_name and module_name.startswith(namespace):
-        return "{0}.{1}".format(module_name, name)
 
-    return name
+    args = []
+    # newer versions of Python extract inner types into __args__
+    # and are no longer part of the name
+    if hasattr(obj, "__args__"):
+        for arg in obj.__args__ or []:
+            arg_string = str(arg)
+            if keyword_regex.match(arg_string):
+                value = keyword_regex.search(arg_string).group(2)
+                # we ignore NoneType since Optional implies that NoneType is
+                # acceptable
+                if value != "NoneType":
+                    args.append(value)
+            elif forward_ref_regex.match(arg_string):
+                value = forward_ref_regex.search(arg_string).group(1)
+                args.append(value)
+            else:
+                args.append(arg_string)
+
+    # omit any brackets for Python 3.9/3.10 compatibility
+    value = name_regex.search(name).group(0)
+    if module_name and module_name.startswith(namespace):
+        value = f"{module_name}.{name}"
+    elif module_name and value.startswith(module_name):
+        # strip the module name if it isn't the namespace (example: typing)
+        value = value[len(module_name) +1:]
+
+    if args and "[" not in value:
+        arg_string = ", ".join(args)
+        value = f"{value}[{arg_string}]"
+    return value

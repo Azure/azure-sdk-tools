@@ -1,12 +1,12 @@
 import * as path from 'path';
-import { Config } from '../common/constant';
+import { AutorestExtensionHost } from '@autorest/extension-base';
+import { Config, configDefaults } from '../common/constant';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
-import { Host } from '@autorest/extension-base';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
 
-export async function processRequest(host: Host): Promise<void> {
-    const testConfig = new TestConfig(await host.GetValue(''));
-    const files = await host.ListInputs();
+export async function processRequest(host: AutorestExtensionHost): Promise<void> {
+    const testConfig = new TestConfig(await host.GetValue(''), configDefaults);
+    const files = await host.listInputs();
     Helper.execSync(`go get golang.org/x/tools/cmd/goimports`);
     for (const outputFile of files) {
         if (outputFile.endsWith('.go')) {

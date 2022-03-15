@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return context;
         }
 
-        private IEnumerable<Tuple<string, StringValues>> _generateHeaderValuesTuples(string[] headerValueStrings) {
+        private IEnumerable<Tuple<string, StringValues>> GenerateHeaderValuesTuples(string[] headerValueStrings) {
             var returnedTuples = new List<Tuple<string, StringValues>>();
             foreach (var headString in headerValueStrings)
             {

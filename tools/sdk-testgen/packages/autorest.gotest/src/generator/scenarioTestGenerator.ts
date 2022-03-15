@@ -12,8 +12,9 @@ import { GoHelper } from '../util/goHelper';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
+import { ExampleValue, OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
+import { Parameter } from '@autorest/codemodel';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     parentVariables: Record<string, string> = {};
@@ -175,6 +176,16 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             if (key === step.variables[key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
                 step.variables[key] = '<newDefinedVariable>';
             }
+        }
+    }
+
+    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
+        const defaultValue = super.getDefaultValue(param, isPtr, elemByVal);
+        // the operation has no client subscriptionID param, but client has, we need to replace it to the subscriptionID param
+        if (defaultValue === '"<subscription-id>"') {
+            return 'subscriptionId';
+        } else {
+            return defaultValue;
         }
     }
 

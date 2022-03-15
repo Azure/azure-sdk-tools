@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             HttpContext context = new DefaultHttpContext();
 
-            foreach(var hTuple in _generateHeaderValuesTuples(headerValueStrings))
+            foreach(var hTuple in GenerateHeaderValuesTuples(headerValueStrings))
             {
 
                 context.Request.Headers.TryAdd(hTuple.Item1, hTuple.Item2);

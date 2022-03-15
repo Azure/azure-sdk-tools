@@ -18,10 +18,24 @@ import java.util.regex.Pattern;
  * guidelines.
  */
 public final class MavenPackageAndDescriptionDiagnosticRule implements DiagnosticRule {
-    private static final Pattern MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
-    private static final Pattern MAVEN_DESCRIPTION =
+    /**
+     * Default {@link Pattern} for the Maven package name.
+     */
+    public static final Pattern DEFAULT_MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
+
+    /**
+     * Default {@link Pattern} for the Maven package description.
+     */
+    public static final Pattern DEFAULT_MAVEN_DESCRIPTION =
         Pattern.compile("This package contains the Microsoft Azure .* client library");
 
+    private final Pattern mavenName;
+    private final Pattern mavenDescription;
+
+    public MavenPackageAndDescriptionDiagnosticRule(Pattern mavenNamePattern, Pattern mavenDescriptionPattern) {
+        this.mavenName = mavenNamePattern;
+        this.mavenDescription = mavenDescriptionPattern;
+    }
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
@@ -29,7 +43,7 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
         // Maven name
         String nameId = getId("name", pom.getName());
-        if (!MAVEN_NAME.matcher(pom.getName()).matches()) {
+        if (!mavenName.matcher(pom.getName()).matches()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
                 "Maven library name should follow the pattern 'Microsoft Azure client library for <service name>'.",
                 "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-name"));
@@ -37,7 +51,7 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
         // Maven description
         String descriptionId = getId("description", pom.getDescription());
-        if (!MAVEN_DESCRIPTION.matcher(pom.getDescription()).matches()) {
+        if (!mavenDescription.matcher(pom.getDescription()).matches()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
                 "Maven library description should follow the pattern 'This package contains the Microsoft Azure <service> client library'.",
                 "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description"));

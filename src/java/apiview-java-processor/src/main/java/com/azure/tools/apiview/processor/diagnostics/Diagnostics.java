@@ -57,7 +57,9 @@ public class Diagnostics {
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
         diagnostics.add(new ModuleInfoDiagnosticRule());
         diagnostics.add(new ServiceVersionDiagnosticRule());
-        diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
+        diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule(
+            MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_NAME,
+            MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_DESCRIPTION));
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

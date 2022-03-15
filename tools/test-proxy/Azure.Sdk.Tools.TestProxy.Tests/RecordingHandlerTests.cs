@@ -607,7 +607,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request, new byte[] { });
 
             // iterate across the set we know about and confirm that GenerateUpstreamRequest worked properly!
-            var setOfHeaders = _generateHeaderValuesTuples(incomingHeaders);
+            var setOfHeaders = GenerateHeaderValuesTuples(incomingHeaders);
             {
                 foreach (var headerTuple in setOfHeaders)
                 {

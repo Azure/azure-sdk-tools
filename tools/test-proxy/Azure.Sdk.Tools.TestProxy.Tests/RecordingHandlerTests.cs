@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
-        private HttpContext _generateHttpRequestContext(string[] headerValueStrings)
+        private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
             HttpContext context = new DefaultHttpContext();
 

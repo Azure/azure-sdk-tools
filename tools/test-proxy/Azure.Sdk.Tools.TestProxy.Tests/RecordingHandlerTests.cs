@@ -602,7 +602,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var requestContext = _generateHttpRequestContext(incomingHeaders);
             var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var upstreamRequestContext = _generateHttpRequestContext(incomingHeaders);
+            var upstreamRequestContext = GenerateHttpRequestContext(incomingHeaders);
 
             var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request, new byte[] { });
 

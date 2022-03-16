@@ -668,24 +668,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
 
-        [Theory]
-        [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
-        [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
-        public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
-        {
-            var session = TestHelpers.LoadRecordSession(targetFile);
+        // Re-enable w/ Azure/azure-sdk-tools#2900
+        //[Theory]
+        //[InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
+        //[InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
+        //public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
+        //{
+        //    var session = TestHelpers.LoadRecordSession(targetFile);
             
-            var targetEntry = session.Session.Entries[0];
-            var matcher = new RecordMatcher();
+        //    var targetEntry = session.Session.Entries[0];
+        //    var matcher = new RecordMatcher();
 
-            var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-            session.Session.Sanitize(sanitizer);
+        //    var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
+        //    session.Session.Sanitize(sanitizer);
 
-            var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
+        //    var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
 
-            Assert.DoesNotContain(regex, bodyString);
-            Assert.Contains(replacementValue, bodyString);
-        }
-
+        //    Assert.DoesNotContain(regex, bodyString);
+        //    Assert.Contains(replacementValue, bodyString);
+        //}
     }
 }

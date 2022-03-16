@@ -1,0 +1,156 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package main
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+    "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+    "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+)
+{{imports}}
+
+var (
+    err            error
+	ctx            context.Context
+	cred           azcore.TokenCredential
+{%- for name, value in variablesOutput %}
+{%- if value === "<newDefinedVariable>" %}
+    {{name}} string
+{%- else %}
+    {{name}} = {{value}}
+{%- endif %}
+{%- endfor %}
+{%- for variable, _ in requiredVariablesDefault %}
+{%- if not variables.hasOwnProperty(variable) %}
+    {%- if variable === "location" %}
+    location = getEnv("LOCATION", "eastus")
+    {%- elif variable === "subscriptionId" %}
+    subscriptionId = getEnv("AZURE_SUBSCRIPTION_ID", "")
+    {%- else %}
+    {{variable}} = getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
+    {%- endif %}
+{%- endif %}
+{%- endfor %}
+)
+
+func main() {
+	ctx = context.Background()
+    cred, err = azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		panic(err)
+	}
+
+    {%- if scope.toLowerCase() == 'resourcegroup'%}
+    createResourceGroup()
+    {%- endif %}
+    {%- if prepareSteps.length > 0 %}
+	prepare()
+    {%- endif %}
+    {%- for testScenario in scenarios %}
+	{{jsFunc.toCamelCase(testScenario.scenario)}}Sample()
+    {%- endfor %}
+    {%- if cleanUpSteps.length > 0 %}
+	cleanup()
+    {%- endif %}
+    {%- if scope.toLowerCase() == 'resourcegroup'%}
+	deleteResourceGroup()
+    {%- endif %}
+}
+{%- if prepareSteps.length > 0 %}
+
+func prepare() {
+	{%- set steps = prepareSteps %}
+	{%- include "./sampleContent.go.njk" %}
+}
+{%- endif %}
+
+{% for testScenario in scenarios %}
+func {{jsFunc.toCamelCase(testScenario.scenario)}}Sample() {
+	{%- for variable, value in testScenario.requiredVariablesDefault %}
+	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
+    {{variable}} := getEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
+	{%- endif %}
+	{%- endfor %}
+	{%- for name, value in testScenario.variablesOutput %}
+    {%- if value === "<newDefinedVariable>" %}
+    var {{name}} string
+    {%- else %}
+    {{name}} := {{value}}
+    {%- endif %}
+	{%- endfor %}
+	
+	{%- set steps = testScenario.steps %}
+	{%- include "./sampleContent.go.njk" %}
+}
+{%- endfor %}
+{%- if cleanUpSteps.length > 0 %}
+
+func cleanup() {
+	{%- set steps = cleanUpSteps %}
+	{%- include "./sampleContent.go.njk" %}
+}
+{%- endif %}
+{%- if scope.toLowerCase() == 'resourcegroup'%}
+
+func createResourceGroup() error {
+	rand.Seed(time.Now().UnixNano())
+	resourceGroupName = fmt.Sprintf("go-sdk-sample-%d", rand.Intn(1000))
+	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	param := armresources.ResourceGroup{
+		Location: to.StringPtr(location),
+	}
+	_, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func deleteResourceGroup() error {
+	resourceGroup := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	pollerResponse, err := resourceGroup.BeginDelete(ctx, resourceGroupName, nil)
+	if err != nil {
+		panic(err)
+	}
+	_, err = pollerResponse.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+{%- endif %}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func createDeployment(deploymentName string, deployment *armresources.Deployment) *armresources.DeploymentExtended {
+	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	poller, err := deployClient.BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		deploymentName,
+		*deployment,
+		&armresources.DeploymentsClientBeginCreateOrUpdateOptions{},
+	)
+	if err != nil {
+		panic(err)
+	}
+	res, err := poller.PollUntilDone(ctx, 10*time.Second)
+	if err != nil {
+		panic(err)
+	}
+	return &res.DeploymentExtended
+}

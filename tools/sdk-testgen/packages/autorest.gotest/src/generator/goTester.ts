@@ -13,6 +13,7 @@ import { MockTestCodeGenerator, MockTestDataRender } from './mockTestGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from './scenarioTestGenerator';
 import { TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
+import { SampleCodeGenerator, SampleDataRender } from './sampleGenerator';
 
 export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     const session = await TestCodeModeler.getSessionFromHost(host);
@@ -45,6 +46,12 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
         scenarioTestDataRender.renderData();
         const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
         scenarioTestCodeGenerator.generateCode(extraParam);
+    }
+    if (config.getValue(Config.generateSdkSample)) {
+        const sampleDataRender = new SampleDataRender(context);
+        sampleDataRender.renderData();
+        const sampleCodeGenerator = new SampleCodeGenerator(context);
+        sampleCodeGenerator.generateCode(extraParam);
     }
     await Helper.outputToModelerfour(host, session);
     if (config.getValue(Config.exportCodemodel)) {

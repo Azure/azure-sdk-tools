@@ -12,50 +12,53 @@
 
 [CmdletBinding(DefaultParameterSetName = 'Interactive', SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param (
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $ProvisionerApplicationId,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+  [string] $ProvisionerApplicationId,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $ProvisionerApplicationSecret,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [ValidateNotNullOrEmpty()]
+  [string] $ProvisionerApplicationSecret,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $OpensourceApiApplicationId,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+  [string] $OpensourceApiApplicationId,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $OpensourceApiApplicationSecret,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [ValidateNotNullOrEmpty()]
+  [string] $OpensourceApiApplicationSecret,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'Interactive')]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $TenantId,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [Parameter(ParameterSetName = 'Interactive')]
+  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+  [string] $TenantId,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [Parameter(ParameterSetName = 'Interactive')]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $SubscriptionId,
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [Parameter(ParameterSetName = 'Interactive')]
+  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+  [string] $SubscriptionId,
 
-    [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [string] $Environment = "AzureCloud",
+  [Parameter()]
+  [ValidateNotNullOrEmpty()]
+  [string] $Environment = "AzureCloud",
 
-    [Parameter()]
-    [int] $DeleteAfterHours = 24,
+  [Parameter()]
+  [switch] $DeleteNonCompliantGroups,
 
-    [Parameter()]
-    [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist",
+  [Parameter()]
+  [int] $DeleteAfterHours = 24,
 
-    [Parameter()]
-    [switch] $Force,
+  [Parameter()]
+  [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist",
 
-    [Parameter(ParameterSetName = 'Interactive')]
-    [switch] $Login,
+  [Parameter()]
+  [switch] $Force,
 
-    [Parameter(ValueFromRemainingArguments = $true)]
-    $IgnoreUnusedArguments
+  [Parameter(ParameterSetName = 'Interactive')]
+  [switch] $Login,
+
+  [Parameter(ValueFromRemainingArguments = $true)]
+  $IgnoreUnusedArguments
 )
 
 Set-StrictMode -Version 3
@@ -76,43 +79,43 @@ function Log($Message) {
 
 function IsValidAlias
 {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Alias
-    )
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Alias
+  )
 
-    if ($OwnerAliasCache.ContainsKey($Alias)) {
-      return $OwnerAliasCache[$Alias]
-    }
+  if ($OwnerAliasCache.ContainsKey($Alias)) {
+    return $OwnerAliasCache[$Alias]
+  }
 
-    # AAD apps require a higher level of permission requiring admin consent to query the MS Graph list API
-    # https://docs.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http#permissions
-    # The Get-AzAdUser call uses the list API under the hood (`/users/$filter=<alias>`)
-    # and for some reason the Get API (`/user/<id or user principal name>`) also returns 401
-    # with User.Read and User.ReadBasic.All permissions when called with an AAD app.
-    # For this reason, skip trying to query MS Graph directly in provisioner mode.
-    # The owner alias cache should already be pre-populated with all user records from the
-    # github -> ms alias mapping retrieved via the repos.opensource.microsoft.com API, however
-    # this will not include any security groups, in the case an owner tag does not contain
-    # individual user aliases.
-    if ($IsProvisionerApp) {
-      Write-Host "Skipping MS Graph alias lookup for '$Alias' due to permissions. Owner aliases not registered with github will be treated as invalid."
-      $OwnerAliasCache[$Alias] = $false
-      return $false
-    }
-
-    $domains = @("microsoft.com", "ntdev.microsoft.com")
-
-    foreach ($domain in $domains) {
-        if (Get-AzAdUser -UserPrincipalName "$Alias@$domain") {
-            $OwnerAliasCache[$Alias] = $true
-            return $true;
-        }
-    }
-
+  # AAD apps require a higher level of permission requiring admin consent to query the MS Graph list API
+  # https://docs.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0&tabs=http#permissions
+  # The Get-AzAdUser call uses the list API under the hood (`/users/$filter=<alias>`)
+  # and for some reason the Get API (`/user/<id or user principal name>`) also returns 401
+  # with User.Read and User.ReadBasic.All permissions when called with an AAD app.
+  # For this reason, skip trying to query MS Graph directly in provisioner mode.
+  # The owner alias cache should already be pre-populated with all user records from the
+  # github -> ms alias mapping retrieved via the repos.opensource.microsoft.com API, however
+  # this will not include any security groups, in the case an owner tag does not contain
+  # individual user aliases.
+  if ($IsProvisionerApp) {
+    Write-Host "Skipping MS Graph alias lookup for '$Alias' due to permissions. Owner aliases not registered with github will be treated as invalid."
     $OwnerAliasCache[$Alias] = $false
+    return $false
+  }
 
-    return $false;
+  $domains = @("microsoft.com", "ntdev.microsoft.com")
+
+  foreach ($domain in $domains) {
+    if (Get-AzAdUser -UserPrincipalName "$Alias@$domain") {
+      $OwnerAliasCache[$Alias] = $true
+      return $true;
+    }
+  }
+
+  $OwnerAliasCache[$Alias] = $false
+
+  return $false;
 }
 
 function AddGithubUsersToAliasCache() {
@@ -154,11 +157,11 @@ function HasValidOwnerTag([object]$ResourceGroup) {
   $hasValidOwner = $false
   $invalidOwners = @()
   foreach ($owner in $owners) {
-      if (IsValidAlias -Alias $owner) {
-          $hasValidOwner = $true
-      } else {
-        $invalidOwners += $owner
-      }
+    if (IsValidAlias -Alias $owner) {
+      $hasValidOwner = $true
+    } else {
+      $invalidOwners += $owner
+    }
   }
   if ($invalidOwners) {
     Write-Warning " Resource group '$($ResourceGroup.ResourceGroupName)' has invalid owner tags: $($invalidOwners -join ',')"
@@ -196,25 +199,25 @@ function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
 
 function HasException([object]$ResourceGroup) {
     if ($Exceptions.Count) {
-        if ($Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
-            Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
-            return $true
-        }
-        return $false
+      if ($Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
+        Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
+        return $true
+      }
+      return $false
     }
     if ($ShouldCheckAllowList) {
-        $lines = Get-Content $AllowListPath
-        foreach ($line in $lines) {
-            if ($line -and !$line.StartsWith("#")) {
-                $Exceptions.Add($line.Trim())
-            }
+      $lines = Get-Content $AllowListPath
+      foreach ($line in $lines) {
+        if ($line -and !$line.StartsWith("#")) {
+          $Exceptions.Add($line.Trim())
         }
-        # If allow list is empty or only contains comments, disable allow list checking
-        if (!$Exceptions.Count) {
-            $ShouldCheckAllowList = $false
-            return $false
-        }
-        return HasException $ResourceGroup
+      }
+      # If allow list is empty or only contains comments, disable allow list checking
+      if (!$Exceptions.Count) {
+        $ShouldCheckAllowList = $false
+        return $false
+      }
+      return HasException $ResourceGroup
     }
     return $false
 }
@@ -259,10 +262,13 @@ function DeleteOrUpdateResourceGroups() {
     }
     $deleteAfter = GetDeleteAfterTag $rg
     if ($deleteAfter) {
-        if (HasExpiredDeleteAfterTag $deleteAfter) {
-          $toDelete += $rg
-        }
-        continue
+      if (HasExpiredDeleteAfterTag $deleteAfter) {
+        $toDelete += $rg
+      }
+      continue
+    }
+    if (!$DeleteNonCompliantGroups) {
+      continue
     }
     if (HasValidAliasInName $rg) {
       continue
@@ -323,10 +329,10 @@ function Login() {
     Write-Verbose "Logging in with interactive user"
     $cmd = "Connect-AzAccount"
     if ($TenantId) {
-        $cmd += " -TenantId $TenantId"
+      $cmd += " -TenantId $TenantId"
     }
     if ($SubscriptionId) {
-        $cmd += " -SubscriptionId $SubscriptionId"
+      $cmd += " -SubscriptionId $SubscriptionId"
     }
     Invoke-Expression $cmd
   } elseif (Get-AzContext) {

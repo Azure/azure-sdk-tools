@@ -8,15 +8,14 @@ parameters:
       - DisplayName: AzureCloud - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
-      - DisplayName: AzureCloud-Preview - Resource Cleanup
-        SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-test-resources-preview)
-      - DisplayName: AzureUSGovernment - Resource Cleanup
-        SubscriptionConfigurations:
-          - $(sub-config-gov-test-resources)
-      - DisplayName: AzureChinaCloud - Resource Cleanup
-        SubscriptionConfigurations:
+        AdditionalParameters: "-DeleteNonCompliantGroups"
+      - SubscriptionConfigurations:
           - $(sub-config-cn-test-resources)
+        AdditionalParameters: "-DeleteNonCompliantGroups"
+      - DisplayName: AzureCloud Playground - Resource Cleanup
+        SubscriptionConfigurations:
+          - $(sub-config-azure-cloud-playground)
+        AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: Dogfood Translation - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-translation-int-test-resources)
@@ -35,9 +34,6 @@ parameters:
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-storage-test-resources-net)
-      - DisplayName: AzureCloud Playground - Resource Cleanup
-        SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-playground)
 
 stages:
 - stage: Run
@@ -62,3 +58,4 @@ stages:
           parameters:
             DisplayName: ${{ subscription.DisplayName }}
             SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
+            AdditionalParameters: ${{ subscription.AdditionalParameters }}

@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var app = host.Build();
 
-            var config = app.Services.GetService<IConfiguration>();
+            var config = app.Services?.GetService<IConfiguration>();
 
             if (config != null)
             {

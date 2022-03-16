@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
                 contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
                 contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
+                contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase))
             {
                 encoding = Encoding.UTF8;
                 return true;

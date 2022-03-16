@@ -23,9 +23,12 @@ steps:
       '@ | ConvertFrom-Json -AsHashtable
 
       ./eng/scripts/live-test-resource-cleanup.ps1 `
-      @subscriptionConfiguration `
-      -WhatIf `
-      -Verbose ${{ parameters.AdditionalParameters }}
+        -OpensourceApiApplicationId $(opensource-aad-app-id) `
+        -OpensourceApiApplicationSecret $(opensource-aad-secret) `
+        -OpensourceApiApplicationTenant $(opensource-aad-tenant-id) `
+        @subscriptionConfiguration `
+        -WhatIf `
+        -Verbose ${{ parameters.AdditionalParameters }}
     displayName: ${{ parameters.DisplayName }}
     continueOnError: true
 

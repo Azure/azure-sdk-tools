@@ -25,6 +25,10 @@ param (
   [string] $OpensourceApiApplicationId,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
+  [string] $OpensourceApiApplicationTenantId,
+
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [ValidateNotNullOrEmpty()]
   [string] $OpensourceApiApplicationSecret,
 
@@ -120,7 +124,7 @@ function IsValidAlias
 
 function AddGithubUsersToAliasCache() {
   Write-Host "Fetching github -> microsoft alias mappings"
-  $users = GetAllGithubUsers $TenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+  $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
   if (!$users) {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
     exit 1

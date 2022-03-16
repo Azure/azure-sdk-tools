@@ -26,19 +26,6 @@ class ApiView:
     :param str source_url: An optional source URL to display in the preamble.
     """
 
-    @classmethod
-    def get_root_path(cls):
-        """ Looks for the root of the api-stub-generator package.
-        """
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-        while os.path.split(path)[1]:
-            dirname = os.path.split(path)[1]
-            if dirname == "api-stub-generator":
-                return path
-            else:
-                path = os.path.split(path)[0]
-        return None
-
     def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0

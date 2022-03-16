@@ -5,6 +5,8 @@ parameters:
     type: object
     default:
       - $(sub-config-azure-cloud-test-resources)
+  - name: GithubAliasCachePath
+    type: string
   - name: AdditionalParameters
     type: string
     default: ""
@@ -26,6 +28,7 @@ steps:
         -OpensourceApiApplicationId $(opensource-aad-app-id) `
         -OpensourceApiApplicationSecret $(opensource-aad-secret) `
         -OpensourceApiApplicationTenant $(opensource-aad-tenant-id) `
+        -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
         @subscriptionConfiguration `
         -WhatIf `
         -Verbose ${{ parameters.AdditionalParameters }}

@@ -42,6 +42,9 @@ param (
   [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
   [string] $SubscriptionId,
 
+  [Parameter(ParameterSetName = 'Provisioner')]
+  [string] $GithubAliasCachePath,
+
   [Parameter()]
   [ValidateNotNullOrEmpty()]
   [string] $Environment = "AzureCloud",
@@ -123,8 +126,13 @@ function IsValidAlias
 }
 
 function AddGithubUsersToAliasCache() {
-  Write-Host "Fetching github -> microsoft alias mappings"
-  $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+  if ($GithubAliasCachePath -and (Test-Path $GithubAliasCachePath)) {
+    Write-Host "Loading github -> microsoft alias mappings from filesystem cache."
+    $users = Get-Content $GithubAliasCachePath | ConvertFrom-Json -AsHashtable
+  } else {
+    Write-Host "Retrieving github -> microsoft alias mappings from opensource API."
+    $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+  }
   if (!$users) {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
     exit 1
@@ -134,7 +142,11 @@ function AddGithubUsersToAliasCache() {
       $OwnerAliasCache[$user.aad.alias] = $true
     }
   }
-  Write-Host "Cached $($OwnerAliasCache.Count) github+microsoft user records."
+  Write-Host "Found $($OwnerAliasCache.Count) github+microsoft user records."
+  if ($GithubAliasCachePath -and !(Test-Path $GithubAliasCachePath)) {
+      Write-Host "Caching github -> microsoft alias mappings to '$GithubAliasCachePath'"
+      $users | ConvertTo-Json -Depth 100 | Out-File $GithubAliasCachePath -WhatIf:$false
+  }
 }
 
 function GetTag([object]$ResourceGroup, [string]$Key) {

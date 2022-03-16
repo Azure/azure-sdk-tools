@@ -9,7 +9,16 @@ parameters:
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
         AdditionalParameters: "-DeleteNonCompliantGroups"
-      - SubscriptionConfigurations:
+      - DisplayName: AzureCloud-Preview - Resource Cleanup
+        SubscriptionConfigurations:
+          - $(sub-config-azure-cloud-test-resources-preview)
+        AdditionalParameters: "-DeleteNonCompliantGroups"
+      - DisplayName: AzureUSGovernment - Resource Cleanup
+        SubscriptionConfigurations:
+          - $(sub-config-cn-test-resources)
+        AdditionalParameters: "-DeleteNonCompliantGroups"
+      - DisplayName: AzureChinaCloud - Resource Cleanup
+        SubscriptionConfigurations:
           - $(sub-config-cn-test-resources)
         AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureCloud Playground - Resource Cleanup
@@ -40,6 +49,10 @@ stages:
 
   variables:
   - template: ./templates/variables/globals.yml
+  - name: DailyCacheKey
+    value: $[format('{0:ddMMyyyy}', pipeline.startTime)]
+  - name: CachePath
+    value: github-mapping-cache
 
   jobs:
   - job: Run
@@ -48,14 +61,24 @@ stages:
       vmImage: ubuntu-20.04
 
     steps:
-      - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
+    - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
 
-      # Register the dogfood environment to clean up any custom subscriptions in it
-      - template: /eng/common/TestResources/setup-environments.yml
+    - task: Cache@2
+      inputs:
+        # CacheSalt is an optional variable that can be overridden at pipeline runtime to
+        # force invalidate the cache.
+        # DailyCacheKey will trigger a new cache entry to refresh once per day.
+        key: '$(CacheSalt) | $(DailyCacheKey)'
+        path: $(CachePath)
+      displayName: Cache PS Modules
 
-      - ${{ each subscription in parameters.Subscriptions }}:
-        - template: ./live-test-cleanup-template.yml
-          parameters:
-            DisplayName: ${{ subscription.DisplayName }}
-            SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
-            AdditionalParameters: ${{ subscription.AdditionalParameters }}
+    # Register the dogfood environment to clean up any custom subscriptions in it
+    - template: /eng/common/TestResources/setup-environments.yml
+
+    - ${{ each subscription in parameters.Subscriptions }}:
+      - template: ./live-test-cleanup-template.yml
+        parameters:
+          DisplayName: ${{ subscription.DisplayName }}
+          SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
+          GithubAliasCachePath: $(CachePath)
+          AdditionalParameters: ${{ subscription.AdditionalParameters }}

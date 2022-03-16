@@ -137,7 +137,7 @@ function GetTag([object]$ResourceGroup, [string]$Key) {
 
   foreach ($tagKey in $ResourceGroup.Tags.Keys) {
     # Compare case-insensitive
-    if ($tagKey -like $Key) {
+    if ($tagKey -ieq $Key) {
       return $ResourceGroup.Tags[$tagKey]
     }
   }
@@ -173,10 +173,10 @@ function HasValidOwnerTag([object]$ResourceGroup) {
 function HasValidAliasInName([object]$ResourceGroup) {
     # check compliance (formatting first, then validate alias) and skip if compliant
     if ($ResourceGroup.ResourceGroupName `
-      -match "^(rg-)?((t-|a-|v-)?[a-z,A-Z]{3,15})([-_]{1}.*)?$" `
-      -and (IsValidAlias -Alias $matches[2]))
+      -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_]{1}.*)?$' `
+      -and (IsValidAlias -Alias $matches['alias']))
     {
-      Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches[2])'"
+      Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"
       return $true
     }
     return $false

@@ -95,9 +95,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (config != null)
             {
+                Console.WriteLine("Dumping Resolved Configuration Values:");
                 foreach (var c in config.AsEnumerable())
                 {
-                    Console.WriteLine("Dumping Resolved Configuration Values:");
                     Console.WriteLine(c.Key + " = " + c.Value);
                 }
             }

@@ -4,7 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from unicodedata import name
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,

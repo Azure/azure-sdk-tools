@@ -27,9 +27,10 @@ class ApiView:
     :param str pkg_name: The package name.
     :param str namespace: The package namespace.
     :param MetadataMap metadata_map: A metadata mapping object.
+    :param str source_url: An optional source URL to display in the preamble.
     """
 
-    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None):
+    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0
         self.version_string = ""
@@ -44,6 +45,9 @@ class ApiView:
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        if source_url:
+            self.set_blank_lines(1)
+            self.add_literal(f"# Source URL: {source_url}")
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
         self.set_blank_lines(2)
 

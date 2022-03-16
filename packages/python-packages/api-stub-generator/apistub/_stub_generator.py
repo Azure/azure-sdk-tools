@@ -6,6 +6,8 @@
 # --------------------------------------------------------------------------------------------
 
 import glob
+import json
+import re
 import sys
 import os
 import argparse
@@ -20,9 +22,9 @@ import tempfile
 from subprocess import check_call
 import zipfile
 
-
 from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
+from apistub._diagnostic import Diagnostic
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -74,6 +76,12 @@ class StubGenerator:
                 "--source-url",
                 help=("URL to the pull request URL that contains the source used to generate this APIView.")
             )
+            parser.add_argument(
+                "--error-report",
+                help=("Generates API view error reports for the entire Python SDK repo."),
+                action="store_true",
+                default=False,
+            )
             args = parser.parse_args()
 
         if not os.path.exists(args.pkg_path):
@@ -90,6 +98,7 @@ class StubGenerator:
         self.mapping_path = args.mapping_path
         self.hide_report = args.hide_report
         self.filter_namespace = args.filter_namespace or ''
+        self.error_report = args.error_report
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -116,25 +125,13 @@ class StubGenerator:
             namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, source_url=self.source_url)
-        if apiview.diagnostics:
-            # Show error report in console
-            if not self.hide_report:
-                logging.info("************************** Error Report **************************")
-                for m in self.module_dict.keys():
-                    self.module_dict[m].print_errors()
-            logging.info("*************** Completed parsing package with errors ***************")
-        else:
-            logging.info("*************** Completed parsing package and generating tokens ***************")
-        return apiview
-
+        return self._generate_tokens(pkg_root_path, pkg_name, version, namespace, source_url=self.source_url)
 
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON
         logging.debug("Serializing tokens into json")
         json_apiview = encoder().encode(apiview)
         return json_apiview
-
 
     def _find_modules(self, pkg_root_path):
         """Find modules within the package to import and parse
@@ -233,7 +230,6 @@ class StubGenerator:
         logging.debug("Extracted package files into temp path")
         return temp_pkg_dir
 
-
     def get_module_root_name(self, wheel_extract_path):
         # APiStubgen finds namespace from setup.py when running against code repo
         # But we don't have setup.py to parse when wheel is uploaded into APIView tool
@@ -247,6 +243,40 @@ class StubGenerator:
             logging.info("Root module found in {0}: '{1}'".format(TOP_LEVEL_WHEEL_FILE, root_module_name))
             return root_module_name
 
+    def generate_error_report(self):
+        pkg_path = self.pkg_path
+        setup_files = glob.glob(os.path.join(pkg_path, "**", "**", "setup.py"))
+        failed_packages = []
+        regex = re.compile(r"sdk\\([a-zA-Z0-9-]+)\\([a-zA-Z0-9-]+)\\setup.py")
+        results = {"ALL": {"TOTAL": {x: 0 for x in Diagnostic.SUPPORTED_DIAGNOSTIC_CODES}}}
+        for path in setup_files:
+            (service, package) = regex.findall(path)[0]
+            # skip management libraries
+            if "mgmt" in package:
+                continue
+            print(f"Analyzing: {service} {package}")
+            if service not in results:
+                results[service] = {}
+            if package not in results[service]:
+                results[service][package] = {}
+            self.pkg_path = os.path.dirname(path)
+            try:
+                apiview = self.generate_tokens()
+                diagnostics = apiview.diagnostics
+                for d in diagnostics:
+                    code = d._code
+                    if code not in results[service][package]:
+                        results[service][package][code] = 1
+                    else:
+                        results[service][package][code] += 1
+                    # also tally in total
+                    results["ALL"]["TOTAL"][code] += 1
+            except:
+                print(f"Error analyzing: {service} {package}")
+                failed_packages.append(f"{service} - {package}")
+        with open("error_report.json", "w+") as dump_file:
+            dump_file.write(json.dumps(results, sort_keys=True, indent=4))
+        return 0
 
     def _parse_pkg_name(self):
         file_name = os.path.basename(self.pkg_path)

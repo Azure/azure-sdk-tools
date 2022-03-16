@@ -1,12 +1,13 @@
 import inspect
+from lib2to3.pytree import Node
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
 # Lint warnings
-TYPE_NOT_AVAILABLE = "Type is not available for {0}"
+TYPE_NOT_AVAILABLE = "Type is not available for '{0}'"
 
-TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls", "*", ]
+TYPE_NOT_REQUIRED = ["**kwargs", "*args", "self", "cls", "*"]
 
 class ArgType:
     """Represents Argument type
@@ -52,11 +53,12 @@ class ArgType:
             apiview.add_punctuation(":", False, True)
             apiview.add_type(self.argtype, self.id)
         elif self.argname not in (TYPE_NOT_REQUIRED):
+            from apistub import DiagnosticLevel
             # Type is not available. Add lint error in review
             error_msg = TYPE_NOT_AVAILABLE.format(self.argname)
-            apiview.add_diagnostic(error_msg, self.id)
+            apiview.add_diagnostic(node=self.function_node, code="missing-type", text=error_msg, target_id=self.id, level=DiagnosticLevel.WARNING)
             if self.function_node:
-                self.function_node.add_error(error_msg)
+                self.function_node.add_error(code="missing-type", text=error_msg, level=DiagnosticLevel.WARNING)
 
         # add arg default value
         if self.default:

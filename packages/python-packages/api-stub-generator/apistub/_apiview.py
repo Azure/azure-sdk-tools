@@ -1,3 +1,4 @@
+from dis import dis
 from json import JSONEncoder
 import logging
 import re
@@ -9,7 +10,7 @@ from ._node_index import NodeIndex
 from ._token import Token
 from ._token_kind import TokenKind
 from ._version import VERSION
-from ._diagnostic import Diagnostic
+from ._diagnostic import Diagnostic, DiagnosticLevel
 from ._metadata_map import MetadataMap
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
@@ -161,8 +162,9 @@ class ApiView:
             # If type name is importable then it's a valid type name. Source link wont be available if type is from 
             # different package
             if not is_valid_type_name(type_full_name):
+                from apistub import DiagnosticLevel
                 # Navigation ID is missing for internal type, add diagnostic error
-                self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.value), line_id)            
+                self.add_diagnostic(node=self, code="missing-source-link", text=SOURCE_LINK_NOT_AVAILABLE.format(token.value), target_id=line_id, level=DiagnosticLevel.ERROR)
         self.add_token(token)
 
 
@@ -189,8 +191,15 @@ class ApiView:
             self.add_punctuation(type_name)        
 
 
-    def add_diagnostic(self, text, line_id):
-        self.diagnostics.append(Diagnostic(line_id, text))
+    def add_diagnostic(self, *, node, code, text, target_id, level):
+        from .nodes._base_node import NodeEntityBase
+        if not isinstance(node, NodeEntityBase):
+            raise TypeError(f"Expected NodeEntityBase. Found '{type(node)}'")
+        if code not in node.suppressions:
+            self.diagnostics.append(Diagnostic(code=code, target_id=target_id, message=text, level=level))
+        else:
+            message = f"**SUPPRESSED** {text}"
+            self.diagnostics.append(Diagnostic(code=code, target_id=target_id, message=message, level=DiagnosticLevel.INFO))
 
 
     def add_member(self, name, id):
@@ -209,6 +218,36 @@ class ApiView:
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
+
+    def report_errors(self, stub_generator) -> int:
+        errors = []
+        warnings = []
+        # sort errors and warnings. Ignore suppressed items.
+        for diagnostic in self.diagnostics:
+            if diagnostic.level == DiagnosticLevel.ERROR:
+                errors.append(diagnostic)
+            elif diagnostic.level == DiagnosticLevel.WARNING:
+                warnings.append(diagnostic)
+
+        if not (warnings or errors):
+            logging.info("*************** Completed token generation. No errors or warnings. ***************")
+            return 0
+
+
+        if not stub_generator.hide_report:
+            if warnings:
+                logging.info("************************** APIVIEW WARNINGS **************************")
+                [x.log(logging.info) for x in warnings]
+            if errors:
+                logging.info("************************** APIVIEW ERRORS **************************")
+                [x.log(logging.info) for x in errors]
+
+            # for module in stub_generator.module_dict.values():
+            #     module.print_errors()
+
+        logging.info(f"*************** Completed token generation. {len(warnings)} warnings. {len(errors)} errors. ***************")
+        return len(errors)
+
 
 class APIViewEncoder(JSONEncoder):
     """Encoder to generate json for APIview object

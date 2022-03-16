@@ -9,6 +9,7 @@
 from ._models import (
     DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict,
     ObjectWithDefaults,
+    ObjectWithSuppressions,
     PetEnum,
     PetEnumPy2Metaclass,
     PetEnumPy3Metaclass,
@@ -24,6 +25,7 @@ __all__ = (
     "FakeObject",
     "FakeTypedDict",
     "ObjectWithDefaults",
+    "ObjectWithSuppressions",
     "PetEnum",
     "PetEnumPy2Metaclass",
     "PetEnumPy3Metaclass",

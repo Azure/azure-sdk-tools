@@ -1,3 +1,6 @@
+from ._suppression_parser import SuppressionParser
+
+import inspect
 from inspect import Parameter
 import re
 
@@ -25,6 +28,7 @@ class NodeEntityBase:
         self.display_name = self.name
         self.child_nodes = []
         self.errors = []
+        self.suppressions = SuppressionParser.parse(inspect.getcomments(obj)) or []
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name

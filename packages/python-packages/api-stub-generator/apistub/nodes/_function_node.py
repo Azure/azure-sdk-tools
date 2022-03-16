@@ -4,6 +4,8 @@ from collections import OrderedDict
 import astroid
 import re
 
+from apistub import DiagnosticLevel
+
 from ._docstring_parser import DocstringParser
 from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -99,10 +101,8 @@ class FunctionNode(NodeEntityBase):
                 ]
         except:
             # TODO: Update exception details in error
-            error_message = "Error in parsing decorators for function {}".format(
-                self.name
-            )
-            self.add_error(error_message)
+            error_message = f"Error parsing decorators for function {self.name}"
+            self.add_error(code="decorator-parse", text=error_message, level=DiagnosticLevel.ERROR)
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
@@ -154,7 +154,7 @@ class FunctionNode(NodeEntityBase):
         self._order_final_args()
 
         if not self.return_type and is_typehint_mandatory(self.name):
-            self.add_error("Return type is missing in both typehint and docstring")
+            self.add_error(code="missing-return-type", text="Return type is missing in both typehint and docstring.", level=DiagnosticLevel.WARNING)
         # Validate return type
         self._validate_pageable_api()
 
@@ -187,7 +187,7 @@ class FunctionNode(NodeEntityBase):
 
         # API must have **kwargs for non async methods. Flag it as an error if it is missing for public API
         if not kwargs_param and is_kwarg_mandatory(self.name):
-            self.errors.append("Keyword arg (**kwargs) is missing in method {}".format(self.name))
+            self.errors.append(("missing-kwargs", f"Keyword arg '**kwargs' is missing in method '{self.name}'", DiagnosticLevel.WARNING))
 
 
     def _parse_docstring(self):
@@ -263,7 +263,7 @@ class FunctionNode(NodeEntityBase):
         # Type hint must be present for all APIs. Flag it as an error if typehint is missing
         if  not type_hint_ret_type:
             if (is_typehint_mandatory(self.name)):
-                self.add_error("Typehint is missing for method {}".format(self.name))
+                self.add_error(code="missing-typehint", text=f"Typehint is missing for method '{self.name}'", level=DiagnosticLevel.WARNING)
             return
 
         if self.return_type:
@@ -273,7 +273,7 @@ class FunctionNode(NodeEntityBase):
             if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
                 logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
                 error_message = "The return type is described in both a type hint and docstring, but they do not match."
-                self.add_error(error_message)
+                self.add_error(code="return-type-mismatch", text=error_message, level=DiagnosticLevel.WARNING)
         # because the typehint isn't subject to the 2-line limit, prefer it over
         # a type parsed from the docstring.
         self.return_type = type_hint_ret_type or self.return_type
@@ -346,11 +346,11 @@ class FunctionNode(NodeEntityBase):
         apiview.add_newline()
 
         if self.errors:
-            for e in self.errors:
-                apiview.add_diagnostic(e, self.namespace_id)
+            for (code, text, level) in self.errors:
+                apiview.add_diagnostic(node=self, code=code, text=text, target_id=self.namespace_id, level=level)
 
 
-    def add_error(self, error_msg):
+    def add_error(self, *, code, text, level):
         # Ignore errors for lint check excluded methods
         if self.name in LINT_EXCLUSION_METHODS:
             return
@@ -358,7 +358,7 @@ class FunctionNode(NodeEntityBase):
         # Hide all diagnostics for now for dunder methods
         # These are well known protocol implementation
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
-            self.errors.append(error_msg)
+            self.errors.append((code, text, level))
 
 
     def _validate_pageable_api(self):
@@ -371,8 +371,8 @@ class FunctionNode(NodeEntityBase):
                 if ret_short_type in PAGED_TYPES:
                     logging.debug("list API returns valid paged return type")
                     return
-            error_msg = "list API {0} should return ItemPaged or AsyncItemPaged instead of {1} and page type must be included in docstring rtype".format(self.name, self.return_type)
-            self.add_error(error_msg)                
+            error_msg = f"list API '{self.name}' should return ItemPaged or AsyncItemPaged instead of '{self.return_type}' and the page type must be included in docstring rtype"
+            self.add_error(code="list-return-type", text=error_msg, level=DiagnosticLevel.WARNING)
         
 
     def print_errors(self):

@@ -38,7 +38,7 @@ extends:
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'
 
-    - script: |
+    - pwsh: |
         cd $(Build.SourcesDirectory)/packages/python-packages/api-stub-generator
         pip install tox
         tox -e pytest,stubgen

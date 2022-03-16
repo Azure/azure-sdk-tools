@@ -173,6 +173,21 @@ stages:
               arguments: --logger trx
               publishTestResults: false
 
+          - script: |
+              python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+            displayName: 'Verify Python APIView version consistency'
+
+          # - script: |
+          #     pip install requests
+          #     python $(Build.SourcesDirectory)/eng/scripts/check_pylintrc.py
+          #   displayName: 'Verify local pylintrc in sync with Azure SDK for Python'
+
+          - script: |
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              pip install tox
+              tox -e pytest,stubgen
+            displayName: 'Test Python Package Parser'
+
           - task: PublishTestResults@2
             condition: succeededOrFailed()
             inputs:

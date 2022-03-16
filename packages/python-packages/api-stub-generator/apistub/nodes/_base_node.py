@@ -1,9 +1,10 @@
-import astroid
 from inspect import Parameter
 import re
 
-keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
-forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
+from ._pylint_parser import PylintParser
+
+keyword_regex = re.compile(r"<(class|enum) '([\w.]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([\w.]+)'\)")
 name_regex = re.compile(r"([^[]*)")
 
 
@@ -39,7 +40,7 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name
         self.child_nodes = []
-        self.errors = []
+        self.pylint_errors = PylintParser.get_items(obj)
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name

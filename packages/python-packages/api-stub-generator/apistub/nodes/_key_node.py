@@ -7,7 +7,6 @@ class KeyNode(NodeEntityBase):
     def __init__(self, namespace, parent_node, name, type_data):
         super().__init__(namespace, parent_node, type_data)
         self.type = get_qualified_name(type_data, namespace)
-        self.errors = []
         self.name = f'"{name}"'
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
@@ -23,10 +22,4 @@ class KeyNode(NodeEntityBase):
         apiview.add_text("", self.name)
         apiview.add_punctuation(":")
         apiview.add_space()
-        apiview.add_type(self.type)  # TODO: Pass navigation ID if it is internal type        
-
-    def print_errors(self):
-        if self.errors:
-            print("property: {}".format(self.name))
-            for e in self.errors:
-                print("    {}".format(e))
+        apiview.add_type(self.type)

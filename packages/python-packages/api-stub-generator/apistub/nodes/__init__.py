@@ -4,6 +4,7 @@ from ._argtype import ArgType
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._class_node import ClassNode
 from ._docstring_parser import DocstringParser
+from ._pylint_parser import PylintParser, PylintError
 from ._enum_node import EnumNode
 from ._function_node import FunctionNode
 from ._key_node import KeyNode
@@ -18,6 +19,8 @@ __all__ = [
     "get_qualified_name",
     "ClassNode",
     "DocstringParser",
+    "PylintParser",
+    "PylintError",
     "EnumNode",
     "FunctionNode",
     "KeyNode",

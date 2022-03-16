@@ -11,34 +11,10 @@ from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 
-VALIDATION_REQUIRED_DUNDER = ["__init__",]
-KWARG_NOT_REQUIRED_METHODS = ["close",]
-TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
-REGEX_ITEM_PAGED = "(~[\w.]*\.)?([\w]*)\s?[\[\(][^\n]*[\]\)]"
-PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
-# Methods that are implementation of known interface should be excluded from lint check
-# for e.g. get, update, keys
-LINT_EXCLUSION_METHODS = [
-    "get",
-    "has_key",
-    "items",
-    "keys",
-    "update",
-    "values",
-    "close",    
-]
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
 # Regex is used to find shorten such instances in complex type
 # for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
-REGEX_FIND_LONG_TYPE = "((?:~?)[\w.]+\.+([\w]+))"
-
-
-def is_kwarg_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
-
-
-def is_typehint_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
+REGEX_FIND_LONG_TYPE = r"((?:~?)[\\w.]+\.+([\\w]+))"
 
 
 class FunctionNode(NodeEntityBase):
@@ -291,20 +267,6 @@ class FunctionNode(NodeEntityBase):
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
         apiview.add_newline()
-
-        if self.errors:
-            for e in self.errors:
-                apiview.add_diagnostic(e, self.namespace_id)
-
-    def add_error(self, error_msg):
-        # Ignore errors for lint check excluded methods
-        if self.name in LINT_EXCLUSION_METHODS:
-            return
-
-        # Hide all diagnostics for now for dunder methods
-        # These are well known protocol implementation
-        if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
-            self.errors.append(error_msg)
 
     def print_errors(self):
         if self.errors:

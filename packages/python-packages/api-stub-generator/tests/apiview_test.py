@@ -5,6 +5,7 @@
 # --------------------------------------------------------------------------
 
 from apistub import ApiView, TokenKind, StubGenerator
+from apistub.nodes import PylintParser
 import os
 import tempfile
 
@@ -16,7 +17,6 @@ class StubGenTestArgs:
     source_url = None
     out_path = None
     mapping_path = None
-    hide_report = None
     verbose = None
     filter_namespace = None
 
@@ -55,9 +55,8 @@ class TestApiView:
 
     def test_api_view_diagnostic_warnings(self):
         args = StubGenTestArgs()
-        print(args.pkg_path)
         stub_gen = StubGenerator(args=args)
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
-        # TODO: This will be removed soon.
-        assert True
+        assert len(apiview.diagnostics) == 3
+        assert len(PylintParser.get_unclaimed()) == 0

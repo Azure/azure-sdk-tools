@@ -25,7 +25,6 @@ class DefaultValuesClient:
         """
         pass
 
-
     def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = None):
         pass
 
@@ -192,4 +191,10 @@ class SpecialArgsClient:
         pass
 
     def with_sorted_kwargs(self, *, d, c, b, a, **kwargs):
+        pass
+
+
+class PylintCheckerViolationsClient:
+
+    def with_too_many_args(self, a: str, b: str, c: str, d: str, e:str , f: str, g: str, h:str) -> None:
         pass

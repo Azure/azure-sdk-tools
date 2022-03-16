@@ -32,6 +32,7 @@ logging.getLogger().setLevel(logging.ERROR)
 
 class StubGenerator:
     def __init__(self, args=None):
+        from .nodes import PylintParser
         if not args:
             parser = argparse.ArgumentParser(
                 description="Parses a Python package and generates a JSON token file for consumption by the APIView tool."
@@ -61,12 +62,6 @@ class StubGenerator:
                 action="store_true",
             )
             parser.add_argument(
-                "--hide-report",
-                help=("Hide diagnostic report."),
-                default=False,
-                action="store_true",
-            )
-            parser.add_argument(
                 "--filter-namespace",
                 help=("Generate APIView only for a specific namespace."),
             )
@@ -88,10 +83,10 @@ class StubGenerator:
         self.out_path = args.out_path
         self.source_url = args.source_url
         self.mapping_path = args.mapping_path
-        self.hide_report = args.hide_report
         self.filter_namespace = args.filter_namespace or ''
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
+        PylintParser.parse(self.pkg_path)
 
 
     def generate_tokens(self):
@@ -118,11 +113,6 @@ class StubGenerator:
         logging.debug("Generating tokens")
         apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, source_url=self.source_url)
         if apiview.diagnostics:
-            # Show error report in console
-            if not self.hide_report:
-                logging.info("************************** Error Report **************************")
-                for m in self.module_dict.keys():
-                    self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")

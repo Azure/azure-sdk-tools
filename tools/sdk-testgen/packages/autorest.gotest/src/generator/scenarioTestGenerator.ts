@@ -7,14 +7,14 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import { BaseCodeGenerator } from './baseGenerator';
 import { Config } from '../common/constant';
+import { ExampleParameter, ExampleValue, OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 import { GoExampleModel } from '../common/model';
 import { GoHelper } from '../util/goHelper';
+import { GroupProperty, Parameter } from '@autorest/codemodel';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { ExampleParameter, ExampleValue, OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
-import { GroupProperty, Parameter } from '@autorest/codemodel';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     packagePrefixForGlobalVariables = 'testsuite.';
@@ -147,7 +147,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 break;
             }
             case OavStepType.armTemplate: {
-                const copyOfPayload = _.cloneDeep(step.armTemplatePayload)
+                const copyOfPayload = _.cloneDeep(step.armTemplatePayload);
                 // environment variables & arguments parse
                 if (copyOfPayload.resources) {
                     copyOfPayload.resources.forEach((t) => {

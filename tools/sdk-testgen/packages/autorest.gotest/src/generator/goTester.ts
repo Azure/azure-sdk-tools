@@ -10,10 +10,10 @@ import { ExampleCodeGenerator, ExampleDataRender } from './exampleGenerator';
 import { GenerateContext } from './generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestCodeGenerator, MockTestDataRender } from './mockTestGenerator';
+import { SampleCodeGenerator, SampleDataRender } from './sampleGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from './scenarioTestGenerator';
 import { TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
-import { SampleCodeGenerator, SampleDataRender } from './sampleGenerator';
 
 export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     const session = await TestCodeModeler.getSessionFromHost(host);

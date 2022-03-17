@@ -69,7 +69,7 @@
 
         {%- if example.checkResponse and not example.isPageable%}
             {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
-                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}.{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
             {%- endfor %}
         {%- endif %}
     {%- elif step.type == "armTemplateDeployment" %}

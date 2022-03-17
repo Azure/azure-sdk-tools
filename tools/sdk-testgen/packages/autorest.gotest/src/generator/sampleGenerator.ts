@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as _ from 'lodash';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { BaseCodeGenerator } from './baseGenerator';
 import { Config } from '../common/constant';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
-import { TestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
 import { ScenarioTestDataRender } from './scenarioTestGenerator';
+import { TestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
 
 export class SampleDataRender extends ScenarioTestDataRender {
     packagePrefixForGlobalVariables = '';

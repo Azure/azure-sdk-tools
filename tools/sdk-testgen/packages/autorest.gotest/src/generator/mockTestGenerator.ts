@@ -147,7 +147,7 @@ export class MockTestDataRender extends BaseDataRender {
         return paramsSig
             .map(([paramName, typeName, parameter]) => {
                 if (paramName === 'ctx') {
-                    return 'ctx'
+                    return 'ctx';
                 }
                 return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
             })

@@ -16,6 +16,7 @@ namespace PipelineGenerator.Conventions
 
         public override string SearchPattern => "ci.yml";
         public override string PipelineNameSuffix => " - ci";
+        public override string PipelineCategory => "ci";
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

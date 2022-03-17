@@ -91,8 +91,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var app = host.Build();
 
-            var config = app.Services.GetService<IConfiguration>();
+            app.Run();
 
+            var config = app.Services?.GetService<IConfiguration>();
             if (config != null)
             {
                 Console.WriteLine("Dumping Resolved Configuration Values:");
@@ -101,8 +102,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     Console.WriteLine(c.Key + " = " + c.Value);
                 }
             }
-
-            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "",
   "scripts": {
     "start": "node dist/changelogToolCli.js",
@@ -36,6 +36,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "typescript": "^3.9.7"
   }
 }

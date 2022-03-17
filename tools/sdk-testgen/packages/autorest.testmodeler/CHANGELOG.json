@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.2.2",
+      "tag": "@autorest/testmodeler_v2.2.2",
+      "date": "Mon, 14 Mar 2022 09:19:34 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.1",
       "tag": "@autorest/testmodeler_v2.2.1",
       "date": "Thu, 03 Mar 2022 02:23:21 GMT",

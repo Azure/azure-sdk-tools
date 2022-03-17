@@ -65,6 +65,14 @@ testmodeler:
     use-example-model: false
 ```
 
+### --testmodeler.add-armtemplate-payload-string
+
+This options switch whether StepArmTemplateModel.armTemplatePayloadString is added into testmodeler. While default to be false, it can be enabled like below:
+```
+testmodeler:
+    add-armtemplate-payload-string: true
+```
+
 
 ## Autorest Pipeline Configurations
 

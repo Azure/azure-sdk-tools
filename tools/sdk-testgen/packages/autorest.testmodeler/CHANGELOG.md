@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Thu, 03 Mar 2022 02:23:21 GMT and should not be manually modified.
+This log was last generated on Fri, 11 Mar 2022 09:19:34 GMT and should not be manually modified.
+
+## 2.2.2
+Mon, 14 Mar 2022 09:19:34 GMT
+
+### Patches
+
+- add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString
 
 ## 2.2.1
 Thu, 03 Mar 2022 02:23:21 GMT

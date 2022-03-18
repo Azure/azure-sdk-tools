@@ -1,5 +1,47 @@
 # Azure SDK Assets Relocation -- "move recordings out of repos"
 
+- [Azure SDK Assets Relocation -- "move recordings out of repos"](#azure-sdk-assets-relocation----move-recordings-out-of-repos)
+  - [Setting Context](#setting-context)
+  - [How the test-proxy can ease transition of external recordings](#how-the-test-proxy-can-ease-transition-of-external-recordings)
+    - [Old](#old)
+    - [New](#new)
+  - [Evaluated  options for storage of these external recordings](#evaluated--options-for-storage-of-these-external-recordings)
+    - [`Git SubModules`](#git-submodules)
+      - [Advantages of `Git SubModules`](#advantages-of-git-submodules)
+      - [Disadvantages of `Git SubModules`](#disadvantages-of-git-submodules)
+    - [`Git lfs`](#git-lfs)
+      - [Advantages of `Git lfs`](#advantages-of-git-lfs)
+      - [Disadvantages of `Git lfs`](#disadvantages-of-git-lfs)
+    - [`External Git Repo`](#external-git-repo)
+      - [Advantages of `Git Repo`](#advantages-of-git-repo)
+      - [Disadvantages of `Git Repo`](#disadvantages-of-git-repo)
+      - [Justifications for `Git Repo`](#justifications-for-git-repo)
+    - [Blob Storage](#blob-storage)
+      - [Advantages of `Blob Storage`](#advantages-of-blob-storage)
+      - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
+      - [Justifications for `Blob Storage`](#justifications-for-blob-storage)
+    - [But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?](#but-if-we-already-have-a-problem-with-ever-expanding-git-repos-why-does-an-external-repo-help-us)
+  - [We have an external git repo, how will we integrate that with our frameworks?](#we-have-an-external-git-repo-how-will-we-integrate-that-with-our-frameworks)
+  - [Scenario Walkthroughs](#scenario-walkthroughs)
+    - [Single Dev: Update single service's recordings](#single-dev-update-single-services-recordings)
+    - [Single Dev: Create a new services's recordings](#single-dev-create-a-new-servicess-recordings)
+    - [Single Dev: Update recordings for a hotfix release](#single-dev-update-recordings-for-a-hotfix-release)
+    - [Multiple Devs: Update the same pull request](#multiple-devs-update-the-same-pull-request)
+    - [Multiple Devs: Update recordings for two packages under same service in parallel](#multiple-devs-update-recordings-for-two-packages-under-same-service-in-parallel)
+  - [Asset sync script implementation](#asset-sync-script-implementation)
+    - [Cross-platform capabilities](#cross-platform-capabilities)
+    - [Interaction](#interaction)
+    - [Implementation of Sync Script](#implementation-of-sync-script)
+    - [Sync operations description and listing](#sync-operations-description-and-listing)
+    - [Sync Operation triggers](#sync-operation-triggers)
+    - [Sync Operation details - pull](#sync-operation-details---pull)
+    - [Sync Operation details - push](#sync-operation-details---push)
+    - [Integrating the sync script w/ language frameworks](#integrating-the-sync-script-w-language-frameworks)
+  - [Test Run](#test-run)
+  - [Integration Checklist](#integration-checklist)
+  - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
+    - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
+
 ## Setting Context
 
 The Azure SDK team has a problem that has been been growing in the background for the past few years. Our repos are getting big! The biggest contributor to this issue are **recordings**. Yes, they compress well, but when bugfixes can result in entire rewrites of multiple recordings files, the compression ratio becomes immaterial.
@@ -71,35 +113,52 @@ He also checked other measures, like `download speed` and `integration requireme
 
 [These and other observations are recorded in his original document available here.](https://microsoft.sharepoint.com/:w:/t/AzureDeveloperExperience/EZ8CA-UTsENIoORsOxekfG8BzwoNV4xhVOIzTGmdk8j4rA?e=DFkiII)
 
+### `Git SubModules`
+
+#### Advantages of `Git SubModules`
+
+- Publically browsable in a coherent fashion through the github UI
+
+#### Disadvantages of `Git SubModules`
+
+- Extremely unwieldy. The method for updating them locally is quite manual, and there is as far as I can tell no way to directly tie a submodule's commits to the main repos commits. They're still totally separate repositories. [As reviewable in their docs](https://git-scm.com/book/en/v2/Git-Tools-Submodules), git submodules aren't quite intended for large collaboration or projects. Especially not with multiple moving parts under the submodule.
+
+### `Git lfs`
+
+#### Advantages of `Git lfs`
+
+- We remain in the same repository. `git lfs` just defers the download of specific sets of files.
+
+#### Disadvantages of `Git lfs`
+
+- Our repos stay massive, which defeats the purpose of this project.
+  
 ### `External Git Repo`
 
 #### Advantages of `Git Repo`
 
+- Publically browsable in a coherent fashion through the github UI
+- The level of customization necessary is purely on the language shims for automatic playback purposes
+
 #### Disadvantages of `Git Repo`
 
+- Need to deal with the fact that it's a git repo, and not a direct storage solution. We will need PRs, branches, and cleanup tasks running on the assets repo instead of a storage solution with no real sense of commit history.
+
 #### Justifications for `Git Repo`
-
-### `Git Modules`
-
-#### Advantages of `Git Modules`
-
-#### Disadvantages of `Git Modules`
-
-#### Justifications for `Git Modules`
-
-### `Git lfs`
-
-#### Advantages f `Git lfs`
-
-#### Disadvantages of `Git lfs`
-
-#### Justifications for `Git lfs`
 
 ### Blob Storage
 
 #### Advantages of `Blob Storage`
 
+- Very extensive versioning capabilities due to manual nature
+- Accessible through basic REST API
+
 #### Disadvantages of `Blob Storage`
+
+- Extensive local scripting necessary to handle upload/download.
+  - We would need to locally zip and upload. Individual file download is _far_ too enefficient, but a single snapshotted blob could definitely work.
+  - Virtuall the same conflicts for download and unzip
+- No publically available UI to browse recordings at rest
 
 #### Justifications for `Blob Storage`
 
@@ -133,9 +192,7 @@ Given the split nature of the above, We need to talk about how the test-proxy kn
 
 To get around this, we will embed a reference to an assets repo SHA into the language repository. As part of the test playback, local implementations must _retrieve_ these referenced assets at runtime. After retrieving, there will also need to be a process to sync any updated recordings _back_ to the recordings repo without an extremely large amount of manual effort.
 
-As of now, it seems the best place to locate this assets SHA is in a new file in each `sdk/<service>` directory. For most of our packages this is a safe bet. Only one team member will be updating this SHA at a time, and as such it will be easy to add onto a commit one at a time. There is no parallelization! For others, like `azure-communication` in python or `spring` in Java land, this will be complex. We will describe these complexities in the [Scenarios](##description).
-
-
+As of now, it seems the best place to locate this assets SHA is in a new file in each `sdk/<service>` directory. For most of our packages this is a safe bet. Only one team member will be updating this SHA at a time, and as such it will be easy to add onto a commit one at a time. There is no parallelization! For others, like `azure-communication` in python or `spring` in Java land, this will be complex. We will revisit these topics in the [Scenarios Walkthroughs](#scenario-walkthroughs) section.
 
 
 ```bash
@@ -160,13 +217,13 @@ And within the file...
 
       Please note that making use of this prefix methodology is safe, as long a s
     */
-    "prefix-path-in-assets": "", 
+    "prefix-path-in-assets": "recordings/", 
 
     // by default, will check out "main"
     "fallback-branch": "",
 
-    // by default, will be resolved to the service name
-    "auto-commit-branch": "auto/tables",
+    // by default, will be resolved auto-commit/<service>
+    "auto-commit-branch": "auto-commit/tables",
 
     // this json file will eventually need additional metadata, the below key just illustrates that
     "metadatakey1": "metadatavalue1",
@@ -302,7 +359,7 @@ What needs to be done on each of the repos to utilize this.
 
 todo this list
 
-- [ ]
+- [ ] 
 - [ ]
 - [ ]
 - [ ]
@@ -321,3 +378,9 @@ FEEDBACK FROM WES
 
   ensure that we leave a comment describing why
   Split the `recordings.json` into a service directory
+
+## Post-Asset-Move space optimizations
+
+### Test-Proxy creates seeded body content at playback time
+
+For more than a few of the storage recordings, some request bodies are obviously made up of generated content. We can significantly reduce the amount of data that is actually needed to be stored by allowing the test-proxy to _fill in_ these request bodies based on a known seed value (maybe from the original request body?).

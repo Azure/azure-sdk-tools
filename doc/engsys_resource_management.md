@@ -8,6 +8,7 @@ improve our overall security risks and manage costs.
      * [Resource Groups](#resource-groups)
         * [Quick Start Creating Resources](#quick-start-creating-resources)
         * [Full Resource Management Specification](#full-resource-management-specification)
+        * [Alias Rules](#alias-rules)
      * [Role Assignments](#role-assignments)
 
 ## Managing Development and Testing Resources
@@ -41,17 +42,23 @@ If you need the group for a little more time, add/update a tag named `DeleteAfte
 *To create long-lived resources:*
 
 Create a resource group to contain all testing resources. The resource group name should start with your Microsoft alias.
-Valid group name examples: `myalias`, `myalias-feature-101-testing`.
+Valid group name examples: `myalias`, `myalias-feature-101-testing`. Your Microsoft account must be
+[linked to your Github account](https://repos.opensource.microsoft.com/link).
+
+```
+New-AzResourceGroup -ResourceGroupName myalias-feature-101-testing -Location centralus
+# Run live tests with pre-allocated resource group
+./eng/common/TestResources/New-TestResources.ps1 <service directory> -ResourceGroupName myalias-feature-101-testing -Location centralus
+```
 
 #### Full Resource Management Specification
 
 The automation will delete all resource groups in managed subscriptions multiple times DAILY, unless they meet at least one of the following criteria:
 
-- The resource group starts with a valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`, followed by an
-  optional hyphen and extra characters.
-    - Valid group name examples: `myalias`, `myalias-test-foobar` for `myalias@microsoft.com`
+- The resource group starts with a valid alias (see alias [rules](#alias-rules)), followed by an optional hyphen and extra characters.
+    - Valid resource group name examples: `myalias`, `myalias-test-foobar` for `myalias@microsoft.com` or `github.com/myalias`
 - The resource group contains a tag with the name `Owners` where the value is a csv formatted string that contains at
-  least one valid Microsoft alias within `microsoft.com` or `ntdev.microsoft.com`.
+  least one valid Microsoft or Github alias (see alias [rules](#alias-rules)).
     - This convention should only be used when it is not possible to name the resource group with an alias
         (for example, inner groups auto-created by a resource provider like AKS).
     - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
@@ -82,6 +89,22 @@ Resource groups which do not satisfy at least one of the above criteria will hav
 complete.
 
 **NOTE:** For long-lived resources, please also add a resource group tag named `Purpose` describing the purpose of the group.
+
+#### Alias Rules
+
+Due to permissions limitations with querying the Microsoft Graph API with an AAD application, alias lookups are
+performed by querying the https://repos.opensource.microsoft.com/ API for github->microsoft alias mappings.
+The implications of this are:
+
+- Mail/Security group aliases are not supported, only aliases for individuals will be recognized.
+- If using a Microsoft alias, it must be linked with a Github account in order to be recognized. See [docs on linking an account](https://repos.opensource.microsoft.com/link).
+
+For example, for a Microsoft account of foobarmsft@microsoft.com linked to a github account of foobar, the following
+will be treated as valid by the cleanup scripts:
+
+- foobarmsft  (Microsoft alias)
+- foobar@microsoft.com  (Microsoft User Principal Name)
+- foobar  (Github username)
 
 ### Role Assignments
 

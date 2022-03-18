@@ -7,6 +7,7 @@ import { GenerateContext } from '../../../src/generator/generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generator/mockTestGenerator';
 import { MockTool } from '../../tools';
+import { SampleCodeGenerator, SampleDataRender } from '../../../src/generator/sampleGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
 import { configDefaults } from '../../../src/common/constant';
@@ -19,6 +20,9 @@ describe('processRequest of go-tester', () => {
     let spyMockTestGenerateCode;
     let spyScenarioTestRenderData;
     let spyScenarioTestGenerateCode;
+    let spySampleRenderData;
+    let spySampleGenerateCode;
+
     beforeEach(() => {
         Helper.outputToModelerfour = jest.fn().mockResolvedValue(undefined);
         Helper.dump = jest.fn().mockResolvedValue(undefined);
@@ -29,6 +33,8 @@ describe('processRequest of go-tester', () => {
         spyMockTestGenerateCode = jest.spyOn(MockTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
         spyScenarioTestRenderData = jest.spyOn(ScenarioTestDataRender.prototype, 'renderData').mockReturnValue(undefined);
         spyScenarioTestGenerateCode = jest.spyOn(ScenarioTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
+        spySampleRenderData = jest.spyOn(SampleDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spySampleGenerateCode = jest.spyOn(SampleCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -158,6 +164,31 @@ describe('processRequest of go-tester', () => {
         expect(spyScenarioTestRenderData).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestGenerateCode).toHaveBeenCalledTimes(1);
     });
+
+    it('generate sdk sample if generate-sdk-sample is true', async () => {
+        TestCodeModeler.getSessionFromHost = jest.fn().mockResolvedValue({
+            getValue: jest.fn().mockImplementation((key: string) => {
+                if (key === '') {
+                    return {
+                        testmodeler: {
+                            'generate-sdk-sample': true,
+                        },
+                    };
+                } else if (key === 'header-text') {
+                    return '';
+                }
+            }),
+        });
+        await processRequest(undefined);
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).toHaveBeenCalledTimes(1);
+        expect(spySampleGenerateCode).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe('GoTestGenerator from RP agrifood', () => {
@@ -271,7 +302,7 @@ describe('GoTestGenerator from RP signalR', () => {
         const scenarioTestCodeGenerator = new ScenarioTestCodeGenerator(context);
         scenarioTestCodeGenerator.generateCode({});
 
-        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length + 1);
+        expect(spyCodeGenerate).toHaveBeenCalledTimes(testCodeModel.codeModel.testModel.scenarioTests.length);
         expect(outputs).toMatchSnapshot();
     });
 });

@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"golang.org/x/net/http2"
 )
@@ -37,7 +38,7 @@ var (
 
 func TestServices_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Get"},
 	})
 	defer func() {
@@ -114,7 +115,7 @@ func TestServices_Get(t *testing.T) {
 
 func TestServices_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CreateOrUpdate"},
 	})
 	defer func() {
@@ -204,7 +205,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CreateOrUpdate_VNetInjection"},
 	})
 	client = test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
@@ -303,7 +304,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 
 func TestServices_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Delete"},
 	})
 	defer func() {
@@ -327,7 +328,7 @@ func TestServices_Delete(t *testing.T) {
 
 func TestServices_Update(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_Update"},
 	})
 	defer func() {
@@ -419,7 +420,7 @@ func TestServices_Update(t *testing.T) {
 
 func TestServices_ListTestKeys(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_ListTestKeys"},
 	})
 	defer func() {
@@ -454,7 +455,7 @@ func TestServices_ListTestKeys(t *testing.T) {
 
 func TestServices_RegenerateTestKey(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_RegenerateTestKey"},
 	})
 	defer func() {
@@ -492,7 +493,7 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 
 func TestServices_DisableTestEndpoint(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_DisableTestEndpoint"},
 	})
 	defer func() {
@@ -512,7 +513,7 @@ func TestServices_DisableTestEndpoint(t *testing.T) {
 
 func TestServices_EnableTestEndpoint(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_EnableTestEndpoint"},
 	})
 	defer func() {
@@ -547,7 +548,7 @@ func TestServices_EnableTestEndpoint(t *testing.T) {
 
 func TestServices_CheckNameAvailability(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_CheckNameAvailability"},
 	})
 	defer func() {
@@ -583,7 +584,7 @@ func TestServices_CheckNameAvailability(t *testing.T) {
 
 func TestServices_ListBySubscription(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_ListBySubscription"},
 	})
 	defer func() {
@@ -666,7 +667,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 
 func TestServices_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Services_List"},
 	})
 	defer func() {
@@ -750,7 +751,7 @@ func TestServices_List(t *testing.T) {
 
 func TestConfigServers_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_Get"},
 	})
 	defer func() {
@@ -794,7 +795,7 @@ func TestConfigServers_Get(t *testing.T) {
 
 func TestConfigServers_UpdatePut(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_UpdatePut"},
 	})
 	defer func() {
@@ -854,7 +855,7 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 
 func TestConfigServers_UpdatePatch(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_UpdatePatch"},
 	})
 	defer func() {
@@ -914,7 +915,7 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 
 func TestConfigServers_Validate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"ConfigServers_Validate"},
 	})
 	defer func() {
@@ -957,7 +958,7 @@ func TestConfigServers_Validate(t *testing.T) {
 
 func TestMonitoringSettings_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_Get"},
 	})
 	defer func() {
@@ -999,7 +1000,7 @@ func TestMonitoringSettings_Get(t *testing.T) {
 
 func TestMonitoringSettings_UpdatePut(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_UpdatePut"},
 	})
 	defer func() {
@@ -1052,7 +1053,7 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 
 func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"MonitoringSettings_UpdatePatch"},
 	})
 	defer func() {
@@ -1105,7 +1106,7 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 
 func TestApps_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Get"},
 	})
 	defer func() {
@@ -1163,7 +1164,7 @@ func TestApps_Get(t *testing.T) {
 
 func TestApps_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_CreateOrUpdate"},
 	})
 	defer func() {
@@ -1243,7 +1244,7 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 
 func TestApps_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Delete"},
 	})
 	defer func() {
@@ -1268,7 +1269,7 @@ func TestApps_Delete(t *testing.T) {
 
 func TestApps_Update(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_Update"},
 	})
 	defer func() {
@@ -1351,7 +1352,7 @@ func TestApps_Update(t *testing.T) {
 
 func TestApps_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_List"},
 	})
 	defer func() {
@@ -1416,7 +1417,7 @@ func TestApps_List(t *testing.T) {
 
 func TestApps_ValidateDomain(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Apps_ValidateDomain"},
 	})
 	defer func() {
@@ -1452,7 +1453,7 @@ func TestApps_ValidateDomain(t *testing.T) {
 
 func TestBindings_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Get"},
 	})
 	defer func() {
@@ -1499,7 +1500,7 @@ func TestBindings_Get(t *testing.T) {
 
 func TestBindings_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_CreateOrUpdate"},
 	})
 	defer func() {
@@ -1560,7 +1561,7 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 
 func TestBindings_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Delete"},
 	})
 	defer func() {
@@ -1586,7 +1587,7 @@ func TestBindings_Delete(t *testing.T) {
 
 func TestBindings_Update(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_Update"},
 	})
 	defer func() {
@@ -1646,7 +1647,7 @@ func TestBindings_Update(t *testing.T) {
 
 func TestBindings_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Bindings_List"},
 	})
 	defer func() {
@@ -1700,7 +1701,7 @@ func TestBindings_List(t *testing.T) {
 
 func TestCertificates_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_Get"},
 	})
 	defer func() {
@@ -1749,7 +1750,7 @@ func TestCertificates_Get(t *testing.T) {
 
 func TestCertificates_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_CreateOrUpdate"},
 	})
 	defer func() {
@@ -1809,7 +1810,7 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 
 func TestCertificates_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_Delete"},
 	})
 	defer func() {
@@ -1834,7 +1835,7 @@ func TestCertificates_Delete(t *testing.T) {
 
 func TestCertificates_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Certificates_List"},
 	})
 	defer func() {
@@ -1890,7 +1891,7 @@ func TestCertificates_List(t *testing.T) {
 
 func TestCustomDomains_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Get"},
 	})
 	defer func() {
@@ -1930,7 +1931,7 @@ func TestCustomDomains_Get(t *testing.T) {
 
 func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_CreateOrUpdate"},
 	})
 	defer func() {
@@ -1980,7 +1981,7 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 
 func TestCustomDomains_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Delete"},
 	})
 	defer func() {
@@ -2006,7 +2007,7 @@ func TestCustomDomains_Delete(t *testing.T) {
 
 func TestCustomDomains_Update(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_Update"},
 	})
 	defer func() {
@@ -2056,7 +2057,7 @@ func TestCustomDomains_Update(t *testing.T) {
 
 func TestCustomDomains_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"CustomDomains_List"},
 	})
 	defer func() {
@@ -2103,7 +2104,7 @@ func TestCustomDomains_List(t *testing.T) {
 
 func TestDeployments_Get(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Get"},
 	})
 	defer func() {
@@ -2171,7 +2172,7 @@ func TestDeployments_Get(t *testing.T) {
 
 func TestDeployments_CreateOrUpdate(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_CreateOrUpdate"},
 	})
 	defer func() {
@@ -2262,7 +2263,7 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 
 func TestDeployments_Delete(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Delete"},
 	})
 	defer func() {
@@ -2288,7 +2289,7 @@ func TestDeployments_Delete(t *testing.T) {
 
 func TestDeployments_Update(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Update"},
 	})
 	defer func() {
@@ -2370,7 +2371,7 @@ func TestDeployments_Update(t *testing.T) {
 
 func TestDeployments_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_List"},
 	})
 	defer func() {
@@ -2445,7 +2446,7 @@ func TestDeployments_List(t *testing.T) {
 
 func TestDeployments_ListForCluster(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_ListForCluster"},
 	})
 	defer func() {
@@ -2519,7 +2520,7 @@ func TestDeployments_ListForCluster(t *testing.T) {
 
 func TestDeployments_Start(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Start"},
 	})
 	defer func() {
@@ -2545,7 +2546,7 @@ func TestDeployments_Start(t *testing.T) {
 
 func TestDeployments_Stop(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Stop"},
 	})
 	defer func() {
@@ -2571,7 +2572,7 @@ func TestDeployments_Stop(t *testing.T) {
 
 func TestDeployments_Restart(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Deployments_Restart"},
 	})
 	defer func() {
@@ -2597,7 +2598,7 @@ func TestDeployments_Restart(t *testing.T) {
 
 func TestOperations_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Operations_List"},
 	})
 	defer func() {
@@ -2643,7 +2644,7 @@ func TestOperations_List(t *testing.T) {
 
 func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RuntimeVersions_ListRuntimeVersions"},
 	})
 	defer func() {
@@ -2687,7 +2688,7 @@ func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 
 func TestSKUs_List(t *testing.T) {
 	// From example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Skus_List"},
 	})
 	defer func() {

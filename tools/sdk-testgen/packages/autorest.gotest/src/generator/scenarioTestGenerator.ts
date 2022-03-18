@@ -7,15 +7,18 @@ import * as _ from 'lodash';
 import * as path from 'path';
 import { BaseCodeGenerator } from './baseGenerator';
 import { Config } from '../common/constant';
+import { ExampleParameter, ExampleValue, OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 import { GoExampleModel } from '../common/model';
 import { GoHelper } from '../util/goHelper';
+import { GroupProperty, Parameter } from '@autorest/codemodel';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
-import { OutputVariableModelType, StepRestCallModel, TestDefinitionModel, TestScenarioModel } from '@autorest/testmodeler/dist/src/core/model';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
+    packagePrefixForGlobalVariables = 'testsuite.';
+    globalVariables: Record<string, string> = {};
     parentVariables: Record<string, string> = {};
     currentVariables: Record<string, string> = {};
     scenarioReferencedVariables: Set<string> = new Set<string>();
@@ -27,16 +30,20 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         }
     }
 
-    private generateScenarioTestData(testDef: TestDefinitionModel) {
+    protected generateScenarioTestData(testDef: TestDefinitionModel) {
         if (testDef.scope.toLowerCase() === 'resourcegroup') {
             this.context.importManager.add('github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources');
         }
 
+        this.globalVariables = {
+            ...testDef.requiredVariablesDefault,
+            ...testDef.variables,
+        };
+
         for (const step of testDef.prepareSteps) {
             // inner variable should overwrite outer ones
             this.parentVariables = {
-                ...testDef.requiredVariablesDefault,
-                ...testDef.variables,
+                ...this.globalVariables,
             };
             this.currentVariables = {
                 ...step.variables,
@@ -52,8 +59,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 this.stepReferencedVariables = new Set<string>();
                 // inner variable should overwrite outer ones
                 this.parentVariables = {
-                    ...testDef.requiredVariablesDefault,
-                    ...testDef.variables,
+                    ...this.globalVariables,
                     ...scenario.requiredVariablesDefault,
                     ...scenario.variables,
                 };
@@ -72,25 +78,24 @@ export class ScenarioTestDataRender extends MockTestDataRender {
 
             // resolve scenario variables
             this.parentVariables = {
-                ...testDef.requiredVariablesDefault,
-                ...testDef.variables,
+                ...this.globalVariables,
             };
             this.currentVariables = {
                 ...scenario.requiredVariablesDefault,
                 ...scenario.variables,
             };
+            scenario['variablesOutput'] = {};
             for (const [key, value] of Object.entries(scenario.variables || {})) {
-                scenario.variables[key] = this.getStringValue(value);
-                if (key === scenario.variables[key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
-                    scenario.variables[key] = '<newDefinedVariable>';
+                scenario['variablesOutput'][key] = this.getStringValue(value);
+                if (key === scenario['variablesOutput'][key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
+                    scenario['variablesOutput'][key] = '<newDefinedVariable>';
                 }
             }
         }
         for (const step of testDef.cleanUpSteps) {
             // inner variable should overwrite outer ones
             this.parentVariables = {
-                ...testDef.requiredVariablesDefault,
-                ...testDef.variables,
+                ...this.globalVariables,
             };
             this.currentVariables = {
                 ...step.variables,
@@ -101,18 +106,18 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         // resolve scope variables
         this.parentVariables = {};
         this.currentVariables = {
-            ...testDef.requiredVariablesDefault,
-            ...testDef.variables,
+            ...this.globalVariables,
         };
+        testDef['variablesOutput'] = {};
         for (const [key, value] of Object.entries(testDef.variables || {})) {
-            testDef.variables[key] = this.getStringValue(value);
-            if (key === testDef.variables[key]) {
-                testDef.variables[key] = '<newDefinedVariable>';
+            testDef['variablesOutput'][key] = this.getStringValue(value);
+            if (key === testDef['variablesOutput'][key]) {
+                testDef['variablesOutput'][key] = '<newDefinedVariable>';
             }
         }
     }
 
-    private genRenderDataForStep(step: Step) {
+    protected genRenderDataForStep(step: Step) {
         switch (step.type) {
             case OavStepType.restCall: {
                 const example = (step as StepRestCallModel).exampleModel as GoExampleModel;
@@ -136,13 +141,16 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                         }
                         step.outputVariables[variableName]['isPtr'] = isPtr;
                     }
+                } else {
+                    example.checkResponse = false;
                 }
                 break;
             }
             case OavStepType.armTemplate: {
+                const copyOfPayload = _.cloneDeep(step.armTemplatePayload);
                 // environment variables & arguments parse
-                if (step.armTemplatePayload.resources) {
-                    step.armTemplatePayload.resources.forEach((t) => {
+                if (copyOfPayload.resources) {
+                    copyOfPayload.resources.forEach((t) => {
                         (t.properties['environmentVariables'] || []).forEach((e) => {
                             if (e.value) {
                                 e.value = '<parsedVariable>' + this.getStringValue(e.value);
@@ -157,7 +165,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
                 }
 
                 // template parse
-                step['armTemplateOutput'] = GoHelper.obejctToString(step.armTemplatePayload);
+                step['armTemplateOutput'] = GoHelper.obejctToString(copyOfPayload);
 
                 break;
             }
@@ -170,11 +178,33 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             }
         }
         // resolve step variables
+        step['variablesOutput'] = {};
         for (const [key, value] of Object.entries(step.variables || {})) {
-            step.variables[key] = this.getStringValue(value);
-            if (key === step.variables[key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
-                step.variables[key] = '<newDefinedVariable>';
+            step['variablesOutput'][key] = this.getStringValue(value);
+            if (key === step['variablesOutput'][key] && !Object.prototype.hasOwnProperty.call(this.parentVariables, key)) {
+                step['variablesOutput'][key] = '<newDefinedVariable>';
             }
+        }
+    }
+
+    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[]): string {
+        return paramsSig
+            .map(([paramName, typeName, parameter]) => {
+                if (paramName === 'ctx') {
+                    return this.packagePrefixForGlobalVariables + 'ctx';
+                }
+                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
+            })
+            .join(',\n');
+    }
+
+    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
+        const defaultValue = super.getDefaultValue(param, isPtr, elemByVal);
+        // the operation has no client subscriptionID param, but client has, we need to replace it to the subscriptionID param
+        if (defaultValue === '"<subscription-id>"') {
+            return this.packagePrefixForGlobalVariables + 'subscriptionId';
+        } else {
+            return defaultValue;
         }
     }
 
@@ -188,7 +218,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
 
     // Pick out $(...) variables from normal string
     // For example: "a string with ${var} inside" => ['"a string with "', 'var', '" inside"']
-    private parseOavVariable(s: string, definedVariables: Record<string, string>): string[] {
+    protected parseOavVariable(s: string, definedVariables: Record<string, string>): string[] {
         if (!s) {
             return ['""'];
         }
@@ -206,9 +236,14 @@ export class ScenarioTestDataRender extends MockTestDataRender {
             if (p > 0) {
                 ret.push(Helper.quotedEscapeString(s.substring(0, p)));
             }
-            ret.push(placeHolder.slice(2, -1));
-            this.scenarioReferencedVariables.add(_.last(ret));
-            this.stepReferencedVariables.add(_.last(ret));
+            const variable = placeHolder.slice(2, -1);
+            if (Object.prototype.hasOwnProperty.call(this.globalVariables, variable)) {
+                ret.push(this.packagePrefixForGlobalVariables + variable);
+            } else {
+                ret.push(variable);
+            }
+            this.scenarioReferencedVariables.add(variable);
+            this.stepReferencedVariables.add(variable);
             s = s.substring(p + placeHolder.length);
         }
         if (s.length > 0) {
@@ -222,18 +257,20 @@ export class ScenarioTestDataRender extends MockTestDataRender {
 export class ScenarioTestCodeGenerator extends BaseCodeGenerator {
     public generateCode(extraParam: Record<string, unknown> = {}): void {
         if (this.context.codeModel.testModel.scenarioTests.length > 0) {
-            this.renderAndWrite({}, 'scenarioUtil.go.njk', `scenario_test/${this.getFilePrefix(Config.testFilePrefix)}scenario_test_util.go`, extraParam);
             for (const testDef of this.context.codeModel.testModel.scenarioTests) {
                 const file = path.basename(testDef._filePath);
                 const filename = file.split('.').slice(0, -1).join('.');
                 const rpRegex = /(\/|\\)(?<rpName>[^/\\]+)(\/|\\)(arm[^/\\]+)/;
                 const execResult = rpRegex.exec(this.context.testConfig.getValue(Config.outputFolder));
                 extraParam['rpName'] = execResult?.groups ? execResult.groups['rpName'] : '';
-                extraParam['testPackageName'] = filename.toLowerCase();
+                extraParam['globalVariables'] = Object.keys({
+                    ...testDef.requiredVariablesDefault,
+                    ...testDef.variables,
+                });
                 this.renderAndWrite(
-                    { ...testDef, testCaseName: Helper.capitalize(Helper.toCamelCase(filename)), allVariables: [] },
+                    { ...testDef, testCaseName: Helper.capitalize(Helper.toCamelCase(filename)) },
                     'scenarioTest.go.njk',
-                    `scenario_test/${filename.toLowerCase()}/${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_test.go`,
+                    `${this.getFilePrefix(Config.testFilePrefix)}${filename.toLowerCase()}_live_test.go`,
                     extraParam,
                     {
                         toSnakeCase: Helper.toSnakeCase,

@@ -7723,7 +7723,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Get.json
               responses:
                 '200':
                   body:
@@ -8027,7 +8027,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -8163,7 +8163,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json
               responses:
                 '200':
                   body:
@@ -8553,7 +8553,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
               responses:
                 '202':
                   headers: &ref_1162
@@ -8822,7 +8822,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json
               responses:
                 '200':
                   body:
@@ -9160,7 +9160,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
               responses:
                 '200':
                   body:
@@ -9397,7 +9397,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
               responses:
                 '200':
                   body:
@@ -9609,7 +9609,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
               responses:
                 '200': {}
         language:
@@ -9785,7 +9785,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_EnableTestEndpoint.json
               responses:
                 '200':
                   body:
@@ -10005,7 +10005,7 @@ operationGroups:
                   type: Microsoft.AppPlatform/Spring
                 location: eastus
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
               responses:
                 '200':
                   body:
@@ -10183,7 +10183,7 @@ operationGroups:
               parameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
               responses:
                 '200':
                   body:
@@ -10422,7 +10422,7 @@ operationGroups:
                 api-version: 2020-11-01-preview
                 resourceGroupName: myResourceGroup
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
               responses:
                 '200':
                   body:
@@ -10694,7 +10694,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Get.json
               responses:
                 '200':
                   body:
@@ -10958,7 +10958,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
               responses:
                 '200':
                   body:
@@ -11283,7 +11283,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
               responses:
                 '200':
                   body:
@@ -11611,7 +11611,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
               responses:
                 '200':
                   body:
@@ -11893,7 +11893,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_Get.json
               responses:
                 '200':
                   body:
@@ -12153,7 +12153,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
               responses:
                 '200':
                   body:
@@ -12473,7 +12473,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
               responses:
                 '200':
                   body:
@@ -12827,7 +12827,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Get.json
               responses:
                 '200':
                   body:
@@ -13126,7 +13126,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -13494,7 +13494,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -13790,7 +13790,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json
               responses:
                 '200':
                   body:
@@ -14102,7 +14102,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
               responses:
                 '200':
                   body:
@@ -14364,7 +14364,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_GetResourceUploadUrl.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_GetResourceUploadUrl.json
               responses:
                 '200':
                   body:
@@ -14617,7 +14617,7 @@ operationGroups:
                 subscriptionId: 00000000-0000-0000-0000-000000000000
                 validatePayload:
                   name: mydomain.io
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_ValidateDomain.json
               responses:
                 '200':
                   body:
@@ -14881,7 +14881,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Get.json
               responses:
                 '200':
                   body:
@@ -15203,7 +15203,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -15568,7 +15568,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -15873,7 +15873,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json
               responses:
                 '200':
                   body:
@@ -16189,7 +16189,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
               responses:
                 '200':
                   body:
@@ -16459,7 +16459,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Get.json
               responses:
                 '200':
                   body:
@@ -16759,7 +16759,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -17109,7 +17109,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -17335,7 +17335,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
               responses:
                 '200':
                   body:
@@ -17625,7 +17625,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Get.json
               responses:
                 '200':
                   body:
@@ -17932,7 +17932,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -18270,7 +18270,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -18570,7 +18570,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json
               responses:
                 '200':
                   body:
@@ -18868,7 +18868,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
               responses:
                 '200':
                   body:
@@ -19148,7 +19148,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Get.json
               responses:
                 '200':
                   body:
@@ -19492,7 +19492,7 @@ operationGroups:
                   capacity: 1
                   tier: Standard
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -19896,7 +19896,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
               responses:
                 '200': {}
                 '202': {}
@@ -20200,7 +20200,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json
               responses:
                 '200':
                   body:
@@ -20580,7 +20580,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
               responses:
                 '200':
                   body:
@@ -20852,7 +20852,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
               responses:
                 '200':
                   body:
@@ -21128,7 +21128,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
               responses:
                 '200': {}
                 '202':
@@ -21398,7 +21398,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
               responses:
                 '200': {}
                 '202':
@@ -21668,7 +21668,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
               responses:
                 '200': {}
                 '202':
@@ -21942,7 +21942,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 serviceName: myservice
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_GetLogFileUrl.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_GetLogFileUrl.json
               responses:
                 '200':
                   body:
@@ -22133,7 +22133,7 @@ operationGroups:
             Operations_List:
               parameters:
                 api-version: 2020-11-01-preview
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
               responses:
                 '200':
                   body:
@@ -22340,7 +22340,7 @@ operationGroups:
             RuntimeVersions_ListRuntimeVersions:
               parameters:
                 api-version: 2020-11-01-preview
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/RuntimeVersions_ListRuntimeVersions.json
               responses:
                 '200':
                   body:
@@ -22538,7 +22538,7 @@ operationGroups:
               parameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
               responses:
                 '200':
                   body:
@@ -33848,11 +33848,11 @@ testModel:
                   cleanupPreference: OnSuccess
                   environmentVariables:
                     - name: resourceGroupName
-                      value: <parsedVariable>dnsResourceGroup
+                      value: $(dnsResourceGroup)
                     - name: dnsCname
-                      value: <parsedVariable>"asc"
+                      value: asc
                     - name: dnsZoneName
-                      value: <parsedVariable>customDomainName
+                      value: $(customDomainName)
                   forceUpdateTag: '[parameters(''utcValue'')]'
                   retentionInterval: P1D
                   scriptContent: |-
@@ -33873,6 +33873,7 @@ testModel:
           secretVariables: []
           step: delete_cname_record
           variables: {}
+          variablesOutput: {}
       prepareSteps:
         - &ref_1549
           type: armTemplateDeployment
@@ -33920,6 +33921,7 @@ testModel:
           secretVariables: []
           step: Generate_Unique_ServiceName
           variables: {}
+          variablesOutput: {}
         - &ref_1550
           type: armTemplateDeployment
           armTemplate: templates/create_application_insights_instance.json
@@ -33990,6 +33992,7 @@ testModel:
           secretVariables: []
           step: Create_Application_Insight_Instance
           variables: {}
+          variablesOutput: {}
         - &ref_1551
           type: armTemplateDeployment
           armTemplate: ''
@@ -34133,13 +34136,13 @@ testModel:
                   cleanupPreference: OnSuccess
                   environmentVariables:
                     - name: resourceGroupName
-                      value: <parsedVariable>dnsResourceGroup
+                      value: $(dnsResourceGroup)
                     - name: dnsZoneName
-                      value: <parsedVariable>customDomainName
+                      value: $(customDomainName)
                     - name: dnsCname
-                      value: <parsedVariable>"asc"
+                      value: asc
                     - name: dnsCnameAlias
-                      value: <parsedVariable>serviceName + ".azuremicroservices.io"
+                      value: $(serviceName).azuremicroservices.io
                   forceUpdateTag: '[parameters(''utcValue'')]'
                   retentionInterval: P1D
                   scriptContent: |-
@@ -34163,6 +34166,7 @@ testModel:
           secretVariables: []
           step: Add_Dns_Cname_Record
           variables: {}
+          variablesOutput: {}
       requiredVariables:
         - customDomainName
         - mysqlKey
@@ -34194,7 +34198,7 @@ testModel:
               exampleFile: ../examples/Services_CheckNameAvailability.json
               exampleModel:
                 name: Services_CheckNameAvailability
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -34297,13 +34301,14 @@ testModel:
               statusCode: 200
               step: Services_CheckNameAvailability
               variables: {}
+              variablesOutput: {}
             - &ref_1573
               type: restCall
               operationId: Services_CreateOrUpdate
               exampleFile: ../examples/Services_CreateOrUpdate.json
               exampleModel:
                 name: Services_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -34666,13 +34671,14 @@ testModel:
               statusCode: 200
               step: Services_CreateOrUpdate
               variables: {}
+              variablesOutput: {}
             - &ref_1574
               type: restCall
               operationId: Services_Get
               exampleFile: ../examples/Services_Get.json
               exampleModel:
                 name: Services_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -34975,13 +34981,14 @@ testModel:
               statusCode: 200
               step: Services_Get
               variables: {}
+              variablesOutput: {}
             - &ref_1575
               type: restCall
               operationId: Services_Update
               exampleFile: ''
               exampleModel:
                 name: ''
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -35345,6 +35352,7 @@ testModel:
               statusCode: 200
               step: Services_Update
               variables: {}
+              variablesOutput: {}
             - &ref_1576
               type: restCall
               operationId: Services_DisableTestEndpoint
@@ -35413,13 +35421,14 @@ testModel:
               statusCode: 200
               step: Services_DisableTestEndpoint
               variables: {}
+              variablesOutput: {}
             - &ref_1577
               type: restCall
               operationId: Services_EnableTestEndpoint
               exampleFile: ../examples/Services_EnableTestEndpoint.json
               exampleModel:
                 name: Services_EnableTestEndpoint
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -35518,13 +35527,14 @@ testModel:
               statusCode: 200
               step: Services_EnableTestEndpoint
               variables: {}
+              variablesOutput: {}
             - &ref_1578
               type: restCall
               operationId: Services_RegenerateTestKey
               exampleFile: ../examples/Services_RegenerateTestKey.json
               exampleModel:
                 name: Services_RegenerateTestKey
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -35638,13 +35648,14 @@ testModel:
               statusCode: 200
               step: Services_RegenerateTestKey
               variables: {}
+              variablesOutput: {}
             - &ref_1579
               type: restCall
               operationId: Services_ListTestKeys
               exampleFile: ../examples/Services_ListTestKeys.json
               exampleModel:
                 name: Services_ListTestKeys
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -35743,13 +35754,14 @@ testModel:
               statusCode: 200
               step: Services_ListTestKeys
               variables: {}
+              variablesOutput: {}
             - &ref_1580
               type: restCall
               operationId: Certificates_CreateOrUpdate
               exampleFile: ../examples/Certificates_CreateOrUpdate.json
               exampleModel:
                 name: Certificates_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -35907,6 +35919,8 @@ testModel:
               statusCode: 200
               step: Certificates_CreateOrUpdate
               variables:
+                certificateName: asc-certificate
+              variablesOutput:
                 certificateName: '"asc-certificate"'
             - &ref_1581
               type: restCall
@@ -35914,7 +35928,7 @@ testModel:
               exampleFile: ../examples/Certificates_Get.json
               exampleModel:
                 name: Certificates_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36098,6 +36112,8 @@ testModel:
               statusCode: 200
               step: Certificates_Get
               variables:
+                certificateName: asc-certificate
+              variablesOutput:
                 certificateName: '"asc-certificate"'
             - &ref_1582
               type: restCall
@@ -36105,7 +36121,7 @@ testModel:
               exampleFile: ../examples/Certificates_List.json
               exampleModel:
                 name: Certificates_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36299,13 +36315,14 @@ testModel:
               statusCode: 200
               step: Certificates_List
               variables: {}
+              variablesOutput: {}
             - &ref_1583
               type: restCall
               operationId: ConfigServers_Validate
               exampleFile: ../examples/ConfigServers_Validate.json
               exampleModel:
                 name: ConfigServers_Validate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36426,13 +36443,14 @@ testModel:
               statusCode: 200
               step: ConfigServers_Validate
               variables: {}
+              variablesOutput: {}
             - &ref_1584
               type: restCall
               operationId: ConfigServers_UpdatePut
               exampleFile: ../examples/ConfigServers_UpdatePut.json
               exampleModel:
                 name: ConfigServers_UpdatePut
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36643,13 +36661,14 @@ testModel:
               statusCode: 200
               step: ConfigServers_UpdatePut
               variables: {}
+              variablesOutput: {}
             - &ref_1585
               type: restCall
               operationId: ConfigServers_UpdatePatch
               exampleFile: ../examples/ConfigServers_UpdatePatch.json
               exampleModel:
                 name: ConfigServers_UpdatePatch
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36825,13 +36844,14 @@ testModel:
               statusCode: 200
               step: ConfigServers_UpdatePatch
               variables: {}
+              variablesOutput: {}
             - &ref_1586
               type: restCall
               operationId: ConfigServers_Get
               exampleFile: ../examples/ConfigServers_Get.json
               exampleModel:
                 name: ConfigServers_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -36980,13 +37000,14 @@ testModel:
               statusCode: 200
               step: ConfigServers_Get
               variables: {}
+              variablesOutput: {}
             - &ref_1587
               type: restCall
               operationId: MonitoringSettings_UpdatePut
               exampleFile: ../examples/MonitoringSettings_UpdatePut.json
               exampleModel:
                 name: MonitoringSettings_UpdatePut
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -37151,13 +37172,14 @@ testModel:
               statusCode: 200
               step: MonitoringSettings_UpdatePut
               variables: {}
+              variablesOutput: {}
             - &ref_1588
               type: restCall
               operationId: MonitoringSettings_Get
               exampleFile: ../examples/MonitoringSettings_Get.json
               exampleModel:
                 name: MonitoringSettings_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -37300,13 +37322,14 @@ testModel:
               statusCode: 200
               step: MonitoringSettings_Get
               variables: {}
+              variablesOutput: {}
             - &ref_1589
               type: restCall
               operationId: MonitoringSettings_UpdatePatch
               exampleFile: ''
               exampleModel:
                 name: ''
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -37456,13 +37479,14 @@ testModel:
               statusCode: 200
               step: MonitoringSettings_UpdatePatch
               variables: {}
+              variablesOutput: {}
             - &ref_1590
               type: restCall
               operationId: Apps_CreateOrUpdate
               exampleFile: ../examples/Apps_CreateOrUpdate.json
               exampleModel:
                 name: Apps_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -37732,13 +37756,14 @@ testModel:
               statusCode: 200
               step: Apps_Create
               variables: {}
+              variablesOutput: {}
             - &ref_1591
               type: restCall
               operationId: Apps_Get
               exampleFile: ../examples/Apps_Get.json
               exampleModel:
                 name: Apps_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -37972,13 +37997,14 @@ testModel:
               statusCode: 200
               step: Apps_Get
               variables: {}
+              variablesOutput: {}
             - &ref_1592
               type: restCall
               operationId: Deployments_CreateOrUpdate
               exampleFile: ../examples/Deployments_CreateOrUpdate.json
               exampleModel:
                 name: Deployments_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -38386,6 +38412,8 @@ testModel:
               statusCode: 200
               step: Deployments_CreateOrUpdate_Default
               variables:
+                deploymentName: default
+              variablesOutput:
                 deploymentName: '"default"'
             - &ref_1593
               type: restCall
@@ -38393,7 +38421,7 @@ testModel:
               exampleFile: ../examples/Deployments_Get.json
               exampleModel:
                 name: Deployments_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -38674,6 +38702,8 @@ testModel:
               statusCode: 200
               step: Deployments_Get
               variables:
+                deploymentName: default
+              variablesOutput:
                 deploymentName: '"default"'
             - &ref_1594
               type: restCall
@@ -38681,7 +38711,7 @@ testModel:
               exampleFile: ''
               exampleModel:
                 name: ''
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -38966,13 +38996,14 @@ testModel:
               statusCode: 200
               step: Apps_Update_ActiveDeployment
               variables: {}
+              variablesOutput: {}
             - &ref_1595
               type: restCall
               operationId: Apps_Update
               exampleFile: ''
               exampleModel:
                 name: ''
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -39298,13 +39329,14 @@ testModel:
               statusCode: 200
               step: Apps_Update_Disk
               variables: {}
+              variablesOutput: {}
             - &ref_1596
               type: restCall
               operationId: Apps_List
               exampleFile: ../examples/Apps_List.json
               exampleModel:
                 name: Apps_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -39541,13 +39573,14 @@ testModel:
               statusCode: 200
               step: Apps_List
               variables: {}
+              variablesOutput: {}
             - &ref_1597
               type: restCall
               operationId: Bindings_CreateOrUpdate
               exampleFile: ../examples/Bindings_CreateOrUpdate.json
               exampleModel:
                 name: Bindings_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -39786,6 +39819,8 @@ testModel:
               statusCode: 200
               step: Bindings_Create
               variables:
+                bindingName: mysql-binding
+              variablesOutput:
                 bindingName: '"mysql-binding"'
             - &ref_1598
               type: restCall
@@ -39793,7 +39828,7 @@ testModel:
               exampleFile: ../examples/Bindings_Update.json
               exampleModel:
                 name: Bindings_Update
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40030,6 +40065,8 @@ testModel:
               statusCode: 200
               step: Bindings_Update
               variables:
+                bindingName: mysql-binding
+              variablesOutput:
                 bindingName: '"mysql-binding"'
             - &ref_1599
               type: restCall
@@ -40037,7 +40074,7 @@ testModel:
               exampleFile: ../examples/Bindings_Get.json
               exampleModel:
                 name: Bindings_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40215,6 +40252,8 @@ testModel:
               statusCode: 200
               step: Bindings_Get
               variables:
+                bindingName: mysql-binding
+              variablesOutput:
                 bindingName: '"mysql-binding"'
             - &ref_1600
               type: restCall
@@ -40222,7 +40261,7 @@ testModel:
               exampleFile: ../examples/Bindings_List.json
               exampleModel:
                 name: Bindings_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40405,6 +40444,7 @@ testModel:
               statusCode: 200
               step: Bindings_List
               variables: {}
+              variablesOutput: {}
             - &ref_1601
               type: restCall
               operationId: Bindings_Delete
@@ -40488,6 +40528,8 @@ testModel:
               statusCode: 200
               step: Bindings_Delete
               variables:
+                bindingName: mysql-binding
+              variablesOutput:
                 bindingName: '"mysql-binding"'
             - &ref_1602
               type: restCall
@@ -40495,7 +40537,7 @@ testModel:
               exampleFile: ../examples/Apps_ValidateDomain.json
               exampleModel:
                 name: Apps_ValidateDomain
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40600,13 +40642,14 @@ testModel:
               statusCode: 200
               step: Apps_ValidateDomain
               variables: {}
+              variablesOutput: {}
             - &ref_1603
               type: restCall
               operationId: CustomDomains_CreateOrUpdate
               exampleFile: ../examples/CustomDomains_CreateOrUpdate.json
               exampleModel:
                 name: CustomDomains_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40758,6 +40801,8 @@ testModel:
               statusCode: 200
               step: CustomDomains_CreateOrUpdate
               variables:
+                domainName: $(dnsCname).$(customDomainName)
+              variablesOutput:
                 domainName: dnsCname + "." + customDomainName
             - &ref_1604
               type: restCall
@@ -40765,7 +40810,7 @@ testModel:
               exampleFile: ../examples/CustomDomains_Update.json
               exampleModel:
                 name: CustomDomains_Update
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -40917,6 +40962,8 @@ testModel:
               statusCode: 200
               step: CustomDomains_Update
               variables:
+                domainName: $(dnsCname).$(customDomainName)
+              variablesOutput:
                 domainName: dnsCname + "." + customDomainName
             - &ref_1605
               type: restCall
@@ -40924,7 +40971,7 @@ testModel:
               exampleFile: ../examples/CustomDomains_Get.json
               exampleModel:
                 name: CustomDomains_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -41061,6 +41108,8 @@ testModel:
               statusCode: 200
               step: CustomDomains_Get
               variables:
+                domainName: $(dnsCname).$(customDomainName)
+              variablesOutput:
                 domainName: dnsCname + "." + customDomainName
             - &ref_1606
               type: restCall
@@ -41068,7 +41117,7 @@ testModel:
               exampleFile: ../examples/CustomDomains_List.json
               exampleModel:
                 name: CustomDomains_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -41215,6 +41264,7 @@ testModel:
               statusCode: 200
               step: CustomDomains_List
               variables: {}
+              variablesOutput: {}
             - &ref_1607
               type: restCall
               operationId: Apps_GetResourceUploadUrl
@@ -41331,6 +41381,7 @@ testModel:
               statusCode: 200
               step: Apps_GetResourceUploadUrl
               variables: {}
+              variablesOutput: {}
             - &ref_1608
               type: armTemplateDeployment
               armTemplate: ''
@@ -41360,9 +41411,9 @@ testModel:
                       cleanupPreference: OnSuccess
                       environmentVariables:
                         - name: uploadUrl
-                          secureValue: <parsedVariable>uploadUrl
+                          secureValue: $(uploadUrl)
                         - name: blobUrl
-                          secureValue: <parsedVariable>blobUrl
+                          secureValue: $(blobUrl)
                       forceUpdateTag: '[parameters(''utcValue'')]'
                       retentionInterval: P1D
                       scriptContent: "$uploadUri = ${Env:uploadUrl}\n$blobUri = ${Env:blobUrl}\n$localFilePath = '/tmp/temp.file'\nfunction DownloadJarFromBlob([string]$blobUri, [string]$localOutputFilePath) {\n\t$BlobFile = [Microsoft.WindowsAzure.Storage.Blob.CloudBlob]::new($blobUri)\n\t$DownLoadTask = $BlobFile.DownloadToFileAsync($localOutputFilePath, 4)\n\t$DownLoadTask\n}\n\nfunction UploadToFileShare([string]$uploadUri, [string]$localFilePath) {\n\t$CloudFile = [Microsoft.WindowsAzure.Storage.File.CloudFile]::New($uploadUri)\n\t$UploadTask = $CloudFile.UploadFromFileAsync($localFilePath)\n\t$UploadTask\n}\n\nConnect-AzAccount -Identity\nDownloadJarFromBlob $blobUri $localFilePath\nUploadToFileShare $uploadUri $localFilePath"
@@ -41373,13 +41424,14 @@ testModel:
               secretVariables: []
               step: Upload_File
               variables: {}
+              variablesOutput: {}
             - &ref_1609
               type: restCall
               operationId: Deployments_CreateOrUpdate
               exampleFile: ../examples/Deployments_CreateOrUpdate.json
               exampleModel:
                 name: Deployments_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -41790,6 +41842,8 @@ testModel:
               statusCode: 200
               step: Deployments_CreateOrUpdate
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1610
               type: restCall
@@ -41797,7 +41851,7 @@ testModel:
               exampleFile: ''
               exampleModel:
                 name: ''
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -42076,6 +42130,7 @@ testModel:
               statusCode: 200
               step: Apps_Update
               variables: {}
+              variablesOutput: {}
             - &ref_1611
               type: restCall
               operationId: Deployments_Restart
@@ -42159,6 +42214,8 @@ testModel:
               statusCode: 200
               step: Deployments_Restart
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1612
               type: restCall
@@ -42243,6 +42300,8 @@ testModel:
               statusCode: 200
               step: Deployments_Stop
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1613
               type: restCall
@@ -42327,6 +42386,8 @@ testModel:
               statusCode: 200
               step: Deployments_Start
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1614
               type: restCall
@@ -42334,7 +42395,7 @@ testModel:
               exampleFile: ../examples/Deployments_GetLogFileUrl.json
               exampleModel:
                 name: Deployments_GetLogFileUrl
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -42428,6 +42489,8 @@ testModel:
               statusCode: 200
               step: Deployments_GetLogFileUrl
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1615
               type: restCall
@@ -42435,7 +42498,7 @@ testModel:
               exampleFile: ../examples/Deployments_List.json
               exampleModel:
                 name: Deployments_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -42721,13 +42784,14 @@ testModel:
               statusCode: 200
               step: Deployments_List
               variables: {}
+              variablesOutput: {}
             - &ref_1616
               type: restCall
               operationId: Deployments_ListForCluster
               exampleFile: ../examples/Deployments_ListForCluster.json
               exampleModel:
                 name: Deployments_ListForCluster
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -43007,13 +43071,14 @@ testModel:
               statusCode: 200
               step: Deployments_ListForCluster
               variables: {}
+              variablesOutput: {}
             - &ref_1617
               type: restCall
               operationId: Services_List
               exampleFile: ../examples/Services_List.json
               exampleModel:
                 name: Services_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -43320,13 +43385,14 @@ testModel:
               statusCode: 200
               step: Services_List
               variables: {}
+              variablesOutput: {}
             - &ref_1618
               type: restCall
               operationId: Services_ListBySubscription
               exampleFile: ../examples/Services_ListBySubscription.json
               exampleModel:
                 name: Services_ListBySubscription
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -43625,6 +43691,7 @@ testModel:
               statusCode: 200
               step: Services_ListBySubscription
               variables: {}
+              variablesOutput: {}
             - &ref_1619
               type: restCall
               operationId: Deployments_Delete
@@ -43708,6 +43775,8 @@ testModel:
               statusCode: 200
               step: Deployments_Delete
               variables:
+                deploymentName: blue
+              variablesOutput:
                 deploymentName: '"blue"'
             - &ref_1620
               type: restCall
@@ -43792,6 +43861,8 @@ testModel:
               statusCode: 200
               step: CustomDomains_Delete
               variables:
+                domainName: $(dnsCname).$(customDomainName)
+              variablesOutput:
                 domainName: dnsCname + "." + customDomainName
             - &ref_1621
               type: restCall
@@ -43869,6 +43940,8 @@ testModel:
               statusCode: 200
               step: Apps_Delete
               variables:
+                appName: app01
+              variablesOutput:
                 appName: '"app01"'
             - &ref_1622
               type: restCall
@@ -43946,6 +44019,8 @@ testModel:
               statusCode: 200
               step: Certificates_Delete
               variables:
+                certificateName: asc-certificate
+              variablesOutput:
                 certificateName: '"asc-certificate"'
             - &ref_1623
               type: restCall
@@ -44011,13 +44086,14 @@ testModel:
               statusCode: 200
               step: Services_Delete
               variables: {}
+              variablesOutput: {}
             - &ref_1624
               type: restCall
               operationId: Skus_List
               exampleFile: ../examples/Skus_List.json
               exampleModel:
                 name: Skus_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -44181,13 +44257,14 @@ testModel:
               statusCode: 200
               step: Skus_List
               variables: {}
+              variablesOutput: {}
             - &ref_1625
               type: restCall
               operationId: Operations_List
               exampleFile: ../examples/Operations_List.json
               exampleModel:
                 name: Operations_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_277
@@ -44315,6 +44392,7 @@ testModel:
               statusCode: 200
               step: Operations_List
               variables: {}
+              variablesOutput: {}
             - *ref_1570
           _scenarioDef: *ref_1571
           requiredVariables:
@@ -44395,6 +44473,9 @@ testModel:
             - *ref_1624
             - *ref_1625
           variables:
+            relativePath: $(relativePath)
+            uploadUrl: $(uploadUrl)
+          variablesOutput:
             relativePath: <newDefinedVariable>
             uploadUrl: <newDefinedVariable>
       scope: ResourceGroup
@@ -44403,6 +44484,12 @@ testModel:
         - blobUrl
       useArmTemplate: true
       variables:
+        appName: app01
+        ascDomainName: .azuremicroservices.io
+        dnsCname: asc
+        insightsInstrumentationKey: $(insightsInstrumentationKey)
+        serviceName: test-scenario-instance
+      variablesOutput:
         appName: '"app01"'
         ascDomainName: '".azuremicroservices.io"'
         dnsCname: '"asc"'

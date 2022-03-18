@@ -3,7 +3,7 @@
 
 {{copyright}}
 
-package {{testPackageName}}_test
+package {{packageName}}_test
 
 import (
 	"context"
@@ -11,76 +11,91 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
-    "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/{{rpName}}/{{packageName}}/scenario_test"
+    "github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
+    "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+    "github.com/stretchr/testify/suite"
 )
 {{imports}}
 
-var (
-	ctx            context.Context
-	cred           azcore.TokenCredential
-    pathToPackage  = "sdk/resourcemanager/{{rpName}}/{{packageName}}/scenario_test/{{testPackageName}}/testdata"
-	options        *arm.ClientOptions
-{%- if scope.toLowerCase() == 'resourcegroup'%}
-	resourceGroup	*armresources.ResourceGroup
-{%- endif %}
-{%- for name, value in variables %}
-{%- if value === "<newDefinedVariable>" %}
-    {{name}} string
-{%- else %}
-    {{name}} = {{value}}
-{%- endif %}
-{%- endfor %}
-{%- for variable, _ in requiredVariablesDefault %}
-{%- if not variables.hasOwnProperty(variable) %}
-    {%- if variable === "location" %}
-    location = scenario_test.GetEnv("LOCATION", "eastus")
-    {%- elif variable === "subscriptionId" %}
-    subscriptionId = scenario_test.GetEnv("SUBSCRIPTION_ID", scenario_test.GetEnv("AZURE_SUBSCRIPTION_ID", ""))
-    {%- else %}
-    {{variable}} = scenario_test.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
-    {%- endif %}
-{%- endif %}
-{%- endfor %}
-)
+type {{testCaseName}}TestSuite struct {
+	suite.Suite
 
-func Test{{testCaseName}}(t *testing.T) {
-    // Setup for test
-	scenario_test.StartRecording(t, pathToPackage)
-	ctx = context.Background()
-	options = scenario_test.CreateArmOptions(t)
-	cred = scenario_test.CreateCred(t, ctx, options)
-    {%- if scope.toLowerCase() == 'resourcegroup'%}
-	resourceGroup = scenario_test.CreateResourceGroup(t, ctx, cred, subscriptionId, location, options)
-	resourceGroupName = *resourceGroup.Name
-    {%- endif %}
-	// Clenup for test
-	t.Cleanup(func() {
-        {%- if scope.toLowerCase() == 'resourcegroup'%}
-		scenario_test.DeleteResourceGroup(t, ctx, cred, subscriptionId, resourceGroupName, options)
-        {%- endif %}
-		scenario_test.StopRecording(t)
-	})
-	prepare(t)
-{%- for testScenario in scenarios %}
-	scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t)
-{%- endfor %}
-	cleanup(t)
+	ctx     context.Context
+	cred    azcore.TokenCredential
+	options *arm.ClientOptions
+
+	{%- for name, value in variablesOutput %}
+    {{name}} string
+    {%- endfor %}
+    {%- for variable, _ in requiredVariablesDefault %}
+    {{variable}} string
+    {%- endfor %}
 }
 
-func prepare(t *testing.T) {
+func (testsuite *{{testCaseName}}TestSuite) SetupSuite() {
+	testsuite.ctx = context.Background()
+	testsuite.cred, testsuite.options = testutil.GetCredAndClientOptions(testsuite.T())
+
+    {%- for name, value in variablesOutput %}
+    {%- if value !== "<newDefinedVariable>" and value !== "testsuite." + name %}
+        testsuite.{{name}} = {{value}}
+    {%- endif %}
+    {%- endfor %}
+    {%- for variable, _ in requiredVariablesDefault %}
+    {%- if not variables.hasOwnProperty(variable) %}
+        {%- if variable === "location" %}
+        testsuite.location = testutil.GetEnv("LOCATION", "eastus")
+        {%- elif variable === "subscriptionId" %}
+        testsuite.subscriptionId = testutil.GetEnv("AZURE_SUBSCRIPTION_ID", "")
+        {%- else %}
+        testsuite.{{variable}} = testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
+        {%- endif %}
+    {%- endif %}
+    {%- endfor %}
+
+    testutil.StartRecording(testsuite.T(), "sdk/resourcemanager/{{rpName}}/{{packageName}}/testdata")
+	
+    {%- if scope.toLowerCase() == 'resourcegroup'%}
+    resourceGroup, _, err := testutil.CreateResourceGroup(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.location)
+	testsuite.Require().NoError(err)
+	testsuite.resourceGroupName = *resourceGroup.Name
+    {%- endif %}
+    {%- if prepareSteps.length > 0 %}
+	testsuite.Prepare()
+    {%- endif %}
+}
+
+func (testsuite *{{testCaseName}}TestSuite) TearDownSuite() {
+    {%- if cleanUpSteps.length > 0 %}
+	testsuite.Cleanup()
+    {%- endif %}
+    {%- if scope.toLowerCase() == 'resourcegroup'%}
+	_, err := testutil.DeleteResourceGroup(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName)
+	testsuite.Require().NoError(err)
+    {%- endif %}
+	testutil.StopRecording(testsuite.T())
+}
+
+func Test{{testCaseName}}TestSuite(t *testing.T) {
+	suite.Run(t, new({{testCaseName}}TestSuite))
+}
+{%- if prepareSteps.length > 0 %}
+
+func (testsuite *{{testCaseName}}TestSuite) Prepare() {
 	{%- set steps = prepareSteps %}
 	{%- include "./scenarioContent.go.njk" %}
 }
+{%- endif %}
 
 {% for testScenario in scenarios %}
-func scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t *testing.T) {
+func (testsuite *{{testCaseName}}TestSuite) Test{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}() {
 	{%- for variable, value in testScenario.requiredVariablesDefault %}
 	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
-    {{variable}} := scenario_test.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
+    {{variable}} := testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
 	{%- endif %}
 	{%- endfor %}
-	{%- for name, value in testScenario.variables %}
+	{%- for name, value in testScenario.variablesOutput %}
     {%- if value === "<newDefinedVariable>" %}
     var {{name}} string
     {%- else %}
@@ -92,8 +107,10 @@ func scenario{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}(t 
 	{%- include "./scenarioContent.go.njk" %}
 }
 {%- endfor %}
+{%- if cleanUpSteps.length > 0 %}
 
-func cleanup(t *testing.T) {
+func (testsuite *{{testCaseName}}TestSuite) Cleanup() {
 	{%- set steps = cleanUpSteps %}
 	{%- include "./scenarioContent.go.njk" %}
 }
+{%- endif %}

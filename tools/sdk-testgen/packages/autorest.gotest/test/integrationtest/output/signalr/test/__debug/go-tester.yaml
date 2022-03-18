@@ -5069,7 +5069,7 @@ operationGroups:
             Operations_List:
               parameters:
                 api-version: 2021-06-01-preview
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
               responses:
                 '200':
                   body:
@@ -5316,7 +5316,7 @@ operationGroups:
                   name: mySignalRService
                   type: Microsoft.SignalRService/SignalR
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
               responses:
                 '200':
                   body:
@@ -5494,7 +5494,7 @@ operationGroups:
               parameters:
                 api-version: 2021-06-01-preview
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
               responses:
                 '200':
                   body:
@@ -5780,7 +5780,7 @@ operationGroups:
                 api-version: 2021-06-01-preview
                 resourceGroupName: myResourceGroup
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
               responses:
                 '200':
                   body:
@@ -6084,7 +6084,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
               responses:
                 '200':
                   body:
@@ -6476,7 +6476,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -6926,7 +6926,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
               responses:
                 '200': {}
                 '202':
@@ -7236,7 +7236,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
               responses:
                 '200':
                   body:
@@ -7580,7 +7580,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
               responses:
                 '200':
                   body: {}
@@ -7812,7 +7812,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
               responses:
                 '202':
                   body: {}
@@ -8081,7 +8081,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
               responses:
                 '202':
                   headers: &ref_615
@@ -8306,7 +8306,7 @@ operationGroups:
                 api-version: 2021-06-01-preview
                 location: eastus
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
               responses:
                 '200':
                   body:
@@ -8557,7 +8557,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
               responses:
                 '200':
                   body:
@@ -8814,7 +8814,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
               responses:
                 '200':
                   body:
@@ -9087,7 +9087,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
               responses:
                 '200':
                   body:
@@ -9355,7 +9355,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
               responses:
                 '200': {}
                 '202':
@@ -9597,7 +9597,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
               responses:
                 '200':
                   body:
@@ -9849,7 +9849,7 @@ operationGroups:
                 resourceGroupName: myResourceGroup
                 resourceName: mySignalRService
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
               responses:
                 '200':
                   body:
@@ -10097,7 +10097,7 @@ operationGroups:
                 resourceName: mySignalRService
                 sharedPrivateLinkResourceName: upstream
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
               responses:
                 '200':
                   body:
@@ -10374,7 +10374,7 @@ operationGroups:
                 resourceName: mySignalRService
                 sharedPrivateLinkResourceName: upstream
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
               responses:
                 '200':
                   body:
@@ -10690,7 +10690,7 @@ operationGroups:
                 resourceName: mySignalRService
                 sharedPrivateLinkResourceName: upstream
                 subscriptionId: 00000000-0000-0000-0000-000000000000
-              x-ms-original-file: file:///D:/projects/codegen/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
+              x-ms-original-file: file:///D:/Workspace/Azure/azure-sdk-tools/tools/sdk-testgen/swagger/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
               responses:
                 '200': {}
                 '202':
@@ -17426,13 +17426,14 @@ testModel:
               secretVariables: []
               step: Generate_Unique_Name
               variables: {}
+              variablesOutput: {}
             - &ref_696
               type: restCall
               operationId: SignalR_CheckNameAvailability
               exampleFile: ../examples/SignalR_CheckNameAvailability.json
               exampleModel:
                 name: SignalR_CheckNameAvailability
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -17535,13 +17536,14 @@ testModel:
               statusCode: 200
               step: SignalR_CheckNameAvailability
               variables: {}
+              variablesOutput: {}
             - &ref_697
               type: restCall
               operationId: SignalR_CreateOrUpdate
               exampleFile: ../examples/SignalR_CreateOrUpdate.json
               exampleModel:
                 name: SignalR_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -18679,13 +18681,14 @@ testModel:
               statusCode: 200
               step: SignalR_CreateOrUpdate
               variables: {}
+              variablesOutput: {}
             - &ref_698
               type: restCall
               operationId: SignalR_Get
               exampleFile: ../examples/SignalR_Get.json
               exampleModel:
                 name: SignalR_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -19445,13 +19448,14 @@ testModel:
               statusCode: 200
               step: SignalR_Get
               variables: {}
+              variablesOutput: {}
             - &ref_699
               type: restCall
               operationId: SignalR_Update
               exampleFile: ../examples/SignalR_Update.json
               exampleModel:
                 name: SignalR_Update
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20589,13 +20593,14 @@ testModel:
               statusCode: 200
               step: SignalR_Update
               variables: {}
+              variablesOutput: {}
             - &ref_700
               type: restCall
               operationId: SignalR_ListKeys
               exampleFile: ../examples/SignalR_ListKeys.json
               exampleModel:
                 name: SignalR_ListKeys
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20664,6 +20669,7 @@ testModel:
               statusCode: 200
               step: SignalR_ListKeys
               variables: {}
+              variablesOutput: {}
             - &ref_701
               type: restCall
               operationId: SignalR_RegenerateKey
@@ -20743,6 +20749,7 @@ testModel:
               statusCode: 200
               step: SignalR_RegenerateKey
               variables: {}
+              variablesOutput: {}
             - &ref_702
               type: restCall
               operationId: SignalR_Restart
@@ -20807,13 +20814,14 @@ testModel:
               statusCode: 200
               step: SignalR_Restart
               variables: {}
+              variablesOutput: {}
             - &ref_703
               type: restCall
               operationId: Usages_List
               exampleFile: ../examples/Usages_List.json
               exampleModel:
                 name: Usages_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20985,13 +20993,14 @@ testModel:
               statusCode: 200
               step: Usages_List
               variables: {}
+              variablesOutput: {}
             - &ref_704
               type: restCall
               operationId: SignalR_ListByResourceGroup
               exampleFile: ../examples/SignalR_ListByResourceGroup.json
               exampleModel:
                 name: SignalR_ListByResourceGroup
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -21759,13 +21768,14 @@ testModel:
               statusCode: 200
               step: SignalR_ListByResourceGroup
               variables: {}
+              variablesOutput: {}
             - &ref_705
               type: restCall
               operationId: SignalR_ListBySubscription
               exampleFile: ../examples/SignalR_ListBySubscription.json
               exampleModel:
                 name: SignalR_ListBySubscription
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -22525,13 +22535,14 @@ testModel:
               statusCode: 200
               step: SignalR_ListBySubscription
               variables: {}
+              variablesOutput: {}
             - &ref_706
               type: restCall
               operationId: Operations_List
               exampleFile: ../examples/Operations_List.json
               exampleModel:
                 name: Operations_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -22648,6 +22659,7 @@ testModel:
               statusCode: 200
               step: Operations_List
               variables: {}
+              variablesOutput: {}
             - &ref_707
               type: restCall
               operationId: SignalR_Delete
@@ -22717,6 +22729,7 @@ testModel:
               statusCode: 200
               step: SignalR_Delete
               variables: {}
+              variablesOutput: {}
           _scenarioDef: *ref_694
           requiredVariables:
             - subscriptionId
@@ -22742,11 +22755,14 @@ testModel:
             - *ref_706
             - *ref_707
           variables:
+            resourceName: $(resourceName)
+          variablesOutput:
             resourceName: <newDefinedVariable>
       scope: ResourceGroup
       secretVariables: []
       useArmTemplate: true
       variables: {}
+      variablesOutput: {}
 language:
   default:
     name: SignalRManagementClient

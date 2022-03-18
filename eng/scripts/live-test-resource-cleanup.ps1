@@ -56,7 +56,7 @@ param (
   [int] $DeleteAfterHours = 24,
 
   [Parameter()]
-  [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist",
+  [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist.txt",
 
   [Parameter()]
   [switch] $Force,
@@ -71,14 +71,25 @@ param (
 Set-StrictMode -Version 3
 
 # Import resource management helpers and override its Log function.
-. "$PSScriptRoot/../common/scripts/Helpers/Resource-Helpers.ps1"
+. (Join-Path $PSScriptRoot .. common scripts Helpers Resource-Helpers.ps1)
 # Import helpers for querying repos.opensource.microsoft.com API
-. "$PSScriptRoot/../common/scripts/Helpers/Metadata-Helpers.ps1"
+. (Join-Path $PSScriptRoot .. common scripts Helpers Metadata-Helpers.ps1)
 
 $OwnerAliasCache = @{}
-$Exceptions = [System.Collections.Generic.HashSet[String]]@()
-$ShouldCheckAllowList = Test-Path $AllowListPath
 $IsProvisionerApp = $PSCmdlet.ParameterSetName -eq "Provisioner"
+$Exceptions = [System.Collections.Generic.HashSet[String]]@()
+
+function LoadAllowList() {
+  if (!(Test-Path $AllowListPath)) {
+    return
+  }
+  $lines = Get-Content $AllowListPath
+  foreach ($line in $lines) {
+    if ($line -and !$line.StartsWith("#")) {
+      $_ = $Exceptions.Add($line.Trim())
+    }
+  }
+}
 
 function Log($Message) {
   Write-Host $Message
@@ -127,7 +138,7 @@ function IsValidAlias
 
 function AddGithubUsersToAliasCache() {
   if ($GithubAliasCachePath -and (Test-Path $GithubAliasCachePath)) {
-    Write-Host "Loading github -> microsoft alias mappings from filesystem cache."
+    Write-Host "Loading github -> microsoft alias mappings from filesystem cache '$GithubAliasCachePath'."
     $users = Get-Content $GithubAliasCachePath | ConvertFrom-Json -AsHashtable
   } else {
     Write-Host "Retrieving github -> microsoft alias mappings from opensource API."
@@ -141,11 +152,17 @@ function AddGithubUsersToAliasCache() {
     if ($user.aad.alias) {
       $OwnerAliasCache[$user.aad.alias] = $true
     }
+    if ($user.aad.userPrincipalName) {
+      $OwnerAliasCache[$user.aad.userPrincipalName] = $true
+    }
+    if ($user.github.login) {
+      $OwnerAliasCache[$user.github.login] = $true
+    }
   }
-  Write-Host "Found $($OwnerAliasCache.Count) github+microsoft user records."
+  Write-Host "Found $($OwnerAliasCache.Count) valid github or microsoft aliases."
   if ($GithubAliasCachePath -and !(Test-Path $GithubAliasCachePath)) {
       Write-Host "Caching github -> microsoft alias mappings to '$GithubAliasCachePath'"
-      $users | ConvertTo-Json -Depth 100 | Out-File $GithubAliasCachePath -WhatIf:$false
+      $users | ConvertTo-Json -Depth 4 | Out-File $GithubAliasCachePath -WhatIf:$false
   }
 }
 
@@ -192,7 +209,7 @@ function HasValidOwnerTag([object]$ResourceGroup) {
 function HasValidAliasInName([object]$ResourceGroup) {
     # check compliance (formatting first, then validate alias) and skip if compliant
     if ($ResourceGroup.ResourceGroupName `
-      -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_]{1}.*)?$' `
+      -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
       -and (IsValidAlias -Alias $matches['alias']))
     {
       Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"
@@ -214,28 +231,11 @@ function HasExpiredDeleteAfterTag([string]$DeleteAfter) {
 }
 
 function HasException([object]$ResourceGroup) {
-    if ($Exceptions.Count) {
-      if ($Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
-        Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
-        return $true
-      }
-      return $false
-    }
-    if ($ShouldCheckAllowList) {
-      $lines = Get-Content $AllowListPath
-      foreach ($line in $lines) {
-        if ($line -and !$line.StartsWith("#")) {
-          $Exceptions.Add($line.Trim())
-        }
-      }
-      # If allow list is empty or only contains comments, disable allow list checking
-      if (!$Exceptions.Count) {
-        $ShouldCheckAllowList = $false
-        return $false
-      }
-      return HasException $ResourceGroup
-    }
-    return $false
+  if ($Exceptions.Count -and $Exceptions.Contains($ResourceGroup.ResourceGroupName)) {
+    Write-Host " Skipping allowed resource group '$($ResourceGroup.ResourceGroupName)' because it is in the allow list '$AllowListPath'"
+    return $true
+  }
+  return $false
 }
 
 function FindOrCreateDeleteAfterTag {
@@ -247,7 +247,7 @@ function FindOrCreateDeleteAfterTag {
   $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
-    if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Update Group DeleteAfter tag")) {
+    if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
       Write-Host "Adding DeleteAfer tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
       $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
     }
@@ -361,6 +361,7 @@ function Login() {
   }
 }
 
+LoadAllowList
 Login
 
 $originalSubscription = (Get-AzContext).Subscription.Id

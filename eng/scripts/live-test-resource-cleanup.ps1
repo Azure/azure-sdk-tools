@@ -161,6 +161,10 @@ function AddGithubUsersToAliasCache() {
   }
   Write-Host "Found $($OwnerAliasCache.Count) valid github or microsoft aliases."
   if ($GithubAliasCachePath -and !(Test-Path $GithubAliasCachePath)) {
+      $cacheDir = Split-Path $GithubAliasCachePath
+      if ($cacheDir -and $cacheDir -ne '.') {
+          New-Item -Type Directory -Force $cacheDir -WhatIf:$false
+      }
       Write-Host "Caching github -> microsoft alias mappings to '$GithubAliasCachePath'"
       $users | ConvertTo-Json -Depth 4 | Out-File $GithubAliasCachePath -WhatIf:$false
   }
@@ -283,7 +287,10 @@ function DeleteOrUpdateResourceGroups() {
       }
       continue
     }
-    if (!$DeleteNonCompliantGroups) {
+    # TODO: Remove $true and follow non-compliant group deletion
+    # Currently this is disabled in order to roll out features of the script slowly.
+    # See https://gitub.com/Azure/azure-sdk-tools/issues/2714h
+    if ($true -or !$DeleteNonCompliantGroups) {
       continue
     }
     if (HasValidAliasInName $rg) {

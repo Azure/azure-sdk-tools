@@ -57,7 +57,7 @@ stages:
   - name: DailyCacheKey
     value: $[format('{0:ddMMyyyy}', pipeline.startTime)]
   - name: CachePath
-    value: github-mapping-cache
+    value: CleanupCache
 
   jobs:
   - job: Run
@@ -73,9 +73,9 @@ stages:
         # CacheSalt is an optional variable that can be overridden at pipeline runtime to
         # force invalidate the cache.
         # DailyCacheKey will trigger a new cache entry to refresh once per day.
-        key: '$(CacheSalt) | $(DailyCacheKey)'
+        key: '"$(CacheSalt)" | "$(DailyCacheKey)" | $(Build.SourcesDirectory)/eng/scripts/live-test-resource-cleanup.ps1'
         path: $(CachePath)
-      displayName: Cache PS Modules
+      displayName: Cache Github Alias Mappings
 
     # Register the dogfood environment to clean up any custom subscriptions in it
     - template: /eng/common/TestResources/setup-environments.yml
@@ -85,5 +85,5 @@ stages:
         parameters:
           DisplayName: ${{ subscription.DisplayName }}
           SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
-          GithubAliasCachePath: $(CachePath)
+          GithubAliasCachePath: $(CachePath)/github-alias-mappings.txt
           AdditionalParameters: ${{ subscription.AdditionalParameters }}

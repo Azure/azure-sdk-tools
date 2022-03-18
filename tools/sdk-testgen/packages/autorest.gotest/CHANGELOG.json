@@ -2,6 +2,32 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "2.2.0",
+      "tag": "@autorest/gotest_v2.2.0",
+      "date": "Thu, 17 Mar 2022 07:43:40 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add sample generation."
+          },
+          {
+            "comment": "Update to latest azcore for mock test."
+          },
+          {
+            "comment": "Consolidate manual-written and auto-generated scenario test code."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Change from go get to go install to prevent warnning."
+          },
+          {
+            "comment": "Operation has no subscriptionID param but client has, need to handle it seperately."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.1.4",
       "tag": "@autorest/gotest_v2.1.4",
       "date": "Mon, 07 Mar 2022 02:56:30 GMT",

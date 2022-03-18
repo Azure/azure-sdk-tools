@@ -31137,7 +31137,6 @@ testModel:
           variables:
             resourceGroupName: $(dnsResourceGroup)
             subscriptionId: $(dnsSubscriptionId)
-      outputVariableNames: []
       prepareSteps:
         - &ref_1703
           type: armTemplateDeployment

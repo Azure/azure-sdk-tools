@@ -1,10 +1,18 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.azure.tools.apiview.processor.model.Token;
+
 import java.util.regex.Pattern;
 
-public class MiscUtils {
+import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
+
+/**
+ * Miscellaneous utility methods.
+ */
+public final class MiscUtils {
 
     public static final String LINEBREAK = "\n"; // or "\r\n";
+    private static final Pattern QUOTED_LINEBREAK = Pattern.compile(Pattern.quote(LINEBREAK));
 
     public static String escapeHTML(final String s) {
         final StringBuilder out = new StringBuilder(Math.max(16, s.length()));
@@ -23,10 +31,33 @@ public class MiscUtils {
 
     public static String wrap(final String string, final int lineLength) {
         final StringBuilder b = new StringBuilder();
-        for (final String line : string.split(Pattern.quote(LINEBREAK))) {
+        for (final String line : QUOTED_LINEBREAK.split(string)) {
             b.append(wrapLine(line, lineLength));
         }
         return b.toString();
+    }
+
+    /**
+     * Tokenizes a key-value pair.
+     *
+     * @param key The key.
+     * @param value The value.
+     * @return A token representing the key-value pair.
+     */
+    public static Token tokeniseKeyValue(String key, Object value) {
+        return tokeniseKeyValue(key, value);
+    }
+
+    /**
+     * Tokenizes a key-value pair with prefix for the definition identifier.
+     *
+     * @param key The key.
+     * @param value The value.
+     * @param prefix The definition identifier prefix.
+     * @return A token representing the key-value pair.
+     */
+    public static Token tokeniseKeyValue(String key, Object value, String prefix) {
+        return new Token(TEXT, value == null ? "<default value>" : value.toString(), prefix + "-" + key + "-" + value);
     }
 
     private static String wrapLine(final String line, final int lineLength) {
@@ -51,5 +82,8 @@ public class MiscUtils {
 
         allLines.append(LINEBREAK);
         return allLines.toString();
+    }
+
+    private MiscUtils() {
     }
 }

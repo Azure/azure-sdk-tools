@@ -11,6 +11,7 @@ export enum Config {
     verifyResponse = 'testmodeler.mock.verify-response',
     scenarioCodeModelRestCallOnly = 'testmodeler.scenario.codemodel-restcall-only',
     useExampleModel = 'testmodeler.use-example-model',
+    addArmTemplatePayloadString = 'testmodeler.add-armtemplate-payload-string',
 }
 
 export const configDefaults = {
@@ -21,6 +22,7 @@ export const configDefaults = {
     [Config.verifyResponse]: true,
     [Config.scenarioCodeModelRestCallOnly]: true,
     [Config.useExampleModel]: true,
+    [Config.addArmTemplatePayloadString]: false,
 };
 
 export enum TestScenarioVariableNames {

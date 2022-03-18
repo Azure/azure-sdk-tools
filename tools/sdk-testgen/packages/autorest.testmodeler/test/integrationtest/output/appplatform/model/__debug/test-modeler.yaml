@@ -22008,7 +22008,6 @@ testModel:
           variables:
             resourceGroupName: $(dnsResourceGroup)
             subscriptionId: $(dnsSubscriptionId)
-      outputVariableNames: []
       prepareSteps:
         - &ref_944
           type: armTemplateDeployment

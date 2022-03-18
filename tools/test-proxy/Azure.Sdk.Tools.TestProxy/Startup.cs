@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var host = Host.CreateDefaultBuilder(args);
 
             host.ConfigureWebHostDefaults(
-                builder => 
+                builder =>
                     builder.UseStartup<Startup>()
                     // ripped directly from implementation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
                     .ConfigureLogging((hostBuilder, loggingBuilder) =>
@@ -91,15 +91,17 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var app = host.Build();
 
-            var config = app.Services.GetRequiredService<IConfiguration>();
+            app.Run();
 
-            foreach (var c in config.AsEnumerable())
+            var config = app.Services?.GetService<IConfiguration>();
+            if (config != null)
             {
                 Console.WriteLine("Dumping Resolved Configuration Values:");
-                Console.WriteLine(c.Key + " = " + c.Value);
+                foreach (var c in config.AsEnumerable())
+                {
+                    Console.WriteLine(c.Key + " = " + c.Value);
+                }
             }
-
-            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();

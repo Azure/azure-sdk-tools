@@ -17370,7 +17370,6 @@ testModel:
     - &ref_694
       _filePath: Microsoft.SignalRService\preview\2021-06-01-preview\scenarios\signalR.yaml
       cleanUpSteps: []
-      outputVariableNames: []
       prepareSteps: []
       requiredVariables:
         - subscriptionId
@@ -17427,13 +17426,14 @@ testModel:
               secretVariables: []
               step: Generate_Unique_Name
               variables: {}
+              variablesOutput: {}
             - &ref_696
               type: restCall
               operationId: SignalR_CheckNameAvailability
               exampleFile: ../examples/SignalR_CheckNameAvailability.json
               exampleModel:
                 name: SignalR_CheckNameAvailability
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -17536,13 +17536,14 @@ testModel:
               statusCode: 200
               step: SignalR_CheckNameAvailability
               variables: {}
+              variablesOutput: {}
             - &ref_697
               type: restCall
               operationId: SignalR_CreateOrUpdate
               exampleFile: ../examples/SignalR_CreateOrUpdate.json
               exampleModel:
                 name: SignalR_CreateOrUpdate
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -18680,13 +18681,14 @@ testModel:
               statusCode: 200
               step: SignalR_CreateOrUpdate
               variables: {}
+              variablesOutput: {}
             - &ref_698
               type: restCall
               operationId: SignalR_Get
               exampleFile: ../examples/SignalR_Get.json
               exampleModel:
                 name: SignalR_Get
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -19446,13 +19448,14 @@ testModel:
               statusCode: 200
               step: SignalR_Get
               variables: {}
+              variablesOutput: {}
             - &ref_699
               type: restCall
               operationId: SignalR_Update
               exampleFile: ../examples/SignalR_Update.json
               exampleModel:
                 name: SignalR_Update
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20590,13 +20593,14 @@ testModel:
               statusCode: 200
               step: SignalR_Update
               variables: {}
+              variablesOutput: {}
             - &ref_700
               type: restCall
               operationId: SignalR_ListKeys
               exampleFile: ../examples/SignalR_ListKeys.json
               exampleModel:
                 name: SignalR_ListKeys
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20665,6 +20669,7 @@ testModel:
               statusCode: 200
               step: SignalR_ListKeys
               variables: {}
+              variablesOutput: {}
             - &ref_701
               type: restCall
               operationId: SignalR_RegenerateKey
@@ -20744,6 +20749,7 @@ testModel:
               statusCode: 200
               step: SignalR_RegenerateKey
               variables: {}
+              variablesOutput: {}
             - &ref_702
               type: restCall
               operationId: SignalR_Restart
@@ -20808,13 +20814,14 @@ testModel:
               statusCode: 200
               step: SignalR_Restart
               variables: {}
+              variablesOutput: {}
             - &ref_703
               type: restCall
               operationId: Usages_List
               exampleFile: ../examples/Usages_List.json
               exampleModel:
                 name: Usages_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -20986,13 +20993,14 @@ testModel:
               statusCode: 200
               step: Usages_List
               variables: {}
+              variablesOutput: {}
             - &ref_704
               type: restCall
               operationId: SignalR_ListByResourceGroup
               exampleFile: ../examples/SignalR_ListByResourceGroup.json
               exampleModel:
                 name: SignalR_ListByResourceGroup
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -21760,13 +21768,14 @@ testModel:
               statusCode: 200
               step: SignalR_ListByResourceGroup
               variables: {}
+              variablesOutput: {}
             - &ref_705
               type: restCall
               operationId: SignalR_ListBySubscription
               exampleFile: ../examples/SignalR_ListBySubscription.json
               exampleModel:
                 name: SignalR_ListBySubscription
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -22526,13 +22535,14 @@ testModel:
               statusCode: 200
               step: SignalR_ListBySubscription
               variables: {}
+              variablesOutput: {}
             - &ref_706
               type: restCall
               operationId: Operations_List
               exampleFile: ../examples/Operations_List.json
               exampleModel:
                 name: Operations_List
-                checkResponse: true
+                checkResponse: false
                 clientParameters:
                   - exampleValue:
                       schema: *ref_171
@@ -22649,6 +22659,7 @@ testModel:
               statusCode: 200
               step: Operations_List
               variables: {}
+              variablesOutput: {}
             - &ref_707
               type: restCall
               operationId: SignalR_Delete
@@ -22718,6 +22729,7 @@ testModel:
               statusCode: 200
               step: SignalR_Delete
               variables: {}
+              variablesOutput: {}
           _scenarioDef: *ref_694
           requiredVariables:
             - subscriptionId
@@ -22743,11 +22755,14 @@ testModel:
             - *ref_706
             - *ref_707
           variables:
+            resourceName: $(resourceName)
+          variablesOutput:
             resourceName: <newDefinedVariable>
       scope: ResourceGroup
       secretVariables: []
       useArmTemplate: true
       variables: {}
+      variablesOutput: {}
 language:
   default:
     name: SignalRManagementClient

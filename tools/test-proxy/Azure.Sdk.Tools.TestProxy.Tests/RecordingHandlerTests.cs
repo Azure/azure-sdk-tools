@@ -23,6 +23,34 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
+        {
+            HttpContext context = new DefaultHttpContext();
+
+            foreach(var hTuple in GenerateHeaderValuesTuples(headerValueStrings))
+            {
+
+                context.Request.Headers.TryAdd(hTuple.Item1, hTuple.Item2);
+            }
+
+            context.Request.Headers.TryAdd("x-recording-upstream-base-uri", new string[] { "https://hello-world" });
+            context.Request.Method = "POST";
+
+            return context;
+        }
+
+        private IEnumerable<Tuple<string, StringValues>> GenerateHeaderValuesTuples(string[] headerValueStrings) {
+            var returnedTuples = new List<Tuple<string, StringValues>>();
+            foreach (var headString in headerValueStrings)
+            {
+                var splitLocation = headString.IndexOf(':');
+                var headerKey = headString.Substring(0, splitLocation);
+                var headerValue = headString.Substring(splitLocation).Split(";").ToArray();
+                returnedTuples.Add(new Tuple<string, StringValues>(headerKey, headerValue));
+            }
+
+            return returnedTuples;
+        }
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
@@ -564,6 +592,45 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var entry = await RecordingHandler.CreateEntryAsync(request);
             Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
         }
+
+
+        [Theory]
+        [InlineData("Content-Type:application/json; odata=minimalmetadata; streaming=true", "Accept:application/json;odata=minimalmetadata")]
+        [InlineData("Content-MD5:<ContentHash>", "x-ms-version:2019-02-02", "RequestMethod:POST", "Connection:keep-alive")]
+        [InlineData("Content-Encoding:utf-8", "x-ms-version:2019-02-02", "RequestMethod:POST", "Content-Length:50")]
+        public void TestCreateUpstreamRequestIncludesExpectedHeaders(params string[] incomingHeaders)
+        {
+            var requestContext = GenerateHttpRequestContext(incomingHeaders);
+            var recordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var upstreamRequestContext = GenerateHttpRequestContext(incomingHeaders);
+
+            var output = recordingHandler.CreateUpstreamRequest(upstreamRequestContext.Request, new byte[] { });
+
+            // iterate across the set we know about and confirm that GenerateUpstreamRequest worked properly!
+            var setOfHeaders = GenerateHeaderValuesTuples(incomingHeaders);
+            {
+                foreach (var headerTuple in setOfHeaders)
+                {
+                    var inContent = false;
+                    var inStandard = false;
+
+                    try
+                    {
+                        inContent = output.Headers.Contains(headerTuple.Item1);
+                    }
+                    catch (Exception) { }
+
+                    try
+                    {
+                        inStandard = output.Content.Headers.Contains(headerTuple.Item1);
+                    }
+                    catch (Exception) { }
+
+                    Assert.True(inContent || inStandard);
+                }
+            }
+        }
+
     }
 
     internal class MockHttpHandler : HttpMessageHandler

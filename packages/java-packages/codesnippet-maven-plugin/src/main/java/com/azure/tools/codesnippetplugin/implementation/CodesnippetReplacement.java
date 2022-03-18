@@ -48,16 +48,29 @@ final class CodesnippetReplacement {
         // replacement scenarios without needing the StringBuilder to perform resizing. And, generally speaking this
         // will rarely exceed any reasonable size (1KB) so if the initial capacity is too large there will be minimal
         // impact.
-        StringBuilder replacer = new StringBuilder(
-            codesnippet.length() + (replacement.length() - target.length()) * 50);
+        StringBuilder replacer = null;
+        int prevStart = 0;
+
         for (int i = 0; i < codesnippet.length(); i++) {
-            char c = codesnippet.charAt(i);
-            if (targetChar == c) {
+            if (codesnippet.charAt(i) == targetChar) {
+                if (replacer == null) {
+                    replacer = new StringBuilder(codesnippet.length() + (replacement.length() - target.length()) * 50);
+                }
+
+                if (prevStart != i) {
+                    replacer.append(codesnippet, prevStart, i);
+                }
                 replacer.append(replacement);
-            } else {
-                replacer.append(c);
+
+                prevStart = i + 1;
             }
         }
+
+        if (replacer == null) {
+            return codesnippet;
+        }
+
+        replacer.append(codesnippet, prevStart, codesnippet.length());
 
         return replacer.toString();
     }

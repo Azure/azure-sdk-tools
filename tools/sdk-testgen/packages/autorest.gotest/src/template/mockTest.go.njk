@@ -16,6 +16,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+    "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"golang.org/x/net/http2"
 )
@@ -35,7 +36,7 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 {%- for example in exampleGroup.examples %}
     // From example {{example.originalFile}}
 	{%- if sendExampleId %}
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
         "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
     })
 	{%- endif %}

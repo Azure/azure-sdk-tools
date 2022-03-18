@@ -11016,7 +11016,6 @@ testModel:
     - &ref_469
       _filePath: Microsoft.SignalRService\preview\2021-06-01-preview\scenarios\signalR.yaml
       cleanUpSteps: []
-      outputVariableNames: []
       prepareSteps: []
       requiredVariables:
         - subscriptionId
@@ -11045,6 +11044,27 @@ testModel:
                     metadata:
                       description: Name of the SignalR service.
                     value: '[concat(''sw'',uniqueString(resourceGroup().id))]'
+              armTemplatePayloadString: |-
+                {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "variables": {
+                    "name": {
+                      "value": "[concat('sw',uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Name of the SignalR service."
+                      },
+                      "type": "string"
+                    }
+                  },
+                  "resources": [],
+                  "outputs": {
+                    "resourceName": {
+                      "type": "string",
+                      "value": "[variables('name').value]"
+                    }
+                  }
+                }
               outputVariables: {}
               requiredVariables: []
               requiredVariablesDefault: {}

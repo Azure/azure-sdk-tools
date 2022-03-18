@@ -38,7 +38,7 @@ export interface ExampleExtension {
     'x-ms-original-file'?: string;
 }
 
-export type StepArmTemplateModel = StepArmTemplate;
+export type StepArmTemplateModel = StepArmTemplate & { armTemplatePayloadString?: string };
 
 export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
@@ -85,7 +85,6 @@ export type TestScenarioModel = Scenario & {
 export type TestDefinitionModel = ScenarioDefinition & {
     useArmTemplate: boolean;
     requiredVariablesDefault: { [variable: string]: string };
-    outputVariableNames: string[];
 };
 export class ExampleValue {
     language: Languages;
@@ -434,6 +433,9 @@ export class TestCodeModeler {
                 resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
             }
         }
+        if (this.testConfig.getValue(Config.addArmTemplatePayloadString) && stepModel.armTemplatePayload) {
+            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload, null, '  ');
+        }
     }
 
     public initiateRestCall(session, step: StepRestCallModel) {
@@ -528,7 +530,6 @@ export class TestCodeModeler {
     public initiateTestDefinition(session: Session<TestCodeModel>, testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
         this.initiateOavVariables(testDef);
         testDef.useArmTemplate = false;
-        testDef.outputVariableNames = [];
 
         for (const step of testDef.prepareSteps) {
             this.processStep(session, step, codeModelRestcallOnly, testDef);
@@ -556,7 +557,7 @@ export class TestCodeModeler {
             }
         } else if (step.type === OavStepType.armTemplate) {
             testDef.useArmTemplate = true;
-            this.initiateArmTemplate(testDef, step);
+            this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
         }
     }
 

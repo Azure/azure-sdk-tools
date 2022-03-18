@@ -1,6 +1,20 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 07 Mar 2022 02:56:30 GMT and should not be manually modified.
+This log was last generated on Thu, 17 Mar 2022 07:43:40 GMT and should not be manually modified.
+
+## 2.2.0
+Thu, 17 Mar 2022 07:43:40 GMT
+
+### Minor changes
+
+- Add sample generation.
+- Update to latest azcore for mock test.
+- Consolidate manual-written and auto-generated scenario test code.
+
+### Patches
+
+- Change from go get to go install to prevent warnning.
+- Operation has no subscriptionID param but client has, need to handle it seperately.
 
 ## 2.1.4
 Mon, 07 Mar 2022 02:56:30 GMT

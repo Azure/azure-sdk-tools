@@ -15,13 +15,13 @@
     - [`External Git Repo`](#external-git-repo)
       - [Advantages of `Git Repo`](#advantages-of-git-repo)
       - [Disadvantages of `Git Repo`](#disadvantages-of-git-repo)
-      - [Justifications for `Git Repo`](#justifications-for-git-repo)
     - [Blob Storage](#blob-storage)
       - [Advantages of `Blob Storage`](#advantages-of-blob-storage)
       - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
-      - [Justifications for `Blob Storage`](#justifications-for-blob-storage)
     - [But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?](#but-if-we-already-have-a-problem-with-ever-expanding-git-repos-why-does-an-external-repo-help-us)
   - [We have an external git repo, how will we integrate that with our frameworks?](#we-have-an-external-git-repo-how-will-we-integrate-that-with-our-frameworks)
+    - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
+    - [Drawbacks](#drawbacks)
   - [Scenario Walkthroughs](#scenario-walkthroughs)
     - [Single Dev: Update single service's recordings](#single-dev-update-single-services-recordings)
     - [Single Dev: Create a new services's recordings](#single-dev-create-a-new-servicess-recordings)
@@ -144,8 +144,6 @@ He also checked other measures, like `download speed` and `integration requireme
 
 - Need to deal with the fact that it's a git repo, and not a direct storage solution. We will need PRs, branches, and cleanup tasks running on the assets repo instead of a storage solution with no real sense of commit history.
 
-#### Justifications for `Git Repo`
-
 ### Blob Storage
 
 #### Advantages of `Blob Storage`
@@ -159,8 +157,6 @@ He also checked other measures, like `download speed` and `integration requireme
   - We would need to locally zip and upload. Individual file download is _far_ too enefficient, but a single snapshotted blob could definitely work.
   - Virtuall the same conflicts for download and unzip
 - No publically available UI to browse recordings at rest
-
-#### Justifications for `Blob Storage`
 
 ### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
 
@@ -222,8 +218,8 @@ And within the file...
     // by default, will check out "main"
     "fallback-branch": "",
 
-    // by default, will be resolved auto-commit/<service>
-    "auto-commit-branch": "auto-commit/tables",
+    // by default, will be resolved auto/<service>
+    "auto-commit-branch": "auto/tables",
 
     // this json file will eventually need additional metadata, the below key just illustrates that
     "metadatakey1": "metadatavalue1",
@@ -238,6 +234,74 @@ While this works really well for local playback, it does not work for submitting
 This necessitates a script that can be queued **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recordings.json` to consume it.
 
 You will note that the above JSON configuration lends itself well to more individual solutions, while allowing space for more _targeted_ overrides later.
+
+### Auto-commits and merges to `main`
+
+We need to add nightly automation that squashes down these auto-commits into the `main` branch on a nightly cadence.
+
+Let's walk through a scenario to show what this would look like.
+
+When PRs are submitted, the SHAs referencing the assets repo will be _different_. This is due to the fact that each user will have pushed their new recordings to the assets repo separately form each other. They have no comprehension of "update from main". All individual SHAs remember!
+
+```text
++---------------------------------------------------+---------------------------------------------------------------+
+| azure-sdk-for-<language>/                         | assets-repo/                                                  |
+|                                                   |                                                               |
+|                                                   |                                                               |
+|   sdk/core/record+--------------------------------+>auto-commit/core@SHA1                                         |
+|      ...         |                                |   /recordings/sdk/core/azure-core/recordings/YYY.json         |
+|      SHA: "SHA1" |                                |                                                               |
+|      ...                               +----------+>auto-commit/storage@SHA2                                      |
+|                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
+|   sdk/storage/recordings.json          |          |                                                               |
+|      ...         +---------------------+          | hotfix-commit/storage@SHA3                                    |
+|      SHA: "SHA2" |                                | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
+|      ...                                          | |                                                             |
+|                                                   | |                                                             |
+|   sdk/storage/recordings.json (from release tag)  | |                                                             |
+|      ...                                          | |                                                             |
+|      SHA: "SHA3" ---------------------------------+-+                                                             |
+|      ...                                          |                                                               |
+|                                                   |                                                               |
++---------------------------------------------------+---------------------------------------------------------------+
+```
+
+Before nightly maintenenance, we will have merged the following to `main` in `azure-sdk-for-<language>`.
+
+After nightly automation has copied commits into `main`, we will update the current recording.json files in `main` to reflect the newly merged _common_ commit.
+
+- auto-commit/core@SHA1 -> commits trasnfered and squashed to main
+- auto-commit/core@SHA2 -> commits trasnfered and squashed to main
+- hotfix-commit/storage@SHA3 -> Stays around forever, like our hotfix branches do.
+
+```text
++---------------------------------------------------+---------------------------------------------------------------+
+| azure-sdk-for-<language>/                         | assets-repo/                                                  |
+|                                                   |                                                               |
+|                                                   |                                                               |
+|   sdk/core/record      +---------------------------+>auto-commit/core@NewMainSHA                                  |
+|      ...               |                          |   /recordings/sdk/core/azure-core/recordings/YYY.json         |
+|      SHA: "NewMainSHA" |                          |                                                               |
+|      ...                               +----------+>auto-commit/storage@NewMainSHA                                |
+|                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
+|   sdk/storage/recordings.json          |          |                                                               |
+|      ...               +---------------+          | hotfix-commit/storage@SHA3                                    |
+|      SHA: "NewMainSHA" |                          | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
+|      ...                                          | |                                                             |
+|                                                   | |                                                             |
+|   sdk/storage/recordings.json (from release tag)  | |                                                             |
+|      ...                                          | |                                                             |
+|      SHA: "SHA3" ---------------------------------+-+                                                             |
+|      ...                                          |                                                               |
+|                                                   |                                                               |
++---------------------------------------------------+---------------------------------------------------------------+
+```
+
+In this way, a concept of `main` can still exist, and will be used where possible, but daily progress will not be held up.
+
+### Drawbacks
+
+The `auto` commit branches will need to stick around. At least as far as we need to keep the commits in them that are referenced from the `azure-sdk-for-python` repo. Any commits present in the `azure-sdk-for-<language>-assets` and referenced anywhere from the `azure-sdk-for-<language>` repo MUST continue to exist. They cannot be automatically trimmed. For example, there is nothing stopping a dev from releasing a package when the assets repo SHA is set to the intial "auto" commit. We'd prefer that folks wait for the merge to `main` to release the package, but to enforce that will cause a whole acre of headache.
 
 ## Scenario Walkthroughs
 
@@ -330,7 +394,7 @@ The `start` point here will be defined by what we settle on for the "main" branc
 
 ### Integrating the sync script w/ language frameworks
 
-todo, describe how an external framework may do this. Use the core generic script.
+Each repo has its own language-specific method to start the test-proxy. The _same method_ that starts that test-proxy needs to resolve these commit SHAs and leverage the assets script to checkout the local assets copy to the appropriate target version.
 
 ## Test Run
 

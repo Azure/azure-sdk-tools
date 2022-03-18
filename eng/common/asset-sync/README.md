@@ -1,4 +1,4 @@
-# Moving Recordings out of the azure-sdk-for-X repos
+# Azure SDK Assets Relocation -- "move recordings out of repos"
 
 ## Setting Context
 
@@ -30,26 +30,29 @@ With language-specific record/playback solutions, there must be an abstraction l
 
 Contrast this with the the test-proxy, which starts with a **storage context**. This context is then used when **saving** and **loading** a recording file.
 
-Users of the test proxy are encouraged to provide a `relative path to test file from the root of the repo` as their recording file name. A great example of this would be...
+Users of the test proxy are required to provide a `relative path to test file from the root of the repo` as their recording file name. A great example of this would be...
 
 ```text
 sdk/tables/azure-data-tables/recordings/test_retry.pyTestStorageRetrytest_no_retry.json
 [----------------test path--------------------------][--------------test name----------]
 ```
 
-[What this looks like in source](https://github.com/YalinLi0312/azure-sdk-for-python/blob/yall-tables-testproxy/sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_no_retry.json)
+[What this looks like in source](https://github.com/YalinLi0312/azure-sdk-for-python/blob/main/sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_no_retry.json)
 
 Given that the test-proxy is storing/retrieving data independent of the client code (other than the key), client side changes for a wholesale shift of the recordings location is actually simple. The source code for the test _won't need to change at all_. From the perspective of the client test code, nothing has functionally changed.
 
-All that needs to happen is to start the test proxy under a different storage context!
+All that needs to happen is to:
+
+1. Start the test proxy with storage context set to cloned assets repo (details forthcoming)
+2. Adjust the provided "file path" to the recording within the asset repo.
 
 If you were invoking the test-proxy as a docker image, the difference in initilization is as easy as:
 
-#### Old
+### Old
 
 `docker run -v C:/repo/sdk-for-python/:/etc/testproxy azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`
 
-#### New
+### New
 
 `docker run -v C:/repo/sdk-for-python-assets/:/etc/testproxy azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`
 
@@ -68,35 +71,72 @@ He also checked other measures, like `download speed` and `integration requireme
 
 [These and other observations are recorded in his original document available here.](https://microsoft.sharepoint.com/:w:/t/AzureDeveloperExperience/EZ8CA-UTsENIoORsOxekfG8BzwoNV4xhVOIzTGmdk8j4rA?e=DFkiII)
 
-## But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
+### `External Git Repo`
 
-Because the automation interacting with this repository should only ever clone down _a single commit_.
+#### Advantages of `Git Repo`
+
+#### Disadvantages of `Git Repo`
+
+#### Justifications for `Git Repo`
+
+### `Git Modules`
+
+#### Advantages of `Git Modules`
+
+#### Disadvantages of `Git Modules`
+
+#### Justifications for `Git Modules`
+
+### `Git lfs`
+
+#### Advantages f `Git lfs`
+
+#### Disadvantages of `Git lfs`
+
+#### Justifications for `Git lfs`
+
+### Blob Storage
+
+#### Advantages of `Blob Storage`
+
+#### Disadvantages of `Blob Storage`
+
+#### Justifications for `Blob Storage`
+
+### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
+
+Because the automation interacting with this repository should only ever clone down _a single commit_ at one time.
 
 Yes, commit histories do add _some_ weight to the git database, but it's definitely not a super impactful difference.
 
-## So what needs to happen if the test proxy is already so well suited to this task?
+## We have an external git repo, how will we integrate that with our frameworks?
 
-This is where the story gets complicated. Now that recordings are no longer stored directly alongside the code that they support, the process to _update_ the recordings gets a bit more stilted.
+This is where the story gets complicated. Now that recordings are no longer stored directly alongside the code that they support, the process to _initially retrieve_ and _update_ the recordings gets a bit more stilted.
 
 In a previous section, we established that another git repo is the most obvious solution.
 
-Today, these `assets` repos exist for the four main languages.
+As part of this project, we have established these `assets` repos for the four main languages.
 
 - [Azure/azure-sdk-for-python-assets](https://github.com/Azure/azure-sdk-for-python-assets)
 - [Azure/azure-sdk-for-js-assets](https://github.com/Azure/azure-sdk-for-js-assets)
 - [Azure/azure-sdk-for-net-assets](https://github.com/Azure/azure-sdk-for-net-assets)
 - [Azure/azure-sdk-for-java-assets](https://github.com/Azure/azure-sdk-for-java-assets)
 
-We have the following resources at play
+So for a given language, we will have the following resources at play:
 
 ```bash
-Azure/azure-sdk-for-python
-Azure/azure-sdk-for-python-assets
+Azure/azure-sdk-for-<language>
+Azure/azure-sdk-for-<language>-assets
 ```
 
 Given the split nature of the above, We need to talk about how the test-proxy knows **which** recordings to grab. We can't simply default to `latest main`, as that will _not_ work if we need to run tests from an earlier released version of the SDK.
 
-To get around this, we will embed a SHA into the language repository. When the test-proxy is manually or automatically started, we need to ensure that the local assets repo aligns to that SHA. To do this, a new file will be added to the code repo itself.
+To get around this, we will embed a reference to an assets repo SHA into the language repository. As part of the test playback, local implementations must _retrieve_ these referenced assets at runtime. After retrieving, there will also need to be a process to sync any updated recordings _back_ to the recordings repo without an extremely large amount of manual effort.
+
+As of now, it seems the best place to locate this assets SHA is in a new file in each `sdk/<service>` directory. For most of our packages this is a safe bet. Only one team member will be updating this SHA at a time, and as such it will be easy to add onto a commit one at a time. There is no parallelization! For others, like `azure-communication` in python or `spring` in Java land, this will be complex. We will describe these complexities in the [Scenarios](##description).
+
+
+
 
 ```bash
 <repo-root>
@@ -142,11 +182,27 @@ This necessitates a script that can be queued **against a local branch or PR** t
 
 You will note that the above JSON configuration lends itself well to more individual solutions, while allowing space for more _targeted_ overrides later.
 
-## How will we integrate these "sync" scripts?
+## Scenario Walkthroughs
+
+### Single Dev: Update single service's recordings
+
+### Single Dev: Create a new services's recordings
+
+### Single Dev: Update recordings for a hotfix release
+
+### Multiple Devs: Update the same pull request
+
+### Multiple Devs: Update recordings for two packages under same service in parallel
+
+## Asset sync script implementation
 
 Alright, so we know how we want to structure the `recordings.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
 
-### Interaction Methodology
+### Cross-platform capabilities
+
+The example implementations of the sync script will be written in `pwsh`. While that will work for our regular CI and local testing, not all the azure-sdk devs 
+
+### Interaction
 
 ```
 main: (commitsha1) -> (commitsha2)
@@ -162,7 +218,7 @@ auto/tables: (commisha1) -> (commitsha2)
    4. Stash changes. Pull
    5. Create new commit to branch `auto/<servicename>`. then push.
 
-### Implementation of Sync Scripts
+### Implementation of Sync Script
 
 To remain as out of the way as possible, it would be rational to support two versions of these `sync` scripts. `pwsh` and `sh`. However, it is easy to see a world where we have bugs in one version or the other of the sync library.
 
@@ -190,7 +246,7 @@ Options:
   - This works for _changes_, but how about for a fresh repo? Initialize has gotta happen at some point. Automagic stuff could also result in erraneous PRs to the  
 - Scripted invocation as part of a test run. For `ts/js`, this is actually simple, as `npm <x>` are just commands defined in the packages.json file. For others, this may be a bit closer to manual process.
 
-## Sync Operation Details - Pull
+### Sync Operation details - pull
 
 The initialization of the assets repo locally should be a simple clone w/ 0 blobs.
 
@@ -211,9 +267,13 @@ As `playback` sessions are started, the repo should:
 
 Given the context advantages discussed earlier, one most only start the proxy at the root of the `assets` directory. Everything else should shake out from there.
 
-## Sync Operation Details - Push
+### Sync Operation details - push
 
 The `start` point here will be defined by what we settle on for the "main" branch.
+
+### Integrating the sync script w/ language frameworks
+
+todo, describe how an external framework may do this. Use the core generic script.
 
 ## Test Run
 
@@ -236,25 +296,22 @@ So to locally repro this experience:
 6. `pip install -r dev_requirements.txt`
 7. `pytest`
 
-## Recap
-
-Walk through the proposals of this document.
-
 ## Integration Checklist
 
 What needs to be done on each of the repos to utilize this.
 
+todo this list
 
-
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+- [ ]
 
 FEEDBACK FROM WES
-  we should cover having the internals of each test framework checkout, etc
-  What would the configuration look like there?
-
-  Ever expanding size of the repo? We've already noted that these sync operations CAN be part of the framework. If they're only ever sparse-checkout-ing a single SHA, we should be fine.
-
-  We can still have a common script that does this kinda stuff manually though.
-
   MERGE COMMITS ONLY WORK IF A SINGLE COMMIT IS NOT SQUASHED.
     Merge commits do not work.
   
@@ -262,12 +319,5 @@ FEEDBACK FROM WES
     conflicts shouldn't happen -> just re-record -> push to branch
     Map out what this would look like. They should be based off master.
 
-    // ensure that we leave a comment describing why
-    Split the `recordings.json` into a service directory
-
-    Postulate additional metadata to recordings.json
-
-
-
-
-
+  ensure that we leave a comment describing why
+  Split the `recordings.json` into a service directory

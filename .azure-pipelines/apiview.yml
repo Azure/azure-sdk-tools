@@ -42,7 +42,7 @@ variables:
   NodeVersion: '12.x'
   BuildConfiguration: 'Release'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
-  PythinParserVersion: '0.2.10'
+  PythonParserVersion: '0.2.10'
   ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'

@@ -13,6 +13,8 @@ improve our overall security risks and manage costs.
 
 ## Managing Development and Testing Resources
 
+The cleanup script implementing these guidelines can be found [here](https://github.com/Azure/azure-sdk-tools/blob/main/eng/scripts/live-test-resource-cleanup.ps1).
+
 This section applies to resource groups located in any of the dev/test subscriptions managed by the Azure SDK
 Engineering System team, such as:
 

@@ -10,6 +10,7 @@ namespace PipelineGenerator.Conventions
         }
 
         public override string PipelineNameSuffix => " - tests-weekly";
+        public override string PipelineCategory => "tests-weekly";
 
         protected override Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {

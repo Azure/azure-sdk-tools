@@ -27,6 +27,7 @@
     - [Single Dev: Create a new services's recordings](#single-dev-create-a-new-servicess-recordings)
     - [Single Dev: Update recordings for a hotfix release](#single-dev-update-recordings-for-a-hotfix-release)
     - [Multiple Devs: Update the same pull request](#multiple-devs-update-the-same-pull-request)
+    - [Multiple Devs: Update the same recordings, same service/package multiple different PRs](#multiple-devs-update-the-same-recordings-same-servicepackage-multiple-different-prs)
     - [Multiple Devs: Update recordings for two packages under same service in parallel](#multiple-devs-update-recordings-for-two-packages-under-same-service-in-parallel)
   - [Asset sync script implementation](#asset-sync-script-implementation)
     - [Cross-platform capabilities](#cross-platform-capabilities)
@@ -274,8 +275,8 @@ Before nightly maintenenance, we will have merged the following to `main` in `az
 
 After nightly automation has copied commits into `main`, we will update the current recording.json files in `main` to reflect the newly merged _common_ commit.
 
-- auto-commit/core@SHA1 -> commits trasnfered and squashed to main
-- auto-commit/core@SHA2 -> commits trasnfered and squashed to main
+- auto-commit/core@SHA1 -> commits transferred and squashed to main
+- auto-commit/core@SHA2 -> commits transferred and squashed to main
 - hotfix-commit/storage@SHA3 -> Stays around forever, like our hotfix branches do.
 
 ```text

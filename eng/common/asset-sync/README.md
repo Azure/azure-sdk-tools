@@ -156,7 +156,11 @@ He also checked other measures, like `download speed` and `integration requireme
 - Extensive local scripting necessary to handle upload/download.
   - We would need to locally zip and upload. Individual file download is _far_ too enefficient, but a single snapshotted blob could definitely work.
   - Virtuall the same conflicts for download and unzip
-- No publically available UI to browse recordings at rest
+- No publically available UI to browse recordings at rest and recorded
+- A native level unzip/zip operation is extremely heavy for larger recordings folders
+  - An example of this is the storage service, where we have upwards of half a gigabyte of data present. This is an enormous tax to zip and unzip with each push/pull.
+- The storage is not geolocated
+- There is no concept of "history". It's all point in time
 
 ### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
 
@@ -312,6 +316,8 @@ The `auto` commit branches will need to stick around. At least as far as we need
 ### Single Dev: Update recordings for a hotfix release
 
 ### Multiple Devs: Update the same pull request
+
+### Multiple Devs: Update the same recordings, same service/package multiple different PRs
 
 ### Multiple Devs: Update recordings for two packages under same service in parallel
 

@@ -131,7 +131,7 @@ stages:
           
           - pwsh: |
               $branch = git symbolic-ref --short HEAD
-              git checkout api-stub-generator_v$(PythinParserVersion)
+              git checkout api-stub-generator_v$(PythonParserVersion)
               Write-Host "Bundling stable version of python api-stub-generator"
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
               git checkout $branch

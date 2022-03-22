@@ -3,12 +3,19 @@ import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator"
 import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
 import {
     makeChangesForFirstRelease,
-    makeChangesForMigrateTrack1ToTrack2,
+    makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
     makeChangesForReleasingTrack2
 } from "./modifyChangelogFileAndBumpVersion";
 import {logger} from "../../utils/logger";
-import {getLatestStableVersion, getNewVersion, isBetaVersion} from "../../utils/version";
+import {
+    bumpPatchVersion,
+    bumpPreviewVersion,
+    getLatestStableVersion,
+    getNewVersion,
+    isBetaVersion
+} from "../../utils/version";
 import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
+import {execSync} from "child_process";
 
 const fs = require('fs');
 const path = require('path');
@@ -52,6 +59,11 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
+                    logger.log('Try to bump a fix version');
+                    const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace('\\', '/')}`, {encoding: 'utf-8'});
+                    const oriVersion = JSON.parse(oriPackageJson).version;
+                    const newVersion = isBetaVersion(oriVersion)? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+                    makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog);

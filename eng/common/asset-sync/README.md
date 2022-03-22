@@ -15,9 +15,11 @@
     - [`External Git Repo`](#external-git-repo)
       - [Advantages of `Git Repo`](#advantages-of-git-repo)
       - [Disadvantages of `Git Repo`](#disadvantages-of-git-repo)
-    - [Blob Storage](#blob-storage)
+    - [`Blob Storage`](#blob-storage)
       - [Advantages of `Blob Storage`](#advantages-of-blob-storage)
       - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
+    - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
+      - [Overall evaluation of `Pulling a zipfile of the repository`](#overall-evaluation-of-pulling-a-zipfile-of-the-repository)
     - [But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?](#but-if-we-already-have-a-problem-with-ever-expanding-git-repos-why-does-an-external-repo-help-us)
   - [We have an external git repo, how will we integrate that with our frameworks?](#we-have-an-external-git-repo-how-will-we-integrate-that-with-our-frameworks)
     - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
@@ -109,6 +111,7 @@ Prior to ScottB starting on this project, JimS was the one leading the charge. A
 - git modules
 - git lfs
 - blob **storage**
+- pulling a zipfile of the repository
 
 He also checked other measures, like `download speed` and `integration requirements`. Blob storage especially has a good story for "public read, private write", and _does_ support snapshotting. However, the cost is low bulk download speed when NOT being run on a tool like `azcopy`.
 
@@ -122,6 +125,7 @@ He also checked other measures, like `download speed` and `integration requireme
 
 #### Disadvantages of `Git SubModules`
 
+- Submodules can’t do part of a repository. The only way one could effectively trim a submodule would be to clone with depth which would leave things in a detached head state. The goal here is to minimize clone and sync times without negating the ability, or requiring the entire enlistment, to do updates.
 - Extremely unwieldy. The method for updating them locally is quite manual, and there is as far as I can tell no way to directly tie a submodule's commits to the main repos commits. They're still totally separate repositories. [As reviewable in their docs](https://git-scm.com/book/en/v2/Git-Tools-Submodules), git submodules aren't quite intended for large collaboration or projects. Especially not with multiple moving parts under the submodule.
 
 ### `Git lfs`
@@ -132,7 +136,11 @@ He also checked other measures, like `download speed` and `integration requireme
 
 #### Disadvantages of `Git lfs`
 
-- Our repos stay massive, which defeats the purpose of this project.
+- There’s no transport level compression - Obviously sending uncompressed files over the wire isn’t going to help checkout times.
+- The physical drive the enlistment is on seems to matter more when using LFS -  For example: two machines, both physically in Redmond  and on corpnet, one was a single spinning drive and the other was an array, the clone time difference was negligible (30 vs 22 seconds) but the checkout times were wildly variant (18 seconds vs 2 minutes and 58 seconds)
+- Distance matters – Fetching from Redmond produced very different numbers than fetching from Australia. On average clone times were double of what we’d see on corpnet and still around a minute, but the checkout times were horrendous. Non-LFS checkout had an average of 32 seconds where the LFS checkouts were taking an average of 8 minutes. Note: This was on an SSD, not a spinning disk.
+- Git LFS files are pulled individually - There’s no way to bulk pull everything. The files are pulled over https with a default concurrency of 3 and while this is something that could be tweaked in the lfs config it would potentially help checkout times on an SSD but make the times on a spinning disk worse.
+- The size on disk size, for us, would initially get worse and then eventually taper off – Because we wouldn’t be rewriting history we’re still going to have space in .git/objects from the previous versions of these files but with the way LFS works, you’re also going to have .git/lfs/objects. Unlike .git/objects, the .git/lfs/objects will only contain the version that’s been pulled local. If you checkout a version you don’t have, it’ll update the .git/lfs/object with that and the other version will simply be a file with pointer. In the case of the .net repo, which has 6029 recording json files taking up about 671MB, this means that the size on disk would grow by that amount. The reason for this bloat is that there’s no compression on the LFS folder.
   
 ### `External Git Repo`
 
@@ -149,11 +157,16 @@ He also checked other measures, like `download speed` and `integration requireme
 
 #### Advantages of `Blob Storage`
 
+- Size on disk only consists of the files that were pulled. There is no .git folder becoming more and more bloated as versions are added.
+- Pulling files piecemeal for an area or areas is relatively easy. The main benefit is how easy it would be to pull resources for a given area, like batch or keyvault. Most areas took under 5 seconds to pull but there were outliers. For example, Storage was the worst offender taking about 7 seconds to pull on corpnet, 15 seconds from Seattle and 50 seconds from Australia.
 - Very extensive versioning capabilities due to manual nature
 - Accessible through basic REST API
 
 #### Disadvantages of `Blob Storage`
 
+- Distance matters – Pulling everything from a machine on corpnet was relatively cheap but pulling the same files from Australia was 2-3x longer pulling from Redmond.
+- Permissions would be a problem - Git on one side, corpnet on the other. For internal developers this is less problematic but external contributors I have no idea how’d we get around this.
+- A single azcopy call isn’t terrible, even if you’re pulling an entire Assets repository (in the US), however the more azcopy calls, the longer it would take to sync. For example, pulling all the assets on my home connection took 50 seconds but if I pulled them an sdk/<area> at a time it took 4 minutes and 13 seconds. 
 - Extensive local scripting necessary to handle upload/download.
   - We would need to locally zip and upload. Individual file download is _far_ too enefficient, but a single snapshotted blob could definitely work.
   - Virtuall the same conflicts for download and unzip
@@ -162,6 +175,11 @@ He also checked other measures, like `download speed` and `integration requireme
   - An example of this is the storage service, where we have upwards of half a gigabyte of data present. This is an enormous tax to zip and unzip with each push/pull.
 - The storage is not geolocated
 - There is no concept of "history". It's all point in time
+
+### `Pulling a zipfile of the repository`
+
+#### Overall evaluation of `Pulling a zipfile of the repository`
+- While it is possible to download a zipfile of a GIT repository it’s not very practical. Downloading the zip is only slightly faster than just syncing the repository but the unpacking of the zip that makes this a non-starter. For example: On my Surface Laptop 2, taking zipfile of azure-sdk-for-net and using powershell’s Expand-Archive took 8:07 to unpack. Using System.IO.Compression.ZipFile’s ExtractToDirectory took 5:06 to unpack. The decompression times alone were enough to end this investigation but even if that could be rectified the result would effectively be a read-only copy of the repository.
 
 ### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
 

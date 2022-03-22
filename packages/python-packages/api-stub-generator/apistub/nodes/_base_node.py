@@ -1,6 +1,5 @@
 from inspect import Parameter
 import re
-from typing import Optional
 
 keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
@@ -70,7 +69,7 @@ def get_qualified_name(obj, namespace):
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
     if hasattr(obj, "__args__"):
-        for arg in getattr(obj, "__args__"):
+        for arg in obj.__args__ or []:
             arg_string = str(arg)
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)
@@ -88,11 +87,11 @@ def get_qualified_name(obj, namespace):
     value = name_regex.search(name).group(0)
     if module_name and module_name.startswith(namespace):
         value = f"{module_name}.{name}"
-    elif value.startswith(module_name):
+    elif module_name and value.startswith(module_name):
         # strip the module name if it isn't the namespace (example: typing)
         value = value[len(module_name) +1:]
 
-    if args:
+    if args and "[" not in value:
         arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"
     return value

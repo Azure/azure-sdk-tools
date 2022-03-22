@@ -47,17 +47,21 @@ namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
             }))
 #pragma warning restore CS0618 // Type or member is obsolete
             {
-                var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(devOpsTokenVar,
+                var devOpsService = AzureDevOpsService.CreateAzureDevOpsService(
+                    Environment.GetEnvironmentVariable(devOpsTokenVar),
                     $"https://dev.azure.com/{organization}/",
                     loggerFactory.CreateLogger<AzureDevOpsService>()
                 );
                 
                 var gitHubServiceLogger = loggerFactory.CreateLogger<GitHubService>();
                 var gitHubService = new GitHubService(gitHubServiceLogger);
-                var credential = new ClientSecretCredential(aadTenantVar, aadAppIdVar, aadAppSecretVar);
+                var credential = new ClientSecretCredential(
+                    Environment.GetEnvironmentVariable(aadTenantVar), 
+                    Environment.GetEnvironmentVariable(aadAppIdVar), 
+                    Environment.GetEnvironmentVariable(aadAppSecretVar));
                 var githubToAadResolver = new GitHubToAADConverter(
                     credential,
-                    loggerFactory.CreateLogger<GitHubNameResolver>()
+                    loggerFactory.CreateLogger<GitHubToAADConverter>()
                 );
 
                 var logger = loggerFactory.CreateLogger<Program>();

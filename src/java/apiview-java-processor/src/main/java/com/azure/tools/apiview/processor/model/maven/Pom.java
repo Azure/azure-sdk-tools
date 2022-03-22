@@ -21,6 +21,10 @@ import java.util.List;
 public class Pom implements MavenGAV {
     private Gav gav;
     private Gav parent;
+
+    private String name;
+    private String description;
+
     private List<Dependency> dependencies;
 
     private Float jacocoMinLineCoverage;
@@ -69,6 +73,14 @@ public class Pom implements MavenGAV {
             n = (Node) xPath.evaluate("/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes", xmlDocument, XPathConstants.NODE);
             this.checkstyleExcludes = n == null ? null : n.getTextContent();
 
+            // Maven name
+            n = (Node) xPath.evaluate("/project/name", xmlDocument, XPathConstants.NODE);
+            this.name = (n == null) ? null : n.getTextContent();
+
+            // Maven description
+            n = (Node) xPath.evaluate("/project/description", xmlDocument, XPathConstants.NODE);
+            this.description = (n == null) ? null : n.getTextContent();
+
             // actual dependencies
             final String dependencyExpression = "/project/dependencies/dependency";
             NodeList dependenciesNodeList = (NodeList) xPath.evaluate(dependencyExpression, xmlDocument, XPathConstants.NODESET);
@@ -106,6 +118,14 @@ public class Pom implements MavenGAV {
 
     public Gav getParent() {
         return parent;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public List<Dependency> getDependencies() {

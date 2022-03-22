@@ -1,0 +1,69 @@
+# Additional sample inputs can be found in `eng/containers/ci.yml`, but here is one here.
+# - name: test_proxy_linux
+#   pool: 'ubuntu-20.04'
+#   dockerRepo: 'engsys/testproxy-lin'
+#   prepareScript: tools/test-proxy/docker/prepare.ps1
+#   dockerFile: 'tools/test-proxy/docker/dockerfile'
+#   stableTags:
+#   - 'latest'
+parameters:
+  - name: DockerDeployments
+    type: object
+    default: []
+  - name: ImageTag
+    type: string
+  - name: ContainerRegistry
+    type: string
+    default: 'azsdkengsys'
+  - name: Publish
+    type: boolean
+    default: true
+
+jobs:
+  - ${{ each config in parameters.DockerDeployments }}:
+    - job: container_build_${{ config.name }}
+      displayName: Build ${{ config.name }} Image
+      pool:
+        vmImage: ${{ config.pool }}
+      steps:
+        - ${{ if config.prepareScript }}:
+          - pwsh: |
+              ./${{ config.prepareScript }}
+            displayName: "Run prep script"
+        - task: Docker@2
+          displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
+          inputs:
+            command: build
+            Dockerfile: ${{ config.dockerFile }}
+            tags: ${{ parameters.ImageTag }}
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}'
+
+        - ${{ if parameters.Publish }}:
+          - task: Docker@2
+            displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              containerRegistry: ${{ parameters.ContainerRegistry }}
+              repository: ${{ config.dockerRepo }}
+              command: push
+              tags: ${{ parameters.ImageTag }}
+
+          - ${{ if config.stableTags }}:
+            - ${{ each stableTag in config.stableTags }}:
+              - task: Docker@2
+                displayName: Build ${{ config.name }}:${{ stableTag }}
+                condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                inputs:
+                  command: build
+                  Dockerfile: ${{ config.dockerFile }}
+                  tags: ${{ stableTag }}
+                  arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+
+              - task: Docker@2
+                displayName: Push ${{ config.name }}:${{ stableTag }}
+                condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                inputs:
+                  containerRegistry: ${{ parameters.ContainerRegistry }}
+                  repository: ${{ config.dockerRepo }}
+                  command: push
+                  tags: ${{ stableTag }}

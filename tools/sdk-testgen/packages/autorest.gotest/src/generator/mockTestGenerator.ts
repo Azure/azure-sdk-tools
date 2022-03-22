@@ -146,8 +146,8 @@ export class MockTestDataRender extends BaseDataRender {
     protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[]): string {
         return paramsSig
             .map(([paramName, typeName, parameter]) => {
-                if (parameter === undefined || parameter === null) {
-                    return paramName;
+                if (paramName === 'ctx') {
+                    return 'ctx';
                 }
                 return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
             })

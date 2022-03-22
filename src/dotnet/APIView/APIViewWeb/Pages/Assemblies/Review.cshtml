@@ -113,8 +113,10 @@
                                 {
                                     var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                         id = @Model.Review.ReviewId,
-                                        revisionId = "",
-                                        doc = @Model.ShowDocumentation
+                                        revisionId = @Model.Revision.RevisionId,
+                                        diffRevisionId = @Model.DiffRevisionId,
+                                        doc = @Model.ShowDocumentation,
+                                        diffOnly = @Model.ShowDiffOnly
                                     });
                                     <button class="btn btn-outline-secondary diff-button" type="button" value="@urlValue">Diff</button>
                                 }
@@ -122,6 +124,7 @@
                                 {
                                     var urlValue = @Url.ActionLink("Review", "Assemblies", new {
                                         id = @Model.Review.ReviewId,
+                                        revisionId = @Model.Revision.RevisionId,
                                         diffRevisionId = @Model.PreviousRevisions.Last().RevisionId,
                                         doc = @Model.ShowDocumentation,
                                         diffOnly = @Model.ShowDiffOnly
@@ -142,7 +145,8 @@
                                         id = @Model.Review.ReviewId,
                                         diffRevisionId = @revision.RevisionId,
                                         doc = @Model.ShowDocumentation,
-                                        diffOnly = @Model.ShowDiffOnly
+                                        diffOnly = @Model.ShowDiffOnly,
+                                        revisionId = @Model.Revision.RevisionId
                                     });
                                     if (@Model.DiffRevisionId != null)
                                     {
@@ -230,7 +234,7 @@
                     </span>
                     <span class="dropdown-item" id="show-documentation-component">
                         <input asp-for="@Model.ShowDocumentation" class="show-doc-checkbox">
-                        <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly)>
+                        <a class="text-dark show-document" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
                             <label>&nbsp;Show Documentation</label>
                         </a>
                     </span>
@@ -244,7 +248,7 @@
                     {
                         <span class="dropdown-item">
                             <input asp-for="@Model.ShowDiffOnly" class="show-diffonly-checkbox">
-                            <a class="text-dark show-diffonly" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: !Model.ShowDiffOnly)>
+                            <a class="text-dark show-diffonly" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: Model.ShowDocumentation, showDiffOnly: !Model.ShowDiffOnly, revisionId: Model.Revision.RevisionId)>
                                 <label>&nbsp;Show Only Diff</label>
                             </a>
                         </span>

@@ -252,7 +252,7 @@ namespace APIViewWeb.Repositories
             bool runAnalysis,
             MemoryStream memoryStream)
         {
-            var languageService = _languageServices.Single(s => s.IsSupportedFile(originalName));
+            var languageService = _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
@@ -568,7 +568,16 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        public async Task<CodeFile> GetCodeFile(string repoName, string buildId, string artifactName, string packageName, string originalFileName, string codeFileName, MemoryStream memoryStream)
+        public async Task<CodeFile> GetCodeFile(string repoName,
+            string buildId,
+            string artifactName,
+            string packageName,
+            string originalFileName,
+            string codeFileName,
+            MemoryStream originalFileStream,
+            string baselineCodeFileName = "",
+            MemoryStream baselineStream = null
+            )
         {
             Stream stream = null;
             CodeFile codeFile = null;
@@ -576,7 +585,7 @@ namespace APIViewWeb.Repositories
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
                 stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, "file");
-                codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, memoryStream);
+                codeFile = await CreateCodeFile(Path.GetFileName(originalFileName), stream, false, originalFileStream);
             }
             else
             {
@@ -587,11 +596,16 @@ namespace APIViewWeb.Repositories
                     var fileName = Path.GetFileName(entry.Name);
                     if (fileName == originalFileName)
                     {
-                        await entry.Open().CopyToAsync(memoryStream);
+                        await entry.Open().CopyToAsync(originalFileStream);
                     }
-                    else if (fileName == codeFileName)
+
+                    if (fileName == codeFileName)
                     {
                         codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                    }
+                    else if (fileName == baselineCodeFileName)
+                    {
+                        await entry.Open().CopyToAsync(baselineStream);
                     }
                 }
             }
@@ -648,6 +662,32 @@ namespace APIViewWeb.Repositories
         public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
         {
             return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
+        }
+
+        public async Task AutoArchiveReviews(int archiveAfterMonths)
+        {
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual);
+            // Find all inactive reviews
+            reviews = reviews.Where(r => r.LastUpdated.AddMonths(archiveAfterMonths) < DateTime.Now);
+            foreach (var review in reviews)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Archiving Review " + review.ReviewId };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    review.IsClosed = true;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    _telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
         }
     }
 }

@@ -9,9 +9,9 @@ class EnumNode(NodeEntityBase):
     """Enum node represents any Enum value
     """
 
-    def __init__(self, namespace, parent_node, obj):
+    def __init__(self, *, name, namespace, parent_node, obj):
         super().__init__(namespace, parent_node, obj)
-        self.name = obj.name
+        self.name = name
         self.value = obj.value
         self.namespace_id = self.generate_id()
 

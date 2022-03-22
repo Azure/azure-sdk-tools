@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"golang.org/x/net/http2"
 )
@@ -37,7 +38,7 @@ var (
 
 func TestOperations_List(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Operations_List"},
 	})
 	defer func() {
@@ -82,7 +83,7 @@ func TestOperations_List(t *testing.T) {
 
 func TestSignalR_CheckNameAvailability(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CheckNameAvailability.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CheckNameAvailability"},
 	})
 	defer func() {
@@ -118,7 +119,7 @@ func TestSignalR_CheckNameAvailability(t *testing.T) {
 
 func TestSignalR_ListBySubscription(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListBySubscription"},
 	})
 	defer func() {
@@ -264,7 +265,7 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 
 func TestSignalR_ListByResourceGroup(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListByResourceGroup"},
 	})
 	defer func() {
@@ -411,7 +412,7 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 
 func TestSignalR_Get(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Get"},
 	})
 	defer func() {
@@ -551,7 +552,7 @@ func TestSignalR_Get(t *testing.T) {
 
 func TestSignalR_CreateOrUpdate(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_CreateOrUpdate"},
 	})
 	defer func() {
@@ -772,7 +773,7 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 
 func TestSignalR_Delete(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Delete"},
 	})
 	defer func() {
@@ -796,7 +797,7 @@ func TestSignalR_Delete(t *testing.T) {
 
 func TestSignalR_Update(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Update"},
 	})
 	defer func() {
@@ -1017,7 +1018,7 @@ func TestSignalR_Update(t *testing.T) {
 
 func TestSignalR_ListKeys(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListKeys.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_ListKeys"},
 	})
 	defer func() {
@@ -1046,7 +1047,7 @@ func TestSignalR_ListKeys(t *testing.T) {
 
 func TestSignalR_RegenerateKey(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_RegenerateKey"},
 	})
 	defer func() {
@@ -1073,7 +1074,7 @@ func TestSignalR_RegenerateKey(t *testing.T) {
 
 func TestSignalR_Restart(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalR_Restart"},
 	})
 	defer func() {
@@ -1097,7 +1098,7 @@ func TestSignalR_Restart(t *testing.T) {
 
 func TestUsages_List(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Usages_List"},
 	})
 	defer func() {
@@ -1152,7 +1153,7 @@ func TestUsages_List(t *testing.T) {
 
 func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_List"},
 	})
 	defer func() {
@@ -1211,7 +1212,7 @@ func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
 
 func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Get"},
 	})
 	defer func() {
@@ -1263,7 +1264,7 @@ func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
 
 func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Update"},
 	})
 	defer func() {
@@ -1326,7 +1327,7 @@ func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 
 func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateEndpointConnections_Delete"},
 	})
 	defer func() {
@@ -1351,7 +1352,7 @@ func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
 
 func TestSignalRPrivateLinkResources_List(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRPrivateLinkResources_List"},
 	})
 	defer func() {
@@ -1408,7 +1409,7 @@ func TestSignalRPrivateLinkResources_List(t *testing.T) {
 
 func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_List"},
 	})
 	defer func() {
@@ -1456,7 +1457,7 @@ func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
 
 func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Get.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_Get"},
 	})
 	defer func() {
@@ -1497,7 +1498,7 @@ func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
 
 func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_CreateOrUpdate"},
 	})
 	defer func() {
@@ -1549,7 +1550,7 @@ func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 
 func TestSignalRSharedPrivateLinkResources_Delete(t *testing.T) {
 	// From example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"SignalRSharedPrivateLinkResources_Delete"},
 	})
 	defer func() {

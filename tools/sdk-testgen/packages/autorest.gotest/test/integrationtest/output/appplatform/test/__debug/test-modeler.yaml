@@ -31137,7 +31137,6 @@ testModel:
           variables:
             resourceGroupName: $(dnsResourceGroup)
             subscriptionId: $(dnsSubscriptionId)
-      outputVariableNames: []
       prepareSteps:
         - &ref_1703
           type: armTemplateDeployment
@@ -31348,6 +31347,7 @@ testModel:
                 nameAvailable: false
                 reason: AlreadyExists
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 availabilityParameters:
@@ -31634,6 +31634,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resource:
@@ -31884,6 +31885,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -32165,6 +32167,7 @@ testModel:
                   created-by: api-test
                   hello: world
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resource:
@@ -32231,6 +32234,7 @@ testModel:
               exampleName: Services_DisableTestEndpoint
               expectedResponse: *ref_1686
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -32312,6 +32316,7 @@ testModel:
                 secondaryKey: <secondaryKey>
                 secondaryTestEndpoint: <secondaryTestEndpoint>
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -32403,6 +32408,7 @@ testModel:
                 secondaryKey: <secondaryKey>
                 secondaryTestEndpoint: <secondaryTestEndpoint>
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 regenerateTestKeyRequest:
@@ -32486,6 +32492,7 @@ testModel:
                 secondaryKey: <secondaryKey>
                 secondaryTestEndpoint: <secondaryTestEndpoint>
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -32607,6 +32614,7 @@ testModel:
                   keyVaultCertName: pfx-cert
                   vaultUri: https://integration-test-prod.vault.azure.net/
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 certificateName: $(certificateName)
@@ -32768,6 +32776,7 @@ testModel:
                   thumbprint: 934367bf1c97033f877db0f15cb1b586957d3133
                   vaultUri: https://myvault.vault.azure.net
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 certificateName: $(certificateName)
@@ -32929,6 +32938,7 @@ testModel:
                       thumbprint: 934367bf1c97033f877db0f15cb1b586957d3133
                       vaultUri: https://myvault.vault.azure.net
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -33015,6 +33025,7 @@ testModel:
               expectedResponse:
                 isValid: true
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 configServerSettings:
@@ -33184,6 +33195,7 @@ testModel:
                       uri: https://github.com/VSChina/asc-config-server-test-public.git
                   provisioningState: Succeeded
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 configServerResource:
@@ -33332,6 +33344,7 @@ testModel:
                       uri: https://github.com/azure-samples/spring-petclinic-microservices-config
                   provisioningState: Succeeded
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 configServerResource:
@@ -33462,6 +33475,7 @@ testModel:
                       uri: https://github.com/fake-user/fake-repository.git
                   provisioningState: Succeeded
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -33587,6 +33601,7 @@ testModel:
                   appInsightsSamplingRate: 50
                   traceEnabled: true
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 monitoringSettingResource:
@@ -33716,6 +33731,7 @@ testModel:
                   provisioningState: Succeeded
                   traceEnabled: true
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -33833,6 +33849,7 @@ testModel:
                   appInsightsSamplingRate: 100
                   traceEnabled: true
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 monitoringSettingResource:
@@ -34044,6 +34061,7 @@ testModel:
                   public: false
                   url: $(appName).$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -34251,6 +34269,7 @@ testModel:
                     sizeInGB: 2
                   url: $(appName).$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -34557,6 +34576,7 @@ testModel:
                   capacity: 1
                   tier: Standard
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -34813,6 +34833,7 @@ testModel:
                   capacity: 1
                   tier: Standard
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -35039,6 +35060,7 @@ testModel:
                     sizeInGB: 2
                   url: $(appName).$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -35293,6 +35315,7 @@ testModel:
                     sizeInGB: 3
                   url: $(appName).$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -35511,6 +35534,7 @@ testModel:
                         sizeInGB: 2
                       url: myapp.$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -35691,6 +35715,7 @@ testModel:
                   resourceType: Microsoft.DocumentDB
                   updatedAt: '2019-01-01T12:34:56.000Z'
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -35889,6 +35914,7 @@ testModel:
                   resourceType: Microsoft.DocumentDB
                   updatedAt: '2019-01-01T12:34:56.000Z'
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36051,6 +36077,7 @@ testModel:
                   resourceType: Microsoft.DocumentDB
                   updatedAt: '2019-01-01T12:34:56.000Z'
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36203,6 +36230,7 @@ testModel:
                       resourceType: Microsoft.DocumentDB
                       updatedAt: '2019-01-01T12:34:56.000Z'
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36268,6 +36296,7 @@ testModel:
               exampleName: Bindings_Delete
               expectedResponse: *ref_1688
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36352,6 +36381,7 @@ testModel:
                 isValid: false
                 message: Certificate is invalid, please check if it is a self signed cert or if it contains a suitable dns name
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36474,6 +36504,7 @@ testModel:
                 properties:
                   certName: asc-certificate
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36600,6 +36631,7 @@ testModel:
                 properties:
                   certName: asc-certificate
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36721,6 +36753,7 @@ testModel:
                   certName: mycert
                   thumbprint: 934367bf1c97033f877db0f15cb1b586957d3133
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36844,6 +36877,7 @@ testModel:
                       certName: mycert
                       thumbprint: 934367bf1c97033f877db0f15cb1b586957d3133
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -36924,6 +36958,13 @@ testModel:
                 uploadUrl:
                   type: secureString
                   fromResponse: /uploadUrl
+              outputVariablesModel:
+                relativePath:
+                  - type: object
+                    languages: *ref_1445
+                uploadUrl:
+                  - type: object
+                    languages: *ref_1446
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37270,6 +37311,7 @@ testModel:
                   capacity: 2
                   tier: Standard
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37519,6 +37561,7 @@ testModel:
                     sizeInGB: 3
                   url: $(appName).$(serviceName).azuremicroservices.io
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37594,6 +37637,7 @@ testModel:
               exampleName: Deployments_Restart
               expectedResponse: *ref_1690
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37661,6 +37705,7 @@ testModel:
               exampleName: Deployments_Stop
               expectedResponse: *ref_1692
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37728,6 +37773,7 @@ testModel:
               exampleName: Deployments_Start
               expectedResponse: *ref_1694
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -37804,6 +37850,7 @@ testModel:
                 url: >-
                   https://spring.blob.core.windows.net/logs/110ec0c337154d45b1f01daf2196c0bf/b58b0cb4ecdea3c65311b4ca8833fe47b6ae0a7500f87a8eb31e8379d3fe48f1-2019081312-42b7b90c-f108-4c09-b33d-1ea134f57f23?sv=2018-03-28&sr=b&sig=example-signature&se=2019-08-14T09%3A43%3A52Z&sp=r
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -38037,6 +38084,7 @@ testModel:
                       capacity: 1
                       tier: Standard
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -38263,6 +38311,7 @@ testModel:
                       capacity: 1
                       tier: Standard
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -38509,6 +38558,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -38748,6 +38798,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: $(subscriptionId)
@@ -38810,6 +38861,7 @@ testModel:
               exampleName: Deployments_Delete
               expectedResponse: *ref_1696
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -38877,6 +38929,7 @@ testModel:
               exampleName: CustomDomains_Delete
               expectedResponse: *ref_1698
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -38939,6 +38992,7 @@ testModel:
               exampleName: Apps_Delete
               expectedResponse: *ref_1700
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 appName: $(appName)
@@ -39000,6 +39054,7 @@ testModel:
               exampleName: Certificates_Delete
               expectedResponse: *ref_1702
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 certificateName: $(certificateName)
@@ -39051,6 +39106,7 @@ testModel:
               exampleName: Services_Delete
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -39182,6 +39238,7 @@ testModel:
                     restrictions: []
                     tier: Basic
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
                 subscriptionId: $(subscriptionId)
@@ -39286,6 +39343,7 @@ testModel:
                     properties:
                       serviceSpecification: null
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2020-11-01-preview
               requestUpdate: []

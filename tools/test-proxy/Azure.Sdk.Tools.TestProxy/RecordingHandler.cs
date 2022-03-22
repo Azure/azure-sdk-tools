@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -43,12 +44,6 @@ namespace Azure.Sdk.Tools.TestProxy
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
             "Proxy-Connection",
-        };
-
-        // Headers which must be set on HttpContent instead of HttpRequestMessage
-        private static readonly string[] s_contentRequestHeaders = new string[] {
-            "Content-Length",
-            "Content-Type",
         };
 
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
@@ -264,7 +259,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody.ToArray();
         }
 
-        private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
+        public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
             var upstreamRequest = new HttpRequestMessage();
             upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
@@ -275,28 +270,26 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 IEnumerable<string> values = header.Value;
 
+                // can't handle PROXY_CONNECTION right now.
                 if (s_excludedRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                try
+                if (!header.Key.StartsWith("x-recording"))
                 {
-                    if (s_contentRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                    if (upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
+                        continue;
                     }
-                    else
+
+                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        if (!header.Key.StartsWith("x-recording"))
-                        {
-                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
-                        }
+                        throw new HttpException(
+                            HttpStatusCode.BadRequest,
+                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
+                        );
                     }
-                }
-                catch (Exception)
-                {
-                    // ignore
                 }
             }
 
@@ -561,7 +554,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer()
+                    new RecordedTestSanitizer(),
+                    new BodyKeySanitizer("$..access_token"),
+                    new BodyKeySanitizer("$..refresh_token")
                 };
 
                 Transforms = new List<ResponseTransform>

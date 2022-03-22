@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -49,9 +50,10 @@ namespace Azure.Sdk.Tools.TestProxy
             if (version)
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var nameVersion = assembly.GetName().Version;
+                var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+                var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine(nameVersion);
+                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }
@@ -65,13 +67,13 @@ namespace Azure.Sdk.Tools.TestProxy
             TargetLocation = resolveRepoLocation(storageLocation);
 
             var statusThread = PrintStatus(
-                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
+                () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
             var host = Host.CreateDefaultBuilder(args);
 
             host.ConfigureWebHostDefaults(
-                builder => 
+                builder =>
                     builder.UseStartup<Startup>()
                     // ripped directly from implementation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
                     .ConfigureLogging((hostBuilder, loggingBuilder) =>
@@ -87,7 +89,19 @@ namespace Azure.Sdk.Tools.TestProxy
                     })
                 );
 
-            host.Build().Run();
+            var app = host.Build();
+
+            app.Run();
+
+            var config = app.Services?.GetService<IConfiguration>();
+            if (config != null)
+            {
+                Console.WriteLine("Dumping Resolved Configuration Values:");
+                foreach (var c in config.AsEnumerable())
+                {
+                    Console.WriteLine(c.Key + " = " + c.Value);
+                }
+            }
 
             statusThreadCts.Cancel();
             statusThread.Join();

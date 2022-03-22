@@ -11016,7 +11016,6 @@ testModel:
     - &ref_469
       _filePath: Microsoft.SignalRService\preview\2021-06-01-preview\scenarios\signalR.yaml
       cleanUpSteps: []
-      outputVariableNames: []
       prepareSteps: []
       requiredVariables:
         - subscriptionId
@@ -11045,6 +11044,27 @@ testModel:
                     metadata:
                       description: Name of the SignalR service.
                     value: '[concat(''sw'',uniqueString(resourceGroup().id))]'
+              armTemplatePayloadString: |-
+                {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "variables": {
+                    "name": {
+                      "value": "[concat('sw',uniqueString(resourceGroup().id))]",
+                      "metadata": {
+                        "description": "Name of the SignalR service."
+                      },
+                      "type": "string"
+                    }
+                  },
+                  "resources": [],
+                  "outputs": {
+                    "resourceName": {
+                      "type": "string",
+                      "value": "[variables('name').value]"
+                    }
+                  }
+                }
               outputVariables: {}
               requiredVariables: []
               requiredVariablesDefault: {}
@@ -11117,6 +11137,7 @@ testModel:
                 nameAvailable: false
                 reason: AlreadyExists
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 location: $(location)
@@ -11881,6 +11902,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -12451,6 +12473,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -13211,6 +13234,7 @@ testModel:
                 tags:
                   key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -13320,6 +13344,7 @@ testModel:
               exampleName: SignalR_ListKeys
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -13379,6 +13404,7 @@ testModel:
               exampleName: SignalR_RegenerateKey
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 parameters:
@@ -13430,6 +13456,7 @@ testModel:
               exampleName: SignalR_Restart
               expectedResponse: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -13569,6 +13596,7 @@ testModel:
                     limit: 100
                     unit: Count
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 location: $(location)
@@ -14088,6 +14116,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)
@@ -14602,6 +14631,7 @@ testModel:
                     tags:
                       key1: value1
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 subscriptionId: $(subscriptionId)
@@ -14696,6 +14726,7 @@ testModel:
                     isDataAction: false
                     properties: {}
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
               requestUpdate: []
@@ -14747,6 +14778,7 @@ testModel:
               exampleName: SignalR_Delete
               expectedResponse: *ref_455
               outputVariables: {}
+              outputVariablesModel: {}
               requestParameters:
                 api-version: 2021-06-01-preview
                 resourceGroupName: $(resourceGroupName)

@@ -1,11 +1,20 @@
 # Release History
 
-## Version 0.2.10 (Unreleased)
+## Version 0.2.10 (2022-03-09)
 Added support for TypedDict classes.
 Added support to parse defaults from docstrings. Example
   syntax: "A value, defaults to foo."
   Also supports older, non-recommended syntax, such as:
   "A value. Default value is foo."
+Added support for "CrossLanguageDefinitionId" and a --mapping-path
+  parameter to supply the necessary mapping file.
+Fixed issue where required keyword-only arguments displayed as optional.
+Fixed issue where APIView would add a false-alarm warning to
+  paged types.
+Fixed issue where aliased models would be displayed with their non-public,
+  unaliased name. APIView will issue a diagnostic warning if `__name__` is
+  not updated to match the alias.
+Fixed issue where enums that correspond to the same value would be omitted.
 
 ## Version 0.2.9 (Unreleased)
 Fixed issue where Python 3-style type hints stopped displaying

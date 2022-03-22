@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"golang.org/x/net/http2"
 )
@@ -41,7 +42,7 @@ func TestOperations_List(t *testing.T) {
 
 func TestAvailabilitySets_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnAvailabilitySet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an availability set."},
 	})
 	defer func() {
@@ -104,7 +105,7 @@ func TestAvailabilitySets_Get(t *testing.T) {
 
 func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List availability sets in a subscription."},
 	})
 	defer func() {
@@ -214,7 +215,7 @@ func TestAvailabilitySets_ListAvailableSizes(t *testing.T) {
 
 func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAProximityPlacementGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or Update a proximity placement group."},
 	})
 	defer func() {
@@ -257,7 +258,7 @@ func TestProximityPlacementGroups_CreateOrUpdate(t *testing.T) {
 
 func TestProximityPlacementGroups_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
 	defer func() {
@@ -299,7 +300,7 @@ func TestProximityPlacementGroups_Update(t *testing.T) {
 
 func TestProximityPlacementGroups_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
 	defer func() {
@@ -319,7 +320,7 @@ func TestProximityPlacementGroups_Delete(t *testing.T) {
 
 func TestProximityPlacementGroups_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAProximityPlacementGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
 	defer func() {
@@ -368,7 +369,7 @@ func TestProximityPlacementGroups_Get(t *testing.T) {
 
 func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
 	defer func() {
@@ -423,7 +424,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 
 func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a proximity placement group."},
 	})
 	defer func() {
@@ -479,7 +480,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 
 func TestDedicatedHostGroups_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host group."},
 	})
 	defer func() {
@@ -542,7 +543,7 @@ func TestDedicatedHostGroups_Delete(t *testing.T) {
 
 func TestDedicatedHostGroups_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a dedicated host group."},
 	})
 	defer func() {
@@ -645,7 +646,7 @@ func TestDedicatedHostGroups_ListBySubscription(t *testing.T) {
 
 func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a dedicated host ."},
 	})
 	defer func() {
@@ -715,7 +716,7 @@ func TestDedicatedHosts_Delete(t *testing.T) {
 
 func TestDedicatedHosts_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a dedicated host."},
 	})
 	defer func() {
@@ -798,7 +799,7 @@ func TestSSHPublicKeys_ListByResourceGroup(t *testing.T) {
 
 func TestSSHPublicKeys_Create(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnSshPublicKey.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a new SSH public key resource."},
 	})
 	defer func() {
@@ -848,7 +849,7 @@ func TestSSHPublicKeys_Delete(t *testing.T) {
 
 func TestSSHPublicKeys_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an ssh public key."},
 	})
 	defer func() {
@@ -887,7 +888,7 @@ func TestSSHPublicKeys_Get(t *testing.T) {
 
 func TestSSHPublicKeys_GenerateKeyPair(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generate an SSH key pair."},
 	})
 	defer func() {
@@ -988,7 +989,7 @@ func TestUsage_List(t *testing.T) {
 
 func TestVirtualMachines_ListByLocation(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the virtual machines under the specified subscription for the specified location."},
 	})
 	defer func() {
@@ -1137,7 +1138,7 @@ func TestVirtualMachines_Capture(t *testing.T) {
 
 func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting assessmentMode of ImageDefault."},
 	})
 	defer func() {
@@ -1262,7 +1263,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch setting patchMode of ImageDefault."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -1382,7 +1383,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Linux vm with a patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -1504,7 +1505,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with Uefi Settings of secureBoot and vTPM."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -1630,7 +1631,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with UserData"},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -1755,7 +1756,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a VM with network interface configuration"},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -1887,7 +1888,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting assessmentMode of ImageDefault."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2009,7 +2010,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByOS."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2131,7 +2132,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of AutomaticByPlatform and enableHotpatching set to true."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2255,7 +2256,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with a patch setting patchMode of Manual."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2377,7 +2378,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a Windows vm with patch settings patchMode and assessmentMode set to AutomaticByPlatform."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2501,7 +2502,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image vm from an unmanaged generalized os image."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2608,7 +2609,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image vm with unmanaged os and data disks."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2757,7 +2758,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a custom image."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2863,7 +2864,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a generalized shared image."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -2969,7 +2970,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm from a specialized shared image."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3062,7 +3063,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in a Virtual Machine Scale Set with customer assigned platformFaultDomain."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3182,7 +3183,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm in an availability set."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3300,7 +3301,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with DiskEncryptionSet resource id in the os disk and data disk."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3463,7 +3464,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Host Encryption using encryptionAtHost property."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3591,7 +3592,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with Scheduled Events Profile"},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3727,7 +3728,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with a marketplace image plan."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3849,7 +3850,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with an extensions time budget."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -3975,7 +3976,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with boot diagnostics."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4099,7 +4100,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with empty data disks."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4240,7 +4241,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Cache disk using placement property."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4370,7 +4371,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk provisioning in Resource disk using placement property."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4500,7 +4501,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ephemeral os disk."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4628,7 +4629,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with managed boot diagnostics."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4750,7 +4751,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with password authentication."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4862,7 +4863,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with premium storage."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -4974,7 +4975,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a vm with ssh authentication."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -5103,7 +5104,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 
 func TestVirtualMachines_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by detaching data disk"},
 	})
 	defer func() {
@@ -5252,7 +5253,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a VM by force-detaching data disk"},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -5400,7 +5401,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 
 func TestVirtualMachines_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force delete a VM"},
 	})
 	defer func() {
@@ -5424,7 +5425,7 @@ func TestVirtualMachines_Delete(t *testing.T) {
 
 func TestVirtualMachines_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a Virtual Machine."},
 	})
 	defer func() {
@@ -5555,7 +5556,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineAutoPlacedOnDedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine placed on a dedicated host group through automatic placement"},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -5632,7 +5633,7 @@ func TestVirtualMachines_Get(t *testing.T) {
 
 func TestVirtualMachines_InstanceView(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceView.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Virtual Machine Instance View."},
 	})
 	defer func() {
@@ -5779,7 +5780,7 @@ func TestVirtualMachines_InstanceView(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineInstanceViewAutoPlacedOnDedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine placed on a dedicated host group through automatic placement."},
 	})
 	client = test.NewVirtualMachinesClient("{subscription-id}", cred, &options)
@@ -5851,7 +5852,7 @@ func TestVirtualMachines_Deallocate(t *testing.T) {
 
 func TestVirtualMachines_Generalize(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GeneralizeVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Generalize a Virtual Machine."},
 	})
 	defer func() {
@@ -5879,7 +5880,7 @@ func TestVirtualMachines_ListAll(t *testing.T) {
 
 func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available virtual machine sizes to which the specified virtual machine can be resized"},
 	})
 	defer func() {
@@ -5930,7 +5931,7 @@ func TestVirtualMachines_PowerOff(t *testing.T) {
 
 func TestVirtualMachines_Reapply(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reapply the state of a virtual machine."},
 	})
 	defer func() {
@@ -5966,7 +5967,7 @@ func TestVirtualMachines_Redeploy(t *testing.T) {
 
 func TestVirtualMachines_Reimage(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage a Virtual Machine."},
 	})
 	defer func() {
@@ -5993,7 +5994,7 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 
 func TestVirtualMachines_RetrieveBootDiagnosticsData(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVirtualMachine.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
 	defer func() {
@@ -6029,7 +6030,7 @@ func TestVirtualMachines_PerformMaintenance(t *testing.T) {
 
 func TestVirtualMachines_SimulateEviction(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
 	defer func() {
@@ -6049,7 +6050,7 @@ func TestVirtualMachines_SimulateEviction(t *testing.T) {
 
 func TestVirtualMachines_AssessPatches(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Assess patch state of a virtual machine."},
 	})
 	defer func() {
@@ -6116,7 +6117,7 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 
 func TestVirtualMachines_InstallPatches(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Install patch state of a virtual machine."},
 	})
 	defer func() {
@@ -6189,7 +6190,7 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 
 func TestVirtualMachines_RunCommand(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommand"},
 	})
 	defer func() {
@@ -6239,7 +6240,7 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 
 func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all the VM scale sets under the specified subscription for the specified location."},
 	})
 	defer func() {
@@ -6424,7 +6425,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 
 func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a custom-image scale set from an unmanaged generalized os image."},
 	})
 	defer func() {
@@ -6565,7 +6566,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a platform-image scale set with unmanaged os disks."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -6719,7 +6720,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a custom image."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -6862,7 +6863,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a generalized shared image."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7005,7 +7006,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set from a specialized shared image."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7135,7 +7136,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with DiskEncryptionSet resource in os disk and data disk."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7310,7 +7311,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Fpga Network Interfaces."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7495,7 +7496,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Host Encryption using encryptionAtHost property."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7661,7 +7662,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with Uefi Settings of secureBoot and vTPM."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7825,7 +7826,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with a marketplace image plan."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -7985,7 +7986,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure application gateway."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8143,7 +8144,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with an azure load balancer."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8315,7 +8316,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with automatic repairs enabled"},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8473,7 +8474,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with boot diagnostics."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8635,7 +8636,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with empty data disks on each vm."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8817,7 +8818,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks using placement property."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -8985,7 +8986,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ephemeral os disks."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9147,7 +9148,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with extension time budget."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9337,7 +9338,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with managed boot diagnostics."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9497,7 +9498,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with password authentication."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9647,7 +9648,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with premium storage."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9797,7 +9798,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with ssh authentication."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -9962,7 +9963,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with terminate scheduled events enabled."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -10124,7 +10125,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with userData."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -10281,7 +10282,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a scale set with virtual machines in different zones."},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -10476,7 +10477,7 @@ func TestVirtualMachineScaleSets_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a VM scale set."},
 	})
 	defer func() {
@@ -10500,7 +10501,7 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set placed on a dedicated host group through automatic placement."},
 	})
 	defer func() {
@@ -10604,7 +10605,7 @@ func TestVirtualMachineScaleSets_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetWithUserData.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a virtual machine scale set with UserData"},
 	})
 	client = test.NewVirtualMachineScaleSetsClient("{subscription-id}", cred, &options)
@@ -10778,7 +10779,7 @@ func TestVirtualMachineSizes_List(t *testing.T) {
 
 func TestImages_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob with DiskEncryptionSet resource."},
 	})
 	defer func() {
@@ -10844,7 +10845,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a blob."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -10901,7 +10902,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk with DiskEncryptionSet resource."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -10966,7 +10967,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a managed disk."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11027,7 +11028,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot with DiskEncryptionSet resource."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11092,7 +11093,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from a snapshot."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11153,7 +11154,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image from an existing virtual machine."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11210,7 +11211,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a blob."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11276,7 +11277,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a managed disk."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11350,7 +11351,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a virtual machine image that includes a data disk from a snapshot."},
 	})
 	client = test.NewImagesClient("{subscription-id}", cred, &options)
@@ -11426,7 +11427,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 
 func TestImages_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Updates tags of an Image."},
 	})
 	defer func() {
@@ -11513,7 +11514,7 @@ func TestImages_Delete(t *testing.T) {
 
 func TestImages_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInformationAboutAnImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a virtual machine image."},
 	})
 	defer func() {
@@ -11578,7 +11579,7 @@ func TestImages_Get(t *testing.T) {
 
 func TestImages_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a resource group."},
 	})
 	defer func() {
@@ -11648,7 +11649,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 
 func TestImages_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListImagesInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all virtual machine images in a subscription."},
 	})
 	defer func() {
@@ -11717,7 +11718,7 @@ func TestImages_List(t *testing.T) {
 
 func TestRestorePointCollections_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateARestorePointCollection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a restore point collection."},
 	})
 	defer func() {
@@ -11781,7 +11782,7 @@ func TestRestorePointCollections_Delete(t *testing.T) {
 
 func TestRestorePointCollections_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection (but not the restore points contained in the restore point collection)"},
 	})
 	defer func() {
@@ -11824,7 +11825,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionWithContainedRestorePoints.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point collection, including the restore points contained in the restore point collection"},
 	})
 	client = test.NewRestorePointCollectionsClient("{subscription-id}", cred, &options)
@@ -11930,7 +11931,7 @@ func TestRestorePointCollections_Get(t *testing.T) {
 
 func TestRestorePointCollections_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a resource group."},
 	})
 	defer func() {
@@ -11999,7 +12000,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 
 func TestRestorePointCollections_ListAll(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Gets the list of restore point collections in a subscription"},
 	})
 	defer func() {
@@ -12067,7 +12068,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 
 func TestRestorePoints_Create(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a restore point"},
 	})
 	defer func() {
@@ -12102,7 +12103,7 @@ func TestRestorePoints_Delete(t *testing.T) {
 
 func TestRestorePoints_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePoint.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a restore point"},
 	})
 	defer func() {
@@ -12224,7 +12225,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartOSUpgrade(t *testing.T) {
 
 func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start an extension rolling upgrade."},
 	})
 	defer func() {
@@ -12252,7 +12253,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_GetLatest(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM extension."},
 	})
 	defer func() {
@@ -12335,7 +12336,7 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM extension."},
 	})
 	defer func() {
@@ -12395,7 +12396,7 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM extension."},
 	})
 	defer func() {
@@ -12421,7 +12422,7 @@ func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMExtensions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM extension."},
 	})
 	defer func() {
@@ -12466,7 +12467,7 @@ func TestVirtualMachineScaleSetVMExtensions_Get(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMExtensions_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List extensions in Vmss instance."},
 	})
 	defer func() {
@@ -12544,7 +12545,7 @@ func TestVirtualMachineScaleSetVMs_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Force Delete a virtual machine from a VM scale set."},
 	})
 	defer func() {
@@ -12569,7 +12570,7 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMWithUserData.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VM scale set VM with UserData"},
 	})
 	defer func() {
@@ -12712,7 +12713,7 @@ func TestVirtualMachineScaleSetVMs_Get(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_GetInstanceView(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get instance view of a virtual machine from a VM scale set placed on a dedicated host group through automatic placement."},
 	})
 	defer func() {
@@ -12800,7 +12801,7 @@ func TestVirtualMachineScaleSetVMs_Redeploy(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_RetrieveBootDiagnosticsData(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"RetrieveBootDiagnosticsData of a virtual machine."},
 	})
 	defer func() {
@@ -12837,7 +12838,7 @@ func TestVirtualMachineScaleSetVMs_PerformMaintenance(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Simulate Eviction a virtual machine."},
 	})
 	defer func() {
@@ -12858,7 +12859,7 @@ func TestVirtualMachineScaleSetVMs_SimulateEviction(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineScaleSetVMs_RunCommand"},
 	})
 	defer func() {
@@ -12911,7 +12912,7 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 
 func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals."},
 	})
 	defer func() {
@@ -12954,7 +12955,7 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 
 func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period."},
 	})
 	defer func() {
@@ -12999,7 +13000,7 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 
 func TestVirtualMachineRunCommands_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandList.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandList"},
 	})
 	defer func() {
@@ -13104,7 +13105,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 
 func TestVirtualMachineRunCommands_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommandGet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"VirtualMachineRunCommandGet"},
 	})
 	defer func() {
@@ -13156,7 +13157,7 @@ func TestVirtualMachineRunCommands_Get(t *testing.T) {
 
 func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a run command."},
 	})
 	defer func() {
@@ -13238,7 +13239,7 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 
 func TestVirtualMachineRunCommands_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a run command."},
 	})
 	defer func() {
@@ -13306,7 +13307,7 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 
 func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a run command."},
 	})
 	defer func() {
@@ -13331,7 +13332,7 @@ func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 
 func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRunCommand.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a run command."},
 	})
 	defer func() {
@@ -13388,7 +13389,7 @@ func TestVirtualMachineRunCommands_GetByVirtualMachine(t *testing.T) {
 
 func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in a Virtual Machine."},
 	})
 	defer func() {
@@ -13452,7 +13453,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create VirtualMachineScaleSet VM run command."},
 	})
 	defer func() {
@@ -13531,7 +13532,7 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update VirtualMachineScaleSet VM run command."},
 	})
 	defer func() {
@@ -13600,7 +13601,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete VirtualMachineScaleSet VM run command."},
 	})
 	defer func() {
@@ -13626,7 +13627,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMRunCommands.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get VirtualMachineScaleSet VM run commands."},
 	})
 	defer func() {
@@ -13684,7 +13685,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Get(t *testing.T) {
 
 func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List run commands in Vmss instance."},
 	})
 	defer func() {
@@ -13745,7 +13746,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 
 func TestResourceSKUs_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs"},
 	})
 	defer func() {
@@ -13942,7 +13943,7 @@ func TestResourceSKUs_List(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkusForARegion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Lists all available Resource SKUs for the specified region"},
 	})
 	client = test.NewResourceSKUsClient("{subscription-id}", cred, &options)
@@ -14136,7 +14137,7 @@ func TestResourceSKUs_List(t *testing.T) {
 
 func TestDisks_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk access resource."},
 	})
 	defer func() {
@@ -14190,7 +14191,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk and associate with disk encryption set."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14241,7 +14242,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by copying a snapshot."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14286,7 +14287,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from a different subscription."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14333,7 +14334,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk by importing an unmanaged blob from the same subscription."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14378,7 +14379,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from a platform image."},
 	})
 	client = test.NewDisksClient("{subscriptionId}", cred, &options)
@@ -14435,7 +14436,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk from an existing managed disk in the same or different subscription."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14480,7 +14481,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with security profile"},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14537,7 +14538,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed disk with ssd zrs account type."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14589,7 +14590,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a managed upload disk."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14634,7 +14635,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk in extended location."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14687,7 +14688,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an empty managed disk."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14732,7 +14733,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create an ultra managed disk with logicalSectorSize 512E"},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14788,7 +14789,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 
 func TestDisks_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a bursting enabled managed disk."},
 	})
 	defer func() {
@@ -14836,7 +14837,7 @@ func TestDisks_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add purchase plan."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14897,7 +14898,7 @@ func TestDisks_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to add supportsHibernation."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14946,7 +14947,7 @@ func TestDisks_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to change tier."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -14987,7 +14988,7 @@ func TestDisks_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a managed disk to disable bursting."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -15027,7 +15028,7 @@ func TestDisks_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update managed disk to remove disk access resource association."},
 	})
 	client = test.NewDisksClient("{subscription-id}", cred, &options)
@@ -15071,7 +15072,7 @@ func TestDisks_Update(t *testing.T) {
 
 func TestDisks_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a managed disk."},
 	})
 	defer func() {
@@ -15160,7 +15161,7 @@ func TestDisks_Delete(t *testing.T) {
 
 func TestDisks_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a resource group."},
 	})
 	defer func() {
@@ -15297,7 +15298,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 
 func TestDisks_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all managed disks in a subscription."},
 	})
 	defer func() {
@@ -15441,7 +15442,7 @@ func TestDisks_RevokeAccess(t *testing.T) {
 
 func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from a different subscription."},
 	})
 	defer func() {
@@ -15493,7 +15494,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot by importing an unmanaged blob from the same subscription."},
 	})
 	client = test.NewSnapshotsClient("{subscription-id}", cred, &options)
@@ -15538,7 +15539,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a snapshot from an existing snapshot in the same or a different subscription."},
 	})
 	client = test.NewSnapshotsClient("{subscription-id}", cred, &options)
@@ -15589,7 +15590,7 @@ func TestSnapshots_Update(t *testing.T) {
 
 func TestSnapshots_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a snapshot."},
 	})
 	defer func() {
@@ -15670,7 +15671,7 @@ func TestSnapshots_Delete(t *testing.T) {
 
 func TestSnapshots_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a resource group."},
 	})
 	defer func() {
@@ -15746,7 +15747,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 
 func TestSnapshots_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all snapshots in a subscription."},
 	})
 	defer func() {
@@ -15871,7 +15872,7 @@ func TestSnapshots_RevokeAccess(t *testing.T) {
 
 func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set with key vault from a different subscription."},
 	})
 	defer func() {
@@ -15927,7 +15928,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk encryption set."},
 	})
 	client = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
@@ -15986,7 +15987,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 
 func TestDiskEncryptionSets_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Succeeded"},
 	})
 	defer func() {
@@ -16046,7 +16047,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set with rotationToLatestKeyVersionEnabled set to true - Updating"},
 	})
 	client = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
@@ -16105,7 +16106,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk encryption set."},
 	})
 	client = test.NewDiskEncryptionSetsClient("{subscription-id}", cred, &options)
@@ -16169,7 +16170,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 
 func TestDiskEncryptionSets_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk encryption set."},
 	})
 	defer func() {
@@ -16221,7 +16222,7 @@ func TestDiskEncryptionSets_Get(t *testing.T) {
 
 func TestDiskEncryptionSets_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk encryption set."},
 	})
 	defer func() {
@@ -16245,7 +16246,7 @@ func TestDiskEncryptionSets_Delete(t *testing.T) {
 
 func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a resource group."},
 	})
 	defer func() {
@@ -16328,7 +16329,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 
 func TestDiskEncryptionSets_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetsInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk encryption sets in a subscription."},
 	})
 	defer func() {
@@ -16410,7 +16411,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 
 func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskEncryptionSetAssociatedResources.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all resources that are encrypted with this disk encryption set."},
 	})
 	defer func() {
@@ -16448,7 +16449,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 
 func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create a disk access resource."},
 	})
 	defer func() {
@@ -16493,7 +16494,7 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 
 func TestDiskAccesses_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a disk access resource."},
 	})
 	defer func() {
@@ -16541,7 +16542,7 @@ func TestDiskAccesses_Update(t *testing.T) {
 
 func TestDiskAccesses_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccessWithPrivateEndpoints.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource with private endpoints."},
 	})
 	defer func() {
@@ -16598,7 +16599,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutADiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a disk access resource."},
 	})
 	client = test.NewDiskAccessesClient("{subscription-id}", cred, &options)
@@ -16635,7 +16636,7 @@ func TestDiskAccesses_Get(t *testing.T) {
 
 func TestDiskAccesses_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a disk access resource."},
 	})
 	defer func() {
@@ -16659,7 +16660,7 @@ func TestDiskAccesses_Delete(t *testing.T) {
 
 func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a resource group."},
 	})
 	defer func() {
@@ -16739,7 +16740,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 
 func TestDiskAccesses_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskAccessesInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all disk access resources in a subscription."},
 	})
 	defer func() {
@@ -16818,7 +16819,7 @@ func TestDiskAccesses_List(t *testing.T) {
 
 func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskAccessPrivateLinkResources.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List all possible private link resources under disk access resource."},
 	})
 	defer func() {
@@ -16861,7 +16862,7 @@ func TestDiskAccesses_GetPrivateLinkResources(t *testing.T) {
 
 func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Approve a Private Endpoint Connection under a disk access resource."},
 	})
 	defer func() {
@@ -16918,7 +16919,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 
 func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAPrivateEndpointConnection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
 	defer func() {
@@ -16963,7 +16964,7 @@ func TestDiskAccesses_GetAPrivateEndpointConnection(t *testing.T) {
 
 func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a private endpoint connection under a disk access resource."},
 	})
 	defer func() {
@@ -16988,7 +16989,7 @@ func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 
 func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListPrivateEndpointConnectionsInADiskAccess.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get information about a private endpoint connection under a disk access resource."},
 	})
 	defer func() {
@@ -17040,7 +17041,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 
 func TestDiskRestorePoint_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetDiskRestorePointResources.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
 	defer func() {
@@ -17082,7 +17083,7 @@ func TestDiskRestorePoint_Get(t *testing.T) {
 
 func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get an incremental disk restorePoint resource."},
 	})
 	defer func() {
@@ -17131,7 +17132,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 
 func TestGalleries_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery with sharing profile."},
 	})
 	defer func() {
@@ -17184,7 +17185,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery."},
 	})
 	client = test.NewGalleriesClient("{subscription-id}", cred, &options)
@@ -17228,7 +17229,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 
 func TestGalleries_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery."},
 	})
 	defer func() {
@@ -17276,7 +17277,7 @@ func TestGalleries_Update(t *testing.T) {
 
 func TestGalleries_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryWithSelectPermissions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery with select permissions."},
 	})
 	defer func() {
@@ -17323,7 +17324,7 @@ func TestGalleries_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	client = test.NewGalleriesClient("{subscription-id}", cred, &options)
@@ -17357,7 +17358,7 @@ func TestGalleries_Get(t *testing.T) {
 
 func TestGalleries_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery."},
 	})
 	defer func() {
@@ -17381,7 +17382,7 @@ func TestGalleries_Delete(t *testing.T) {
 
 func TestGalleries_ListByResourceGroup(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInAResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a resource group."},
 	})
 	defer func() {
@@ -17428,7 +17429,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 
 func TestGalleries_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleriesInASubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List galleries in a subscription."},
 	})
 	defer func() {
@@ -17474,7 +17475,7 @@ func TestGalleries_List(t *testing.T) {
 
 func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery image."},
 	})
 	defer func() {
@@ -17535,7 +17536,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 
 func TestGalleryImages_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery image."},
 	})
 	defer func() {
@@ -17595,7 +17596,7 @@ func TestGalleryImages_Update(t *testing.T) {
 
 func TestGalleryImages_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image."},
 	})
 	defer func() {
@@ -17639,7 +17640,7 @@ func TestGalleryImages_Get(t *testing.T) {
 
 func TestGalleryImages_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image."},
 	})
 	defer func() {
@@ -17664,7 +17665,7 @@ func TestGalleryImages_Delete(t *testing.T) {
 
 func TestGalleryImages_ListByGallery(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImagesInAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery images in a gallery."},
 	})
 	defer func() {
@@ -17715,7 +17716,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 
 func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using VM as source."},
 	})
 	defer func() {
@@ -17863,7 +17864,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using managed image as source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18006,7 +18007,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using mix of disks and snapshots as a source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18147,7 +18148,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using shared image as source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18290,7 +18291,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using snapshots as a source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18431,7 +18432,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple Gallery Image Version using vhd as a source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18556,7 +18557,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 
 func TestGalleryImageVersions_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version (Managed Image as source)."},
 	})
 	defer func() {
@@ -18657,7 +18658,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple Gallery Image Version without source id."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18751,7 +18752,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 
 func TestGalleryImageVersions_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithReplicationStatus.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with replication status."},
 	})
 	defer func() {
@@ -18847,7 +18848,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithSnapshotsAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with snapshots as a source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18917,7 +18918,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersionWithVhdAsSource.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version with vhd as a source."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -18991,7 +18992,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImageVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery image version."},
 	})
 	client = test.NewGalleryImageVersionsClient("{subscription-id}", cred, &options)
@@ -19068,7 +19069,7 @@ func TestGalleryImageVersions_Get(t *testing.T) {
 
 func TestGalleryImageVersions_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery image version."},
 	})
 	defer func() {
@@ -19094,7 +19095,7 @@ func TestGalleryImageVersions_Delete(t *testing.T) {
 
 func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryImageVersionsInAGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery image versions in a gallery image definition."},
 	})
 	defer func() {
@@ -19183,7 +19184,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 
 func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application."},
 	})
 	defer func() {
@@ -19239,7 +19240,7 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 
 func TestGalleryApplications_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application."},
 	})
 	defer func() {
@@ -19294,7 +19295,7 @@ func TestGalleryApplications_Update(t *testing.T) {
 
 func TestGalleryApplications_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application."},
 	})
 	defer func() {
@@ -19334,7 +19335,7 @@ func TestGalleryApplications_Get(t *testing.T) {
 
 func TestGalleryApplications_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application."},
 	})
 	defer func() {
@@ -19359,7 +19360,7 @@ func TestGalleryApplications_Delete(t *testing.T) {
 
 func TestGalleryApplications_ListByGallery(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationsInAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Applications in a gallery."},
 	})
 	defer func() {
@@ -19406,7 +19407,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 
 func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create or update a simple gallery Application Version."},
 	})
 	defer func() {
@@ -19493,7 +19494,7 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 
 func TestGalleryApplicationVersions_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update a simple gallery Application Version."},
 	})
 	defer func() {
@@ -19579,7 +19580,7 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 
 func TestGalleryApplicationVersions_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version with replication status."},
 	})
 	defer func() {
@@ -19645,7 +19646,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery Application Version."},
 	})
 	client = test.NewGalleryApplicationVersionsClient("{subscription-id}", cred, &options)
@@ -19700,7 +19701,7 @@ func TestGalleryApplicationVersions_Get(t *testing.T) {
 
 func TestGalleryApplicationVersions_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete a gallery Application Version."},
 	})
 	defer func() {
@@ -19726,7 +19727,7 @@ func TestGalleryApplicationVersions_Delete(t *testing.T) {
 
 func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListGalleryApplicationVersionsInAGalleryApplication.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List gallery Application Versions in a gallery Application Definition."},
 	})
 	defer func() {
@@ -19793,7 +19794,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 
 func TestGallerySharingProfile_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Add sharing id to the sharing profile of a gallery."},
 	})
 	defer func() {
@@ -19853,7 +19854,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"reset sharing profile of a gallery."},
 	})
 	client = test.NewGallerySharingProfileClient("{subscription-id}", cred, &options)
@@ -19886,7 +19887,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 
 func TestSharedGalleries_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleries.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -19928,7 +19929,7 @@ func TestSharedGalleries_List(t *testing.T) {
 
 func TestSharedGalleries_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGallery.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -19963,7 +19964,7 @@ func TestSharedGalleries_Get(t *testing.T) {
 
 func TestSharedGalleryImages_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImages.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -20016,7 +20017,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 
 func TestSharedGalleryImages_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImage.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -20062,7 +20063,7 @@ func TestSharedGalleryImages_Get(t *testing.T) {
 
 func TestSharedGalleryImageVersions_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ListSharedGalleryImageVersions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -20110,7 +20111,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 
 func TestSharedGalleryImageVersions_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetASharedGalleryImageVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get a gallery."},
 	})
 	defer func() {
@@ -20151,7 +20152,7 @@ func TestSharedGalleryImageVersions_Get(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20176,7 +20177,7 @@ func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20223,7 +20224,7 @@ func TestCloudServiceRoleInstances_Get(t *testing.T) {
 
 func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetInstanceViewOfCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Instance View of Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20264,7 +20265,7 @@ func TestCloudServiceRoleInstances_GetInstanceView(t *testing.T) {
 
 func TestCloudServiceRoleInstances_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Role Instances in a Cloud Service"},
 	})
 	defer func() {
@@ -20372,7 +20373,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20397,7 +20398,7 @@ func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20422,7 +20423,7 @@ func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 
 func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instance"},
 	})
 	defer func() {
@@ -20451,7 +20452,7 @@ func TestCloudServiceRoleInstances_GetRemoteDesktopFile(t *testing.T) {
 
 func TestCloudServiceRoles_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceRole.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Role"},
 	})
 	defer func() {
@@ -20494,7 +20495,7 @@ func TestCloudServiceRoles_Get(t *testing.T) {
 
 func TestCloudServiceRoles_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRoles.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Roles in a Cloud Service"},
 	})
 	defer func() {
@@ -20558,7 +20559,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 
 func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Multiple Roles"},
 	})
 	defer func() {
@@ -20684,7 +20685,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role"},
 	})
 	client = test.NewCloudServicesClient("{subscription-id}", cred, &options)
@@ -20789,7 +20790,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and Certificate from Key Vault"},
 	})
 	client = test.NewCloudServicesClient("{subscription-id}", cred, &options)
@@ -20915,7 +20916,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 	}
 
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Create New Cloud Service with Single Role and RDP Extension"},
 	})
 	client = test.NewCloudServicesClient("{subscription-id}", cred, &options)
@@ -21052,7 +21053,7 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 
 func TestCloudServices_Update(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update existing Cloud Service to add tags"},
 	})
 	defer func() {
@@ -21143,7 +21144,7 @@ func TestCloudServices_Update(t *testing.T) {
 
 func TestCloudServices_Delete(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service"},
 	})
 	defer func() {
@@ -21167,7 +21168,7 @@ func TestCloudServices_Delete(t *testing.T) {
 
 func TestCloudServices_Get(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceWithMultiRoleAndRDP.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service with Multiple Roles and RDP Extension"},
 	})
 	defer func() {
@@ -21262,7 +21263,7 @@ func TestCloudServices_Get(t *testing.T) {
 
 func TestCloudServices_GetInstanceView(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Instance View with Multiple Roles"},
 	})
 	defer func() {
@@ -21333,7 +21334,7 @@ func TestCloudServices_GetInstanceView(t *testing.T) {
 
 func TestCloudServices_ListAll(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Subscription"},
 	})
 	defer func() {
@@ -21434,7 +21435,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 
 func TestCloudServices_List(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInResourceGroup.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Services in a Resource Group"},
 	})
 	defer func() {
@@ -21536,7 +21537,7 @@ func TestCloudServices_List(t *testing.T) {
 
 func TestCloudServices_Start(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Start Cloud Service"},
 	})
 	defer func() {
@@ -21560,7 +21561,7 @@ func TestCloudServices_Start(t *testing.T) {
 
 func TestCloudServices_PowerOff(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Stop or PowerOff Cloud Service"},
 	})
 	defer func() {
@@ -21584,7 +21585,7 @@ func TestCloudServices_PowerOff(t *testing.T) {
 
 func TestCloudServices_Restart(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Restart Cloud Service Role Instances"},
 	})
 	defer func() {
@@ -21613,7 +21614,7 @@ func TestCloudServices_Restart(t *testing.T) {
 
 func TestCloudServices_Reimage(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Reimage Cloud Service Role Instances"},
 	})
 	defer func() {
@@ -21642,7 +21643,7 @@ func TestCloudServices_Reimage(t *testing.T) {
 
 func TestCloudServices_Rebuild(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Rebuild Cloud Service Role Instances"},
 	})
 	defer func() {
@@ -21671,7 +21672,7 @@ func TestCloudServices_Rebuild(t *testing.T) {
 
 func TestCloudServices_DeleteInstances(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Delete Cloud Service Role Instances"},
 	})
 	defer func() {
@@ -21700,7 +21701,7 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 
 func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Update Cloud Service to specified Domain"},
 	})
 	defer func() {
@@ -21725,7 +21726,7 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 
 func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service Update Domain"},
 	})
 	defer func() {
@@ -21758,7 +21759,7 @@ func TestCloudServicesUpdateDomain_GetUpdateDomain(t *testing.T) {
 
 func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Update Domains in Cloud Service"},
 	})
 	defer func() {
@@ -21802,7 +21803,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 
 func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSVersion.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Version"},
 	})
 	defer func() {
@@ -21844,7 +21845,7 @@ func TestCloudServiceOperatingSystems_GetOSVersion(t *testing.T) {
 
 func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Versions in a subscription"},
 	})
 	defer func() {
@@ -21907,7 +21908,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 
 func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceOSFamily.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"Get Cloud Service OS Family"},
 	})
 	defer func() {
@@ -21952,7 +21953,7 @@ func TestCloudServiceOperatingSystems_GetOSFamily(t *testing.T) {
 
 func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 	// From example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
-	ctx = policy.WithHTTPHeader(ctx, map[string][]string{
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
 		"example-id": {"List Cloud Service OS Families in a subscription"},
 	})
 	defer func() {

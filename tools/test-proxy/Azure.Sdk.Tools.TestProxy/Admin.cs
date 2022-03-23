@@ -2,11 +2,10 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,30 +17,38 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Admin : ControllerBase
     {
         private readonly RecordingHandler _recordingHandler;
+        private readonly ILogger _logger;
 
-        public Admin(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
+        public Admin(RecordingHandler recordingHandler, ILoggerFactory loggingFactory)
+        {
+            _recordingHandler = recordingHandler;
+            _logger = loggingFactory.CreateLogger<Admin>();
+        }
 
         [HttpPost]
-        public void Reset()
+        public async Task Reset()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]
-        public void IsAlive()
+        public async Task IsAlive()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             Response.StatusCode = 200;
         }
 
         [HttpPost]
         public async Task AddTransform()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            ResponseTransform t = (ResponseTransform)GetTransform(tName, await GetBody(Request));
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -56,10 +63,11 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task AddSanitizer()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await GetBody(Request));
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -74,10 +82,11 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task SetMatcher()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await GetBody(Request));
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
@@ -119,35 +128,54 @@ namespace Azure.Sdk.Tools.TestProxy
             var ctor = t.GetConstructors()[0];
             var paramsSet = ctor.GetParameters();
 
-                // walk across our constructor params. check inside the body for a resulting value for each of them
-                foreach (var param in paramsSet)
+            // walk across our constructor params. check inside the body for a resulting value for each of them
+            foreach (var param in paramsSet)
+            {
+                if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                 {
-                    if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
+                    if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
-                        object valueResult = null;
-                        switch (jsonElement.ValueKind)
-                        {
-                            case JsonValueKind.Null:
-                            case JsonValueKind.String:
-                                valueResult = jsonElement.GetString();
-                                break;
-                            case JsonValueKind.True:
-                            case JsonValueKind.False:
-                                valueResult = jsonElement.GetBoolean();
-                                break;
-                            default:
-                                throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
-                        }
+                        _logger.LogDebug("Request Body Content" + JsonSerializer.Serialize(documentBody.RootElement));
+                    }
 
-                        if(valueResult == null || (valueResult is string stringResult && string.IsNullOrEmpty(stringResult)))
-                        {
-                            if (!acceptableEmptyArgs.Contains(param.Name))
+                    object argumentValue = null;
+                    switch (jsonElement.ValueKind)
+                    {
+                        case JsonValueKind.Null:
+                        case JsonValueKind.String:
+                            argumentValue = jsonElement.GetString();
+                            break;
+                        case JsonValueKind.True:
+                        case JsonValueKind.False:
+                            argumentValue = jsonElement.GetBoolean();
+                            break;
+                        case JsonValueKind.Object:
+                            try
                             {
-                                throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                                argumentValue = Activator.CreateInstance(param.ParameterType, new List<object> { jsonElement }.ToArray());
                             }
+                            catch (Exception e)
+                            {
+                                if (e.InnerException is HttpException)
+                                {
+                                    throw e.InnerException;
+                                }
+                                else throw;
+                            }
+                            break;
+                        default:
+                            throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
+                    }
+
+                    if(argumentValue == null || (argumentValue is string stringResult && string.IsNullOrEmpty(stringResult)))
+                    {
+                        if (!acceptableEmptyArgs.Contains(param.Name))
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
                         }
+                    }
                         
-                    arg_list.Add((object)valueResult);
+                    arg_list.Add((object)argumentValue);
                 }
                 else
                 {
@@ -162,20 +190,20 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            return Activator.CreateInstance(t, arg_list.ToArray());
-        }
-
-
-        private async static Task<JsonDocument> GetBody(HttpRequest req)
-        {
-            if (req.ContentLength > 0)
+            try
             {
-                var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
-
-                return result;
+                return Activator.CreateInstance(t, arg_list.ToArray());
             }
-
-            return null;
+            catch(Exception e)
+            {
+                if (e.InnerException is HttpException)
+                {
+                    throw e.InnerException;
+                }
+                else throw;
+            }
         }
+
+
     }
 }

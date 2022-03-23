@@ -2,9 +2,16 @@ import * as _ from 'lodash'
 import * as fs from 'fs'
 import * as path from 'path'
 import { AjvSchemaValidator } from 'oav/dist/lib/swaggerValidator/ajvSchemaValidator'
+import {
+    AzureExtensions,
+    Headers,
+    LRO_CALLBACK,
+    ParameterType,
+    SWAGGER_ENCODING,
+    useREF
+} from '../common/constants'
 import { Config } from '../common/config'
 import { ExampleNotFound, ExampleNotMatch } from '../common/errors'
-import { Headers, ParameterType, SWAGGER_ENCODING, useREF } from '../common/constants'
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { MockerCache, PayloadCache } from 'oav/dist/lib/generator/exampleCache'
@@ -14,7 +21,7 @@ import { applyGlobalTransformers, applySpecTransformers } from 'oav/dist/lib/tra
 import { discriminatorTransformer } from 'oav/dist/lib/transform/discriminatorTransformer'
 import { injectable } from 'inversify'
 import { inversifyGetInstance } from 'oav/dist/lib/inversifyUtils'
-import { isNullOrUndefined } from '../common/utils'
+import { isNullOrUndefined, removeNullValueKey } from '../common/utils'
 import { resolveNestedDefinitionTransformer } from 'oav/dist/lib/transform/resolveNestedDefinitionTransformer'
 import SwaggerMocker from './oav/swaggerMocker'
 
@@ -36,6 +43,7 @@ export class ResponseGenerator {
     private payloadCache: PayloadCache
     private swaggerMocker: SwaggerMocker
     public readonly transformContext: TransformContext
+    private lroExamplesMap: Map<string, any> = new Map<string, any>()
 
     constructor() {
         this.jsonLoader = inversifyGetInstance(JsonLoader, {})
@@ -49,10 +57,10 @@ export class ResponseGenerator {
         ])
     }
 
-    private getSpecItem(spec: any, operationId: string): SpecItem | undefined {
+    public static getSpecItem(spec: any, operationId: string): SpecItem | undefined {
         let paths = spec.paths || {}
-        if (spec['x-ms-paths']) {
-            paths = { ...paths, ...spec['x-ms-paths'] }
+        if (spec[AzureExtensions.XMsPaths]) {
+            paths = { ...paths, ...spec[AzureExtensions.XMsPaths] }
         }
         for (const pathName of Object.keys(paths)) {
             for (const methodName of Object.keys(paths[pathName])) {
@@ -91,29 +99,47 @@ export class ResponseGenerator {
         parameterTypes: Record<string, ParameterType>
     } {
         const parameters: Record<string, any> = {}
-        const specPathItems: string[] = specItem.path.split('/')
-        const url = liveRequest.url.split('?')[0]
-        const requestPathItems: string[] = url
-            .substr(url.indexOf(':/') + 2)
-            .split('/')
-            .slice(1)
+        // replace all the param placeholder in path with regex group annotation
+        const specPathRegex = new RegExp(
+            specItem.path
+                .split('/')
+                .map((v: string) => {
+                    if (v.startsWith('{') && v.endsWith('}')) {
+                        return `(?<${v.slice(1, -1)}>.*)`
+                    } else {
+                        return v
+                    }
+                })
+                .join('\\/')
+        )
+        // remove request url query string, http:// and host:port
+        let url = liveRequest.url.split('?')[0]
+        url =
+            '/' +
+            url
+                .substr(url.indexOf(':/') + 3)
+                .split('/')
+                .slice(1)
+                .join('/')
+        // exec regex to pair all the path param with value
+        const urlMappingResult = specPathRegex.exec(url)
         const types: Record<string, ParameterType> = {}
         for (let paramSpec of specItem?.content?.parameters || []) {
             if (Object.prototype.hasOwnProperty.call(paramSpec, useREF)) {
                 paramSpec = this.jsonLoader.resolveRefObj(paramSpec)
             }
             if (paramSpec.in === ParameterType.Path.toString()) {
-                for (let i = 0; i < specPathItems.length; i++) {
-                    const item = specPathItems[i]
-                    if (
-                        item.startsWith('{') &&
-                        item.endsWith('}') &&
-                        item.slice(1, -1) === paramSpec.name
-                    ) {
-                        parameters[paramSpec.name] = decodeURI(requestPathItems[i])
-                    }
+                // use regex group to get path param value
+                if (
+                    urlMappingResult !== null &&
+                    urlMappingResult.groups &&
+                    urlMappingResult.groups[paramSpec.name]
+                ) {
+                    parameters[paramSpec.name] = decodeURIComponent(
+                        urlMappingResult.groups[paramSpec.name]
+                    )
+                    types[paramSpec.name] = ParameterType.Path
                 }
-                types[paramSpec.name] = ParameterType.Path
             } else if (paramSpec.in === ParameterType.Body.toString()) {
                 parameters[paramSpec.name] = liveRequest.body
                 types[paramSpec.name] = ParameterType.Body
@@ -148,7 +174,14 @@ export class ResponseGenerator {
         const exampleParameters = example.parameters
 
         for (const [k, v] of Object.entries(requestParameters)) {
-            if (exampleParameters[k] && !_.isEqual(exampleParameters[k], v)) {
+            if (
+                exampleParameters[k] &&
+                !_.isEqualWith(
+                    removeNullValueKey(exampleParameters[k]),
+                    removeNullValueKey(v),
+                    this.customizerIsEqual
+                )
+            ) {
                 throw new ExampleNotMatch(
                     `${receivedExampleParameters.parameterTypes[k]} parameter ${k}=${JSON.stringify(
                         v
@@ -158,13 +191,31 @@ export class ResponseGenerator {
         }
     }
 
-    public async generate(operation: Operation, config: Config, liveRequest: LiveRequest) {
+    private customizerIsEqual(objValue: any, othValue: any): boolean | undefined {
+        // rfc3339 timestamp comparison
+        const rfc3339Regex = /^((?:(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?))(Z|[+-]\d{2}:\d{2})?)$/g
+        if (
+            _.isString(objValue) &&
+            objValue.match(rfc3339Regex) &&
+            _.isString(othValue) &&
+            othValue.match(rfc3339Regex)
+        ) {
+            return Date.parse(objValue) === Date.parse(othValue)
+        }
+    }
+
+    public async generate(
+        operation: Operation,
+        config: Config,
+        liveRequest: LiveRequest,
+        lroCallback: string | null
+    ) {
         const specFile = this.getSpecFileByOperation(operation, config)
         const spec = (await (this.jsonLoader.load(specFile) as unknown)) as SwaggerSpec
         applySpecTransformers(spec, this.transformContext)
         applyGlobalTransformers(this.transformContext)
 
-        const specItem = this.getSpecItem(spec, operation.operationId as string)
+        const specItem = ResponseGenerator.getSpecItem(spec, operation.operationId as string)
         if (!specItem) {
             throw Error(`operation ${operation.operationId} can't be found in ${specFile}`)
         }
@@ -176,7 +227,7 @@ export class ResponseGenerator {
 
         const exampleId = liveRequest.headers?.[Headers.ExampleId]
         if (exampleId) {
-            example = this.loadExample(specFile, specItem, exampleId)
+            example = this.loadExample(specFile, specItem, exampleId, liveRequest, lroCallback)
             this.validateRequestByExample(example, liveRequest, specItem)
         } else {
             this.swaggerMocker.mockForExample(example, specItem, spec, 'unknown', liveRequest)
@@ -205,12 +256,43 @@ export class ResponseGenerator {
     }
 
     // The implementation of this function don't use jsonLoader since it removes all 'description' fields in example
-    private loadExample(specFile: string, specItem: SpecItem, exampleId: string): SwaggerExample {
+    private loadExample(
+        specFile: string,
+        specItem: SpecItem,
+        exampleId: string,
+        liveRequest: LiveRequest,
+        lroCallback: string | null
+    ): SwaggerExample {
         const rawSpec = JSON.parse(fs.readFileSync(specFile, SWAGGER_ENCODING))
+        let allExamples
+        if (rawSpec.paths[specItem.path]) {
+            allExamples = _.mapKeys(
+                rawSpec.paths[specItem.path][specItem.methodName][AzureExtensions.XMsExamples],
+                (_, k) => k.trim()
+            )
+        } else {
+            allExamples = _.mapKeys(
+                rawSpec['x-ms-paths'][specItem.path][specItem.methodName][
+                    AzureExtensions.XMsExamples
+                ],
+                (_, k) => k.trim()
+            )
+        }
+        if (this.lroExamplesMap.has(liveRequest.url)) {
+            allExamples = { ...this.lroExamplesMap.get(liveRequest.url), ...allExamples }
+        } else {
+            const urlWithCallback = `${liveRequest.url}&${LRO_CALLBACK}=true`
+            if (this.lroExamplesMap.has(urlWithCallback)) {
+                allExamples = { ...this.lroExamplesMap.get(urlWithCallback), ...allExamples }
+            }
+        }
 
-        const allExamples = rawSpec.paths[specItem.path][specItem.methodName]['x-ms-examples']
         if (!allExamples || !Object.prototype.hasOwnProperty.call(allExamples, exampleId)) {
             throw new ExampleNotFound(exampleId)
+        }
+
+        if (lroCallback) {
+            this.lroExamplesMap.set(lroCallback, allExamples)
         }
 
         const examplePath = allExamples[exampleId][useREF]

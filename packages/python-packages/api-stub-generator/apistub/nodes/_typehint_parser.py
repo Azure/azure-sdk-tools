@@ -3,7 +3,7 @@ import inspect
 import logging
 
 
-find_type_hint_ret_type = "(?<!#)\\s?->\\s?([^\n:]*)"
+find_type_hint_ret_type = "(?<!#)\\s?->\\s?([^\n:#]*)"
 
 class TypeHintParser:
     """TypeHintParser helps to find return type from type hint is type hint is available
@@ -24,6 +24,6 @@ class TypeHintParser:
         ret_type = re.search(find_type_hint_ret_type, source)
         # Don't return None as string literal
         if ret_type and ret_type != "None":
-            return ret_type.groups()[-1]
+            return ret_type.groups()[-1].strip().replace('"', "")
         else:
             return None

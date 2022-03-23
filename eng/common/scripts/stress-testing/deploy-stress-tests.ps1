@@ -1,3 +1,7 @@
+# Set a default parameter set here so we can call this script without requiring -Login and -Subscription,
+# but if it IS called with either of those, then both parameters need to be required. Not defining a
+# default parameter set makes Login/Subscription required all the time.
+[CmdletBinding(DefaultParameterSetName = 'Default')]
 param(
     [string]$SearchDirectory,
     [hashtable]$Filters,
@@ -14,7 +18,10 @@ param(
     [string]$Subscription,
 
     # Default to true in Azure Pipelines environments
-    [switch] $CI = ($null -ne $env:SYSTEM_TEAMPROJECTID)
+    [switch] $CI = ($null -ne $env:SYSTEM_TEAMPROJECTID),
+
+    # Optional namespace override, otherwise the shell user or chart annotation will be used
+    [string]$Namespace
 )
 
 . $PSScriptRoot/stress-test-deployment-lib.ps1

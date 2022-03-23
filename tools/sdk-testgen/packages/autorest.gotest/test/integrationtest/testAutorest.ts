@@ -23,7 +23,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.6.2 --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --use=' +
+        ' --version=3.7.3 --testmodeler.generate-mock-test --testmodeler.generate-sdk-example --testmodeler.generate-scenario-test --testmodeler.generate-sdk-sample --use=' +
         path.join(`${__dirname}`, '..', '..', '..', 'autorest.testmodeler') +
         ' --use=' +
         path.join(`${__dirname}`, '..', '..') +
@@ -45,12 +45,8 @@ async function runAutorest(readmePath: string, extraOption: string[]) {
         });
     });
 }
-function getExtraOption(outputFolder: string, lang: string) {
-    let ret = [`--output-folder=${outputFolder}`];
-    if (lang === 'golang') {
-        ret = ret.concat(['--use=@autorest/go@4.0.0-preview.31', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0']);
-    }
-    return ret;
+function getExtraOption(outputFolder: string) {
+    return [`--output-folder=${outputFolder}`, '--use=@autorest/go@4.0.0-preview.36', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0'];
 }
 
 async function runSingleTest(swaggerDir: string, rp: string, extraOption: string[], outputFolder: string, tempOutputFolder: string): Promise<boolean> {
@@ -97,25 +93,23 @@ describe('Run autorest and compare the output', () => {
 
     it('', async () => {
         jest.setTimeout(8 * 60 * 60 * 1000);
-        const swaggerDir = path.join(`${__dirname}`, '../swagger');
+        const swaggerDir = path.join(`${__dirname}`, '../../../../swagger');
         const outputDir = path.join(`${__dirname}`, 'output');
         const tempoutputDir = path.join(`${__dirname}`, 'tempoutput');
 
         let finalResult = true;
         const allTests: Array<Promise<boolean>> = [];
-        for (const rp of ['compute']) {
-            for (const lang of ['golang']) {
-                console.log('Start Processing: ' + rp);
+        for (const rp of ['appplatform', 'compute', 'signalr']) {
+            console.log('Start Processing: ' + rp);
 
-                // Remove tmpoutput
-                const outputFolder = path.join(outputDir, rp, lang);
-                const tempOutputFolder = path.join(tempoutputDir, rp, lang);
-                Helper.deleteFolderRecursive(tempOutputFolder);
-                fs.mkdirSync(tempOutputFolder, { recursive: true });
+            // Remove tmpoutput
+            const outputFolder = path.join(outputDir, rp, 'test');
+            const tempOutputFolder = path.join(tempoutputDir, rp, 'test');
+            Helper.deleteFolderRecursive(tempOutputFolder);
+            fs.mkdirSync(tempOutputFolder, { recursive: true });
 
-                const test = runSingleTest(swaggerDir, rp, getExtraOption(tempOutputFolder, lang), outputFolder, tempOutputFolder);
-                allTests.push(test);
-            }
+            const test = runSingleTest(swaggerDir, rp, getExtraOption(tempOutputFolder), outputFolder, tempOutputFolder);
+            allTests.push(test);
         }
         if ((process.env['PARALELL_TEST'] || 'false').toLowerCase() === 'true') {
             finalResult = (await Promise.all(allTests)).every((x) => x);

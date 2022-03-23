@@ -3,6 +3,9 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using Azure.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -50,6 +53,29 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static byte[] GenerateByteRequestBody(string s)
         {
             return Encoding.UTF8.GetBytes(s);
+        }
+
+        public static HttpRequest CreateRequestFromEntry(RecordEntry entry)
+        {
+            var context = new DefaultHttpContext();
+            if(entry.Request.Body != null)
+            {
+                context.Request.Body = new BinaryData(entry.Request.Body).ToStream();
+            }
+            context.Request.Method = entry.RequestMethod.ToString();
+            foreach (var header in entry.Request.Headers)
+            {
+                context.Request.Headers[header.Key] = header.Value;
+            }
+
+            context.Request.Headers["x-recording-upstream-base-uri"] = entry.RequestUri;
+
+            var uri = new Uri(entry.RequestUri);
+            context.Request.Host = new HostString(uri.Authority);
+            context.Request.QueryString = new QueryString(uri.Query);
+            context.Request.Path = uri.AbsolutePath;
+            context.Features.Get<IHttpRequestFeature>().RawTarget = context.Request.Path + context.Request.QueryString;
+            return context.Request;
         }
     }
 }

@@ -69,7 +69,7 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
-The test-proxy resolves the its storage location via:
+The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
@@ -83,6 +83,23 @@ By default, the server will listen on the following port mappings:
 |-|-|
 | http | 5000 |
 | https | 5001 |
+
+#### Environment Variable
+
+Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:
+
+```powershell
+$env:ASPNETCORE_URLS="http://*:3331"  // Set custom port for http only
+$env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both http and https
+```
+
+#### Input arguments
+
+Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+
+```powershell
+test-proxy --urls "http://localhost:9000;https://localhost:9001"
+```
 
 ## Environment Variables
 
@@ -106,7 +123,7 @@ A couple notes before running the test-proxy:
 
 ### Where will my recordings end up?
 
-In the next step, you will be asked to provide a header to `/record/start/` under key `x-recording-file`. The value provided will be consumed by the test-proxy and **used to write your recording to disk**.
+In the next step, you will be asked to provide a JSON body within your POST to `/record/start/`. This body should be a JSON object with a top-level key `x-recording-file` present. The value of this key will be consumed by the test-proxy and **used to write your recording to disk**.
 
 For example, let's invoke the test-proxy:
 
@@ -114,7 +131,7 @@ For example, let's invoke the test-proxy:
 test-proxy --storage-location "C:/repo/sdk-for-net/"
 ```
 
-When we **start** a test run (method outlined in next section), we have to provide a file location via header `x-recording-file`.
+When we **start** a test run (method outlined in next section), we have to provide a file location within JSON body key `x-recording-file`.
 
 When your recording is finalized, it will be stored following the below logic.
 
@@ -125,7 +142,7 @@ recording = sdk/tools/test-proxy/tests/testFile.testFunction.cs
 final_output_location = C:/repo/sdk-for-net/sdk/tools/test-proxy/tests/testFile.testFunction.cs.json
 ```
 
-During a `playback` start, the **same** value for header `x-recording-file` should be provided. This allows the test-proxy to load a previous recording into memory.
+During a `playback` start, the **same** value for `x-recording-file` should be provided within the POST body. This allows the test-proxy to load a previous recording into memory.
 
 Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file. If the parent folders do not exist, they will be created at run-time during the write operation.
 
@@ -135,7 +152,7 @@ Before each individual test runs, a `recordingId` must be retrieved from the tes
 
 ```json
 URL: https://localhost:5001/record/start
-headers {
+BODY {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -196,6 +213,10 @@ Given that reccordings are _not traditionally accessible_ to the client code, th
 
 An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
 
+#### Customizing what gets recorded
+
+Some tests send large request bodies that are not meaningful and should not be stored in the session records. In order to disable storing the request body for a specific request, add the request header "x-recording-skip" and set the value to "request-body". This header can also be used to skip an entire request/response pair from being included in the recording - this is useful for cleanup code that you might have as part of your test. To skip the request/response pair, set the "x-recording-skip" header value to "request-response". Note that the "x-recording-skip" should only be specified when in `Record` mode. As a result, any request that would use the "request-response" value when in `Record` mode should not be sent when in `Playback` mode. For requests that use "request-body" in `Record` mode, you should either null out the body of the request before sending to the test proxy when in `Playback` mode, or you can set a `CustomDefaultMatcher` with `compareBodies = false`.
+
 ## How do I use the test-proxy to play a recording back?
 
 ### Start playback
@@ -206,7 +227,7 @@ POST to the proxy server:
 
 ```json
 URL: https://localhost:5001/playback/start
-headers {
+BODY: {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -238,9 +259,9 @@ headers {
 
 ### An important note about perf testing
 
-If a user does **not** provide a `fileId` via header `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
+If a user does **not** provide a `fileId` via body key `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
 
-Start the recording **without a `x-recording-file` header**.
+Start the recording **without a `x-recording-file` body value**.
 
 ```json
 URL: https://localhost:5001/record/start
@@ -401,3 +422,26 @@ To connect to the docker on SSL, both the docker image and your local machine mu
 In the future, passing in a custom cert via a bound volume that contains your certificate will be a possibility as well.
 
 For additional reading on this process for trusting SSL certs locally, feel free to read up [here.](https://devblogs.microsoft.com/aspnet/configuring-https-in-asp-net-core-across-different-platforms/) The afore-mentioned [docker specific readme](../docker/README.md) also has details that are relevant.
+
+## Troubleshooting
+
+### Visual studio
+
+If you get the message dialog `The project doesn't know how to run the profile Azure.Sdk.Tools.TestProxy`, you can fix it by reviewing the next two things:
+
+#### ASP.NET and web development
+
+Run Visual Studio installer and make sure ASP.NET and web development is installed.
+
+![image](https://user-images.githubusercontent.com/24213737/152257876-be1ed946-20bc-47ff-83da-f9ae05db290a.png)
+
+Then, confirm in the right panel that `Development time IIS support` is not checked:
+
+![image](https://user-images.githubusercontent.com/24213737/152257948-c61e6876-eb36-4414-b8de-8c85aa0532bb.png)
+
+#### Windows IIS
+
+[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
+
+![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+

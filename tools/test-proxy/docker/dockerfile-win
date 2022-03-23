@@ -1,12 +1,12 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0.401-nanoserver-1809 AS build_env
+FROM mcr.microsoft.com/dotnet/sdk:6.0.101-nanoserver-1809 AS build_env
 
 # copy the code
 COPY docker_build/Azure.Sdk.Tools.TestProxy/ /proxyservercode
 
 # publish the package
-RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net5.0
+RUN cd /proxyservercode && dotnet publish -c Release -o /proxyserver -f net6.0
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0.10-nanoserver-1809 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.1-nanoserver-1809 AS build
 
 ENV ProgramFiles="C:\Program Files" \
     # set a fixed location for the Module analysis cache
@@ -39,7 +39,7 @@ ADD docker_build/dotnet-devcert.pfx certwork
 
 # we still need to import this certificate to ensure it's available to all users. there is _something_ gnarly going on that purely having the cert 
 # available through the environment variables is causing some inconsistent weirdness.    
-COPY --from=build_env ["C:/Program Files/dotnet/sdk/5.0.401/DotnetTools/dotnet-dev-certs/5.0.10-servicing.21410.22/tools/net5.0/any/", "C:/dotnet-dev-certs/"]
+COPY --from=build_env ["C:/Program Files/dotnet/sdk/6.0.101/DotnetTools/dotnet-dev-certs/6.0.1-servicing.21567.14/tools/net6.0/any/", "C:/dotnet-dev-certs/"]
 
 RUN dotnet /dotnet-dev-certs/dotnet-dev-certs.dll https --clean --import /certwork/dotnet-devcert.pfx -p "password"
 

@@ -4,6 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from cmath import exp
 from apistub.nodes import TypeHintParser
 
 
@@ -25,4 +26,12 @@ class TestTypeHintParser:
         return val
         """
         expected = "str"
+        assert parser._parse_typehint(code) == expected
+
+    def test_typehint_with_pylint_disable(self):
+        parser = TypeHintParser([])
+        code = """
+        # type: (...) -> AnalyzeHealthcareEntitiesLROPoller[ItemPaged[Union[AnalyzeHealthcareEntitiesResult, DocumentError]]]  # pylint: disable=line-too-long
+        """
+        expected = "AnalyzeHealthcareEntitiesLROPoller[ItemPaged[Union[AnalyzeHealthcareEntitiesResult, DocumentError]]]"
         assert parser._parse_typehint(code) == expected

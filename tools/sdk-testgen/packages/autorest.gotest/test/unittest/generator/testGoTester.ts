@@ -2,13 +2,15 @@ import * as path from 'path';
 import * as process from 'process';
 import { BaseCodeGenerator } from '../../../src/generator/baseGenerator';
 import { ExampleCodeGenerator, ExampleDataRender } from '../../../src/generator/exampleGenerator';
-import { ExtensionName, TestCodeModel, TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
+import { ExtensionName, TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
 import { GenerateContext } from '../../../src/generator/generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generator/mockTestGenerator';
 import { MockTool } from '../../tools';
+import { SampleCodeGenerator, SampleDataRender } from '../../../src/generator/sampleGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
+import { configDefaults } from '../../../src/common/constant';
 import { processRequest } from '../../../src/generator/goTester';
 
 describe('processRequest of go-tester', () => {
@@ -18,6 +20,9 @@ describe('processRequest of go-tester', () => {
     let spyMockTestGenerateCode;
     let spyScenarioTestRenderData;
     let spyScenarioTestGenerateCode;
+    let spySampleRenderData;
+    let spySampleGenerateCode;
+
     beforeEach(() => {
         Helper.outputToModelerfour = jest.fn().mockResolvedValue(undefined);
         Helper.dump = jest.fn().mockResolvedValue(undefined);
@@ -28,6 +33,8 @@ describe('processRequest of go-tester', () => {
         spyMockTestGenerateCode = jest.spyOn(MockTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
         spyScenarioTestRenderData = jest.spyOn(ScenarioTestDataRender.prototype, 'renderData').mockReturnValue(undefined);
         spyScenarioTestGenerateCode = jest.spyOn(ScenarioTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
+        spySampleRenderData = jest.spyOn(SampleDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spySampleGenerateCode = jest.spyOn(SampleCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -157,18 +164,49 @@ describe('processRequest of go-tester', () => {
         expect(spyScenarioTestRenderData).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestGenerateCode).toHaveBeenCalledTimes(1);
     });
+
+    it('generate sdk sample if generate-sdk-sample is true', async () => {
+        TestCodeModeler.getSessionFromHost = jest.fn().mockResolvedValue({
+            getValue: jest.fn().mockImplementation((key: string) => {
+                if (key === '') {
+                    return {
+                        testmodeler: {
+                            'generate-sdk-sample': true,
+                        },
+                    };
+                } else if (key === 'header-text') {
+                    return '';
+                }
+            }),
+        });
+        await processRequest(undefined);
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).toHaveBeenCalledTimes(1);
+        expect(spySampleGenerateCode).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe('GoTestGenerator from RP agrifood', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
         const codeModel = MockTool.createCodeModel();
-        testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-            testmodeler: {
-                'split-parents-value': true,
-            },
-        });
-        testCodeModel.genMockTests();
+        testCodeModel = TestCodeModeler.createInstance(
+            codeModel as any,
+            new TestConfig(
+                {
+                    testmodeler: {
+                        'split-parents-value': true,
+                    },
+                },
+                configDefaults,
+            ),
+        );
+        testCodeModel.genMockTests(undefined);
     });
 
     afterEach(() => {
@@ -181,7 +219,7 @@ describe('GoTestGenerator from RP agrifood', () => {
             outputs[filename] = output;
         });
 
-        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}, configDefaults));
         const mockTestDataRender = new MockTestDataRender(context);
         mockTestDataRender.renderData();
         const mockTestCodeGenerator = new MockTestCodeGenerator(context);
@@ -213,26 +251,37 @@ describe('GoTestGenerator from RP agrifood', () => {
 describe('GoTestGenerator from RP signalR', () => {
     let testCodeModel: TestCodeModeler;
     beforeAll(async () => {
-        const codeModel = MockTool.loadCodeModel('signalR/test-modeler-pre.yaml');
-        const swaggerFolder = path.join(__dirname, '..', '..', 'swagger/specification/signalr/resource-manager/');
-        testCodeModel = TestCodeModeler.createInstance(codeModel as TestCodeModel, {
-            __parents: {
-                'Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
-                    ? `file:///${swaggerFolder}`
-                    : `file://${swaggerFolder}`,
-            },
-            'input-file': ['Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json'],
-            'test-resources': [
+        const codeModel = MockTool.loadCodeModel('signalR/test-modeler.yaml');
+        const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
+        testCodeModel = TestCodeModeler.createInstance(
+            codeModel as any,
+            new TestConfig(
                 {
-                    test: 'Microsoft.SignalRService/preview/2020-07-01-preview/test-scenarios/signalR.yaml',
+                    __parents: {
+                        'Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
+                            ? `file:///${swaggerFolder}`
+                            : `file://${swaggerFolder}`,
+                    },
+                    'input-file': ['Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json'],
+                    'test-resources': [
+                        {
+                            test: 'Microsoft.SignalRService/preview/2021-06-01-preview/scenarios/signalR.yaml',
+                        },
+                    ],
+                    testmodeler: {
+                        'split-parents-value': true,
+                    },
                 },
-            ],
-            testmodeler: {
-                'split-parents-value': true,
-            },
-        });
-        testCodeModel.genMockTests();
-        await testCodeModel.loadTestResources();
+                configDefaults,
+            ),
+        );
+        if (!process.platform.toLowerCase().startsWith('win')) {
+            for (const scenarios of testCodeModel.codeModel.testModel.scenarioTests || []) {
+                if (scenarios._filePath) {
+                    scenarios._filePath = scenarios._filePath.split('\\').join('/');
+                }
+            }
+        }
     });
 
     afterEach(() => {
@@ -245,7 +294,7 @@ describe('GoTestGenerator from RP signalR', () => {
             outputs[filename] = output;
         });
 
-        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}));
+        const context = new GenerateContext(undefined, testCodeModel.codeModel, new TestConfig({}, configDefaults));
         const mockTestDataRender = new MockTestDataRender(context);
         mockTestDataRender.renderData();
         const scenarioTestDataRender = new ScenarioTestDataRender(context);

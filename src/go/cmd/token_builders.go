@@ -156,8 +156,10 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	makeToken(nil, nil, "func", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "(", punctuation, list)
-	makeToken(nil, nil, receiverVar, memberName, list)
-	makeToken(nil, nil, " ", whitespace, list)
+	if receiverVar != "" {
+		makeToken(nil, nil, receiverVar, memberName, list)
+		makeToken(nil, nil, " ", whitespace, list)
+	}
 	if isPointer {
 		makeToken(nil, nil, "*", memberName, list)
 	}

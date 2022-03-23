@@ -1,24 +1,31 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as jp from 'jsonpath';
-import * as lodash from 'lodash';
 import * as path from 'path';
+import { AutorestExtensionHost, Session } from '@autorest/extension-base';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
-import { Host, Session } from '@autorest/extension-base';
 import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
-    public static async outputToModelerfour(host: Host, session: Session<CodeModel>): Promise<void> {
+    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
-            host.WriteFile('code-model-v4.yaml', serialize(session.model, { schema: codeModelSchema }), undefined, 'code-model-v4');
+            host.writeFile({
+                filename: 'code-model-v4.yaml',
+                content: serialize(session.model, { schema: codeModelSchema }),
+                artifactType: 'code-model-v4',
+            });
         }
         if (modelerfourOptions['emit-yaml-tags'] !== true) {
-            host.WriteFile('code-model-v4-no-tags.yaml', serialize(session.model), undefined, 'code-model-v4-no-tags');
+            host.writeFile({
+                filename: 'code-model-v4-no-tags.yaml',
+                content: serialize(session.model),
+                artifactType: 'code-model-v4-no-tags',
+            });
         }
     }
 
@@ -26,9 +33,12 @@ export class Helper {
         this.dumpBuf[(debugOnly ? '__debug/' : '') + fileName] = serialize(session.model);
     }
 
-    public static async dump(host: Host): Promise<void> {
+    public static async dump(host: AutorestExtensionHost): Promise<void> {
         for (const [filename, content] of Object.entries(this.dumpBuf)) {
-            host.WriteFile(filename, content);
+            host.writeFile({
+                filename: filename,
+                content: content,
+            });
         }
         this.dumpBuf = {};
     }
@@ -113,12 +123,7 @@ export class Helper {
                 return choiceValue;
             }
         }
-
-        if (schema.choices?.length > 0) {
-            console.warn(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
-            return schema.choices[0];
-        }
-        throw new Error(`${schema.language.default.name} has no choices!`);
+        throw new Error(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
     }
 
     public static execSync(command: string) {
@@ -180,8 +185,23 @@ export class Helper {
 
     public static queryByPath(obj: any, path: string[]): any[] {
         const jsonPath = '$' + path.map((x) => `['${x}']`).join('');
-
         return jp.query(obj, jsonPath);
+    }
+
+    public static queryBodyParameter(obj: any, path: string[]): any[] {
+        let i = 0;
+        let cur = obj;
+        while (path.length > i) {
+            const realKey =
+                i === 0 ? Object.keys(cur).find((key) => key.replace(/[^A-Za-z$0-9]/g, '').toLowerCase() === path[i].replace(/[^A-Za-z$0-9]/g, '').toLowerCase()) : path[i];
+            if (realKey) {
+                cur = cur[realKey];
+            } else {
+                return [];
+            }
+            i++;
+        }
+        return [cur];
     }
 
     public static getExampleRelativePath(src: string): string {
@@ -219,19 +239,5 @@ export class Helper {
                 .filter((x) => x.length >= prefix.length && x.slice(0, prefix.length).join(',') === prefix.join(','))
                 .map((x) => x.slice(prefix.length)),
         );
-    }
-
-    public static uncapitalizeObjectKeys(obj) {
-        if (typeof obj !== 'object' || Array.isArray(obj)) {
-            return obj;
-        }
-
-        return lodash.transform(obj, (result, val, key) => {
-            if (typeof key === 'string') {
-                result[key.charAt(0).toLowerCase() + key.substring(1)] = val;
-            } else {
-                result[key] = val;
-            }
-        });
     }
 }

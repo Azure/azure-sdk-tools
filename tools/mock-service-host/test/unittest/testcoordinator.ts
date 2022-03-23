@@ -2,7 +2,6 @@ import 'reflect-metadata' // Must be imported exactly once for Inversify
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as assert from 'assert'
-import * as oav from 'oav'
 import * as path from 'path'
 import { Coordinator } from '../../src/mid/coordinator'
 import {
@@ -156,21 +155,41 @@ describe('generateResponse()', () => {
     })
 
     it('findLROGet', async () => {
-        jest.spyOn(coordinator, 'validate').mockImplementation(
-            async (liveRequest: oav.LiveRequest) => {
+        jest.spyOn(coordinator.liveValidator, 'parseValidationRequest').mockImplementation(
+            (
+                requestUrl: string,
+                requestMethod: string | undefined | null,
+                correlationId: string
+            ) => {
                 const getUrls = [
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type',
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType',
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2',
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2',
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/start',
-                    'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/Type3'
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type',
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType',
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2',
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2',
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/start',
+                    'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/Type3'
                 ]
-                return {
-                    isSuccessful: getUrls.indexOf(liveRequest.url.split('?')[0]) >= 0,
-                    operationInfo: undefined as any,
-                    errors: []
+                if (getUrls.indexOf(requestUrl.split('?')[0]) < 0) {
+                    throw new Error('No operation')
                 }
+                return {
+                    providerNamespace: '',
+                    resourceType: '',
+                    apiVersion: '',
+                    requestMethod: 'get',
+                    host: '',
+                    pathStr: '',
+                    correlationId: correlationId,
+                    requestUrl: requestUrl
+                }
+            }
+        )
+        jest.spyOn(coordinator.liveValidator.operationSearcher, 'search').mockImplementation(
+            (_) => {
+                return {
+                    operationMatch: 'fake',
+                    apiVersion: 'fake'
+                } as any
             }
         )
 
@@ -180,33 +199,34 @@ describe('generateResponse()', () => {
                 '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/Type3/myType3/start?api-version=20210701',
             method: 'POST',
             headers: {
-                host: 'localhost'
-            }
+                host: 'localhost:8443'
+            },
+            localPort: 8443
         }
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2/stop?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/Type2/myType2?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
             '/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType/new?api-version=20210701'
         assert.strictEqual(
             await coordinator.findLROGet(liveRequest),
-            'https://localhost/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
+            'https://localhost:8443/subscriptions/xxx/resourceGroups/xx/providers/Microsoft.Mock/Type/myType?api-version=20210701&lro-callback=true'
         )
 
         liveRequest.url =
@@ -520,6 +540,13 @@ describe('Example Validation', () => {
         const request = mockRequest(pair.liveRequest)
         await coordinator.generateResponse(request, response, statelessProfile)
         assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
+        expect(response.body?.name).toMatch('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+
+        // verify behaviour when don't set example-id
+        request.headers = {}
+        await coordinator.generateResponse(request, response, statelessProfile)
+        assert.strictEqual(response.statusCode, HttpStatusCode.OK.toString())
+        expect(response.body?.name).toMatch('randomUsers')
     })
 
     it('will fail if send wrong example-id', async () => {

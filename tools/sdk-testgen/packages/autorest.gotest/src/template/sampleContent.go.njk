@@ -1,0 +1,103 @@
+{%- set allVariables = [] %}
+{%- set firstDeployment = true %}
+{%- set firstDeploymentOutput = true %}
+{%- for step in steps %}
+    // From step {{step.step}}
+    {%- if step.type == "restCall" %}
+        {%- set example = step.exampleModel %}
+        {%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.clientName) %}
+        {%- if allVariables.indexOf(clientVariable)<0 %}
+    {{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, nil)
+        {%- set _ = allVariables.push(clientVariable) %}
+        {%- endif %}
+    {%- endif %}
+    {%- for name, value in step.variablesOutput %}
+    {{name}} {%- if allVariables.indexOf(name)<0 %}:{%- set _ = allVariables.push(name) %}{%- endif %}= {{value}}
+    {%- endfor %}
+    {%- if step.type == "restCall" %}		
+        {%- if example.checkResponse %}
+            {%- set resVariable = jsFunc.genVariableName(example.returnInfo[0]) %}
+        {%- endif %}
+        {%- if example.returnInfo.length == 2 %}
+            {%- if example.isLRO %}
+                {%- set pollerVariable = jsFunc.genVariableName(example.pollerType)%}
+                {{pollerVariable}}, err {%- if allVariables.indexOf(pollerVariable)<0 %}:{%- set _ = allVariables.push(pollerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
+            {%- else %}
+                {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err {% if example.checkResponse and allVariables.indexOf(resVariable)<0 %}:{%- set _ = allVariables.push(resVariable) %}{% endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
+            {%- endif %}
+            if err != nil {
+                panic(err)
+            }
+            {%- if example.isLRO %}
+            {%- if example.checkResponse %}
+            {%- if allVariables.indexOf(resVariable)<0 %}
+            var {{resVariable}} {{packageName}}.{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Response
+            {%- endif %}
+            {%- endif %}
+            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = {{pollerVariable}}.PollUntilDone(ctx, 10*time.Second)
+            if err != nil {
+                panic(err)
+            }
+            {%- endif %}
+        {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+            {%- set pagerVariable = jsFunc.genVariableName(example.pageableType) %}
+            {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
+            for {{pagerVariable}}.NextPage(ctx) {
+                err = {{pagerVariable}}.Err()
+                if err != nil {
+                    panic(err)
+                }
+                for _, v := range {{pagerVariable}}.PageResponse().{{example.pageableItemName}} {
+                    _ = v
+                }
+            }
+        {%- else %}
+            {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
+        {%- endif %}
+
+        {%- if example.isLRO and example.isPageable %}
+            for {{resVariable}}.NextPage(ctx) {
+                err = {{resVariable}}.Err()
+                if err != nil {
+                    panic(err)
+                }
+                for _, v := range {{resVariable}}.PageResponse().{{example.pageableItemName}} {
+                    _ = v
+                }
+            }
+        {%- endif %}
+
+        {%- if example.checkResponse and not example.isPageable%}
+            {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
+            {%- endfor %}
+        {%- endif %}
+    {%- elif step.type == "armTemplateDeployment" %}
+    template {%- if firstDeployment %}:{%- endif %}= {{step.armTemplateOutput}}
+    params {%- if firstDeployment %}:{%- endif %}= map[string]interface{}{
+        {%- for k, v in step.armTemplatePayload.parameters %}
+        {%- if v.defaultValue === "$("  + k + ")" %}
+    "{{k}}": map[string]interface{}{ "value": {{k}},},
+        {%- endif %}
+        {%- endfor %}
+    }
+    deployment {%- if firstDeployment %}:{%- set firstDeployment = false %}{%- endif %}= armresources.Deployment{
+		Properties: &armresources.DeploymentProperties{
+			Template:   template,
+			Parameters: params,
+			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+		},
+	}
+    {%- if step.armTemplatePayload.outputs %}
+    deploymentExtend {%- if firstDeploymentOutput %}:{%- set firstDeploymentOutput = false %}{%- endif %}= createDeployment("{{step.step}}", &deployment)
+    {%- for k,v in step.armTemplatePayload.outputs %}
+    {{k}} = deploymentExtend.Properties.Outputs["{{k}}"].(map[string]interface{})["value"].(string)
+    {%- endfor %}
+    {%- else %}
+    _ = createDeployment("{{step.step}}", &deployment)
+    {%- endif %}
+    {%- endif %}
+    {%- if not loop.last %}
+
+    {% endif %}
+    {%- endfor %}

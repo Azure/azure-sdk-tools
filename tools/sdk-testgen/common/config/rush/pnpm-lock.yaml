@@ -1,10 +1,9 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@autorest/codemodel': ~4.17.0
-  '@autorest/extension-base': ~3.3.1
-  '@autorest/go': 4.0.0-preview.31
-  '@azure-tools/codegen': ~2.7.0
+  '@autorest/extension-base': ~3.4.4
+  '@autorest/go': 4.0.0-preview.36
+  '@azure-tools/codegen': ~2.9.0
   '@azure-tools/linq': ~3.1.0
   '@rush-temp/gotest': file:./projects/gotest.tgz
   '@rush-temp/testmodeler': file:./projects/testmodeler.tgz
@@ -27,17 +26,16 @@ specifiers:
   lodash: ~4.17.21
   node-yaml: ^3.2.0
   nunjucks: ^3.2.3
-  oav: ~2.8.3
+  oav: 2.11.3
   prettier: ^2.2.1
   reflect-metadata: ~0.1.13
   ts-jest: ^26.5.5
   typescript: ^4.2.4
 
 dependencies:
-  '@autorest/codemodel': 4.17.1
-  '@autorest/extension-base': 3.3.2
-  '@autorest/go': 4.0.0-preview.31
-  '@azure-tools/codegen': 2.7.0
+  '@autorest/extension-base': 3.4.4
+  '@autorest/go': 4.0.0-preview.36
+  '@azure-tools/codegen': 2.9.0
   '@azure-tools/linq': 3.1.263
   '@rush-temp/gotest': file:projects/gotest.tgz
   '@rush-temp/testmodeler': file:projects/testmodeler.tgz
@@ -60,7 +58,7 @@ dependencies:
   lodash: 4.17.21
   node-yaml: 3.2.0_eslint@7.32.0
   nunjucks: 3.2.3
-  oav: 2.8.3
+  oav: 2.11.3
   prettier: 2.4.1
   reflect-metadata: 0.1.13
   ts-jest: 26.5.6_jest@26.6.3+typescript@4.4.4
@@ -68,31 +66,39 @@ dependencies:
 
 packages:
 
-  /@autorest/codemodel/4.17.1:
-    resolution: {integrity: sha512-KbzO7cUOaLwKGtkaI7HyoV/FyiLoNTJnNSFYkkjrDeuFSEkxXb36Yqu00l/LgxydJr5QdheRgwkTFZ9uuSmZdg==}
+  /@autorest/codemodel/4.17.2:
+    resolution: {integrity: sha512-ZmTpF8OtP6ouUQ7iIJCLbEe9I4/NMGXv/1KXLFgbLjKoN2wC7j8p+FpB4PLFWdT6hqGSzeWrXNsJwAZ4B0Fg3g==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@azure-tools/codegen': 2.8.0
+      '@azure-tools/codegen': 2.9.1
       js-yaml: 4.0.0
     dev: false
 
-  /@autorest/extension-base/3.3.2:
-    resolution: {integrity: sha512-kBTusd0GvjmBhN3NypCm/WxpmIxZL2/qCfI5sIYz7ICl7BW6LCGpM3yO1MBQY/pC3VGUT/ypzeW8+X691uh7fA==}
+  /@autorest/codemodel/4.18.2:
+    resolution: {integrity: sha512-xnGbxU2xvqtyIQYYwsEZsK+w2MmavbUrQdk1/sLPhjT+cQ5R6VUc5PX1ZTmPzBZWc/utiaAurxFC65J5J/uSgA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@azure-tools/codegen': 2.8.0
+      '@azure-tools/codegen': 2.9.1
+      js-yaml: 4.0.0
+    dev: false
+
+  /@autorest/extension-base/3.4.4:
+    resolution: {integrity: sha512-u7+3GGzeYwFcafjt8gmpt0JM56UCdgP3Okhb23i5jhoc+5v7AWPEi00n5YmMb27OcR8wNDkb1jqtDjjeTnUHeQ==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@azure-tools/codegen': 2.9.0
       js-yaml: 4.0.0
       vscode-jsonrpc: 3.6.2
     dev: false
 
-  /@autorest/go/4.0.0-preview.31:
-    resolution: {integrity: sha512-oc5tIbTF3mZPm5UtWr6If/+2MEIBvo2yq0ZefE6/AxjjMvYssEHqAHNgbnzkwJcuTaRmCMU90U0cM3r4InINdA==}
+  /@autorest/go/4.0.0-preview.36:
+    resolution: {integrity: sha512-EPupno7CDo5RYSuS4vA7GeHoEZU8QyUTKs8g/wxFPff8hb5qYThKnpMrC6Kr/c5Stzj9vjZI6bqFm1hyH3+H6Q==}
     engines: {node: '>=10.12.0'}
     dependencies:
-      '@autorest/codemodel': 4.17.1
-      '@autorest/extension-base': 3.3.2
+      '@autorest/codemodel': 4.17.2
+      '@autorest/extension-base': 3.4.4
       '@azure-tools/async-io': 3.0.254
-      '@azure-tools/codegen': 2.7.0
+      '@azure-tools/codegen': 2.9.0
       '@azure-tools/linq': 3.1.263
       '@azure-tools/tasks': 3.0.255
       '@types/html-to-text': 5.1.2
@@ -115,8 +121,8 @@ packages:
       proper-lockfile: 2.0.1
     dev: false
 
-  /@azure-tools/codegen/2.7.0:
-    resolution: {integrity: sha512-OP83pnc8QMNPnlai+UDTG9E2YR833tHEIFebVULB72ZHLDH8pCnSMHN4VOAgwV75L0kCHG3f5VUYohOzCyt7Rg==}
+  /@azure-tools/codegen/2.9.0:
+    resolution: {integrity: sha512-dWjtdn01jK561RgWVrGz+g8G5hEp2PAuqBTXjwPmrXbuvzNPUMMDoeqCXjZ+d13VhfPY52T21zexftO0aOdf3w==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@azure-tools/async-io': 3.0.254
@@ -124,13 +130,13 @@ packages:
       semver: 5.7.1
     dev: false
 
-  /@azure-tools/codegen/2.8.0:
-    resolution: {integrity: sha512-HzIWjWzzjCAiUr8uXH1EfeCiC9Gln5YPTbJyfPQCBQeXAQIMRFo1IabFnBXhJpuRl7R11vpt4THELydYZLbalw==}
+  /@azure-tools/codegen/2.9.1:
+    resolution: {integrity: sha512-qlQSMaSUtrhlnW/XqgOeOcAfDw5kLUWq16DcjbnvxRC/F4QepqtNth4PHgHM+1UXZeWuiGj5sAsLQnm/9CApDQ==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@azure-tools/async-io': 3.0.254
       js-yaml: 4.0.0
-      semver: 5.7.1
+      semver: 7.3.5
     dev: false
 
   /@azure-tools/linq/3.1.263:
@@ -2094,11 +2100,6 @@ packages:
       quick-lru: 4.0.1
     dev: false
 
-  /camelcase/3.0.0:
-    resolution: {integrity: sha1-MvxLn82vhF/N9+c7uXysImHwqwo=}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /camelcase/5.3.1:
     resolution: {integrity: sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==}
     engines: {node: '>=6'}
@@ -2212,14 +2213,6 @@ packages:
       colors: 1.4.0
     dev: false
 
-  /cliui/3.2.0:
-    resolution: {integrity: sha1-EgYBU3qRbSmUD5NNo7SNWFo5IT0=}
-    dependencies:
-      string-width: 1.0.2
-      strip-ansi: 3.0.1
-      wrap-ansi: 2.1.0
-    dev: false
-
   /cliui/5.0.0:
     resolution: {integrity: sha512-PYeGSEmmHM6zvoef2w8TPzlrnNpXIjTipYK780YswmIP9vjxmd6Y2a3CB2Ks6/AU8NHjZugXvo8w3oWM2qnwXA==}
     dependencies:
@@ -2254,6 +2247,7 @@ packages:
     resolution: {integrity: sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=}
     engines: {node: '>=0.10.0'}
     dev: false
+    optional: true
 
   /collect-v8-coverage/1.0.1:
     resolution: {integrity: sha512-iBPtljfCNcTKNAto0KEtDfZ3qzjJvqE3aTGZsbhjSBlorqpXJlaWWtPO35D+ZImoC3KWejX64o+yPGxhWSTzfg==}
@@ -2415,7 +2409,7 @@ packages:
 
   /core-js/2.6.12:
     resolution: {integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==}
-    deprecated: core-js@<3.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Please, upgrade your dependencies to the actual version of core-js.
+    deprecated: core-js@<3.4 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Please, upgrade your dependencies to the actual version of core-js.
     requiresBuild: true
     dev: false
 
@@ -3407,14 +3401,6 @@ packages:
       pkg-dir: 4.2.0
     dev: false
 
-  /find-up/1.1.2:
-    resolution: {integrity: sha1-ay6YIrGizgpgq2TWEOzK1TyyTQ8=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      path-exists: 2.1.0
-      pinkie-promise: 2.0.1
-    dev: false
-
   /find-up/2.1.0:
     resolution: {integrity: sha1-RdG35QbHF93UgndaK3eSCjwMV6c=}
     engines: {node: '>=4'}
@@ -3530,6 +3516,7 @@ packages:
 
   /formidable/1.2.2:
     resolution: {integrity: sha512-V8gLm+41I/8kguQ4/o1D3RIHRmhYFG4pnNyonvua+40rqcEmT4+V71yaZ3B457xbbgCsCfjSPi65u/W6vK1U5Q==}
+    deprecated: 'Please upgrade to latest, formidable@v2 or formidable@v3! Check these notes: https://bit.ly/2ZEqIau'
     dev: false
 
   /fragment-cache/0.2.1:
@@ -3599,10 +3586,6 @@ packages:
   /gensync/1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
-    dev: false
-
-  /get-caller-file/1.0.3:
-    resolution: {integrity: sha512-3t6rVToeoZfYSGd8YoLFR2DJkiQrIiUrGcjvFX2mDw3bn6k2OtwHN0TNCLbBO+w8qTvimhDkv+LSscbJY1vE6w==}
     dev: false
 
   /get-caller-file/2.0.5:
@@ -4094,11 +4077,6 @@ packages:
     resolution: {integrity: sha512-j8grHGDzv1v+8T1sAQ+3boTCntFPfvxLCkNcxB1J8qA0lUN+fAlSyYd+RXKvaPRL4AGyPxViutBEJHNXOyUdFQ==}
     dev: false
 
-  /invert-kv/1.0.0:
-    resolution: {integrity: sha1-EEqOSqym09jNFXqO+L+rLXo//bY=}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /ip-regex/2.1.0:
     resolution: {integrity: sha1-+ni/XS5pE8kRzp+BnuUUa7bYROk=}
     engines: {node: '>=4'}
@@ -4230,6 +4208,7 @@ packages:
     dependencies:
       number-is-nan: 1.0.1
     dev: false
+    optional: true
 
   /is-fullwidth-code-point/2.0.0:
     resolution: {integrity: sha1-o7MKXE8ZkYMWeqq5O+764937ZU8=}
@@ -4338,10 +4317,6 @@ packages:
 
   /is-typedarray/1.0.0:
     resolution: {integrity: sha1-5HnICFjfDBsR3dppQPlgEfzaSpo=}
-    dev: false
-
-  /is-utf8/0.2.1:
-    resolution: {integrity: sha1-Sw2hRCEE0bM2NA6AeX6GXPOffXI=}
     dev: false
 
   /is-weakref/1.0.1:
@@ -5059,6 +5034,12 @@ packages:
     hasBin: true
     dev: false
 
+  /json-merge-patch/1.0.2:
+    resolution: {integrity: sha512-M6Vp2GN9L7cfuMXiWOmHj9bEFbeC250iVtcKQbqVgEsDVYnIsrNsbU+h/Y/PkbBQCtEa4Bez+Ebv0zfbC8ObLg==}
+    dependencies:
+      fast-deep-equal: 3.1.3
+    dev: false
+
   /json-parse-even-better-errors/2.3.1:
     resolution: {integrity: sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==}
     dev: false
@@ -5287,13 +5268,6 @@ packages:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
     dev: false
 
-  /lcid/1.0.0:
-    resolution: {integrity: sha1-MIrMr6C8SDo4Z7S28rlQYlHRuDU=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      invert-kv: 1.0.0
-    dev: false
-
   /left-pad/1.3.0:
     resolution: {integrity: sha512-XI5MPzVNApjAyhQzphX8BkmKsKUxD4LdyK24iZeQGinBN9yTQT3bFlCBy/aVx2HrNcqQGsdot8ghrjyrvMCoEA==}
     deprecated: use String.prototype.padStart()
@@ -5331,17 +5305,6 @@ packages:
   /liquid-json/0.3.1:
     resolution: {integrity: sha1-kVWhgTbYprJhXl8W+aJEira1Duo=}
     engines: {node: '>=4'}
-    dev: false
-
-  /load-json-file/1.1.0:
-    resolution: {integrity: sha1-lWkFcI1YtLq0wiYbBPWfMcmTdMA=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      graceful-fs: 4.2.8
-      parse-json: 2.2.0
-      pify: 2.3.0
-      pinkie-promise: 2.0.1
-      strip-bom: 2.0.0
     dev: false
 
   /locate-path/2.0.0:
@@ -5854,7 +5817,7 @@ packages:
     resolution: {integrity: sha1-xkZdvwirzU2zWTF/eaxopkayj/k=}
     hasBin: true
     dependencies:
-      abbrev: 1.0.9
+      abbrev: 1.1.1
     dev: false
 
   /nopt/5.0.0:
@@ -5914,6 +5877,7 @@ packages:
     resolution: {integrity: sha1-CXtgK1NCKlIsGvuHkDGDNpQaAR0=}
     engines: {node: '>=0.10.0'}
     dev: false
+    optional: true
 
   /nunjucks/3.2.3:
     resolution: {integrity: sha512-psb6xjLj47+fE76JdZwskvwG4MYsQKXUtMsPh6U0YMvmyjRtKRFcxnlXGWglNybtNTNVmGdp94K62/+NjF5FDQ==}
@@ -5974,8 +5938,8 @@ packages:
     resolution: {integrity: sha512-fexhUFFPTGV8ybAtSIGbV6gOkSv8UtRbDBnAyLQw4QPKkgNlsH2ByPGtMUqdWkos6YCRmAqViwgZrJc/mRDzZQ==}
     dev: false
 
-  /oav/2.8.3:
-    resolution: {integrity: sha512-yaPYp0XPxefJJt3RW0l06Urq95GbGtdgXehDUAvTwi25dQyCM+MBcWm+vSoeiiu6sHP8nL4UMxts5ctLh3BimA==}
+  /oav/2.11.3:
+    resolution: {integrity: sha512-/Nyh/lJJ47u9FLMHOs+njuTajs4DZcpd+bE+pWJbYDX0gGUZmWW+gNr67kwTg5eFvmtmJeWdCmzIS3uen1GDwA==}
     engines: {node: '>=10.11.0'}
     hasBin: true
     dependencies:
@@ -6003,6 +5967,7 @@ packages:
       humanize-duration: 3.27.0
       inversify: 5.1.1
       js-yaml: 4.0.0
+      json-merge-patch: 1.0.2
       json-pointer: 0.6.1
       json-refs: 3.0.15
       json-schema-traverse: 0.4.1
@@ -6026,7 +5991,7 @@ packages:
       uuid: 3.4.0
       vscode-jsonrpc: 3.6.2
       winston: 3.3.3
-      yargs: 7.1.2
+      yargs: 15.4.1
       yasway: 1.10.7
       yuml2svg: 4.2.2
       z-schema: 4.2.4
@@ -6171,13 +6136,6 @@ packages:
       word-wrap: 1.2.3
     dev: false
 
-  /os-locale/1.4.0:
-    resolution: {integrity: sha1-IPnxeuKe00XoveWDsT0gCYA8FNk=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      lcid: 1.0.0
-    dev: false
-
   /p-all/2.1.0:
     resolution: {integrity: sha512-HbZxz5FONzz/z2gJfk6bFca0BCiSRF8jU3yCsWOen/vR6lZjfPOu/e7L3uFzTW1i0H8TlC3vqQstEJPQL4/uLA==}
     engines: {node: '>=6'}
@@ -6290,13 +6248,6 @@ packages:
       callsites: 3.1.0
     dev: false
 
-  /parse-json/2.2.0:
-    resolution: {integrity: sha1-9ID0BDTvgHQfhGkJn43qGPVaTck=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      error-ex: 1.3.2
-    dev: false
-
   /parse-json/5.2.0:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
     engines: {node: '>=8'}
@@ -6327,13 +6278,6 @@ packages:
 
   /path-dirname/1.0.2:
     resolution: {integrity: sha1-zDPSTVJeCZpTiMAzbG4yuRYGCeA=}
-    dev: false
-
-  /path-exists/2.1.0:
-    resolution: {integrity: sha1-D+tsZPD8UY2adU3V77YscCJ2H0s=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      pinkie-promise: 2.0.1
     dev: false
 
   /path-exists/3.0.0:
@@ -6382,15 +6326,6 @@ packages:
     resolution: {integrity: sha512-f66KywYG6+43afgE/8j/GoiNyygk/bnoCbps++3ErRKsIYkGGupyv07R2Ok5m9i67Iqc+T2g1eAUGUPzWhYTyg==}
     dev: false
 
-  /path-type/1.1.0:
-    resolution: {integrity: sha1-WcRPfuSR2nBNpBXaWkBwuk+P5EE=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      graceful-fs: 4.2.8
-      pify: 2.3.0
-      pinkie-promise: 2.0.1
-    dev: false
-
   /path-type/3.0.0:
     resolution: {integrity: sha512-T2ZUsdZFHgA3u4e5PfPbjd7HDDpxPnQb5jN0SrDsjNSuVXHJqtwTnWqG0B1jZrgmJ/7lj1EmVIByWt1gxGkWvg==}
     engines: {node: '>=4'}
@@ -6416,11 +6351,6 @@ packages:
     engines: {node: '>=8.6'}
     dev: false
 
-  /pify/2.3.0:
-    resolution: {integrity: sha1-7RQaasBDqEnqWISY59yosVMw6Qw=}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /pify/3.0.0:
     resolution: {integrity: sha1-5aSs0sEB/fPZpNB/DbxNtJ3SgXY=}
     engines: {node: '>=4'}
@@ -6429,18 +6359,6 @@ packages:
   /pify/4.0.1:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
     engines: {node: '>=6'}
-    dev: false
-
-  /pinkie-promise/2.0.1:
-    resolution: {integrity: sha1-ITXW36ejWMBprJsXh3YogihFD/o=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      pinkie: 2.0.4
-    dev: false
-
-  /pinkie/2.0.4:
-    resolution: {integrity: sha1-clVrgM+g1IqXToDnckjoDtT3+HA=}
-    engines: {node: '>=0.10.0'}
     dev: false
 
   /pirates/4.0.1:
@@ -6741,14 +6659,6 @@ packages:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
     dev: false
 
-  /read-pkg-up/1.0.1:
-    resolution: {integrity: sha1-nWPBMnbAZZGNV/ACpX9AobZD+wI=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      find-up: 1.1.2
-      read-pkg: 1.1.0
-    dev: false
-
   /read-pkg-up/7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
     engines: {node: '>=8'}
@@ -6756,15 +6666,6 @@ packages:
       find-up: 4.1.0
       read-pkg: 5.2.0
       type-fest: 0.8.1
-    dev: false
-
-  /read-pkg/1.1.0:
-    resolution: {integrity: sha1-9f+qXs0pyzHAR0vKfXVra7KePyg=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      load-json-file: 1.1.0
-      normalize-package-data: 2.5.0
-      path-type: 1.1.0
     dev: false
 
   /read-pkg/5.2.0:
@@ -6907,10 +6808,6 @@ packages:
   /require-from-string/2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
-    dev: false
-
-  /require-main-filename/1.0.1:
-    resolution: {integrity: sha1-l/cXtp1IeE9fUmpsWqj/3aBVpNE=}
     dev: false
 
   /require-main-filename/2.0.0:
@@ -7387,6 +7284,7 @@ packages:
       is-fullwidth-code-point: 1.0.0
       strip-ansi: 3.0.1
     dev: false
+    optional: true
 
   /string-width/3.1.0:
     resolution: {integrity: sha512-vafcv6KjVZKSgz06oM/H6GDBrAtz8vdhQakGjFIvNrHA6y3HCF1CInLy+QLq8dTJPQ1b+KDUqDFctkdRW44e1w==}
@@ -7455,13 +7353,6 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       ansi-regex: 5.0.1
-    dev: false
-
-  /strip-bom/2.0.0:
-    resolution: {integrity: sha1-YhmoVhZSBJHzV4i9vxRHqZx+aw4=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      is-utf8: 0.2.1
     dev: false
 
   /strip-bom/3.0.0:
@@ -8101,10 +7992,6 @@ packages:
       is-symbol: 1.0.4
     dev: false
 
-  /which-module/1.0.0:
-    resolution: {integrity: sha1-u6Y8qGGUiZT/MHc2CJ47lgJsKk8=}
-    dev: false
-
   /which-module/2.0.0:
     resolution: {integrity: sha1-2e8H3Od7mQK4o6j6SzHD4/fm6Ho=}
     dev: false
@@ -8127,7 +8014,7 @@ packages:
   /wide-align/1.1.5:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}
     dependencies:
-      string-width: 1.0.2
+      string-width: 4.2.3
     dev: false
     optional: true
 
@@ -8161,14 +8048,6 @@ packages:
 
   /wordwrap/1.0.0:
     resolution: {integrity: sha1-J1hIEIkUVqQXHI0CJkQa3pDLyus=}
-    dev: false
-
-  /wrap-ansi/2.1.0:
-    resolution: {integrity: sha1-2Pw9KE3QV5T+hJc8rs3Rz4JP3YU=}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      string-width: 1.0.2
-      strip-ansi: 3.0.1
     dev: false
 
   /wrap-ansi/5.1.0:
@@ -8251,10 +8130,6 @@ packages:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
     dev: false
 
-  /y18n/3.2.2:
-    resolution: {integrity: sha512-uGZHXkHnhF0XeeAPgnKfPv1bgKAYyVvmNL1xlKsPYZPaIHxGti2hHqvOCQv71XMsLxu1QjergkqogUnms5D3YQ==}
-    dev: false
-
   /y18n/4.0.3:
     resolution: {integrity: sha512-JKhqTOwSrqNA1NY5lSztJ1GrBiUodLMmIZuLiDaMRJ+itFd+ABVE8XBjOvIWL+rSqNDC74LCSFmlb/U4UZ4hJQ==}
     dev: false
@@ -8285,13 +8160,6 @@ packages:
   /yargs-parser/20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
     engines: {node: '>=10'}
-    dev: false
-
-  /yargs-parser/5.0.1:
-    resolution: {integrity: sha512-wpav5XYiddjXxirPoCTUPbqM0PXvJ9hiBMvuJgInvo4/lAOTZzUprArw17q2O1P2+GHhbBr18/iQwjL5Z9BqfA==}
-    dependencies:
-      camelcase: 3.0.0
-      object.assign: 4.1.2
     dev: false
 
   /yargs/14.2.3:
@@ -8325,24 +8193,6 @@ packages:
       which-module: 2.0.0
       y18n: 4.0.3
       yargs-parser: 18.1.3
-    dev: false
-
-  /yargs/7.1.2:
-    resolution: {integrity: sha512-ZEjj/dQYQy0Zx0lgLMLR8QuaqTihnxirir7EwUHp1Axq4e3+k8jXU5K0VLbNvedv1f4EWtBonDIZm0NUr+jCcA==}
-    dependencies:
-      camelcase: 3.0.0
-      cliui: 3.2.0
-      decamelize: 1.2.0
-      get-caller-file: 1.0.3
-      os-locale: 1.4.0
-      read-pkg-up: 1.0.1
-      require-directory: 2.1.1
-      require-main-filename: 1.0.1
-      set-blocking: 2.0.0
-      string-width: 1.0.2
-      which-module: 1.0.0
-      y18n: 3.2.2
-      yargs-parser: 5.0.1
     dev: false
 
   /yasway/1.10.7:
@@ -8404,14 +8254,14 @@ packages:
     dev: false
 
   file:projects/gotest.tgz:
-    resolution: {integrity: sha512-GcEralaQUqHOhW57GGfFF1lvwx/LDYOo5wK+1iOIuErjEzlv/AH+9JHh3zfUm3PjijP6cnY9zBdlugdVaStskA==, tarball: file:projects/gotest.tgz}
+    resolution: {integrity: sha512-IMq7/upSLRQH4vWI/H257adMCjtS7ziegZjjSmX1L5ZhjvYftM043jX4HxaRmw470TLzuO3+bnGgQKokER11yw==, tarball: file:projects/gotest.tgz}
     name: '@rush-temp/gotest'
     version: 0.0.0
     dependencies:
-      '@autorest/codemodel': 4.17.1
-      '@autorest/extension-base': 3.3.2
-      '@autorest/go': 4.0.0-preview.31
-      '@azure-tools/codegen': 2.7.0
+      '@autorest/codemodel': 4.17.2
+      '@autorest/extension-base': 3.4.4
+      '@autorest/go': 4.0.0-preview.36
+      '@azure-tools/codegen': 2.9.1
       '@azure-tools/linq': 3.1.263
       '@types/jest': 26.0.24
       '@types/lodash': 4.14.176
@@ -8432,7 +8282,7 @@ packages:
       lodash: 4.17.21
       node-yaml: 3.2.0_eslint@7.32.0
       nunjucks: 3.2.3
-      oav: 2.8.3
+      oav: 2.11.3
       prettier: 2.4.1
       reflect-metadata: 0.1.13
       ts-jest: 26.5.6_jest@26.6.3+typescript@4.4.4
@@ -8449,13 +8299,13 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-KJV7+LFlW7DV0oW0TVVik5kgNlyDZlElbkEu0J8Y5fv+Q9ILD7BC/pND90aG/qDLqS4eaIQFOoPFxDTo/z5gBA==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-KG12A2VLv77ktR7IzxJYaZJzMn18S5bdFVRflrHZj+5glvSJzR+aF05Y9MTMEB9lGtP7U/Wu4rDiE790V+Tyzw==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:
-      '@autorest/codemodel': 4.17.1
-      '@autorest/extension-base': 3.3.2
-      '@azure-tools/codegen': 2.7.0
+      '@autorest/codemodel': 4.18.2
+      '@autorest/extension-base': 3.4.4
+      '@azure-tools/codegen': 2.9.1
       '@types/jest': 26.0.24
       '@types/lodash': 4.14.176
       '@types/node': 10.17.0
@@ -8474,7 +8324,7 @@ packages:
       jsonpath: 1.1.1
       lodash: 4.17.21
       node-yaml: 3.2.0_eslint@7.32.0
-      oav: 2.8.3
+      oav: 2.11.3
       prettier: 2.4.1
       reflect-metadata: 0.1.13
       ts-jest: 26.5.6_jest@26.6.3+typescript@4.4.4

@@ -25,20 +25,21 @@ namespace APIViewWeb.Controllers
                 
         [HttpGet]
         public async Task<ActionResult> DetectApiChanges(
-            string buildId, 
-            string artifactName, 
-            string filePath, 
-            int pullRequestNumber, 
+            string buildId,
+            string artifactName,
+            string filePath,
             string commitSha,
             string repoName,
-            string packageName)
+            string packageName,
+            int pullRequestNumber = 0,
+            string codeFile = null,
+            string baselineCodeFile = null)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, pullRequestNumber, commitSha, repoName, packageName);
+            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile);
             return Ok();
         }
 

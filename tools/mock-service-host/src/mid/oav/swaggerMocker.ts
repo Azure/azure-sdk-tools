@@ -12,8 +12,10 @@ import { ExampleRule, getRuleValidator } from 'oav/dist/lib/generator/exampleRul
 import { JsonLoader } from 'oav/dist/lib/swagger/jsonLoader'
 import { LiveRequest } from 'oav/dist/lib/liveValidation/operationValidator'
 import { SpecItem } from '../responser'
-import { logger } from '../../common/utils'
+import { logger, setStringIfExist } from '../../common/utils'
+import { mockedResourceType } from '../../common/constants'
 import { parse as parseUrl } from 'url'
+import { xmsAzureResource } from 'oav/dist/lib/util/constants'
 import Mocker from './mocker'
 
 export default class SwaggerMocker {
@@ -56,15 +58,32 @@ export default class SwaggerMocker {
         }
         example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
         example.responses = this.mockResponse(example.responses, specItem)
-        this.patchResourceId(example.responses, liveRequest)
+        this.patchResourceIdAndType(example.responses, liveRequest)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
     }
 
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceId(responses: any, liveRequest: LiveRequest) {
+    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
         const url = parseUrl(liveRequest.url)
+
+        const pathElements = (url.pathname || '').split('/')
+        let resourceType = ''
+        let foundProvider = false
+        for (let i = 0; i < pathElements.length; i++) {
+            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
+                foundProvider = true
+                resourceType = pathElements[i]
+            }
+            if (foundProvider && i % 2 === 1) {
+                resourceType = `${resourceType}/${pathElements[i]}`
+            }
+        }
+        if (resourceType.length === 0) {
+            resourceType = mockedResourceType
+        }
+
         Object.keys(responses).forEach((key) => {
             if (responses[key]?.body?.id) {
                 // put
@@ -79,15 +98,26 @@ export default class SwaggerMocker {
                     responses[key].body.id = url.pathname
                 }
             }
+            setStringIfExist(responses[key]?.body, 'type', resourceType)
+            if (responses[key]?.body?.type && typeof responses[key]?.body?.type === 'string') {
+                responses[key].body.type = resourceType
+            }
+
             // get(list)
-            if (Array.isArray(responses[key]?.body?.value) && responses[key]?.body?.value?.length) {
-                responses[key]?.body?.value?.forEach((item: any) => {
-                    if (item.id) {
-                        const resourceName = item.name || 'resourceName'
-                        url.pathname = `${url.pathname}/${resourceName}`
-                        item.id = url.pathname
-                    }
-                })
+            for (const arr of [
+                responses[key]?.body?.value /*pagable list*/,
+                responses[key]?.body /*non-pagable list*/
+            ]) {
+                if (Array.isArray(arr) && arr.length) {
+                    arr.forEach((item: any) => {
+                        if (item.id) {
+                            const resourceName = item.name || 'resourceName'
+                            url.pathname = `${url.pathname}/${resourceName}`
+                            item.id = url.pathname
+                        }
+                        setStringIfExist(item, 'type', resourceType)
+                    })
+                }
             }
         })
     }
@@ -141,10 +171,6 @@ export default class SwaggerMocker {
                 )
             }
         })
-    }
-
-    public getMockCachedObj(objName: string, schema: any, isRequest: boolean) {
-        return this.mockCachedObj(objName, schema, undefined, new Set<string>(), isRequest)
     }
 
     private mockResponse(responseExample: any, specItem: any) {
@@ -268,6 +294,35 @@ export default class SwaggerMocker {
         return undefined
     }
 
+    private isAzureResource(schema: any, visited: Set<string>): boolean {
+        const definitionSpec = this.getDefSpec(schema, visited)
+
+        // check by x-ms-azure-resource
+        if (definitionSpec[xmsAzureResource]) {
+            return true
+        }
+
+        // check by property id&type&name
+        const allProperties = definitionSpec.properties || {}
+        if (
+            allProperties.id?.type === 'string' &&
+            allProperties.name?.type === 'string' &&
+            allProperties.type?.type === 'string'
+        ) {
+            return true
+        }
+
+        // check parents
+        for (const parent of definitionSpec.allOf || []) {
+            const parentDefinitionSpec = this.getDefSpec(parent, visited)
+            if (this.isAzureResource(parentDefinitionSpec, visited)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     private mockObj(
         objName: string,
         schema: any,
@@ -287,7 +342,8 @@ export default class SwaggerMocker {
         visited: Set<string>,
         isRequest: boolean,
         discriminatorValue: string | undefined = undefined,
-        useCache = false
+        useCache = false,
+        inAzureResource = false
     ) {
         if (!schema || typeof schema !== 'object') {
             logger.warn(`invalid schema.`)
@@ -304,6 +360,7 @@ export default class SwaggerMocker {
         const definitionSpec = this.getDefSpec(schema, visited)
 
         if (util.isObject(definitionSpec)) {
+            const isAzureResourceObj = this.isAzureResource(schema, visited)
             // circular inherit will not be handled
             const properties = this.getProperties(definitionSpec, visited)
             example = example || {}
@@ -320,7 +377,8 @@ export default class SwaggerMocker {
                         example,
                         discriminator,
                         isRequest,
-                        visited
+                        visited,
+                        isAzureResourceObj
                     ) || undefined
                 )
             } else {
@@ -338,7 +396,9 @@ export default class SwaggerMocker {
                             example[key],
                             visited,
                             isRequest,
-                            discriminatorValue
+                            discriminatorValue,
+                            false,
+                            isAzureResourceObj
                         )
                     }
                 })
@@ -354,7 +414,9 @@ export default class SwaggerMocker {
                         undefined,
                         visited,
                         isRequest,
-                        discriminatorValue
+                        discriminatorValue,
+                        false,
+                        inAzureResource
                     )
                 }
             }
@@ -373,7 +435,7 @@ export default class SwaggerMocker {
             example =
                 example && typeof example !== 'object'
                     ? example
-                    : this.mocker.mock(definitionSpec, objName)
+                    : this.mocker.mock(definitionSpec, objName, undefined, inAzureResource)
         }
         // return value for primary type: string, number, integer, boolean
         // "aaaa"
@@ -431,7 +493,8 @@ export default class SwaggerMocker {
         example: any,
         discriminator: string,
         isRequest: boolean,
-        visited: Set<string>
+        visited: Set<string>,
+        inAzureResource: boolean
     ): any {
         const disDetail = this.getDefSpec(schema, visited)
         if (disDetail.discriminatorMap && Object.keys(disDetail.discriminatorMap).length > 0) {
@@ -454,7 +517,8 @@ export default class SwaggerMocker {
                     {},
                     new Set<string>(),
                     isRequest,
-                    discriminatorValue
+                    discriminatorValue,
+                    inAzureResource
                 ) || undefined
             this.removeFromSet(schema, visited)
             return cacheItem

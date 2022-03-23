@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -23,7 +24,7 @@ async function compare(dir1: string, dir2: string) {
 async function runAutorest(readmePath: string, extraOption: string[]) {
     const cmd =
         path.join(`${__dirname}`, '..', '..' + '/node_modules', '.bin', 'autorest') +
-        ' --version=3.6.2 --use=' +
+        ' --version=3.7.3 --use=' +
         path.join(`${__dirname}`, '..', '..') +
         ' ' +
         readmePath +
@@ -77,6 +78,10 @@ async function runSingleTest(swaggerDir: string, rp: string, extraOption: string
     return result;
 }
 
+const extraOptions: Record<string, string[]> = {
+    signalr: ['--testmodeler.add-armtemplate-payload-string'],
+};
+
 describe('Run autorest and compare the output', () => {
     beforeAll(async () => {
         //
@@ -88,13 +93,13 @@ describe('Run autorest and compare the output', () => {
 
     it('', async () => {
         jest.setTimeout(8 * 60 * 60 * 1000);
-        const swaggerDir = path.join(`${__dirname}`, '../swagger');
+        const swaggerDir = path.join(`${__dirname}`, '../../../../swagger');
         const outputDir = path.join(`${__dirname}`, 'output');
         const tempoutputDir = path.join(`${__dirname}`, 'tempoutput');
 
         let finalResult = true;
         const allTests: Array<Promise<boolean>> = [];
-        for (const rp of ['compute']) {
+        for (const rp of ['appplatform', 'compute', 'signalr']) {
             console.log('Start Processing: ' + rp);
 
             // Remove tmpoutput
@@ -103,7 +108,7 @@ describe('Run autorest and compare the output', () => {
             Helper.deleteFolderRecursive(tempOutputFolder);
             fs.mkdirSync(tempOutputFolder, { recursive: true });
 
-            const test = runSingleTest(swaggerDir, rp, [`--output-folder=${tempOutputFolder}`, '--debug'], outputFolder, tempOutputFolder);
+            const test = runSingleTest(swaggerDir, rp, [`--output-folder=${tempOutputFolder}`, '--debug', ..._.get(extraOptions, rp, [])], outputFolder, tempOutputFolder);
             allTests.push(test);
         }
         if ((process.env['PARALELL_TEST'] || 'false').toLowerCase() === 'true') {

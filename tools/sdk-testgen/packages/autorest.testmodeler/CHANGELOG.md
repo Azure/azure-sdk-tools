@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Fri, 11 Mar 2022 09:19:34 GMT and should not be manually modified.
+This log was last generated on Wed, 23 Mar 2022 06:19:34 GMT and should not be manually modified.
+
+## 2.2.3
+Wed, 23 Mar 2022 06:19:34 GMT
+
+### Patches
+
+- upgrade @autorest/codemodel from 4.17.2 to 4.18.2
 
 ## 2.2.2
 Mon, 14 Mar 2022 09:19:34 GMT

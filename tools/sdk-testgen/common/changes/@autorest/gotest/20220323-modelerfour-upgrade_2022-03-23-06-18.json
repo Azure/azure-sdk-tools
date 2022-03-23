@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "upgrade @autorest/codemodel from 4.17.2 to 4.18.2",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

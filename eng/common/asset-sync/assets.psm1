@@ -1,12 +1,21 @@
-# any functions that are exported outside the module are exposed via Export-ModuleMember and are documented.
-# remaining functions NOT exported are essentially private functions
-
 # Module-level variables can be accessed via $script:<Variable> naming convention
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
 # this methodology for any global variables
 
 $REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
 
+
+<#
+.SYNOPSIS
+Checks the contents of a directory, then returns a tuple of booleans @("recordingJsonPresent", "isRootFolder").
+.DESCRIPTION
+Evaluates a directory by checking its contents. First value of the tuple is whether or not a "recording.json" file 
+is present A "root" directory is one where a recording.json is present OR where we are as far up the file tree as 
+we can possibly ascend. 
+
+.PARAMETER TargetPath
+The path we will evaulate to detect either a root directory or a .git folder.
+#>
 function Evaluate-Target-Dir {
     param (
         [Parameter(Mandatory = $true)]
@@ -40,6 +49,7 @@ function Evaluate-Target-Dir {
         $foundRecording, $foundRoot
     )
 }
+Export-ModuleMember -Function Evaluate-Target-Dir
 
 <#
 .SYNOPSIS
@@ -50,28 +60,26 @@ Traverses upwards until it hits either a `.git` folder or a `recording.json` fil
 
 .PARAMETER TargetPath
 Optional argument specifying the directory to start traversing up from. If not provided, current working directory will be used.
-
-.COMPONENT
-assets
 #>
 function Resolve-RecordingJson {
     param (
         [Parameter(Mandatory = $false)]
         [string] $TargetPath
     )
-    $PathForManipulation = $TargetPath
+    $pathForManipulation = $TargetPath
     $foundConfig = $false
     $reachedRoot = $false
 
     if(-not $TargetPath){
-        $PathForManipulation = Get-Location
+        $pathForManipulation = Get-Location
     }
     
-    
-    $foundConfig, $foundRoot = Evaluate-Target-Dir -TargetPath PathForManipulation
+    $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
 
-    while (-not $foundConfig -and -not $foundRoot){
-        $prospectivePath, $remainder = Split-Path $props
+    while (-not $foundConfig -and -not $reachedRoot){
+        $pathForManipulation, $remainder = Split-Path $props
+
+        $found_config, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
 }
 Export-ModuleMember -Function Resolve-RecordingJson
@@ -86,41 +94,39 @@ function Resolve-Asset-Repo-Location {
 
     return (Resolve-Path $prospectivePath)
 }
+Export-ModuleMember -Function Resolve-Asset-Repo-Location
+
+<#
+.SYNOPSIS
+Initializes a recordings repo based on a recordings.json file. 
+
+.DESCRIPTION
+
+#>
+function Initialize-Recordings-Repo {
+    if (!(Test-Path $AssetsRepoLocation)){
+        mkdir -p $AssetsRepoLocation
+    }
+    else {
+        Remove-Item -Force -R "$AssetsRepoLocation/*"
+    }
+
+    try {
+        Push-Location $AssetsRepoLocation
+        git clone --filter=blob:none --no-checkout "https://github.com/$AssetsRepo" .
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 
 # <#
 # .SYNOPSIS
 
-# .DESCRIPTION
-
-# .COMPONENT
-# assets
-# #>
-# function Initialize-Recordings-Repo {
-#     if (!(Test-Path $AssetsRepoLocation)){
-#         mkdir -p $AssetsRepoLocation
-#     }
-#     else {
-#         Remove-Item -Force -R "$AssetsRepoLocation/*"
-#     }
-
-#     try {
-#         Push-Location $AssetsRepoLocation
-#         git clone --filter=blob:none --no-checkout "https://github.com/$AssetsRepo" .
-#     }
-#     finally {
-#         Pop-Location
-#     }
-# }
-
-
-# <#
-# .SYNOPSIS
-
 
 # .DESCRIPTION
 
-# .COMPONENT
-# assets
 # #>
 # function Reset-Recordings-Repo {
 #     param (

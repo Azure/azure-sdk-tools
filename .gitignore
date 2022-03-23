@@ -491,6 +491,7 @@ src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
 *-lock.json
 
 .assets
+eng/common/asset-sync/.testruns
 
 # oav converter
 tools/oav-traffic-converter/input-example/

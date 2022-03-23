@@ -16,6 +16,26 @@ import (
 // skip adding the const type in the token list
 const skip = "Untyped const"
 
+// content defines the set of exported constants, funcs, and structs.
+type content struct {
+	// the list of exported constants.
+	// key is the exported name, value is its type and value.
+	Consts map[string]Const `json:"consts,omitempty"`
+
+	// the list of exported functions and methods.
+	// key is the exported name, for methods it's prefixed with the receiver type (e.g. "Type.Method").
+	// value contains the list of params and return types.
+	Funcs map[string]Func `json:"funcs,omitempty"`
+
+	// the list of exported interfaces.
+	// key is the exported name, value contains the interface definition.
+	Interfaces map[string]Interface `json:"interfaces,omitempty"`
+
+	// the list of exported struct types.
+	// key is the exported name, value contains field information.
+	Structs map[string]Struct `json:"structs,omitempty"`
+}
+
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{

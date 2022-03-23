@@ -63,5 +63,21 @@ Describe "AssetsModuleTests" {
       }
     }
 
+    It "Should should error when unable to find a recording json" {
+      $files = @(
+        "a/b.json",
+        "a/b/c.json"
+      )
+
+      $testLocation = Describe-TestFolder -RecordingJsonContent "" -Files $files
+      
+      try {
+        Push-Location -Path (Join-Path $testLocation "a" "b")
+        { Resolve-RecordingJson -TargetPath $testLocation } | Should -Throw
+      }
+      finally {
+        Pop-Location
+      }
+    }
   }
 }

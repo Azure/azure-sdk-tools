@@ -37,9 +37,31 @@ Describe "AssetsModuleTests" {
 
       $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
       
+      $testLocation.GetType().Name | Should -Be "String"
+
       $Result = Resolve-RecordingJson -TargetPath $testLocation
       $recordingLocation = $Result[0]
       $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
     }
+
+    It "Should should traverse upwards to find recording.json" {
+      $files = @(
+        "a/b.json",
+        "a/b/c.json"
+      )
+
+      $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
+      
+      try {
+        Push-Location -Path (Join-Path $testLocation "a" "b")
+        $Result = Resolve-RecordingJson -TargetPath $testLocation
+        $recordingLocation = $Result[0]
+        $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
+      }
+      finally {
+        Pop-Location
+      }
+    }
+
   }
 }

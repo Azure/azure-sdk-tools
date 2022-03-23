@@ -21,13 +21,13 @@ Function Get-TestPath {
   if (-not $usePersistentStorage){
     $testPath = "TestDrive:\$([Guid]::NewGuid())\"
     
-    mkdir $testPath
+    mkdir $testPath | Out-Null
     return $testPath
   }
   else {
     $testPath = (Join-Path $localTempPath "$([Guid]::NewGuid())")
 
-    $result = mkdir -p $testPath
+    $result = mkdir -p $testPath | Out-Null
     return $testPath
   }
 }
@@ -43,7 +43,6 @@ Function Describe-TestFolder{
   )
   
   $testPath = Get-TestPath
-  Write-Host $testPath
 
   $recordingJsonLocation = Join-Path $testPath "recording.json"
   
@@ -52,9 +51,9 @@ Function Describe-TestFolder{
       $recordingJsonLocation = Join-Path $testPath $file
     }
   }
-
+  
   if ($RecordingJsonContent){
-    Set-Content -Value $RecordingJsonContent -Path $recordingJsonLocation
+    Set-Content -Value $RecordingJsonContent -Path $recordingJsonLocation | Out-Null
   }
 
   foreach($file in $Files){
@@ -66,19 +65,18 @@ Function Describe-TestFolder{
         $directory = Split-Path $resolvedFilePath
 
         if (-not (Test-Path $directory)){
-          mkdir -p $directory
+          mkdir -p $directory | Out-Null
         }
         
-        New-Item -Path $resolvedFilePath -ItemType File -Value ("{ `"a`": `"" + ([guid]::NewGuid().ToString()) + "`" }") `
+        New-Item -Path $resolvedFilePath -ItemType File -Value ("{ `"a`": `"" + ([guid]::NewGuid().ToString()) + "`" }") | Out-Null
       }
     }
     else {
       if (-not (Test-Path $file)){
-        mkdir -p $file
+        mkdir -p $file | Out-Null
       }
     }
   }
 
-  Write-Host $testPath
   return $testPath
 }

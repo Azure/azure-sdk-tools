@@ -3,18 +3,6 @@
 
 package cmd
 
-import (
-	"go/ast"
-	"go/token"
-)
-
-// pkg represents a Go package.
-type pkg struct {
-	f     *token.FileSet
-	p     *ast.Package
-	files map[string][]byte
-}
-
 // content defines the set of exported constants, funcs, and structs.
 type content struct {
 	// the list of exported constants.

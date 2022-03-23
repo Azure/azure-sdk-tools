@@ -32,7 +32,7 @@ func (c content) isEmpty() bool {
 }
 
 // adds the specified const declaration to the exports list
-func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
+func (c *content) addConst(pkg Pkg, g *ast.GenDecl) {
 	for _, s := range g.Specs {
 		co := Const{}
 		vs := s.(*ast.ValueSpec)
@@ -66,7 +66,7 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 	}
 }
 
-func getConstValue(pkg pkg, expr ast.Expr) string {
+func getConstValue(pkg Pkg, expr ast.Expr) string {
 	if bl, ok := expr.(*ast.BasicLit); ok {
 		// const DefaultLinkCredit = 1
 		return bl.Value
@@ -159,7 +159,7 @@ func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 }
 
 // adds the specified function declaration to the exports list
-func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
+func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) {
 	// create a method sig, for methods it's a combination of the receiver type
 	// with the function name e.g. "FooReceiver.Method", else just the function name.
 	sig := ""
@@ -180,7 +180,7 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 }
 
 // adds the specified interface type to the exports list.
-func (c *content) addInterface(pkg pkg, name string, i *ast.InterfaceType) {
+func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) {
 	in := Interface{Methods: map[string]Func{}}
 	if i.Methods != nil {
 		for _, m := range i.Methods.List {
@@ -210,7 +210,7 @@ func (c *content) parseInterface(tokenList *[]Token) {
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) addStruct(pkg pkg, name string, s *ast.StructType) {
+func (c *content) addStruct(pkg Pkg, name string, s *ast.StructType) {
 	sd := Struct{}
 	// assumes all struct types have fields
 	pkg.translateFieldList(s.Fields.List, func(n *string, t string) {

@@ -12,17 +12,17 @@ BeforeAll {
 
 Describe "AssetsModuleTests" {
   Context "Evaluate-Target-Dir" {
-    It "Should evaluate a root directory properly" {
+    It "Should evaluate a root directory properly." {
       $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." ".." "..")
       $Value | Should -Be @($false, $true)
     }
     
-    It "Should evaluate a recording directory properly" {
+    It "Should evaluate a recording directory properly." {
       $Value = Evaluate-Target-Dir -TargetPath $PSScriptRoot
       $Value | Should -Be @($true, $false)
     }
   
-    It "Should evaluate an transitory directory properly" {
+    It "Should evaluate an transitory directory properly." {
       $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." ".." )
       $Value | Should -Be @($false, $false)
     }
@@ -78,6 +78,56 @@ Describe "AssetsModuleTests" {
       finally {
         Pop-Location
       }
+    }
+  }
+
+  Context "Resolve-Assets" {
+    It "Should resolve the asset store location." {
+      $files = @()
+      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $testLocation = Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
+      $result = Resolve-AssetStore-Location
+
+      $result.Length | Should -Be $expectedLocation.Length
+    }
+
+    # It "Should should resolve a standard assets repo." {
+    #   $files = @()
+    #   $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+    #   $testLocation = Describe-TestFolder -RecordingJsonContent -Files $files
+
+    #   Resolve-AssetRepo-Location
+    # }
+
+    # It "Should should resolve a custom repoId." {
+    #   $files = @()
+    #   $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+    #   $jsonContent["assets-repo-id"] = "custom"
+
+    #   $testLocation = Describe-TestFolder -RecordingJsonContent -Files $files
+
+    #   $customRepoLocation = Resolve-AssetRepo-Location
+
+    # }
+  }
+
+  Context "Initialize-Assets-Repo" {
+    It "Should initialize an empty directory." {
+      $files = @(
+        "a/b.json",
+        "a/b/c.json"
+      )
+
+      $JsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
+    }
+
+    It "Should no-op when repo already initialized." {
+    }
+
+    It "Should allow custom repo alias." {
     }
   }
 }

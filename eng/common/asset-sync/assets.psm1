@@ -2,8 +2,10 @@
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
 # this methodology for any global variables
 
-$REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
+. (Join-Path $PSScriptRoot ".." "scripts" "common.ps1" )
 
+$REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
+$ASSETS_STORE = Resolve-Path (Join-Path $REPO_ROOT ".assets")
 
 <#
 .SYNOPSIS
@@ -16,7 +18,7 @@ we can possibly ascend.
 .PARAMETER TargetPath
 The path we will evaulate to detect either a root directory or a .git folder.
 #>
-function Evaluate-Target-Dir {
+Function Evaluate-Target-Dir {
     param (
         [Parameter(Mandatory = $true)]
         [string] $TargetPath
@@ -56,12 +58,12 @@ Export-ModuleMember -Function Evaluate-Target-Dir
 Traverses up from a provided target directory to find a recording JSON, parses it, and returns the location and JSON content.
 
 .DESCRIPTION
-Traverses upwards until it hits either a `.git` folder or a `recording.json` file.
+Traverses upwards until it hits either a `.git` folder or a `recording.json` file. Throws an exception if it can't find a recording.json before it hits root.
 
 .PARAMETER TargetPath
 Optional argument specifying the directory to start traversing up from. If not provided, current working directory will be used.
 #>
-function Resolve-RecordingJson {
+Function Resolve-RecordingJson {
     param (
         [Parameter(Mandatory = $false)]
         [string] $TargetPath
@@ -93,40 +95,63 @@ function Resolve-RecordingJson {
 }
 Export-ModuleMember -Function Resolve-RecordingJson
 
+Function Resolve-AssetStore-Location {
 
-function Resolve-Asset-Repo-Location {
-    $prospectivePath = Join-Path $REPO_ROOT ".assets"
-
-    if (-not (Test-Path $prospectivePath)) {
-        mkdir -p $prospectivePath
+    if (-not (Test-Path $script:ASSETS_STORE)){
+        mkdir -p $script:ASSETS_STORE | Out-Null
     }
 
-    return (Resolve-Path $prospectivePath)
+    return $script:ASSETS_STORE
 }
-Export-ModuleMember -Function Resolve-Asset-Repo-Location
+Export-ModuleMember -Function Resolve-AssetStore-Location
+
+Function Resolve-AssetRepo-Location {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $RepoId
+    )
+    $assetsLocation = Resolve-AssetStore-Location
+
+    return (Join-Path $assetsLocation $RepoId)
+}
+Export-ModuleMember -Function Resolve-AssetRepo-Location
 
 <#
 .SYNOPSIS
 Initializes a recordings repo based on a recordings.json file. 
 
 .DESCRIPTION
+This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
+.PARAMETER TargetDirectory
+Optional directory containing a "recording.json" file.
 #>
-function Initialize-Recordings-Repo {
-    if (!(Test-Path $AssetsRepoLocation)){
-        mkdir -p $AssetsRepoLocation
-    }
-    else {
-        Remove-Item -Force -R "$AssetsRepoLocation/*"
-    }
+Function Initialize-Assets-Repo {
+    param(
+        [Parameter(Mandatory=$false)]
+        [string] $TargetDirectory = "",
+        [Parameter(Mandatory=$false)]
+        [boolean] $ForceReinit = $false
+    )
+    
+    $assetRepo = Resolve-AssetRepo-Location
+    $configLocation, $config = Resolve-RecordingJson -TargetPath $TargetDirectory
 
-    try {
-        Push-Location $AssetsRepoLocation
-        git clone --filter=blob:none --no-checkout "https://github.com/$AssetsRepo" .
-    }
-    finally {
-        Pop-Location
-    }
+
+    # if (!()){
+    #     mkdir -p $AssetsRepoLocation | Out-Null
+    #     return $AssetsRepoLocation
+    # }
+
+    # Remove-Item -Force -R "$AssetsRepoLocation/*"
+
+    # try {
+    #     Push-Location $AssetsRepoLocation
+    #     git clone --filter=blob:none --no-checkout "https://github.com/$AssetsRepo" .
+    # }
+    # finally {
+    #     Pop-Location
+    # }
 }
 
 
@@ -137,7 +162,7 @@ function Initialize-Recordings-Repo {
 # .DESCRIPTION
 
 # #>
-# function Reset-Recordings-Repo {
+# Function Reset-Recordings-Repo {
 #     param (
 #         [Parameter(Mandatory = $true)]
 #         $targetPath,
@@ -186,7 +211,7 @@ function Initialize-Recordings-Repo {
 
 
 # # check for existence within the repo
-# function Recordings-Repo-Initialized {
+# Function Recordings-Repo-Initialized {
 #     $result = $false
 #     if (!(Test-Path $AssetsRepoLocation))
 #     {
@@ -211,11 +236,11 @@ function Initialize-Recordings-Repo {
 #     return $result
 # }
 
-# function Commit-Pending-Changes {
+# Function Commit-Pending-Changes {
 
 # }
 
-# function Pending-Changes {
+# Function Pending-Changes {
 #     $result = (git status --porcelain)
 #     if ($result){
 #         return $true
@@ -226,7 +251,7 @@ function Initialize-Recordings-Repo {
 # }
 
 # # do we add traversal logic here?
-# function Retrieve-SHA-From-JSON {
+# Function Retrieve-SHA-From-JSON {
 #     if ($ShaObject[$Folder]){
 #         Write-Host "Matched Path from recordings.json: $Folder"
 #         return $ShaObject[$Folder]

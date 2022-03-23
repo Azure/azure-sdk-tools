@@ -114,7 +114,7 @@ namespace Stress.Watcher
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Error with pod watch stream.");
+                    Log.Error(ex, $"Error with pod watch stream: {ex.Message}");
                     await Task.Delay(1000, cancellationToken);
                 }
             }

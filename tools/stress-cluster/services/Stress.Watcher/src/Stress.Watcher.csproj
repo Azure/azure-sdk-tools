@@ -13,6 +13,9 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.5.0" />
     <PackageReference Include="Azure.ResourceManager" Version="1.0.0-beta.4" />
+    <PackageReference Include="Azure.ResourceManager.Insights" Version="1.0.0-preview.1" />
+    <PackageReference Include="Microsoft.Azure.Management.Monitor" Version="0.27.0-preview" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure.Authentication" Version="2.4.1" />
     <PackageReference Include="dotenv.net" Version="3.0.0" />
   </ItemGroup>
 

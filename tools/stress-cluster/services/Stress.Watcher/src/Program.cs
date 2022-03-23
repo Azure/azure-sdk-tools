@@ -6,6 +6,9 @@ using k8s.Models;
 using CommandLine;
 using Azure.Identity;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Insights;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Rest.Azure.Authentication;
 using dotenv.net;
 
 namespace Stress.Watcher
@@ -50,10 +53,21 @@ namespace Stress.Watcher
             // Default to 'Azure SDK Developer Playground' subscription when testing locally outside of the stress cluster. 
             subscriptionId = subscriptionId ?? "faa080af-c1d8-40ad-9cce-e1a450ca5b57";
 
-            ArmClient armClient = new ArmClient(subscriptionId, new DefaultAzureCredential());
+
+            DefaultAzureCredential defaultAzureCredential = new DefaultAzureCredential();
+            ArmClient armClient = new ArmClient(subscriptionId, defaultAzureCredential);
+            // InsightsManagementClient insightsManagementClient = new InsightsManagementClient(subscriptionId, defaultAzureCredential);
+            
+            string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+            string clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+            string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
+            var serviceClientCredentials = await ApplicationTokenProvider.LoginSilentAsync(tenantId, clientId, clientSecret);
+
+            MonitorManagementClient monitorManagementClient = new MonitorManagementClient(serviceClientCredentials);
+            monitorManagementClient.SubscriptionId = subscriptionId;
 
             var podEventHandler = new PodEventHandler(client, chaosClient, armClient, options.Namespace);
-            var jobEventHandler = new JobEventHandler(client, options.Namespace);
+            var jobEventHandler = new JobEventHandler(client, monitorManagementClient, options.Namespace);
             
             var cts = new CancellationTokenSource();
 

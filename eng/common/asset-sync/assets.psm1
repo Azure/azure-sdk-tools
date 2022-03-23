@@ -81,6 +81,15 @@ function Resolve-RecordingJson {
 
         $found_config, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
+
+    if ($foundConfig){
+        $discoveredPath = Join-Path $pathForManipulation "recording.json"
+        return @($discoveredPath, (Get-Content -Path $discoveredPath | ConvertFrom-Json))
+    }
+    else {
+        Write-Error "Unable to locate recording.json".
+    }
+
 }
 Export-ModuleMember -Function Resolve-RecordingJson
 

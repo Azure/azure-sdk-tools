@@ -26,3 +26,4 @@
 /tools/mock-service-host/        @changlong-liu @tadelesh
 /tools/sdk-testgen/              @changlong-liu @tadelesh
 /tools/js-sdk-release-tools/     @dw511214992 @qiaozha @MaryGao
+/tools/keyvault-mock-attestation @maorleger

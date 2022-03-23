@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "",
   "scripts": {
     "start": "node dist/changelogToolCli.js",

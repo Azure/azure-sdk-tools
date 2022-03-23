@@ -23,8 +23,9 @@
     - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
     - [Drawbacks](#drawbacks)
   - [Scenario Walkthroughs](#scenario-walkthroughs)
-    - [Single Dev: Update single service's recordings](#single-dev-update-single-services-recordings)
     - [Single Dev: Create a new services's recordings](#single-dev-create-a-new-servicess-recordings)
+      - [Test Walkthrough](#test-walkthrough)
+    - [Single Dev: Update single service's recordings](#single-dev-update-single-services-recordings)
     - [Single Dev: Update recordings for a hotfix release](#single-dev-update-recordings-for-a-hotfix-release)
     - [Multiple Devs: Update the same pull request](#multiple-devs-update-the-same-pull-request)
     - [Multiple Devs: Update the same recordings, same service/package multiple different PRs](#multiple-devs-update-the-same-recordings-same-servicepackage-multiple-different-prs)
@@ -221,7 +222,7 @@ And within the file...
     "prefix-path-in-assets": "recordings/", 
 
     // by default, will check out "main"
-    "fallback-branch": "",
+    "fallback-branch": "main",
 
     // by default, will be resolved auto/<service>
     "auto-commit-branch": "auto/tables",
@@ -310,9 +311,22 @@ The `auto` commit branches will need to stick around. At least as far as we need
 
 ## Scenario Walkthroughs
 
-### Single Dev: Update single service's recordings
+For all of these, any supplementary functionality is laid out in `asset-interactions.ps1`. Just `.` include it in your local powershell environment for the commands to work.
 
 ### Single Dev: Create a new services's recordings
+
+This is the easiest case, there is no existing place to start.
+
+#### Test Walkthrough
+
+```
+
+```
+
+
+### Single Dev: Update single service's recordings
+
+This situation is the "normal" use case. Merely adding an additional commit to their auto/<service> branch.
 
 ### Single Dev: Update recordings for a hotfix release
 
@@ -328,7 +342,13 @@ Alright, so we know how we want to structure the `recordings.json`, and we know 
 
 ### Cross-platform capabilities
 
-The example implementations of the sync script will be written in `pwsh`. While that will work for our regular CI and local testing, not all the azure-sdk devs 
+Basic interactions will be provided by a powershell script.
+
+- Initialize local assets repo
+- Checkout at SHA
+- Push update to auto branch
+
+Each language framework can of course implement the above as well, and should at the very least shell out to the assets script to ensure we 
 
 ### Interaction
 

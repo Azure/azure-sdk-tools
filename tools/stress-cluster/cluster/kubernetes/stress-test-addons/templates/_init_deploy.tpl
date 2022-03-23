@@ -14,7 +14,7 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
     - name: RESOURCE_GROUP_NAME
-      value: '{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
+      value: '{{ .Release.Namespace }}-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources

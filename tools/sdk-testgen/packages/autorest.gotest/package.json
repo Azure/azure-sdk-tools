@@ -43,10 +43,10 @@
         "typescript": "^4.2.4"
     },
     "dependencies": {
-        "@autorest/codemodel": "~4.17.2",
+        "@autorest/codemodel": "4.17.2",
         "@autorest/extension-base": "~3.4.4",
         "@autorest/go": "4.0.0-preview.36",
-        "@autorest/testmodeler": "~2.2.2",
+        "@autorest/testmodeler": "~2.2.3",
         "@azure-tools/codegen": "~2.9.0",
         "@azure-tools/linq": "~3.1.0",
         "@types/lodash": "~4.14.176",

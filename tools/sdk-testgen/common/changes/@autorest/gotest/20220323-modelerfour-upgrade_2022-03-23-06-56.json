@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@autorest/gotest",
+      "comment": "use @autorest/testmodeler@2.2.3",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@autorest/gotest"
+}

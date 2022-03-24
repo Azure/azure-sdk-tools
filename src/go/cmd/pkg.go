@@ -4,35 +4,56 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 // Pkg represents a Go package.
 type Pkg struct {
-	c       content
-	files   map[string][]byte
-	fs      *token.FileSet
-	p       *ast.Package
-	relName string
+	c          content
+	files      map[string][]byte
+	fs         *token.FileSet
+	moduleName string
+	p          *ast.Package
+	path       string
+	relName    string
 
-	// typeAliases contains type names defined in other packages that this package exports by alias.
+	// typeAliases keys are type names defined in other packages that this package exports by alias.
 	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
 	// an alias like "type TokenCredential = shared.TokenCredential", in which case this map will
-	// have key "azcore/internal/shared.TokenCredential". The value is meaningless--this is a map
+	// have key "azcore/internal/shared.TokenCredential". Values are meaningless--this is a map
 	// only to facilitate identifying duplicates.
 	typeAliases map[string]interface{}
+
+	// types maps the name of a type defined in this package to that type's definition
+	types map[string]typeDef
 }
 
 // NewPkg loads the package in the specified directory.
 // It's required there is only one package in the directory.
-func NewPkg(dir string) (*Pkg, error) {
-	pk := &Pkg{c: newContent(), typeAliases: map[string]interface{}{}}
+func NewPkg(dir, moduleName string) (*Pkg, error) {
+	pk := &Pkg{
+		c:           newContent(),
+		moduleName:  moduleName,
+		path:        dir,
+		typeAliases: map[string]interface{}{},
+		types:       map[string]typeDef{},
+	}
+	if _, after, found := strings.Cut(dir, moduleName); found {
+		pk.relName = moduleName
+		if after != "" {
+			pk.relName += after
+		}
+	} else {
+		return nil, errors.New(dir + " isn't part of module " + moduleName)
+	}
 	pk.files = map[string][]byte{}
 	pk.fs = token.NewFileSet()
 	packages, err := parser.ParseDir(pk.fs, dir, func(f os.FileInfo) bool {
@@ -59,9 +80,100 @@ func NewPkg(dir string) (*Pkg, error) {
 	panic("failed to load package")
 }
 
-// Name returns the pkg name.
+// Name returns the package's name relative to its module, for example "azcore/runtime".
 func (pkg Pkg) Name() string {
-	return pkg.p.Name
+	return pkg.relName
+}
+
+// Index parses the package's files, adding exported types to the package's content as discovered.
+func (p *Pkg) Index() {
+	fmt.Println(p.path)
+	for _, f := range p.p.Files {
+		p.indexFile(f)
+	}
+}
+
+func (p *Pkg) indexFile(f *ast.File) {
+	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
+	sdkImports := map[string]string{}
+	for _, imp := range f.Imports {
+		// ignore third party and stdlib imports because we don't want to hoist their type definitions
+		path := strings.Trim(imp.Path.Value, `"`)
+		if strings.HasPrefix(path, "github.com/Azure/azure-sdk-for-go/sdk/") {
+			sdkImports[filepath.Base(path)] = path
+		}
+	}
+
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.FuncDecl:
+			p.c.addFunc(*p, x)
+			// children can't be exported, let's not inspect them
+			return false
+		case *ast.GenDecl:
+			if x.Tok == token.CONST {
+				fmt.Printf("\tconst     %s\n", x.Specs[0].(*ast.ValueSpec).Names[0])
+				p.c.addConst(*p, x)
+			}
+		case *ast.TypeSpec:
+			switch t := x.Type.(type) {
+			case *ast.ArrayType:
+				// "type UUID [16]byte"
+				txt := p.getText(t.Pos(), t.End())
+				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
+				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, txt)
+			case *ast.FuncType:
+				// "type PolicyFunc func(*Request) (*http.Response, error)"
+				txt := p.getText(t.Pos(), t.End())
+				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
+				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, txt)
+			case *ast.Ident:
+				// "type ETag string"
+				fmt.Printf("\ttype      %s %s\n", x.Name.Name, t.Name)
+				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, t.Name)
+			case *ast.InterfaceType:
+				if _, ok := p.types[x.Name.Name]; ok {
+					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
+				}
+				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				fmt.Printf("\tinterface %s\n", x.Name.Name)
+				p.c.addInterface(*p, x.Name.Name, t)
+			case *ast.SelectorExpr:
+				if ident, ok := t.X.(*ast.Ident); ok {
+					if impPath, ok := sdkImports[ident.Name]; ok {
+						// This is a re-exported SDK type e.g. "type TokenCredential = shared.TokenCredential".
+						// Track it as an alias so we can later hoist its definition into this package.
+						qn := impPath + "." + t.Sel.Name
+						if _, ok := p.typeAliases[qn]; ok {
+							fmt.Printf("\tWARNING:  multiple aliases for '%s'\n", qn)
+						}
+						p.typeAliases[qn] = x
+						fmt.Printf("\talias     %s => %s\n", t.Sel.Name, qn)
+					} else {
+						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
+						// because we don't want to hoist its definition into this package.
+						expr := p.getText(t.Pos(), t.End())
+						fmt.Printf("\ttype      %s %s\n", x.Name.Name, expr)
+						p.c.addSimpleType(*p, x.Name.Name, expr)
+					}
+				}
+			case *ast.StructType:
+				fmt.Printf("\tstruct    %s\n", x.Name.Name)
+				if _, ok := p.types[x.Name.Name]; ok {
+					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
+				}
+				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.c.addStruct(*p, x.Name.Name, t)
+			default:
+				txt := p.getText(x.Pos(), x.End())
+				fmt.Printf("\tWARNING:  unexpected node type %T: %s\n", t, txt)
+			}
+		}
+		return true
+	})
 }
 
 // returns the text between [start, end]
@@ -130,4 +242,12 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 		t := pkg.getText(f.Type.Pos(), f.Type.End())
 		cb(name, t)
 	}
+}
+
+type typeDef struct {
+	name string
+	// n is the AST node defining the type
+	n *ast.TypeSpec
+	// p is the package defining the type
+	p *Pkg
 }

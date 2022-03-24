@@ -1,6 +1,6 @@
 BeforeAll {
   . $PSScriptRoot/assets.Tests.Helpers.ps1
-  Import-Module -DisableNameChecking -Force $PSScriptRoot/assets.psm1
+  . $PSScriptRoot/assets.ps1
 
   # wipe the test runs 
   $testPath = Get-TestFolder

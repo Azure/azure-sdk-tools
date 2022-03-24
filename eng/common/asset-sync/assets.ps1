@@ -1,10 +1,9 @@
-# Module-level variables can be accessed via $script:<Variable> naming convention from within module functions.
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
 # this methodology for any global variables that can be considered constants
 . (Join-Path $PSScriptRoot ".." "scripts" "common.ps1" )
 
 $REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
-$ASSETS_STORE = Resolve-Path (Join-Path $REPO_ROOT ".assets")
+$ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 
 <#
 .SYNOPSIS
@@ -50,7 +49,6 @@ Function Evaluate-Target-Dir {
         $foundRecording, $foundRoot
     )
 }
-Export-ModuleMember -Function Evaluate-Target-Dir
 
 <#
 .SYNOPSIS
@@ -95,17 +93,15 @@ Function Resolve-RecordingJson {
 
     return $config
 }
-Export-ModuleMember -Function Resolve-RecordingJson
 
 Function Resolve-AssetStore-Location {
-
-    if (-not (Test-Path $script:ASSETS_STORE)){
-        mkdir -p $script:ASSETS_STORE | Out-Null
+    if (-not (Test-Path $ASSETS_STORE)){
+        mkdir -p $ASSETS_STORE | Out-Null
     }
+    $ASSETS_STORE = Resolve-Path $ASSETS_STORE
 
-    return $script:ASSETS_STORE
+    return $ASSETS_STORE
 }
-Export-ModuleMember -Function Resolve-AssetStore-Location
 
 Function Resolve-AssetRepo-Location {
     param(
@@ -127,8 +123,6 @@ Function Resolve-AssetRepo-Location {
     
     return $repoPath
 }
-Export-ModuleMember -Function Resolve-AssetRepo-Location
-
 
 Function Get-Default-Branch {
     param(
@@ -169,7 +163,6 @@ Function Is-AssetsRepo-Initialized {
 
     return $result
 }
-Export-ModuleMember -Function Is-AssetsRepo-Initialized
 
 <#
 .SYNOPSIS
@@ -210,7 +203,6 @@ Function Initialize-AssetsRepo {
         }
     }
 }
-Export-ModuleMember -Function Initialize-AssetsRepo
 
 <#
 .SYNOPSIS
@@ -248,8 +240,6 @@ Function Reset-AssetsRepo {
         Pop-Location
     }
 }
-Export-ModuleMember -Function Reset-AssetsRepo
-
 
 <#
 .SYNOPSIS
@@ -266,7 +256,6 @@ Function Update-Recording-Json {
     
     Write-Host "Update!"
 }
-Export-ModuleMember -Function Update-Recording-Json
 
 <#
 .SYNOPSIS
@@ -285,4 +274,3 @@ Function Push-AssetsRepo-Update {
 
     return $newSha
 }
-Export-ModuleMember -Function Push-Asset-Update

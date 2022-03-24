@@ -8,7 +8,6 @@ Function Get-Basic-RecordingJson {
     Add-Member -InputObject $result -MemberType "NoteProperty" -Name "AssetRepoId" -Value (New-Guid).ToString()
   }
 
-  Write-Host $RandomizeRepoId
   return $result
 }
 

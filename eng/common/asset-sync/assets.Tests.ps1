@@ -80,12 +80,12 @@ Describe "AssetsModuleTests" {
       }
     }
   }
-
+  
   Context "Resolve-Assets" {
     It "Should resolve the asset store location." {
       $files = @()
       $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
-      $testLocation = Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
 
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
       $result = Resolve-AssetStore-Location
@@ -93,24 +93,25 @@ Describe "AssetsModuleTests" {
       $result.Length | Should -Be $expectedLocation.Length
     }
 
-    # It "Should should resolve a standard assets repo." {
-    #   $files = @()
-    #   $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
-    #   $testLocation = Describe-TestFolder -RecordingJsonContent -Files $files
+    It "Should should resolve a standard assets repo." {
+      $files = @()
+      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $testLocation = Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
 
-    #   Resolve-AssetRepo-Location
-    # }
+    
+    }
 
-    # It "Should should resolve a custom repoId." {
-    #   $files = @()
-    #   $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
-    #   $jsonContent["assets-repo-id"] = "custom"
+    It "Should should resolve a custom repoId." {
+      $files = @()
+      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $jsonContent.AssetsRepoId = "custom"
 
-    #   $testLocation = Describe-TestFolder -RecordingJsonContent -Files $files
-
-    #   $customRepoLocation = Resolve-AssetRepo-Location
-
-    # }
+      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      $result = Resolve-AssetRepo-Location -Context $jsonContent
+      $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "custom")
+      
+      $result | Should -Be $expectedLocation.ToString()
+    }
   }
 
   Context "Initialize-Assets-Repo" {

@@ -1,7 +1,6 @@
-# Module-level variables can be accessed via $script:<Variable> naming convention
+# Module-level variables can be accessed via $script:<Variable> naming convention from within module functions.
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
-# this methodology for any global variables
-
+# this methodology for any global variables that can be considered constants
 . (Join-Path $PSScriptRoot ".." "scripts" "common.ps1" )
 
 $REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
@@ -108,11 +107,22 @@ Export-ModuleMember -Function Resolve-AssetStore-Location
 Function Resolve-AssetRepo-Location {
     param(
         [Parameter(Mandatory=$true)]
-        [string] $RepoId
+        [PSCustomObject] $Context
     )
     $assetsLocation = Resolve-AssetStore-Location
+    $repoName = $Context.AssetsRepo.Replace("/", ".")
+    
+    if ($Context.AssetsRepoId) {
+        $repoName = $Context.AssetsRepoId
+    }
 
-    return (Join-Path $assetsLocation $RepoId)
+    $repoPath = (Join-Path $assetsLocation $repoName)
+    
+    if (-not (Test-Path $repoPath)){
+        mkdir -p $repoPath | Out-Null
+    }
+    
+    return $repoPath
 }
 Export-ModuleMember -Function Resolve-AssetRepo-Location
 
@@ -123,13 +133,17 @@ Initializes a recordings repo based on a recordings.json file.
 .DESCRIPTION
 This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
+
+.PARAMETER Context
+A PSCustomObject that contains an auto-parsed recording.json content.
+
 .PARAMETER TargetDirectory
 Optional directory containing a "recording.json" file.
 #>
 Function Initialize-Assets-Repo {
     param(
-        [Parameter(Mandatory=$false)]
-        [string] $TargetDirectory = "",
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Context,
         [Parameter(Mandatory=$false)]
         [boolean] $ForceReinit = $false
     )
@@ -153,6 +167,7 @@ Function Initialize-Assets-Repo {
     #     Pop-Location
     # }
 }
+
 
 
 # <#

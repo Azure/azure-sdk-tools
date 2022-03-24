@@ -60,6 +60,7 @@ type Navigation struct {
 
 // PackageReview ...
 type PackageReview struct {
+	Language   string       `json:"Language"`
 	Name       string       `json:"Name"`
 	Tokens     []Token      `json:"Tokens"`
 	Navigation []Navigation `json:"Navigation"`

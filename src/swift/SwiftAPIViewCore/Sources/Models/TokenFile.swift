@@ -212,7 +212,8 @@ class TokenFile: Codable {
             SharedLogger.fail("Definition ID should not contain whitespace: \(defId)")
         }
         if self.definitionIds.contains(defId) {
-            SharedLogger.fail("Duplication definition ID: \(defId). Will result in duplicate comments.")
+            // FIXME: Change back to fail
+            SharedLogger.warn("Duplicate definition ID: \(defId). Will result in duplicate comments.")
         }
         definitionIds.insert(defId)
         return defId
@@ -414,13 +415,8 @@ class TokenFile: Codable {
     private func process(_ decl: ExtensionDeclaration, defIdPrefix: String, overridingAccess: AccessLevelModifier? = nil) -> Bool {
         let accessLevel = decl.accessLevelModifier ?? overridingAccess
 
-        // a missing access modifier for extensions does *not* automatically
-        // imply internal access
-        if let access = accessLevel {
-            guard publicModifiers.contains(access) else {
-                return false
-            }
-        }
+        let shouldDisplay = decl.isPublic || decl.hasPublicMembers
+        guard shouldDisplay == true else { return false }
         handle(attributes: decl.attributes, defId: defIdPrefix)
 
         if let access = accessLevel {
@@ -616,7 +612,8 @@ class TokenFile: Codable {
         case let decl as EnumDeclaration:
             return process(decl, defIdPrefix: defIdPrefix, overridingAccess: overridingAccess)
         case let decl as ExtensionDeclaration:
-            return process(decl, defIdPrefix: defIdPrefix, overridingAccess: overridingAccess)
+            let extensionPrefix = "\(defIdPrefix).\(decl.type.textDescription)"
+            return process(decl, defIdPrefix: extensionPrefix, overridingAccess: overridingAccess)
         case let decl as FunctionDeclaration:
             return process(decl, defIdPrefix: defIdPrefix, overridingAccess: overridingAccess)
         case let decl as InitializerDeclaration:

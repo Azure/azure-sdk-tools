@@ -56,11 +56,15 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--source=/Users/travisprescott/repos/communication-ui-library-ios/AzureCommunicationUI"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--package-version=0.0.0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=TestFile2"
+            argument = "--package-name=AzureCommunicationUI"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -73,7 +77,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile2.swifttxt"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <LocationScenarioReference

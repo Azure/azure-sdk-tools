@@ -5,7 +5,7 @@
 function Get-ChangedFiles {
   param (
     [string]$SourceCommittish= "${env:SYSTEM_PULLREQUEST_SOURCECOMMITID}",
-    [string]$TargetCommittish = ("origin/${env:SYSTEM_PULLREQUEST_TARGETBRANCH}" -replace "refs/heads/"),
+    [string]$TargetCommittish = ("origin//${env:SYSTEM_PULLREQUEST_TARGETBRANCH}" -replace "refs/heads/"),
     [string]$DiffPath,
     [string]$DiffFilterType = "d"
   )

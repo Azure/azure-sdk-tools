@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -53,44 +54,53 @@ var (
 
 // CreateAPIView generates the output file that the API view tool uses.
 func CreateAPIView(pkgDir, outputDir string) error {
-	// load the given Go package
-	pkg, err := loadPackage(pkgDir)
+	m, err := NewModule(pkgDir)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	tokenList := &[]Token{}
-	c := newContent()
-	c = inspectAST(pkg)
-	// create the tokens for the Go package declaration
-	makeToken(nil, nil, "package", memberName, tokenList)
-	makeToken(nil, nil, " ", whitespace, tokenList)
-	makeToken(&pkg.p.Name, nil, pkg.p.Name, typeName, tokenList)
-	makeToken(nil, nil, "", newline, tokenList)
-	makeToken(nil, nil, " ", whitespace, tokenList)
-	makeToken(nil, nil, "", newline, tokenList)
-	// work through consts, interfaces, structs and funcs sequentially adding tokens
-	c.parseConst(tokenList)
-	c.parseInterface(tokenList)
-	c.parseStruct(tokenList)
-	c.parseFunc(tokenList)
-	// generate navigation items for each top level Go component
-	navItems := c.generateNavChildItems()
+	nav := []Navigation{}
+	packageNames := []string{}
+	for name, p := range m.packages {
+		if strings.Contains(p.relName, "internal") || p.c.isEmpty() {
+			continue
+		}
+		packageNames = append(packageNames, name)
+	}
+	sort.Strings(packageNames)
+	for _, name := range packageNames {
+		p := m.packages[name]
+		n := p.relName
+		makeToken(nil, nil, "package", memberName, tokenList)
+		makeToken(nil, nil, " ", whitespace, tokenList)
+		makeToken(&n, &n, n, typeName, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
+		// TODO: reordering these calls reorders APIView output and can omit content
+		p.c.parseSimpleType(tokenList)
+		p.c.parseConst(tokenList)
+		p.c.parseInterface(tokenList)
+		p.c.parseStruct(tokenList)
+		p.c.parseFunc(tokenList)
+		navItems := p.c.generateNavChildItems()
+		nav = append(nav, Navigation{
+			Text:         &n,
+			NavigationId: &n,
+			ChildItems:   navItems,
+		})
+	}
 	review := PackageReview{
-		Name:   pkg.p.Name,
-		Tokens: *tokenList,
-		Navigation: []Navigation{
-			{
-				Text:       &pkg.p.Name,
-				ChildItems: navItems,
-			},
-		},
+		Language:   "Go",
+		Name:       m.Name,
+		Tokens:     *tokenList,
+		Navigation: nav,
 	}
 	if outputDir == "." {
 		outputDir = ""
 	} else if !strings.HasSuffix(outputDir, "/") {
 		outputDir = fmt.Sprintf("%s/", outputDir)
 	}
-	filename := fmt.Sprintf("%s%s.json", outputDir, pkg.p.Name)
+	filename := fmt.Sprintf("%s%s.json", outputDir, m.Name)
 	file, _ := json.MarshalIndent(review, "", " ")
 	err = ioutil.WriteFile(filename, file, 0644)
 	if err != nil {

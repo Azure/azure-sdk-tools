@@ -186,7 +186,6 @@ func (c *content) parseConst(tokenList *[]Token) {
 			makeToken(nil, nil, "", 1, tokenList)
 
 			c.searchForPossibleValuesMethod(t, tokenList)
-			c.searchForMethods(t, tokenList)
 		}
 	}
 

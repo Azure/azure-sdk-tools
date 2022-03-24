@@ -334,17 +334,8 @@
         <div id="review-right" class="col-10 rounded-1 border">
             <table class="code-window">
                 <tbody>
-                    @{
-                        var commentThreadNumber = 0;
-                        ViewData["CommentThreadCount"] = @Model.Lines.Where(l => l.CommentThread != null).Count();
-                    }
                     @foreach (var line in Model.Lines)
                     {
-                        if (@line.CommentThread != null)
-                        {
-                            commentThreadNumber++;
-                            ViewData["CommentThreadNumber"] = commentThreadNumber;
-                        }
                         <partial name="_CodeLine" model="@line" />
                     }
                 </tbody>

@@ -9,10 +9,7 @@
 {
     <tr class="comment-row" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
-            @{
-                var commentThreadAnchor = "comment-thread-" + ViewData["CommentThreadNumber"];
-            }
-            <a class="comment-thread-anchor" id="@commentThreadAnchor"></a>
+            <a class="comment-thread-anchor"></a>
             @if (Model.IsResolved)
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
@@ -102,21 +99,8 @@
                                 <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                             </form>
                         }
-                        <div>
-                            @{
-                                var commentThreadNumber = (int)ViewData["CommentThreadNumber"];
-                                var commentThreadCount = (int)ViewData["CommentThreadCount"];
-                            }
-                            @if (commentThreadNumber != 1)
-                            {
-                                var previousCommentThreadAnchor = "comment-thread-" + (commentThreadNumber - 1);
-                                <a class="btn btn-outline-secondary" href="#@previousCommentThreadAnchor"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>
-                            }
-                            @if (commentThreadNumber != commentThreadCount)
-                            {
-                                var nextCommentThreadAnchor = "comment-thread-" + (commentThreadNumber + 1);
-                                <a class="btn btn btn-outline-secondary" href="#@nextCommentThreadAnchor"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>
-                            }
+                        <div class="comment-navigation-buttons">
+                            <!-- Navigation button are added via JavaScript-->
                         </div>
                     </div>
                 </div>

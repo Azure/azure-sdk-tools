@@ -90,7 +90,10 @@ Function Resolve-RecordingJson {
         throw "Unable to locate recording.json"
     }
 
-    return @($discoveredPath, (Get-Content -Path $discoveredPath | ConvertFrom-Json))
+    $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
+    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "RecordingJsonLocation" -Value "$discoveredPath"
+
+    return $config
 }
 Export-ModuleMember -Function Resolve-RecordingJson
 
@@ -107,13 +110,13 @@ Export-ModuleMember -Function Resolve-AssetStore-Location
 Function Resolve-AssetRepo-Location {
     param(
         [Parameter(Mandatory=$true)]
-        [PSCustomObject] $Context
+        [PSCustomObject] $Config
     )
     $assetsLocation = Resolve-AssetStore-Location
-    $repoName = $Context.AssetsRepo.Replace("/", ".")
+    $repoName = $Config.AssetsRepo.Replace("/", ".")
     
-    if ($Context.AssetsRepoId) {
-        $repoName = $Context.AssetsRepoId
+    if ($Config.AssetsRepoId) {
+        $repoName = $Config.AssetsRepoId
     }
 
     $repoPath = (Join-Path $assetsLocation $repoName)
@@ -126,6 +129,40 @@ Function Resolve-AssetRepo-Location {
 }
 Export-ModuleMember -Function Resolve-AssetRepo-Location
 
+
+<#
+.SYNOPSIS
+This function returns a boolean that indicates whether or not the assets repo has been initialized.
+
+.DESCRIPTION
+#>
+Function Is-AssetsRepo-Initialized {
+    param(
+        [PSCustomObject] $Config
+    )
+
+    $result = $false
+    $assetRepoLocation = Resolve-AssetRepo-Location -Config $Config
+
+    try {
+        Push-Location $assetRepoLocation
+
+        $originData = (git remote show origin)
+
+        $result = $originData.Contains($Config.AssetsRepo)
+    }
+    catch {
+        Write-Host $_
+        $result = $false
+    }
+    finally {
+        Pop-Location
+    }
+
+    return $result
+}
+
+
 <#
 .SYNOPSIS
 Initializes a recordings repo based on a recordings.json file. 
@@ -133,167 +170,106 @@ Initializes a recordings repo based on a recordings.json file.
 .DESCRIPTION
 This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
-
-.PARAMETER Context
+.PARAMETER Config
 A PSCustomObject that contains an auto-parsed recording.json content.
 
-.PARAMETER TargetDirectory
-Optional directory containing a "recording.json" file.
+.PARAMETER ForceReinitialize
+Should this assets repo be renewed regardless of current status?
 #>
 Function Initialize-Assets-Repo {
     param(
         [Parameter(Mandatory=$true)]
-        [PSCustomObject] $Context,
+        [PSCustomObject] $Config,
         [Parameter(Mandatory=$false)]
-        [boolean] $ForceReinit = $false
+        [boolean] $ForceReinitialize = $false
     )
+    $assetRepo = Resolve-AssetRepo-Location -Config $Config
+
+    if ($ForceReinitialize)
+    {
+        Remove-Item -Force -R "$assetRepo/*"
+    }
     
-    $assetRepo = Resolve-AssetRepo-Location
-    $configLocation, $config = Resolve-RecordingJson -TargetPath $TargetDirectory
+    $isInitialized = $false
 
+    if(-not $isInitialized){
+        try {
+            Push-Location $assetRepo
+            git clone --filter=blob:none --no-checkout "https://github.com/$($Config.AssetsRepo)" .
+        }
+        finally {
+            Pop-Location
+        }
+    }
+}
 
-    # if (!()){
-    #     mkdir -p $AssetsRepoLocation | Out-Null
-    #     return $AssetsRepoLocation
-    # }
+<#
+.SYNOPSIS
+This function will forcibly reset the repo to a targeted SHA. This is a **destructive** update.
 
-    # Remove-Item -Force -R "$AssetsRepoLocation/*"
+.DESCRIPTION
+#>
+Function Reset-Recordings-Repo {
+    param (
+        [Parameter(Mandatory = $true)]
+        $Config
+    )
+    try {
 
-    # try {
-    #     Push-Location $AssetsRepoLocation
-    #     git clone --filter=blob:none --no-checkout "https://github.com/$AssetsRepo" .
-    # }
-    # finally {
-    #     Pop-Location
-    # }
+        $assetRepo = Resolve-AssetRepo-Location -Config $Config
+        Push-Location  $assetRepo
+
+        Write-Host "git checkout *"
+        git checkout *
+        Write-Host "git clean -xdf"
+        git clean -xdf
+        Write-Host "git reset --hard (Get-Default-Branch)"
+        git reset --hard (Get-Default-Branch)
+
+        # need to figure out the sparse checkouts if we want to optimize this as much as possible
+        # for prototyping checking out the whole repo is fine
+        
+        
+        if($RecordingRepoSHA){
+            Write-Host "git checkout $RecordingRepoSHA"
+            git checkout $RecordingRepoSHA
+            Write-Host "git pull"
+            git pull
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 
+<#
+.SYNOPSIS
+This function's purpose is solely to update a recording.json (both config and on file) with a new recording SHA.
 
-# <#
-# .SYNOPSIS
+.DESCRIPTION
 
+#>
+Function Update-Recording-Json {
+    param(
+        $Config,
+        $NewSHA
+    )
+    
+    Write-Host "Update!"
+}
+Export-ModuleMember -Function Update-Recording-Json
 
-# .DESCRIPTION
+<#
+.SYNOPSIS
+This function returns a boolean that indicates whether or not the assets repo has been initialized.
 
-# #>
-# Function Reset-Recordings-Repo {
-#     param (
-#         [Parameter(Mandatory = $true)]
-#         $targetPath,
-#         [Parameter(Mandatory = $false)]
-#         $RecordingRepoSHA = ""
-#     )
-#     try {
-#         Push-Location $AssetsRepoLocation
+.DESCRIPTION
+#>
+Function Push-Asset-Update {
+    param(
+        [PSCustomObject]$Config
+    )
 
-#         Write-Host (Get-Location)
-
-#         Write-Host "git checkout *"
-#         git checkout *
-#         Write-Host "git clean -xdf"
-#         git clean -xdf
-#         Write-Host "git reset --hard (Get-Default-Branch)"
-#         git reset --hard (Get-Default-Branch)
-
-#         Write-Host "git sparse-checkout add $targetPath"
-#         git sparse-checkout add $targetPath
-
-#         if($RecordingRepoSHA){
-#             Write-Host "git checkout $RecordingRepoSHA"
-#             git checkout $RecordingRepoSHA
-#             Write-Host "git pull"
-#             git pull
-#         }
-#     }
-#     finally {
-#         Pop-Location
-#     }
-# }
-
-
-
-# $RepoRoot = Resolve-Path "${PSScriptRoot}..\..\..\.."
-# Write-Host $RepoRoot
-
-
-
-# $hash = @{}
-# foreach ($property in $jsonObj.PSObject.Properties) {
-#     $hash[$property.Name] = $property.Value
-# }
-
-
-
-# # check for existence within the repo
-# Function Recordings-Repo-Initialized {
-#     $result = $false
-#     if (!(Test-Path $AssetsRepoLocation))
-#     {
-#         return $result
-#     }
-
-#     try {
-#         Push-Location $AssetsRepoLocation
-
-#         $originData = (git remote show origin)
-
-#         $result = $originData.Contains($AssetsRepo)
-#     }
-#     catch {
-#         Write-Host $_
-#         $result = $false
-#     }
-#     finally {
-#         Pop-Location
-#     }
-
-#     return $result
-# }
-
-# Function Commit-Pending-Changes {
-
-# }
-
-# Function Pending-Changes {
-#     $result = (git status --porcelain)
-#     if ($result){
-#         return $true
-#     }
-#     else{
-#         return $false
-#     }
-# }
-
-# # do we add traversal logic here?
-# Function Retrieve-SHA-From-JSON {
-#     if ($ShaObject[$Folder]){
-#         Write-Host "Matched Path from recordings.json: $Folder"
-#         return $ShaObject[$Folder]
-#     }
-#     else{
-#         Write-Host "No matches in ShaObject found. Falling back to root."
-#         return $ShaObject["/"]
-#     }
-# }
-
-# # reset repo to default branch
-# if ($Goal -eq "playback"){
-#     $targetSHA = Retrieve-SHA-From-JSON
-
-#     try {
-#         Initialize-Recordings-Repo
-#         Reset-Recordings-Repo $Folder $targetSHA
-#     }
-#     catch {
-#         Write-Host $_
-#     }
-# }
-
-# # updates, do we even want to target a branch?
-# # let's start with checking out 
-# if ($Goal -eq "submit"){
-
-# }
-
-# exports
+    $assetRepo = Resolve-AssetRepo-Location -Config $Config
+}

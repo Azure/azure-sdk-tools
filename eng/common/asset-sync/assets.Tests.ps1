@@ -40,7 +40,7 @@ Describe "AssetsModuleTests" {
       $testLocation.GetType().Name | Should -Be "String"
 
       $Result = Resolve-RecordingJson -TargetPath $testLocation
-      $recordingLocation = $Result[0]
+      $recordingLocation = $Result.RecordingJsonLocation
       $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
     }
 
@@ -55,7 +55,7 @@ Describe "AssetsModuleTests" {
       try {
         Push-Location -Path (Join-Path $testLocation "a" "b")
         $Result = Resolve-RecordingJson -TargetPath $testLocation
-        $recordingLocation = $Result[0]
+        $recordingLocation = $Result.RecordingJsonLocation
         $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
       }
       finally {
@@ -90,15 +90,17 @@ Describe "AssetsModuleTests" {
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
       $result = Resolve-AssetStore-Location
 
-      $result.Length | Should -Be $expectedLocation.Length
+      $result | Should -Be $expectedLocation.ToString()
     }
 
     It "Should should resolve a standard assets repo." {
       $files = @()
       $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
-      $testLocation = Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      $result = Resolve-AssetRepo-Location -Config $jsonContent
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "Azure.azure-sdk-for-python-assets")
 
-    
+      $result | Should -Be $expectedLocation.ToString()
     }
 
     It "Should should resolve a custom repoId." {
@@ -107,7 +109,7 @@ Describe "AssetsModuleTests" {
       $jsonContent.AssetsRepoId = "custom"
 
       Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
-      $result = Resolve-AssetRepo-Location -Context $jsonContent
+      $result = Resolve-AssetRepo-Location -Config $jsonContent
       $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "custom")
       
       $result | Should -Be $expectedLocation.ToString()
@@ -125,10 +127,8 @@ Describe "AssetsModuleTests" {
       $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
     }
 
-    It "Should no-op when repo already initialized." {
-    }
+    It "Should recognize an initialized repository." {
 
-    It "Should allow custom repo alias." {
     }
   }
 }

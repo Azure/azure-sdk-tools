@@ -23,6 +23,11 @@ type Func struct {
 	ReturnsNum int
 }
 
+type SimpleType struct {
+	Name           *string `json:"name,omitempty"`
+	UnderlyingType *string `json:"underlyingType,omitempty"`
+}
+
 // Interface contains the list of methods for an interface.
 type Interface struct {
 	EmbeddedInterfaces []string

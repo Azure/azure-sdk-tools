@@ -31,6 +31,9 @@ type content struct {
 	// key is the exported name, value contains the interface definition.
 	Interfaces map[string]Interface `json:"interfaces,omitempty"`
 
+	// SimpleTypes are types with underlying types other than interface and struct, for example "type Thing string"
+	SimpleTypes map[string]SimpleType
+
 	// the list of exported struct types.
 	// key is the exported name, value contains field information.
 	Structs map[string]Struct `json:"structs,omitempty"`
@@ -39,16 +42,17 @@ type content struct {
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{
-		Consts:     make(map[string]Const),
-		Funcs:      make(map[string]Func),
-		Interfaces: make(map[string]Interface),
-		Structs:    make(map[string]Struct),
+		Consts:      make(map[string]Const),
+		Funcs:       make(map[string]Func),
+		Interfaces:  make(map[string]Interface),
+		Structs:     make(map[string]Struct),
+		SimpleTypes: make(map[string]SimpleType),
 	}
 }
 
 // isEmpty returns true if there is no content in any of the fields.
 func (c content) isEmpty() bool {
-	return len(c.Consts) == 0 && len(c.Funcs) == 0 && len(c.Interfaces) == 0 && len(c.Structs) == 0
+	return len(c.Consts)+len(c.Funcs)+len(c.Interfaces)+len(c.Structs)+len(c.SimpleTypes) == 0
 }
 
 // adds the specified const declaration to the exports list
@@ -117,6 +121,26 @@ func includesType(s []string, t string) bool {
 		}
 	}
 	return false
+}
+
+func (c *content) parseSimpleType(tokenList *[]Token) {
+	keys := make([]string, 0, len(c.SimpleTypes))
+	for key := range c.SimpleTypes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, name := range keys {
+		v := c.SimpleTypes[name]
+		n := name
+		makeToken(&n, &n, "type", keyword, tokenList)
+		makeToken(nil, nil, " ", whitespace, tokenList)
+		makeToken(nil, nil, *v.Name, typeName, tokenList)
+		makeToken(nil, nil, " ", whitespace, tokenList)
+		makeToken(nil, nil, *v.UnderlyingType, text, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
+		c.searchForMethods(name, tokenList)
+	}
 }
 
 func (c *content) parseConst(tokenList *[]Token) {
@@ -197,6 +221,10 @@ func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) {
 	}
 	sig += f.Name.Name
 	c.Funcs[sig] = pkg.buildFunc(f.Type)
+}
+
+func (c *content) addSimpleType(pkg Pkg, name string, underlyingType string) {
+	c.SimpleTypes[name] = SimpleType{Name: &name, UnderlyingType: &underlyingType}
 }
 
 // adds the specified interface type to the exports list.

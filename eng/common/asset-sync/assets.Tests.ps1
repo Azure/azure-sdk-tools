@@ -84,7 +84,7 @@ Describe "AssetsModuleTests" {
   Context "Resolve-Assets" {
     It "Should resolve the asset store location." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $jsonContent = Get-Basic-RecordingJson
       Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
 
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
@@ -95,7 +95,7 @@ Describe "AssetsModuleTests" {
 
     It "Should should resolve a standard assets repo." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $jsonContent = Get-Basic-RecordingJson -RandomizeRepoId $false
       Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
       $result = Resolve-AssetRepo-Location -Config $jsonContent
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "Azure.azure-sdk-for-python-assets")
@@ -105,7 +105,7 @@ Describe "AssetsModuleTests" {
 
     It "Should should resolve a custom repoId." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $jsonContent = Get-Basic-RecordingJson
       $jsonContent.AssetsRepoId = "custom"
 
       Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
@@ -123,7 +123,7 @@ Describe "AssetsModuleTests" {
         "a/b/c.json"
       )
 
-      $JsonContent = Get-Basic-RecordingJson | ConvertFrom-Json
+      $JsonContent = Get-Basic-RecordingJson
       $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
     }
 

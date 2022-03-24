@@ -1,5 +1,15 @@
 Function Get-Basic-RecordingJson {
-  return (Get-Content -Raw -Path (Join-Path $PSScriptRoot "recording.json"))
+  param(
+    [boolean]$RandomizeRepoId = $true
+  )
+  $result = (Get-Content -Raw -Path (Join-Path $PSScriptRoot "recording.json") | ConvertFrom-Json)
+
+  if ($RandomizeRepoId) {
+    Add-Member -InputObject $result -MemberType "NoteProperty" -Name "AssetRepoId" -Value (New-Guid).ToString()
+  }
+
+  Write-Host $RandomizeRepoId
+  return $result
 }
 
 Function Get-Full-TestPath {
@@ -53,7 +63,7 @@ Function Describe-TestFolder{
   }
   
   if ($RecordingJsonContent){
-    Set-Content -Value $RecordingJsonContent -Path $recordingJsonLocation | Out-Null
+    Set-Content -Value ($RecordingJsonContent | ConvertTo-Json) -Path $recordingJsonLocation | Out-Null
   }
 
   foreach($file in $Files){

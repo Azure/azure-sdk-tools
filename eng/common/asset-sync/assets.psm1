@@ -130,6 +130,14 @@ Function Resolve-AssetRepo-Location {
 Export-ModuleMember -Function Resolve-AssetRepo-Location
 
 
+Function Get-Default-Branch {
+    param(
+        $Config
+    )
+    $repoJsonResult = curl "https://api.github.com/repos/$($Config.AssetsRepo)"
+    return ($repoJsonResult | ConvertFrom-Json).default_branch
+}
+
 <#
 .SYNOPSIS
 This function returns a boolean that indicates whether or not the assets repo has been initialized.
@@ -161,7 +169,7 @@ Function Is-AssetsRepo-Initialized {
 
     return $result
 }
-
+Export-ModuleMember -Function Is-AssetsRepo-Initialized
 
 <#
 .SYNOPSIS
@@ -176,7 +184,7 @@ A PSCustomObject that contains an auto-parsed recording.json content.
 .PARAMETER ForceReinitialize
 Should this assets repo be renewed regardless of current status?
 #>
-Function Initialize-Assets-Repo {
+Function Initialize-AssetsRepo {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config,
@@ -202,6 +210,7 @@ Function Initialize-Assets-Repo {
         }
     }
 }
+Export-ModuleMember -Function Initialize-AssetsRepo
 
 <#
 .SYNOPSIS
@@ -209,7 +218,7 @@ This function will forcibly reset the repo to a targeted SHA. This is a **destru
 
 .DESCRIPTION
 #>
-Function Reset-Recordings-Repo {
+Function Reset-AssetsRepo {
     param (
         [Parameter(Mandatory = $true)]
         $Config
@@ -228,8 +237,6 @@ Function Reset-Recordings-Repo {
 
         # need to figure out the sparse checkouts if we want to optimize this as much as possible
         # for prototyping checking out the whole repo is fine
-        
-        
         if($RecordingRepoSHA){
             Write-Host "git checkout $RecordingRepoSHA"
             git checkout $RecordingRepoSHA
@@ -241,6 +248,7 @@ Function Reset-Recordings-Repo {
         Pop-Location
     }
 }
+Export-ModuleMember -Function Reset-AssetsRepo
 
 
 <#
@@ -266,10 +274,15 @@ This function returns a boolean that indicates whether or not the assets repo ha
 
 .DESCRIPTION
 #>
-Function Push-Asset-Update {
+Function Push-AssetsRepo-Update {
     param(
         [PSCustomObject]$Config
     )
 
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
+
+    $newSha = "I have a new SHA!"
+
+    return $newSha
 }
+Export-ModuleMember -Function Push-Asset-Update

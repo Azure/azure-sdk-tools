@@ -338,6 +338,20 @@ This is the easiest case, there is no existing place to start.
 #### Test Walkthrough
 
 ```
+<user> Create recording.json with assetsRepo and assetRecordingPrefix targeted
+<user> Invoke Record Tests 
+  <tooling> Initialize-Assets-Repo
+  <tooling> Check for SHA/auto branch in the repo
+  <tooling> If no remote references, create branch under format of auto/<servicename> push empty branch
+    <tooling> After above invocation, recording.json values of the following fields will be updated as per main, since there is no existing auto/<service> branch.
+                AssetsRepo
+                AssetsRepoPrefixPath
+                Branch
+                TargetSHA
+  <tooling> Return the root of the initialized repo to the framework <-- is where we start test-proxy
+
+
+
 
 ```
 
@@ -345,6 +359,8 @@ This is the easiest case, there is no existing place to start.
 ### Single Dev: Update single service's recordings
 
 This situation is the "normal" use case. Merely adding an additional commit to their auto/<service> branch.
+
+
 
 ### Single Dev: Update recordings for a hotfix release
 

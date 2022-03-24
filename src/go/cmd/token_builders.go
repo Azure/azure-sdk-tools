@@ -33,27 +33,32 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	makeToken(nil, nil, "struct", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
-	if anonFields != nil || fields != nil {
+	if anonFields == nil && fields == nil {
+		makeToken(nil, nil, "", newline, list)
+		makeToken(nil, nil, "\t", whitespace, list)
+		makeToken(nil, nil, "// no exported fields", comment, list)
+	} else {
+		sort.Strings(anonFields)
 		for _, v1 := range anonFields {
 			v := v1 + "-" + *name
 			makeToken(nil, nil, "", newline, list)
 			makeToken(nil, nil, "\t", whitespace, list)
 			makeToken(&v, nil, v1, typeName, list)
 		}
-		for k1, v1 := range fields {
-			k := k1 + "-" + *name
+		keys := []string{}
+		for k := range fields {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, field := range keys {
+			typ := fields[field]
+			defID := field + "-" + *name
 			makeToken(nil, nil, "", newline, list)
 			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&k, nil, k1, typeName, list)
+			makeToken(&defID, nil, field, typeName, list)
 			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, v1, memberName, list)
+			makeToken(nil, nil, typ, memberName, list)
 		}
-	}
-	if anonFields == nil && fields == nil {
-		makeToken(nil, nil, "", newline, list)
-		makeToken(nil, nil, "\t", whitespace, list)
-		makeToken(nil, nil, "// no exported fields", comment, list)
-		makeToken(nil, nil, "", newline, list)
 	}
 	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "}", punctuation, list)

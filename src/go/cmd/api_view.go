@@ -11,47 +11,6 @@ import (
 	"strings"
 )
 
-type TokenType int
-
-const (
-	text          TokenType = 0
-	newline       TokenType = 1
-	whitespace    TokenType = 2
-	punctuation   TokenType = 3
-	keyword       TokenType = 6
-	lineIDMarker  TokenType = 5
-	typeName      TokenType = 4
-	memberName    TokenType = 7
-	stringLiteral TokenType = 8
-	literal       TokenType = 9
-	comment       TokenType = 10
-)
-
-var (
-	reservedNames = map[string]struct{}{
-		"string":     {},
-		"byte":       {},
-		"int":        {},
-		"int8":       {},
-		"int16":      {},
-		"int32":      {},
-		"int64":      {},
-		"float32":    {},
-		"float64":    {},
-		"rune":       {},
-		"bool":       {},
-		"map":        {},
-		"uint":       {},
-		"uint8":      {},
-		"uint16":     {},
-		"uint32":     {},
-		"uint64":     {},
-		"complex64":  {},
-		"complex128": {},
-		"error":      {},
-	}
-)
-
 // CreateAPIView generates the output file that the API view tool uses.
 func CreateAPIView(pkgDir, outputDir string) error {
 	m, err := NewModule(pkgDir)

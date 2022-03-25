@@ -8,6 +8,46 @@ import (
 	"strings"
 )
 
+var reservedNames = map[string]struct{}{
+	"string":     {},
+	"byte":       {},
+	"int":        {},
+	"int8":       {},
+	"int16":      {},
+	"int32":      {},
+	"int64":      {},
+	"float32":    {},
+	"float64":    {},
+	"rune":       {},
+	"bool":       {},
+	"map":        {},
+	"uint":       {},
+	"uint8":      {},
+	"uint16":     {},
+	"uint32":     {},
+	"uint64":     {},
+	"complex64":  {},
+	"complex128": {},
+	"error":      {},
+}
+
+type TokenType int
+
+// these values are determined by APIView
+const (
+	text          TokenType = 0
+	newline       TokenType = 1
+	whitespace    TokenType = 2
+	punctuation   TokenType = 3
+	keyword       TokenType = 6
+	lineIDMarker  TokenType = 5
+	typeName      TokenType = 4
+	memberName    TokenType = 7
+	stringLiteral TokenType = 8
+	literal       TokenType = 9
+	comment       TokenType = 10
+)
+
 // makeToken builds the Token to be added to the Token slice that is passed in as a parameter.
 // defID and navID components can be passed in as nil to indicate that there is no definition ID or
 // navigation ID that is related to that token.

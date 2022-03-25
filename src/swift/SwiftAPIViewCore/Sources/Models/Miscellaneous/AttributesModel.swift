@@ -24,8 +24,50 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
-protocol Tokenizable {
-    var tokens: [TokenItem] { get }
+struct AttributeModel: Tokenizable {
+
+    /// Name of the attribute
+    var name: String
+
+    /// Optional argument clause
+    var argumentClause: String?
+
+    /// Whether the attribute is rendered inline or on a separate line
+    var isInline: Bool
+
+    init(from clause: Attribute) {
+        name = "@\(clause.name)"
+        argumentClause = clause.argumentClause?.textDescription
+        isInline = false
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        t.keyword(name, definitionId: nil)
+        if let argument = argumentClause {
+            t.text(argument)
+        }
+        isInline ? t.whitespace() : t.newLine()
+        return t
+    }
+}
+
+class AttributesModel: Tokenizable {
+
+    var attributes: [AttributeModel]
+
+    init(from clause: Attributes) {
+        self.attributes = [AttributeModel]()
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        attributes.forEach { attribute in
+            t.append(contentsOf: attribute.tokenize())
+        }
+        return t
+    }
 }

@@ -24,39 +24,25 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
-/// APIView navigation item for the left-hand navigation sidebar
-class NavigationItem: Codable {
-    /// Name to display in the navigation sidebar
-    var name: String
-    /// Unique indentifier describing the navigation path
-    var navigationId: String
-    /// Child navigation items
-    var childItems = [NavigationItem]()
-    /// Tags which determine the type of icon displayed in the navigation pane of APIView
-    var tags: NavigationTags
+class EqualityModel: Tokenizable {
 
-    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
-        self.name = name
-        self.navigationId = "\(prefix).\(name)"
-        tags = NavigationTags(typeKind: typeKind)
+    var key: String
+    var value: TypeModel
+
+    init(key: Identifier, value: TypeIdentifier) {
+        self.key = key.textDescription
+        self.value = TypeModel(from: value)
     }
 
-    // MARK: Codable
-
-    enum CodingKeys: String, CodingKey {
-        case name = "Text"
-        case navigationId = "NavigationId"
-        case childItems = "ChildItems"
-        case tags = "Tags"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(navigationId, forKey: .navigationId)
-        try container.encode(childItems, forKey: .childItems)
-        try container.encode(tags, forKey: .tags)
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        t.typeReference(name: key)
+        t.punctuation("==")
+        t.whitespace()
+        t.append(contentsOf: value.tokenize())
+        return t
     }
 }

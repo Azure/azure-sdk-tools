@@ -26,35 +26,35 @@
 
 import AST
 import Foundation
-
-extension PatternInitializer {
-    var name: String {
-        if let ident = self.pattern as? IdentifierPattern {
-            return ident.identifier.textDescription
-        }
-        SharedLogger.fail("Unable to extract name from \(self)")
-    }
-
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return TypeModel(from: typeInfo)
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        SharedLogger.fail("Unsupported pattern: \(self)")
-    }
-
-    var defaultValue: String? {
-        guard let initExpr = initializerExpression else { return nil }
-        if case is LiteralExpression = initExpr {
-            return initExpr.textDescription
-        }
-        // ignore function expressions
-        return nil
-    }
-}
+//
+//extension PatternInitializer {
+//    var name: String {
+//        if let ident = self.pattern as? IdentifierPattern {
+//            return ident.identifier.textDescription
+//        }
+//        SharedLogger.fail("Unable to extract name from \(self)")
+//    }
+//
+//    var typeModel: TypeModel? {
+//        if case let typeAnno as IdentifierPattern = pattern,
+//            let typeInfo = typeAnno.typeAnnotation?.type {
+//            return TypeModel(from: typeInfo)
+//        }
+//        if case let literalExpression as LiteralExpression = initializerExpression {
+//            return TypeModel(name: literalExpression.kind.textDescription)
+//        }
+//        if case let functionExpression as FunctionCallExpression = initializerExpression {
+//            return TypeModel(name: functionExpression.postfixExpression.textDescription)
+//        }
+//        SharedLogger.fail("Unsupported pattern: \(self)")
+//    }
+//
+//    var defaultValue: String? {
+//        guard let initExpr = initializerExpression else { return nil }
+//        if case is LiteralExpression = initExpr {
+//            return initExpr.textDescription
+//        }
+//        // ignore function expressions
+//        return nil
+//    }
+//}

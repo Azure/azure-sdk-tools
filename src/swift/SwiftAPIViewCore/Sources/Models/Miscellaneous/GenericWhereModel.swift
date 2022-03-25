@@ -24,12 +24,42 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
-class ClassModel: Tokenizable {
+class GenericWhereModel: Tokenizable {
 
-    var tokens: [TokenItem] {
-        // TODO: Implement
-        return []
+    var requirementsList: [Tokenizable]
+
+    init?(from clause: GenericWhereClause?) {
+        guard let clause = clause else { return nil }
+        self.requirementsList = [Tokenizable]()
+        clause.requirementList.forEach { item in
+            switch item {
+            case let .protocolConformance(type1, protocol2):
+                requirementsList.append(ConformanceModel(key: type1, value: protocol2))
+            case let .typeConformance(type1, type2):
+                requirementsList.append(ConformanceModel(key: type1, value: type2))
+            case let .sameType(type1, type2):
+                requirementsList.append(EqualityModel(key: type1, value: type2))
+            }
+        }
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        t.whitespace()
+        t.keyword("where")
+        t.whitespace()
+        let stopIdx = requirementsList.count - 1
+        for (idx, item) in requirementsList.enumerated() {
+            t.append(contentsOf: item.tokenize())
+            if idx != stopIdx {
+                t.punctuation(",")
+                t.whitespace()
+            }
+        }
+        t.whitespace()
+        return t
     }
 }

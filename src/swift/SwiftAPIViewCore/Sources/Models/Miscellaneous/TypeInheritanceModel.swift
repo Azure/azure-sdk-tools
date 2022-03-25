@@ -24,6 +24,37 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
+class TypeInheritanceModel: Tokenizable {
 
+    var isClassRequirement: Bool
+    var typeList: [TypeModel]
+
+    init?(from clause: TypeInheritanceClause?) {
+        guard let clause = clause else { return nil }
+        self.isClassRequirement = clause.classRequirement
+        self.typeList = [TypeModel]()
+        clause.typeInheritanceList.forEach { item in
+            typeList.append(TypeModel(from: item))
+        }
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        t.punctuation(":")
+        t.whitespace()
+        let stopIdx = typeList.count - 1
+        for (idx, param) in typeList.enumerated() {
+            param.useShorthand = false
+            t.append(contentsOf: param.tokenize())
+            if idx != stopIdx {
+                t.punctuation(",")
+                t.whitespace()
+            }
+        }
+        t.whitespace()
+        return t
+    }
+}

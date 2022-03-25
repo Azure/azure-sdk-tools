@@ -26,4 +26,6 @@
 
 import Foundation
 
-
+protocol Linkable {
+    var definitionId: String? { get }
+}

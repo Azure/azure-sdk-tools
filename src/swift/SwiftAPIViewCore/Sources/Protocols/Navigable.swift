@@ -27,3 +27,7 @@
 import Foundation
 
 
+/// Conforming objects are listed in the navigation sidebar
+protocol Navigable {
+    func navigationTokenize() -> [NavigationToken]
+}

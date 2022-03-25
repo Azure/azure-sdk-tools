@@ -26,4 +26,37 @@
 
 import Foundation
 
+/// APIView navigation toekn for the left-hand navigation sidebar
+class NavigationToken: Codable {
+    /// Name to display in the navigation sidebar
+    var name: String
+    /// Unique indentifier describing the navigation path
+    var navigationId: String
+    /// Child navigation items
+    var childItems = [NavigationToken]()
+    /// Tags which determine the type of icon displayed in the navigation pane of APIView
+    var tags: NavigationTags
 
+    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
+        self.name = name
+        self.navigationId = "\(prefix).\(name)"
+        tags = NavigationTags(typeKind: typeKind)
+    }
+
+    // MARK: Codable
+
+    enum CodingKeys: String, CodingKey {
+        case name = "Text"
+        case navigationId = "NavigationId"
+        case childItems = "ChildItems"
+        case tags = "Tags"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(navigationId, forKey: .navigationId)
+        try container.encode(childItems, forKey: .childItems)
+        try container.encode(tags, forKey: .tags)
+    }
+}

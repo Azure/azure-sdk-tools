@@ -49,7 +49,7 @@ enum TokenKind: Int, Codable {
 }
 
 /// An individual token item
-struct TokenItem: Codable {
+struct Token: Codable {
     // Allows tokens to be navigated to. Should be unique. Used as ID for comment thread.
     var definitionId: String?
     // If set, clicking on the token would navigate to the other token with this ID.

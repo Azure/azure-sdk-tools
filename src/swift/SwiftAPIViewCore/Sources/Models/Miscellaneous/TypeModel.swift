@@ -27,7 +27,9 @@
 import AST
 import Foundation
 
-class TypeModel {
+class TypeModel: Tokenizable, Linkable {
+
+    var definitionId: String?
     var name: String
     var isOptional: Bool
     var isImplicitlyUnwrapped: Bool
@@ -179,5 +181,86 @@ class TypeModel {
         default:
             SharedLogger.fail("Unsupported identifier: \(source)")
         }
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+//        if let attributes = typeModel?.attributes {
+//            handle(attributes: attributes, defId: defId, inline: true)
+//        }
+//        if source.isInOut {
+//            keyword(value: "inout")
+//            whitespace()
+//        }
+//        if source.isArray {
+//            if !source.useShorthand {
+//                text("Array")
+//            }
+//            source.useShorthand ? punctuation("[") : punctuation("<")
+//            handle(typeModel: source.arguments!.first!, defId: defId)
+//            source.useShorthand ? punctuation("]") : punctuation(">")
+//        } else if source.isDict {
+//            if !source.useShorthand {
+//                text("Dictionary")
+//            }
+//            source.useShorthand ? punctuation("[") : punctuation("<")
+//            handle(typeModel: source.arguments!.first!, defId: defId)
+//            source.useShorthand ? punctuation(":") : punctuation(",")
+//            whitespace()
+//            handle(typeModel: source.arguments!.last!, defId: defId)
+//            source.useShorthand ? punctuation("]") : punctuation(">")
+//        } else if source.isTuple {
+//            guard let arguments = source.arguments else {
+//                SharedLogger.fail("Tuples must have arguments.")
+//            }
+//            punctuation("(")
+//            let argCount = arguments.count
+//            for (idx, arg) in arguments.enumerated() {
+//                self.handle(typeModel: arg, defId: defId)
+//                if idx + 1 != argCount {
+//                    punctuation(",")
+//                    whitespace()
+//                }
+//            }
+//            punctuation(")")
+//        } else {
+//            typeReference(name: source.name)
+//            if let genericArgs = source.genericArgumentList {
+//                punctuation("<")
+//                let argCount = genericArgs.count
+//                for (idx, item) in genericArgs.enumerated() {
+//                    self.handle(typeModel: item, defId: defId)
+//                    if idx + 1 != argCount {
+//                        punctuation(",")
+//                        whitespace()
+//                    }
+//                }
+//                punctuation(">")
+//            }
+//            if let arguments = source.arguments {
+//                punctuation("(")
+//                let argCount = arguments.count
+//                for (idx, arg) in arguments.enumerated() {
+//                    self.handle(typeModel: arg, defId: defId)
+//                    if idx + 1 != argCount {
+//                        punctuation(",")
+//                        whitespace()
+//                    }
+//                }
+//                punctuation(")")
+//                if let retType = source.returnType {
+//                    whitespace()
+//                    text("->")
+//                    whitespace()
+//                    self.handle(typeModel: retType, defId: defId)
+//                }
+//            }
+//        }
+//        if source.isOptional && !source.isImplicitlyUnwrapped {
+//            punctuation("?")
+//        } else if source.isImplicitlyUnwrapped {
+//            punctuation("!")
+//        }
+        return t
     }
 }

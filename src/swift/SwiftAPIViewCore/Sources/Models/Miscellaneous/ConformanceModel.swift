@@ -24,6 +24,30 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
+class ConformanceModel: Tokenizable {
 
+    var key: String
+    var value: TypeModel
+
+    init(key: Identifier, value: TypeIdentifier) {
+        self.key = key.textDescription
+        self.value = TypeModel(from: value)
+    }
+
+    init(key: Identifier, value: ProtocolCompositionType) {
+        self.key = key.textDescription
+        self.value = TypeModel(from: value)
+    }
+
+    func tokenize() -> [Token] {
+        var t = [Token]()
+        t.typeReference(name: key)
+        t.punctuation(":")
+        t.whitespace()
+        t.append(contentsOf: value.tokenize())
+        return t
+    }
+}

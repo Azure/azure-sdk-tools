@@ -170,9 +170,6 @@ func (c *content) parseConst(tokenList *[]Token) {
 			// this token parsing is performed so that const declarations of different types are declared
 			// in their own const block to make them easier to click on
 			n := t
-			makeToken(nil, nil, "", 1, tokenList)
-			makeToken(nil, nil, " ", whitespace, tokenList)
-			makeToken(nil, nil, "", 1, tokenList)
 			makeToken(&n, nil, "const", keyword, tokenList)
 			makeToken(nil, nil, " ", whitespace, tokenList)
 			makeToken(nil, nil, "(", punctuation, tokenList)
@@ -184,11 +181,10 @@ func (c *content) parseConst(tokenList *[]Token) {
 			}
 			makeToken(nil, nil, ")", punctuation, tokenList)
 			makeToken(nil, nil, "", 1, tokenList)
-
+			makeToken(nil, nil, "", newline, tokenList)
 			c.searchForPossibleValuesMethod(t, tokenList)
 		}
 	}
-
 }
 
 func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
@@ -398,9 +394,6 @@ func (c *content) parseFunc(tokenList *[]Token) {
 		}
 	}
 	for _, k := range keys {
-		makeToken(nil, nil, "", newline, tokenList)
-		makeToken(nil, nil, " ", whitespace, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
 		makeFuncTokens(&k, c.Funcs[k].Params, c.Funcs[k].Returns, c.Funcs[k].ReturnsNum, tokenList)
 	}
 }

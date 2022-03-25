@@ -23,9 +23,6 @@ func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) 
 
 func makeStructTokens(name *string, anonFields []string, fields map[string]string, list *[]Token) {
 	n := *name
-	makeToken(nil, nil, "", newline, list)
-	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "type", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(&n, &n, *name, typeName, list)
@@ -63,6 +60,7 @@ func makeStructTokens(name *string, anonFields []string, fields map[string]strin
 	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "}", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
+	makeToken(nil, nil, "", newline, list)
 }
 
 func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[string]Func, list *[]Token) {
@@ -75,39 +73,30 @@ func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
-	if embeddedInterfaces != nil {
-		for _, v1 := range embeddedInterfaces {
-			v := v1 + "-" + n
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v, nil, v1, typeName, list)
-			makeToken(nil, nil, "", newline, list)
-		}
+	for _, v1 := range embeddedInterfaces {
+		v := v1 + "-" + n
+		makeToken(nil, nil, "\t", whitespace, list)
+		makeToken(&v, nil, v1, typeName, list)
+		makeToken(nil, nil, "", newline, list)
 	}
-	if methods != nil {
+	if len(methods) > 0 {
 		keys := []string{}
 		for k1 := range methods {
 			keys = append(keys, k1)
 		}
 		sort.Strings(keys)
 		for _, k1 := range keys {
-			makeIntFuncTokens(&k1, methods[k1], list)
+			makeToken(nil, nil, "\t", whitespace, list)
+			makeIntMethodTokens(&k1, methods[k1].Params, methods[k1].Returns, list)
 			makeToken(nil, nil, "", newline, list)
 		}
 	}
 	makeToken(nil, nil, "}", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
-	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
-// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
-func makeIntFuncTokens(name *string, funcs Func, list *[]Token) {
-	makeToken(nil, nil, "\t", whitespace, list)
-	// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
-	makeIntMethodTokens(name, funcs.Params, funcs.Returns, list)
-}
-
-func makeFuncTokens(name *string, params, results *string, returnCount int, list *[]Token) {
+func makeFuncTokens(name *string, params, returns *string, returnCount int, list *[]Token) {
 	if isOnUnexportedMember(*name) || isExampleOrTest(*name) {
 		return
 	}
@@ -131,9 +120,9 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 		}
 	}
 	makeToken(nil, nil, ")", punctuation, list)
-	makeToken(nil, nil, " ", whitespace, list)
-	if results != nil {
-		r := *results
+	if returns != nil {
+		makeToken(nil, nil, " ", whitespace, list)
+		r := *returns
 		tok := strings.Split(r, ",")
 		if len(tok) > 1 {
 			makeToken(nil, nil, "(", punctuation, list)
@@ -149,12 +138,12 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 		if len(tok) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
+	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
-func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string, params, results *string, returnCount int, list *[]Token) {
+func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string, params, returns *string, returnCount int, list *[]Token) {
 	if isOnUnexportedMember(name) || isExampleOrTest(name) {
 		return
 	}
@@ -192,8 +181,8 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	}
 	makeToken(nil, nil, ")", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	if results != nil {
-		r := *results
+	if returns != nil {
+		r := *returns
 		tok := strings.Split(r, ",")
 		if len(tok) > 1 {
 			makeToken(nil, nil, "(", punctuation, list)
@@ -209,8 +198,8 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 		if len(tok) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
+	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
@@ -260,9 +249,7 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 		if len(tok) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
-	makeToken(nil, nil, "", newline, list)
 }
 
 // TODO can improve how BinaryExpr consts are represented with different colors

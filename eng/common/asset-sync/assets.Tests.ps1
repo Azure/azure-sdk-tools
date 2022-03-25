@@ -44,7 +44,7 @@ Describe "AssetsModuleTests" {
       $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
     }
 
-    It "Should should traverse upwards to find recording.json" {
+    It "Should should traverse upwards to find recording.json." {
       $files = @(
         "a/b.json",
         "a/b/c.json"
@@ -63,7 +63,7 @@ Describe "AssetsModuleTests" {
       }
     }
 
-    It "Should should error when unable to find a recording json" {
+    It "Should should error when unable to find a recording json." {
       $files = @(
         "a/b.json",
         "a/b/c.json"
@@ -78,6 +78,24 @@ Describe "AssetsModuleTests" {
       finally {
         Pop-Location
       }
+    }
+
+    It "Should should not attempt to calculate relative path where not possible." {
+
+      $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
+      $Result = Resolve-RecordingJson -TargetPath $testLocation
+      $expectedValue = ""
+
+      $recordingLocation = $Result.RecordingJsonRelativeLocation
+      $recordingLocation | Should -Be $expectedValue
+    }
+
+    It "Should should calculate relative path from root of repo to the target recording.json." {
+      $Result = Resolve-RecordingJson -TargetPath $PSScriptRoot
+      $expectedValue = (Join-Path "./" "eng" "common" "asset-sync" "recording.json")
+
+      $recordingLocation = $Result.RecordingJsonRelativeLocation
+      $recordingLocation | Should -Be $expectedValue
     }
   }
   
@@ -131,4 +149,6 @@ Describe "AssetsModuleTests" {
 
     }
   }
+
+
 }

@@ -88,8 +88,24 @@ Function Resolve-RecordingJson {
         throw "Unable to locate recording.json"
     }
 
+    # path to recording Json
     $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
     Add-Member -InputObject $config -MemberType "NoteProperty" -Name "RecordingJsonLocation" -Value "$discoveredPath"
+
+    $relPath = ""
+
+    if($discoveredPath.StartsWith($REPO_ROOT)) {
+        try {
+            Push-Location $REPO_ROOT
+            $relPath = Resolve-Path -Relative -Path $discoveredPath
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
+    # relative path to recording Json from within path
+    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "RecordingJsonRelativeLocation" -Value $relPath
 
     return $config
 }

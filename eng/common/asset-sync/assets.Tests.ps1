@@ -136,17 +136,12 @@ Describe "AssetsModuleTests" {
 
   Context "Initialize-Assets-Repo" {
     It "Should initialize an empty directory." {
-      $files = @(
-        "a/b.json",
-        "a/b/c.json"
-      )
-
       $JsonContent = Get-Basic-RecordingJson
       $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
     }
 
     It "Should recognize an initialized repository." {
-
+      
     }
   }
 

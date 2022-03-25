@@ -158,6 +158,8 @@ He also checked other measures, like `download speed` and `integration requireme
 
 ### Blob Storage
 
+`scbedd` [did a quick proto of what this _could_ look like.](https://github.com/semick-dev/shipwreck) We'd probably swap to a thin `go` client instead of this python package, but the concept definitely works.
+
 #### Advantages of `Blob Storage`
 
 - Size on disk only consists of the files that were pulled. There is no .git folder becoming more and more bloated as versions are added.

@@ -63,7 +63,7 @@ public class APIViewManager {
 
     // MARK: Properties
 
-    public var config = APIViewConfiguration()
+    var config = APIViewConfiguration()
 
     var mode: APIViewManagerMode
 

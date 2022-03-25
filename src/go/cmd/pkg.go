@@ -234,13 +234,17 @@ func (pkg Pkg) buildFunc(ft *ast.FuncType) (f Func) {
 // name can be nil, e.g. anonymous fields in structs, unnamed return types etc.
 func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	for _, f := range fl {
-		var name *string
-		if f.Names != nil {
-			n := pkg.getText(f.Names[0].Pos(), f.Names[0].End())
-			name = &n
-		}
 		t := pkg.getText(f.Type.Pos(), f.Type.End())
-		cb(name, t)
+		if len(f.Names) == 0 {
+			// field is an unnamed func return
+			cb(nil, t)
+		}
+		// field could have multiple names: in "type A struct { m, n int }",
+		// syntactically speaking, A has one field having two names
+		for _, name := range f.Names {
+			n := pkg.getText(name.Pos(), name.End())
+			cb(&n, t)
+		}
 	}
 }
 

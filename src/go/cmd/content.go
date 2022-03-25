@@ -306,20 +306,29 @@ func (c *content) searchForCtors(s string, tokenList *[]Token) {
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
 func (c *content) searchForMethods(s string, tokenList *[]Token) {
-	for i, f := range c.Funcs {
-		v, n := getReceiverName(i)
+	methods := map[string]Func{}
+	methodNames := []string{}
+	for name, fn := range c.Funcs {
+		_, n := getReceiverName(name)
+		if s == n || "*"+s == n {
+			methods[name] = fn
+			methodNames = append(methodNames, name)
+			delete(c.Funcs, name)
+		}
+		if isOnUnexportedMember(name) || isExampleOrTest(name) {
+			delete(c.Funcs, name)
+		}
+	}
+	sort.Strings(methodNames)
+	for _, name := range methodNames {
+		fn := methods[name]
+		v, n := getReceiverName(name)
 		isPointer := false
 		if strings.HasPrefix(n, "*") {
 			n = n[1:]
 			isPointer = true
 		}
-		if s == n {
-			makeMethodTokens(v, n, isPointer, getMethodName(i), f.Params, f.Returns, f.ReturnsNum, tokenList)
-			delete(c.Funcs, i)
-		}
-		if isOnUnexportedMember(i) || isExampleOrTest(i) {
-			delete(c.Funcs, i)
-		}
+		makeMethodTokens(v, n, isPointer, getMethodName(name), fn.Params, fn.Returns, fn.ReturnsNum, tokenList)
 	}
 }
 

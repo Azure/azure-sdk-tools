@@ -15,7 +15,7 @@
     - [`External Git Repo`](#external-git-repo)
       - [Advantages of `Git Repo`](#advantages-of-git-repo)
       - [Disadvantages of `Git Repo`](#disadvantages-of-git-repo)
-    - [`Blob Storage`](#blob-storage)
+    - [Blob Storage](#blob-storage)
       - [Advantages of `Blob Storage`](#advantages-of-blob-storage)
       - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
     - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
@@ -148,6 +148,8 @@ He also checked other measures, like `download speed` and `integration requireme
 #### Advantages of `Git Repo`
 
 - Publically browsable in a coherent fashion through the github UI
+- History
+- Geo-replicated throughout the world
 - The level of customization necessary is purely on the language shims for automatic playback purposes
 
 #### Disadvantages of `Git Repo`
@@ -160,27 +162,30 @@ He also checked other measures, like `download speed` and `integration requireme
 
 - Size on disk only consists of the files that were pulled. There is no .git folder becoming more and more bloated as versions are added.
 - Pulling files piecemeal for an area or areas is relatively easy. The main benefit is how easy it would be to pull resources for a given area, like batch or keyvault. Most areas took under 5 seconds to pull but there were outliers. For example, Storage was the worst offender taking about 7 seconds to pull on corpnet, 15 seconds from Seattle and 50 seconds from Australia.
-- Very extensive versioning capabilities due to manual nature
-- Accessible through basic REST API
+- Extremely easy to avoid conflicts, don't need to worry about storage/endless expansion with a storage blob.
+- Accessible through basic REST API.
+- Much fewer moving parts. It's possible to get into a conflict with the git repo, but not when individually uploading blobs.
+- Given rest API nature of this, possibly implement thin client in go to generate platform specific runners.
 
 #### Disadvantages of `Blob Storage`
 
 - Distance matters – Pulling everything from a machine on corpnet was relatively cheap but pulling the same files from Australia was 2-3x longer pulling from Redmond.
 - Permissions would be a problem - Git on one side, corpnet on the other. For internal developers this is less problematic but external contributors I have no idea how’d we get around this.
-- A single azcopy call isn’t terrible, even if you’re pulling an entire Assets repository (in the US), however the more azcopy calls, the longer it would take to sync. For example, pulling all the assets on my home connection took 50 seconds but if I pulled them an sdk/<area> at a time it took 4 minutes and 13 seconds. 
+- A single azcopy call isn’t terrible, even if you’re pulling an entire Assets repository (in the US), however the more azcopy calls, the longer it would take to sync. For example, pulling all the assets on my home connection took 50 seconds but if I pulled them an sdk/<area> at a time it took 4 minutes and 13 seconds.
 - Extensive local scripting necessary to handle upload/download.
   - We would need to locally zip and upload. Individual file download is _far_ too enefficient, but a single snapshotted blob could definitely work.
-  - Virtuall the same conflicts for download and unzip
+  - Virtually the same conflicts for download and unzip
 - No publically available UI to browse recordings at rest and recorded
 - A native level unzip/zip operation is extremely heavy for larger recordings folders
   - An example of this is the storage service, where we have upwards of half a gigabyte of data present. This is an enormous tax to zip and unzip with each push/pull.
-- The storage is not geolocated
-- There is no concept of "history". It's all point in time
+- The storage is not geolocated, though geo replication be set for as many as _all_ regions supported by azure.
+- There is no concept of "history". It's all point in time.
 
 ### `Pulling a zipfile of the repository`
 
 #### Overall evaluation of `Pulling a zipfile of the repository`
-- While it is possible to download a zipfile of a GIT repository it’s not very practical. Downloading the zip is only slightly faster than just syncing the repository but the unpacking of the zip that makes this a non-starter. For example: On my Surface Laptop 2, taking zipfile of azure-sdk-for-net and using powershell’s Expand-Archive took 8:07 to unpack. Using System.IO.Compression.ZipFile’s ExtractToDirectory took 5:06 to unpack. The decompression times alone were enough to end this investigation but even if that could be rectified the result would effectively be a read-only copy of the repository.
+
+While it is possible to download a zipfile of a GIT repository it’s not very practical. Downloading the zip is only slightly faster than just syncing the repository but the unpacking of the zip that makes this a non-starter. For example: On my Surface Laptop 2, taking zipfile of azure-sdk-for-net and using powershell’s Expand-Archive took 8:07 to unpack. Using System.IO.Compression.ZipFile’s ExtractToDirectory took 5:06 to unpack. The decompression times alone were enough to end this investigation but even if that could be rectified the result would effectively be a read-only copy of the repository.
 
 ### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
 
@@ -374,6 +379,20 @@ This situation is the "normal" use case. Merely adding an additional commit to t
 
 Alright, so we know how we want to structure the `recordings.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
 
+They key mention here is that **regardless** of what storage methodology is used, we need to describe some integration points for each language's proxy-shim.
+
+Specifically, we need to do the following:
+
+- Resolve the "context" of an operation given a target directory or CWD
+  - Current  implementation is in [Resove-RecordingJson](https://github.com/Azure/azure-sdk-tools/blob/240426ec98a62606bf1c9d99991e31eadd1b22f5/eng/common/asset-sync/assets.ps1#L63) 
+  - The key here is we will resolve a lot of the the relative paths here.
+  - This "context" will be passed around internally when referring to various operations.
+  - The relative path to the target recording.json in the language repo will be used to _focus sparse checkouts_.
+- Clone the assets repo if it is not yet initialized
+- Figure out which auto-branch to go after
+- Grab "the assets" from the storage medium given an `Target Asset Identifier` (given git storage it would be a SHA) in the recording.json, restore into the target directory
+- Return the _root of the cloned directory to the tooling for use when starting the test-proxy)
+
 ### Cross-platform capabilities
 
 Basic interactions will be provided by a powershell script.
@@ -386,19 +405,14 @@ Each language framework can of course implement the above as well, and should at
 
 ### Interaction
 
-```
-main: (commitsha1) -> (commitsha2)
-
-auto/tables: (commisha1) -> (commitsha2)
-```
-
 1. Sync for `playback`
-   1. If there is no `recordings.json`, create it.
+   1. If there is no `recordings.json`, create it. Maybe separate this into a separate action.
    2. If there is an existing `recordings.json`
-      1. Check out assets repo sdk/service directory with the targeted SHA from `recordings.json`.
-   3. Invoke Tests
-   4. Stash changes. Pull
-   5. Create new commit to branch `auto/<servicename>`. then push.
+      1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recordings.json`.
+      2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`
+   3. Invoke Tests to get new recordings.
+   4. Create new commit to branch `auto/<servicename>`. then push.
+   5. Update recording.json targeted SHA with the new commit.
 
 ### Implementation of Sync Script
 
@@ -410,13 +424,31 @@ One of the azsdk repos may wish to integrate these `sync` scripts themselves rat
 
 ### Sync operations description and listing
 
-The external repo will just be a _git_ repo, so it's not like devs won't be able to `cd` into it and resolve any conflicts themselves. However, that should not be the _norm_. To avoid this, we need the following functionality into these scripts.
+The external repo will probably be a _git_ repo, so it's not like devs won't be able to `cd` into it and resolve any conflicts themselves. However, that should not be the _norm_. To avoid this, we need the following functionality into these scripts.
 
 | Operation | Description |
 |---|---|
 | Sync | When one first checks out the repo, one must initialize the recordings repo so that we can run in `playback` mode.  |
 | Push | Submits a PR to the assets repo, updates local `recordings.json` with new SHA. |
 | Reset | Return assets repo and `recordings.json` to "just-cloned" state. |
+| Checkout | Abandon Any Pending Changes (prompt the user!), then Sync to the targeted SHA |
+
+We need to have _rational_ no-op operations. What does this mean? Let's set up a scenario. We have been actively bugfixing a feature for keyvault, and we've been asked to check something in storage. You'll need to change context with a `Checkout` operation right? However, the recording.jsons don't have the same repo SHA!  
+
+```text
+Main Commits
+(A) -> (B) -> (C) -> (D) -> (E)
+
+sdk/storage/recording.json
+  SHA: D
+
+sdk/keyvault/recording.json
+  SHA: E
+```
+
+If we regularly `merge-commit` from each `auto/<service>` branch into `main`, we will be able to keep the `auto` commit branches clean and with short commit histories. The commits will never go anywhere! They'll just be available on `main` instead of each specific branch.
+
+A side-benefit of this is that we can run into the situation above. If we are swapping from a _newer_ merged commit to an older one, we can ascertain whether that commit is _already encapsulated_ by our current. In best-case, our scripting should recognize that `D` is supplanted by `E`, and we don't need to do any checkout actions at all!
 
 ### Sync Operation triggers
 

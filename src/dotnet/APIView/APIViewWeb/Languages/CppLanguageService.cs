@@ -25,6 +25,9 @@ namespace APIViewWeb
         private const string CxxDestructorDeclKind = "CXXDestructorDecl";
         private const string FunctionTemplateDeclKind = "FunctionTemplateDecl";
         private const string TemplateTypeParmDeclKind = "TemplateTypeParmDecl";
+        private const string TemplateArgumentKind = "TemplateArgument";
+        private const string ClassTemplateDeclKind = "ClassTemplateDecl";
+        private const string ClassTemplateSpecializationDeclKind = "ClassTemplateSpecializationDecl";
         private const string AccessSpecDeclKind = "AccessSpecDecl";
         private const string ParmVarDeclKind = "ParmVarDecl";
         private const string FunctionDeclKind = "FunctionDecl";
@@ -43,9 +46,9 @@ namespace APIViewWeb
         private const string ImplicitConstrucorHintError = "Implicit constructor is found. Constructors must be explicitly declared.";
         private const string NonAccessModifierMemberError = "Found field without access modifier. Access modifier must be explicitly declared.";
 
-        private static Regex _typeTokenizer = new Regex("[\\w:]+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex _typeTokenizer = new Regex("[\\w:<>]+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex _packageNameParser = new Regex("([A-Za-z_]*)", RegexOptions.Compiled);
-        
+
         private static HashSet<string> _keywords = new HashSet<string>()
         {
             "auto",
@@ -280,7 +283,7 @@ namespace APIViewWeb
 
             void BuildMemberDeclaration(string containerName, string name, string id = "")
             {
-                if(string.IsNullOrEmpty(id))
+                if (string.IsNullOrEmpty(id))
                 {
                     id = name;
                 }
@@ -315,30 +318,40 @@ namespace APIViewWeb
                 return bldr.ToString();
             }
 
-            NavigationItem ProcessClassNode(CppAstNode node, string parentName)
+            NavigationItem ProcessClassNode(CppAstNode node, string parentName, List<CppAstNode> templateParams = null)
             {
                 NavigationItem navigationItem = null;
 
-                // Skip empty forward declarations
-                if (node.inner == null)
-                    return navigationItem;
-
                 builder.Keyword(node.tagUsed);
                 builder.Space();
-
-                if (!string.IsNullOrEmpty(node.name))
+                string nodeName = node.name;
+                if (templateParams != null)
                 {
-                    navigationItem = BuildDeclaration(node.name, node.tagUsed, parentName);
+                    nodeName += "<";
+                    bool first = true;
+                    foreach (var paramNode in templateParams)
+                    {
+                        if (!first)
+                        {
+                            nodeName += ", ";
+                        }
+                        nodeName += paramNode.name;
+                    }
+                    nodeName += ">";
+                }
+                if (!string.IsNullOrEmpty(nodeName))
+                {
+                    navigationItem = BuildDeclaration(nodeName, node.tagUsed, parentName);
                     builder.Space();
                 }
-                
+
                 var memberNavigations = new List<NavigationItem>();
                 var parents = node.inner?.Where(n => parentTypes.Contains(n.kind));
                 if (parents != null)
-                {                    
+                {
                     bool first = true;
                     //Show inheritance details
-                    foreach ( var parent in parents)
+                    foreach (var parent in parents)
                     {
                         if (first)
                         {
@@ -354,7 +367,9 @@ namespace APIViewWeb
                         builder.Keyword(parent.access);
                         builder.Space();
                         if (parent.name != null)
-                           BuildType(builder, parent.name, types);
+                        {
+                            BuildType(builder, parent.name, types);
+                        }
                     }
                     builder.Space();
                 }
@@ -395,7 +410,7 @@ namespace APIViewWeb
                             builder.IncrementIndent();
                             builder.NewLine();
                         }
-                        else if(!isPrivateMember && !parentTypes.Contains(childNode.kind))
+                        else if (!isPrivateMember && !parentTypes.Contains(childNode.kind))
                         {
                             if (string.IsNullOrEmpty(currentAccessModifier) && !hasFoundDefaultAccessMembers)
                             {
@@ -413,7 +428,7 @@ namespace APIViewWeb
                 builder.Punctuation(";");
                 builder.NewLine();
                 builder.NewLine();
-                  
+
                 if (navigationItem != null)
                 {
                     navigationItem.ChildItems = memberNavigations.ToArray();
@@ -431,7 +446,7 @@ namespace APIViewWeb
                         diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, NonAccessModifierMemberError, ""));
                     }
                 }
-                
+
                 return navigationItem;
             }
 
@@ -508,7 +523,7 @@ namespace APIViewWeb
                     BuildType(builder, node.type, types);
                     builder.Space();
                 }
-                
+
                 BuildMemberDeclaration(parentName, node.name, GenerateUniqueMethodId(node));
                 builder.Punctuation("(");
                 bool first = true;
@@ -519,7 +534,7 @@ namespace APIViewWeb
                     foreach (var parameterNode in node.inner)
                     {
                         if (parameterNode.kind == ParmVarDeclKind)
-                        {   
+                        {
                             if (first)
                             {
                                 first = false;
@@ -541,18 +556,18 @@ namespace APIViewWeb
                             {
                                 builder.Space();
                                 builder.Text(parameterNode.name);
-                            }                                                     
+                            }
                         }
                     }
                     builder.DecrementIndent();
                 }
-                
+
                 builder.Punctuation(")");
                 //Add any postfix keywords if signature has any.
                 // Few expamples are 'const noexcept' 
                 if (!string.IsNullOrEmpty(node.keywords))
                 {
-                    foreach(var key in node.keywords.Split())
+                    foreach (var key in node.keywords.Split())
                     {
                         builder.Space();
                         builder.Keyword(key);
@@ -586,11 +601,69 @@ namespace APIViewWeb
                 builder.NewLine();
             }
 
+            NavigationItem ProcessTemplateClassDeclNode(CppAstNode node, string parentName)
+            {
+                NavigationItem returnValue = null;
+                builder.Keyword("template");
+                builder.Space();
+
+                if (node.inner != null)
+                {
+                    bool first = true;
+                    builder.Punctuation("<");
+                    List<CppAstNode> templateParams = new List<CppAstNode>();
+                    foreach (var childnode in node.inner.Where(n => n.kind == TemplateTypeParmDeclKind))
+                    {
+                        if (!first)
+                        {
+                            builder.Punctuation(",");
+                            builder.Space();
+                        }
+
+                        templateParams.Add(childnode);
+                        BuildType(builder, childnode.name, types);
+                    }
+                    builder.Punctuation(">");
+                    builder.NewLine();
+                    builder.WriteIndent();
+                    foreach (var childnode in node.inner.Where(n => n.kind == CxxRecordDeclKind))
+                    {
+                        returnValue = ProcessClassNode(childnode, parentName, templateParams);
+                    }
+                }
+                return returnValue;
+            }
+
+            NavigationItem ProcessTemplateClassSpecializationDeclNode(CppAstNode node, string parentName)
+            {
+                NavigationItem returnValue = null;
+                builder.Keyword("template");
+                builder.Space();
+
+                if (node.inner != null)
+                {
+                    builder.Punctuation("<>");
+                    List<CppAstNode> templateParams = new List<CppAstNode>();
+                    foreach (var childnode in node.inner.Where(n => n.kind == TemplateArgumentKind))
+                    {
+                        templateParams.Add(childnode);
+                    }
+                    builder.NewLine();
+                    builder.WriteIndent();
+                    foreach (var childnode in node.inner.Where(n => n.kind == CxxRecordDeclKind))
+                    {
+                        returnValue = ProcessClassNode(childnode, parentName, templateParams);
+                    }
+                }
+                return returnValue;
+            }
+
+
             void ProcessTemplateFuncDeclNode(CppAstNode node, string parentName)
             {
                 builder.Keyword("template");
                 builder.Space();
-                
+
                 if (node.inner != null)
                 {
                     bool first = true;
@@ -602,7 +675,7 @@ namespace APIViewWeb
                             builder.Punctuation(",");
                             builder.Space();
                         }
-                        builder.Text(childnode.name);
+                        BuildType(builder, childnode.name, types);
                     }
                     builder.Punctuation(">");
 
@@ -710,7 +783,16 @@ namespace APIViewWeb
                             ProcessTemplateFuncDeclNode(node, parentName);
                             break;
                         }
-                        
+                    case ClassTemplateDeclKind:
+                        {
+                            currentNavItem = ProcessTemplateClassDeclNode(node, parentName);
+                            break;
+                        }
+                    case ClassTemplateSpecializationDeclKind:
+                        {
+                            currentNavItem = ProcessTemplateClassSpecializationDeclNode(node, parentName);
+                            break;
+                        }
                     default:
                         builder.Text(node.ToString());
                         builder.NewLine();
@@ -756,7 +838,7 @@ namespace APIViewWeb
                     }
                 }
             }
-        }        
+        }
 
         private static void BuildExpression(CodeFileTokensBuilder builder, CppAstNode exprNode)
         {
@@ -801,7 +883,7 @@ namespace APIViewWeb
             public string storageClass { get; set; }
             public bool? constexpr { get; set; }
             public bool? inline { get; set; }
-            public bool? isimplicit {get; set; }
+            public bool? isimplicit { get; set; }
             public bool? isvirtual { get; set; }
             public bool? ispure { get; set; }
             public bool? isdefault { get; set; }
@@ -819,16 +901,18 @@ namespace APIViewWeb
         {
             private static Regex _declKindParser = new Regex("\\w+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _methodOrParamParser = new Regex("([\\S]+)\\s'([^\\(']*)\\s?\\([^)]*\\)\\s?([^']*)'([\\w\\s]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            private static Regex _varOrParamParser = new Regex("([a-zA-Z]*)\\s'([^\\(']*)\\s?\\(?[^']*'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            private static Regex _classNameParser = new Regex("(struct|class|union)\\s?([\\w]*)\\sdefinition", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _varOrParamParser = new Regex("([a-zA-Z0-9_]*)\\s'([^\\(']*)\\s?\\(?[^']*'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _typeAliasParser = new Regex("([a-zA-Z]*)\\s'([^']*)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _classNameParser = new Regex("(struct|class|union)\\s?([\\w]*)(\\sdefinition)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _classTemplateNameParser = new Regex("\\s?([\\w_]*)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _fieldDefParser = new Regex("([\\w]+)\\s'([^']+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _accessType = new Regex("private|public|protected", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _stringLiteralParser = new Regex("\"([^\"]+)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _integerLiteralParser = new Regex("'int'\\s([0-9A-Fx]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _enumDeclParser = new Regex("(class)\\s([\\w]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static Regex _enumConstantDeclParser = new Regex("([\\w]+)+\\s'([\\w:]+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            private static Regex _inheritanceParser = new Regex("(private|public|protected)\\s'([\\w:]+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+            private static Regex _inheritanceParser = new Regex("(private|public|protected)\\s'([\\w:<>]+)'", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            private static Regex _templateArgumentParser = new Regex("'([\\w:_<>]+)':?'?([\\w_<>]+)?'?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             private static HashSet<string> _declarationKinds = new HashSet<string>()
             {
                 NamespaceDeclKind,
@@ -847,7 +931,10 @@ namespace APIViewWeb
                 EnumConstantDeclKind,
                 TypeAliasDeclKind,
                 FunctionTemplateDeclKind,
+                ClassTemplateDeclKind,
+                ClassTemplateSpecializationDeclKind,
                 TemplateTypeParmDeclKind,
+                TemplateArgumentKind,
                 AccessModifierPublic,
                 AccessModifierProtected,
                 AccessModifierPrivate
@@ -879,8 +966,13 @@ namespace APIViewWeb
                 }
 
                 // Process line if it is within valid namespace and tokenKind is in valid list
-                // Implicit line should be processed only if it is for ConstructorDecl
-                return isValidNamespace && _declarationKinds.Contains(node.kind) && (node.isimplicit == false || node.kind == CxxConstructorDeclKind);
+                // Implicit line should be processed only if it is for ConstructorDecl or if the previous node was a TemplateArgument.
+                return isValidNamespace &&
+                    _declarationKinds.Contains(node.kind) &&
+                    (node.isimplicit == false ||
+                     ((node.kind == CxxConstructorDeclKind) ||
+                     (lastNode.kind == ClassTemplateSpecializationDeclKind))
+                    );
             }
 
             public void ParseToAstTree(ZipArchiveEntry zipEntry, CppAstNode astRoot)
@@ -897,30 +989,31 @@ namespace APIViewWeb
                     CppAstNode node = new CppAstNode();
                     node.kind = ParseNodeKind(line);
                     var prefix = line.Substring(0, line.IndexOf(node.kind));
-                    if (ShouldProcessLine(line, node, astnodeStack.Peek()))
+
+                    //Prefix string in ast-dump is compared to identify tree depth
+                    //If prefix stack is empty or last element is same type as new prefix then node is at same depth
+                    //If new prefix is larger than last element then this new node is sub node
+                    //If new prefix is smaller than last element in stack then this new node is at higher level.(Traverse all the way to find a matching level in stack)
+                    //Stack always keep track of items equivalent to max depth so it will be less items in stack)
+                    if (patternStack.Count > 0)
                     {
-                        ParseLine(line, ref node);
-                        //Prefix string in ast-dump is compared to identify tree depth                    
-                        //If prefix stack is empty or last element is same type as new prefix then node is at same depth
-                        //If new prefix is larger than last element then this new node is sub node
-                        //If new prefix is smaller than last element in stack then this new node is at higher level.(Traverse all the way to find a matching level in stack)
-                        //Stack always keep track of items equivalent to max depth so it will be less items in stack)
-                        if (patternStack.Count > 0)
+                        if (patternStack.Peek().Length == prefix.Length)
                         {
-                            if (patternStack.Peek().Length == prefix.Length)
+                            patternStack.Pop();
+                            astnodeStack.Pop();
+                        }
+                        else if (patternStack.Peek().Length > prefix.Length)
+                        {
+                            while (patternStack.Count > 0 && patternStack.Peek().Length >= prefix.Length)
                             {
                                 patternStack.Pop();
                                 astnodeStack.Pop();
                             }
-                            else if (patternStack.Peek().Length > prefix.Length)
-                            {
-                                while (patternStack.Count > 0 && patternStack.Peek().Length >= prefix.Length)
-                                {
-                                    patternStack.Pop();
-                                    astnodeStack.Pop();
-                                }
-                            }
                         }
+                    }
+                    if (ShouldProcessLine(line, node, astnodeStack.Peek()))
+                    {
+                        ParseLine(line, ref node);
 
                         var parentNode = astnodeStack.Count > 0 ? astnodeStack.Pop() : astRoot;
                         if (parentNode.inner == null)
@@ -969,8 +1062,11 @@ namespace APIViewWeb
 
                     case VarDeclKind:
                     case ParmVarDeclKind:
-                    case TypeAliasDeclKind:
                         ParseFieldDecl(line, ref node, ref _varOrParamParser);
+                        break;
+
+                    case TypeAliasDeclKind:
+                        ParseFieldDecl(line, ref node, ref _typeAliasParser);
                         break;
 
                     case CxxMethodDeclKind:
@@ -982,6 +1078,16 @@ namespace APIViewWeb
 
                     case CxxRecordDeclKind:
                         ParseClassDecl(line, ref node);
+                        break;
+
+                    case ClassTemplateSpecializationDeclKind:
+                        ParseClassTemplateSpecializationDecl(line, ref node);
+                        break;
+                    case TemplateArgumentKind:
+                        ParseTemplateArgument(line, ref node);
+                        break;
+                    case ClassTemplateDeclKind:
+                        ParseClassTemplateDecl(line, ref node);
                         break;
 
                     case FieldDeclKind:
@@ -1056,6 +1162,35 @@ namespace APIViewWeb
                     node.tagUsed = match.Groups[1].Value;
                     node.name = match.Groups[2].Value;
                 }
+            }
+
+            private static void ParseClassTemplateDecl(string line, ref CppAstNode node)
+            {
+                var match = _classTemplateNameParser.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[1].Value;
+                }
+            }
+
+            private static void ParseClassTemplateSpecializationDecl(string line, ref CppAstNode node)
+            {
+                var match = _classNameParser.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[2].Value;
+                }
+
+            }
+            private static void ParseTemplateArgument(string line, ref CppAstNode node)
+            {
+                var match = _templateArgumentParser.Match(line);
+                if (match.Success)
+                {
+                    node.name = match.Groups[1].Value;
+                    node.type = match.Groups[2].Value;
+                }
+
             }
 
             private static void ParseInheritanceDecl(string line, CppAstNode node)

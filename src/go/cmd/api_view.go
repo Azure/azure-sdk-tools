@@ -37,6 +37,7 @@ func CreateAPIView(pkgDir, outputDir string) error {
 		makeToken(nil, nil, "", newline, tokenList)
 		// TODO: reordering these calls reorders APIView output and can omit content
 		p.c.parseSimpleType(tokenList)
+		p.c.parseVar(tokenList)
 		p.c.parseConst(tokenList)
 		p.c.parseInterface(tokenList)
 		p.c.parseStruct(tokenList)

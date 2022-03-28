@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"go/ast"
+	"go/token"
 	"regexp"
 	"sort"
 	"strings"
@@ -20,7 +21,7 @@ const skip = "Untyped const"
 type content struct {
 	// the list of exported constants.
 	// key is the exported name, value is its type and value.
-	Consts map[string]Const `json:"consts,omitempty"`
+	Consts map[string]Declaration `json:"consts,omitempty"`
 
 	// the list of exported functions and methods.
 	// key is the exported name, for methods it's prefixed with the receiver type (e.g. "Type.Method").
@@ -37,78 +38,100 @@ type content struct {
 	// the list of exported struct types.
 	// key is the exported name, value contains field information.
 	Structs map[string]Struct `json:"structs,omitempty"`
+
+	Vars map[string]Declaration
 }
 
 // newContent returns an initialized Content object.
 func newContent() content {
 	return content{
-		Consts:      make(map[string]Const),
+		Consts:      make(map[string]Declaration),
 		Funcs:       make(map[string]Func),
 		Interfaces:  make(map[string]Interface),
-		Structs:     make(map[string]Struct),
 		SimpleTypes: make(map[string]SimpleType),
+		Structs:     make(map[string]Struct),
+		Vars:        make(map[string]Declaration),
 	}
 }
 
 // isEmpty returns true if there is no content in any of the fields.
 func (c content) isEmpty() bool {
-	return len(c.Consts)+len(c.Funcs)+len(c.Interfaces)+len(c.Structs)+len(c.SimpleTypes) == 0
+	return len(c.Consts)+len(c.Funcs)+len(c.Interfaces)+len(c.SimpleTypes)+len(c.Structs)+len(c.Vars) == 0
 }
 
-// adds the specified const declaration to the exports list
-func (c *content) addConst(pkg Pkg, g *ast.GenDecl) {
+// adds const and var declaration to the exports list
+func (c *content) addGenDecl(pkg Pkg, g *ast.GenDecl) {
 	for _, s := range g.Specs {
-		co := Const{}
 		vs := s.(*ast.ValueSpec)
-		v := getConstValue(pkg, vs.Values[0])
+		v := getExprValue(pkg, vs.Values[0])
 		if v == "" {
 			fmt.Printf("WARNING: failed to determine value for %s\n", pkg.getText(vs.Pos(), vs.End()))
 			continue
 		}
+		decl := Declaration{Value: v}
 		// Type is nil for untyped consts
 		if vs.Type != nil {
 			switch x := vs.Type.(type) {
 			case *ast.Ident:
 				// const ETagAny ETag = "*"
 				// const PeekLock ReceiveMode = internal.PeekLock
-				co.Type = x.Name
+				decl.Type = x.Name
 			case *ast.SelectorExpr:
 				// const LogCredential log.Classification = "Credential"
-				co.Type = x.Sel.Name
+				decl.Type = x.Sel.Name
 			default:
 				fmt.Printf("WARNING: unhandled constant type %s\n", pkg.getText(vs.Type.Pos(), vs.Type.End()))
 			}
-		} else if ce, ok := vs.Values[0].(*ast.CallExpr); ok {
-			// const FooConst = FooType("value")
-			co.Type = pkg.getText(ce.Fun.Pos(), ce.Fun.End())
+		} else if _, ok := vs.Values[0].(*ast.CallExpr); ok {
+			// const FooConst = Foo("value")
+			// var Foo = NewFoo()
+			// TODO: determining the type here requires finding the definition of the called function. We may
+			// not have encountered that yet, so we would need to set the types of these declarations after
+			// traversing the entire AST.
+		} else if cl, ok := vs.Values[0].(*ast.CompositeLit); ok {
+			// var AzureChina = Configuration{ ... }
+			decl.Type = pkg.getText(cl.Type.Pos(), cl.Type.End())
 		} else {
 			// implicitly typed const
-			co.Type = skip
+			decl.Type = skip
 		}
-		co.Value = v
-		c.Consts[vs.Names[0].Name] = co
+		// TODO handle multiple names like "var a, b = 42"
+		switch g.Tok {
+		case token.CONST:
+			c.Consts[vs.Names[0].Name] = decl
+		case token.VAR:
+			c.Vars[vs.Names[0].Name] = decl
+		default:
+			fmt.Printf("WARNING: unexpected declaration kind %v", vs.Names[0].Obj.Kind)
+		}
 	}
 }
 
-func getConstValue(pkg Pkg, expr ast.Expr) string {
-	if bl, ok := expr.(*ast.BasicLit); ok {
+func getExprValue(pkg Pkg, expr ast.Expr) string {
+	switch x := expr.(type) {
+	case *ast.BasicLit:
 		// const DefaultLinkCredit = 1
-		return bl.Value
-	} else if ce, ok := expr.(*ast.CallExpr); ok {
-		// const FooConst = FooType("value")
-		return pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
-	} else if ce, ok := expr.(*ast.BinaryExpr); ok {
+		return x.Value
+	case *ast.BinaryExpr:
 		// const FooConst = "value" + Bar
-		return pkg.getText(ce.X.Pos(), ce.Y.End())
-	} else if ce, ok := expr.(*ast.UnaryExpr); ok {
-		// const FooConst = -1
-		return pkg.getText(ce.Pos(), ce.End())
-	} else if se, ok := expr.(*ast.SelectorExpr); ok {
-		// const ModeUnsettled = encoding.ModeUnsettled
-		return pkg.getText(se.Pos(), se.End())
-	} else if id, ok := expr.(*ast.Ident); ok {
+		return pkg.getText(x.X.Pos(), x.Y.End())
+	case *ast.CallExpr:
+		// const FooConst = Foo("value")
+		// var Foo = NewFoo()
+		return pkg.getText(x.Pos(), x.End())
+	case *ast.CompositeLit:
+		// var AzureChina = Configuration{ LoginEndpoint: "https://login.chinacloudapi.cn/", Services: map[ServiceName]ServiceConfiguration{} }
+		txt := pkg.getText(expr.Pos(), expr.End())
+		return txt
+	case *ast.Ident:
 		// const DefaultLinkBatching = false
-		return id.Name
+		return x.Name
+	case *ast.SelectorExpr:
+		// const ModeUnsettled = encoding.ModeUnsettled
+		return pkg.getText(x.Pos(), x.End())
+	case *ast.UnaryExpr:
+		// const FooConst = -1
+		return pkg.getText(x.Pos(), x.End())
 	}
 	fmt.Printf("WARNING: unhandled constant value %s\n", pkg.getText(expr.Pos(), expr.End()))
 	return ""
@@ -144,46 +167,55 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 }
 
 func (c *content) parseConst(tokenList *[]Token) {
-	if len(c.Consts) > 0 {
-		// create keys slice in order to later sort consts by their types
-		keys := []string{}
-		// create types slice in order to be able to separate consts by the type they represent
-		types := []string{}
-		for i, s := range c.Consts {
-			keys = append(keys, i)
-			if !includesType(types, s.Type) {
-				types = append(types, s.Type)
+	c.parseDeclarations(c.Consts, "const", tokenList)
+}
+
+func (c *content) parseVar(tokenList *[]Token) {
+	c.parseDeclarations(c.Vars, "var", tokenList)
+}
+
+func (c *content) parseDeclarations(decls map[string]Declaration, kind string, tokenList *[]Token) {
+	if len(decls) < 1 {
+		return
+	}
+	// create keys slice in order to later sort consts by their types
+	keys := []string{}
+	// create types slice in order to be able to separate consts by the type they represent
+	types := []string{}
+	for i, s := range decls {
+		keys = append(keys, i)
+		if !includesType(types, s.Type) {
+			types = append(types, s.Type)
+		}
+	}
+	sort.Strings(keys)
+	sort.Strings(types)
+	// finalKeys will order const keys by their type
+	finalKeys := []string{}
+	for _, t := range types {
+		for _, k := range keys {
+			if t == decls[k].Type {
+				finalKeys = append(finalKeys, k)
 			}
 		}
-		sort.Strings(keys)
-		sort.Strings(types)
-		// finalKeys will order const keys by their type
-		finalKeys := []string{}
-		for _, t := range types {
-			for _, k := range keys {
-				if t == c.Consts[k].Type {
-					finalKeys = append(finalKeys, k)
-				}
+	}
+	for _, t := range types {
+		// this token parsing is performed so that const declarations of different types are declared
+		// in their own const block to make them easier to click on
+		n := t
+		makeToken(&n, nil, kind, keyword, tokenList)
+		makeToken(nil, nil, " ", whitespace, tokenList)
+		makeToken(nil, nil, "(", punctuation, tokenList)
+		makeToken(nil, nil, "", 1, tokenList)
+		for _, v := range finalKeys {
+			if decls[v].Type == t {
+				makeDeclarationTokens(&v, decls[v], tokenList)
 			}
 		}
-		for _, t := range types {
-			// this token parsing is performed so that const declarations of different types are declared
-			// in their own const block to make them easier to click on
-			n := t
-			makeToken(&n, nil, "const", keyword, tokenList)
-			makeToken(nil, nil, " ", whitespace, tokenList)
-			makeToken(nil, nil, "(", punctuation, tokenList)
-			makeToken(nil, nil, "", 1, tokenList)
-			for _, v := range finalKeys {
-				if c.Consts[v].Type == t {
-					makeConstTokens(&v, c.Consts[v], tokenList)
-				}
-			}
-			makeToken(nil, nil, ")", punctuation, tokenList)
-			makeToken(nil, nil, "", 1, tokenList)
-			makeToken(nil, nil, "", newline, tokenList)
-			c.searchForPossibleValuesMethod(t, tokenList)
-		}
+		makeToken(nil, nil, ")", punctuation, tokenList)
+		makeToken(nil, nil, "", 1, tokenList)
+		makeToken(nil, nil, "", newline, tokenList)
+		c.searchForPossibleValuesMethod(t, tokenList)
 	}
 }
 

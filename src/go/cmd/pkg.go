@@ -111,9 +111,14 @@ func (p *Pkg) indexFile(f *ast.File) {
 			// children can't be exported, let's not inspect them
 			return false
 		case *ast.GenDecl:
-			if x.Tok == token.CONST {
-				fmt.Printf("\tconst     %s\n", x.Specs[0].(*ast.ValueSpec).Names[0])
-				p.c.addConst(*p, x)
+			if x.Tok == token.CONST || x.Tok == token.VAR {
+				// const or var declaration
+				kind := "const"
+				if x.Tok == token.VAR {
+					kind = "var  "
+				}
+				fmt.Printf("\t%s     %s\n", kind, x.Specs[0].(*ast.ValueSpec).Names[0])
+				p.c.addGenDecl(*p, x)
 			}
 		case *ast.TypeSpec:
 			switch t := x.Type.(type) {

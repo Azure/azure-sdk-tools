@@ -293,7 +293,7 @@ func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
 }
 
 // TODO can improve how BinaryExpr consts are represented with different colors
-func makeConstTokens(name *string, c Const, list *[]Token) {
+func makeDeclarationTokens(name *string, c Declaration, list *[]Token) {
 	n := *name
 	makeToken(nil, nil, "\t", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)

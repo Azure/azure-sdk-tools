@@ -3,8 +3,8 @@
 
 package cmd
 
-// Const is a const definition.
-type Const struct {
+// Declaration is a const or var declaration.
+type Declaration struct {
 	// the type of the constant
 	Type string `json:"type"`
 

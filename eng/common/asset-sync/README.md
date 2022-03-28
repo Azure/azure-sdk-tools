@@ -1,27 +1,28 @@
 # Azure SDK Assets Relocation -- "move recordings out of repos"
 
 - [Azure SDK Assets Relocation -- "move recordings out of repos"](#azure-sdk-assets-relocation----move-recordings-out-of-repos)
-  - [Setting Context](#setting-context)
+  - [What is the problem? Why?](#what-is-the-problem-why)
   - [How the test-proxy can ease transition of external recordings](#how-the-test-proxy-can-ease-transition-of-external-recordings)
     - [Old](#old)
     - [New](#new)
-  - [Evaluated  options for storage of these external recordings](#evaluated--options-for-storage-of-these-external-recordings)
+  - [Which external storage mediums were considered?](#which-external-storage-mediums-were-considered)
     - [`Git SubModules`](#git-submodules)
       - [Advantages of `Git SubModules`](#advantages-of-git-submodules)
       - [Disadvantages of `Git SubModules`](#disadvantages-of-git-submodules)
+    - [`Git Subtrees`](#git-subtrees)
     - [`Git lfs`](#git-lfs)
       - [Advantages of `Git lfs`](#advantages-of-git-lfs)
       - [Disadvantages of `Git lfs`](#disadvantages-of-git-lfs)
     - [`External Git Repo`](#external-git-repo)
       - [Advantages of `Git Repo`](#advantages-of-git-repo)
       - [Disadvantages of `Git Repo`](#disadvantages-of-git-repo)
+      - [But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?](#but-if-we-already-have-a-problem-with-ever-expanding-git-repos-why-does-an-external-repo-help-us)
     - [Blob Storage](#blob-storage)
       - [Advantages of `Blob Storage`](#advantages-of-blob-storage)
       - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
     - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
       - [Overall evaluation of `Pulling a zipfile of the repository`](#overall-evaluation-of-pulling-a-zipfile-of-the-repository)
-    - [But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?](#but-if-we-already-have-a-problem-with-ever-expanding-git-repos-why-does-an-external-repo-help-us)
-  - [We have an external git repo, how will we integrate that with our frameworks?](#we-have-an-external-git-repo-how-will-we-integrate-that-with-our-frameworks)
+  - [Exploring An External Git Repo](#exploring-an-external-git-repo)
     - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
     - [Drawbacks](#drawbacks)
   - [Scenario Walkthroughs](#scenario-walkthroughs)
@@ -34,19 +35,18 @@
     - [Multiple Devs: Update recordings for two packages under same service in parallel](#multiple-devs-update-recordings-for-two-packages-under-same-service-in-parallel)
   - [Asset sync script implementation](#asset-sync-script-implementation)
     - [Cross-platform capabilities](#cross-platform-capabilities)
-    - [Interaction](#interaction)
     - [Implementation of Sync Script](#implementation-of-sync-script)
     - [Sync operations description and listing](#sync-operations-description-and-listing)
     - [Sync Operation triggers](#sync-operation-triggers)
     - [Sync Operation details - pull](#sync-operation-details---pull)
     - [Sync Operation details - push](#sync-operation-details---push)
     - [Integrating the sync script w/ language frameworks](#integrating-the-sync-script-w-language-frameworks)
-  - [Test Run](#test-run)
+    - [Test Run](#test-run)
   - [Integration Checklist](#integration-checklist)
   - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
     - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
 
-## Setting Context
+## What is the problem? Why?
 
 The Azure SDK team has a problem that has been been growing in the background for the past few years. Our repos are getting big! The biggest contributor to this issue are **recordings**. Yes, they compress well, but when bugfixes can result in entire rewrites of multiple recordings files, the compression ratio becomes immaterial.
 
@@ -68,11 +68,11 @@ sdk-for-python/                            sdk-for-python-assets/
 
 The unfortunate fact of the matter is that an update like this _will_ impede users. The only thing we can do is mitigate the worst of these impacts.
 
-Thankfully, the integration of the test-proxy actually provides a great opportunity for upheavel in the test areas! Not only would we be making big changes in the test area already, but the `storage context` feature of the test-proxy really lends itself well to this effort as well!
+Thankfully, the integration of the test-proxy actually provides a great opportunity for upheavel in the test areas! Not only would we be making big changes in the test area already, but the `storage-location` feature of the test-proxy really lends itself well to this effort as well!
 
 ## How the test-proxy can ease transition of external recordings
 
-With language-specific record/playback solutions, there must be an abstraction layer that retrieves the recording files from an expected `recordings` folder. Where these default locations are is usually predicated on the tech being used. It's not super terrible, but custom save/load would need to be implemented for each recording stack, with varying degrees of complexity depending on how opinionated a given framework is.
+With language-specific record/playback sollutions, there must be an abstraction layer that retrieves the recording files from an expected `recordings` folder. Where these default locations are is usually predicated on the tech being used. It's not super terrible, but custom save/load would need to be implemented for each recording stack, with varying degrees of complexity depending on how opinionated a given framework is.
 
 Contrast this with the the test-proxy, which starts with a **storage context**. This context is then used when **saving** and **loading** a recording file.
 
@@ -89,10 +89,12 @@ Given that the test-proxy is storing/retrieving data independent of the client c
 
 All that needs to happen is to:
 
+0. Test framework calls sync script, ensures recordings are present in a cloned assets repo locally.
 1. Start the test proxy with storage context set to cloned assets repo (details forthcoming)
-2. Adjust the provided "file path" to the recording within the asset repo.
+2. Adjust the provided "file path" to the recording within the asset repo if necesssary.
+3. Profit.
 
-If you were invoking the test-proxy as a docker image, the difference in initilization is as easy as:
+If you were invoking the test-proxy as a docker image, the difference in initialization is as easy as:
 
 ### Old
 
@@ -102,9 +104,9 @@ If you were invoking the test-proxy as a docker image, the difference in initili
 
 `docker run -v C:/repo/sdk-for-python-assets/:/etc/testproxy azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`
 
-Given the same relative path in the assets repo, 0 changes to test code are necessary.
+Given the same relative path in the assets repo, zero changes to test code are necessary.
 
-## Evaluated  options for storage of these external recordings
+## Which external storage mediums were considered?
 
 Prior to ScottB starting on this project, JimS was the one leading the charge. As part of that work, Jim explored few potentional storage solutions. He did not evaluate these strictly from a `usability` standpoint.
 
@@ -127,7 +129,11 @@ He also checked other measures, like `download speed` and `integration requireme
 #### Disadvantages of `Git SubModules`
 
 - Submodules can’t do part of a repository. The only way one could effectively trim a submodule would be to clone with depth which would leave things in a detached head state. The goal here is to minimize clone and sync times without negating the ability, or requiring the entire enlistment, to do updates.
-- Extremely unwieldy. The method for updating them locally is quite manual, and there is as far as I can tell no way to directly tie a submodule's commits to the main repos commits. They're still totally separate repositories. [As reviewable in their docs](https://git-scm.com/book/en/v2/Git-Tools-Submodules), git submodules aren't quite intended for large collaboration or projects. Especially not with multiple moving parts under the submodule.
+- Extremely unwieldy. The method for updating them locally is quite manual, and there is as far as I can tell no way to directly tie a submodule's commits to the main repos commits. They're still totally separate repositories. [As reviewable in their docs](https://git-scm.com/book/en/v2/Git-Tools-Submodules), git submodules aren't quite intended for large collaboration or projects. Especially not with multiple moving parts under the submodule. Not only this, but with submodules in place,
+
+### `Git Subtrees`
+
+TODO: Read about this option.
 
 ### `Git lfs`
 
@@ -145,6 +151,8 @@ He also checked other measures, like `download speed` and `integration requireme
   
 ### `External Git Repo`
 
+Current prototype visible [here.](./assets.ps1).
+
 #### Advantages of `Git Repo`
 
 - Publically browsable in a coherent fashion through the github UI
@@ -155,6 +163,14 @@ He also checked other measures, like `download speed` and `integration requireme
 #### Disadvantages of `Git Repo`
 
 - Need to deal with the fact that it's a git repo, and not a direct storage solution. We will need PRs, branches, and cleanup tasks running on the assets repo instead of a storage solution with no real sense of commit history.
+- Our local tooling will need to do a bunch of heavy lifting to keep the process simple for users. Even with that, we are going to be seeing a bunch of finicky issues.
+- What do we do for the `-pr` repositories? We will _have_ to maintain a copy of the assets repo for those as well. What would this look like to migrate a PR from `-pr` to public?
+
+#### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
+
+Because the automation interacting with this repository should only ever clone down _a single commit_ at one time.
+
+Yes, commit histories do add _some_ weight to the git database, but it's definitely not a super impactful difference.
 
 ### Blob Storage
 
@@ -164,10 +180,10 @@ He also checked other measures, like `download speed` and `integration requireme
 
 - Size on disk only consists of the files that were pulled. There is no .git folder becoming more and more bloated as versions are added.
 - Pulling files piecemeal for an area or areas is relatively easy. The main benefit is how easy it would be to pull resources for a given area, like batch or keyvault. Most areas took under 5 seconds to pull but there were outliers. For example, Storage was the worst offender taking about 7 seconds to pull on corpnet, 15 seconds from Seattle and 50 seconds from Australia.
-- Extremely easy to avoid conflicts, don't need to worry about storage/endless expansion with a storage blob.
+- Extremely easy to avoid conflicts
 - Accessible through basic REST API.
 - Much fewer moving parts. It's possible to get into a conflict with the git repo, but not when individually uploading blobs.
-- Given rest API nature of this, possibly implement thin client in go to generate platform specific runners.
+- Given rest API nature of this, possibly implement thin client in `go` to generate platform specific runners.
 
 #### Disadvantages of `Blob Storage`
 
@@ -180,8 +196,10 @@ He also checked other measures, like `download speed` and `integration requireme
 - No publically available UI to browse recordings at rest and recorded
 - A native level unzip/zip operation is extremely heavy for larger recordings folders
   - An example of this is the storage service, where we have upwards of half a gigabyte of data present. This is an enormous tax to zip and unzip with each push/pull.
-- The storage is not geolocated, though geo replication be set for as many as _all_ regions supported by azure.
+  - This is somewhat mitigated when swapping to per-package `recording.json` (which we would do with this approach)
+- The storage is not geolocated normally, though geo replication be set for as many as _all_ regions supported by azure.
 - There is no concept of "history". It's all point in time.
+- Cost _may_ be a problem, git is free as far as we are concerned.
 
 ### `Pulling a zipfile of the repository`
 
@@ -189,13 +207,7 @@ He also checked other measures, like `download speed` and `integration requireme
 
 While it is possible to download a zipfile of a GIT repository it’s not very practical. Downloading the zip is only slightly faster than just syncing the repository but the unpacking of the zip that makes this a non-starter. For example: On my Surface Laptop 2, taking zipfile of azure-sdk-for-net and using powershell’s Expand-Archive took 8:07 to unpack. Using System.IO.Compression.ZipFile’s ExtractToDirectory took 5:06 to unpack. The decompression times alone were enough to end this investigation but even if that could be rectified the result would effectively be a read-only copy of the repository.
 
-### But if we already HAVE a problem with ever expanding git repos, why does an external repo help us?
-
-Because the automation interacting with this repository should only ever clone down _a single commit_ at one time.
-
-Yes, commit histories do add _some_ weight to the git database, but it's definitely not a super impactful difference.
-
-## We have an external git repo, how will we integrate that with our frameworks?
+## Exploring An External Git Repo
 
 This is where the story gets complicated. Now that recordings are no longer stored directly alongside the code that they support, the process to _initially retrieve_ and _update_ the recordings gets a bit more stilted.
 
@@ -221,17 +233,16 @@ To get around this, we will embed a reference to an assets repo SHA into the lan
 
 As of now, it seems the best place to locate this assets SHA is in a new file in each `sdk/<service>` directory. For most of our packages this is a safe bet. Only one team member will be updating this SHA at a time, and as such it will be easy to add onto a commit one at a time. There is no parallelization! For others, like `azure-communication` in python or `spring` in Java land, this will be complex. We will revisit these topics in the [Scenarios Walkthroughs](#scenario-walkthroughs) section.
 
-
-```bash
+```text
 <repo-root>
   /sdk
     /<service>
-      recordings.json
+      recording.json
 ```
 
 And within the file...
 
-```json
+```jsonc
 {
     /*
       By default, the prefix path to a test file in the assets repo will be identical to the code repo.
@@ -262,7 +273,7 @@ And within the file...
 
 While this works really well for local playback, it does not work for submitting a PR with your code changes. Why? Because the PR checks won't _have_ your updated assets repo that you may have created by recording your tests locally!
 
-This necessitates a script that can be queued **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recordings.json` to consume it.
+This necessitates a script that can be queued **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recording.json` to consume it.
 
 You will note that the above JSON configuration lends itself well to more individual solutions, while allowing space for more _targeted_ overrides later.
 
@@ -279,17 +290,17 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 | azure-sdk-for-<language>/                         | assets-repo/                                                  |
 |                                                   |                                                               |
 |                                                   |                                                               |
-|   sdk/core/record+--------------------------------+>auto-commit/core@SHA1                                         |
+|   sdk/core/recording.json------------------------+>auto-commit/core@SHA1                                         |
 |      ...         |                                |   /recordings/sdk/core/azure-core/recordings/YYY.json         |
 |      SHA: "SHA1" |                                |                                                               |
 |      ...                               +----------+>auto-commit/storage@SHA2                                      |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recordings.json          |          |                                                               |
+|   sdk/storage/recording.json          |          |                                                               |
 |      ...         +---------------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "SHA2" |                                | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recordings.json (from release tag)  | |                                                             |
+|   sdk/storage/recording.json (from release tag)  | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |
@@ -297,12 +308,10 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 +---------------------------------------------------+---------------------------------------------------------------+
 ```
 
-Before nightly maintenenance, we will have merged the following to `main` in `azure-sdk-for-<language>`.
-
 After nightly automation has copied commits into `main`, we will update the current recording.json files in `main` to reflect the newly merged _common_ commit.
 
-- auto-commit/core@SHA1 -> commits transferred and squashed to main
-- auto-commit/core@SHA2 -> commits transferred and squashed to main
+- auto-commit/core@SHA1 -> commits merge-commit to main
+- auto-commit/core@SHA2 -> commits merge-commit to main
 - hotfix-commit/storage@SHA3 -> Stays around forever, like our hotfix branches do.
 
 ```text
@@ -315,12 +324,12 @@ After nightly automation has copied commits into `main`, we will update the curr
 |      SHA: "NewMainSHA" |                          |                                                               |
 |      ...                               +----------+>auto-commit/storage@NewMainSHA                                |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recordings.json          |          |                                                               |
+|   sdk/storage/recording.json          |          |                                                               |
 |      ...               +---------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "NewMainSHA" |                          | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recordings.json (from release tag)  | |                                                             |
+|   sdk/storage/recording.json (from release tag)  | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |
@@ -362,12 +371,9 @@ This is the easiest case, there is no existing place to start.
 
 ```
 
-
 ### Single Dev: Update single service's recordings
 
 This situation is the "normal" use case. Merely adding an additional commit to their auto/<service> branch.
-
-
 
 ### Single Dev: Update recordings for a hotfix release
 
@@ -379,7 +385,7 @@ This situation is the "normal" use case. Merely adding an additional commit to t
 
 ## Asset sync script implementation
 
-Alright, so we know how we want to structure the `recordings.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
+Alright, so we know how we want to structure the `recording.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
 
 They key mention here is that **regardless** of what storage methodology is used, we need to describe some integration points for each language's proxy-shim.
 
@@ -393,7 +399,7 @@ Specifically, we need to do the following:
 - Clone the assets repo if it is not yet initialized
 - Figure out which auto-branch to go after
 - Grab "the assets" from the storage medium given an `Target Asset Identifier` (given git storage it would be a SHA) in the recording.json, restore into the target directory
-- Return the _root of the cloned directory to the tooling for use when starting the test-proxy)
+- Return the **root** of the cloned directory to the tooling for use when starting the test-proxy)
 
 ### Cross-platform capabilities
 
@@ -403,18 +409,7 @@ Basic interactions will be provided by a powershell script.
 - Checkout at SHA
 - Push update to auto branch
 
-Each language framework can of course implement the above as well, and should at the very least shell out to the assets script to ensure we 
-
-### Interaction
-
-1. Sync for `playback`
-   1. If there is no `recordings.json`, create it. Maybe separate this into a separate action.
-   2. If there is an existing `recordings.json`
-      1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recordings.json`.
-      2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`
-   3. Invoke Tests to get new recordings.
-   4. Create new commit to branch `auto/<servicename>`. then push.
-   5. Update recording.json targeted SHA with the new commit.
+Each language framework can of course implement the above as well, and should at the very least shell out to the assets script to begin with.
 
 ### Implementation of Sync Script
 
@@ -431,14 +426,14 @@ The external repo will probably be a _git_ repo, so it's not like devs won't be 
 | Operation | Description |
 |---|---|
 | Sync | When one first checks out the repo, one must initialize the recordings repo so that we can run in `playback` mode.  |
-| Push | Submits a PR to the assets repo, updates local `recordings.json` with new SHA. |
-| Reset | Return assets repo and `recordings.json` to "just-cloned" state. |
+| Push | Submits a PR to the assets repo, updates local `recording.json` with new SHA. |
+| Reset | Return assets repo and `recording.json` to "just-cloned" state. |
 | Checkout | Abandon Any Pending Changes (prompt the user!), then Sync to the targeted SHA |
 
-We need to have _rational_ no-op operations. What does this mean? Let's set up a scenario. We have been actively bugfixing a feature for keyvault, and we've been asked to check something in storage. You'll need to change context with a `Checkout` operation right? However, the recording.jsons don't have the same repo SHA!  
+One benefit of building on top of a git repository is that we have a possible no-op checkout posible when switching the target assets repo SHA. EG: a dev is working a `storage` PR and needs to check a possible issue in `keyvault`. That dev will need to probably need to retarget their assets repo to point at the SHA defined in the `storage` recording.json sync-script. However, the recording.jsons probably don't have the same SHA!  
 
 ```text
-Main Commits
+Commits in assets repository
 (A) -> (B) -> (C) -> (D) -> (E)
 
 sdk/storage/recording.json
@@ -452,6 +447,8 @@ If we regularly `merge-commit` from each `auto/<service>` branch into `main`, we
 
 A side-benefit of this is that we can run into the situation above. If we are swapping from a _newer_ merged commit to an older one, we can ascertain whether that commit is _already encapsulated_ by our current. In best-case, our scripting should recognize that `D` is supplanted by `E`, and we don't need to do any checkout actions at all!
 
+- One major concern with this process. We are watching `checkenforcer` deal with checks that are fired from CI builds that are the result of a manual large merge. `scbedd` has concerns  with the amount of churn we will be forcing on the repo (just for the PR builds) that would result from the constant updating of these SHAs.
+
 ### Sync Operation triggers
 
 At the outset, this will need to be manually run. How far down this manual path do we want to go?
@@ -461,37 +458,49 @@ Options:
 - `Pre-commit` hook ala typescript linting
   - This works for _changes_, but how about for a fresh repo? Initialize has gotta happen at some point. Automagic stuff could also result in erraneous PRs to the  
 - Scripted invocation as part of a test run. For `ts/js`, this is actually simple, as `npm <x>` are just commands defined in the packages.json file. For others, this may be a bit closer to manual process.
+  - Given that the testing frameworks _already_ have emplaced a "before the tests, start test-proxy" shim that, we have a great opportunity to place our script in this same location.
 
 ### Sync Operation details - pull
 
 The initialization of the assets repo locally should be a simple clone w/ 0 blobs.
 
-```
+```text
 .git
 <files at root>
-folder1/
-folder2/
-  folder3/
+sdk/
+  <targetservice>/
+   ...
 ```
 
 As `playback` sessions are started, the repo should:
 
 1. Discard pending changes, reset to empty
-2. Add `sparse-checkout` for the service folder needed by the current playback request.
-3. `checkout` exact SHA specified in `recordings.json`
-4. `pull`
+2. If there is no `recording.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
+   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recording.json`.
+   2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`, check grab the latest commit and use as base.
+3. Add `sparse-checkout` for the service folder needed by the current playback request.
+   1. If changing targeted service, this means removing the previous `sdk/<service>` directory from the local git config before adding the current target
+4. `checkout` exact SHA specified in `recording.json`
+   1. If the SHA isn't supplanted by currently checked out SHA, leave the current SHA checked out and no-op.
+5. `pull`
 
-Given the context advantages discussed earlier, one most only start the proxy at the root of the `assets` directory. Everything else should shake out from there.
+Given the context advantages discussed earlier, one most only start the proxy at the root of the `assets/recordings` directory. Everything else should shake out from there.
 
 ### Sync Operation details - push
 
-The `start` point here will be defined by what we settle on for the "main" branch.
+The `start` point here will be defined by what we settle on for the "main" branch OR the _latest commit on the `auto/<servicename>` branch.
+
+1. If there is no `recording.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
+   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recording.json`.
+   2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`, check grab the latest commit and use as base.
+2. Create a new commit to the branch `auto/<servicename>`. Push.
+3. Update recording.json with new SHA from assets repo push.
 
 ### Integrating the sync script w/ language frameworks
 
 Each repo has its own language-specific method to start the test-proxy. The _same method_ that starts that test-proxy needs to resolve these commit SHAs and leverage the assets script to checkout the local assets copy to the appropriate target version.
 
-## Test Run
+### Test Run
 
 `scbedd` has created a [a test branch](https://github.com/scbedd/azure-sdk-for-python/tree/feature/move-recordings) that has a hacked up local version of everything we talk about above. The scripts are no where near complete and are merely proxies to ensure everything still works as we expect.
 
@@ -514,29 +523,14 @@ So to locally repro this experience:
 
 ## Integration Checklist
 
-What needs to be done on each of the repos to utilize this.
+What needs to be done on each of the repos to utilize this the sync script?
 
-todo this list
+To utilize the _base_ version of the script, the necessary steps are fairly simple.
 
-- [ ] 
-- [ ]
-- [ ]
-- [ ]
-- [ ]
-- [ ]
-- [ ]
-- [ ]
+- [ ] Add base recording.json
+- [ ] Update test-proxy `shim`s to call asset-sync scripts to prepare the test directory prior to tests invoking.
 
-FEEDBACK FROM WES
-  MERGE COMMITS ONLY WORK IF A SINGLE COMMIT IS NOT SQUASHED.
-    Merge commits do not work.
-  
-  Description of base methodology ->
-    conflicts shouldn't happen -> just re-record -> push to branch
-    Map out what this would look like. They should be based off master.
-
-  ensure that we leave a comment describing why
-  Split the `recordings.json` into a service directory
+Where the difficulty _really_ lies is in the weird situations that folks get into.
 
 ## Post-Asset-Move space optimizations
 

@@ -14,9 +14,9 @@
 
     using Microsoft.Extensions.Logging;
     using Microsoft.TeamFoundation.Build.WebApi;
+    using Microsoft.TeamFoundation.Core.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
-    using Microsoft.WindowsAzure.Storage;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -46,7 +46,12 @@
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
 
-        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient, TestResultsHttpClient testResultsClient)
+        public BlobUploadProcessor(
+            ILogger<BlobUploadProcessor> logger,
+            BuildLogProvider logProvider,
+            BlobServiceClient blobServiceClient,
+            BuildHttpClient buildClient,
+            TestResultsHttpClient testResultsClient)
         {
             if (blobServiceClient == null)
             {
@@ -63,47 +68,72 @@
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerNameTestRunsContainerName);
         }
 
-        public async Task UploadBuildBlobsAsync(
-            string account,
-            Build build,
-            Timeline timeline)
+        public async Task UploadBuildBlobsAsync(string account, Guid projectId, int buildId)
         {
+            var build = await GetBuildAsync(projectId, buildId);
+
             if (build == null)
             {
-                throw new ArgumentNullException(nameof(build));
+                this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                return;
             }
 
+            var skipBuild = false;
+
+            // Project name is used in blob paths and cannot be empty
             if (build.Project == null)
             {
-                throw new ArgumentException("build.Project is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                skipBuild = true;
+            }
+            else if (string.IsNullOrWhiteSpace(build.Project.Name))
+            {
+                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                skipBuild = true;
             }
 
-            if (build.Definition == null)
+            if (build.Deleted)
             {
-                throw new ArgumentException("build.Definition is null", nameof(build));
+                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
-            // QueueTime is used in blob paths and cannot be null
-            if (build.QueueTime == null)
+            if (build.StartTime == null)
             {
-                throw new ArgumentException("build.QueueTime is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
             // FinishTime is used in blob paths and cannot be null
             if (build.FinishTime == null)
             {
-                throw new ArgumentException("build.FinishTime is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
-            // Project name is used in blob paths and cannot be empty
-            if (string.IsNullOrWhiteSpace(build.Project.Name))
+            // QueueTime is used in blob paths and cannot be null
+            if (build.QueueTime == null)
             {
-                throw new ArgumentException("build.Project.Name is null or whitespace", nameof(build));
+                this.logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
+            if (build.Definition == null)
+            {
+                this.logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
+            }
+
+            if (skipBuild)
+            {
+                return;
+            }
+    
             await UploadBuildBlobAsync(account, build);
 
             await UploadTestRunBlobsAsync(account, build);
+
+            var timeline = await this.buildClient.GetBuildTimelineAsync(projectId, buildId);
 
             if (timeline == null)
             {
@@ -310,28 +340,47 @@
                     return;
                 }
 
-                var messagesWriter = new StringBuilder();
-                var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
-                var lastTimeStamp = log.CreatedOn;
+                logger.LogTrace("Processing {LineCount} lines for build {BuildId}, log {LogId}", log.LineCount, build.Id, log.Id);
 
-                for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
+                var lineNumber = 0;
+                var characterCount = 0;
+
+                // Over an open read stream and an open write stream, one line at a time, read, process, and write to
+                // blob storage
+                using (var logStream = await this.logProvider.GetLogStreamAsync(build, log.Id))
+                using (var logReader = new StreamReader(logStream))
+                using (var blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions()))
+                using (var blobWriter = new StreamWriter(blobStream))
                 {
-                    var line = logLines[lineNumber - 1];
-                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-                    var timestamp = match.Success
-                        ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                            System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                        : lastTimeStamp;
+                    var lastTimeStamp = log.CreatedOn;
 
-                    var message = match.Success ? match.Groups[2].Value : line;
-
-                    if (timestamp == null)
+                    while (true)
                     {
-                        throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
-                    }
+                        var line = await logReader.ReadLineAsync();
 
-                    messagesWriter.AppendLine(JsonConvert.SerializeObject(
-                        new
+                        if (line == null)
+                        {
+                            break;
+                        }
+
+                        lineNumber += 1;
+                        characterCount += line.Length;
+
+                        var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+
+                        var timestamp = match.Success
+                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
+                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                            : lastTimeStamp;
+
+                        var message = match.Success ? match.Groups[2].Value : line;
+
+                        if (timestamp == null)
+                        {
+                            throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
+                        }
+
+                        await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
                         {
                             OrganizationName = account,
                             ProjectId = build.Project?.Id,
@@ -348,10 +397,11 @@
                             EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
                         }, jsonSettings));
 
-                    lastTimeStamp = timestamp;
+                        lastTimeStamp = timestamp;
+                    }
                 }
 
-                await blobClient.UploadAsync(new BinaryData(messagesWriter.ToString()));
+                logger.LogTrace("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, log {LogId}", characterCount, lineNumber, build.Id, log.Id);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
@@ -464,6 +514,21 @@
                 this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
                 throw;
             }
+        }
+
+        private async Task<Build> GetBuildAsync(Guid projectId, int buildId)
+        {
+            Build build = null;
+
+            try
+            {
+                build = await buildClient.GetBuildAsync(projectId, buildId);
+            }
+            catch (BuildNotFoundException)
+            {
+            }
+
+            return build;
         }
     }
 }

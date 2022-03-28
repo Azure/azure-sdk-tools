@@ -43,8 +43,11 @@ export function generateReturnsInfo(op: Operation, apiType: 'api' | 'op' | 'hand
                 }
                 break;
             case 'op':
-                returnType = '*http.Response';
-                break;
+                // change to get final response type
+                if (op.language.go!.pageableType) {
+                    returnType = (<PagerInfo>op.language.go!.pageableType).name;
+                }
+                returnType = getFinalResponseEnvelopeName(op);
         }
     } else if (isPageableOperation(op)) {
         switch (apiType) {

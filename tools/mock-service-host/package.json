@@ -38,7 +38,7 @@
     "oauth2-mock-server": "^3.1.0",
     "oav": "~2.10.2",
     "reflect-metadata": "^0.1.13",
-    "simple-git": "^2.38.0",
+    "simple-git": "^3.3.0",
     "winston": "^3.3.3"
   },
   "devDependencies": {

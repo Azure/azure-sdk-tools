@@ -38,6 +38,7 @@ var err error
             {%- set _ = allVariables.push(resVariable) %}
             {%- endif %}
             {%- endif %}
+            {%- endif %}
             if recording.GetRecordMode() == recording.PlaybackMode {
                 for {
                     _, err = {{pollerVariable}}.Poller.Poll(testsuite.ctx)

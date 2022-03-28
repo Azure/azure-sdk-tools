@@ -17,7 +17,7 @@ namespace PipelineGenerator
 
         public static int Main(string[] args)
         {
-
+            
             var cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (sender, e) =>
             {
@@ -49,7 +49,7 @@ namespace PipelineGenerator
             var prefixOption = app.Option("--prefix <prefix>", "The prefix to append to the pipeline name.", CommandOptionType.SingleValue).IsRequired();
             var pathOption = app.Option("--path <path>", "The directory from which to scan for components", CommandOptionType.SingleValue).IsRequired();
             var devOpsPathOption = app.Option("--devopspath <path>", "The DevOps directory for created pipelines", CommandOptionType.SingleValue);
-            var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue).IsRequired();
+            var patvarOption = app.Option("--patvar <env>", "Name of an environment variable which contains a PAT.", CommandOptionType.SingleValue);
             var endpointOption = app.Option("--endpoint <endpoint>", "Name of the service endpoint to configure repositories with.", CommandOptionType.SingleValue).IsRequired();
             var repositoryOption = app.Option("--repository <repository>", "Name of the GitHub repo in the form [org]/[repo].", CommandOptionType.SingleValue).IsRequired();
             var branchOption = app.Option("--branch <branch>", "Typically refs/heads/main.", CommandOptionType.SingleValue).IsRequired();
@@ -61,6 +61,7 @@ namespace PipelineGenerator
             var destroyOption = app.Option("--destroy", "Use this switch to delete the pipelines instead (DANGER!)", CommandOptionType.NoValue);
             var debugOption = app.Option("--debug", "Turn on debug level logging.", CommandOptionType.NoValue);
             var noScheduleOption = app.Option("--no-schedule", "Don't create any scheduled triggers.", CommandOptionType.NoValue);
+            var setManagedVariables = app.Option("--set-managed-variables", "Set managed meta.* variable values", CommandOptionType.NoValue);
             var overwriteTriggersOption = app.Option("--overwrite-triggers", "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution).", CommandOptionType.NoValue);
 
             app.OnExecute(() =>
@@ -84,6 +85,7 @@ namespace PipelineGenerator
                     openOption.HasValue(),
                     destroyOption.HasValue(),
                     noScheduleOption.HasValue(),
+                    setManagedVariables.HasValue(),
                     overwriteTriggersOption.HasValue(),
                     cancellationTokenSource.Token
                     ).Result;
@@ -152,6 +154,7 @@ namespace PipelineGenerator
             bool open,
             bool destroy,
             bool noSchedule,
+            bool setManagedVariables,
             bool overwriteTriggers,
             CancellationToken cancellationToken)
         {
@@ -163,6 +166,7 @@ namespace PipelineGenerator
                 var devOpsPathValue = string.IsNullOrEmpty(devOpsPath) ? $"\\{prefix}" : devOpsPath;
 
                 var context = new PipelineGenerationContext(
+                    this.logger,
                     organization,
                     project,
                     patvar,
@@ -175,6 +179,7 @@ namespace PipelineGenerator
                     prefix,
                     whatIf,
                     noSchedule,
+                    setManagedVariables,
                     overwriteTriggers
                     );
 

@@ -1,6 +1,7 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -37,6 +38,7 @@ namespace APIViewWeb.Repositories
         private readonly DevopsArtifactRepository _devopsArtifactRepository;
         private readonly IAuthorizationService _authorizationService;
         private readonly int _pullRequestCleanupDays;
+        private HashSet<string> _allowedListBotAccounts;
 
         public PullRequestManager(
             IAuthorizationService authorizationService,
@@ -59,6 +61,12 @@ namespace APIViewWeb.Repositories
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
+            _allowedListBotAccounts = new HashSet<string>();
+            var botAllowedList = _configuration["allowedList-bot-github-accounts"];
+            if (!string.IsNullOrEmpty(botAllowedList))
+            {
+                _allowedListBotAccounts.UnionWith(botAllowedList.Split(","));
+            }
         }
 
 
@@ -71,12 +79,14 @@ namespace APIViewWeb.Repositories
             string packageName, 
             int prNumber,
             string hostName,
-            string codeFileName = "")
+            string codeFileName = null,
+            string baselineCodeFileName = null)
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
             try
             {
+                originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
                 var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
                 if (pullRequestModel == null)
@@ -101,12 +111,20 @@ namespace APIViewWeb.Repositories
                 }
                 pullRequestModel.Commits.Add(commitSha);
                 await AssertPullRequestCreatorPermission(pullRequestModel);
-
+                
                 using var memoryStream = new MemoryStream();
-                var codeFile = await _reviewManager.GetCodeFile(repoName,buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream);
+                using var baselineStream = new MemoryStream();
+                var codeFile = await _reviewManager.GetCodeFile(repoName, buildId, artifactName, packageName, originalFileName, codeFileName, memoryStream, baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream);
+                CodeFile baseLineCodeFile = null;
+                if (baselineStream.Length>0)
+                {
+                    baselineStream.Position = 0;
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
+                }
+
                 if (codeFile != null)
                 {
-                    var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, hostName);
+                    var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, hostName, baseLineCodeFile, baselineStream, baselineCodeFileName);
                     if (apiDiff != "")
                     {
                         var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
@@ -135,6 +153,17 @@ namespace APIViewWeb.Repositories
             }
         }
 
+        private bool ShouldShowDiffAsComment(string language)
+        {
+            switch(language)
+            {
+                case "Swagger":
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
         private async Task<IssueComment> GetExistingCommentForPackage(string packageName, string repoOwner, string repoName, int pr)
         {
             var comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
@@ -160,7 +189,45 @@ namespace APIViewWeb.Repositories
             return false;
         }
 
-        public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile, int prNumber, string originalFileName, MemoryStream memoryStream, PullRequestModel pullRequestModel, string hostName)
+        private async Task<ReviewRevisionModel> CreateBaselineRevision(
+            CodeFile baselineCodeFile,
+            MemoryStream baseLineStream,
+            PullRequestModel prModel,
+            string fileName)
+        {
+            var newRevision = new ReviewRevisionModel()
+            {
+                Author = prModel.Author,
+                Label = $"Baseline for PR {prModel.PullRequestNumber}"
+            };
+            var reviewCodeFileModel = await _reviewManager.CreateReviewCodeFileModel(newRevision.RevisionId, baseLineStream, baselineCodeFile);
+            reviewCodeFileModel.FileName = fileName;
+            newRevision.Files.Add(reviewCodeFileModel);
+            return newRevision;
+        }
+
+        private ReviewModel CreateNewReview(PullRequestModel prModel)
+        {
+            return new ReviewModel()
+            {
+                Author = prModel.Author,
+                CreationDate = DateTime.Now,
+                Name = prModel.PackageName,
+                IsClosed = false,
+                FilterType = ReviewType.PullRequest,
+                ReviewId = IdHelper.GenerateId()
+            };
+        }
+
+        public async Task<string> GetApiDiffFromAutomaticReview(CodeFile codeFile,
+            int prNumber,
+            string originalFileName,
+            MemoryStream memoryStream,
+            PullRequestModel pullRequestModel,
+            string hostName,
+            CodeFile baselineCodeFile,
+            MemoryStream baseLineStream,
+            string baselineFileName)
         {
             var newRevision = new ReviewRevisionModel()
             {
@@ -175,15 +242,13 @@ namespace APIViewWeb.Repositories
             if (review == null)
             {
                 // If base line is not available (possible if package is new or request coming from SDK automation)
-                review = new ReviewModel()
+                review = CreateNewReview(pullRequestModel);
+                // If request passes code file for baseline 
+                if (baselineCodeFile != null)
                 {
-                    Author = pullRequestModel.Author,
-                    CreationDate = DateTime.Now,
-                    Name = pullRequestModel.PackageName,
-                    IsClosed = false,
-                    FilterType = ReviewType.PullRequest,
-                    ReviewId = IdHelper.GenerateId()
-                };
+                    var baseline = await CreateBaselineRevision(baselineCodeFile, baseLineStream, pullRequestModel, baselineFileName);
+                    review.Revisions.Add(baseline);
+                }
                 var reviewUrl = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId);
                 stringBuilder.Append($"API review is created for `{codeFile.PackageName}`. You can review APIs [here]({reviewUrl}).").Append(Environment.NewLine);
             }
@@ -220,7 +285,10 @@ namespace APIViewWeb.Repositories
                 var diffUrl = REVIEW_DIFF_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", review.ReviewId).Replace("{NewRevision}", review.Revisions.Last().RevisionId);
                 stringBuilder.Append($"API changes have been detected in `{codeFile.PackageName}`. You can review API changes [here]({diffUrl})").Append(Environment.NewLine);
                 // If review doesn't match with any revisions then generate formatted diff against last revision of automatic review
-                await GetFormattedDiff(renderedCodeFile, review.Revisions.Last(), stringBuilder);
+                if (ShouldShowDiffAsComment(codeFile.Language))
+                {
+                    await GetFormattedDiff(renderedCodeFile, review.Revisions.Last(), stringBuilder);
+                }                
             }
 
             var reviewCodeFileModel = await _reviewManager.CreateReviewCodeFileModel(newRevision.RevisionId, memoryStream, codeFile);
@@ -368,16 +436,20 @@ namespace APIViewWeb.Repositories
 
         private async Task AssertPullRequestCreatorPermission(PullRequestModel prModel)
         {
-            var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
-            var orgNames = orgs.Select(o => o.Login);
-            var result = await _authorizationService.AuthorizeAsync(
-                null,
-                orgNames,
-                new[] { PullRequestPermissionRequirement.Instance });
-            if (!result.Succeeded)
+            // White list bot accounts to create API reviews from PR automatically
+            if (!_allowedListBotAccounts.Contains(prModel.Author))
             {
-                _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}.");
-                throw new AuthorizationFailedException();
+                var orgs = await _githubClient.Organization.GetAllForUser(prModel.Author);
+                var orgNames = orgs.Select(o => o.Login);
+                var result = await _authorizationService.AuthorizeAsync(
+                    null,
+                    orgNames,
+                    new[] { PullRequestPermissionRequirement.Instance });
+                if (!result.Succeeded)
+                {
+                    _telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.Author}.");
+                    throw new AuthorizationFailedException();
+                }
             }
         }
     }

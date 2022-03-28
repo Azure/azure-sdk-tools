@@ -290,17 +290,17 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 | azure-sdk-for-<language>/                         | assets-repo/                                                  |
 |                                                   |                                                               |
 |                                                   |                                                               |
-|   sdk/core/recording.json------------------------+>auto-commit/core@SHA1                                         |
+|   sdk/core/recording.json-------------------------+>auto-commit/core@SHA1                                         |
 |      ...         |                                |   /recordings/sdk/core/azure-core/recordings/YYY.json         |
 |      SHA: "SHA1" |                                |                                                               |
 |      ...                               +----------+>auto-commit/storage@SHA2                                      |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recording.json          |          |                                                               |
+|   sdk/storage/recording.json           |          |                                                               |
 |      ...         +---------------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "SHA2" |                                | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recording.json (from release tag)  | |                                                             |
+|   sdk/storage/recording.json (from release tag)   | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |

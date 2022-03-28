@@ -23,11 +23,13 @@
     - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
       - [Overall evaluation of `Pulling a zipfile of the repository`](#overall-evaluation-of-pulling-a-zipfile-of-the-repository)
   - [Exploring An External Git Repo](#exploring-an-external-git-repo)
+    - [Recording.json discovery](#recordingjson-discovery)
+      - [When establishing recordings for a new service](#when-establishing-recordings-for-a-new-service)
+    - [Repo Organization](#repo-organization)
     - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
     - [Drawbacks](#drawbacks)
   - [Scenario Walkthroughs](#scenario-walkthroughs)
     - [Single Dev: Create a new services's recordings](#single-dev-create-a-new-servicess-recordings)
-      - [Test Walkthrough](#test-walkthrough)
     - [Single Dev: Update single service's recordings](#single-dev-update-single-services-recordings)
     - [Single Dev: Update recordings for a hotfix release](#single-dev-update-recordings-for-a-hotfix-release)
     - [Multiple Devs: Update the same pull request](#multiple-devs-update-the-same-pull-request)
@@ -240,30 +242,26 @@ As of now, it seems the best place to locate this assets SHA is in a new file in
       recording.json
 ```
 
-And within the file...
+And within a sample recording.json file...
 
 ```jsonc
 {
-    /*
-      By default, the prefix path to a test file in the assets repo will be identical to the code repo.
-        sdk/<service>/<package>/<recordings>/recording1.json
-        [   prefix  ]
-      
+    // Within the assets repo, should we prefix anything before the recording path being written?
+    "AssetsRepoPrefixPath": "recordings/",
 
-      EG: if "path-in-assets" is set to "tables", the prefix will no longer be present, which will result:
-        tables/<package>/<recordings>/recording1.json
+    // In the case of the -pr repo, we would have Azure/azure-sdk-for-python-assets-pr
+    "AssetsRepo": "Azure/azure-sdk-for-python-assets",
 
-      Please note that making use of this prefix methodology is safe, as long a s
-    */
-    "prefix-path-in-assets": "recordings/", 
+    // We will design this to support multiple identical assets repos at the same time. Will be mostly unused.
+    "AssetsRepoId": "",
 
-    // by default, will check out "main"
-    "fallback-branch": "main",
+    // By default, will fall back to main. this will ONLY be used if there is no auto/<servicename> branch in the repo.
+    "AssetsrepoFallbackBranch": "main",
 
-    // by default, will be resolved auto/<service>
-    "auto-commit-branch": "auto/tables",
+    // By default, will be resolved auto/<service>.
+    "AssetsRepoBranch": "auto/tables",
 
-    // this json file will eventually need additional metadata, the below key just illustrates that
+    // this json file will eventually need additional metadata, the below key just illustrates that we can put whatever we want here.
     "metadatakey1": "metadatavalue1",
 
     // no default for this value.
@@ -273,9 +271,46 @@ And within the file...
 
 While this works really well for local playback, it does not work for submitting a PR with your code changes. Why? Because the PR checks won't _have_ your updated assets repo that you may have created by recording your tests locally!
 
-This necessitates a script that can be queued **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recording.json` to consume it.
+This necessitates some local action that can be run **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recording.json` to consume it.
 
 You will note that the above JSON configuration lends itself well to more individual solutions, while allowing space for more _targeted_ overrides later.
+
+### Recording.json discovery
+
+Any interactors with the asset script must be able to parse a `recording.json` given only a `current working directory`. The `assets.ps1` implementation as it exists now allows a user to pass a target directory as well. Whatever the chosen method, given a _start_ directory, the algo should traverse _up_ the file tree until it discovers a file named exactly `recording.json` OR hits `root`.
+
+`root` can be either a folder with `.git` present within it OR the actual current-disk root `/`.
+
+#### When establishing recordings for a new service
+
+One must _create_ a recording.json. The recording framework should base a _new_ recording.json off of one further up the directory tree. Everything is safe to use _other than_ the `AssetsRepoBranch` property.
+
+### Repo Organization
+
+```text
+<azure-sdk-for-language-root>/
+    .git
+    .assets/
+
++------> azure2/
+|
+|  +-------> recordings/
+|  |
+|  |             <TestPath>
+|  |
+|  | recording.json
+|  +---AssetsRepoPrefixPath:"recordings"
+|      AssetsRepo:"azure/azure-sdk-for-python"
++------AssetsRepoId:"azure2"
+       SHA:"ABC"
+       AssetsRepo:"Azure/azure-sdk-for-python"
+```
+
+- All assets repositories will be cloned to a folder under the `.assets` folder at root.
+- If `AssetsRepoId` is provided, that will be the name of the folder under `.assets`.
+  - If not provided, the folder under `.assets` will be named `AssetRepo.Replace("/", ".)`
+  - AssetRepoId is used in weird edge cases, and we're keeping it around for future proofing only at this time
+- `<TestPath>` is the _current_ path to recording that the language-repos will provide to the test-proxy in the `Test-File` argument.
 
 ### Auto-commits and merges to `main`
 
@@ -324,12 +359,12 @@ After nightly automation has copied commits into `main`, we will update the curr
 |      SHA: "NewMainSHA" |                          |                                                               |
 |      ...                               +----------+>auto-commit/storage@NewMainSHA                                |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recording.json          |          |                                                               |
+|   sdk/storage/recording.json           |          |                                                               |
 |      ...               +---------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "NewMainSHA" |                          | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recording.json (from release tag)  | |                                                             |
+|   sdk/storage/recording.json (from release tag)   | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |
@@ -351,24 +386,19 @@ For all of these, any supplementary functionality is laid out in `asset-interact
 
 This is the easiest case, there is no existing place to start.
 
-#### Test Walkthrough
-
-```
-<user> Create recording.json with assetsRepo and assetRecordingPrefix targeted
+```text
 <user> Invoke Record Tests 
   <tooling> Initialize-Assets-Repo
   <tooling> Check for SHA/auto branch in the repo
+    <user> If changes are being abandoned in a different directory, prompt user before discarding changes.
   <tooling> If no remote references, create branch under format of auto/<servicename> push empty branch
-    <tooling> After above invocation, recording.json values of the following fields will be updated as per main, since there is no existing auto/<service> branch.
-                AssetsRepo
-                AssetsRepoPrefixPath
-                Branch
-                TargetSHA
-  <tooling> Return the root of the initialized repo to the framework <-- is where we start test-proxy
-
-
-
-
+  <tooling> After above invocation, recording.json values of the following fields will be updated as per main, since there is no existing auto/<service> branch.
+            AssetsRepo
+            AssetsRepoPrefixPath
+            Branch
+            TargetSHA
+  <tooling> Return the root of the initialized repo to the framework
+  <tooling> Start Test-Proxy in context of returned root
 ```
 
 ### Single Dev: Update single service's recordings
@@ -530,7 +560,7 @@ To utilize the _base_ version of the script, the necessary steps are fairly simp
 - [ ] Add base recording.json
 - [ ] Update test-proxy `shim`s to call asset-sync scripts to prepare the test directory prior to tests invoking.
 
-Where the difficulty _really_ lies is in the weird situations that folks get into.
+Where the difficulty _really_ lies is in the weird situations that folks will into.
 
 ## Post-Asset-Move space optimizations
 

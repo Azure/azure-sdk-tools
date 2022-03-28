@@ -15,7 +15,6 @@ import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { OavStepType } from '@autorest/testmodeler/dist/src/common/constant';
 import { Step } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
-import { isArray } from 'lodash';
 
 export class ScenarioTestDataRender extends MockTestDataRender {
     packagePrefixForGlobalVariables = 'testsuite.';
@@ -208,6 +207,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected getSubscriptionValue(param: Parameter) {
         return this.packagePrefixForGlobalVariables + 'subscriptionId';
     }

@@ -308,15 +308,7 @@ func (c *content) parseStruct(tokenList *[]Token) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	clients := []string{}
-	for i, k := range keys {
-		if strings.HasSuffix(k, "Client") {
-			clients = append(clients, k)
-			keys = append(keys[:i], keys[i+1:]...)
-		}
-	}
-	clients = append(clients, keys...)
-	for _, k := range clients {
+	for _, k := range keys {
 		makeStructTokens(&k, c.Structs[k].AnonymousFields, c.Structs[k].Fields, tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)

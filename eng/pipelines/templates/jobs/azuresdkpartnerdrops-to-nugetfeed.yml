@@ -36,7 +36,7 @@ parameters:
     default: 'drops-signed'
   - name: PartnerDropsBlobDestPrefix
     type: string
-    default: '$(Release.DefinitionName)\$(Release.ReleaseId)-$(Release.AttemptNumber)'
+    default: '$(Build.DefinitionName)\$(Build.BuildId)-$(System.JobAttempt)'
   - name: ShouldSign
     type: boolean
     default: true

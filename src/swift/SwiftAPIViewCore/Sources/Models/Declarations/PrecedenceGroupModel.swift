@@ -42,54 +42,109 @@ import AST
 ///     precedence-group-associativity → associativity : none
 ///     precedence-group-names → precedence-group-name | precedence-group-name , precedence-group-names
 ///     precedence-group-name → identifier
-class PrecedenceGroupModel: Tokenizable, Navigable, Linkable {
+class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
 
+    var lineId: String?
     var definitionId: String?
     var name: String
-    var attributes: [Tokenizable]
+    var members: [Tokenizable]
+
+    struct AssociativityMember: Tokenizable, Commentable {
+
+        var lineId: String?
+        var value: String
+
+        init(value: String) {
+            // FIXME: Fix this!
+            self.lineId = nil // self.defId(forName: "associativity", withPrefix: defId)
+            self.value = value
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword("associativity", definitionId: lineId)
+            t.punctuation(":")
+            t.whitespace()
+            t.keyword(value)
+            return t
+        }
+    }
+
+    struct ComparisonMember: Tokenizable, Commentable {
+
+        var lineId: String?
+        var keyword: String
+        var groups: [TypeModel]
+
+        init(keyword: String, with identifiers: IdentifierList) {
+            // FIXME: Fix this!
+            self.lineId = nil // self.defId(forName: "higherThan", withPrefix: defId)
+            self.keyword = keyword
+            self.groups = [TypeModel]()
+            identifiers.forEach { item in
+                self.groups.append(TypeModel(from: item))
+            }
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword(keyword, definitionId: lineId)
+            t.punctuation(":")
+            t.whitespace()
+            let stopIdx = groups.count - 1
+            for (idx, group) in groups.enumerated() {
+                t.append(contentsOf: group.tokenize())
+                if idx != stopIdx {
+                    t.punctuation(",")
+                    t.whitespace()
+                }
+            }
+            return t
+        }
+    }
+
+    struct AssignmentMember: Tokenizable, Commentable {
+
+        var lineId: String?
+        var value: Bool
+
+        init(value: Bool) {
+            // FIXME: Fix this!
+            self.lineId = nil
+            self.value = value
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword("assignment", definitionId: lineId)
+            t.punctuation(":")
+            t.whitespace()
+            t.stringLiteral(String(value))
+            return t
+        }
+    }
 
     init(from decl: PrecedenceGroupDeclaration) {
-        self.name = ""
-        //self.definitionId = = self.defId(forName: name, withPrefix: defIdPrefix)
+        // FIXME: Fix this!
+        self.definitionId = nil
+        self.lineId = nil
+        self.name = decl.name.textDescription
+        self.members = [Tokenizable]()
         decl.attributes.forEach { item in
-//                switch attr {
-//                case let .assignment(val):
-//                    let defId = self.defId(forName: "assignment", withPrefix: defId)
-//                    keyword(value: "assignment", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    keyword(value: String(val))
-//                case .associativityLeft:
-//                    let defId = self.defId(forName: "associativity", withPrefix: defId)
-//                    keyword(value: "associativity", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    keyword(value: "left")
-//                case .associativityNone:
-//                    let defId = self.defId(forName: "associativity", withPrefix: defId)
-//                    keyword(value: "associativity", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    keyword(value: "none")
-//                case .associativityRight:
-//                    let defId = self.defId(forName: "associativity", withPrefix: defId)
-//                    keyword(value: "associativity", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    keyword(value: "right")
-//                case let .higherThan(val):
-//                    let defId = self.defId(forName: "higherThan", withPrefix: defId)
-//                    keyword(value: "higherThan", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    typeReference(name: val.map { $0.textDescription }.joined(separator: "."))
-//                case  let .lowerThan(val):
-//                    let defId = self.defId(forName: "lowerThan", withPrefix: defId)
-//                    keyword(value: "lowerThan", definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    typeReference(name: val.map { $0.textDescription }.joined(separator: "."))
-//                }
+            switch item {
+            case let .assignment(val):
+                self.members.append(AssignmentMember(value: val))
+            case .associativityLeft:
+                self.members.append(AssociativityMember(value: "left"))
+            case .associativityNone:
+                self.members.append(AssociativityMember(value: "none"))
+            case .associativityRight:
+                self.members.append(AssociativityMember(value: "right"))
+            case let .higherThan(val):
+                self.members.append(ComparisonMember(keyword: "higherThan", with: val))
+            case  let .lowerThan(val):
+                self.members.append(ComparisonMember(keyword: "lowerThan", with: val))
+            }
         }
     }
 
@@ -101,7 +156,7 @@ class PrecedenceGroupModel: Tokenizable, Navigable, Linkable {
         t.whitespace()
         t.punctuation("{")
         t.newLine()
-        attributes.forEach { item in
+        members.forEach { item in
             t.append(contentsOf: item.tokenize())
             t.newLine()
         }
@@ -110,9 +165,7 @@ class PrecedenceGroupModel: Tokenizable, Navigable, Linkable {
         return t
     }
 
-    func navigationTokenize() -> [NavigationToken] {
-        var t = [NavigationToken]()
-        //        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .unknown)
-        return t
+    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
+        return [NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown)]
     }
 }

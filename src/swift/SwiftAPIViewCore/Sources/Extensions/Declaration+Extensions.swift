@@ -26,49 +26,78 @@
 
 import AST
 import Foundation
-//
-//extension Declaration {
-//    var accessLevel: AccessLevelModifier? {
-//        switch self {
-//        case let decl as ClassDeclaration:
-//            return decl.accessLevelModifier
-//        case let decl as FunctionDeclaration:
-//            return decl.modifiers.accessLevel
-//        case let decl as EnumDeclaration:
-//            return decl.accessLevelModifier
-//        case let decl as ConstantDeclaration:
-//            return decl.modifiers.accessLevel
-//        case let decl as VariableDeclaration:
-//            return decl.modifiers.accessLevel
-//        case let decl as TypealiasDeclaration:
-//            return decl.accessLevelModifier
-//        case let decl as StructDeclaration:
-//            return decl.accessLevelModifier
-//        case let decl as InitializerDeclaration:
-//            return decl.modifiers.accessLevel
-//        case let decl as SubscriptDeclaration:
-//            return decl.modifiers.accessLevel
-//        default:
-//            return nil
-//        }
-//    }
-//}
-//
-//extension DeclarationModifiers {
-//
-//    var accessLevel: AccessLevelModifier? {
-//        for modifier in self {
-//            switch modifier {
-//            case let .accessLevel(value):
-//                return value
-//            default:
-//                continue
-//            }
-//        }
-//        return nil
-//    }
-//}
-//
+
+extension Declaration {
+
+    /// Convert a declaration to a Tokenizable instance.
+    func toTokenizable() -> Tokenizable? {
+        switch self {
+        case let self as ClassDeclaration:
+            return ClassModel(from: self)
+        case let self as ConstantDeclaration:
+            return ConstantModel(from: self)
+        case let self as EnumDeclaration:
+            return EnumModel(from: self)
+        case let self as ExtensionDeclaration:
+            return ExtensionModel(from: self)
+        case let self as FunctionDeclaration:
+            return FunctionModel(from: self)
+        case let self as InitializerDeclaration:
+            return InitializerModel(from: self)
+        case let self as ProtocolDeclaration:
+            return ProtocolModel(from: self)
+        case let self as StructDeclaration:
+            return StructModel(from: self)
+        case let self as TypealiasDeclaration:
+            return TypealiasModel(from: self)
+        case let self as VariableDeclaration:
+            return VariableModel(from: self)
+        case _ as ImportDeclaration:
+            // Imports are no-op
+            return nil
+        case _ as DeinitializerDeclaration:
+            // Deinitializers are never public
+            return nil
+        case let self as SubscriptDeclaration:
+            return SubscriptModel(from: self)
+        case let self as PrecedenceGroupDeclaration:
+            // precedence groups are always public
+            return PrecedenceGroupModel(from: self)
+        case let self as OperatorDeclaration:
+            // operators are always public
+            return OperatorModel(from: self)
+        default:
+            SharedLogger.fail("Unsupported declaration: \(self)")
+        }
+    }
+
+    /// Returns the access level, if found, for the declaration.
+    var accessLevel: AccessLevelModifier? {
+        switch self {
+        case let decl as ClassDeclaration:
+            return decl.accessLevelModifier
+        case let decl as FunctionDeclaration:
+            return decl.modifiers.accessLevel
+        case let decl as EnumDeclaration:
+            return decl.accessLevelModifier
+        case let decl as ConstantDeclaration:
+            return decl.modifiers.accessLevel
+        case let decl as VariableDeclaration:
+            return decl.modifiers.accessLevel
+        case let decl as TypealiasDeclaration:
+            return decl.accessLevelModifier
+        case let decl as StructDeclaration:
+            return decl.accessLevelModifier
+        case let decl as InitializerDeclaration:
+            return decl.modifiers.accessLevel
+        case let decl as SubscriptDeclaration:
+            return decl.modifiers.accessLevel
+        default:
+            return nil
+        }
+    }
+}
+
 //extension InitializerDeclaration {
 //    var fullName: String {
 //        var value = "init("
@@ -127,37 +156,3 @@ import Foundation
 //    }
 //}
 //
-//extension OperatorDeclaration {
-//    var `operator`: String {
-//        switch self.kind {
-//        case let .infix(opName, _):
-//            return opName
-//        case let .postfix(opName):
-//            return opName
-//        case let .prefix(opName):
-//            return opName
-//        }
-//    }
-//}
-//
-//extension ExtensionDeclaration {
-//
-//    var isPublic: Bool {
-//        let publicModifiers: [AccessLevelModifier] = [.public, .open]
-//        return publicModifiers.contains(self.accessLevelModifier ?? .internal)
-//    }
-//
-//    var hasPublicMembers: Bool {
-//        let publicModifiers: [AccessLevelModifier] = [.public, .open]
-//        for member in self.members {
-//            switch member {
-//            case let .declaration(decl):
-//                guard let accessLevel = decl.accessLevel else { continue }
-//                if publicModifiers.contains(accessLevel) { return true }
-//            case .compilerControl(_):
-//                break
-//            }
-//        }
-//        return false
-//    }
-//}

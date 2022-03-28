@@ -24,10 +24,18 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
-
-/// Conforming objects are listed in the navigation sidebar
-protocol Navigable {
-    func navigationTokenize() -> [NavigationToken]
+extension OperatorDeclaration {
+    var `operator`: String {
+        switch self.kind {
+        case let .infix(opName, _):
+            return opName
+        case let .postfix(opName):
+            return opName
+        case let .prefix(opName):
+            return opName
+        }
+    }
 }

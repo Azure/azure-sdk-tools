@@ -33,46 +33,48 @@ import AST
 /// struct-body → { struct-members opt }
 /// struct-members → struct-member struct-members opt
 /// struct-member → declaration | compiler-control-statement
-class StructModel: Tokenizable, Navigable, Linkable {
+class StructModel: Tokenizable, Linkable, Commentable, Extensible {
 
     var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String
+    var accessLevel: AccessLevelModifier
     var name: String
     var genericParamClause: GenericParameterModel?
     var typeInheritanceClause: TypeInheritanceModel?
     var genericWhereClause: GenericWhereModel?
-    var children: [Tokenizable]
+    var members: [Tokenizable]
+    var extensions: [ExtensionModel]
 
     init(from decl: StructDeclaration) {
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.accessLevel = ""
-        self.name = ""
-        self.definitionId = ""
-        self.genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
-        self.genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        self.children = [Tokenizable]()
+        // FIXME: Fix this!
+        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.name.textDescription
+        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
+        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+        extensions = [ExtensionModel]()
+        members = [Tokenizable]()
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                // FIXME: The big switch statement again??
-                break
-            case .compilerControl(_):
-                break
+                if let model = decl.toTokenizable() {
+                    members.append(model)
+                }
+            case let .compilerControl(statement):
+                SharedLogger.warn("Unsupported compiler control statement: \(statement)")
             }
         }
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-//        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
-//        guard publicModifiers.contains(accessLevel) else { return false }
-
-        // register type as linkable
-//        let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel)
+        t.keyword(accessLevel.textDescription)
         t.whitespace()
         t.keyword("struct")
         t.whitespace()
@@ -83,33 +85,25 @@ class StructModel: Tokenizable, Navigable, Linkable {
         t.whitespace()
         t.punctuation("{")
         t.newLine()
-        children.forEach { child in
-            t.append(contentsOf: child.tokenize())
+        members.forEach { member in
+            t.append(contentsOf: member.tokenize())
+        }
+        extensions.forEach { ext in
+            t.append(contentsOf: ext.tokenize())
         }
         t.punctuation("}")
         t.newLine()
         return t
     }
 
-    func navigationTokenize() -> [NavigationToken] {
+    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
         var t = [NavigationToken]()
-        //    private func navigationTokens(from decl: StructDeclaration, withPrefix prefix: String) -> NavigationItem? {
-        //        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-        //            return nil
-        //        }
-        //        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .struct)
-        //        decl.members.forEach { member in
-        //            switch member {
-        //            case let .declaration(decl):
-        //                if let item = navigationTokens(from: decl, withPrefix: navItem.navigationId) {
-        //                    navItem.childItems.append(item)
-        //                }
-        //            case .compilerControl:
-        //                return
-        //            }
-        //        }
-        //        return navItem
-        //    }
+        guard publicModifiers.contains(accessLevel) else { return t }
+        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
+        for member in members {
+            guard let member = member as? Linkable else { continue }
+            t.append(contentsOf: member.navigationTokenize(parent: self))
+        }
         return t
     }
 }

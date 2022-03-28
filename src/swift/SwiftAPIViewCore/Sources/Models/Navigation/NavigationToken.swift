@@ -37,9 +37,13 @@ class NavigationToken: Codable {
     /// Tags which determine the type of icon displayed in the navigation pane of APIView
     var tags: NavigationTags
 
-    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
+    init(name: String, prefix: String?, typeKind: NavigationTypeKind) {
         self.name = name
-        self.navigationId = "\(prefix).\(name)"
+        if let prefix = prefix {
+            self.navigationId = "\(prefix).\(name)"
+        } else {
+            self.navigationId = name
+        }
         tags = NavigationTags(typeKind: typeKind)
     }
 

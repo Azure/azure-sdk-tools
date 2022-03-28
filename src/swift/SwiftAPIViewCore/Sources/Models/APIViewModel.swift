@@ -54,7 +54,7 @@ class APIViewModel: Tokenizable, Codable {
         self.versionString = versionString
         self.packageName = packageName
         let package = PackageModel(name: packageName, statements: statements)
-        self.navigation = package.navigationTokenize()
+        self.navigation = package.navigationTokenize(parent: nil)
         self.tokens = [Token]()
         self.tokens.append(contentsOf: self.tokenize())
         self.tokens.append(contentsOf: package.tokenize())

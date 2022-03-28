@@ -32,64 +32,45 @@ import AST
 ///     pattern-initializer-list → pattern-initializer | pattern-initializer , pattern-initializer-list
 ///     pattern-initializer → pattern initializer opt
 ///     initializer → = expression
-class ConstantModel: Tokenizable {
+class ConstantModel: Tokenizable, Commentable {
 
+    var lineId: String?
     var attributes: AttributesModel
-    //var declarationModifiers: ModifiersModel
-    var accessLevel: String
+    var modifiers: DeclarationModifiersModel
+    var accessLevel: AccessLevelModifier
     var name: String
-    var typeModel: String
-    var defaultValue: String
+    var typeModel: TypeModel
+    var defaultValue: String?
 
     init(from decl: ConstantDeclaration) {
-        //        for item in decl.initializerList {
-        //            if let typeModel = item.typeModel {
-        //                let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        //                let defId = defId(forName: item.name, withPrefix: defIdPrefix)
-        //                return processMember(name: item.name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: true, defaultValue: item.defaultValue, accessLevel: accessLevel)
-        //            }
-        //        }
-        //        SharedLogger.fail("Type information not found.")
-        self.attributes = AttributesModel(from: decl.attributes)
-        //self.declarationModifiers = [String]()
-        self.accessLevel = ""
-        self.name = ""
-        self.typeModel = ""
-        self.defaultValue = ""
+        // FIXME: Fix this!
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.initializerList.name
+        typeModel = decl.initializerList.typeModel
+        defaultValue = decl.initializerList.defaultValue
     }
-
-    //    private func process(_ decl: ConstantDeclaration, defIdPrefix: String, overridingAccess: AccessLevelModifier? = nil) -> Bool {
-    //        for item in decl.initializerList {
-    //            if let typeModel = item.typeModel {
-    //                let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-    //                let defId = defId(forName: item.name, withPrefix: defIdPrefix)
-    //                return processMember(name: item.name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: true, defaultValue: item.defaultValue, accessLevel: accessLevel)
-    //            }
-    //        }
-    //        SharedLogger.fail("Type information not found.")
-    //    }
-
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        //guard publicModifiers.contains(accessLevel) else { return false }
-        //t.handle(attributes: attributes, defId: defId)
-        //t.handle(modifiers: modifiers)
+        guard publicModifiers.contains(accessLevel) else { return t }
+        t.append(contentsOf: attributes.tokenize())
+        t.append(contentsOf: modifiers.tokenize())
         t.keyword("let")
         t.whitespace()
-        t.member(name: name, definitionId: nil)
+        t.member(name: name, definitionId: lineId)
         t.punctuation(":")
         t.whitespace()
-        //t.typeModel.tokenize()
-        //if let defaultValue = defaultValue {
-        //            whitespace()
-        //            punctuation("=")
-        //            whitespace()
-        //            stringLiteral(defaultValue)
-        //        }
-        //        newLine()
-        //        return true
-        //    }
+        t.append(contentsOf: typeModel.tokenize())
+        t.whitespace()
+        t.punctuation("=")
+        t.whitespace()
+        if let defaultValue = defaultValue {
+            t.stringLiteral(defaultValue)
+        }
+        t.newLine()
         return t
     }
 }

@@ -26,20 +26,20 @@
 
 import AST
 import Foundation
-//
-//extension LiteralExpression.Kind: ASTTextRepresentable {
-//    public var textDescription: String {
-//        switch self {
-//        case .boolean:
-//            return "Bool"
-//        case .floatingPoint:
-//            return "Float"
-//        case .integer:
-//            return "Int"
-//        case .staticString, .interpolatedString:
-//            return "String"
-//        default:
-//            SharedLogger.fail("Unsupported literal kind: \(self)")
-//        }
-//    }
-//}
+
+extension LiteralExpression.Kind: ASTTextRepresentable {
+    public var textDescription: String {
+        switch self {
+        case .boolean:
+            return "Bool"
+        case .floatingPoint:
+            return "Float"
+        case .integer:
+            return "Int"
+        case .staticString, .interpolatedString:
+            return "String"
+        default:
+            SharedLogger.fail("Unsupported literal kind: \(self)")
+        }
+    }
+}

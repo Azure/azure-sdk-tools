@@ -27,40 +27,35 @@
 import AST
 import Foundation
 
+struct DeclarationModifiersModel: Tokenizable {
 
-class GenericParameterModel: Tokenizable {
+    var accessLevel: AccessLevelModifier? = nil
+    var modifiers: [String]
 
-    /// The list of type or protocol conformances
-    var typeList: [Tokenizable]
-
-    init?(from clause: GenericParameterClause?) {
-        guard let clause = clause else { return nil }
-        self.typeList = [TypeModel]()
-        clause.parameterList.forEach { param in
-            switch param {
-            case let .identifier(type1):
-                typeList.append(TypeModel(from: type1))
-            case let .protocolConformance(type1, protocol2):
-                typeList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                typeList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+    init(from source: DeclarationModifiers) {
+        self.modifiers = [String]()
+        for item in source {
+            switch item {
+            case let .accessLevel(value):
+                self.accessLevel = value
+            case let .mutation(value):
+                self.modifiers.append(value.textDescription)
+            default:
+                self.modifiers.append(item.textDescription)
             }
         }
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        t.punctuation("<")
-        let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            t.append(contentsOf: param.tokenize())
-            if idx != stopIdx {
-                t.punctuation(",")
-                t.whitespace()
-            }
+        if let accessLevel = accessLevel {
+            t.keyword(accessLevel.textDescription)
+            t.whitespace()
         }
-        t.punctuation(">")
-        t.whitespace()
+        modifiers.forEach { value in
+            t.keyword(value)
+            t.whitespace()
+        }
         return t
     }
 }

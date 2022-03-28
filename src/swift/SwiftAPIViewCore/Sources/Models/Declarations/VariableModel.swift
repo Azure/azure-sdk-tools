@@ -51,33 +51,29 @@ import AST
 ///     willSet-didSet-block → { didSet-clause willSet-clause opt }
 ///     willSet-clause → attributes opt willSet setter-name opt code-block
 ///     didSet-clause → attributes opt didSet setter-name opt code-block
-class VariableModel: Tokenizable, Linkable {
+class VariableModel: Tokenizable, Commentable {
 
-    var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    //var declarationModifiers: ModifiersModel
-    var accessLevel: String
+    var modifiers: DeclarationModifiersModel
+    var accessLevel: AccessLevelModifier
     var name: String
     var typeModel: TypeModel
     var defaultValue: String?
-
+    var getterSetterBlock: GetterSetterModel?
 
     init(from decl: VariableDeclaration) {
-        self.attributes = AttributesModel(from: decl.attributes)
-        //self.declarationModifiers = [String]()
-        self.accessLevel = ""
+        // FIXME: Fix this!
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+        accessLevel = decl.accessLevel ?? .internal
+        getterSetterBlock = nil
         switch decl.body {
         case let .initializerList(initializerList):
-            for item in initializerList {
-//                let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-//                if let typeModelVal = item.typeModel {
-//                    name = item.name
-//                    typeModel = typeModelVal
-//                    let defId = defId(forName: name, withPrefix: defIdPrefix)
-//                    return processMember(name: name, defId: defId, attributes: decl.attributes, modifiers: decl.modifiers, typeModel: typeModel, isConst: false, defaultValue: item.defaultValue, accessLevel: accessLevel)
-//                }
-            }
-            SharedLogger.fail("Type information not found.")
+            name = initializerList.name
+            typeModel = initializerList.typeModel
+            defaultValue = initializerList.defaultValue
         case let .codeBlock(ident, typeAnno, _):
             typeModel = TypeModel(from: typeAnno)
             name = ident.textDescription
@@ -95,21 +91,28 @@ class VariableModel: Tokenizable, Linkable {
             guard expression == nil else {
                 SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
             }
-        default:
-            SharedLogger.fail("Unsupported variable body type: \(decl.body)")
         }
-        self.defaultValue = ""
     }
 
+    init(from decl: ProtocolDeclaration.PropertyMember) {
+        // FIXME: Fix this!
+        lineId = nil // self.defId(forName: name, withPrefix: defId)
+        attributes = AttributesModel(from: decl.attributes)
+        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+        accessLevel = modifiers.accessLevel ?? .internal
+        name = decl.name.textDescription
+        typeModel = TypeModel(from: decl.typeAnnotation)
+        getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
+    }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        //guard publicModifiers.contains(accessLevel) else { return false }
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        //handle(modifiers: modifiers)
+        t.append(contentsOf: modifiers.tokenize())
         t.keyword("var")
         t.whitespace()
-        t.member(name: name, definitionId: definitionId)
+        t.member(name: name, definitionId: lineId)
         t.punctuation(":")
         t.whitespace()
         t.append(contentsOf: typeModel.tokenize())
@@ -120,6 +123,7 @@ class VariableModel: Tokenizable, Linkable {
             t.stringLiteral(defaultValue)
         }
         t.newLine()
+        t.append(contentsOf: getterSetterBlock?.tokenize() ?? [])
         return t
     }
 }

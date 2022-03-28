@@ -32,29 +32,32 @@ import AST
 ///     typealias-declaration → attributes opt access-level-modifier opt typealias typealias-name generic-parameter-clause opt typealias-assignment
 ///     typealias-name → identifier
 ///     typealias-assignment → = type
-class TypealiasModel: Tokenizable, Navigable, Linkable {
+class TypealiasModel: Tokenizable, Linkable, Commentable {
 
     var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String
+    var accessLevel: AccessLevelModifier
     var name: String
     var genericParamClause: GenericParameterModel?
+    var assignment: TypeModel
 
     init(from decl: TypealiasDeclaration) {
-        //let definitionId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
-        self.definitionId = ""
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.name = ""
-        self.accessLevel = ""
-        self.genericParamClause = GenericParameterModel(from: decl.generic)
+        // FIXME: Fix this!
+        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.name.textDescription
+        genericParamClause = GenericParameterModel(from: decl.generic)
+        assignment = TypeModel(from: decl.assignment)
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        //let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
-        //guard publicModifiers.contains(accessLevel) else { return false }
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel)
+        t.keyword(accessLevel.textDescription)
         t.whitespace()
         t.keyword("typealias")
         t.whitespace()
@@ -63,15 +66,13 @@ class TypealiasModel: Tokenizable, Navigable, Linkable {
         t.whitespace()
         t.punctuation("=")
         t.whitespace()
-        // TODO: Don't use assignment.textDescription
-        // Break out into richer types
-        //t.typeReference(name: decl.assignment.textDescription)
+        t.append(contentsOf: assignment.tokenize())
         t.newLine()
         return t
 
     }
 
-    func navigationTokenize() -> [NavigationToken] {
+    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
         var t = [NavigationToken]()
         //        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
         return t

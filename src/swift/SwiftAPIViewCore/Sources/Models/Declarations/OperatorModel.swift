@@ -34,49 +34,44 @@ import AST
 ///     postfix-operator-declaration → postfix operator operator
 ///     infix-operator-declaration → infix operator operator infix-operator-group opt
 ///     infix-operator-group → : precedence-group-name
-class OperatorModel: Tokenizable, Navigable, Linkable {
+class OperatorModel: Tokenizable, Commentable {
 
-    var definitionId: String?
-    var kword: String
+    var lineId: String?
+    var keyword: String
     var name: String?
     var opName: String
 
     init(from decl: OperatorDeclaration) {
+        // FIXME: This!
+        //self.definitionId = defId(forName: opName, withPrefix: defIdPrefix)
+        self.lineId = nil
         switch decl.kind {
         case let .infix(op, ident):
-            self.kword = "infix"
+            self.keyword = "infix"
             self.opName = op
             self.name = ident?.textDescription
         case let .prefix(op):
-            self.kword = "prefix"
+            self.keyword = "prefix"
             self.opName = op
         case let .postfix(op):
-            self.kword = "postfix"
+            self.keyword = "postfix"
             self.opName = op
         }
-        // FIXME: This!
-        //self.definitionId = defId(forName: opName, withPrefix: defIdPrefix)
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        t.keyword(kword)
+        t.keyword(keyword)
         t.whitespace()
         t.keyword("operator")
         t.whitespace()
-        t.text(opName, definitionId: definitionId)
+        t.text(opName, definitionId: lineId)
         if let name = name {
             t.punctuation(":")
             t.whitespace()
             t.typeReference(name: name)
         }
         t.newLine()
-        return t
-    }
-
-    func navigationTokenize() -> [NavigationToken] {
-        var t = [NavigationToken]()
-        //        let navItem = NavigationItem(name: decl.operator, prefix: prefix, typeKind: .unknown)
         return t
     }
 }

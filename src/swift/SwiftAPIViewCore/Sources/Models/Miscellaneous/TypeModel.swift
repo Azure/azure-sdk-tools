@@ -27,9 +27,8 @@
 import AST
 import Foundation
 
-class TypeModel: Tokenizable, Linkable {
+class TypeModel: Tokenizable {
 
-    var definitionId: String?
     var name: String
     var isOptional: Bool
     var isImplicitlyUnwrapped: Bool
@@ -56,6 +55,10 @@ class TypeModel: Tokenizable, Linkable {
         self.attributes = attributes
         self.arguments = arguments
         self.returnType = returnType
+    }
+
+    convenience init(from source: Identifier) {
+        self.init(name: source.textDescription)
     }
 
     convenience init(from source: TypeAnnotation) {
@@ -143,9 +146,17 @@ class TypeModel: Tokenizable, Linkable {
     convenience init(from source: TupleType) {
         // FIXME: Handle named tuple names
         self.init(
-            name: "",
+             name: "",
+             isTuple: true,
+             arguments: source.elements.map { TypeModel(from: $0.type) }
+        )
+    }
+
+    convenience init(from source: TupleType.Element) {
+        self.init(
+            name: source.name?.textDescription ?? "",
             isTuple: true,
-            arguments: source.elements.map { TypeModel(from: $0.type) }
+            arguments: [TypeModel(from: source.type)]
         )
     }
 

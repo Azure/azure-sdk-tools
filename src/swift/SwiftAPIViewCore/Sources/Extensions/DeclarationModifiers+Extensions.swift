@@ -27,40 +27,17 @@
 import AST
 import Foundation
 
+extension DeclarationModifiers {
 
-class GenericParameterModel: Tokenizable {
-
-    /// The list of type or protocol conformances
-    var typeList: [Tokenizable]
-
-    init?(from clause: GenericParameterClause?) {
-        guard let clause = clause else { return nil }
-        self.typeList = [TypeModel]()
-        clause.parameterList.forEach { param in
-            switch param {
-            case let .identifier(type1):
-                typeList.append(TypeModel(from: type1))
-            case let .protocolConformance(type1, protocol2):
-                typeList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                typeList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+    var accessLevel: AccessLevelModifier? {
+        for modifier in self {
+            switch modifier {
+            case let .accessLevel(value):
+                return value
+            default:
+                continue
             }
         }
-    }
-
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.punctuation("<")
-        let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            t.append(contentsOf: param.tokenize())
-            if idx != stopIdx {
-                t.punctuation(",")
-                t.whitespace()
-            }
-        }
-        t.punctuation(">")
-        t.whitespace()
-        return t
+        return nil
     }
 }

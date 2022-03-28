@@ -28,19 +28,21 @@ import Foundation
 import AST
 
 
-class ExtensionModel: Tokenizable {
+class ExtensionModel: Tokenizable, Commentable {
 
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String?
+    var accessLevel: AccessLevelModifier?
     var typeModel: TypeModel
     var typeInheritanceClause: TypeInheritanceModel?
     var genericWhereClause: GenericWhereModel?
     var members: [Tokenizable]
 
     init(from decl: ExtensionDeclaration) {
+        // FIXME: This this!
+        self.lineId = nil
         self.attributes = AttributesModel(from: decl.attributes)
-        // FIXME: Update
-        self.accessLevel = nil
+        self.accessLevel = decl.accessLevel
         self.typeModel = TypeModel(from: decl.type)
         self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
         self.genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
@@ -48,24 +50,34 @@ class ExtensionModel: Tokenizable {
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                // FIXME: Big ol' Switch!?
-                //_ = process(decl, defIdPrefix: defId, overridingAccess: overridingAccess)
-                break
+                if let model = decl.toTokenizable() {
+                    self.members.append(model)
+                }
             case let .compilerControl(statement):
-                SharedLogger.fail("Unsupported statement: \(statement)")
+                SharedLogger.warn("Unsupported compiler control statement: \(statement)")
             }
         }
     }
 
+    var isPublic: Bool {
+        guard let accessLevel = accessLevel else { return false }
+        return publicModifiers.contains(accessLevel)
+    }
+
+    var hasPublicMembers: Bool {
+        members.forEach { member in
+            // TODO: Cast to types with access level?
+        }
+        return false
+    }
+
     func tokenize() -> [Token] {
         var t = [Token]()
-        //        let accessLevel = decl.accessLevelModifier ?? overridingAccess
-        //
-        //        let shouldDisplay = decl.isPublic || decl.hasPublicMembers
-        //        guard shouldDisplay == true else { return false }
+        let shouldDisplay = isPublic || hasPublicMembers
+        guard shouldDisplay == true else { return t }
         t.append(contentsOf: attributes.tokenize())
         if let access = accessLevel {
-            t.keyword(access)
+            t.keyword(access.textDescription)
             t.whitespace()
         }
         t.keyword("extension")
@@ -76,18 +88,11 @@ class ExtensionModel: Tokenizable {
         t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
         t.punctuation("{")
         t.newLine()
-//        decl.members.forEach { member in
-//            handle(member: member, defId: defIdPrefix, overridingAccess: accessLevel)
-//        }
+        members.forEach { member in
+            t.append(contentsOf: member.tokenize())
+        }
         t.punctuation("}")
         t.newLine()
         return t
     }
-
-    //    private func navigationTokens(from decl: ExtensionDeclaration, withPrefix prefix: String) -> NavigationItem? {
-    //        // FIXME: extensions should not have navigation tokens by themselves.
-    //        // If the extension contains something that should be shown in navigation,
-    //        // it should be associated with the type it extends.
-    //        return nil
-    //    }
 }

@@ -27,25 +27,48 @@
 import AST
 import Foundation
 
-class ConformanceModel: Tokenizable {
+class GenericRequirementModel: Tokenizable {
 
-    var key: String
-    var value: TypeModel
+    enum Mode {
+        case conformance
+        case equality
 
-    init(key: Identifier, value: TypeIdentifier) {
-        self.key = key.textDescription
-        self.value = TypeModel(from: value)
+        var punctuation: String {
+            switch self {
+            case .conformance:
+                return ":"
+            case .equality:
+                return "=="
+            }
+        }
     }
 
-    init(key: Identifier, value: ProtocolCompositionType) {
-        self.key = key.textDescription
+    var key: TypeModel
+    var value: TypeModel
+    var mode: Mode
+
+    init(key: Type, value: Type, mode: Mode) {
+        self.key = TypeModel(from: key)
         self.value = TypeModel(from: value)
+        self.mode = mode
+    }
+
+    init(key: Identifier, value: Type, mode: Mode) {
+        self.key = TypeModel(from: key)
+        self.value = TypeModel(from: value)
+        self.mode = mode
+    }
+
+    init(key: Identifier, value: Identifier, mode: Mode) {
+        self.key = TypeModel(from: key)
+        self.value = TypeModel(from: value)
+        self.mode = mode
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        t.typeReference(name: key)
-        t.punctuation(":")
+        t.append(contentsOf: key.tokenize())
+        t.punctuation(mode.punctuation)
         t.whitespace()
         t.append(contentsOf: value.tokenize())
         return t

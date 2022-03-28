@@ -37,11 +37,11 @@ class GenericWhereModel: Tokenizable {
         clause.requirementList.forEach { item in
             switch item {
             case let .protocolConformance(type1, protocol2):
-                requirementsList.append(ConformanceModel(key: type1, value: protocol2))
+                requirementsList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
             case let .typeConformance(type1, type2):
-                requirementsList.append(ConformanceModel(key: type1, value: type2))
+                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
             case let .sameType(type1, type2):
-                requirementsList.append(EqualityModel(key: type1, value: type2))
+                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .equality))
             }
         }
     }

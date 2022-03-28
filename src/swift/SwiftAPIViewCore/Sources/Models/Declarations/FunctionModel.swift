@@ -43,36 +43,51 @@ import AST
 ///     external-parameter-name → identifier
 ///     local-parameter-name → identifier
 ///     default-argument-clause → = expression
-class FunctionModel: Tokenizable, Linkable {
+class FunctionModel: Tokenizable, Commentable {
 
-    var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String
+    var modifiers: DeclarationModifiersModel
+    var accessLevel: AccessLevelModifier
     var name: String
     var genericParamClause: GenericParameterModel?
     var genericWhereClause: GenericWhereModel?
+    var signature: SignatureModel
 
     init(from decl: FunctionDeclaration) {
-        self.definitionId = ""
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.accessLevel = ""
-        self.name = ""
-        self.genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
-        self.genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+        // FIXME: Fix this!
+        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+        attributes = AttributesModel(from: decl.attributes)
+        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.name.textDescription
+        genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
+        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+        signature = SignatureModel(from: decl.signature)
+    }
+
+    init(from decl: ProtocolDeclaration.MethodMember) {
+        // FIXME: Fix this!
+        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+        attributes = AttributesModel(from: decl.attributes)
+        modifiers = DeclarationModifiersModel(from: decl.modifiers)
+        accessLevel = modifiers.accessLevel ?? .internal
+        name = decl.name.textDescription
+        genericParamClause = GenericParameterModel(from: decl.genericParameter)
+        genericWhereClause = GenericWhereModel(from: decl.genericWhere)
+        signature = SignatureModel(from: decl.signature)
     }
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        //        let accessLevel = decl.modifiers.accessLevel ?? overridingAccess ?? .internal
-        //        let defId = defId(forName: decl.fullName, withPrefix: defIdPrefix)
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        //handle(modifiers: modifiers)
+        t.append(contentsOf: modifiers.tokenize())
         t.keyword("func")
         t.whitespace()
-        t.member(name: name, definitionId: definitionId)
+        t.member(name: name, definitionId: lineId)
         t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        // FIXME: Implement
-        //handle(signature: signature, defId: defId)
+        t.append(contentsOf: signature.tokenize())
         t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
         t.newLine()
         return t

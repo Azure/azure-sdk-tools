@@ -40,65 +40,63 @@ import AST
 ///     protocol-member-declaration → protocol-subscript-declaration
 ///     protocol-member-declaration → protocol-associated-type-declaration
 ///     protocol-member-declaration → typealias-declaration
-class ProtocolModel: Tokenizable, Navigable, Linkable {
+class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible {
 
     var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String
+    var accessLevel: AccessLevelModifier
     var name: String
     var typeInheritanceClause: TypeInheritanceModel?
-    var children: [Tokenizable]
+    var members: [Tokenizable]
+    var extensions: [ExtensionModel]
+
+    struct AssociatedTypeModel: Tokenizable, Commentable {
+
+        var lineId: String?
+        var name: String
+        var typeInheritance: TypeInheritanceModel?
+
+        init(from source: ProtocolDeclaration.AssociativityTypeMember) {
+            // FIXME: Fix this!
+            lineId = nil // self.defId(forName: name, withPrefix: defId)
+            name = source.name.textDescription
+            typeInheritance = TypeInheritanceModel(from: source.typeInheritance)
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword("associatedtype")
+            t.whitespace()
+            t.member(name: name, definitionId: lineId)
+            t.append(contentsOf: typeInheritance?.tokenize() ?? [])
+            t.newLine()
+            return t
+        }
+    }
 
     init(from decl: ProtocolDeclaration) {
-        // FIXME: This!
-        // self.definitionId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.accessLevel = ""
-        self.name = ""
-        self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
-        self.children = [Tokenizable]()
+        // FIXME: Fix this!
+        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.name.textDescription
+        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
+        extensions = [ExtensionModel]()
+        members = [Tokenizable]()
         decl.members.forEach { member in
             switch member {
                 case let .associatedType(data):
-//                    let name = data.name.textDescription
-//                    let defId = self.defId(forName: name, withPrefix: defId)
-//                    keyword(value: "associatedtype")
-//                    whitespace()
-//                    self.member(name: name, definitionId: defId)
-//                    if let inheritance = data.typeInheritance {
-//                        handle(clause: inheritance, defId: defId)
-//                    }
-//                    newLine()
-                    break
+                    members.append(AssociatedTypeModel(from: data))
                 case let .method(data):
-//                    let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-//                    let defId = self.defId(forName: data.fullName, withPrefix: defId)
-//                    let name = data.name.textDescription
-//                    _ = processFunction(name: name, defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, signature: data.signature, genericParam: data.genericParameter, genericWhere: data.genericWhere)
-                    break
+                    members.append(FunctionModel(from: data))
                 case let .property(data):
-//                    let name = data.name.textDescription
-//                    let defId = self.defId(forName: name, withPrefix: defId)
-//                    handle(attributes: data.attributes, defId: defId)
-//                    handle(modifiers: data.modifiers)
-//                    keyword(value: "var")
-//                    whitespace()
-//                    self.member(name: name, definitionId: defId)
-//                    punctuation(":")
-//                    whitespace()
-//                    handle(typeModel: TypeModel(from: data.typeAnnotation), defId: defId)
-//                    handle(clause: data.getterSetterKeywordBlock)
-                    break
+                    members.append(VariableModel(from: data))
                 case let .initializer(data):
-//                    let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-//                    let defId = self.defId(forName: data.fullName, withPrefix: defId)
-//                    _ = processInitializer(defId: defId, attributes: data.attributes, modifiers: data.modifiers, kind: data.kind.textDescription, accessLevel: accessLevel,  genericParam: data.genericParameter, throwsKind: data.throwsKind, parameterList: data.parameterList, genericWhere: data.genericWhere)
-                    break
+                    members.append(InitializerModel(from: data))
                 case let .subscript(data):
-//                    let accessLevel = data.modifiers.accessLevel ?? overridingAccess ?? .internal
-//                    let defId = self.defId(forName: "subscript", withPrefix: defId)
-//                    _ = processSubscript(defId: defId, attributes: data.attributes, modifiers: data.modifiers, accessLevel: accessLevel, genericParam: data.genericParameter, parameterList: data.parameterList, resultType: data.resultType, genericWhere: data.genericWhere, getterSetterKeywordBlock: data.getterSetterKeywordBlock)
-                    break
+                    members.append(SubscriptModel(from: data))
                 default:
                     SharedLogger.fail("Unsupported protocol member: \(member)")
             }
@@ -107,11 +105,9 @@ class ProtocolModel: Tokenizable, Navigable, Linkable {
 
     func tokenize() -> [Token] {
         var t = [Token]()
-//        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
-//        guard publicModifiers.contains(accessLevel) else { return false }
-
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel)
+        t.keyword(accessLevel.textDescription)
         t.whitespace()
         t.keyword("protocol")
         t.whitespace()
@@ -121,25 +117,25 @@ class ProtocolModel: Tokenizable, Navigable, Linkable {
         t.whitespace()
         t.punctuation("{")
         t.newLine()
-        children.forEach { child in
+        members.forEach { child in
             t.append(contentsOf: child.tokenize())
+        }
+        extensions.forEach { ext in
+            t.append(contentsOf: ext.tokenize())
         }
         t.punctuation("}")
         t.newLine()
         return t
     }
 
-    func navigationTokenize() -> [NavigationToken] {
+    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
         var t = [NavigationToken]()
-        //        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-        //            return nil
-        //        }
-        //        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .interface)
-        //        for item in decl.members {
-        //            if case let ProtocolDeclaration.Member.associatedType(data) = item {
-        //                navItem.childItems.append(NavigationItem(name: data.name.textDescription, prefix: navItem.navigationId, typeKind: .class))
-        //            }
-        //        }
+        guard publicModifiers.contains(accessLevel) else { return t }
+        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .interface))
+        for member in members {
+            guard let member = member as? Linkable else { continue }
+            t.append(contentsOf: member.navigationTokenize(parent: self))
+        }
         return t
     }
 }

@@ -46,66 +46,161 @@ import AST
 ///     raw-value-style-enum-case → enum-case-name raw-value-assignment opt
 ///     raw-value-assignment → = raw-value-literal
 ///     raw-value-literal → numeric-literal | static-string-literal | boolean-literal
-class EnumModel: Tokenizable, Navigable, Linkable {
+class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
 
     var definitionId: String?
+    var lineId: String?
     var attributes: AttributesModel
-    var accessLevel: String
+    var accessLevel: AccessLevelModifier
     var name: String
-    var members: [Tokenizable]
     var isIndirect: Bool
     var genericParamClause: GenericParameterModel?
     var typeInheritanceClause: TypeInheritanceModel?
     var genericWhereClause: GenericWhereModel?
+    var members: [Tokenizable]
+    var extensions: [ExtensionModel]
+
+    struct AssociatedValuesModel: Tokenizable {
+
+        struct Element: Tokenizable {
+
+            var name: String?
+            var typeModel: TypeModel
+
+            init(from element: TupleType.Element) {
+                name = element.name?.textDescription
+                typeModel = TypeModel(from: element)
+            }
+
+            func tokenize() -> [Token] {
+                var t = [Token]()
+                if let name = name {
+                    t.member(name: name)
+                    t.punctuation(":")
+                    t.whitespace()
+                }
+                t.append(contentsOf: typeModel.tokenize())
+                return t
+            }
+        }
+
+        var elements: [Element]
+
+        init?(from tuple: TupleType?) {
+            guard let tuple = tuple else { return nil }
+            elements = [Element]()
+            tuple.elements.forEach { element in
+                elements.append(Element(from: element))
+            }
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.punctuation("(")
+            let stopIdx = elements.count - 1
+            for (idx, element) in elements.enumerated() {
+                t.append(contentsOf: element.tokenize())
+                if idx != stopIdx {
+                    t.punctuation(",")
+                    t.whitespace()
+                }
+            }
+            t.punctuation(")")
+            return t
+        }
+    }
+
+    struct UnionStyleCase: Tokenizable, Commentable {
+
+        var lineId: String?
+        var name: String
+        var associatedValues: AssociatedValuesModel?
+
+        init(from source: EnumDeclaration.UnionStyleEnumCase.Case) {
+            // FIXME: Fix this
+            //let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
+            lineId = nil
+            name = source.name.textDescription
+            associatedValues = AssociatedValuesModel(from: source.tuple)
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword("case")
+            t.whitespace()
+            t.member(name: name, definitionId: lineId)
+            t.append(contentsOf: associatedValues?.tokenize() ?? [])
+            t.newLine()
+            return t
+        }
+    }
+
+    struct RawValueCase: Tokenizable, Commentable {
+
+        var lineId: String?
+        var name: String
+        var rawValue: String?
+
+        init(from source: EnumDeclaration.RawValueStyleEnumCase.Case) {
+            // FIXME: Fix this
+            //let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
+            lineId = nil
+            name = source.name.textDescription
+            rawValue = nil
+            if let assignment = source.assignment {
+                switch assignment {
+                case let .boolean(val):
+                    rawValue = String(val)
+                case let .floatingPoint(val):
+                    rawValue = String(val)
+                case let .integer(val):
+                    rawValue = String(val)
+                case let .string(val):
+                    rawValue = "\"\(val)\""
+                }
+            }
+        }
+
+        func tokenize() -> [Token] {
+            var t = [Token]()
+            t.keyword("case")
+            t.whitespace()
+            t.member(name: name, definitionId: lineId)
+            if let value = rawValue {
+                t.whitespace()
+                t.punctuation("=")
+                t.whitespace()
+                t.stringLiteral(value)
+            }
+            t.newLine()
+            return t
+        }
+    }
 
     init(from decl: EnumDeclaration) {
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.isIndirect = decl.isIndirect
-        self.accessLevel = ""
-        self.name = decl.name.textDescription
-        self.members = [Tokenizable]()
+        // FIXME: Fix this!
+        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        lineId = nil
+        attributes = AttributesModel(from: decl.attributes)
+        isIndirect = decl.isIndirect
+        accessLevel = decl.accessLevel ?? .internal
+        name = decl.name.textDescription
+        extensions = [ExtensionModel]()
+        members = [Tokenizable]()
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                // FIXME: Update
-                break
-                // _ = process(decl, defIdPrefix: defId, overridingAccess: overridingAccess)
+                if let model = decl.toTokenizable() {
+                    members.append(model)
+                }
             case let .union(enumCase):
-                // FIXME: Update
-                break
-//                enumCase.cases.forEach { enumCaseValue in
-//                    let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
-//                    keyword(value: "case")
-//                    whitespace()
-//                    self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
-//                    handle(tuple: enumCaseValue.tuple, defId: enumDefId)
-//                    newLine()
-//                }
+                enumCase.cases.forEach { item in
+                    members.append(UnionStyleCase(from: item))
+                }
             case let .rawValue(enumCase):
-                // FIXME: Update
-                break
-//                enumCase.cases.forEach { enumCaseValue in
-//                    let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
-//                    keyword(value: "case")
-//                    whitespace()
-//                    self.member(name: enumCaseValue.name.textDescription, definitionId: enumDefId)
-//                    if let value = enumCaseValue.assignment {
-//                        whitespace()
-//                        punctuation("=")
-//                        whitespace()
-//                        switch value {
-//                        case let .boolean(val):
-//                            stringLiteral(String(val))
-//                        case let .floatingPoint(val):
-//                            stringLiteral(String(val))
-//                        case let .integer(val):
-//                            stringLiteral(String(val))
-//                        case let .string(val):
-//                            stringLiteral("\"\(val)\"")
-//                        }
-//                    }
-//                    newLine()
-//                }
+                enumCase.cases.forEach { item in
+                    members.append(RawValueCase(from: item))
+                }
             default:
                 SharedLogger.fail("Unsupported member: \(member)")
             }
@@ -117,13 +212,9 @@ class EnumModel: Tokenizable, Navigable, Linkable {
 
     func tokenize() -> [Token] {
         var t = [Token]()
-        //        let accessLevel = decl.accessLevelModifier ?? overridingAccess ?? .internal
-        //        guard publicModifiers.contains(accessLevel) else { return false }
-        //
-        //        // register type as linkable
-        //        let defId = defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+        guard publicModifiers.contains(accessLevel) else { return t }
         t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel)
+        t.keyword(accessLevel.textDescription)
         t.whitespace()
         if isIndirect {
             t.keyword("indirect")
@@ -141,27 +232,22 @@ class EnumModel: Tokenizable, Navigable, Linkable {
         members.forEach { member in
             t.append(contentsOf: member.tokenize())
         }
+        extensions.forEach { ext in
+            t.append(contentsOf: ext.tokenize())
+        }
         t.punctuation("}")
         t.newLine()
         return t
     }
 
-    func navigationTokenize() -> [NavigationToken] {
+    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
         var t = [NavigationToken]()
-//        guard publicModifiers.contains(decl.accessLevelModifier ?? .internal) else {
-//            return nil
-//        }
-//        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .enum)
-//        decl.members.forEach { member in
-//            switch member {
-//            case let .declaration(memberDecl):
-//                if let item = navigationTokens(from: memberDecl, withPrefix: navItem.navigationId) {
-//                    navItem.childItems.append(item)
-//                }
-//            default:
-//                return
-//            }
-//        }
+        guard publicModifiers.contains(accessLevel) else { return t }
+        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .enum))
+        for member in members {
+            guard let member = member as? Linkable else { continue }
+            t.append(contentsOf: member.navigationTokenize(parent: self))
+        }
         return t
     }
 }

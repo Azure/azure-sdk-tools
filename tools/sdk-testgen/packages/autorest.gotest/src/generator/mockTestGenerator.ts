@@ -163,7 +163,7 @@ export class MockTestDataRender extends BaseDataRender {
             const isPtr: boolean = isPolymophismValue || !(param.required || param.language.go.byValue === true);
             for (const methodParameter of exampleParameters) {
                 if (this.getLanguageName(methodParameter.parameter) === name) {
-                    // we should judge wheter a param or property is ptr or not from outside of exampleValueToString
+                    // we should judge whether a param or property is ptr or not from outside of exampleValueToString
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(param));
                 }
             }

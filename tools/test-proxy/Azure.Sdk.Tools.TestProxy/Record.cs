@@ -48,8 +48,15 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Stop([FromBody()] IDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            bool save = true;
+            EntryRecordMode mode = RecordingHandler.GetRecordMode(Request);
 
-            _recordingHandler.StopRecording(id, variables: variables);
+            if (mode == EntryRecordMode.DontRecord)
+            {
+                save = false;
+            }
+
+            _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
 
         public async Task HandleRequest()

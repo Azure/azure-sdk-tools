@@ -57,7 +57,12 @@ namespace APIViewWeb.Repositories
             _codeFileRepository = codeFileRepository;
             _devopsArtifactRepository = devopsArtifactRepository;
             _authorizationService = authorizationService;
-            _githubClient.Credentials = new Credentials(_configuration["github-access-token"]);
+            var ghToken = _configuration["github-access-token"];
+            if (ghToken != null)
+            {
+                _githubClient.Credentials = new Credentials(ghToken);
+
+            }
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
@@ -71,7 +76,7 @@ namespace APIViewWeb.Repositories
 
 
         // API change detection for PR will pull artifact from devops artifact
-        public async Task DetectApiChanges(string buildId, 
+        public async Task<string> DetectApiChanges(string buildId, 
             string artifactName, 
             string originalFileName, 
             string commitSha, 
@@ -80,7 +85,8 @@ namespace APIViewWeb.Repositories
             int prNumber,
             string hostName,
             string codeFileName = null,
-            string baselineCodeFileName = null)
+            string baselineCodeFileName = null,
+            bool commentOnPR = true)
         {
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -88,28 +94,15 @@ namespace APIViewWeb.Repositories
             {
                 originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
-                var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
-                if (pullRequestModel == null)
+                var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
+                if (pullRequestModel.Commits.Any(c=> c== commitSha))
                 {
-                    var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
-                    pullRequestModel = new PullRequestModel()
-                    {
-                        RepoName = repoName,
-                        PullRequestNumber = prNumber,
-                        FilePath = originalFileName,
-                        Author = issue.User.Login,
-                        PackageName = packageName
-                    };
+                    // PR commit is already processed. No need to reprocess it again.
+                    return "";
                 }
-                else
-                {
-                    if (pullRequestModel.Commits.Any(c=> c== commitSha))
-                    {
-                        // PR commit is already processed. No need to reprocess it again.
-                        return;
-                    }
-                }
+
                 pullRequestModel.Commits.Add(commitSha);
+                //Check if PR owner is part of Azure//Microsoft org in GitHub
                 await AssertPullRequestCreatorPermission(pullRequestModel);
                 
                 using var memoryStream = new MemoryStream();
@@ -124,18 +117,27 @@ namespace APIViewWeb.Repositories
 
                 if (codeFile != null)
                 {
-                    var apiDiff = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, hostName, baseLineCodeFile, baselineStream, baselineCodeFileName);
-                    if (apiDiff != "")
+                    var comment = await GetApiDiffFromAutomaticReview(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, hostName, baseLineCodeFile, baselineStream, baselineCodeFileName);
+                    // If caller script handles writing comment on PR then we don't want to create duplicate comment by APIView.
+                    if (comment != "")
                     {
-                        var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
-                        if (existingComment != null)
+                        if (commentOnPR)
                         {
-                            await _githubClient.Issue.Comment.Update(repoInfo[0], repoInfo[1], existingComment.Id, apiDiff);
+                            var existingComment = await GetExistingCommentForPackage(codeFile.PackageName, repoInfo[0], repoInfo[1], prNumber);
+                            if (existingComment != null)
+                            {
+                                await _githubClient.Issue.Comment.Update(repoInfo[0], repoInfo[1], existingComment.Id, comment);
+                            }
+                            else
+                            {
+                                await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, comment);
+                            }
                         }
-                        else
+
+                        if (!string.IsNullOrEmpty(pullRequestModel.ReviewId))
                         {
-                            await _githubClient.Issue.Comment.Create(repoInfo[0], repoInfo[1], prNumber, apiDiff);
-                        }                        
+                            return REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", pullRequestModel.ReviewId);
+                        }
                     }                    
                 }
                 else
@@ -151,6 +153,26 @@ namespace APIViewWeb.Repositories
             {
                 _telemetryClient.StopOperation(operation);
             }
+            return "";
+        }
+
+        private async Task<PullRequestModel> GetPullRequestModel(int prNumber, string repoName, string packageName, string originalFile)
+        {
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName);
+            if (pullRequestModel == null)
+            {
+                string[] repoInfo = repoName.Split("/");
+                var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
+                pullRequestModel = new PullRequestModel()
+                {
+                    RepoName = repoName,
+                    PullRequestNumber = prNumber,
+                    FilePath = originalFile,
+                    Author = issue.User.Login,
+                    PackageName = packageName
+                };
+            }
+            return pullRequestModel;
         }
 
         private bool ShouldShowDiffAsComment(string language)
@@ -237,6 +259,7 @@ namespace APIViewWeb.Repositories
             var stringBuilder = new StringBuilder();
             stringBuilder.Append(ISSUE_COMMENT_PACKAGE_IDENTIFIER.Replace("<PKG-NAME>", codeFile.PackageName));
             stringBuilder.Append(Environment.NewLine).Append(Environment.NewLine);
+
             // Get automatically generated master review for package or previously cloned review for this pull request
             var review = await GetBaseLineReview(codeFile.Language, codeFile.PackageName, pullRequestModel);
             if (review == null)

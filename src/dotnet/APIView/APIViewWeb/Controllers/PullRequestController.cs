@@ -33,14 +33,15 @@ namespace APIViewWeb.Controllers
             string packageName,
             int pullRequestNumber = 0,
             string codeFile = null,
-            string baselineCodeFile = null)
+            string baselineCodeFile = null,
+            bool commentOnPR = true)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile);
-            return Ok();
+            var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR);
+            return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
         }
 
         private bool ValidateInputParams()

@@ -389,7 +389,7 @@ This is the easiest case, there is no existing place to start.
   <user> Invoke Record Tests - logic in the recording.json discover needs to _create_ a service-level recording.json.
   <tooling-assets.ps1> Initialize-Assets-Repo - Function from psm1. Clone down with 0 blobs, init in a known location.
   <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation
-    <toolling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
+    <tooling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
   <tooling-assets.ps1> If no remote references, create branch under format of auto/<servicename> push empty branch.
   <tooling-assets.ps1> After above invocation, recording.json values of the following fields will be updated as per main, since  there is no existing auto/<service> branch.
             AssetsRepo
@@ -409,13 +409,36 @@ This is the easiest case, there is no existing place to start.
 
 This situation is the "normal" use case. Merely adding an additional commit to their auto/<service> branch.
 
+```text
+  <user> runs tests -- recording mode
+  <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation via existing recording.json
+    <tooling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
+  <tooling-assets.ps1> Return the root of the initialized repo to the framework  -- for example <path-to-your-language>/.assets/<azpythonassets>/recordings/<storage path>
+  <tooling-assets.ps1> Start Test-Proxy in context of returned root
+  <tooling-assets.ps1> Invoke push. A "recording" push can only work against the latest commit of the auto/<service> branch.
+    <tooling-assets.ps1> Need to "stash" new recordings, pull "latest" commit from auto/<service> branch, unstash new changes to to the cloned commit.
+  <user> runs assets.ps1 push -- implementation detail
+    <tooling> updates recording.json with new SHA from a newly created assets repo auto/<servicearea> branch.
+  <user commits their other changes, including recording.json updates, submits for PR>
+```
+
 ### Single Dev: Update recordings for a hotfix release
+
+Given above scenario plays out how we expect, this is identical to a normal service update, just on a branch in the language repo.
 
 ### Multiple Devs: Update the same pull request
 
+Given above scenario plays out how we expect, this is identical to a normal service update, just on a branch in the language repo.
+
 ### Multiple Devs: Update the same recordings, same service/package multiple different PRs
 
+First one in wins. The way we have the above scenario laid out.
+
+When the second person attempts to merge, they'll hit conflicts on `recording.json`. They will need to update, then re-record their tests with the latest from the PR branch, to ensure they have the changes THEY added as well as the changes that were checked in by their co-dev.
+
 ### Multiple Devs: Update recordings for two packages under same service in parallel
+
+Same above.
 
 ## Asset sync script implementation
 
@@ -571,3 +594,8 @@ Where the difficulty _really_ lies is in the weird situations that folks will in
 ### Test-Proxy creates seeded body content at playback time
 
 For more than a few of the storage recordings, some request bodies are obviously made up of generated content. We can significantly reduce the amount of data that is actually needed to be stored by allowing the test-proxy to _fill in_ these request bodies based on a known seed value (maybe from the original request body?).
+
+
+## Follow-Ups
+
+- [ ] Need to resolve what the nighty automation would _actually look like._.

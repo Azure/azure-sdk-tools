@@ -449,7 +449,7 @@ They key mention here is that **regardless** of what storage methodology is used
 Specifically, we need to do the following:
 
 - Resolve the "context" of an operation given a target directory or CWD
-  - Current  implementation is in [Resove-RecordingJson](https://github.com/Azure/azure-sdk-tools/blob/240426ec98a62606bf1c9d99991e31eadd1b22f5/eng/common/asset-sync/assets.ps1#L63) 
+  - Current  implementation is in [Resolve-RecordingJson](https://github.com/Azure/azure-sdk-tools/blob/240426ec98a62606bf1c9d99991e31eadd1b22f5/eng/common/asset-sync/assets.ps1#L63) 
   - The key here is we will resolve a lot of the the relative paths here.
   - This "context" will be passed around internally when referring to various operations.
   - The relative path to the target recording.json in the language repo will be used to _focus sparse checkouts_.

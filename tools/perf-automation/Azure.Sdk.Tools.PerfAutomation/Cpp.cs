@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
     // 2. git clone https://github.com/microsoft/vcpkg
     // 3. cd vcpkg
     // 4. ./bootstrap-vcpkg.sh
-    // 5. ./vcpkg install curl LibXml2
+    // 5. ./vcpkg install curl LibXml2 openssl
     public class Cpp : LanguageBase
     {
         private const string _buildDirectory = "build";

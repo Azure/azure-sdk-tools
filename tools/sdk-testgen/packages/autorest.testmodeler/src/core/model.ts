@@ -564,27 +564,26 @@ export class TestCodeModeler {
     public async loadTestResources(session: Session<TestCodeModel>) {
         try {
             const fileRoot = this.testConfig.getSwaggerFolder();
-            const loader = ApiScenarioLoader.create({
-                useJsonParser: false,
-                checkUnderFileRoot: false,
-                fileRoot: fileRoot,
-                swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
-            });
-
             if (Array.isArray(this.testConfig.config[Config.testResources])) {
-                await this.loadTestResourcesFromConfig(session, fileRoot, loader);
+                await this.loadTestResourcesFromConfig(session, fileRoot);
             } else {
-                await this.loadAvailableTestResources(session, fileRoot, loader);
+                await this.loadAvailableTestResources(session, fileRoot);
             }
         } catch (error) {
             session.warning('Exception occured when load test resource scenario: ${error.stack}', ['Test Modeler']);
         }
     }
 
-    public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string, loader: ApiScenarioLoader) {
+    public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
         for (const testResource of this.testConfig.getValue(Config.testResources)) {
             if (fs.existsSync(path.join(fileRoot, testResource[Config.test]))) {
                 try {
+                    const loader = ApiScenarioLoader.create({
+                        useJsonParser: false,
+                        checkUnderFileRoot: false,
+                        fileRoot: fileRoot,
+                        swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+                    });
                     const testDef = (await loader.load(testResource[Config.test])) as TestDefinitionModel;
                     this.initiateTestDefinition(session, testDef);
                     this.codeModel.testModel.scenarioTests.push(testDef);
@@ -597,7 +596,7 @@ export class TestCodeModeler {
         }
     }
 
-    public async loadAvailableTestResources(session: Session<TestCodeModel>, fileRoot: string, loader: ApiScenarioLoader) {
+    public async loadAvailableTestResources(session: Session<TestCodeModel>, fileRoot: string) {
         const scenariosFolders = ['scenarios', 'test-scenarios'];
         const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
         for (const apiFolder of this.testConfig.getInputFileFolders()) {
@@ -611,6 +610,12 @@ export class TestCodeModeler {
                         }
                         const scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
                         try {
+                            const loader = ApiScenarioLoader.create({
+                                useJsonParser: false,
+                                checkUnderFileRoot: false,
+                                fileRoot: fileRoot,
+                                swaggerFilePaths: this.testConfig.getValue(Config.inputFile),
+                            });
                             const testDef = (await loader.load(scenarioPathName)) as TestDefinitionModel;
 
                             this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);

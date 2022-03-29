@@ -78,4 +78,7 @@ ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
     changeClientFile(packageFolderPath, packageVersion);
 }
 
-
+export function makeChangesForPatchReleasingTrack2(packageFolderPath: string, packageVersion: string) {
+    changePackageJSON(packageFolderPath, packageVersion);
+    changeClientFile(packageFolderPath, packageVersion);
+}

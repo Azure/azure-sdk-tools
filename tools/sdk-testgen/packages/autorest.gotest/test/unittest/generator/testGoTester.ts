@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as process from 'process';
 import { BaseCodeGenerator } from '../../../src/generator/baseGenerator';
 import { ExampleCodeGenerator, ExampleDataRender } from '../../../src/generator/exampleGenerator';
-import { ExtensionName, TestCodeModel, TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
+import { ExtensionName, TestCodeModeler } from '@autorest/testmodeler/dist/src/core/model';
 import { GenerateContext } from '../../../src/generator/generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generator/mockTestGenerator';
@@ -196,7 +196,7 @@ describe('GoTestGenerator from RP agrifood', () => {
     beforeAll(async () => {
         const codeModel = MockTool.createCodeModel();
         testCodeModel = TestCodeModeler.createInstance(
-            codeModel as TestCodeModel,
+            codeModel as any,
             new TestConfig(
                 {
                     testmodeler: {
@@ -254,7 +254,7 @@ describe('GoTestGenerator from RP signalR', () => {
         const codeModel = MockTool.loadCodeModel('signalR/test-modeler.yaml');
         const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
         testCodeModel = TestCodeModeler.createInstance(
-            codeModel as TestCodeModel,
+            codeModel as any,
             new TestConfig(
                 {
                     __parents: {

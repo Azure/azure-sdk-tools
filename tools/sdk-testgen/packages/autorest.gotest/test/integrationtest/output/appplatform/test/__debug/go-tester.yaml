@@ -23102,7 +23102,7 @@ testModel:
             responseType: ServiceResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ServicesClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -23776,7 +23776,7 @@ testModel:
             responseType: ServiceResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ServicesClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -24349,7 +24349,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
             pollerType: ServicesClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - ServicesClientDeleteResponse
               - error
             responses:
               '202':
@@ -24519,7 +24519,7 @@ testModel:
             responseType: ServiceResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ServicesClientUpdateResponse
               - error
             responses:
               '200':
@@ -26020,7 +26020,7 @@ testModel:
             responseType: ConfigServerResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ConfigServersClientUpdatePutResponse
               - error
             responses:
               '200':
@@ -26271,7 +26271,7 @@ testModel:
             responseType: ConfigServerResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ConfigServersClientUpdatePatchResponse
               - error
             responses:
               '200':
@@ -26492,7 +26492,7 @@ testModel:
             responseType: ConfigServerSettingsValidateResult
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - ConfigServersClientValidateResponse
               - error
             responses:
               '200':
@@ -26739,7 +26739,7 @@ testModel:
             responseType: MonitoringSettingResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - MonitoringSettingsClientUpdatePutResponse
               - error
             responses:
               '200':
@@ -26960,7 +26960,7 @@ testModel:
             responseType: MonitoringSettingResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - MonitoringSettingsClientUpdatePatchResponse
               - error
             responses:
               '200':
@@ -27471,7 +27471,7 @@ testModel:
             responseType: AppResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - AppsClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -27865,7 +27865,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json
             pollerType: AppsClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - AppsClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -28078,7 +28078,7 @@ testModel:
             responseType: AppResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - AppsClientUpdateResponse
               - error
             responses:
               '200':
@@ -28984,7 +28984,7 @@ testModel:
             responseType: BindingResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - BindingsClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -29259,7 +29259,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
             pollerType: BindingsClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - BindingsClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -29402,7 +29402,7 @@ testModel:
             responseType: BindingResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - BindingsClientUpdateResponse
               - error
             responses:
               '200':
@@ -29977,7 +29977,7 @@ testModel:
             responseType: CertificateResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - CertificatesClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -30272,7 +30272,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
             pollerType: CertificatesClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - CertificatesClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -30672,7 +30672,7 @@ testModel:
             responseType: CustomDomainResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - CustomDomainsClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -30872,7 +30872,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
             pollerType: CustomDomainsClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - CustomDomainsClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -30984,7 +30984,7 @@ testModel:
             responseType: CustomDomainResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - CustomDomainsClientUpdateResponse
               - error
             responses:
               '200':
@@ -31655,7 +31655,7 @@ testModel:
             responseType: DeploymentResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -32134,7 +32134,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json
             pollerType: DeploymentsClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -32299,7 +32299,7 @@ testModel:
             responseType: DeploymentResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientUpdateResponse
               - error
             responses:
               '200':
@@ -33130,7 +33130,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json
             pollerType: DeploymentsClientStartPollerResponse
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientStartResponse
               - error
             responses:
               '200': {}
@@ -33198,7 +33198,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json
             pollerType: DeploymentsClientStopPollerResponse
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientStopResponse
               - error
             responses:
               '200': {}
@@ -33266,7 +33266,7 @@ testModel:
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json
             pollerType: DeploymentsClientRestartPollerResponse
             returnInfo:
-              - '*http.Response'
+              - DeploymentsClientRestartResponse
               - error
             responses:
               '200': {}
@@ -34449,7 +34449,7 @@ testModel:
                 responseType: ServiceResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - ServicesClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -35122,7 +35122,7 @@ testModel:
                 responseType: ServiceResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - ServicesClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -35841,7 +35841,7 @@ testModel:
                 responseType: CertificateResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - CertificatesClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -36398,7 +36398,7 @@ testModel:
                 responseType: ConfigServerSettingsValidateResult
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - ConfigServersClientValidateResponse
                   - error
                 responses:
                   '200':
@@ -36553,7 +36553,7 @@ testModel:
                 responseType: ConfigServerResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - ConfigServersClientUpdatePutResponse
                   - error
                 responses:
                   '200':
@@ -36755,7 +36755,7 @@ testModel:
                 responseType: ConfigServerResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - ConfigServersClientUpdatePatchResponse
                   - error
                 responses:
                   '200':
@@ -37087,7 +37087,7 @@ testModel:
                 responseType: MonitoringSettingResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - MonitoringSettingsClientUpdatePutResponse
                   - error
                 responses:
                   '200':
@@ -37399,7 +37399,7 @@ testModel:
                 responseType: MonitoringSettingResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - MonitoringSettingsClientUpdatePatchResponse
                   - error
                 responses:
                   '200':
@@ -37619,7 +37619,7 @@ testModel:
                 responseType: AppResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - AppsClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -38195,7 +38195,7 @@ testModel:
                 responseType: DeploymentResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -38828,7 +38828,7 @@ testModel:
                 responseType: AppResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - AppsClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -39152,7 +39152,7 @@ testModel:
                 responseType: AppResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - AppsClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -39689,7 +39689,7 @@ testModel:
                 responseType: BindingResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - BindingsClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -39937,7 +39937,7 @@ testModel:
                 responseType: BindingResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - BindingsClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -40500,7 +40500,7 @@ testModel:
                 originalFile: ''
                 pollerType: BindingsClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - BindingsClientDeleteResponse
                   - error
                 responses:
                   '200':
@@ -40729,7 +40729,7 @@ testModel:
                 responseType: CustomDomainResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - CustomDomainsClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -40890,7 +40890,7 @@ testModel:
                 responseType: CustomDomainResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - CustomDomainsClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -41622,7 +41622,7 @@ testModel:
                 responseType: DeploymentResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -41967,7 +41967,7 @@ testModel:
                 responseType: AppResource
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - AppsClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -42186,7 +42186,7 @@ testModel:
                 originalFile: ''
                 pollerType: DeploymentsClientRestartPollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientRestartResponse
                   - error
                 responses:
                   '200':
@@ -42272,7 +42272,7 @@ testModel:
                 originalFile: ''
                 pollerType: DeploymentsClientStopPollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientStopResponse
                   - error
                 responses:
                   '200':
@@ -42358,7 +42358,7 @@ testModel:
                 originalFile: ''
                 pollerType: DeploymentsClientStartPollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientStartResponse
                   - error
                 responses:
                   '200':
@@ -43747,7 +43747,7 @@ testModel:
                 originalFile: ''
                 pollerType: DeploymentsClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - DeploymentsClientDeleteResponse
                   - error
                 responses:
                   '200':
@@ -43833,7 +43833,7 @@ testModel:
                 originalFile: ''
                 pollerType: CustomDomainsClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - CustomDomainsClientDeleteResponse
                   - error
                 responses:
                   '200':
@@ -43913,7 +43913,7 @@ testModel:
                 originalFile: ''
                 pollerType: AppsClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - AppsClientDeleteResponse
                   - error
                 responses:
                   '200':
@@ -43992,7 +43992,7 @@ testModel:
                 originalFile: ''
                 pollerType: CertificatesClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - CertificatesClientDeleteResponse
                   - error
                 responses:
                   '200':
@@ -44065,7 +44065,7 @@ testModel:
                 originalFile: ''
                 pollerType: ServicesClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - ServicesClientDeleteResponse
                   - error
                 responses: {}
               exampleName: Services_Delete

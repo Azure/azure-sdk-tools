@@ -187,25 +187,29 @@ export class ScenarioTestDataRender extends MockTestDataRender {
         }
     }
 
-    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[]): string {
+    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[], isClient = false): string {
         return paramsSig
             .map(([paramName, typeName, parameter]) => {
                 if (paramName === 'ctx') {
                     return this.packagePrefixForGlobalVariables + 'ctx';
                 }
-                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
+                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters, isClient);
             })
             .join(',\n');
     }
 
-    protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
-        const defaultValue = super.getDefaultValue(param, isPtr, elemByVal);
-        // the operation has no client subscriptionID param, but client has, we need to replace it to the subscriptionID param
-        if (defaultValue === '"<subscription-id>"') {
-            return this.packagePrefixForGlobalVariables + 'subscriptionId';
+    // For some method which has no subscriptionId param but client has, oav will not do the variable replacement. So we need to specific handle it.
+    protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean, elemByVal = false, inArray = false): string {
+        if (exampleValue.language?.default?.name === 'SubscriptionId') {
+            return this.getSubscriptionValue(undefined);
         } else {
-            return defaultValue;
+            return super.exampleValueToString(exampleValue, isPtr, elemByVal, inArray);
         }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected getSubscriptionValue(param: Parameter) {
+        return this.packagePrefixForGlobalVariables + 'subscriptionId';
     }
 
     protected getStringValue(rawValue: string) {

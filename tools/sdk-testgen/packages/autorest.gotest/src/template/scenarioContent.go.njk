@@ -35,6 +35,7 @@ var err error
             {%- if example.checkResponse %}
             {%- if allVariables.indexOf(resVariable)<0 %}
             var {{resVariable}} {{packageName}}.{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Response
+            {%- set _ = allVariables.push(resVariable) %}
             {%- endif %}
             {%- endif %}
             if recording.GetRecordMode() == recording.PlaybackMode {

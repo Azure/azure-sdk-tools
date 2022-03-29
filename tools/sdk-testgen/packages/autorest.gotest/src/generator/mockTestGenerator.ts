@@ -72,7 +72,7 @@ export class MockTestDataRender extends BaseDataRender {
             return rawValue;
         };
         example.methodParametersOutput = this.toParametersOutput(getAPIParametersSig(op), example.methodParameters);
-        example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
+        example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters, true);
         example.returnInfo = generateReturnsInfo(op, 'op');
         const schemaResponse = getSchemaResponse(op as any);
         if (example.isPageable) {
@@ -143,31 +143,36 @@ export class MockTestDataRender extends BaseDataRender {
     }
 
     // get GO code of all parameters for one operation invoke
-    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[]): string {
+    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[], isClient = false): string {
         return paramsSig
             .map(([paramName, typeName, parameter]) => {
                 if (paramName === 'ctx') {
                     return 'ctx';
                 }
-                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
+                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters, isClient);
             })
             .join(',\n');
     }
 
     // get GO code of single parameter for one operation invoke
-    protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[]): string {
-        // get cooresponding example value of a parameter
+    protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[], isClient = false): string {
+        // get corresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
             // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
             const isPolymophismValue = param?.schema?.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true;
             const isPtr: boolean = isPolymophismValue || !(param.required || param.language.go.byValue === true);
             for (const methodParameter of exampleParameters) {
                 if (this.getLanguageName(methodParameter.parameter) === name) {
-                    // we should judge wheter a param or property is ptr or not from outside of exampleValueToString
+                    // we should judge whether a param or property is ptr or not from outside of exampleValueToString
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(param));
                 }
             }
-            return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
+            // if client param, only subscription will have no corresponding example value
+            if (isClient) {
+                return this.getSubscriptionValue(param);
+            } else {
+                return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
+            }
         };
 
         if ((parameter as GroupProperty).originalParameter) {
@@ -193,6 +198,10 @@ export class MockTestDataRender extends BaseDataRender {
             return ret;
         }
         return findExampleParameter(paramName, parameter);
+    }
+
+    protected getSubscriptionValue(param: Parameter) {
+        return '"<' + Helper.toKebabCase(this.getLanguageName(param)) + '>"';
     }
 
     protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
@@ -258,7 +267,7 @@ export class MockTestDataRender extends BaseDataRender {
                 const result = `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{}`;
                 return result;
             } else {
-                // for pholymophism element, need to add type name, so pass false for inArray
+                // for polymorphism element, need to add type name, so pass false for inArray
                 const result =
                     `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{\n` +
                     exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, elementIsPolymophism ? false : true)).join(',\n') +
@@ -287,7 +296,7 @@ export class MockTestDataRender extends BaseDataRender {
                         (parentsProp.schema as ObjectSchema).discriminator?.property.isDiscriminator === true);
                 output += `${this.getLanguageName(parentsProp)}: ${this.exampleValueToString(parentsProp, isPolymophismValue || !parentsProp.language.go?.byValue === true)},\n`;
             }
-            // TODO: handle multiplue additionalProps
+            // TODO: handle multiple additionalProps
             for (const additionalProp of additionalProps) {
                 output += `AdditionalProperties: ${this.exampleValueToString(additionalProp, false)},\n`;
             }

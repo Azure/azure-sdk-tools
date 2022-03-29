@@ -303,7 +303,6 @@ One must _create_ a recording.json. The recording framework should base a _new_ 
 |      AssetsRepo:"azure/azure-sdk-for-python"
 +------AssetsRepoId:"azure2"
        SHA:"ABC"
-       AssetsRepo:"Azure/azure-sdk-for-python"
 ```
 
 - All assets repositories will be cloned to a folder under the `.assets` folder at root.
@@ -387,18 +386,23 @@ For all of these, any supplementary functionality is laid out in `asset-interact
 This is the easiest case, there is no existing place to start.
 
 ```text
-<user> Invoke Record Tests 
-  <tooling> Initialize-Assets-Repo
-  <tooling> Check for SHA/auto branch in the repo
-    <user> If changes are being abandoned in a different directory, prompt user before discarding changes.
-  <tooling> If no remote references, create branch under format of auto/<servicename> push empty branch
-  <tooling> After above invocation, recording.json values of the following fields will be updated as per main, since there is no existing auto/<service> branch.
+  <user> Invoke Record Tests - logic in the recording.json discover needs to _create_ a service-level recording.json.
+  <tooling-assets.ps1> Initialize-Assets-Repo - Function from psm1. Clone down with 0 blobs, init in a known location.
+  <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation
+    <toolling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
+  <tooling-assets.ps1> If no remote references, create branch under format of auto/<servicename> push empty branch.
+  <tooling-assets.ps1> After above invocation, recording.json values of the following fields will be updated as per main, since  there is no existing auto/<service> branch.
             AssetsRepo
             AssetsRepoPrefixPath
             Branch
             TargetSHA
-  <tooling> Return the root of the initialized repo to the framework
-  <tooling> Start Test-Proxy in context of returned root
+  <tooling-assets.ps1> Return the root of the initialized repo to the framework  -- for example <path-to-your-language>/.assets/<azpythonassets>/recordings/<storage path>
+  <tooling-assets.ps1> Start Test-Proxy in context of returned root
+  <user> git status -- see a new recording.json in the area's root. sdk/<servicearea>
+  <user> runs tests -- recording mode
+  <user> runs assets.ps1 push -- implementation detail
+    <tooling> updates recording.json with new SHA from a newly created assets repo auto/<servicearea> branch.
+  <user commits their other changes, including recording.json updates, submits for PR>
 ```
 
 ### Single Dev: Update single service's recordings
@@ -463,7 +467,7 @@ The external repo will probably be a _git_ repo, so it's not like devs won't be 
 One benefit of building on top of a git repository is that we have a possible no-op checkout posible when switching the target assets repo SHA. EG: a dev is working a `storage` PR and needs to check a possible issue in `keyvault`. That dev will need to probably need to retarget their assets repo to point at the SHA defined in the `storage` recording.json sync-script. However, the recording.jsons probably don't have the same SHA!  
 
 ```text
-Commits in assets repository
+Commits in assets repository on main
 (A) -> (B) -> (C) -> (D) -> (E)
 
 sdk/storage/recording.json

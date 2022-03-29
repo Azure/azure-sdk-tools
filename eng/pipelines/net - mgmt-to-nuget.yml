@@ -1,0 +1,29 @@
+resources:
+  pipelines:
+  - pipeline: net-template
+    project: internal
+    source: net/net - template
+    branch: main
+  repositories:
+  - repository: azure-sdk-build-tools
+    type: git
+    name: internal/azure-sdk-build-tools
+    ref: refs/tags/azure-sdk-build-tools_20211215.1
+
+parameters:
+- name: SourcePipeline
+  type: string
+  default: 'net-template'
+- name: ShouldPublish
+  type: string
+  default: true
+- name: ShouldSign
+  type: string
+  default: true
+
+jobs:
+- template: /eng/pipelines/templates/jobs/pipeline-artifact-to-nuget.yml
+  parameters:
+    SourcePipeline: ${{ parameters.SourcePipeline }}
+    ShouldSign: ${{ parameters.ShouldSign }}
+    ShouldPublish: ${{ parameters.ShouldPublish }}

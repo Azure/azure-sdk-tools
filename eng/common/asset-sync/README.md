@@ -379,7 +379,7 @@ The `auto` commit branches will need to stick around. At least as far as we need
 
 ## Scenario Walkthroughs
 
-For all of these, any supplementary functionality is laid out in `asset-interactions.ps1`. Just `.` include it in your local powershell environment for the commands to work.
+For all of these, any supplementary functionality is laid out in `asset.ps1`. Just `.` include it in your local powershell environment for the commands to work.
 
 ### Single Dev: Create a new services's recordings
 

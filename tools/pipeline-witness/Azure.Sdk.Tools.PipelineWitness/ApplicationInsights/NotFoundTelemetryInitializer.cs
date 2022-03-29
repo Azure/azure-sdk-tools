@@ -1,6 +1,7 @@
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.VisualStudio.Services.ActivityStatistic;
 
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {

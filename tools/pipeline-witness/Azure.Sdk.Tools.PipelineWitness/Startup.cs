@@ -111,6 +111,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
             builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
         }
     }
 }

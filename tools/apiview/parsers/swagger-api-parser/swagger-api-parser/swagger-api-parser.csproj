@@ -8,6 +8,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

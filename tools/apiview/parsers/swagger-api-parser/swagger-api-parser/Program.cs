@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ApiView;
 using APIView;
-using APIViewWeb;
 
 namespace swagger_api_parser
 {
@@ -221,7 +220,7 @@ namespace swagger_api_parser
                 var swaggerFileName = Path.GetFileName(input);
                 Console.WriteLine("Input swagger file: {0}", input);
                 await using FileStream fileReadStream = File.OpenRead(input);
-                var ls = new SwaggerLanguageService();
+                var ls = new SwaggerTokenSerializer();
                 var cf = await ls.GetCodeFileInternalAsync(swaggerFileName, fileReadStream, false);
                 swaggerCodeFileRender.AppendResult(swaggerFileName, cf);
             }

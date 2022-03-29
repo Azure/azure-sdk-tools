@@ -60,7 +60,8 @@ namespace APIViewWeb.Repositories
             var ghToken = _configuration["github-access-token"];
             if (ghToken != null)
             {
-                _githubClient.Credentials = new Credentials(_configuration["github-access-token"]);
+                _githubClient.Credentials = new Credentials(ghToken);
+
             }
 
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";

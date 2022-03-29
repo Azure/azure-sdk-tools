@@ -110,7 +110,7 @@ public class APIViewManager {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
-            let tokenData = try encoder.encode(apiView.tokenize())
+            let tokenData = try encoder.encode(apiView)
             try tokenData.write(to: destUrl)
         } catch {
             SharedLogger.fail(error.localizedDescription)

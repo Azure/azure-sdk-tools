@@ -49,22 +49,17 @@ class SignatureModel: Tokenizable {
             isVarargs = source.isVarargs
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.member(name: name)
-            t.punctuation(":")
-            t.whitespace()
-            t.append(contentsOf: typeModel.tokenize())
+        func tokenize(apiview a: APIViewModel) {
+            a.member(name: name)
+            a.punctuation(":", postfixSpace: true)
+            typeModel.tokenize(apiview: a)
             if let defaultValue = defaultValue {
-                t.whitespace()
-                t.punctuation("=")
-                t.whitespace()
-                t.stringLiteral(defaultValue)
+                a.punctuation("=", prefixSpace: true, postfixSpace: true)
+                a.literal(defaultValue)
             }
             if isVarargs {
-                t.text("...")
+                a.text("...")
             }
-            return t
         }
     }
 
@@ -108,31 +103,25 @@ class SignatureModel: Tokenizable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.punctuation("(")
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation("(")
         let stopIdx = parameters.count - 1
         for (idx, param) in parameters.enumerated() {
-            t.append(contentsOf: param.tokenize())
+            param.tokenize(apiview: a)
             if idx != stopIdx {
-                t.punctuation(",")
-                t.whitespace()
+                a.punctuation(",", postfixSpace: true)
             }
         }
-        t.punctuation(")")
-        t.whitespace()
+        a.punctuation(")", postfixSpace: true)
         if let async = async {
-            t.keyword(async)
-            t.whitespace()
+            a.keyword(async, postfixSpace: true)
         }
         if let throwing = throwing {
-            t.keyword(throwing)
-            t.whitespace()
+            a.keyword(throwing, postfixSpace: true)
         }
         if let result = result {
-            t.append(contentsOf: result.tokenize())
+            result.tokenize(apiview: a)
         }
-        t.whitespace()
-        return t
+        a.whitespace()
     }
 }

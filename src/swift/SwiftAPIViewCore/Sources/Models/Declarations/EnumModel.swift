@@ -46,7 +46,7 @@ import AST
 ///     raw-value-style-enum-case → enum-case-name raw-value-assignment opt
 ///     raw-value-assignment → = raw-value-literal
 ///     raw-value-literal → numeric-literal | static-string-literal | boolean-literal
-class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
+class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
 
     var definitionId: String?
     var lineId: String?
@@ -72,15 +72,12 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
                 typeModel = TypeModel(from: element)
             }
 
-            func tokenize() -> [Token] {
-                var t = [Token]()
+            func tokenize(apiview a: APIViewModel) {
                 if let name = name {
-                    t.member(name: name)
-                    t.punctuation(":")
-                    t.whitespace()
+                    a.member(name: name)
+                    a.punctuation(":", postfixSpace: true)
                 }
-                t.append(contentsOf: typeModel.tokenize())
-                return t
+                typeModel.tokenize(apiview: a)
             }
         }
 
@@ -94,19 +91,16 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
             }
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.punctuation("(")
+        func tokenize(apiview a: APIViewModel) {
+            a.punctuation("(")
             let stopIdx = elements.count - 1
             for (idx, element) in elements.enumerated() {
-                t.append(contentsOf: element.tokenize())
+                element.tokenize(apiview: a)
                 if idx != stopIdx {
-                    t.punctuation(",")
-                    t.whitespace()
+                    a.punctuation(",", postfixSpace: true)
                 }
             }
-            t.punctuation(")")
-            return t
+            a.punctuation(")")
         }
     }
 
@@ -124,14 +118,11 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
             associatedValues = AssociatedValuesModel(from: source.tuple)
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword("case")
-            t.whitespace()
-            t.member(name: name, definitionId: lineId)
-            t.append(contentsOf: associatedValues?.tokenize() ?? [])
-            t.newLine()
-            return t
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword("case", postfixSpace: true)
+            a.member(name: name, definitionId: lineId)
+            associatedValues?.tokenize(apiview: a)
+            a.newline()
         }
     }
 
@@ -161,19 +152,14 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
             }
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword("case")
-            t.whitespace()
-            t.member(name: name, definitionId: lineId)
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword("case", postfixSpace: true)
+            a.member(name: name, definitionId: lineId)
             if let value = rawValue {
-                t.whitespace()
-                t.punctuation("=")
-                t.whitespace()
-                t.stringLiteral(value)
+                a.punctuation("=", prefixSpace: true, postfixSpace: true)
+                a.literal(value)
             }
-            t.newLine()
-            return t
+            a.newline()
         }
     }
 
@@ -210,44 +196,39 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible {
         self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel.textDescription)
-        t.whitespace()
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        a.keyword(accessLevel.textDescription, postfixSpace: true)
         if isIndirect {
-            t.keyword("indirect")
-            t.whitespace()
+            a.keyword("indirect", postfixSpace: true)
         }
-        t.keyword("enum")
-        t.whitespace()
-        t.typeDeclaration(name: name, definitionId: definitionId)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.append(contentsOf: typeInheritanceClause?.tokenize() ?? [])
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.whitespace()
-        t.punctuation("{")
-        t.newLine()
-        members.forEach { member in
-            t.append(contentsOf: member.tokenize())
+        a.keyword("enum", postfixSpace: true)
+        a.typeDeclaration(name: name, definitionId: definitionId)
+        genericParamClause?.tokenize(apiview: a)
+        typeInheritanceClause?.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.punctuation("{", prefixSpace: true)
+        a.newline()
+        a.indent {
+            members.forEach { member in
+                member.tokenize(apiview: a)
+            }
+            extensions.forEach { ext in
+                ext.tokenize(apiview: a)
+            }
         }
-        extensions.forEach { ext in
-            t.append(contentsOf: ext.tokenize())
-        }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
+        a.blankLines(set: 1)
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        var t = [NavigationToken]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .enum))
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .enum))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            t.append(contentsOf: member.navigationTokenize(parent: self))
+            member.navigationTokenize(apiview: a, parent: self)
         }
-        return t
     }
 }

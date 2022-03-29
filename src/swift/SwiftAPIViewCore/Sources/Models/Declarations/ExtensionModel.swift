@@ -36,7 +36,7 @@ class ExtensionModel: Tokenizable, Commentable {
     var typeModel: TypeModel
     var typeInheritanceClause: TypeInheritanceModel?
     var genericWhereClause: GenericWhereModel?
-    var members: [Tokenizable]
+    var members: [AccessLevelProtocol]
 
     init(from decl: ExtensionDeclaration) {
         // FIXME: This this!
@@ -46,11 +46,11 @@ class ExtensionModel: Tokenizable, Commentable {
         self.typeModel = TypeModel(from: decl.type)
         self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
         self.genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        self.members = [Tokenizable]()
+        self.members = [AccessLevelProtocol]()
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                if let model = decl.toTokenizable() {
+                if let model = decl.toTokenizable() as? AccessLevelProtocol {
                     self.members.append(model)
                 }
             case let .compilerControl(statement):
@@ -61,38 +61,39 @@ class ExtensionModel: Tokenizable, Commentable {
 
     var isPublic: Bool {
         guard let accessLevel = accessLevel else { return false }
-        return publicModifiers.contains(accessLevel)
+        return APIViewModel.publicModifiers.contains(accessLevel)
     }
 
     var hasPublicMembers: Bool {
-        members.forEach { member in
-            // TODO: Cast to types with access level?
+        for member in members {
+            if APIViewModel.publicModifiers.contains(member.accessLevel) {
+                return true
+            }
         }
         return false
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
+    func tokenize(apiview a: APIViewModel) {
         let shouldDisplay = isPublic || hasPublicMembers
-        guard shouldDisplay == true else { return t }
-        t.append(contentsOf: attributes.tokenize())
+        guard shouldDisplay == true else { return }
+        attributes.tokenize(apiview: a)
         if let access = accessLevel {
-            t.keyword(access.textDescription)
-            t.whitespace()
+            a.keyword(access.textDescription, postfixSpace: true)
         }
-        t.keyword("extension")
-        t.whitespace()
-        t.append(contentsOf: typeModel.tokenize())
-        t.whitespace()
-        t.append(contentsOf: typeInheritanceClause?.tokenize() ?? [])
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.punctuation("{")
-        t.newLine()
-        members.forEach { member in
-            t.append(contentsOf: member.tokenize())
+        a.keyword("extension", postfixSpace: true)
+        typeModel.tokenize(apiview: a)
+        a.whitespace()
+        typeInheritanceClause?.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.punctuation("{")
+        a.newline()
+        a.indent {
+            members.forEach { member in
+                member.tokenize(apiview: a)
+            }
         }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
+        a.blankLines(set: 1)
     }
 }

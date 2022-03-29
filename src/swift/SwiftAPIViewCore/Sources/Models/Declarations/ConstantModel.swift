@@ -32,7 +32,7 @@ import AST
 ///     pattern-initializer-list → pattern-initializer | pattern-initializer , pattern-initializer-list
 ///     pattern-initializer → pattern initializer opt
 ///     initializer → = expression
-class ConstantModel: Tokenizable, Commentable {
+class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     var lineId: String?
     var attributes: AttributesModel
@@ -53,24 +53,18 @@ class ConstantModel: Tokenizable, Commentable {
         defaultValue = decl.initializerList.defaultValue
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.append(contentsOf: modifiers.tokenize())
-        t.keyword("let")
-        t.whitespace()
-        t.member(name: name, definitionId: lineId)
-        t.punctuation(":")
-        t.whitespace()
-        t.append(contentsOf: typeModel.tokenize())
-        t.whitespace()
-        t.punctuation("=")
-        t.whitespace()
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        modifiers.tokenize(apiview: a)
+        a.keyword("let", postfixSpace: true)
+        a.member(name: name, definitionId: lineId)
+        a.punctuation(":", postfixSpace: true)
+        typeModel.tokenize(apiview: a)
+        a.punctuation("=", prefixSpace: true, postfixSpace: true)
         if let defaultValue = defaultValue {
-            t.stringLiteral(defaultValue)
+            a.literal(defaultValue)
         }
-        t.newLine()
-        return t
+        a.newline()
     }
 }

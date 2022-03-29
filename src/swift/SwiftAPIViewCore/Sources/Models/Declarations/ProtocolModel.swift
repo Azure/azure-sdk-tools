@@ -40,7 +40,7 @@ import AST
 ///     protocol-member-declaration → protocol-subscript-declaration
 ///     protocol-member-declaration → protocol-associated-type-declaration
 ///     protocol-member-declaration → typealias-declaration
-class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible {
+class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
 
     var definitionId: String?
     var lineId: String?
@@ -64,14 +64,11 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible {
             typeInheritance = TypeInheritanceModel(from: source.typeInheritance)
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword("associatedtype")
-            t.whitespace()
-            t.member(name: name, definitionId: lineId)
-            t.append(contentsOf: typeInheritance?.tokenize() ?? [])
-            t.newLine()
-            return t
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword("associatedtype", postfixSpace: true)
+            a.member(name: name, definitionId: lineId)
+            typeInheritance?.tokenize(apiview: a)
+            a.newline()
         }
     }
 
@@ -103,39 +100,35 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel.textDescription)
-        t.whitespace()
-        t.keyword("protocol")
-        t.whitespace()
-        t.typeDeclaration(name: name, definitionId: definitionId)
-        t.whitespace()
-        t.append(contentsOf: typeInheritanceClause?.tokenize() ?? [])
-        t.whitespace()
-        t.punctuation("{")
-        t.newLine()
-        members.forEach { child in
-            t.append(contentsOf: child.tokenize())
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        a.keyword(accessLevel.textDescription, postfixSpace: true)
+        a.keyword("protocol", postfixSpace: true)
+        a.typeDeclaration(name: name, definitionId: definitionId)
+        a.whitespace()
+        typeInheritanceClause?.tokenize(apiview: a)
+        a.punctuation("{", prefixSpace: true)
+        a.newline()
+        a.indent {
+            members.forEach { child in
+                child.tokenize(apiview: a)
+            }
+            extensions.forEach { ext in
+                ext.tokenize(apiview: a)
+            }
         }
-        extensions.forEach { ext in
-            t.append(contentsOf: ext.tokenize())
-        }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
+        a.blankLines(set: 1)
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        var t = [NavigationToken]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .interface))
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .interface))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            t.append(contentsOf: member.navigationTokenize(parent: self))
+            member.navigationTokenize(apiview: a, parent: self)
         }
-        return t
     }
 }

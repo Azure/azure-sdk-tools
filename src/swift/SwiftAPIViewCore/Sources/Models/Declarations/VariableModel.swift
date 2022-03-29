@@ -51,7 +51,7 @@ import AST
 ///     willSet-didSet-block → { didSet-clause willSet-clause opt }
 ///     willSet-clause → attributes opt willSet setter-name opt code-block
 ///     didSet-clause → attributes opt didSet setter-name opt code-block
-class VariableModel: Tokenizable, Commentable {
+class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     var lineId: String?
     var attributes: AttributesModel
@@ -105,25 +105,19 @@ class VariableModel: Tokenizable, Commentable {
         getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.append(contentsOf: modifiers.tokenize())
-        t.keyword("var")
-        t.whitespace()
-        t.member(name: name, definitionId: lineId)
-        t.punctuation(":")
-        t.whitespace()
-        t.append(contentsOf: typeModel.tokenize())
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        modifiers.tokenize(apiview: a)
+        a.keyword("var", postfixSpace: true)
+        a.member(name: name, definitionId: lineId)
+        a.punctuation(":", postfixSpace: true)
+        typeModel.tokenize(apiview: a)
         if let defaultValue = defaultValue {
-            t.whitespace()
-            t.punctuation("=")
-            t.whitespace()
-            t.stringLiteral(defaultValue)
+            a.punctuation("=", prefixSpace: true, postfixSpace: true)
+            a.literal(defaultValue)
         }
-        t.newLine()
-        t.append(contentsOf: getterSetterBlock?.tokenize() ?? [])
-        return t
+        a.newline()
+        getterSetterBlock?.tokenize(apiview: a)
     }
 }

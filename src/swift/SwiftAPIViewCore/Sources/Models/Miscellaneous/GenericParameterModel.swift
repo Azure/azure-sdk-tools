@@ -48,19 +48,15 @@ class GenericParameterModel: Tokenizable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.punctuation("<")
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation("<")
         let stopIdx = typeList.count - 1
         for (idx, param) in typeList.enumerated() {
-            t.append(contentsOf: param.tokenize())
+            param.tokenize(apiview: a)
             if idx != stopIdx {
-                t.punctuation(",")
-                t.whitespace()
+                a.punctuation(",", postfixSpace: true)
             }
         }
-        t.punctuation(">")
-        t.whitespace()
-        return t
+        a.punctuation(">", postfixSpace: true)
     }
 }

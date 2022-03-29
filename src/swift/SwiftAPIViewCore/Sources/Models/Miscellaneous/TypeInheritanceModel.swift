@@ -41,20 +41,16 @@ class TypeInheritanceModel: Tokenizable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.punctuation(":")
-        t.whitespace()
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation(":", postfixSpace: true)
         let stopIdx = typeList.count - 1
         for (idx, param) in typeList.enumerated() {
             param.useShorthand = false
-            t.append(contentsOf: param.tokenize())
+            param.tokenize(apiview: a)
             if idx != stopIdx {
-                t.punctuation(",")
-                t.whitespace()
+                a.punctuation(",", postfixSpace: true)
             }
         }
-        t.whitespace()
-        return t
+        a.whitespace()
     }
 }

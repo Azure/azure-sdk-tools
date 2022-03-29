@@ -38,7 +38,7 @@ class TypeModel: Tokenizable {
     var isTuple: Bool
     var isInOut: Bool
     var genericArgumentList: [TypeModel]?
-    var attributes: Attributes?
+    var attributes: AttributesModel?
     var arguments: [TypeModel]?
     var returnType: TypeModel?
 
@@ -52,7 +52,11 @@ class TypeModel: Tokenizable {
         self.isTuple = isTuple
         self.isInOut = isInOut
         self.genericArgumentList = genericArgumentList
-        self.attributes = attributes
+        if let attrs = attributes {
+            self.attributes = AttributesModel(from: attrs)
+        } else {
+            self.attributes = nil
+        }
         self.arguments = arguments
         self.returnType = returnType
     }
@@ -64,7 +68,7 @@ class TypeModel: Tokenizable {
     convenience init(from source: TypeAnnotation) {
         self.init(from: source.type)
         isInOut = source.isInOutParameter
-        attributes = source.attributes
+        attributes = AttributesModel(from: source.attributes)
     }
 
     convenience init(from source: OptionalType) {
@@ -194,84 +198,76 @@ class TypeModel: Tokenizable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-//        if let attributes = typeModel?.attributes {
-//            handle(attributes: attributes, defId: defId, inline: true)
-//        }
-//        if source.isInOut {
-//            keyword(value: "inout")
-//            whitespace()
-//        }
-//        if source.isArray {
-//            if !source.useShorthand {
-//                text("Array")
-//            }
-//            source.useShorthand ? punctuation("[") : punctuation("<")
-//            handle(typeModel: source.arguments!.first!, defId: defId)
-//            source.useShorthand ? punctuation("]") : punctuation(">")
-//        } else if source.isDict {
-//            if !source.useShorthand {
-//                text("Dictionary")
-//            }
-//            source.useShorthand ? punctuation("[") : punctuation("<")
-//            handle(typeModel: source.arguments!.first!, defId: defId)
-//            source.useShorthand ? punctuation(":") : punctuation(",")
-//            whitespace()
-//            handle(typeModel: source.arguments!.last!, defId: defId)
-//            source.useShorthand ? punctuation("]") : punctuation(">")
-//        } else if source.isTuple {
-//            guard let arguments = source.arguments else {
-//                SharedLogger.fail("Tuples must have arguments.")
-//            }
-//            punctuation("(")
-//            let argCount = arguments.count
-//            for (idx, arg) in arguments.enumerated() {
-//                self.handle(typeModel: arg, defId: defId)
-//                if idx + 1 != argCount {
-//                    punctuation(",")
-//                    whitespace()
-//                }
-//            }
-//            punctuation(")")
-//        } else {
-//            typeReference(name: source.name)
-//            if let genericArgs = source.genericArgumentList {
-//                punctuation("<")
-//                let argCount = genericArgs.count
-//                for (idx, item) in genericArgs.enumerated() {
-//                    self.handle(typeModel: item, defId: defId)
-//                    if idx + 1 != argCount {
-//                        punctuation(",")
-//                        whitespace()
-//                    }
-//                }
-//                punctuation(">")
-//            }
-//            if let arguments = source.arguments {
-//                punctuation("(")
-//                let argCount = arguments.count
-//                for (idx, arg) in arguments.enumerated() {
-//                    self.handle(typeModel: arg, defId: defId)
-//                    if idx + 1 != argCount {
-//                        punctuation(",")
-//                        whitespace()
-//                    }
-//                }
-//                punctuation(")")
-//                if let retType = source.returnType {
-//                    whitespace()
-//                    text("->")
-//                    whitespace()
-//                    self.handle(typeModel: retType, defId: defId)
-//                }
-//            }
-//        }
-//        if source.isOptional && !source.isImplicitlyUnwrapped {
-//            punctuation("?")
-//        } else if source.isImplicitlyUnwrapped {
-//            punctuation("!")
-//        }
-        return t
+    func tokenize(apiview a: APIViewModel) {
+        attributes?.tokenize(apiview: a)
+        if isInOut {
+            a.keyword("inout", postfixSpace: true)
+        }
+        if isArray {
+            if !useShorthand {
+                a.text("Array")
+            }
+            useShorthand ? a.punctuation("[") : a.punctuation("<")
+            arguments!.first!.tokenize(apiview: a)
+            useShorthand ? a.punctuation("]") : a.punctuation(">")
+        } else if isDict {
+            if !useShorthand {
+                a.text("Dictionary")
+            }
+            useShorthand ? a.punctuation("[") : a.punctuation("<")
+            arguments!.first!.tokenize(apiview: a)
+            useShorthand ? a.punctuation(":") : a.punctuation(",")
+            a.whitespace()
+            arguments!.last!.tokenize(apiview: a)
+            useShorthand ? a.punctuation("]") : a.punctuation(">")
+        } else if isTuple {
+            guard let arguments = arguments else {
+                SharedLogger.fail("Tuples must have arguments.")
+            }
+            a.punctuation("(")
+            let argCount = arguments.count
+            for (idx, arg) in arguments.enumerated() {
+                arg.tokenize(apiview: a)
+                if idx + 1 != argCount {
+                    a.punctuation(",", postfixSpace: true)
+                }
+            }
+            a.punctuation(")")
+        } else {
+            a.typeReference(name: name)
+            if let genericArgs = genericArgumentList {
+                a.punctuation("<")
+                let argCount = genericArgs.count
+                for (idx, item) in genericArgs.enumerated() {
+                    item.tokenize(apiview: a)
+                    if idx + 1 != argCount {
+                        a.punctuation(",", postfixSpace: true)
+                    }
+                }
+                a.punctuation(">")
+            }
+            if let arguments = arguments {
+                a.punctuation("(")
+                let argCount = arguments.count
+                for (idx, arg) in arguments.enumerated() {
+                    arg.tokenize(apiview: a)
+                    if idx + 1 != argCount {
+                        a.punctuation(",", postfixSpace: true)
+                    }
+                }
+                a.punctuation(")")
+                if let retType = returnType {
+                    a.whitespace()
+                    a.text("->")
+                    a.whitespace()
+                    retType.tokenize(apiview: a)
+                }
+            }
+        }
+        if isOptional && !isImplicitlyUnwrapped {
+            a.punctuation("?")
+        } else if isImplicitlyUnwrapped {
+            a.punctuation("!")
+        }
     }
 }

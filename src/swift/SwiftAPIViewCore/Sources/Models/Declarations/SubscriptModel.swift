@@ -34,7 +34,7 @@ import AST
 ///     subscript-declaration → subscript-head subscript-result generic-where-clause opt getter-setter-keyword-block
 ///     subscript-head → attributes opt declaration-modifiers opt subscript generic-parameter-clause opt parameter-clause
 ///     subscript-result → -> attributes opt type
-class SubscriptModel: Tokenizable, Commentable {
+class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     var lineId: String?
     var attributes: AttributesModel
@@ -66,16 +66,15 @@ class SubscriptModel: Tokenizable, Commentable {
         signature = SignatureModel(params: decl.parameterList)
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.append(contentsOf: modifiers.tokenize())
-        t.keyword("subscript", definitionId: lineId)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.append(contentsOf: signature.tokenize())
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.newLine()
-        return t
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        modifiers.tokenize(apiview: a)
+        a.keyword("subscript")
+        genericParamClause?.tokenize(apiview: a)
+        signature.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.newline()
+        a.blankLines(set: 1)
     }
 }

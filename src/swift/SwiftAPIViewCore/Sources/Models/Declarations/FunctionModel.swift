@@ -43,7 +43,7 @@ import AST
 ///     external-parameter-name → identifier
 ///     local-parameter-name → identifier
 ///     default-argument-clause → = expression
-class FunctionModel: Tokenizable, Commentable {
+class FunctionModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     var lineId: String?
     var attributes: AttributesModel
@@ -78,18 +78,16 @@ class FunctionModel: Tokenizable, Commentable {
         signature = SignatureModel(from: decl.signature)
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.append(contentsOf: modifiers.tokenize())
-        t.keyword("func")
-        t.whitespace()
-        t.member(name: name, definitionId: lineId)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.append(contentsOf: signature.tokenize())
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.newLine()
-        return t
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        modifiers.tokenize(apiview: a)
+        a.keyword("func", postfixSpace: true)
+        a.member(name: name, definitionId: lineId)
+        genericParamClause?.tokenize(apiview: a)
+        signature.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.newline()
+        a.blankLines(set: 1)
     }
 }

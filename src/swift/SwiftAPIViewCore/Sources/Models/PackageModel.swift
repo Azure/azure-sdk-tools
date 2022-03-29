@@ -54,28 +54,26 @@ class PackageModel: Tokenizable, Linkable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.text("package")
-        t.whitespace()
-        t.text(name, definitionId: definitionId)
-        t.whitespace()
-        t.punctuation("{")
-        t.newLine()
-        for member in members {
-            t.append(contentsOf: member.tokenize())
+    func tokenize(apiview a: APIViewModel) {
+        a.text("package")
+        a.whitespace()
+        a.text(name, definitionId: definitionId)
+        a.whitespace()
+        a.punctuation("{")
+        a.newline()
+        a.indent {
+            for member in members {
+                member.tokenize(apiview: a)
+            }
         }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        var t = [NavigationToken]()
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
         for member in members {
             guard let member = member as? Linkable else { continue }
-            t.append(contentsOf: member.navigationTokenize(parent: self))
+            member.navigationTokenize(apiview: a, parent: self)
         }
-        return t
     }
 }

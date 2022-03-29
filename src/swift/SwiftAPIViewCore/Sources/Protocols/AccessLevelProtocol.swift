@@ -24,37 +24,9 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import AST
 
-class GenericWhereModel: Tokenizable {
-
-    var requirementsList: [Tokenizable]
-
-    init?(from clause: GenericWhereClause?) {
-        guard let clause = clause else { return nil }
-        self.requirementsList = [Tokenizable]()
-        clause.requirementList.forEach { item in
-            switch item {
-            case let .protocolConformance(type1, protocol2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
-            case let .sameType(type1, type2):
-                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .equality))
-            }
-        }
-    }
-
-    func tokenize(apiview a: APIViewModel) {
-        a.keyword("where", prefixSpace: true, postfixSpace: true)
-        let stopIdx = requirementsList.count - 1
-        for (idx, item) in requirementsList.enumerated() {
-            item.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
-        }
-        a.whitespace()
-    }
+protocol AccessLevelProtocol: Tokenizable {
+    var accessLevel: AccessLevelModifier { get set }
 }

@@ -60,29 +60,21 @@ class GetterSetterModel: Tokenizable, Commentable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.whitespace()
-        t.punctuation("{")
-        t.whitespace()
-        t.append(contentsOf: getAttributes.tokenize())
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation("{", prefixSpace: true, postfixSpace: true)
+        getAttributes.tokenize(apiview: a)
         if let mutating = getMutating {
-            t.keyword(mutating)
-            t.whitespace()
+            a.keyword(mutating, postfixSpace: true)
         }
-        t.keyword("get")
-        t.whitespace()
+        a.keyword("get", postfixSpace: true)
         if let setter = setter {
-            t.append(contentsOf: setAttributes?.tokenize() ?? [])
+            setAttributes?.tokenize(apiview: a)
             if let mutating = setMutating {
-                t.keyword(mutating)
-                t.whitespace()
+                a.keyword(mutating, postfixSpace: true)
             }
-            t.keyword(setter)
-            t.whitespace()
+            a.keyword(setter, postfixSpace: true)
         }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
     }
 }

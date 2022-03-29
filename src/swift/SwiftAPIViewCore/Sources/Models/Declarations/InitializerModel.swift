@@ -35,7 +35,7 @@ import AST
 ///     initializer-head → attributes opt declaration-modifiers opt init ?
 ///     initializer-head → attributes opt declaration-modifiers opt init !
 ///     initializer-body → code-block
-class InitializerModel: Tokenizable, Commentable {
+class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     var lineId: String?
     var attributes: AttributesModel
@@ -87,18 +87,16 @@ class InitializerModel: Tokenizable, Commentable {
         signature = SignatureModel(params: decl.parameterList)
     }
 
-
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.append(contentsOf: modifiers.tokenize())
-        t.keyword(name, definitionId: lineId)
-        t.punctuation(kind)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.append(contentsOf: signature.tokenize())
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.newLine()
-        return t
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        modifiers.tokenize(apiview: a)
+        a.keyword(name)
+        a.punctuation(kind)
+        genericParamClause?.tokenize(apiview: a)
+        signature.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.newline()
+        a.blankLines(set: 1)
     }
 }

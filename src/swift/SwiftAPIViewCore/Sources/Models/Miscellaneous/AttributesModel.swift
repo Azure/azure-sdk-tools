@@ -44,14 +44,12 @@ struct AttributeModel: Tokenizable {
         isInline = false
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.keyword(name, definitionId: nil)
+    func tokenize(apiview a: APIViewModel) {
+        a.keyword(name)
         if let argument = argumentClause {
-            t.text(argument)
+            a.text(argument)
         }
-        isInline ? t.whitespace() : t.newLine()
-        return t
+        isInline ? a.whitespace() : a.newline()
     }
 }
 
@@ -63,11 +61,9 @@ class AttributesModel: Tokenizable {
         self.attributes = [AttributeModel]()
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
+    func tokenize(apiview a: APIViewModel) {
         attributes.forEach { attribute in
-            t.append(contentsOf: attribute.tokenize())
+            attribute.tokenize(apiview: a)
         }
-        return t
     }
 }

@@ -59,19 +59,15 @@ class OperatorModel: Tokenizable, Commentable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.keyword(keyword)
-        t.whitespace()
-        t.keyword("operator")
-        t.whitespace()
-        t.text(opName, definitionId: lineId)
+    func tokenize(apiview a: APIViewModel) {
+        a.keyword(keyword, postfixSpace: true)
+        a.keyword("operator", postfixSpace: true)
+        a.text(opName, definitionId: lineId)
         if let name = name {
-            t.punctuation(":")
-            t.whitespace()
-            t.typeReference(name: name)
+            a.punctuation(":", postfixSpace: true)
+            a.typeReference(name: name)
         }
-        t.newLine()
-        return t
+        a.newline()
+        a.blankLines(set: 1)
     }
 }

@@ -46,16 +46,12 @@ struct DeclarationModifiersModel: Tokenizable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
+    func tokenize(apiview a: APIViewModel) {
         if let accessLevel = accessLevel {
-            t.keyword(accessLevel.textDescription)
-            t.whitespace()
+            a.keyword(accessLevel.textDescription, postfixSpace: true)
         }
         modifiers.forEach { value in
-            t.keyword(value)
-            t.whitespace()
+            a.keyword(value, postfixSpace: true)
         }
-        return t
     }
 }

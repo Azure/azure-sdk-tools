@@ -33,7 +33,7 @@ import AST
 /// struct-body → { struct-members opt }
 /// struct-members → struct-member struct-members opt
 /// struct-member → declaration | compiler-control-statement
-class StructModel: Tokenizable, Linkable, Commentable, Extensible {
+class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
 
     var definitionId: String?
     var lineId: String?
@@ -70,40 +70,36 @@ class StructModel: Tokenizable, Linkable, Commentable, Extensible {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel.textDescription)
-        t.whitespace()
-        t.keyword("struct")
-        t.whitespace()
-        t.typeDeclaration(name: name, definitionId: definitionId)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.append(contentsOf: typeInheritanceClause?.tokenize() ?? [])
-        t.append(contentsOf: genericWhereClause?.tokenize() ?? [])
-        t.whitespace()
-        t.punctuation("{")
-        t.newLine()
-        members.forEach { member in
-            t.append(contentsOf: member.tokenize())
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        a.keyword(accessLevel.textDescription, postfixSpace: true)
+        a.keyword("struct", postfixSpace: true)
+        a.typeDeclaration(name: name, definitionId: definitionId)
+        genericParamClause?.tokenize(apiview: a)
+        typeInheritanceClause?.tokenize(apiview: a)
+        genericWhereClause?.tokenize(apiview: a)
+        a.punctuation("{", prefixSpace: true)
+        a.newline()
+        a.indent {
+            members.forEach { member in
+                member.tokenize(apiview: a)
+            }
+            extensions.forEach { ext in
+                ext.tokenize(apiview: a)
+            }
         }
-        extensions.forEach { ext in
-            t.append(contentsOf: ext.tokenize())
-        }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
+        a.blankLines(set: 1)
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        var t = [NavigationToken]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            t.append(contentsOf: member.navigationTokenize(parent: self))
+            member.navigationTokenize(apiview: a, parent: self)
         }
-        return t
     }
 }

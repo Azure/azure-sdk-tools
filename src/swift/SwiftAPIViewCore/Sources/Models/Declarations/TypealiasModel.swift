@@ -32,7 +32,7 @@ import AST
 ///     typealias-declaration → attributes opt access-level-modifier opt typealias typealias-name generic-parameter-clause opt typealias-assignment
 ///     typealias-name → identifier
 ///     typealias-assignment → = type
-class TypealiasModel: Tokenizable, Linkable, Commentable {
+class TypealiasModel: Tokenizable, Linkable, Commentable, AccessLevelProtocol {
 
     var definitionId: String?
     var lineId: String?
@@ -53,28 +53,20 @@ class TypealiasModel: Tokenizable, Linkable, Commentable {
         assignment = TypeModel(from: decl.assignment)
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        guard publicModifiers.contains(accessLevel) else { return t }
-        t.append(contentsOf: attributes.tokenize())
-        t.keyword(accessLevel.textDescription)
-        t.whitespace()
-        t.keyword("typealias")
-        t.whitespace()
-        t.typeDeclaration(name: name, definitionId: definitionId)
-        t.append(contentsOf: genericParamClause?.tokenize() ?? [])
-        t.whitespace()
-        t.punctuation("=")
-        t.whitespace()
-        t.append(contentsOf: assignment.tokenize())
-        t.newLine()
-        return t
-
+    func tokenize(apiview a: APIViewModel) {
+        guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        attributes.tokenize(apiview: a)
+        a.keyword(accessLevel.textDescription, postfixSpace: true)
+        a.keyword("typealias", postfixSpace: true)
+        a.typeDeclaration(name: name, definitionId: definitionId)
+        genericParamClause?.tokenize(apiview: a)
+        a.punctuation("=", prefixSpace: true, postfixSpace: true)
+        assignment.tokenize(apiview: a)
+        a.newline()
+        a.blankLines(set: 1)
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        var t = [NavigationToken]()
-        //        let navItem = NavigationItem(name: decl.name.textDescription, prefix: prefix, typeKind: .class)
-        return t
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
     }
 }

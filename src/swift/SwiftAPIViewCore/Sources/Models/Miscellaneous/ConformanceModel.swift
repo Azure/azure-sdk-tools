@@ -65,12 +65,9 @@ class GenericRequirementModel: Tokenizable {
         self.mode = mode
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.append(contentsOf: key.tokenize())
-        t.punctuation(mode.punctuation)
-        t.whitespace()
-        t.append(contentsOf: value.tokenize())
-        return t
+    func tokenize(apiview a: APIViewModel) {
+        key.tokenize(apiview: a)
+        a.punctuation(mode.punctuation, postfixSpace: true)
+        value.tokenize(apiview: a)
     }
 }

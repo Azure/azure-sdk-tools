@@ -60,13 +60,10 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
             self.value = value
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword("associativity", definitionId: lineId)
-            t.punctuation(":")
-            t.whitespace()
-            t.keyword(value)
-            return t
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword("associativity")
+            a.punctuation(":", postfixSpace: true)
+            a.keyword(value)
         }
     }
 
@@ -86,20 +83,16 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
             }
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword(keyword, definitionId: lineId)
-            t.punctuation(":")
-            t.whitespace()
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword(keyword)
+            a.punctuation(":", postfixSpace: true)
             let stopIdx = groups.count - 1
             for (idx, group) in groups.enumerated() {
-                t.append(contentsOf: group.tokenize())
+                group.tokenize(apiview: a)
                 if idx != stopIdx {
-                    t.punctuation(",")
-                    t.whitespace()
+                    a.punctuation(",", postfixSpace: true)
                 }
             }
-            return t
         }
     }
 
@@ -114,13 +107,10 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
             self.value = value
         }
 
-        func tokenize() -> [Token] {
-            var t = [Token]()
-            t.keyword("assignment", definitionId: lineId)
-            t.punctuation(":")
-            t.whitespace()
-            t.stringLiteral(String(value))
-            return t
+        func tokenize(apiview a: APIViewModel) {
+            a.keyword("assignment")
+            a.punctuation(":", postfixSpace: true)
+            a.literal(String(value))
         }
     }
 
@@ -148,24 +138,24 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         }
     }
 
-    func tokenize() -> [Token] {
-        var t = [Token]()
-        t.keyword("precedencegroup")
-        t.whitespace()
-        t.typeDeclaration(name: name, definitionId: definitionId)
-        t.whitespace()
-        t.punctuation("{")
-        t.newLine()
-        members.forEach { item in
-            t.append(contentsOf: item.tokenize())
-            t.newLine()
+    func tokenize(apiview a: APIViewModel) {
+        a.keyword("precedencegroup", postfixSpace: true)
+        a.typeDeclaration(name: name, definitionId: definitionId)
+        a.whitespace()
+        a.punctuation("{")
+        a.newline()
+        a.indent {
+            members.forEach { member in
+                member.tokenize(apiview: a)
+                a.newline()
+            }
         }
-        t.punctuation("}")
-        t.newLine()
-        return t
+        a.punctuation("}")
+        a.newline()
+        a.blankLines(set: 1)
     }
 
-    func navigationTokenize(parent: Linkable?) -> [NavigationToken] {
-        return [NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown)]
+    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+        a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown))
     }
 }

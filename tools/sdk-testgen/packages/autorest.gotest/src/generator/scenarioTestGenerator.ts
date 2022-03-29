@@ -201,7 +201,7 @@ export class ScenarioTestDataRender extends MockTestDataRender {
     // For some method which has no subscriptionId param but client has, oav will not do the variable replacement. So we need to specific handle it.
     protected exampleValueToString(exampleValue: ExampleValue, isPtr: boolean, elemByVal = false, inArray = false): string {
         if (exampleValue.language?.default?.name === 'SubscriptionId') {
-            return this.packagePrefixForGlobalVariables + 'subscriptionId';
+            return this.getSubscriptionValue(undefined);
         } else {
             return super.exampleValueToString(exampleValue, isPtr, elemByVal, inArray);
         }

@@ -2,6 +2,29 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "2.2.1",
+      "tag": "@autorest/gotest_v2.2.1",
+      "date": "Tue, 29 Mar 2022 01:56:58 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "use @autorest/testmodeler@2.2.3"
+          },
+          {
+            "comment": "Client subscription param problem."
+          },
+          {
+            "comment": "LRO need to get final response type name."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@autorest/testmodeler\" from `~2.2.3` to `~2.2.4`"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.0",
       "tag": "@autorest/gotest_v2.2.0",
       "date": "Thu, 17 Mar 2022 07:43:40 GMT",

@@ -59,9 +59,13 @@ var err error
             for {{pagerVariable}}.NextPage(testsuite.ctx) {
                 err = {{pagerVariable}}.Err()
                 testsuite.Require().NoError(err)
-                for _, v := range {{pagerVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+                {%- if example.checkResponse %}
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set _ = variableConfigs.shift() %}
+                        {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{pagerVariable}}.PageResponse().{{example.pageableItemName}}{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- else %}
             {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
@@ -71,9 +75,13 @@ var err error
             for {{resVariable}}.NextPage(testsuite.ctx) {
                 err = {{resVariable}}.Err()
                 testsuite.Require().NoError(err)
-                for _, v := range {{resVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+                {%- if example.checkResponse %}
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set _ = variableConfigs.shift() %}
+                        {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}{{resVariable}}.PageResponse().{{example.pageableItemName}}{% for variableConfig in variableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- endif %}
 

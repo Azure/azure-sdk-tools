@@ -81,13 +81,16 @@ namespace ApiView
                         isSkipDiffRange = false;
                         break;
 
-                    case CodeFileTokenKind.FoldableContentStart:
+                    case CodeFileTokenKind.FoldableParentToken:
                         // In case of nested foldable panel, push current parent name to stack
                         if (nodeName != null)
                         {
                             foldableParentStack.Push(nodeName);
                         }
                         nodeName = token.Value;
+                        break;
+
+                    case CodeFileTokenKind.FoldableContentStart:
                         isFoldableRange = true;
                         break;
 

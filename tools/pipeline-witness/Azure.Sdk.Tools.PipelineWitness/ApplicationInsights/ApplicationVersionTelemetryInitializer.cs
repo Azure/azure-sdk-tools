@@ -1,12 +1,13 @@
-﻿using Microsoft.ApplicationInsights.Channel;
+﻿using System.Reflection;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
-    public class ApplicationVersionTelemetryInitializer : ITelemetryInitializer
+    public class ApplicationVersionTelemetryInitializer<T> : ITelemetryInitializer
     {
-        private static string _version = typeof(ApplicationVersionTelemetryInitializer).Assembly.GetName().Version.ToString();
+        private static string _version = GetVersion();
 
         public void Initialize(ITelemetry telemetry)
         {
@@ -14,6 +15,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
             {
                 propertyTelemetry.Properties["Application version"] = _version;
             }
+        }
+        
+        private static string GetVersion()
+        {
+            var assembly = typeof(T).Assembly;
+            
+            var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? assembly.GetName().Version.ToString();
+
+            return version;
         }
     }
 }

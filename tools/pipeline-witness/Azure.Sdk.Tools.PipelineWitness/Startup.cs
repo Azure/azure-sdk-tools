@@ -28,6 +28,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return websiteResourceGroupEnvironmentVariable;
         }
 
+        private string GetAzureWebJobsStorageEnvironmentVariable()
+        {
+            var value = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            return value;
+        }
+
         private string GetBuildBlobStorageEnvironmentVariable()
         {
             var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
@@ -38,6 +44,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
             var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
+            var azureWebJobStorageConnectionString = GetAzureWebJobsStorageEnvironmentVariable();
 
             builder.Services.AddAzureClients(builder =>
             {
@@ -45,6 +52,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 builder.AddSecretClient(keyVaultUri);
 
                 builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
+                builder.AddQueueServiceClient(azureWebJobStorageConnectionString)
+                    .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
             });
 
             builder.Services.AddSingleton<CosmosClient>(provider =>
@@ -111,7 +120,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
             builder.Services.AddTransient<ITelemetryInitializer, NotFoundTelemetryInitializer>();
-            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer<Startup>>();
+            builder.Services.Configure<PipelineWitnessSettings>(builder.GetContext().Configuration);
         }
     }
 }

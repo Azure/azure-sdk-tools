@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,12 +33,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             return response;
         }
 
-        public virtual async Task<Stream> GetLogStreamAsync(Build build, int logId)
+        public virtual async Task<Stream> GetLogStreamAsync(string projectName, int buildId, int logId)
         {
-            logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", build.Id, logId);
+            logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", buildId, logId);
 
             var buildHttpClient = vssConnection.GetClient<BuildHttpClient>();
-            var stream = await buildHttpClient.GetBuildLogAsync(build.Project.Id, build.Id, logId);
+            var stream = await buildHttpClient.GetBuildLogAsync(projectName, buildId, logId);
 
             return stream;
         }

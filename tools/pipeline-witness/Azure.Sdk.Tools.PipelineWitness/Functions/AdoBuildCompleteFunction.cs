@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
         private BlobUploadProcessor runProcessor;
 
         [FunctionName("AdoBuildComplete")]
-        public async Task Run([QueueTrigger("ado-build-completed")]QueueMessage message)
+        public async Task Run([QueueTrigger("%BuildCompleteQueueName%")]QueueMessage message)
         {
             logger.LogInformation("Processing build.complete event.");
             var messageBody = message.MessageText;

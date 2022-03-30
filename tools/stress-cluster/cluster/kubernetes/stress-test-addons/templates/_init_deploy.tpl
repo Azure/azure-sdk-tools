@@ -14,11 +14,11 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
     - name: RESOURCE_GROUP_NAME
-      value: '{{ .Release.Namespace }}-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}'
+      value: {{ .Stress.ResourceGroupName }}
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources
-    - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
+    - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
     - name: "static-secrets-{{ .Release.Name }}"
       mountPath: "/mnt/secrets/static"

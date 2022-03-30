@@ -14,7 +14,8 @@ from ._models import (
     PetEnumPy3Metaclass,
     PublicCaseInsensitiveEnumMeta,
     PublicPrivateClass, RequiredKwargObject,
-    SomePoorlyNamedObject as SomeAwesomelyNamedObject
+    SomePoorlyNamedObject as SomeAwesomelyNamedObject,
+    SomethingWithOverloads
 )
 
 
@@ -30,5 +31,6 @@ __all__ = (
     "PublicCaseInsensitiveEnumMeta",
     "PublicPrivateClass",
     "RequiredKwargObject",
-    "SomeAwesomelyNamedObject"
+    "SomeAwesomelyNamedObject",
+    "SomethingWithOverloads"
 )

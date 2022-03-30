@@ -1,7 +1,9 @@
+import astroid
 import logging
 import inspect
 from enum import Enum
 import operator
+from typing import List
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -100,9 +102,7 @@ class ClassNode(NodeEntityBase):
         # Method or Function member should only be included if it is defined in same package.
         # So this check will filter any methods defined in parent class if parent class is in non-azure package
         # for e.g. as_dict method in msrest
-        if not (
-            inspect.ismethod(func_obj) or inspect.isfunction(func_obj)
-        ) or inspect.isbuiltin(func_obj):
+        if not (inspect.ismethod(func_obj) or inspect.isfunction(func_obj)):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
@@ -134,6 +134,23 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
+    """ Uses AST parsing to look for @overload decorated functions
+        because inspect cannot see these.
+    """
+    def _parse_overloads(self) -> List[FunctionNode]:
+        overload_nodes = []
+        try:
+            class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
+            functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+            for func in functions:
+                for node in func.decorators.nodes:
+                    if node.name == "overload":
+                        overload_nodes.append(FunctionNode(self.namespace, self, node=func))
+        except:
+            pass
+        finally:
+            return overload_nodes
+
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
@@ -144,7 +161,12 @@ class ClassNode(NodeEntityBase):
         # Find any ivar from docstring
         self._parse_ivars()
 
+
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
+
+        overloads = self._parse_overloads()
+        if overloads:
+            test = "best"
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
@@ -164,7 +186,7 @@ class ClassNode(NodeEntityBase):
                 if not name.startswith("_") or name.startswith("__"):
                     try:
                         self.child_nodes.append(
-                            FunctionNode(self.namespace, self, child_obj)
+                            FunctionNode(self.namespace, self, obj=child_obj)
                         )
                     except OSError:
                         # Don't create entries for things that don't have source

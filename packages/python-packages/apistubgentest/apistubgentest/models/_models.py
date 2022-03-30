@@ -7,10 +7,11 @@
 # --------------------------------------------------------------------------
 
 from azure.core import CaseInsensitiveEnumMeta
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 from six import with_metaclass
-from typing import Any, TypedDict, Union
+from typing import Any, overload, TypedDict, Union
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
@@ -153,3 +154,17 @@ class SomePoorlyNamedObject:
 
     def __init__(self, name: str):
         self.name = name
+
+class SomethingWithOverloads:
+    @overload
+    async def double(input_: int) -> int:
+        ...
+
+    @overload
+    async def double(input_: Sequence[int]) -> list[int]:
+        ...
+
+    async def double(input_: int | Sequence[int]) -> int | list[int]:
+        if isinstance(input_, Sequence):
+            return [i * 2 for i in input_]
+        return input_ * 2

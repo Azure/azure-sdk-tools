@@ -1,3 +1,4 @@
+import ast
 import logging
 import inspect
 from collections import OrderedDict
@@ -46,10 +47,11 @@ class FunctionNode(NodeEntityBase):
     :param str: namespace
     :param NodeEntityBase: parent_node
     :param function: obj
+    :param astroid.FunctionDef: node
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, obj, is_module_level=False):
+    def __init__(self, namespace, parent_node, *, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         self.annotations = []
         self.args = OrderedDict()
@@ -63,46 +65,25 @@ class FunctionNode(NodeEntityBase):
         # Some of the methods wont be listed in API review
         # For e.g. ABC methods if class implements all ABC methods
         self.hidden = False
+        self.node = node or astroid.extract_node(inspect.getsource(obj))
         self._inspect()
 
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
-        try:
-            code = inspect.getsource(self.obj).strip()
-        except OSError:
-            # skip functions with no source code
-            self.is_async = False
-            return
-        
-        for line in code.splitlines():
-            # skip decorators
-            if line.strip().startswith("@"):
-                continue
-            # the first non-decorator line should be the function signature
-            self.is_async = line.strip().startswith("async def")
-            self.def_key = "async def" if self.is_async else "def"
-            break
+
+        self.is_async = isinstance(self.node, astroid.AsyncFunctionDef)
+        self.def_key = "async def" if self.is_async else "def"
 
         # Update namespace ID to reflect async status. Otherwise ID will conflict between sync and async methods
         if self.is_async:
             self.namespace_id += ":async"
-
-        # Find decorators and any annotations
+        
+        # Turn any decorators into annotation
         try:
-            node = astroid.extract_node(inspect.getsource(self.obj))
-            if node.decorators:
-                self.annotations = [
-                    "@{}".format(x.name)
-                    for x in node.decorators.nodes
-                    if hasattr(x, "name")
-                ]
+            self.annotations = [f"@{x.name}" for x in self.node.decorators.nodes if hasattr(x, "name")]
         except:
-            # TODO: Update exception details in error
-            error_message = "Error in parsing decorators for function {}".format(
-                self.name
-            )
-            self.add_error(error_message)
+            pass
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
@@ -120,34 +101,39 @@ class FunctionNode(NodeEntityBase):
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
             self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
+            
+        if self.obj:
+            # Find signature to find positional args and return type
+            sig = inspect.signature(self.obj)
+            params = sig.parameters
+            # Add all keyword only args here temporarily until docstring is parsed
+            # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
+            self.kw_args = OrderedDict()
+            for argname, argvalues in params.items():
+                kind = argvalues.kind
+                keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
+                arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
 
-        # Find signature to find positional args and return type
-        sig = inspect.signature(self.obj)
-        params = sig.parameters
-        # Add all keyword only args here temporarily until docstring is parsed
-        # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
-        self.kw_args = OrderedDict()
-        for argname, argvalues in params.items():
-            kind = argvalues.kind
-            keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
-            arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
+                # Store handle to kwarg object to replace it later
+                if kind == inspect.Parameter.VAR_KEYWORD:
+                    arg.argname = f"**{argname}"
 
-            # Store handle to kwarg object to replace it later
-            if kind == inspect.Parameter.VAR_KEYWORD:
-                arg.argname = f"**{argname}"
+                if kind == inspect.Parameter.KEYWORD_ONLY:
+                    self.kw_args[arg.argname] = arg
+                elif kind == inspect.Parameter.VAR_POSITIONAL:
+                    # to work with docstring parsing, the key must
+                    # not have the * in it.
+                    arg.argname = f"*{argname}"
+                    self.args[argname] = arg
+                else:
+                    self.args[arg.argname] = arg
 
-            if kind == inspect.Parameter.KEYWORD_ONLY:
-                self.kw_args[arg.argname] = arg
-            elif kind == inspect.Parameter.VAR_POSITIONAL:
-                # to work with docstring parsing, the key must
-                # not have the * in it.
-                arg.argname = f"*{argname}"
-                self.args[argname] = arg
-            else:
-                self.args[arg.argname] = arg
-
-        if sig.return_annotation:
-            self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
+            if sig.return_annotation:
+                self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
+        else:
+            # Logic for when we only have the node, not the function object itself
+            # TODO: IMPLEMENT
+            pass
 
         self._parse_docstring()
         self._parse_typehint()

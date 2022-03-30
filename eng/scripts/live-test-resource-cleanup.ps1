@@ -315,7 +315,7 @@ function DeleteOrUpdateResourceGroups() {
     $deleteAfter = GetTag $rg "DeleteAfter"
     if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
       # Add purgeable resources that will be deleted with the resource group to the collection.
-      $purgeableResourcesFromRG = Get-PurgeableGroupResources $rg.ResourceGroupName
+      $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
 
       if ($purgeableResourcesFromRG) {
         $purgeableResources += $purgeableResourcesFromRG
@@ -330,7 +330,7 @@ function DeleteOrUpdateResourceGroups() {
   if (!$purgeableResources.Count) {
     return
   }
-  if ($Force -or $PSCmdlet.ShouldProcess("$($purgeableResources.VaultName)", "Delete Purgeable Resources")) {
+  if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
     # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
     Write-Host "Attempting to purge $($purgeableResources.Count) resources."
     $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)

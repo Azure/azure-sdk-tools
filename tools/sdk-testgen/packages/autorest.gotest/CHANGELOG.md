@@ -1,6 +1,15 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Thu, 17 Mar 2022 07:43:40 GMT and should not be manually modified.
+This log was last generated on Tue, 29 Mar 2022 01:56:58 GMT and should not be manually modified.
+
+## 2.2.1
+Tue, 29 Mar 2022 01:56:58 GMT
+
+### Patches
+
+- use @autorest/testmodeler@2.2.3
+- Client subscription param problem.
+- LRO need to get final response type name.
 
 ## 2.2.0
 Thu, 17 Mar 2022 07:43:40 GMT

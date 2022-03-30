@@ -127,13 +127,6 @@ form.comment {
     padding: 12px;
 }
 
-.comment-actions {
-    float: right;
-    margin-left: 10px;
-    margin-right: -5px;
-    max-height: 50px;
-}
-
 .comment-row {
     border: 1px solid gray;
     border-spacing: 0;
@@ -152,7 +145,6 @@ form.comment {
 }
 
 .comment-contents {
-    max-width: 592px;
     margin-bottom: 3px;
     overflow-wrap: break-word;
 }
@@ -647,4 +639,16 @@ mark {
 .rounded-left-0 {
     border-top-left-radius: 0px !important;
     border-bottom-left-radius: 0px !important;
+}
+
+.comment-thread-anchor {
+    visibility: hidden;
+    scroll-margin-top: calc(50px + 1.7em);
+}
+
+.btn-xs {
+    height: 25px !important;
+    font-size: 15px;
+    vertical-align: middle;
+    padding: 0.01rem;
 }

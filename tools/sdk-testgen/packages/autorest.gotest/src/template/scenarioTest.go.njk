@@ -92,7 +92,7 @@ func (testsuite *{{testCaseName}}TestSuite) Prepare() {
 func (testsuite *{{testCaseName}}TestSuite) Test{{jsFunc.capitalize(jsFunc.toCamelCase(testScenario.scenario))}}() {
 	{%- for variable, value in testScenario.requiredVariablesDefault %}
 	{%- if not requiredVariablesDefault.hasOwnProperty(variable) %}
-    {{variable}} := testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}, "{{value}}")
+    {{variable}} := testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{value}}")
 	{%- endif %}
 	{%- endfor %}
 	{%- for name, value in testScenario.variablesOutput %}

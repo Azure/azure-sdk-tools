@@ -13713,7 +13713,7 @@ testModel:
             responseType: ResourceInfo
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - SignalRClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -14537,7 +14537,7 @@ testModel:
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json
             pollerType: SignalRClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - SignalRClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -15232,7 +15232,7 @@ testModel:
             responseType: ResourceInfo
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - SignalRClientUpdateResponse
               - error
             responses:
               '200':
@@ -15747,7 +15747,7 @@ testModel:
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json
             pollerType: SignalRClientRegenerateKeyPollerResponse
             returnInfo:
-              - '*http.Response'
+              - SignalRClientRegenerateKeyResponse
               - error
             responses:
               '202':
@@ -15805,7 +15805,7 @@ testModel:
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json
             pollerType: SignalRClientRestartPollerResponse
             returnInfo:
-              - '*http.Response'
+              - SignalRClientRestartResponse
               - error
             responses:
               '202':
@@ -16660,7 +16660,7 @@ testModel:
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
             pollerType: SignalRPrivateEndpointConnectionsClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - SignalRPrivateEndpointConnectionsClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -17192,7 +17192,7 @@ testModel:
             responseType: SharedPrivateLinkResource
             responseTypePointer: false
             returnInfo:
-              - '*http.Response'
+              - SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResponse
               - error
             responses:
               '200':
@@ -17357,7 +17357,7 @@ testModel:
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
             pollerType: SignalRSharedPrivateLinkResourcesClientDeletePollerResponse
             returnInfo:
-              - '*http.Response'
+              - SignalRSharedPrivateLinkResourcesClientDeleteResponse
               - error
             responses:
               '200': {}
@@ -18139,7 +18139,7 @@ testModel:
                 responseType: ResourceInfo
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - SignalRClientCreateOrUpdateResponse
                   - error
                 responses:
                   '200':
@@ -20051,7 +20051,7 @@ testModel:
                 responseType: ResourceInfo
                 responseTypePointer: false
                 returnInfo:
-                  - '*http.Response'
+                  - SignalRClientUpdateResponse
                   - error
                 responses:
                   '200':
@@ -20726,7 +20726,7 @@ testModel:
                 originalFile: ''
                 pollerType: SignalRClientRegenerateKeyPollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - SignalRClientRegenerateKeyResponse
                   - error
                 responses: {}
               exampleName: SignalR_RegenerateKey
@@ -20793,7 +20793,7 @@ testModel:
                 originalFile: ''
                 pollerType: SignalRClientRestartPollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - SignalRClientRestartResponse
                   - error
                 responses: {}
               exampleName: SignalR_Restart
@@ -22703,7 +22703,7 @@ testModel:
                 originalFile: ''
                 pollerType: SignalRClientDeletePollerResponse
                 returnInfo:
-                  - '*http.Response'
+                  - SignalRClientDeleteResponse
                   - error
                 responses:
                   '200':

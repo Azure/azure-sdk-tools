@@ -72,22 +72,33 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
+        // no-op
+    }
+
+    @Override
+    public void scanFinal(APIListing listing) {
         Pom pom = listing.getMavenPom();
 
-        // Maven name
-        String nameId = getId("name", pom.getName());
-        if (!mavenName.matcher(pom.getName()).matches()) {
-            listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
-                "Maven library name should follow the pattern '" + mavenName.pattern() + "'.",
-                mavenNameGuidelineLink));
-        }
+        // it's possible there was no real maven POM in the uploaded file, in which case we should warn the user
+        // of this so that they can investigate if their build is configured correctly to include this file.
+        if (!pom.isPomFileReal()) {
+            // TODO
+        } else {
+            // Maven name
+            String nameId = getId("name", pom.getName());
+            if (!mavenName.matcher(pom.getName()).matches()) {
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
+                        "Maven library name should follow the pattern '" + mavenName.pattern() + "'.",
+                        mavenNameGuidelineLink));
+            }
 
-        // Maven description
-        String descriptionId = getId("description", pom.getDescription());
-        if (!mavenDescription.matcher(pom.getDescription()).matches()) {
-            listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
-                "Maven library description should follow the pattern '" + mavenDescription.pattern() +"'.",
-                mavenDescriptionGuidelineLink));
+            // Maven description
+            String descriptionId = getId("description", pom.getDescription());
+            if (!mavenDescription.matcher(pom.getDescription()).matches()) {
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
+                        "Maven library description should follow the pattern '" + mavenDescription.pattern() + "'.",
+                        mavenDescriptionGuidelineLink));
+            }
         }
     }
 

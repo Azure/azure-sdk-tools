@@ -26,8 +26,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void missingPackageDescription() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView", null);
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -44,9 +43,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void invalidPackageDescription() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
-        when(pom.getDescription()).thenReturn("A description that doesn't pass the rule");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView", "A description that doesn't pass the rule");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -63,9 +60,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void validPackageDescription() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView",
+            "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -82,9 +78,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
             Pattern.compile("A custom package description validation"), DEFAULT_MAVEN_NAME_GUIDELINE_LINK,
             DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK);
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
-        when(pom.getDescription()).thenReturn("A custom package description validation");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView", "A custom package description validation");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -100,9 +94,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule(DEFAULT_MAVEN_NAME,
             DEFAULT_MAVEN_DESCRIPTION, DEFAULT_MAVEN_NAME_GUIDELINE_LINK, "custom package description guideline link");
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
-        when(pom.getDescription()).thenReturn("A description that doesn't pass the rule");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView", "A description that doesn't pass the rule");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -119,8 +111,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void missingPackageName() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom(null, "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -136,9 +127,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void invalidPackageName() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("A name that doesn't pass the rule");
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom("A name that doesn't pass the rule",
+            "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -154,9 +144,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
     public void validPackageName() {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule();
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("Microsoft Azure client library for ApiView");
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom("Microsoft Azure client library for ApiView",
+            "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -173,9 +162,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
             Pattern.compile("A custom package name validation"), DEFAULT_MAVEN_DESCRIPTION,
             DEFAULT_MAVEN_NAME_GUIDELINE_LINK, DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK);
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("A custom package name validation");
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom("A custom package name validation",
+            "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
@@ -191,14 +179,22 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         MavenPackageAndDescriptionDiagnosticRule rule = new MavenPackageAndDescriptionDiagnosticRule(DEFAULT_MAVEN_NAME,
             DEFAULT_MAVEN_DESCRIPTION, "custom package name guideline link", DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK);
         APIListing apiListing = new APIListing();
-        Pom pom = mock(Pom.class);
-        when(pom.getName()).thenReturn("A name that doesn't pass the rule");
-        when(pom.getDescription()).thenReturn("This package contains the Microsoft Azure ApiView client library");
+        Pom pom = mockRealPom("A name that doesn't pass the rule",
+            "This package contains the Microsoft Azure ApiView client library");
         apiListing.setMavenPom(pom);
 
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
         assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri().contains("custom package name guideline link"));
+    }
+
+    private static Pom mockRealPom(String name, String description) {
+        Pom pom = mock(Pom.class);
+        when(pom.getName()).thenReturn(name);
+        when(pom.getDescription()).thenReturn(description);
+        when(pom.isPomFileReal()).thenReturn(true);
+
+        return pom;
     }
 }

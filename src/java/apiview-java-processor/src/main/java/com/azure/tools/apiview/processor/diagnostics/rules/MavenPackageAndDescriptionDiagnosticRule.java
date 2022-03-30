@@ -72,29 +72,35 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
-        // no-op, package rule only needs to be ran once at the end.
+        // no-op, package rule only needs to be run once at the end.
     }
 
     @Override
-        public void scanFinal(APIListing listing) {
+    public void scanFinal(APIListing listing) {
         Pom pom = listing.getMavenPom();
 
-        // Maven name
-        String nameId = getId("name", pom.getName());
-        String mavenName = pom.getName();
-        if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
-            listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
-                "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
-                mavenNameGuidelineLink));
-        }
+        // it's possible there was no real maven POM in the uploaded file, in which case we should warn the user
+        // of this so that they can investigate if their build is configured correctly to include this file.
+        if (!pom.isPomFileReal()) {
+            // TODO
+        } else {
+            // Maven name
+            String nameId = getId("name", pom.getName());
+            String mavenName = pom.getName();
+            if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
+                    "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
+                    mavenNameGuidelineLink));
+            }
 
-        // Maven description
-        String descriptionId = getId("description", pom.getDescription());
-        String mavenDescription = pom.getDescription();
-        if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
-            listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
-                "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() +"'.",
-                mavenDescriptionGuidelineLink));
+            // Maven description
+            String descriptionId = getId("description", pom.getDescription());
+            String mavenDescription = pom.getDescription();
+            if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
+                    "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
+                    mavenDescriptionGuidelineLink));
+            }
         }
     }
 

@@ -120,6 +120,7 @@ class SignatureModel: Tokenizable {
             a.keyword(throwing, postfixSpace: true)
         }
         if let result = result {
+            a.punctuation("->", prefixSpace: true, postfixSpace: true)
             result.tokenize(apiview: a)
         }
         a.whitespace()

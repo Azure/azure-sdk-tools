@@ -42,13 +42,13 @@ class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
     var typeModel: TypeModel
     var defaultValue: String?
 
-    init(from decl: ConstantDeclaration) {
-        // FIXME: Fix this!
-        lineId = nil
+    init(from decl: ConstantDeclaration, parent: Linkable) {
+        let name = decl.initializerList.name
+        self.name = name
+        lineId = identifier(forName: name, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = decl.accessLevel ?? .internal
-        name = decl.initializerList.name
         typeModel = decl.initializerList.typeModel
         defaultValue = decl.initializerList.defaultValue
     }

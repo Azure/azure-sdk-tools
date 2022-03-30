@@ -44,9 +44,8 @@ class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
     var genericWhereClause: GenericWhereModel?
     var signature: SignatureModel
 
-    init(from decl: SubscriptDeclaration) {
-        // FIXME: Fix this!
-        lineId = ""
+    init(from decl: SubscriptDeclaration, parent: Linkable) {
+        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
         accessLevel = decl.accessLevel ?? .internal
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
@@ -55,9 +54,8 @@ class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
         signature = SignatureModel(params: decl.parameterList)
     }
 
-    init(from decl: ProtocolDeclaration.SubscriptMember) {
-        // FIXME: Fix this!
-        lineId = ""
+    init(from decl: ProtocolDeclaration.SubscriptMember, parent: ProtocolModel) {
+        lineId = identifier(forName: "subscript", withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = modifiers.accessLevel ?? .internal
@@ -68,6 +66,7 @@ class SubscriptModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     func tokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        a.lineIdMarker(definitionId: lineId)
         attributes.tokenize(apiview: a)
         modifiers.tokenize(apiview: a)
         a.keyword("subscript")

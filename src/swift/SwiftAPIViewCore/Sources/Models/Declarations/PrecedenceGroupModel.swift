@@ -46,6 +46,7 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
 
     var lineId: String?
     var definitionId: String?
+    var parent: Linkable?
     var name: String
     var members: [Tokenizable]
 
@@ -54,13 +55,13 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         var lineId: String?
         var value: String
 
-        init(value: String) {
-            // FIXME: Fix this!
-            self.lineId = nil // self.defId(forName: "associativity", withPrefix: defId)
+        init(value: String, parent: PrecedenceGroupModel) {
+            self.lineId = identifier(forName: "associativity", withPrefix: parent.definitionId)
             self.value = value
         }
 
         func tokenize(apiview a: APIViewModel) {
+            a.lineIdMarker(definitionId: lineId)
             a.keyword("associativity")
             a.punctuation(":", postfixSpace: true)
             a.keyword(value)
@@ -73,9 +74,8 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         var keyword: String
         var groups: [TypeModel]
 
-        init(keyword: String, with identifiers: IdentifierList) {
-            // FIXME: Fix this!
-            self.lineId = nil // self.defId(forName: "higherThan", withPrefix: defId)
+        init(keyword: String, with identifiers: IdentifierList, parent: PrecedenceGroupModel) {
+            self.lineId = identifier(forName: keyword, withPrefix: parent.definitionId)
             self.keyword = keyword
             self.groups = [TypeModel]()
             identifiers.forEach { item in
@@ -84,6 +84,7 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         }
 
         func tokenize(apiview a: APIViewModel) {
+            a.lineIdMarker(definitionId: lineId)
             a.keyword(keyword)
             a.punctuation(":", postfixSpace: true)
             let stopIdx = groups.count - 1
@@ -101,39 +102,39 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         var lineId: String?
         var value: Bool
 
-        init(value: Bool) {
-            // FIXME: Fix this!
-            self.lineId = nil
+        init(value: Bool, parent: PrecedenceGroupModel) {
+            self.lineId = identifier(forName: "assignment", withPrefix: parent.definitionId)
             self.value = value
         }
 
         func tokenize(apiview a: APIViewModel) {
+            a.lineIdMarker(definitionId: lineId)
             a.keyword("assignment")
             a.punctuation(":", postfixSpace: true)
             a.literal(String(value))
         }
     }
 
-    init(from decl: PrecedenceGroupDeclaration) {
-        // FIXME: Fix this!
-        self.definitionId = nil
-        self.lineId = nil
-        self.name = decl.name.textDescription
-        self.members = [Tokenizable]()
+    init(from decl: PrecedenceGroupDeclaration, parent: Linkable) {
+        self.parent = parent
+        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
+        lineId = nil
+        name = decl.name.textDescription
+        members = [Tokenizable]()
         decl.attributes.forEach { item in
             switch item {
             case let .assignment(val):
-                self.members.append(AssignmentMember(value: val))
+                members.append(AssignmentMember(value: val, parent: self))
             case .associativityLeft:
-                self.members.append(AssociativityMember(value: "left"))
+                members.append(AssociativityMember(value: "left", parent: self))
             case .associativityNone:
-                self.members.append(AssociativityMember(value: "none"))
+                members.append(AssociativityMember(value: "none", parent: self))
             case .associativityRight:
-                self.members.append(AssociativityMember(value: "right"))
+                members.append(AssociativityMember(value: "right", parent: self))
             case let .higherThan(val):
-                self.members.append(ComparisonMember(keyword: "higherThan", with: val))
+                members.append(ComparisonMember(keyword: "higherThan", with: val, parent: self))
             case  let .lowerThan(val):
-                self.members.append(ComparisonMember(keyword: "lowerThan", with: val))
+                members.append(ComparisonMember(keyword: "lowerThan", with: val, parent: self))
             }
         }
     }
@@ -155,7 +156,7 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .unknown))
     }
 }

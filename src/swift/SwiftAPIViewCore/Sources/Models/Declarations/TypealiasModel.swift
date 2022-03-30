@@ -36,15 +36,16 @@ class TypealiasModel: Tokenizable, Linkable, Commentable, AccessLevelProtocol {
 
     var definitionId: String?
     var lineId: String?
+    var parent: Linkable?
     var attributes: AttributesModel
     var accessLevel: AccessLevelModifier
     var name: String
     var genericParamClause: GenericParameterModel?
     var assignment: TypeModel
 
-    init(from decl: TypealiasDeclaration) {
-        // FIXME: Fix this!
-        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+    init(from decl: TypealiasDeclaration, parent: Linkable) {
+        self.parent = parent
+        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
         lineId = nil
         attributes = AttributesModel(from: decl.attributes)
         accessLevel = decl.accessLevel ?? .internal
@@ -66,7 +67,7 @@ class TypealiasModel: Tokenizable, Linkable, Commentable, AccessLevelProtocol {
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
     }
 }

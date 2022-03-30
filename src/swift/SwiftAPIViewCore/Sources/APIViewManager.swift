@@ -89,9 +89,7 @@ public class APIViewManager {
             save(apiView: apiView)
             return ""
         case .testing:
-            // FIXME: Fix this!
-            return ""
-            //return apiView.text
+            return apiView.text
         }
     }
 

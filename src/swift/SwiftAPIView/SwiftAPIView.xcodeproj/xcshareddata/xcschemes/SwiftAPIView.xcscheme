@@ -64,19 +64,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--package-name=TestPackage"
+            argument = "--package-name=SwiftAPIViewTests"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/MixedCodeDemo/Sources"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--source=/Users/travisprescott/Documents/AzureCommunicationCalling.framework"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewCore/TestFiles/TestFile1.swifttxt"
+            argument = "--source=/Users/travisprescott/repos/azure-sdk-tools/src/swift/SwiftAPIViewTests/Sources"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

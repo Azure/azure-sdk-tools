@@ -47,9 +47,8 @@ class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
     var genericWhereClause: GenericWhereModel?
     var signature: SignatureModel
 
-    init(from decl: InitializerDeclaration) {
-        // FIXME: Fix this!
-        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+    init(from decl: InitializerDeclaration, parent: Linkable) {
+        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = decl.accessLevel ?? .internal
@@ -67,9 +66,8 @@ class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
         signature = SignatureModel(params: decl.parameterList)
     }
 
-    init(from decl: ProtocolDeclaration.InitializerMember) {
-        // FIXME: Fix this!
-        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+    init(from decl: ProtocolDeclaration.InitializerMember, parent: ProtocolModel) {
+        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = modifiers.accessLevel ?? .internal
@@ -91,6 +89,7 @@ class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         attributes.tokenize(apiview: a)
         modifiers.tokenize(apiview: a)
+        a.lineIdMarker(definitionId: lineId)
         a.keyword(name)
         a.punctuation(kind)
         genericParamClause?.tokenize(apiview: a)

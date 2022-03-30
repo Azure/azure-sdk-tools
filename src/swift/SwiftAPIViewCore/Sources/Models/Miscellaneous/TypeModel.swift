@@ -110,14 +110,22 @@ class TypeModel: Tokenizable {
                 arguments: genericArgs
             )
         } else if name == "Array" {
-            guard genericArgs?.count == 1 else {
-                SharedLogger.fail("Array must have exactly one generic argument")
+            if let genericArgs = genericArgs {
+                guard genericArgs.count == 1 else {
+                    SharedLogger.fail("Array must have exactly one generic argument")
+                }
+                self.init(
+                    name: "",
+                    isArray: true,
+                    arguments: genericArgs
+                )
+            } else {
+                self.init(
+                    name: "Array",
+                    isArray: false,
+                    arguments: []
+                )
             }
-            self.init(
-                name: "",
-                isArray: true,
-                arguments: genericArgs
-            )
         } else {
             self.init(
                 name: name,
@@ -148,7 +156,7 @@ class TypeModel: Tokenizable {
     }
 
     convenience init(from source: TupleType) {
-        // FIXME: Handle named tuple names
+        // TODO: Handle named tuple names
         self.init(
              name: "",
              isTuple: true,
@@ -191,6 +199,9 @@ class TypeModel: Tokenizable {
         case let src as ImplicitlyUnwrappedOptionalType:
             self.init(from: src.wrappedType)
             self.isImplicitlyUnwrapped = true
+        case let src as ProtocolCompositionType:
+            // TODO: Improve this!
+            self.init(name: src.textDescription)
         case is AnyType:
             self.init(name: "Any")
         default:

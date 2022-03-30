@@ -41,10 +41,7 @@ class OperatorModel: Tokenizable, Commentable {
     var name: String?
     var opName: String
 
-    init(from decl: OperatorDeclaration) {
-        // FIXME: This!
-        //self.definitionId = defId(forName: opName, withPrefix: defIdPrefix)
-        self.lineId = nil
+    init(from decl: OperatorDeclaration, parent: Linkable) {
         switch decl.kind {
         case let .infix(op, ident):
             self.keyword = "infix"
@@ -57,6 +54,7 @@ class OperatorModel: Tokenizable, Commentable {
             self.keyword = "postfix"
             self.opName = op
         }
+        self.lineId = identifier(forName: opName, withPrefix: parent.definitionId)
     }
 
     func tokenize(apiview a: APIViewModel) {

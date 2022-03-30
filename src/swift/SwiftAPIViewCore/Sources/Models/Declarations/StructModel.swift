@@ -37,6 +37,7 @@ class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPr
 
     var definitionId: String?
     var lineId: String?
+    var parent: Linkable?
     var attributes: AttributesModel
     var accessLevel: AccessLevelModifier
     var name: String
@@ -46,9 +47,9 @@ class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPr
     var members: [Tokenizable]
     var extensions: [ExtensionModel]
 
-    init(from decl: StructDeclaration) {
-        // FIXME: Fix this!
-        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+    init(from decl: StructDeclaration, parent: Linkable) {
+        self.parent = parent
+        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
         lineId = nil
         attributes = AttributesModel(from: decl.attributes)
         accessLevel = decl.accessLevel ?? .internal
@@ -61,8 +62,13 @@ class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPr
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                if let model = decl.toTokenizable() {
-                    members.append(model)
+                if let model = decl.toTokenizable(withParent: self) {
+                    if let model = model as? ExtensionModel {
+                        // TODO: Place the extension in the appropriate location
+                        extensions.append(model)
+                    } else {
+                        members.append(model)
+                    }
                 }
             case let .compilerControl(statement):
                 SharedLogger.warn("Unsupported compiler control statement: \(statement)")
@@ -94,12 +100,12 @@ class StructModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPr
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .struct))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a, parent: self)
+            member.navigationTokenize(apiview: a)
         }
     }
 }

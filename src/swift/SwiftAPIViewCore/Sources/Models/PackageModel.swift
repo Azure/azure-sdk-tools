@@ -32,11 +32,13 @@ class PackageModel: Tokenizable, Linkable {
 
     let name: String
     var definitionId: String?
+    var parent: Linkable?
     var members: [Tokenizable]
 
     init(name: String, statements: [Statement]) {
         self.name = name
         self.definitionId = name
+        self.parent = nil
         self.members = [Tokenizable]()
         self.process(statements: statements)
     }
@@ -45,8 +47,13 @@ class PackageModel: Tokenizable, Linkable {
         for statement in statements {
             switch statement {
             case let decl as Declaration:
-                if let model = decl.toTokenizable() {
-                    self.members.append(model)
+                if let model = decl.toTokenizable(withParent: self) {
+                    if let model = model as? ExtensionModel {
+                        // TODO: Place the extension in the appropriate location
+                        self.members.append(model)
+                    } else {
+                        self.members.append(model)
+                    }
                 }
             default:
                 SharedLogger.fail("Unsupported statement type: \(statement)")
@@ -70,10 +77,10 @@ class PackageModel: Tokenizable, Linkable {
         a.newline()
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         for member in members {
             guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a, parent: self)
+            member.navigationTokenize(apiview: a)
         }
     }
 }

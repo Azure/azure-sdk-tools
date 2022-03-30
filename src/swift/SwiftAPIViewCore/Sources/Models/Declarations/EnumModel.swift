@@ -48,18 +48,6 @@ import AST
 ///     raw-value-literal → numeric-literal | static-string-literal | boolean-literal
 class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
 
-    var definitionId: String?
-    var lineId: String?
-    var attributes: AttributesModel
-    var accessLevel: AccessLevelModifier
-    var name: String
-    var isIndirect: Bool
-    var genericParamClause: GenericParameterModel?
-    var typeInheritanceClause: TypeInheritanceModel?
-    var genericWhereClause: GenericWhereModel?
-    var members: [Tokenizable]
-    var extensions: [ExtensionModel]
-
     struct AssociatedValuesModel: Tokenizable {
 
         struct Element: Tokenizable {
@@ -110,11 +98,10 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
         var name: String
         var associatedValues: AssociatedValuesModel?
 
-        init(from source: EnumDeclaration.UnionStyleEnumCase.Case) {
-            // FIXME: Fix this
-            //let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
-            lineId = nil
-            name = source.name.textDescription
+        init(from source: EnumDeclaration.UnionStyleEnumCase.Case, parent: EnumModel) {
+            let name = source.name.textDescription
+            self.name = name
+            lineId = identifier(forName: name, withPrefix: parent.definitionId)
             associatedValues = AssociatedValuesModel(from: source.tuple)
         }
 
@@ -132,11 +119,10 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
         var name: String
         var rawValue: String?
 
-        init(from source: EnumDeclaration.RawValueStyleEnumCase.Case) {
-            // FIXME: Fix this
-            //let enumDefId = self.defId(forName: enumCaseValue.name.textDescription, withPrefix: defId)
-            lineId = nil
-            name = source.name.textDescription
+        init(from source: EnumDeclaration.RawValueStyleEnumCase.Case, parent: EnumModel) {
+            let name = source.name.textDescription
+            self.name = name
+            lineId = identifier(forName: name, withPrefix: parent.definitionId)
             rawValue = nil
             if let assignment = source.assignment {
                 switch assignment {
@@ -163,29 +149,47 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
         }
     }
 
-    init(from decl: EnumDeclaration) {
-        // FIXME: Fix this!
-        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+    var definitionId: String?
+    var lineId: String?
+    var parent: Linkable?
+    var attributes: AttributesModel
+    var accessLevel: AccessLevelModifier
+    var name: String
+    var isIndirect: Bool
+    var genericParamClause: GenericParameterModel?
+    var typeInheritanceClause: TypeInheritanceModel?
+    var genericWhereClause: GenericWhereModel?
+    var members: [Tokenizable]
+    var extensions: [ExtensionModel]
+
+    init(from decl: EnumDeclaration, parent: Linkable) {
+        self.parent = parent
+        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
         lineId = nil
+        name = decl.name.textDescription
         attributes = AttributesModel(from: decl.attributes)
         isIndirect = decl.isIndirect
         accessLevel = decl.accessLevel ?? .internal
-        name = decl.name.textDescription
         extensions = [ExtensionModel]()
         members = [Tokenizable]()
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                if let model = decl.toTokenizable() {
-                    members.append(model)
+                if let model = decl.toTokenizable(withParent: self) {
+                    if let model = model as? ExtensionModel {
+                        // TODO: Place the extension in the appropriate location
+                        extensions.append(model)
+                    } else {
+                        members.append(model)
+                    }
                 }
             case let .union(enumCase):
                 enumCase.cases.forEach { item in
-                    members.append(UnionStyleCase(from: item))
+                    members.append(UnionStyleCase(from: item, parent: self))
                 }
             case let .rawValue(enumCase):
                 enumCase.cases.forEach { item in
-                    members.append(RawValueCase(from: item))
+                    members.append(RawValueCase(from: item, parent: self))
                 }
             default:
                 SharedLogger.fail("Unsupported member: \(member)")
@@ -223,12 +227,12 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .enum))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a, parent: self)
+            member.navigationTokenize(apiview: a)
         }
     }
 }

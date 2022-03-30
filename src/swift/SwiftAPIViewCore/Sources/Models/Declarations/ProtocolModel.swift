@@ -44,6 +44,7 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
 
     var definitionId: String?
     var lineId: String?
+    var parent: Linkable?
     var attributes: AttributesModel
     var accessLevel: AccessLevelModifier
     var name: String
@@ -57,10 +58,10 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
         var name: String
         var typeInheritance: TypeInheritanceModel?
 
-        init(from source: ProtocolDeclaration.AssociativityTypeMember) {
-            // FIXME: Fix this!
-            lineId = nil // self.defId(forName: name, withPrefix: defId)
-            name = source.name.textDescription
+        init(from source: ProtocolDeclaration.AssociativityTypeMember, parent: ProtocolModel) {
+            let name = source.name.textDescription
+            self.name = name
+            lineId = identifier(forName: name, withPrefix: parent.definitionId)
             typeInheritance = TypeInheritanceModel(from: source.typeInheritance)
         }
 
@@ -72,9 +73,9 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
         }
     }
 
-    init(from decl: ProtocolDeclaration) {
-        // FIXME: Fix this!
-        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+    init(from decl: ProtocolDeclaration, parent: Linkable) {
+        self.parent = parent
+        definitionId = identifier(forName: decl.name.textDescription, withPrefix: parent.definitionId)
         lineId = nil
         attributes = AttributesModel(from: decl.attributes)
         accessLevel = decl.accessLevel ?? .internal
@@ -83,19 +84,30 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
         extensions = [ExtensionModel]()
         members = [Tokenizable]()
         decl.members.forEach { member in
+            var model: Tokenizable
             switch member {
                 case let .associatedType(data):
-                    members.append(AssociatedTypeModel(from: data))
+                    model = AssociatedTypeModel(from: data, parent: self)
                 case let .method(data):
-                    members.append(FunctionModel(from: data))
+                    model = FunctionModel(from: data, parent: self)
                 case let .property(data):
-                    members.append(VariableModel(from: data))
+                    model = VariableModel(from: data, parent: self)
                 case let .initializer(data):
-                    members.append(InitializerModel(from: data))
+                    model = InitializerModel(from: data, parent: self)
                 case let .subscript(data):
-                    members.append(SubscriptModel(from: data))
+                    model = SubscriptModel(from: data, parent: self)
                 default:
                     SharedLogger.fail("Unsupported protocol member: \(member)")
+            }
+            // protocol members inherit their access level modifier from the definition
+            if var model = model as? AccessLevelProtocol {
+                model.accessLevel = self.accessLevel
+            }
+            if let model = model as? ExtensionModel {
+                // TODO: Place the extension in the appropriate location
+                extensions.append(model)
+            } else {
+                members.append(model)
             }
         }
     }
@@ -123,12 +135,12 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .interface))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a, parent: self)
+            member.navigationTokenize(apiview: a)
         }
     }
 }

@@ -37,6 +37,7 @@ import AST
 class ClassModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProtocol {
     var definitionId: String?
     var lineId: String?
+    var parent: Linkable?
     var attributes: AttributesModel
     var accessLevel: AccessLevelModifier
     var isFinal: Bool
@@ -47,13 +48,14 @@ class ClassModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPro
     var members: [Tokenizable]
     var extensions: [ExtensionModel]
 
-    init(from decl: ClassDeclaration) {
-        // FIXME: Fix this
-        definitionId = nil // defId(forName: decl.name.textDescription, withPrefix: defIdPrefix)
+    init(from decl: ClassDeclaration, parent: Linkable) {
+        self.parent = parent
+        let name = decl.name.textDescription
+        definitionId = identifier(forName: name, withPrefix: parent.definitionId)
         lineId = nil
         attributes = AttributesModel(from: decl.attributes)
         accessLevel = decl.accessLevel ?? .internal
-        name = decl.name.textDescription
+        self.name = name
         isFinal = decl.isFinal
         genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
         typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
@@ -63,8 +65,13 @@ class ClassModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPro
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                if let model = decl.toTokenizable() {
-                    members.append(model)
+                if let model = decl.toTokenizable(withParent: self) {
+                    if let model = model as? ExtensionModel {
+                        // TODO: Place the extension in the appropriate location
+                        extensions.append(model)
+                    } else {
+                        members.append(model)
+                    }
                 }
             case let .compilerControl(statement):
                 SharedLogger.warn("Unsupported compiler control statement: \(statement)")
@@ -99,12 +106,12 @@ class ClassModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelPro
         a.blankLines(set: 1)
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func navigationTokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
         a.add(token: NavigationToken(name: name, prefix: parent?.name, typeKind: .class))
         for member in members {
             guard let member = member as? Linkable else { continue }
-            member.navigationTokenize(apiview: a, parent: self)
+            member.navigationTokenize(apiview: a)
         }
     }
 }

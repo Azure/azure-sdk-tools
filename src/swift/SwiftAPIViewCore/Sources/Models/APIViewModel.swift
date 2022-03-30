@@ -65,6 +65,11 @@ class APIViewModel: Tokenizable, Encodable {
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
 
+    /// Returns the text-based representation of all tokens
+    var text: String {
+        return tokens.map { $0.text }.joined()
+    }
+    
     // MARK: Initializers
 
     init(name: String, packageName: String, versionString: String, statements: [Statement]) {
@@ -75,7 +80,7 @@ class APIViewModel: Tokenizable, Encodable {
         tokens = [Token]()
         model = PackageModel(name: packageName, statements: statements)
         self.tokenize(apiview: self)
-        model.navigationTokenize(apiview: self, parent: nil)
+        model.navigationTokenize(apiview: self)
     }
 
     // MARK: Codable
@@ -208,7 +213,7 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     /// Create a line ID marker (only needed if no other token has a definition ID)
-    func lineIdMarker(definitionId: String? = nil) {
+    func lineIdMarker(definitionId: String?) {
         checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
         add(token: item)
@@ -249,6 +254,15 @@ class APIViewModel: Tokenizable, Encodable {
     // TODO: Add support for diagnostics
 //    func diagnostic(self, text, line_id):
 //        self.diagnostics.append(Diagnostic(line_id, text))
+
+    func comment(_ text: String) {
+        var message = text
+        if !text.starts(with: "\\") {
+            message = "\\\\ \(message)"
+        }
+        let item = Token(definitionId: nil, navigateToId: nil, value: message, kind: .comment)
+        add(token: item)
+    }
 
     func literal(_ value: String) {
         let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .literal)

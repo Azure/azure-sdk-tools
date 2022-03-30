@@ -27,9 +27,8 @@
 import AST
 import Foundation
 
-class GetterSetterModel: Tokenizable, Commentable {
+class GetterSetterModel: Tokenizable {
 
-    var lineId: String?
     var getMutating: String?
     var getAttributes: AttributesModel
     var setter: String?
@@ -37,8 +36,6 @@ class GetterSetterModel: Tokenizable, Commentable {
     var setAttributes: AttributesModel?
 
     init?(from source: GetterSetterKeywordBlock) {
-        // FIXME: Fix this!
-        lineId = nil
         if source.getter.mutationModifier == .mutating {
             getMutating = "mutating"
         } else {

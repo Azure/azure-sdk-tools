@@ -62,9 +62,7 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
     var defaultValue: String?
     var getterSetterBlock: GetterSetterModel?
 
-    init(from decl: VariableDeclaration) {
-        // FIXME: Fix this!
-        lineId = nil
+    init(from decl: VariableDeclaration, parent: Linkable) {
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = decl.accessLevel ?? .internal
@@ -92,15 +90,16 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
                 SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
             }
         }
+        lineId = identifier(forName: name, withPrefix: parent.definitionId)
     }
 
-    init(from decl: ProtocolDeclaration.PropertyMember) {
-        // FIXME: Fix this!
-        lineId = nil // self.defId(forName: name, withPrefix: defId)
+    init(from decl: ProtocolDeclaration.PropertyMember, parent: ProtocolModel) {
+        let name = decl.name.textDescription
+        self.name = name
+        lineId = identifier(forName: name, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = modifiers.accessLevel ?? .internal
-        name = decl.name.textDescription
         typeModel = TypeModel(from: decl.typeAnnotation)
         getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
     }

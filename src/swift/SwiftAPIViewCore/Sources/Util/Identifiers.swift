@@ -26,13 +26,12 @@
 
 import Foundation
 
-/// Protocol which designates that a given entity should be shown in the
-/// navigation sidebar and should be clickable to jump to definitions within
-/// APIView.
-protocol Linkable {
-    var name: String { get }
-    var definitionId: String? { get }
-    var parent: Linkable? { get }
-
-    func navigationTokenize(apiview: APIViewModel)
+/// Constructs an identifier
+func identifier(forName name: String, withPrefix prefix: String?) -> String {
+    var defId = name
+    if let prefix = prefix {
+        defId = "\(prefix).\(defId)"
+    }
+    defId = defId.replacingOccurrences(of: " ", with: "_")
+    return defId
 }

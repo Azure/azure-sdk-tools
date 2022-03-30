@@ -38,19 +38,24 @@ class ExtensionModel: Tokenizable, Commentable {
     var genericWhereClause: GenericWhereModel?
     var members: [AccessLevelProtocol]
 
-    init(from decl: ExtensionDeclaration) {
-        // FIXME: This this!
-        self.lineId = nil
-        self.attributes = AttributesModel(from: decl.attributes)
-        self.accessLevel = decl.accessLevel
+    init(from decl: ExtensionDeclaration, parent: Linkable) {
+        lineId = identifier(forName: decl.type.textDescription, withPrefix: parent.definitionId)
+        attributes = AttributesModel(from: decl.attributes)
+        accessLevel = decl.accessLevel
         self.typeModel = TypeModel(from: decl.type)
-        self.typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
-        self.genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        self.members = [AccessLevelProtocol]()
+        typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
+        genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
+        members = [AccessLevelProtocol]()
         decl.members.forEach { member in
             switch member {
             case let .declaration(decl):
-                if let model = decl.toTokenizable() as? AccessLevelProtocol {
+                // TODO: We need to push these into the relevant object definitions.
+                // We should not just use the Extension's parent
+                if var model = decl.toTokenizable(withParent: parent) as? AccessLevelProtocol {
+                    // a public extension implicitly makes all its members public as well
+                    if let overrideAccess = accessLevel {
+                        model.accessLevel = overrideAccess
+                    }
                     self.members.append(model)
                 }
             case let .compilerControl(statement):
@@ -76,6 +81,7 @@ class ExtensionModel: Tokenizable, Commentable {
     func tokenize(apiview a: APIViewModel) {
         let shouldDisplay = isPublic || hasPublicMembers
         guard shouldDisplay == true else { return }
+        a.lineIdMarker(definitionId: lineId)
         attributes.tokenize(apiview: a)
         if let access = accessLevel {
             a.keyword(access.textDescription, postfixSpace: true)

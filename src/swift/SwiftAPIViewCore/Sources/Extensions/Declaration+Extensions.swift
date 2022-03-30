@@ -30,28 +30,28 @@ import Foundation
 extension Declaration {
 
     /// Convert a declaration to a Tokenizable instance.
-    func toTokenizable() -> Tokenizable? {
+    func toTokenizable(withParent parent: Linkable) -> Tokenizable? {
         switch self {
         case let self as ClassDeclaration:
-            return ClassModel(from: self)
+            return ClassModel(from: self, parent: parent)
         case let self as ConstantDeclaration:
-            return ConstantModel(from: self)
+            return ConstantModel(from: self, parent: parent)
         case let self as EnumDeclaration:
-            return EnumModel(from: self)
+            return EnumModel(from: self, parent: parent)
         case let self as ExtensionDeclaration:
-            return ExtensionModel(from: self)
+            return ExtensionModel(from: self, parent: parent)
         case let self as FunctionDeclaration:
-            return FunctionModel(from: self)
+            return FunctionModel(from: self, parent: parent)
         case let self as InitializerDeclaration:
-            return InitializerModel(from: self)
+            return InitializerModel(from: self, parent: parent)
         case let self as ProtocolDeclaration:
-            return ProtocolModel(from: self)
+            return ProtocolModel(from: self, parent: parent)
         case let self as StructDeclaration:
-            return StructModel(from: self)
+            return StructModel(from: self, parent: parent)
         case let self as TypealiasDeclaration:
-            return TypealiasModel(from: self)
+            return TypealiasModel(from: self, parent: parent)
         case let self as VariableDeclaration:
-            return VariableModel(from: self)
+            return VariableModel(from: self, parent: parent)
         case _ as ImportDeclaration:
             // Imports are no-op
             return nil
@@ -59,13 +59,13 @@ extension Declaration {
             // Deinitializers are never public
             return nil
         case let self as SubscriptDeclaration:
-            return SubscriptModel(from: self)
+            return SubscriptModel(from: self, parent: parent)
         case let self as PrecedenceGroupDeclaration:
             // precedence groups are always public
-            return PrecedenceGroupModel(from: self)
+            return PrecedenceGroupModel(from: self, parent: parent)
         case let self as OperatorDeclaration:
             // operators are always public
-            return OperatorModel(from: self)
+            return OperatorModel(from: self, parent: parent)
         default:
             SharedLogger.fail("Unsupported declaration: \(self)")
         }
@@ -92,67 +92,70 @@ extension Declaration {
             return decl.modifiers.accessLevel
         case let decl as SubscriptDeclaration:
             return decl.modifiers.accessLevel
+        case let decl as ExtensionDeclaration:
+            return decl.accessLevelModifier
+        case let decl as ProtocolDeclaration:
+            return decl.accessLevelModifier
         default:
             return nil
         }
     }
 }
 
-//extension InitializerDeclaration {
-//    var fullName: String {
-//        var value = "init("
-//        for param in parameterList {
-//            let label = param.externalName?.textDescription ?? param.localName.textDescription
-//            let type = param.typeAnnotation.type.textDescription
-//            value += "\(label)[\(type)]:"
-//        }
-//        value += ")"
-//        return value.replacingOccurrences(of: " ", with: "")
-//    }
-//}
-//
-//extension FunctionDeclaration {
-//    var fullName: String {
-//        var value = "\(self.name)("
-//        for param in signature.parameterList {
-//            let label = param.externalName?.textDescription ?? param.localName.textDescription
-//            let type = param.typeAnnotation.type.textDescription
-//            value += "\(label)[\(type)]:"
-//        }
-//        value += ")"
-//        if self.signature.asyncKind == .async {
-//            value += "[async]"
-//        }
-//        if self.signature.throwsKind != .nothrowing {
-//            value += "[\(self.signature.throwsKind.textDescription)]"
-//        }
-//        return value.replacingOccurrences(of: " ", with: "")
-//    }
-//}
-//
-//extension ProtocolDeclaration.InitializerMember {
-//    var fullName: String {
-//        var value = "init("
-//        for param in parameterList {
-//            let label = param.externalName?.textDescription ?? param.localName.textDescription
-//            let type = param.typeAnnotation.type.textDescription
-//            value += "\(label)[\(type)]:"
-//        }
-//        value += ")"
-//        return value.replacingOccurrences(of: " ", with: "")
-//    }
-//}
-//
-//extension ProtocolDeclaration.MethodMember {
-//    var fullName: String {
-//        var value = "\(self.name)("
-//        for param in signature.parameterList {
-//            let label = param.externalName?.textDescription ?? param.localName.textDescription
-//            let type = param.typeAnnotation.type.textDescription
-//            value += "\(label)[\(type)]:"
-//        }
-//        value += ")"
-//        return value.replacingOccurrences(of: " ", with: "")
-//    }
-//}
-//
+extension InitializerDeclaration {
+    var fullName: String {
+        var value = "init("
+        for param in parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension FunctionDeclaration {
+    var fullName: String {
+        var value = "\(self.name)("
+        for param in signature.parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        if self.signature.asyncKind == .async {
+            value += "[async]"
+        }
+        if self.signature.throwsKind != .nothrowing {
+            value += "[\(self.signature.throwsKind.textDescription)]"
+        }
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension ProtocolDeclaration.InitializerMember {
+    var fullName: String {
+        var value = "init("
+        for param in parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}
+
+extension ProtocolDeclaration.MethodMember {
+    var fullName: String {
+        var value = "\(self.name)("
+        for param in signature.parameterList {
+            let label = param.externalName?.textDescription ?? param.localName.textDescription
+            let type = param.typeAnnotation.type.textDescription
+            value += "\(label)[\(type)]:"
+        }
+        value += ")"
+        return value.replacingOccurrences(of: " ", with: "")
+    }
+}

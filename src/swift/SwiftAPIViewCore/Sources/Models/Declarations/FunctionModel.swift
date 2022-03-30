@@ -54,9 +54,8 @@ class FunctionModel: Tokenizable, Commentable, AccessLevelProtocol {
     var genericWhereClause: GenericWhereModel?
     var signature: SignatureModel
 
-    init(from decl: FunctionDeclaration) {
-        // FIXME: Fix this!
-        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+    init(from decl: FunctionDeclaration, parent: Linkable) {
+        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = decl.accessLevel ?? .internal
@@ -66,9 +65,8 @@ class FunctionModel: Tokenizable, Commentable, AccessLevelProtocol {
         signature = SignatureModel(from: decl.signature)
     }
 
-    init(from decl: ProtocolDeclaration.MethodMember) {
-        // FIXME: Fix this!
-        lineId = "" // defId(forName: decl.fullName, withPrefix: defIdPrefix)
+    init(from decl: ProtocolDeclaration.MethodMember, parent: ProtocolModel) {
+        lineId = identifier(forName: decl.fullName, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = modifiers.accessLevel ?? .internal

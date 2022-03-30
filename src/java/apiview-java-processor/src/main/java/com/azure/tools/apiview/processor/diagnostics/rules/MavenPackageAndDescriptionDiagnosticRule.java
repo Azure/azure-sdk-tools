@@ -41,8 +41,8 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     static final String DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK =
         "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description";
 
-    private final Pattern mavenName;
-    private final Pattern mavenDescription;
+    private final Pattern mavenNamePattern;
+    private final Pattern mavenDescriptionPattern;
     private final String mavenNameGuidelineLink;
     private final String mavenDescriptionGuidelineLink;
 
@@ -64,8 +64,8 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
      */
     public MavenPackageAndDescriptionDiagnosticRule(Pattern mavenNamePattern, Pattern mavenDescriptionPattern,
         String mavenNameGuidelineLink, String mavenDescriptionGuidelineLink) {
-        this.mavenName = mavenNamePattern;
-        this.mavenDescription = mavenDescriptionPattern;
+        this.mavenNamePattern = mavenNamePattern;
+        this.mavenDescriptionPattern = mavenDescriptionPattern;
         this.mavenNameGuidelineLink = mavenNameGuidelineLink;
         this.mavenDescriptionGuidelineLink = mavenDescriptionGuidelineLink;
     }
@@ -81,17 +81,19 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
         // Maven name
         String nameId = getId("name", pom.getName());
-        if (!mavenName.matcher(pom.getName()).matches()) {
+        String mavenName = pom.getName();
+        if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
-                "Maven library name should follow the pattern '" + mavenName.pattern() + "'.",
+                "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
                 mavenNameGuidelineLink));
         }
 
         // Maven description
         String descriptionId = getId("description", pom.getDescription());
-        if (!mavenDescription.matcher(pom.getDescription()).matches()) {
+        String mavenDescription = pom.getDescription();
+        if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
-                "Maven library description should follow the pattern '" + mavenDescription.pattern() +"'.",
+                "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() +"'.",
                 mavenDescriptionGuidelineLink));
         }
     }

@@ -45,7 +45,7 @@ public final class MiscUtils {
      * @return A token representing the key-value pair.
      */
     public static Token tokeniseKeyValue(String key, Object value) {
-        return tokeniseKeyValue(key, value);
+        return tokeniseKeyValue(key, value, "");
     }
 
     /**

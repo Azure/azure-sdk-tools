@@ -33,7 +33,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains(DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri()
+            .contains(DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK));
     }
 
     /**
@@ -51,7 +52,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains(DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri()
+            .contains(DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK));
     }
 
     /**
@@ -106,7 +108,8 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains("custom package description guideline link"));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri()
+            .contains("custom package description guideline link"));
     }
 
     /**
@@ -123,7 +126,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains(DEFAULT_MAVEN_NAME_GUIDELINE_LINK));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri().contains(DEFAULT_MAVEN_NAME_GUIDELINE_LINK));
     }
 
     /**
@@ -141,7 +144,7 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains(DEFAULT_MAVEN_NAME_GUIDELINE_LINK));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri().contains(DEFAULT_MAVEN_NAME_GUIDELINE_LINK));
     }
 
     /**
@@ -196,6 +199,6 @@ public class MavenPackageAndDescriptionDiagnosticRuleTests {
         rule.scanFinal(apiListing);
 
         assertEquals(1, apiListing.getDiagnostics().size());
-        assertTrue(apiListing.getDiagnostics().get(1).getText().contains("custom package name guideline link"));
+        assertTrue(apiListing.getDiagnostics().get(0).getHelpLinkUri().contains("custom package name guideline link"));
     }
 }

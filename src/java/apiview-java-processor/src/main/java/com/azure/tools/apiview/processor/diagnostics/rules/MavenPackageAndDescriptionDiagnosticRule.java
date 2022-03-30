@@ -21,24 +21,24 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     /*
      * Default {@link Pattern} for the Maven package name.
      */
-    private static final Pattern DEFAULT_MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
+    static final Pattern DEFAULT_MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
 
     /*
      * Default {@link Pattern} for the Maven package description.
      */
-    private static final Pattern DEFAULT_MAVEN_DESCRIPTION =
+    static final Pattern DEFAULT_MAVEN_DESCRIPTION =
         Pattern.compile("This package contains the Microsoft Azure .* client library");
 
     /*
      * Default guideline link for the Maven package name.
      */
-    private static final String DEFAULT_MAVEN_NAME_GUIDELINE_LINK =
+    static final String DEFAULT_MAVEN_NAME_GUIDELINE_LINK =
         "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-name";
 
     /*
      * Default guideline link for the Maven package description.
      */
-    private static final String DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK =
+    static final String DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK =
         "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description";
 
     private final Pattern mavenName;
@@ -72,6 +72,11 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
+        // no-op, package rule only needs to be ran once at the end.
+    }
+
+    @Override
+        public void scanFinal(APIListing listing) {
         Pom pom = listing.getMavenPom();
 
         // Maven name

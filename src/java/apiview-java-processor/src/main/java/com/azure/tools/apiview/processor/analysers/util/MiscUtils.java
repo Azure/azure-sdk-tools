@@ -45,7 +45,7 @@ public final class MiscUtils {
      * @return A token representing the key-value pair.
      */
     public static Token tokeniseKeyValue(String key, Object value) {
-        return tokeniseKeyValue(key, value);
+        return tokeniseKeyValue(key, value, null);
     }
 
     /**
@@ -57,7 +57,8 @@ public final class MiscUtils {
      * @return A token representing the key-value pair.
      */
     public static Token tokeniseKeyValue(String key, Object value, String prefix) {
-        return new Token(TEXT, value == null ? "<default value>" : value.toString(), prefix + "-" + key + "-" + value);
+        prefix = prefix == null || prefix.isEmpty() ? "" : prefix + "-";
+        return new Token(TEXT, value == null ? "<default value>" : value.toString(), prefix + key + "-" + value);
     }
 
     private static String wrapLine(final String line, final int lineLength) {

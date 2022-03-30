@@ -32,11 +32,14 @@ public class Pom implements MavenGAV {
 
     private String checkstyleExcludes;
 
+    private boolean fileExists;
+
     // These are the dependencies specifies in the maven-enforcer that are allowed
     private List<String> allowedDependencies;
 
-    public Pom(final String groupId, final String artifactId, final String version) {
+    public Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
         this.gav = new Gav(groupId, artifactId, version);
+        this.fileExists = fileExists;
     }
 
     public Pom(InputStream pomFileStream) throws IOException {
@@ -146,6 +149,13 @@ public class Pom implements MavenGAV {
 
     public List<String> getAllowedDependencies() {
         return allowedDependencies;
+    }
+
+    /**
+     * Sometimes we can't find a pom file, so we fake it with the info we do have.
+     */
+    public boolean isPomFileReal() {
+        return fileExists;
     }
 
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {

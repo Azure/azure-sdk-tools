@@ -117,7 +117,7 @@
             "NavigateToId": null,
             "Value": "ClassLibrary1.Class1",
             "Kind": 17
-        },        
+        },               
         {
             "DefinitionId": null,
             "NavigateToId": null,
@@ -136,6 +136,12 @@
             "Value": null,
             "Kind": 1
         },
+        {
+            "DefinitionId": null,
+            "NavigateToId": null,
+            "Value": null,
+            "Kind": 18
+        }, 
         {
             "DefinitionId": null,
             "NavigateToId": null,
@@ -339,7 +345,7 @@
             "DefinitionId": null,
             "NavigateToId": null,
             "Value": null,
-            "Kind": 18
+            "Kind": 19
         }
     ],
     "Navigation": [

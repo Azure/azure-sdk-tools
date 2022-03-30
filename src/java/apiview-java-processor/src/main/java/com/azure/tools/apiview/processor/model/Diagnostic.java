@@ -35,4 +35,8 @@ public class Diagnostic {
     public String getText() {
         return text;
     }
+
+    public String getHelpLinkUri() {
+        return helpLinkUri;
+    }
 }

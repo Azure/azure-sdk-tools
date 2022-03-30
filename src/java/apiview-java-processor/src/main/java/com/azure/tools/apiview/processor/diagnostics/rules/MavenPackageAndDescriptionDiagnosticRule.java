@@ -21,28 +21,28 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     /*
      * Default {@link Pattern} for the Maven package name.
      */
-    private static final Pattern DEFAULT_MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
+    static final Pattern DEFAULT_MAVEN_NAME = Pattern.compile("Microsoft Azure client library for .*");
 
     /*
      * Default {@link Pattern} for the Maven package description.
      */
-    private static final Pattern DEFAULT_MAVEN_DESCRIPTION =
+    static final Pattern DEFAULT_MAVEN_DESCRIPTION =
         Pattern.compile("This package contains the Microsoft Azure .* client library");
 
     /*
      * Default guideline link for the Maven package name.
      */
-    private static final String DEFAULT_MAVEN_NAME_GUIDELINE_LINK =
+    static final String DEFAULT_MAVEN_NAME_GUIDELINE_LINK =
         "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-name";
 
     /*
      * Default guideline link for the Maven package description.
      */
-    private static final String DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK =
+    static final String DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK =
         "https://azure.github.io/azure-sdk/java_introduction.html#java-maven-description";
 
-    private final Pattern mavenName;
-    private final Pattern mavenDescription;
+    private final Pattern mavenNamePattern;
+    private final Pattern mavenDescriptionPattern;
     private final String mavenNameGuidelineLink;
     private final String mavenDescriptionGuidelineLink;
 
@@ -64,15 +64,15 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
      */
     public MavenPackageAndDescriptionDiagnosticRule(Pattern mavenNamePattern, Pattern mavenDescriptionPattern,
         String mavenNameGuidelineLink, String mavenDescriptionGuidelineLink) {
-        this.mavenName = mavenNamePattern;
-        this.mavenDescription = mavenDescriptionPattern;
+        this.mavenNamePattern = mavenNamePattern;
+        this.mavenDescriptionPattern = mavenDescriptionPattern;
         this.mavenNameGuidelineLink = mavenNameGuidelineLink;
         this.mavenDescriptionGuidelineLink = mavenDescriptionGuidelineLink;
     }
 
     @Override
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
-        // no-op
+        // no-op, package rule only needs to be run once at the end.
     }
 
     @Override
@@ -86,18 +86,20 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
         } else {
             // Maven name
             String nameId = getId("name", pom.getName());
-            if (!mavenName.matcher(pom.getName()).matches()) {
+            String mavenName = pom.getName();
+            if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
                 listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
-                        "Maven library name should follow the pattern '" + mavenName.pattern() + "'.",
-                        mavenNameGuidelineLink));
+                    "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
+                    mavenNameGuidelineLink));
             }
 
             // Maven description
             String descriptionId = getId("description", pom.getDescription());
-            if (!mavenDescription.matcher(pom.getDescription()).matches()) {
+            String mavenDescription = pom.getDescription();
+            if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
                 listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
-                        "Maven library description should follow the pattern '" + mavenDescription.pattern() + "'.",
-                        mavenDescriptionGuidelineLink));
+                    "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
+                    mavenDescriptionGuidelineLink));
             }
         }
     }

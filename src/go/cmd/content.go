@@ -36,44 +36,58 @@ func (c *content) addConst(pkg pkg, g *ast.GenDecl) {
 	for _, s := range g.Specs {
 		co := Const{}
 		vs := s.(*ast.ValueSpec)
-		v := ""
+		v := getConstValue(pkg, vs.Values[0])
+		if v == "" {
+			fmt.Printf("WARNING: failed to determine value for %s\n", pkg.getText(vs.Pos(), vs.End()))
+			continue
+		}
 		// Type is nil for untyped consts
 		if vs.Type != nil {
 			switch x := vs.Type.(type) {
 			case *ast.Ident:
+				// const ETagAny ETag = "*"
+				// const PeekLock ReceiveMode = internal.PeekLock
 				co.Type = x.Name
-				v = vs.Values[0].(*ast.BasicLit).Value
 			case *ast.SelectorExpr:
+				// const LogCredential log.Classification = "Credential"
 				co.Type = x.Sel.Name
-				v = vs.Values[0].(*ast.BasicLit).Value
 			default:
-				panic(fmt.Sprintf("wrong type %T", vs.Type))
+				fmt.Printf("WARNING: unhandled constant type %s\n", pkg.getText(vs.Type.Pos(), vs.Type.End()))
 			}
-
+		} else if ce, ok := vs.Values[0].(*ast.CallExpr); ok {
+			// const FooConst = FooType("value")
+			co.Type = pkg.getText(ce.Fun.Pos(), ce.Fun.End())
 		} else {
-			// get the type from the token type
-			if bl, ok := vs.Values[0].(*ast.BasicLit); ok {
-				co.Type = skip
-				v = bl.Value
-			} else if ce, ok := vs.Values[0].(*ast.CallExpr); ok {
-				// const FooConst = FooType("value")
-				co.Type = pkg.getText(ce.Fun.Pos(), ce.Fun.End())
-				v = pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
-			} else if ce, ok := vs.Values[0].(*ast.BinaryExpr); ok {
-				// const FooConst = "value" + Bar
-				co.Type = skip
-				v = pkg.getText(ce.X.Pos(), ce.Y.End())
-			} else if ce, ok := vs.Values[0].(*ast.UnaryExpr); ok {
-				// const FooConst = -1
-				co.Type = skip
-				v = pkg.getText(ce.Pos(), ce.End())
-			} else {
-				panic("unhandled case for adding constant")
-			}
+			// implicitly typed const
+			co.Type = skip
 		}
 		co.Value = v
 		c.Consts[vs.Names[0].Name] = co
 	}
+}
+
+func getConstValue(pkg pkg, expr ast.Expr) string {
+	if bl, ok := expr.(*ast.BasicLit); ok {
+		// const DefaultLinkCredit = 1
+		return bl.Value
+	} else if ce, ok := expr.(*ast.CallExpr); ok {
+		// const FooConst = FooType("value")
+		return pkg.getText(ce.Args[0].Pos(), ce.Args[0].End())
+	} else if ce, ok := expr.(*ast.BinaryExpr); ok {
+		// const FooConst = "value" + Bar
+		return pkg.getText(ce.X.Pos(), ce.Y.End())
+	} else if ce, ok := expr.(*ast.UnaryExpr); ok {
+		// const FooConst = -1
+		return pkg.getText(ce.Pos(), ce.End())
+	} else if se, ok := expr.(*ast.SelectorExpr); ok {
+		// const ModeUnsettled = encoding.ModeUnsettled
+		return pkg.getText(se.Pos(), se.End())
+	} else if id, ok := expr.(*ast.Ident); ok {
+		// const DefaultLinkBatching = false
+		return id.Name
+	}
+	fmt.Printf("WARNING: unhandled constant value %s\n", pkg.getText(expr.Pos(), expr.End()))
+	return ""
 }
 
 func includesType(s []string, t string) bool {
@@ -155,10 +169,11 @@ func (c *content) addFunc(pkg pkg, f *ast.FuncDecl) {
 			// skip adding methods on unexported receivers
 			return
 		}
-		sig = "(" + f.Recv.List[0].Names[0].Name + " "
-		sig += receiver
-		// CP: changed to space, was a period before
-		sig += ") "
+		name := ""
+		if len(f.Recv.List[0].Names) != 0 {
+			name = f.Recv.List[0].Names[0].Name + " "
+		}
+		sig = fmt.Sprintf("(%s%s) ", name, receiver)
 	}
 	sig += f.Name.Name
 	c.Funcs[sig] = pkg.buildFunc(f.Type)
@@ -278,14 +293,20 @@ func getCtorName(s string) string {
 
 // getReceiverName returns the components of the receiver on a method signature
 // i.e.: (c *Foo) Bar(s string) will return "c" and "Foo".
-func getReceiverName(s string) (receiverVar string, receiver string) {
+func getReceiverName(s string) (string, string) {
+	name, typ := "", ""
 	if strings.HasPrefix(s, "(") {
-		parts := strings.Split(s[:strings.Index(s, ")")], " ")
-		receiverVar = parts[0][1:]
-		receiver = parts[1]
-		return
+		parts := strings.Split(s[1:strings.Index(s, ")")], " ")
+		if len(parts) == 2 {
+			// most common case e.g. (c *Foo)
+			name = parts[0]
+			typ = parts[1]
+		} else {
+			// unnamed receiver e.g. (*Foo)
+			typ = parts[0]
+		}
 	}
-	return "", ""
+	return name, typ
 }
 
 // getMethodName expects a method signature in the param s and removes the receiver portion of the

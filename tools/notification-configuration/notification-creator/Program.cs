@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using NotificationConfiguration.Services;
+using Azure.Sdk.Tools.NotificationConfiguration.Services;
 
-namespace NotificationConfiguration
+namespace Azure.Sdk.Tools.NotificationConfiguration
 {
     class Program
     {

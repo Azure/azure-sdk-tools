@@ -2,16 +2,20 @@
     Layout = "Shared/_Layout";
     var id = ViewContext.RouteData.Values["id"];
 }
-<ul class="nav nav-tabs">
-    <li class="nav-item">
-        <a class="nav-link" active-if="@TempData["page"].Equals("api")" asp-page="Review" asp-route-id="@id">API</a>
-    </li>
-        <li class="nav-item">
-        <a class="nav-link" active-if="@TempData["page"].Equals("conversation")" asp-page="Conversation" asp-route-id="@id">Conversation</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
-    </li>
-</ul>
 
+<nav class="navbar-light shadow-sm bg-light sticky-top">
+    <div class="container-fluid py-2">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("api")" asp-page="Review" asp-route-id="@id">API</a>
+            </li>
+                <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("conversation")" asp-page="Conversation" asp-route-id="@id">Conversations</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" active-if="@TempData["page"].Equals("revisions")" asp-page="Revisions" asp-route-id="@id">Revisions</a>
+            </li>
+        </ul>
+    </div>
+</nav>
 @RenderBody()

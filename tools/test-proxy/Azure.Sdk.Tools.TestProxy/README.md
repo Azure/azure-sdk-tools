@@ -22,12 +22,10 @@ There is a walkthrough through the process below in the [how do I use the test p
 2. Install test-proxy
 
 ```powershell
-> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+> dotnet tool install azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version 1.0.0-dev*
 ```
 
 This feed is available in [the public azure-sdk project.](https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk)
-
-Note that given there are only dev versions available, please add `--version <selectedVersion>`. You will see a failure that **gives you the latest version of the package** if you do not provide this additional argument.
 
 After successful installation, run the tool:
 
@@ -46,16 +44,32 @@ If you've already installed the tool, you can always check the installed version
 The Azure SDK Team maintains a public Azure Container Registry.
 
 ```powershell
-> docker run -v <your-volume-name-or-location>:/etc/testproxy -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+> docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
+
+For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
+
+```powershell
+> docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 ```
 
 Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
 
-Within the container, recording outputs are written within the directory `/etc/testproxy`.
+Within the container, recording outputs are written within the directory `/srv/testproxy/`.
+
+#### A note about docker caching
+
+The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines may be running outdated versions of the test-proxy.
+
+To ensure that your local copy is up to date, run:
+
+```powershell
+> docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
+```
 
 ## Command line arguments
 
-The test-proxy resolves the its storage location via:
+The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
@@ -70,6 +84,34 @@ By default, the server will listen on the following port mappings:
 | http | 5000 |
 | https | 5001 |
 
+#### Environment Variable
+
+Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:
+
+```powershell
+$env:ASPNETCORE_URLS="http://*:3331"  // Set custom port for http only
+$env:ASPNETCORE_URLS="http://*3331;https://*:8881"  // set custom ports for both http and https
+```
+
+#### Input arguments
+
+Use command line argument `--urls` to bind to a non-default host and port. This configuration will override the environment configuration.  For example, to only bind to localhost http 5000, provide the argument `--urls http://localhost:9000`.
+
+```powershell
+test-proxy --urls "http://localhost:9000;https://localhost:9001"
+```
+
+## Environment Variables
+
+The test-proxy is integrated with the following environment variables.
+
+| Variable | Usage |
+|---|---|
+| `TEST_PROXY_FOLDER` | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
+| `Logging__LogLevel__Microsoft` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
+
+Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`. For multiple environment variables, just use multiple `-e` provisions.
+
 ## How do I use the test-proxy to get a recording?
 
 Use either local or docker image to start the tool. Reference the [Installation](#installation) section of this readme. SSL Configuration is discussed below in [SSL Support](#ssl-support).
@@ -81,7 +123,7 @@ A couple notes before running the test-proxy:
 
 ### Where will my recordings end up?
 
-In the next step, you will be asked to provide a header to `/record/start/` under key `x-recording-file`. The value provided will be consumed by the test-proxy and **used to write your recording to disk**.
+In the next step, you will be asked to provide a JSON body within your POST to `/record/start/`. This body should be a JSON object with a top-level key `x-recording-file` present. The value of this key will be consumed by the test-proxy and **used to write your recording to disk**.
 
 For example, let's invoke the test-proxy:
 
@@ -89,7 +131,7 @@ For example, let's invoke the test-proxy:
 test-proxy --storage-location "C:/repo/sdk-for-net/"
 ```
 
-When we **start** a test run (method outlined in next section), we have to provide a file location via header `x-recording-file`.
+When we **start** a test run (method outlined in next section), we have to provide a file location within JSON body key `x-recording-file`.
 
 When your recording is finalized, it will be stored following the below logic.
 
@@ -100,7 +142,9 @@ recording = sdk/tools/test-proxy/tests/testFile.testFunction.cs
 final_output_location = C:/repo/sdk-for-net/sdk/tools/test-proxy/tests/testFile.testFunction.cs.json
 ```
 
-During a `playback` start, the **same** value for header `x-recording-file` should be provided. This allows the test-proxy to load a previous recording into memory.
+During a `playback` start, the **same** value for `x-recording-file` should be provided within the POST body. This allows the test-proxy to load a previous recording into memory.
+
+Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file. If the parent folders do not exist, they will be created at run-time during the write operation.
 
 ### Start the test run
 
@@ -108,7 +152,7 @@ Before each individual test runs, a `recordingId` must be retrieved from the tes
 
 ```json
 URL: https://localhost:5001/record/start
-headers {
+BODY {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
@@ -143,16 +187,35 @@ POST to the proxy server:
 
 ```json
 URL: https://localhost:5001/record/stop
-headers {
+headers: {
     "x-recording-id": "<x-recording-id>",
+    "Content-Type": "application/json"
+}
+<optional> body: {
+    "key1": "value1",
+    "key2": "value2"
 }
 ```
+
+The `Content-Type` must be set ONLY if a body with values is also sent. Read section directly below [storing variables](#storing-variables) for a description.
 
 This will **finalize** your recording by:
 
 - Removing from active sessions.
 - Applying session/recording sanitizers.
 - Saving to disk.
+
+#### Storing `variables`
+
+In the above example notice that there is an optional body. This is extremely useful when your tests have an element of "randomness" to them. A great example of non-secret randomness would be a `tablename` provided during `tables storage` tests. It is extremely common for a given azure-sdk test framework to generate a name like `u324bca`. Unfortunately, randomness can lead to difficulties during `playback`. The URI, headers, and body of a request must match _exactly_ with a recording entry.
+
+Given that reccordings are _not traditionally accessible_ to the client code, there is no way to "retrieve" what those random non-secret values WERE. Without that capability, one must sanitize _everything_ that could be possibly random.
+
+An alternative is this `variable` concept. During a final POST to `/Record/Stop`, set the `Content-Type` header and make the `body` of the request a simple JSON map. The test-proxy will pass back these values in the `body` of `/Playback/Start`.
+
+#### Customizing what gets recorded
+
+Some tests send large request bodies that are not meaningful and should not be stored in the session records. In order to disable storing the request body for a specific request, add the request header "x-recording-skip" and set the value to "request-body". This header can also be used to skip an entire request/response pair from being included in the recording - this is useful for cleanup code that you might have as part of your test. To skip the request/response pair, set the "x-recording-skip" header value to "request-response". Note that the "x-recording-skip" should only be specified when in `Record` mode. As a result, any request that would use the "request-response" value when in `Record` mode should not be sent when in `Playback` mode. For requests that use "request-body" in `Record` mode, you should either null out the body of the request before sending to the test proxy when in `Playback` mode, or you can set a `CustomDefaultMatcher` with `compareBodies = false`.
 
 ## How do I use the test-proxy to play a recording back?
 
@@ -164,12 +227,18 @@ POST to the proxy server:
 
 ```json
 URL: https://localhost:5001/playback/start
-headers {
+BODY: {
     "x-recording-file": "<path-to-test>/recordings/<testfile>.<testname>"
 }
 ```
 
 As with `/record/start`, check response header `x-recording-id` to get the recording-id for usage later on.
+
+#### Optional `variables` returned
+
+In the case where a user set `variables` in `/Record/Stop`, those values will also be returned in the `body` of the result from `/Playback/Start`. There is no manipulation of these values, whatever is saved during `/Record/Stop` should be identical to what is available from `/Playback/Start`.
+
+As one could guess based on the routes, these variables are saved and returned on a per-recording basis.
 
 ### During your test run
 
@@ -190,9 +259,9 @@ headers {
 
 ### An important note about perf testing
 
-If a user does **not** provide a `fileId` via header `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
+If a user does **not** provide a `fileId` via body key `x-recording-file`, the recording will be saved **in-memory only**. If a recording is saved into memory, the only way to retrieve it is to access the playback by passing along the original recordingId that you **recorded it with**.
 
-Start the recording **without a `x-recording-file` header**.
+Start the recording **without a `x-recording-file` body value**.
 
 ```json
 URL: https://localhost:5001/record/start
@@ -257,6 +326,16 @@ body: {
 }
 ```
 
+#### A note about where sanitizers apply
+
+Each sanitizer is optionally prefaced with the **specific part** of the request/response pair that it applies to. These prefixes are
+
+- `Uri`
+- `Header`
+- `Body`
+
+A sanitizer that does _not_ include this prefix is something different, and probably applies at the session level instead on an individual request/response pair.
+
 ### For Sanitizers, Matchers, or Transforms in general
 
 When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`. Where applicable.
@@ -267,7 +346,7 @@ When invoked as basic requests to the `Admin` controller, these settings will be
 
 Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
 
-### Viewing Available/Active Sanitizers, Matchers, and Transforms
+### Viewing available/active Sanitizers, Matchers, and Transforms
 
 Launch the test-proxy through your chosen method, then visit:
 
@@ -275,6 +354,33 @@ Launch the test-proxy through your chosen method, then visit:
 - `<proxyUrl>/Info/Active` to see all currently active.
 
 Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface.
+
+### Resetting active Sanitizers, Matchers, and Transforms
+
+Given that the test-proxy offers the ability to set up customizations for an entire session or a single recording, it also must provide the ability to **reset** these settings without entirely restarting the server.
+
+This is allowed through the use of the `/Admin/Reset` API. A `reset` operation "returns to default".
+
+#### Reset the session
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+```
+
+This API operates exclusively on the `Session` level if no recordingId is provided in the header. Any customizations on individual recordings are left untouched.
+
+#### Reset for a specific recordingId
+
+```json
+POST
+url: <proxyURL>/Admin/Reset
+headers: {
+    "x-recording-id": "<guid>"
+}
+```
+
+If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
 
 ## Testing
 
@@ -286,7 +392,7 @@ The test-proxy server supports SSL, but due to its local-hosted nature, SSL vali
 
 Within this repository there is a single certificate.
 
-* `eng/common/testproxy/dotnet-devcert.pfx`: generated on a `Ubuntu` distribution using `openssl`.
+- `eng/common/testproxy/dotnet-devcert.pfx`: generated on a `Ubuntu` distribution using `openssl`.
 
 Unfortunately, the `dotnet dev-certs` generated certificates are _not_ acceptable to a standard ubuntu distro. The issue is that the `KeyUsage` field in the `.crt` [MUST contain](https://github.com/dotnet/aspnetcore/issues/7246#issuecomment-541165030) the `keyCertSign` flag. Certificates generated by `dotnet dev-certs` do NOT have this flag. This means that if you're on Windows AND running the Ubuntu docker image, you will need to trust the `dotnet-devcert.pfx` locally prior to `docker run`.
 
@@ -316,3 +422,26 @@ To connect to the docker on SSL, both the docker image and your local machine mu
 In the future, passing in a custom cert via a bound volume that contains your certificate will be a possibility as well.
 
 For additional reading on this process for trusting SSL certs locally, feel free to read up [here.](https://devblogs.microsoft.com/aspnet/configuring-https-in-asp-net-core-across-different-platforms/) The afore-mentioned [docker specific readme](../docker/README.md) also has details that are relevant.
+
+## Troubleshooting
+
+### Visual studio
+
+If you get the message dialog `The project doesn't know how to run the profile Azure.Sdk.Tools.TestProxy`, you can fix it by reviewing the next two things:
+
+#### ASP.NET and web development
+
+Run Visual Studio installer and make sure ASP.NET and web development is installed.
+
+![image](https://user-images.githubusercontent.com/24213737/152257876-be1ed946-20bc-47ff-83da-f9ae05db290a.png)
+
+Then, confirm in the right panel that `Development time IIS support` is not checked:
+
+![image](https://user-images.githubusercontent.com/24213737/152257948-c61e6876-eb36-4414-b8de-8c85aa0532bb.png)
+
+#### Windows IIS
+
+[Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
+
+![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
+

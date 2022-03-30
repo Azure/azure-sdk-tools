@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
@@ -14,11 +15,13 @@ namespace APIViewWeb
     public class CosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
+        private readonly PackageNameManager _packageNameManager;
 
-        public CosmosReviewRepository(IConfiguration configuration)
+        public CosmosReviewRepository(IConfiguration configuration, PackageNameManager packageNameManager)
         {
             var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _reviewsContainer = client.GetContainer("APIView", "Reviews");
+            _packageNameManager = packageNameManager;
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -38,18 +41,18 @@ namespace APIViewWeb
 
         public async Task<ReviewModel> GetMasterReviewForPackageAsync(string language, string packageName)
         {
-            var reviews = await GetReviewsAsync(false, language, packageName, true);
+            var reviews = await GetReviewsAsync(false, language, packageName, ReviewType.Automatic);
             return reviews.FirstOrDefault();
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, bool? isAutomatic = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
 
-            //Add filter if looking for automatic or manual reviews only
-            if (isAutomatic != null)
+            //Add filter if looking for automatic, manual or PR reviews
+            if (filterType != null && filterType != ReviewType.All)
             {
-                queryStringBuilder.Append("AND (IS_DEFINED(r.IsAutomatic) ? r.IsAutomatic : false) = @isAutomatic ");
+               queryStringBuilder.Append("AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
             }
 
             // Add language and package name clause
@@ -68,7 +71,7 @@ namespace APIViewWeb
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
-                .WithParameter("@isAutomatic", isAutomatic)
+                .WithParameter("@filterType", filterType)
                 .WithParameter("@isClosed", isClosed);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
@@ -77,7 +80,33 @@ namespace APIViewWeb
                 var result = await itemQueryIterator.ReadNextAsync();
                 allReviews.AddRange(result.Resource);
             }
+
             return allReviews.OrderByDescending(r => r.LastUpdated);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName, ReviewType? filterType = null)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = false");
+            queryStringBuilder.Append(" AND r.ServiceName = @serviceName");
+            queryStringBuilder.Append(" AND r.PackageDisplayName = @packageDisplayName");
+            if (filterType != null && filterType != ReviewType.All)
+            {
+                queryStringBuilder.Append(" AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
+            }
+
+            var reviews = new List<ReviewModel>();
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@serviceName", serviceName)
+                .WithParameter("@packageDisplayName", packageDisplayName)
+                .WithParameter("@filterType", filterType);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviews.AddRange(result.Resource);
+            }
+            return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Azure.Sdk.Tools.CodeOwnersParser;
+using Newtonsoft.Json.Linq;
 using OutputColorizer;
 using System;
 using System.Collections.Generic;
@@ -99,7 +100,7 @@ namespace CreateRuleFabricBot.Rules.PullRequestLabel
 
         public override string GetTaskId()
         {
-            return $"AzureSDKPullRequestLabelFolder_{_owner}_{_repo}";
+            return $"AzureSDKPullRequestLabelFolder_{_repo}_{_owner}";
         }
     }
 }

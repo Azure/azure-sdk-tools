@@ -6,16 +6,8 @@ class Token:
     """
 
     def __init__(self, value="", kind=TokenKind.Text):
-        self.Kind = kind
-        self.DefinitionId = None
-        self.NavigateToId = None
-        self.Value = value
-
-    def set_definition_id(self, id):
-        self.DefinitionId = id
-
-    def set_navigation_id(self, id):
-        self.NavigateToId = id
-
-    def set_value(self, value):
-        self.Value = value
+        self.kind = kind
+        self.definition_id = None
+        self.cross_language_definition_id = None
+        self.navigate_to_id = None
+        self.value = value

@@ -3,7 +3,7 @@
 
 package main
 
-import "apiview/cmd"
+import "apiviewgo/cmd"
 
 func main() {
 	cmd.Execute()

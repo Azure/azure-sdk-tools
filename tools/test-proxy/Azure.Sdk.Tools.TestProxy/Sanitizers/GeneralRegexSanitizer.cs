@@ -23,11 +23,18 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>
         /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
-        public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".*", string groupForReplace = null)
+        /// <param name="condition">
+        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 
+        /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
+        /// </param>
+        public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
         {
             _newValue = value;
             _regexValue = regex;
             _groupForReplace = groupForReplace;
+            Condition = condition;
+
+            StringSanitizer.ConfirmValidRegex(regex);
 
             _bodySanitizer = new BodyRegexSanitizer(value, regex, groupForReplace);
             _uriSanitizer = new UriRegexSanitizer(value, regex, groupForReplace);

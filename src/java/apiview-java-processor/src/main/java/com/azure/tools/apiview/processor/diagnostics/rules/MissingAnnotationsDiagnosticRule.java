@@ -27,7 +27,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                         INFO,
                         makeId(cu),
                         "Classes named *Builder are potential candidates to have the @ServiceClientBuilder annotation applied.",
-                        "https://azure.github.io/azure-sdk/java_design.html#service-client-builder"));
+                        "https://azure.github.io/azure-sdk/java_introduction.html#service-client-creation"));
                 }
             } else if (className.endsWith("Client")) {
                 // check if the @ServiceClient annotation is present
@@ -36,7 +36,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                         INFO,
                         makeId(cu),
                         "Classes named *Client are potential candidates to have the @ServiceClient annotation applied.",
-                        "https://azure.github.io/azure-sdk/java_design.html#service-client"));
+                        "https://azure.github.io/azure-sdk/java_introduction.html#service-client"));
                 }
 
                 // check all public / protected methods in client classes. Because we can't easily determine if a method
@@ -59,7 +59,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                         makeId(cu),
                     "There is a low number of methods annotated with @ServiceMethod. " +
                             "Please review to ensure all appropriate methods have this annotation.",
-                        "https://azure.github.io/azure-sdk/java_design.html#service-client"));
+                        "https://azure.github.io/azure-sdk/java_introduction.html#service-client"));
                 }
             }
         });

@@ -91,7 +91,13 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
 }
 
 const apiModel = new ApiModel();
-apiModel.loadPackage(process.argv[2]);
+const fileName = process.argv[2];
+var versionString = "";
+if (fileName.includes("_"))
+{
+    versionString = fileName.split("_").pop().replace(".api.json", "");
+}
+apiModel.loadPackage(fileName);
 
 var navigation: IApiViewNavItem[] = [];
 var builder = new TokensBuilder();
@@ -104,8 +110,13 @@ for (const modelPackage of apiModel.packages) {
     }
 }
 
+var name = apiModel.packages[0].name;
+if (versionString != "")
+{
+    name += "(" +versionString + ")";
+}
 var apiViewFile: IApiViewFile = {
-    Name: apiModel.packages[0].name,
+    Name: name,
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name

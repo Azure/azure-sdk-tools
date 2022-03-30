@@ -1,0 +1,37 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - /packages/java-packages/codesnippet-maven-plugin/
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - /packages/java-packages/codesnippet-maven-plugin/
+
+stages:
+  - stage: Validate
+    jobs:
+      - job: Validate
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+
+        steps:
+          - task: Maven@3
+            displayName: 'Validate Build'
+            inputs:
+              mavenPomFile: 'packages/java-packages/codesnippet-maven-plugin/pom.xml'
+              goals: 'clean install'
+              options: '--batch-mode -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 --no-transfer-progress'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.8'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: false

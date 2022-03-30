@@ -2,10 +2,11 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -16,44 +17,42 @@ namespace Azure.Sdk.Tools.TestProxy
     public sealed class Admin : ControllerBase
     {
         private readonly RecordingHandler _recordingHandler;
+        private readonly ILogger _logger;
 
-        public Admin(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
-
-        [HttpPost]
-        public void StartSession()
+        public Admin(RecordingHandler recordingHandler, ILoggerFactory loggingFactory)
         {
-            // so far, nothing necessary here
+            _recordingHandler = recordingHandler;
+            _logger = loggingFactory.CreateLogger<Admin>();
         }
 
         [HttpPost]
-        public void StopSession()
+        public async Task Reset()
         {
-            // so far, nothing necessary here
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]
-        public void Reset()
+        public async Task IsAlive()
         {
-            _recordingHandler.SetDefaultExtensions();
-        }
-
-        [HttpGet]
-        public void IsAlive()
-        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             Response.StatusCode = 200;
         }
 
         [HttpPost]
-        public async void AddTransform()
+        public async Task AddTransform()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            ResponseTransform t = (ResponseTransform)GetTransform(tName, await GetBody(Request));
+            ResponseTransform t = (ResponseTransform)GetTransform(tName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
-                _recordingHandler.AddPlaybackTransform(recordingId, t);
+                _recordingHandler.AddTransformToRecording(recordingId, t);
             }
             else
             {
@@ -62,16 +61,17 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void AddSanitizer()
+        public async Task AddSanitizer()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await GetBody(Request));
+            RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
-                _recordingHandler.AddRecordSanitizer(recordingId, s);
+                _recordingHandler.AddSanitizerToRecording(recordingId, s);
             }
             else
             {
@@ -80,16 +80,17 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async void SetMatcher()
+        public async Task SetMatcher()
         {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await GetBody(Request));
+            RecordMatcher m = (RecordMatcher)GetMatcher(mName, await HttpRequestInteractions.GetBody(Request));
 
             if (recordingId != null)
             {
-                _recordingHandler.SetPlaybackMatcher(recordingId, m);
+                _recordingHandler.SetMatcherForRecording(recordingId, m);
             }
             else
             {
@@ -99,79 +100,110 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public object GetSanitizer(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);
         }
 
         public object GetTransform(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Transforms.", name, new HashSet<string>() { }, documentBody: body);
         }
 
         public object GetMatcher(string name, JsonDocument body)
         {
-            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, body);
+            return GenerateInstance("Azure.Sdk.Tools.TestProxy.Matchers.", name, new HashSet<string>() { }, documentBody:body);
         }
 
-        public object GenerateInstance(string typePrefix, string name, JsonDocument body = null)
+        private object GenerateInstance(string typePrefix, string name, HashSet<string> acceptableEmptyArgs, JsonDocument documentBody = null)
         {
-            try
+            Type t = Type.GetType(typePrefix + name);
+
+            if (t == null)
             {
-                Type t = Type.GetType(typePrefix + name);
+                throw new HttpException(HttpStatusCode.BadRequest, String.Format("Requested type {0} is not not recognized.", typePrefix + name));
+            }
 
-                if (body != null)
+            var arg_list = new List<Object> { };
+
+            // we are deliberately assuming here that there will only be a single constructor
+            var ctor = t.GetConstructors()[0];
+            var paramsSet = ctor.GetParameters();
+
+            // walk across our constructor params. check inside the body for a resulting value for each of them
+            foreach (var param in paramsSet)
+            {
+                if (documentBody != null && documentBody.RootElement.TryGetProperty(param.Name, out var jsonElement))
                 {
-                    var arg_list = new List<Object> { };
-
-                    // we are deliberately assuming here that there will only be a single constructor
-                    var ctor = t.GetConstructors()[0];
-                    var paramsSet = ctor.GetParameters();
-
-                    // walk across our constructor params. check inside the body for a resulting value for each of them
-                    foreach (var param in paramsSet)
+                    if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
-                        if (body.RootElement.TryGetProperty(param.Name, out var jsonElement))
-                        {
-                            var valueResult = jsonElement.GetString();
-                            arg_list.Add((object)valueResult);
-                        }
-                        else
-                        {
-                            if (param.IsOptional)
-                            {
-                                arg_list.Add(null);
-                            }
-                            else
-                            {
-                                // TODO: make this a specific argument not found exception
-                                throw new Exception(String.Format("Required parameter key {0} was not found in the request body.", param));
-                            }
-                        }
+                        _logger.LogDebug("Request Body Content" + JsonSerializer.Serialize(documentBody.RootElement));
                     }
 
-                    return Activator.CreateInstance(t, arg_list.ToArray());
+                    object argumentValue = null;
+                    switch (jsonElement.ValueKind)
+                    {
+                        case JsonValueKind.Null:
+                        case JsonValueKind.String:
+                            argumentValue = jsonElement.GetString();
+                            break;
+                        case JsonValueKind.True:
+                        case JsonValueKind.False:
+                            argumentValue = jsonElement.GetBoolean();
+                            break;
+                        case JsonValueKind.Object:
+                            try
+                            {
+                                argumentValue = Activator.CreateInstance(param.ParameterType, new List<object> { jsonElement }.ToArray());
+                            }
+                            catch (Exception e)
+                            {
+                                if (e.InnerException is HttpException)
+                                {
+                                    throw e.InnerException;
+                                }
+                                else throw;
+                            }
+                            break;
+                        default:
+                            throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
+                    }
+
+                    if(argumentValue == null || (argumentValue is string stringResult && string.IsNullOrEmpty(stringResult)))
+                    {
+                        if (!acceptableEmptyArgs.Contains(param.Name))
+                        {
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                        }
+                    }
+                        
+                    arg_list.Add((object)argumentValue);
                 }
                 else
                 {
-                    return Activator.CreateInstance(t);
+                    if (param.IsOptional)
+                    {
+                        arg_list.Add(param.DefaultValue);
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
+                    }
                 }
             }
-            catch
+
+            try
             {
-                throw new Exception(String.Format("Requested type {0} is not not recognized.", typePrefix + name));
+                return Activator.CreateInstance(t, arg_list.ToArray());
+            }
+            catch(Exception e)
+            {
+                if (e.InnerException is HttpException)
+                {
+                    throw e.InnerException;
+                }
+                else throw;
             }
         }
 
 
-        private async static Task<JsonDocument> GetBody(HttpRequest req)
-        {
-            if (req.ContentLength > 0)
-            {
-                var result = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
-
-                return result;
-            }
-
-            return null;
-        }
     }
 }

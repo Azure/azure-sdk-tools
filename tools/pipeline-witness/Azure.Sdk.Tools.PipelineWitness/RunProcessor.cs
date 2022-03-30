@@ -1,61 +1,56 @@
-﻿using Azure.Cosmos;
-using Azure.Identity;
-using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
-using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-using Azure.Security.KeyVault.Secrets;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Caching.Memory;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+using Azure.Cosmos;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.Organization.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using Microsoft.WindowsAzure.Storage.Blob.Protocol;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+
+using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
+using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
     public class RunProcessor
     {
-        public RunProcessor(IFailureAnalyzer failureAnalyzer, ILogger<RunProcessor> logger, IMemoryCache cache, SecretClient secretClient, CosmosClient cosmosClient, VssConnection vssConnection)
+        public RunProcessor(
+            IFailureAnalyzer failureAnalyzer,
+            ILogger<RunProcessor> logger,
+            CosmosClient cosmosClient,
+            VssConnection vssConnection,
+            BlobUploadProcessor blobUploadProcessor)
         {
-            this.failureAnalyzer = failureAnalyzer;
-            this.logger = logger;
-            this.cache = cache;
-            this.secretClient = secretClient;
-            this.cosmosClient = cosmosClient;
-            this.vssConnection = vssConnection;
+            this.failureAnalyzer = failureAnalyzer ?? throw new ArgumentNullException(nameof(failureAnalyzer));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.blobUploadProcessor = blobUploadProcessor ?? throw new ArgumentNullException(nameof(blobUploadProcessor));
+            this.cosmosClient = cosmosClient ?? throw new ArgumentNullException(nameof(cosmosClient));
+            this.vssConnection = vssConnection ?? throw new ArgumentNullException(nameof(vssConnection));
         }
 
-        private IFailureAnalyzer failureAnalyzer;
-        private ILogger<RunProcessor> logger;
-        private IMemoryCache cache;
-        private SecretClient secretClient;
-        private CosmosClient cosmosClient;
-        private VssConnection vssConnection;
+        private const string Account = "azure-sdk";
+        private readonly IFailureAnalyzer failureAnalyzer;
+        private readonly ILogger<RunProcessor> logger;
+        private readonly CosmosClient cosmosClient;
+        private readonly VssConnection vssConnection;
+        private readonly BlobUploadProcessor blobUploadProcessor;
 
         private bool IsValidAzureDevOpsUri(Uri uri)
         {
             // We want to throw if we start getting messages from other Azure DevOps
             // organizations since currently Pipeline Witness is designed to only work
             // against our instance.
-            return uri.Host == "dev.azure.com" && uri.PathAndQuery.StartsWith("/azure-sdk/");
+            return uri.Host == "dev.azure.com" && uri.PathAndQuery.StartsWith($"/{Account}/");
         }
 
         public async Task ProcessRunAsync(Uri runUri)
         {
             if (!IsValidAzureDevOpsUri(runUri))
             {
-                throw new ArgumentOutOfRangeException("Run URI does not point to the Azure SDK instance of Azure DevOps");
+                throw new ArgumentOutOfRangeException(
+                    "Run URI does not point to the Azure SDK instance of Azure DevOps");
             }
 
             var runUriPath = runUri.AbsolutePath;
@@ -67,8 +62,37 @@ namespace Azure.Sdk.Tools.PipelineWitness
             var buildClient = vssConnection.GetClient<BuildHttpClient>();
             var projectClient = vssConnection.GetClient<ProjectHttpClient>();
 
-            var build = await buildClient.GetBuildAsync(projectGuid, runId);
             var project = await projectClient.GetProject(projectGuid.ToString());
+
+            // Avoid unhandled BuildNotFoundException by folding it into the following null check.
+            Build build = null;
+
+            try
+            {
+                build = await buildClient.GetBuildAsync(projectGuid, runId);
+            }
+            catch (BuildNotFoundException)
+            {
+            }
+
+            if (build == null)
+            {
+                this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
+                return;
+            }
+
+            if (build.Deleted)
+            {
+                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
+                return;
+            }
+
+            if (build.StartTime == null || build.FinishTime == null)
+            {
+                this.logger.LogWarning("Skipping build with null start or finish time. Project: {Project}, BuildId: {BuildId}", project.Name, runId);
+                return;
+            }
+
             var pipeline = await buildClient.GetDefinitionAsync(project.Id, build.Definition.Id);
             var timeline = await buildClient.GetBuildTimelineAsync(projectGuid, runId);
 
@@ -78,20 +102,22 @@ namespace Azure.Sdk.Tools.PipelineWitness
             if (timeline != null)
             {
                 agentDurationInSeconds = (from record in timeline.Records
-                                            where record.RecordType == "Task"
-                                            where (record.Name == "Initialize job" || record.Name == "Finalize Job") // Love consistency in capitalization!
-                                            group record by record.ParentId into job
-                                            let jobStartTime = job.Min(jobRecord => jobRecord.StartTime)
-                                            let jobFinishTime = job.Max(jobRecord => jobRecord.FinishTime)
-                                            let agentDuration = jobFinishTime - jobStartTime
-                                            select agentDuration.Value.TotalSeconds).Sum();
+                    where record.RecordType == "Task"
+                    where (record.Name == "Initialize job" ||
+                        record.Name == "Finalize Job") // Love consistency in capitalization!
+                    group record by record.ParentId
+                    into job
+                    let jobStartTime = job.Min(jobRecord => jobRecord.StartTime)
+                    let jobFinishTime = job.Max(jobRecord => jobRecord.FinishTime)
+                    let agentDuration = jobFinishTime - jobStartTime
+                    select agentDuration?.TotalSeconds ?? 0).Sum();
 
                 queueDurationInSeconds = (from taskRecord in timeline.Records
-                                            where taskRecord.RecordType == "Task"
-                                            where taskRecord.Name == "Initialize job"
-                                            join jobRecord in timeline.Records on taskRecord.ParentId equals jobRecord.Id
-                                            let queueDuration = taskRecord.StartTime - jobRecord.StartTime
-                                            select queueDuration.Value.TotalSeconds).Sum();
+                    where taskRecord.RecordType == "Task"
+                    where taskRecord.Name == "Initialize job"
+                    join jobRecord in timeline.Records on taskRecord.ParentId equals jobRecord.Id
+                    let queueDuration = taskRecord.StartTime - jobRecord.StartTime
+                    select queueDuration?.TotalSeconds ?? 0).Sum();
             }
 
             var run = new Run()
@@ -144,6 +170,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             var container = await GetItemContainerAsync("azure-pipelines-runs");
             await container.UpsertItemAsync(run);
+
+            await this.blobUploadProcessor.UploadBuildBlobsAsync(Account, build, timeline);
         }
 
         public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)
@@ -152,6 +180,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             if (timeline == null) return new Failure[0];
 
             var failures = await failureAnalyzer.AnalyzeFailureAsync(build, timeline);
+
             return failures.ToArray();
         }
 

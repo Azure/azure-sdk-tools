@@ -1,0 +1,198 @@
+//go:build go1.16
+// +build go1.16
+
+{{copyright}}
+
+package {{packageName}}_test
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"runtime/debug"
+	"testing"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+    "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"golang.org/x/net/http2"
+)
+{{imports}}
+
+var (
+	ctx            context.Context
+    options        arm.ClientOptions
+	cred           azcore.TokenCredential
+	err            error
+	mockHost       string
+)
+
+{% for exampleGroup in exampleGroups %}
+{% if exampleGroup.operation.language.default.name == exampleGroup.operation.language.go.name %}
+func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operation.language.go.name}}(t *testing.T) {
+{%- for example in exampleGroup.examples %}
+    // From example {{example.originalFile}}
+	{%- if sendExampleId %}
+	ctx = runtime.WithHTTPHeader(ctx, map[string][]string{
+        "example-id": {"{{example.name.split('\\').join('\\\\').split('"').join('\\"')}}"},
+    })
+	{%- endif %}
+	{%- if loop.first %}
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+    {%- else %}
+    client = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+	{%- endif %}
+	{%- if example.returnInfo.length == 2 %}
+        {%- if example.isLRO %}
+            poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- else %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        {%- endif %}
+        if err != nil {
+            t.Fatalf("Failed to get result for example {{example.originalFile}}: %v", err)
+        }
+        {%- if example.isLRO %}
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
+            if err != nil {
+                t.Fatalf("Failed to get LRO result for example {{example.originalFile}}: %v", err)
+            }
+        {%- endif %}
+    {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
+        pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+        for {
+            nextResult := pager.NextPage(ctx)
+            if err := pager.Err(); err != nil {
+                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
+            }
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            if nextResult {
+                pagerExampleRes := {{example.responseOutput}}
+                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}}) {
+                    exampleResJson, _ := json.Marshal(pagerExampleRes)
+                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}})
+                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                }
+            } else {
+                t.Logf("Page end.")
+                break
+            }
+            {%- else %}
+            if !nextResult {
+                break
+            }
+            {%- endif %}
+        }
+    {%- else %}
+        client.{{example.opName}}({{example.methodParametersOutput}})
+    {%- endif %}
+
+    {%- if example.isLRO and example.isPageable and example.checkResponse %}
+        for {
+            nextResult := res.NextPage(ctx)
+            if err := res.Err(); err != nil {
+                t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
+            }
+            {%- if example.checkResponse and verifyResponse%}
+            // Response check
+            if nextResult {
+                pagerExampleRes := {{example.responseOutput}}
+                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}}) {
+                    exampleResJson, _ := json.Marshal(pagerExampleRes)
+                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}})
+                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+                }
+            } else {
+                t.Logf("Page end.")
+                break
+            }
+            {%- else %}
+            if !nextResult {
+                break
+            }
+            {%- endif %}
+        }
+    {%- endif %}
+        
+    {%- if example.checkResponse and not example.isPageable and verifyResponse%}
+        // Response check
+        {
+            exampleRes := {{example.responseOutput}}
+            {%- if example.responseHasLROState %}
+            exampleRes.Properties.ProvisioningState = {{packageName}}.ProvisioningStateSucceeded.ToPtr()
+            {%- endif %}
+            if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
+                exampleResJson, _ := json.Marshal(exampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})
+                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
+            }
+        }
+    {%- endif %}
+    {%- if not loop.last %}
+
+    {% endif %}
+{%- endfor %}
+{%- if exampleGroup.examples|length <=0 %}
+	t.Skip("Warning: No test steps for this operation!")
+{%- endif %}
+}
+{%- endif %}
+{% endfor %}
+
+// TestMain will exec each test
+func TestMain(m *testing.M) {
+	setUp()
+	retCode := m.Run() // exec test and this returns an exit code to pass to os
+	tearDown()
+	os.Exit(retCode)
+}
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
+func setUp() {
+	ctx = context.Background()
+	mockHost = getEnv("AZURE_VIRTUAL_SERVER_HOST", "https://localhost:8443")
+
+	tr := &http.Transport{}
+	if err := http2.ConfigureTransport(tr); err != nil {
+		fmt.Printf("Failed to configure http2 transport: %v", err)
+	}
+	tr.TLSClientConfig.InsecureSkipVerify = true
+	client := &http.Client{Transport: tr}
+	
+    cred = &MockCredential{}
+
+	options = arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			Logging: policy.LogOptions{
+				IncludeBody: true,
+			},
+			Transport: client,
+		},
+		Endpoint: arm.Endpoint(mockHost),
+	}
+}
+
+func tearDown() {
+
+}
+
+type MockCredential struct {
+}
+
+func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (*azcore.AccessToken, error) {
+	return &azcore.AccessToken{Token: "MockToken", ExpiresOn: time.Now().Add(time.Hour * 24).UTC()}, nil
+}

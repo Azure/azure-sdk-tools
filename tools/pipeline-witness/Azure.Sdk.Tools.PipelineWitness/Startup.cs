@@ -1,17 +1,22 @@
-﻿using Azure.Cosmos;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Text;
+
+using Azure.Cosmos;
 using Azure.Sdk.Tools.PipelineWitness;
+using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
+using Microsoft.VisualStudio.Services.TestResults.WebApi;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 
@@ -25,14 +30,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return websiteResourceGroupEnvironmentVariable;
         }
 
+        private string GetBuildBlobStorageEnvironmentVariable()
+        {
+            var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
+            return environmentVariable;
+        }
+
         public override void Configure(IFunctionsHostBuilder builder)
         {
             var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
+            var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
 
             builder.Services.AddAzureClients(builder =>
             {
                 var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
                 builder.AddSecretClient(keyVaultUri);
+
+                builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
             });
 
             builder.Services.AddSingleton<CosmosClient>(provider =>
@@ -69,9 +83,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 return connection;
             });
 
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<BuildHttpClient>());
+            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
+
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<RunProcessor>();
+            builder.Services.AddSingleton<BlobUploadProcessor>();
+            builder.Services.AddSingleton<BuildLogProvider>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
             builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();

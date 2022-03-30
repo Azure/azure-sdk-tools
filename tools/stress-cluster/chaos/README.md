@@ -9,18 +9,21 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Quick Testing with no Dependencies](#quick-testing-with-no-dependencies)
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
+     * [Stress Test Metadata](#stress-test-metadata)
      * [Stress Test Secrets](#stress-test-secrets)
+     * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
      * [Helm Chart Dependencies](#helm-chart-dependencies)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and values.yaml](#scenarios-and-valuesyaml)
+     * [Node Size Requirements](#node-size-requirements)
   * [Deploying a Stress Test](#deploying-a-stress-test)
   * [Configuring faults](#configuring-faults)
      * [Faults via Dashboard](#faults-via-dashboard)
      * [Faults via Config](#faults-via-config)
-  * [Running the example test with a network fault](#running-the-example-test-with-a-network-fault)
-     * [Configure Faults via Dashboard](#configure-faults-via-dashboard)
+     * [Debugging chaos resources and events](#debugging-chaos-resources-and-events)
+     * [Running the example test with a network fault](#running-the-example-test-with-a-network-fault)
 
 
 Technologies used:
@@ -41,12 +44,16 @@ You will need the following tools to create and run tests:
 
 ## Access
 
-To access the cluster, run the following:
+To access the cluster, run the following. These commands are unnecessary for stress test deployment but can be useful
+for verifying permissions and directly interacting with containers via the kubernetes command line tool `kubectl`. For
+running the build and deployment script, see [Deploying a Stress Test](#deploying-a-stress-test).
 
-```
+```bash
+# Authenticate to Azure
 az login
-# Download the kubeconfig for the cluster
-az aks get-credentials --subscription 'Azure SDK Test Resources' -g rg-stress-test-cluster- -n stress-test
+
+# Download the kubeconfig for the cluster (creates a 'context' named 'stress-test')
+az aks get-credentials --subscription "Azure SDK Developer Playground" -g rg-stress-cluster-test -n stress-test
 ```
 
 You should now be able to access the cluster. To verify, you should see a list of namespaces when running the command:
@@ -65,17 +72,31 @@ The Dockerfile for your image should contain your test code/artifacts. See [docs
 
 To create any resources in the cluster, you will need to create a namespace for them to live in:
 
-```
+```bash
+# For simplicity of tracking use your user alias as the name of your namespace.
 kubectl create namespace <your alias>
-kubectl label namespace <namespace> owners=<your alias>
 ```
 
-You will then need to build and push your container image to a registry the cluster has access to:
+You will then need to build and push your container image to an Azure Container Registry the cluster has access to.
+
+Get the default container registry for the stress testing Kubernetes cluster:
+
+```bash
+az acr list -g rg-stress-cluster-test --subscription "Azure SDK Developer Playground" --query "[0].loginServer"
+# Outputs: <registry server host name, ex: 'myregistry.azurecr.io'>
+```
+
+Login to the azure container registry. The below command will add a token to the registy to the local docker config. This must be refreshed daily.
 
 ```
-az acr login -n stresstestregistry
-docker build . -t stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
-docker push stresstestregistry.azurecr.io/<your name>/<test job image name>:<version>
+az acr login -n <registry name>
+```
+
+Build and push development image to stress test cluster registry
+
+```bash
+docker build . -t "<registry server host name from above>/<your alias>/<test job image name>:<version>"
+docker push "<registry server host name from above>/<your username>/<test job image name>:<version>"
 ```
 
 To define a job that utilizes your test, create a file called testjob.yaml, including the below contents (with fields replaced):
@@ -92,6 +113,7 @@ spec:
       containers:
       - name: <container name, pick anything>
         image: <container image name>
+        imagePullPolicy: Always
         command: ["test entrypoint command/binary"]
         args: [<args string array for your test command>]
       restartPolicy: Never
@@ -140,26 +162,27 @@ The usage of helm charts allows for two primary scenarios:
 - Stress tests can easily take dependencies on core configuration and templates required to interact with the cluster
 - Stress tests can easily be deployed and removed via the `helm` command line tool.
 
+**To quickly bootstrap a stress test package configuration, see the [stress test generator](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/generator/README.md)**
+
 ### Layout
 
-The basic layout for a stress test is the following (see `examples/stress_deployment_example` for an example):
+The basic layout for a stress test is the following (see [`examples/stress_deployment_example`](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-deployment-example) for an example):
 
 ```
 <stress test root directory>
-    Dockerfile                   # A Dockerfile for building the stress test image
-    test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
-    parameters.json              # An ARM template parameters file that will be used at runtime along with the ARM template
+    Dockerfile                          # A Dockerfile for building the stress test image
+    stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
-    Chart.yaml                   # A YAML file containing information about the helm chart and its dependencies
-    templates/                   # A directory of helm templates that will generate Kubernetes manifest files.
-                                 # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
+    Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
+    templates/                          # A directory of helm templates that will generate Kubernetes manifest files.
+                                        # Most commonly this will contain a Job/Pod spec snippet and a chaos mesh manifest.
 
     # Optional files/directories
 
     values.yaml                  # Any default helm template values for this chart, e.g. a `scenarios` list
     <misc scripts/configs>       # Any language specific files for building/running/deploying the test
-    <source directories>         # Directories containing code for stress tests
-    <bicep modules>              # Any additional bicep module files/directories referenced by test-resources.bicep
+    <source dirs, e.g. src/>     # Directories containing code for stress tests
+    <bicep modules>              # Any additional bicep module files/directories referenced by stress-test-resources.bicep
 ```
 
 ### Stress Test Metadata
@@ -170,7 +193,7 @@ Fields in `Chart.yaml`
 1. The `name` field will get used as the helm release name. To deploy instances of the same stress test release in parallel, update this field.
 1. The `annotations.stressTest` field must be set to true for the script to discover the test.
 1. The `annotations.namespace` field must be set, and governs which kubernetes namespace the stress test package will be
-   installed into as a helm release.
+   installed into as a helm release when deployed by CI. Locally, this defaults to your username instead.
 1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
    script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
@@ -198,14 +221,38 @@ APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 RESOURCE_GROUP=<value>
 ```
 
+### Stress Test File Share
+
+Stress tests are encouraged to use app insights logs and metrics as much as possible for diagnostics. However there
+are some times where larger files (such as verbose logs, heap dumps, packet captures, etc.) need to be persisted for
+a duration longer than the lifespan of the test itself.
+
+All stress tests have an azure file share automatically mounted into the container by default. The path to this share
+is available via the environment variable `$DEBUG_SHARE` and is global to all tests in the cluster. 
+The `$DEBUG_SHARE` path includes the namespace and pod name of the test in order to avoid path overlaps with other
+tests. The `$DEBUG_SHARE_ROOT` path is also available, which points to the root of the file share, but this directory
+should only be used in special circumstances and with caution.
+
+NOTE: The share directory path MUST be created by the test before using it.
+
+After writing debug files to the share, the files can be viewed by navigating to the [file share
+portal](https://aka.ms/azsdk/stress/share),
+selecting the `namespace/<pod name>` directory, and clicking the download link for any files in that directory.
+
+See
+[stress-debug-share-example](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples/stress-debug-share-example)
+for example usage.
+
 ### Stress Test Azure Resources
 
-Stress test resources can either be defined as azure bicep files, or an ARM template directly, provided there is
-a `chart/test-resources.json` file in place before running `helm install`.
+Stress test resources can either be defined as azure bicep files, or an ARM template directly named
+`stress-test-resources.[json|bicep]`. If using bicep, the [stress test deploy
+script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1)
+will compile an ARM template named `stress-test-resources.json` from the bicep file.
 The stress test cluster and config boilerplate will handle running ARM deployments in an init container before
 stress test container startup.
 
-The bicep file should output at least the resource group name, which will be injected into the stress test env file.
+The bicep/ARM file should output at least the resource group name, which will be injected into the stress test env file.
 
 ```
 // Dummy parameter to handle defaults the script passes in
@@ -223,19 +270,9 @@ output RESOURCE_GROUP string = resourceGroup().name
 output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-A stress test package must include a `parameters.json` file as well, which can either be empty or contain parameters:
-
-```
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": { }
-}
-```
-
 ### Helm Chart Dependencies
 
-The `<chart root>/chart/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
+The `<chart root>/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
 ```
 apiVersion: v2
@@ -244,12 +281,13 @@ description: <description>
 version: 0.1.0
 appVersion: v0.1
 annotations:
-  stressTest: 'true'
-  namespace: <your stress test namespace>
+  stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
+  namespace: <your stress test namespace, e.g. python>
+  <optional key/value annotations for filtering>
 
 dependencies:
 - name: stress-test-addons
-  version: 0.1.1
+  version: 0.1.6
   repository: https://stresstestcharts.blob.core.windows.net/helm/
 ```
 
@@ -276,6 +314,7 @@ spec:
   containers:
     - name: deployment-example
       image: mcr.microsoft.com/azure-cli
+      imagePullPolicy: Always
       command: ['bash', '-c']
       args:
         - |
@@ -291,7 +330,7 @@ spec:
 
 The most common way of configuring stress against test jobs is via [Chaos Mesh](https://chaos-mesh.org/).
 
-Any chaos experiment manifests can be placed in the `<stress test directory>/chart/templates/`.
+Any chaos experiment manifests can be placed in the `<stress test directory>/templates/`.
 
 Chaos experiments can be targeted against test jobs via namespace and label selectors.
 
@@ -319,19 +358,21 @@ selector:
 For more detailed examples, see:
 
 - [Chaos Experiments](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment) docs for all possible types
-- `./examples/network_stress_example/chart/templates/network_loss.yaml` for an example network loss manifest within a helm chart
+- `./examples/network_stress_example/templates/network_loss.yaml` for an example network loss manifest within a helm chart
 - The [Faults via Dashboard section](#faults-via-dashboard) for generating the configs from the UI
 
 ### Scenarios and values.yaml
 
-For cases where the same job config must be run for multiple instances, a `scenarios` list can be specified in a file called `values.yaml`.
+In order to run multiple tests but re-use the same job yaml, a special config key called `scenarios` can be used. Under
+the hood, the stress test tools will duplicate the job yaml for each scenario. A common pattern is to represent each
+test case with a file and/or argument passed to the stress program via the container command.
 
 For example, given a stress test package with multiple tests represented as separate files:
 
 ```
 values.yaml
 templates/
-app/
+src/
   scenarioLongRunning.js
   scenarioPeekMessages.js
   scenarioBatchReceive.js
@@ -355,6 +396,45 @@ scenarios:
 
 The underlying `stress-test-addons` helm library will handle a scenarios list automatically, and deploy multiple instances of the stress test job, one for each scenario.
 
+### Node Size Requirements
+
+The stress test cluster is deployed with several node SKUs (see [agentPoolProfiles declaration and
+variables](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/cluster.bicep)), with tests defaulting to the SKU labeled 'default'.
+By adding the `nodeSelector` field to the job spec, you can override which nodes the test container will
+be provisioned to. For support adding a custom or dedicated node SKU, reach out to the EngSys team.
+
+Available common SKUs in stress test clusters:
+
+- 'default' - Standard\_D2\_v3
+- 'highMem' - Standard\_D4ds\_v4
+
+To deploy a stress test to a custom node (see also
+[example](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/network-stress-example/templates/testjob.yaml)):
+
+```
+spec:
+  nodeSelector:
+    sku: 'highMem'
+  containers:
+    < container spec ... >
+```
+
+To add a new temporary nodepool (for cluster admins/engsys), see example below:
+
+```
+az aks nodepool add \
+    -g <cluster group> \
+    --cluster-name <cluster name> \
+    -n <nodepool name> \
+    --enable-encryption-at-host \
+    --enable-cluster-autoscaler \
+    --node-count 1 \
+    --min-count 1 \
+    --max-count 3 \
+    --node-vm-size <azure vm sku> \
+    --labels "sku=<nodepool sku label>"
+```
+
 ## Deploying a Stress Test
 
 The stress test deployment is best run via the [stress test deploy
@@ -371,18 +451,22 @@ cd <stress test search directory>
 
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
     -Login `
-    -PushImages `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -PushImages
 ```
 
 To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
 made).
 
 ```
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
+```
+
+To run multiple instances of the same test in parallel, add a different namespace override 
+for each test deployment. If not specified, it will default to the shell username when run locally.
+
+```
 <repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Repository <your name> `
-    -DeployId <tag for scoping>
+    -Namespace my-test-instance-2 `
 ```
 
 You can check the progress/status of your installation via:
@@ -409,15 +493,15 @@ To check the status of the stress test job resources:
 # List stress test pods
 kubectl get pods -n <stress test namespace> -l release=<stress test name>
 
-# Get logs from azure-deployer init container, if deploying resources. Omit `-c azure-deployer` to get main container
+# Get logs from the init-azure-deployer init container, if deploying resources. Omit `-c init-azure-deployer` to get main container
 logs.
-kubectl logs -n <stress test namespace> <stress test pod name> -c azure-deployer
+kubectl logs -n <stress test namespace> <stress test pod name> -c init-azure-deployer
 
 # If empty, there may have been startup failures
 kubectl describe pod -n <stress test namespace> <stress test pod name>
 ```
 
-If deploying resources, once the `azure-deployer` init container is completed and the stress test pod is in a `Running` state,
+If deploying resources, once the `init-azure-deployer` init container is completed and the stress test pod is in a `Running` state,
 you can quick check the local logs:
 
 ```
@@ -430,10 +514,12 @@ Faults can be configured via kubernetes manifests or via the UI (which is a help
 
 ### Faults via Dashboard
 
+NOTE: The chaos mesh dashboard is just a helper for generating manifest under the hood. You can create and submit these directly as well. See the [docs](https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/).
+
 To configure faults via the UI, make sure you can access the chaos dashboard by running the below command, and navigating to `localhost:2333` in your browser.
 
 ```
-kubectl port-forward -n chaos-testing svc/chaos-dashboard 2333:2333
+kubectl port-forward -n stress-infra svc/chaos-dashboard 2333:2333
 ```
 
 From the chaos dashboard, you can click `New Experiment` and choose your fault and parameters from there.
@@ -446,16 +532,85 @@ a label like `job-name: <your job name>` in the drop down.
 
 See [Chaos Manifest](#chaos-manifest).
 
-## Running the example test with a network fault
+### Debugging chaos resources and events
+
+There are a few ways to check on the status of your chaos resources, after your stress test pod(s) reach a `Running` state.
+
+From the [test cluster dashboard](https://aka.ms/azsdk/stress/dashboard), select your stress test pods from the dropdown
+and verify there are entries in the logs in the **Chaos Daemon Events** table.
+
+On the stress cluster, you can view the status of your chaos resources. For example, to check on all the network chaos
+resources you have deployed:
+
+```
+kubectl get networkchaos -n <your alias>
+```
+
+Pick the one relevant to your test and print the detailed view:
+
+```
+kubectl get networkchaos -n <your alias> <networkchaos resource name> -o yaml
+```
+
+The yaml output should show a success or failure:
+
+**Example Success**
+
+```
+  status:
+    experiment:
+      duration: 10.000411955s
+      endTime: "2021-12-09T01:20:57Z"
+      phase: Waiting
+      podRecords:
+      - action: loss
+        hostIP: 10.240.0.7
+        message: This is a source pod.network traffic control action duration 10s
+        name: stress-python-eventhubs-stress-test-1-m2hhh
+        namespace: yuling
+        podIP: 10.244.1.40
+      startTime: "2021-12-09T01:20:47Z"
+    scheduler:
+      nextRecover: "2021-12-09T01:21:27Z"
+      nextStart: "2021-12-09T01:21:17Z"
+```
+
+**Example Failure**
+
+```
+status:
+  experiment:
+    phase: Failed
+  failedMessage: 'lookup some-bad-host.foobar.net;:
+    no such host'
+  scheduler: {}
+```
+
+For chaos resource types other than network chaos, you can also query these by their `kind`. To list those available:
+
+```
+⇉ ⇉ ⇉ kubectl api-resources | grep chaos-mesh.org
+awschaos                                       chaos-mesh.org/v1alpha1                true         AwsChaos
+dnschaos                                       chaos-mesh.org/v1alpha1                true         DNSChaos
+httpchaos                                      chaos-mesh.org/v1alpha1                true         HTTPChaos
+iochaos                                        chaos-mesh.org/v1alpha1                true         IoChaos
+jvmchaos                                       chaos-mesh.org/v1alpha1                true         JVMChaos
+kernelchaos                                    chaos-mesh.org/v1alpha1                true         KernelChaos
+networkchaos                                   chaos-mesh.org/v1alpha1                true         NetworkChaos
+podchaos                                       chaos-mesh.org/v1alpha1                true         PodChaos
+podiochaos                                     chaos-mesh.org/v1alpha1                true         PodIoChaos
+podnetworkchaos                                chaos-mesh.org/v1alpha1                true         PodNetworkChaos
+stresschaos                                    chaos-mesh.org/v1alpha1                true         StressChaos
+timechaos                                      chaos-mesh.org/v1alpha1                true         TimeChaos
+```
+
+### Running the example test with a network fault
 
 Follow the below commands to execute a sample test.
 
 ```
 cd ./examples/network_stress_example
-# This will build the docker images and helm chart dependencies
-./build.sh
-# This will log in to the cluster and container registry, publish the image and the chart
-./deploy.sh <your alias>
+pwsh ../../../../../eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages
 ```
 
 Verify the pods in the job have booted and are running ok (with chaos network failures):
@@ -465,7 +620,7 @@ Verify the pods in the job have booted and are running ok (with chaos network fa
 NAME                               READY   STATUS    RESTARTS   AGE
 network-example-0629200737-bk647   1/1     Running   0          89s
 
-⇉ ⇉ ⇉ kubectl logs -n <YOUR NAMESPACE> network-example-0629200737-bk647 -f
+⇉ ⇉ ⇉ kubectl logs -n <your alias> network-example-0629200737-bk647 -f
 Spider mode enabled. Check if remote file exists.
 --2021-06-09 00:51:52--  http://www.bing.com/
 Resolving www.bing.com (www.bing.com)... 204.79.197.200, 13.107.21.200, 2620:1ec:c11::200
@@ -474,17 +629,3 @@ Connecting to www.bing.com (www.bing.com)|13.107.21.200|:80... failed: Connectio
 Connecting to www.bing.com (www.bing.com)|2620:1ec:c11::200|:80... failed: Cannot assign requested address.
 Giving up.
 ```
-
-### Configure Faults via Dashboard
-
-Navigate to the chaos dashboard at `localhost:2333`
-
-NOTE: The chaos mesh dashbaord is just a helper for generating manifest under the hood. You can create and submit these directly as well. See the [docs](https://chaos-mesh.org/docs/chaos_experiments/networkchaos_experiment).
-
-1. From the UI, click `New Experiment`
-1. Select `Network Attack` and then select `LOSS`
-1. In the `Loss` textbox, enter `100`
-1. Scroll down to `Scope`. Enter your namespace in the `Namespace Selectors` field, and find a Label Selector that matches your test (e.g. `testInstance: network-example-<your alias>`).
-1. Enter a name for experiment like `<YOUR NAME>-<chaos type>`.
-1. Enable `Run Continuously`
-1. Click through the multiple `Submit` buttons.

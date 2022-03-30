@@ -38,6 +38,16 @@ html {
     }
 }
 
+// Enable clear button in search input
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    margin-left: .4em;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23777'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>");
+    cursor: pointer;
+  }
+
 .border-top {
     border-top: 1px solid #e5e5e5;
 }
@@ -117,13 +127,6 @@ form.comment {
     padding: 12px;
 }
 
-.comment-actions {
-    float: right;
-    margin-left: 10px;
-    margin-right: -5px;
-    max-height: 50px;
-}
-
 .comment-row {
     border: 1px solid gray;
     border-spacing: 0;
@@ -142,7 +145,6 @@ form.comment {
 }
 
 .comment-contents {
-    max-width: 592px;
     margin-bottom: 3px;
     overflow-wrap: break-word;
 }
@@ -155,6 +157,8 @@ form.comment {
 
 .comment-holder {
     max-width: 780px;
+    position: sticky;
+    left: 10px;
 }
 
 .comment-icon {
@@ -208,12 +212,20 @@ form.comment {
     tab-size: 8;
     border-spacing: 0;
     background-color: white; // prevents code-window from overlapping stickySidebar
-    table-layout: fixed;
     width: 100%;
 }
 
+.code-lines-header {
+    border-bottom: 1px solid #DEE2E6;
+    vertical-align: middle;
+    padding-top: 9px;
+    padding-left: 10px;
+    font-size: small;
+    font-weight: normal;
+}
+
 .code-line {
-    white-space: pre-wrap;
+    display: table-row;
     font-family: Consolas, monospace;
     line-height: 20px;
 }
@@ -240,6 +252,27 @@ form.comment {
     animation: glow normal 1.5s ease-in-out;
 }
 
+.line-number {
+    width: 1%;
+    min-width: 50px;
+    padding-left: 10px;
+    padding-right: 12px;
+    text-align: right;
+    white-space: nowrap;
+    cursor: pointer;
+    vertical-align: top;
+    border-right: 1px solid #DEE2E6;
+    background-color: white;
+    z-index:1;
+    position: sticky;
+    left: 0;
+    color: darkcyan;
+}
+
+.line-number-hidden {
+    display: none;
+}
+
 .line-comment-button:hover {
     transform: scale(1);
 }
@@ -247,10 +280,9 @@ form.comment {
 .line-comment-button {
     position: relative;
     z-index: 5;
-    float: left;
+    float: right;
     width: 22px;
     height: 22px;
-    margin: -2px -10px -2px -20px;
     line-height: 21px;
     color: #fff !important;
     text-align: center;
@@ -265,21 +297,27 @@ form.comment {
     transform: scale(.8);
     user-select: none;
     text-decoration: none;
+    left: 21px;
+}
+
+.line-comment-button-cell {
+    user-select: none;
+    max-width: 0px;
+    white-space: normal;
+    positon: sticky;
+    left: 0px;
 }
 
 .code {
-    line-height: 20px;
-    padding-left: 10px;
     padding-right: 10px;
     position: relative;
     vertical-align: top;
-    width: 100%;
 }
 
-code-inner {
-    color: #24292E;
+.code-inner {
     overflow: visible;
     word-wrap: normal;
+    white-space: pre;
 }
 
 .rounded-1 {
@@ -357,18 +395,6 @@ code-inner {
     font-size: 14px;
 }
 
-.line-comment-button-cell {
-    user-select: none;
-    width: 1em;
-    white-space: normal;
-}
-
-.line-comment-button-cell::before {
-    display: block;
-    height: 0;
-    width: 0;
-}
-
 .btn-link.line-comment-button {
     border: 0;
     opacity: 0;
@@ -388,12 +414,15 @@ code-inner {
 #review-left {
     // Override values from bootstrap
     max-width: none;
-    min-width: 130px;
+    min-width: 10px;
 }
 
 #review-right {
     // Override values from bootsrap
-    max-width: none;
+    max-width: 100%;
+    min-width: 100px;
+    overflow-x: auto;
+    padding: 0px;
 }
 
 .gutter {
@@ -482,6 +511,13 @@ code-inner {
     margin: 0;
 }
 
+.code-diagnostics div {
+    position: sticky;
+    left: 0px;
+    padding-left: 10px;
+    max-width: 2000px;
+}
+
 /* ICONS */
 .icon {
     height: 16px;
@@ -554,4 +590,65 @@ mark {
 
 .apiview-logo {
     width: 30px;
+}
+
+#reviews-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bottom-right-floating {
+    position:fixed;
+    z-index: 10;
+    bottom:130px;
+    right:70px;
+}
+
+.btn-circle {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    text-align: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.btn-circle-xl {
+    width: 100px;
+    height: 100px;
+    line-height: 1.2rem;
+    font-weight: bold;
+    font-size: 1.0rem;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+// Use to implement review row grouping
+.hidden-row {
+    display: none;
+}
+
+.hidden-row-via-filter {
+    display: none;
+}
+
+.bootstraps-select-label {
+    padding: 4px 5px 3px 2px;
+}
+
+.rounded-left-0 {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}
+
+.comment-thread-anchor {
+    visibility: hidden;
+    scroll-margin-top: calc(50px + 1.7em);
+}
+
+.btn-xs {
+    height: 25px !important;
+    font-size: 15px;
+    vertical-align: middle;
+    padding: 0.01rem;
 }

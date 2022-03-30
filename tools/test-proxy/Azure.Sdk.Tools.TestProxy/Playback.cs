@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy
@@ -18,20 +19,20 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Start()
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file", true);
+            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
-                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
+                await _recordingHandler.StartPlaybackAsync(recordingId, Response, RecordingType.InMemory);
             }
             else if(!String.IsNullOrEmpty(file))
             {
-                await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
+                await _recordingHandler.StartPlaybackAsync(file, Response, RecordingType.FilePersisted);
             }
             else
             {
-                throw new InvalidOperationException("Either header 'x-recording-file' or 'x-recording-id' must be set when starting playback.");
+                throw new HttpException(HttpStatusCode.BadRequest, "At least one of either JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
             }
         }
 

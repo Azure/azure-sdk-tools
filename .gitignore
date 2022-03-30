@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-#build/
+build/
 develop-eggs/
 dist/
 downloads/
@@ -291,6 +291,9 @@ PublishScripts/
 # The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
 !packages/java-packages/
+!packages/python-packages/
+packages/python-packages/apistubgentest/_build/
+!tools/sdk-testgen/packages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
@@ -409,6 +412,7 @@ paket-files/
 
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
+
 *.pyc
 
 # Cake - Uncomment if you are using it
@@ -485,4 +489,13 @@ src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
 
 # npm
 *-lock.json
-src/swift/SwiftAPIView.xcworkspace/xcuserdata
+
+
+# oav converter
+tools/oav-traffic-converter/input-example/
+tools/oav-traffic-converter/output-example/
+tools/oav-traffic-converter/build/
+
+# ios
+src/swift/*.xcworkspace/xcuserdata/
+src/swift/**/*.xcodeproj/xcuserdata/

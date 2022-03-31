@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.Services.WebApi;
 using Azure.Sdk.Tools.NotificationConfiguration.Enums;
 using Azure.Sdk.Tools.NotificationConfiguration.Models;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;

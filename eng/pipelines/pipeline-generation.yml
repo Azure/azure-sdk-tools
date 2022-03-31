@@ -32,8 +32,9 @@ parameters:
 jobs:
 - job: GeneratePipelines
   pool:
-    name: azsdk-pool-mms-ubuntu-2004-general
-    vmImage: MMSUbuntu20.04
+    # name: azsdk-pool-mms-ubuntu-2004-general
+    # vmImage: MMSUbuntu20.04
+    vmImage: ubuntu-20.04
   timeoutInMinutes: 120
   strategy:
     matrix:

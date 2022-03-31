@@ -143,6 +143,9 @@ function DeployStressPackage(
     if (Test-Path "$($pkg.Directory)/stress-test-resources.bicep") {
         Run az bicep build -f "$($pkg.Directory)/stress-test-resources.bicep"
         if ($LASTEXITCODE) { return }
+    } else {
+        Write-Error "Unable to find $($pkg.Directory)/stress-test-resources.bicep"
+        return
     }
 
     $imageTag = "${registryName}.azurecr.io"

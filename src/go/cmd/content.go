@@ -163,6 +163,12 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 		makeToken(nil, nil, "", newline, tokenList)
 		makeToken(nil, nil, "", newline, tokenList)
 		c.searchForMethods(name, tokenList)
+		if consts := c.filterDeclarations(name, c.Consts, tokenList); len(consts) > 0 {
+			c.parseDeclarations(consts, "const", tokenList)
+		}
+		if vars := c.filterDeclarations(name, c.Vars, tokenList); len(vars) > 0 {
+			c.parseDeclarations(vars, "var", tokenList)
+		}
 	}
 }
 
@@ -318,6 +324,12 @@ func (c *content) parseStruct(tokenList *[]Token) {
 		makeStructTokens(&k, c.Structs[k], tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)
+		if consts := c.filterDeclarations(k, c.Consts, tokenList); len(consts) > 0 {
+			c.parseDeclarations(consts, "const", tokenList)
+		}
+		if vars := c.filterDeclarations(k, c.Vars, tokenList); len(vars) > 0 {
+			c.parseDeclarations(vars, "var", tokenList)
+		}
 	}
 }
 
@@ -332,6 +344,18 @@ func (c *content) searchForCtors(s string, tokenList *[]Token) {
 			return
 		}
 	}
+}
+
+// filterDeclarations returns a subset of decls containing only items matching the specified type, deleting them from the given map
+func (c *content) filterDeclarations(typ string, decls map[string]Declaration, tokens *[]Token) map[string]Declaration {
+	results := map[string]Declaration{}
+	for name, decl := range decls {
+		if typ == decl.Type {
+			results[name] = decl
+			delete(decls, name)
+		}
+	}
+	return results
 }
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.

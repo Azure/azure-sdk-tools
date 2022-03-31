@@ -128,15 +128,6 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
-          
-          - pwsh: |
-              $branch = git symbolic-ref --short HEAD
-              git checkout api-stub-generator_v$(PythonParserVersion)
-              Write-Host "Bundling stable version of python api-stub-generator"
-              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
-              git checkout $branch
-            displayName: 'Bundle Python API Parser'
-
           - task: DotNetCoreCLI@2
             displayName: 'Publish site'
             env:
@@ -149,6 +140,22 @@ stages:
               publishWebProjects: false
               arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
               zipAfterPublish: true
+
+          - pwsh: |
+              $branch = git branch --show-current
+              git checkout api-stub-generator_v$(PythonParserVersion)
+              Write-Host "Bundling stable version of python api-stub-generator"
+              copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
+              git checkout $branch
+            displayName: 'Bundle Python API Parser'
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/APIViewWeb'
+              includeRootFolder: true
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/APIViewWeb.zip'
+              verbose: true
 
           - task: PublishBuildArtifacts@1
             inputs:

@@ -11,7 +11,7 @@ stages:
 
   jobs:
   - job: Run
-    timeoutInMinutes: 120
+    timeoutInMinutes: 240
     strategy:
       # Running all entries simultaneously causes "Service Unavailable" errors
       maxParallel: 2

@@ -506,7 +506,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing log {LogId} for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
+                this.logger.LogError(ex, "Error processing build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
                 throw;
             }
         }

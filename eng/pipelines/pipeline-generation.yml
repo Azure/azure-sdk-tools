@@ -128,9 +128,6 @@ jobs:
       #     --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
       #   GenerateUnifiedWeekly: true
   steps:
-  - script: |
-      netstat
-    displayName: 'netstat'
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
@@ -166,9 +163,6 @@ jobs:
     condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
     env:
       PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-  - script: |
-      netstat
-    displayName: 'netstat'
 
   # - script: |
   #     pipeline-generator --organization https://dev.azure.com/azure-sdk --project internal --prefix $(Prefix)-pr --devopspath "\$(Prefix)\pr" --path $(Pipeline.Workspace)/$(RepositoryName)/sdk --endpoint Azure --repository Azure/$(RepositoryName)-pr --convention ci --agentpool Hosted --branch refs/heads/ $(DefaultBranch) --patvar PATVAR --debug

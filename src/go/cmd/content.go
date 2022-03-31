@@ -222,7 +222,7 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 	for i, f := range c.Funcs {
 		if i == fmt.Sprintf("Possible%sValues", t) {
-			makeFuncTokens(&i, f.Params, f.Returns, f.ReturnsNum, tokenList)
+			makeFuncTokens(&i, f, tokenList)
 			delete(c.Funcs, i)
 			return
 		}
@@ -285,10 +285,15 @@ func (c *content) parseInterface(tokenList *[]Token) {
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) addStruct(pkg Pkg, name string, s *ast.StructType) {
+func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) {
 	sd := Struct{}
-	// assumes all struct types have fields
-	pkg.translateFieldList(s.Fields.List, func(n *string, t string) {
+	if ts.TypeParams != nil {
+		sd.TypeParams = make([]string, 0, len(ts.TypeParams.List))
+		pkg.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
+			sd.TypeParams = append(sd.TypeParams, strings.TrimRight(*param+" "+constraint, " "))
+		})
+	}
+	pkg.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
 			sd.AnonymousFields = append(sd.AnonymousFields, t)
 		} else {
@@ -298,6 +303,7 @@ func (c *content) addStruct(pkg Pkg, name string, s *ast.StructType) {
 			sd.Fields[*n] = t
 		}
 	})
+	sort.Strings(sd.AnonymousFields)
 	c.Structs[name] = sd
 }
 
@@ -309,7 +315,7 @@ func (c *content) parseStruct(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		makeStructTokens(&k, c.Structs[k].AnonymousFields, c.Structs[k].Fields, tokenList)
+		makeStructTokens(&k, c.Structs[k], tokenList)
 		c.searchForCtors(k, tokenList)
 		c.searchForMethods(k, tokenList)
 	}
@@ -321,7 +327,7 @@ func (c *content) searchForCtors(s string, tokenList *[]Token) {
 	for i, f := range c.Funcs {
 		n := getCtorName(i)
 		if s == n {
-			makeFuncTokens(&i, f.Params, f.Returns, f.ReturnsNum, tokenList)
+			makeFuncTokens(&i, f, tokenList)
 			delete(c.Funcs, i)
 			return
 		}
@@ -333,7 +339,11 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	methods := map[string]Func{}
 	methodNames := []string{}
 	for name, fn := range c.Funcs {
-		_, n := getReceiverName(name)
+		_, n := getReceiver(name)
+		if before, _, found := strings.Cut(n, "["); found {
+			// ignore type parameters when matching receivers to types
+			n = before
+		}
 		if s == n || "*"+s == n {
 			methods[name] = fn
 			methodNames = append(methodNames, name)
@@ -346,13 +356,13 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
-		v, n := getReceiverName(name)
+		v, n := getReceiver(name)
 		isPointer := false
 		if strings.HasPrefix(n, "*") {
 			n = n[1:]
 			isPointer = true
 		}
-		makeMethodTokens(v, n, isPointer, getMethodName(name), fn.Params, fn.Returns, fn.ReturnsNum, tokenList)
+		makeMethodTokens(v, n, isPointer, getMethodName(name), fn, tokenList)
 	}
 }
 
@@ -367,19 +377,21 @@ func getCtorName(s string) string {
 	return ""
 }
 
-// getReceiverName returns the components of the receiver on a method signature
+// receiverRegex captures a receiver's type and optional name
+var receiverRegex = regexp.MustCompile(`\((\w*)?(?: ?(\*?\w.*)\))?`)
+
+// getReceiver returns the components of the receiver on a method signature
 // i.e.: (c *Foo) Bar(s string) will return "c" and "Foo".
-func getReceiverName(s string) (string, string) {
+func getReceiver(s string) (string, string) {
 	name, typ := "", ""
-	if strings.HasPrefix(s, "(") {
-		parts := strings.Split(s[1:strings.Index(s, ")")], " ")
-		if len(parts) == 2 {
-			// most common case e.g. (c *Foo)
-			name = parts[0]
-			typ = parts[1]
+	t := receiverRegex.FindStringSubmatch(s)
+	if t != nil {
+		if t[2] == "" {
+			// nameless receiver e.g., (Foo)
+			typ = t[1]
 		} else {
-			// unnamed receiver e.g. (*Foo)
-			typ = parts[0]
+			name = t[1]
+			typ = t[2]
 		}
 	}
 	return name, typ
@@ -427,7 +439,7 @@ func (c *content) parseFunc(tokenList *[]Token) {
 		}
 	}
 	for _, k := range keys {
-		makeFuncTokens(&k, c.Funcs[k].Params, c.Funcs[k].Returns, c.Funcs[k].ReturnsNum, tokenList)
+		makeFuncTokens(&k, c.Funcs[k], tokenList)
 	}
 }
 

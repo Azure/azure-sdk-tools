@@ -14,13 +14,14 @@ type Declaration struct {
 
 // Func contains parameter and return types of a function/method.
 type Func struct {
-	// a comma-delimited list of the param types
-	Params *string `json:"params,omitempty"`
+	// Params lists the func's parameters as strings of the form "name type"
+	Params []string `json:"params,omitempty"`
 
-	// a comma-delimited list of the return types
-	Returns *string `json:"returns,omitempty"`
+	// Returns lists the func's return types
+	Returns []string `json:"returns,omitempty"`
 
-	ReturnsNum int
+	// TypeParams lists the func's type parameters as strings of the form "name constraint"
+	TypeParams []string
 }
 
 type SimpleType struct {
@@ -41,6 +42,9 @@ type Struct struct {
 
 	// key/value pairs of the field names and types respectively.
 	Fields map[string]string `json:"fields,omitempty"`
+
+	// TypeParams lists the func's type parameters as strings of the form "name constraint"
+	TypeParams []string
 }
 
 // Token ...

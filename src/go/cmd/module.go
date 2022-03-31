@@ -89,7 +89,7 @@ func NewModule(dir string) (*Module, error) {
 				case *ast.InterfaceType:
 					p.c.addInterface(*def.p, def.n.Name.Name, n)
 				case *ast.StructType:
-					p.c.addStruct(*def.p, def.n.Name.Name, n)
+					p.c.addStruct(*def.p, def.n.Name.Name, def.n)
 				case *ast.Ident:
 					p.c.addSimpleType(*p, def.n.Name.Name, def.n.Type.(*ast.Ident).Name)
 				default:

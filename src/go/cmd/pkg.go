@@ -171,7 +171,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
 				}
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addStruct(*p, x.Name.Name, t)
+				p.c.addStruct(*p, x.Name.Name, x)
 			default:
 				txt := p.getText(x.Pos(), x.End())
 				fmt.Printf("\tWARNING:  unexpected node type %T: %s\n", t, txt)
@@ -197,41 +197,36 @@ func (pkg Pkg) getText(start token.Pos, end token.Pos) string {
 }
 
 // creates a Func object from the specified ast.FuncType
-func (pkg Pkg) buildFunc(ft *ast.FuncType) (f Func) {
-	// appends a to s, comma-delimited style, and returns s
-	appendString := func(s, a string) string {
-		if s != "" {
-			s += ","
-		}
-		s += a
-		return s
+func (pkg Pkg) buildFunc(ft *ast.FuncType) Func {
+	f := Func{}
+
+	if ft.TypeParams != nil {
+		f.TypeParams = make([]string, 0, len(ft.TypeParams.List))
+		pkg.translateFieldList(ft.TypeParams.List, func(param *string, constraint string) {
+			// constraint == "" when the parameter has no constraint
+			f.TypeParams = append(f.TypeParams, strings.TrimRight(*param+" "+constraint, " "))
+		})
 	}
 
-	// build the params type list
 	if ft.Params.List != nil {
-		p := ""
+		f.Params = make([]string, 0, len(ft.Params.List))
 		pkg.translateFieldList(ft.Params.List, func(n *string, t string) {
-			temp := ""
+			p := ""
 			if n != nil {
-				temp = *n + " "
+				p = *n + " "
 			}
-			temp += t
-			p = appendString(p, temp)
+			p += t
+			f.Params = append(f.Params, p)
 		})
-		f.Params = &p
 	}
 
-	// build the return types list
 	if ft.Results != nil {
-		r := ""
+		f.Returns = make([]string, 0, len(ft.Results.List))
 		pkg.translateFieldList(ft.Results.List, func(n *string, t string) {
-			r = appendString(r, t)
+			f.Returns = append(f.Returns, t)
 		})
-		f.Returns = &r
-
-		f.ReturnsNum = len(ft.Results.List)
 	}
-	return
+	return f
 }
 
 // iterates over the specified field list, for each field the specified

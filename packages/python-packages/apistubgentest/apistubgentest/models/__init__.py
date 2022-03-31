@@ -15,6 +15,7 @@ from ._models import (
     PublicCaseInsensitiveEnumMeta,
     PublicPrivateClass, RequiredKwargObject,
     SomePoorlyNamedObject as SomeAwesomelyNamedObject,
+    SomethingWithDecorators,
     SomethingWithOverloads
 )
 
@@ -32,5 +33,6 @@ __all__ = (
     "PublicPrivateClass",
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
+    "SomethingWithDecorators",
     "SomethingWithOverloads"
 )

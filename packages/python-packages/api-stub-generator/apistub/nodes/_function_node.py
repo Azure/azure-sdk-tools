@@ -53,7 +53,11 @@ class FunctionNode(NodeEntityBase):
 
     def __init__(self, namespace, parent_node, *, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
+        if not obj and node:
+            self.name = node.name
+            self.display_name = node.name
         self.annotations = []
+        self.kw_args = OrderedDict()
         self.args = OrderedDict()
         self.return_type = None
         self.namespace_id = self.generate_id()
@@ -108,7 +112,6 @@ class FunctionNode(NodeEntityBase):
             params = sig.parameters
             # Add all keyword only args here temporarily until docstring is parsed
             # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
-            self.kw_args = OrderedDict()
             for argname, argvalues in params.items():
                 kind = argvalues.kind
                 keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
@@ -131,9 +134,30 @@ class FunctionNode(NodeEntityBase):
             if sig.return_annotation:
                 self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
         else:
+            class EmptyIterator:
+                def __iter__(self):
+                    return self
+                def __next__(self):
+                    return None
+
             # Logic for when we only have the node, not the function object itself
-            # TODO: IMPLEMENT
-            pass
+            argdata = self.node.args
+            args = zip(argdata.args, argdata.annotations, argdata.type_comment_args, argdata.defaults)
+            kwargs = zip(argdata.kwonlyargs, argdata.kwonlyargs_annotations, argdata.type_comment_kwonlyargs, argdata.kw_defaults)
+            posargs = zip(argdata.posonlyargs, argdata.posonlyargs_annotations, argdata.type_comment_posonlyargs, EmptyIterator())
+
+            for (props, annotation, type_comment, default) in args:
+                argname = props.name
+                self.args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword=None, func_node=self)
+            for (props, annotation, type_comment,default) in posargs:
+                argname = props.name
+                self.args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword=None, func_node=self)
+            for (props, annotation, type_comment,default) in kwargs:
+                argname = props.name
+                self.kw_args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword="keyword", func_node=self)
+
+            if self.node.returns:
+                self.return_type = get_qualified_name(self.node.returns, self.namespace)
 
         self._parse_docstring()
         self._parse_typehint()

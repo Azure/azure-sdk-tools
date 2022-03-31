@@ -1,3 +1,4 @@
+import astroid
 from inspect import Parameter
 import re
 
@@ -45,13 +46,17 @@ class NodeEntityBase:
                 c.generate_tokens(apiview)
             apiview.end_group()
 
-
-def get_qualified_name(obj, namespace):
+def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.
        If module name is not available for the object then it will return name
     :param: obj
         Parameter object of type class, function or enum
     """
+    module_name = getattr(obj, "__module__", "")
+
+    if module_name.startswith("astroid"):
+        return obj.as_string()
+
     if obj is Parameter.empty:
         return None
 
@@ -60,10 +65,6 @@ def get_qualified_name(obj, namespace):
         name = getattr(obj, "__name__")
     elif hasattr(obj, "__qualname__"):
         name = getattr(obj, "__qualname__")
-
-    module_name = ""
-    if hasattr(obj, "__module__"):
-        module_name = getattr(obj, "__module__")
 
     wrap_optional = False
     args = []

@@ -150,21 +150,41 @@ class ObjectWithDefaults:
         self.is_awesome = is_awesome
         self.pet = pet
 
+
 class SomePoorlyNamedObject:
 
     def __init__(self, name: str):
         self.name = name
 
+
 class SomethingWithOverloads:
+
     @overload
-    async def double(input_: int) -> int:
+    async def double(input_: int = 1, *, test: bool = False, **kwargs) -> int:
         ...
 
     @overload
-    async def double(input_: Sequence[int]) -> list[int]:
+    async def double(input_: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
         ...
 
-    async def double(input_: int | Sequence[int]) -> int | list[int]:
+    async def double(input_: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
         if isinstance(input_, Sequence):
             return [i * 2 for i in input_]
         return input_ * 2
+
+
+class SomethingWithDecorators:
+
+    class MyDecorator:
+        def __init__(self, function):
+            pass
+        def __call__(self, *args, **kwargs):
+            return
+
+    @MyDecorator
+    async def name_async(self):
+        return "Test"
+
+    @MyDecorator
+    def name_sync(self):
+        return "Test"

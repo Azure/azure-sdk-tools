@@ -141,15 +141,17 @@ class ClassNode(NodeEntityBase):
         overload_nodes = []
         try:
             class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
-            functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
-            for func in functions:
-                for node in func.decorators.nodes:
-                    if node.name == "overload":
-                        overload_nodes.append(FunctionNode(self.namespace, self, node=func))
         except:
-            pass
-        finally:
-            return overload_nodes
+            return []
+        functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        for func in functions:
+            if not func.decorators:
+                continue
+            for node in func.decorators.nodes:
+                if node.name == "overload":
+                    overload_node = FunctionNode(self.namespace, self, node=func)
+                    overload_nodes.append(overload_node)
+        return overload_nodes
 
     def _inspect(self):
         # Inspect current class and it's members recursively
@@ -163,10 +165,7 @@ class ClassNode(NodeEntityBase):
 
 
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
-
         overloads = self._parse_overloads()
-        if overloads:
-            test = "best"
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
@@ -185,9 +184,11 @@ class ClassNode(NodeEntityBase):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
                     try:
-                        self.child_nodes.append(
-                            FunctionNode(self.namespace, self, obj=child_obj)
-                        )
+                        func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                        func_overloads = [x for x in overloads if x.name == func_node.name]
+                        for overload in func_overloads:
+                            self.child_nodes.append(overload)
+                        self.child_nodes.append(func_node)
                     except OSError:
                         # Don't create entries for things that don't have source
                         pass

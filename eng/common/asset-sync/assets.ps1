@@ -119,6 +119,20 @@ Function Resolve-AssetStore-Location {
     return $ASSETS_STORE
 }
 
+Function Get-MD5-Hash {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $Input
+    )
+
+    $stringAsStream = [System.IO.MemoryStream]::new()
+    $writer = [System.IO.StreamWriter]::new($stringAsStream)
+    $writer.write($Input)
+    $writer.Flush()
+    $stringAsStream.Position = 0
+    return Get-FileHash -InputStream $stringAsStream -Algorithm MD5
+}
+
 Function Resolve-AssetRepo-Location {
     param(
         [Parameter(Mandatory=$true)]
@@ -126,10 +140,18 @@ Function Resolve-AssetRepo-Location {
     )
     $assetsLocation = Resolve-AssetStore-Location
     $repoName = $Config.AssetsRepo.Replace("/", ".")
-    
+
+    # this is where we will need to handle the multi-copying of the repository.
+    # to begin with, we will use the relative path of the recording json in combination with the
+    # Repo/RepoId to create a unique hash. In the future, we will need to take the targeted commit into account,
+    # and resolve conflicts
     if ($Config.AssetsRepoId) {
         $repoName = $Config.AssetsRepoId
     }
+
+    $repoNameHashed = Join-Path $repoName $Config.RecordingJsonRelativeLocation
+
+
 
     $repoPath = (Join-Path $assetsLocation $repoName)
     

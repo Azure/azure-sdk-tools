@@ -135,13 +135,22 @@ Describe "AssetsModuleTests" {
   }
 
   Context "Initialize-Assets-Repo" {
-    It "Should initialize an empty directory." {
+    It "Should create assets repo for standard sync." {
       $JsonContent = Get-Basic-RecordingJson
       $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
     }
 
-    It "Should recognize an initialized repository." {
-      
+    It "Should recognize an initialized repository and no-op." {
+      $JsonContent = Get-Basic-RecordingJson
+      $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
+    }
+
+    It "Should create a service level recording.json based off main." {
+
+    }
+
+    It "Should initialize language repo with a new recording.json at sdk/<service> if necessary" {
+
     }
   }
 

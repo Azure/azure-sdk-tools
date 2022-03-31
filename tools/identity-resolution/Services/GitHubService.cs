@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeOwnersParser;
 
-namespace Azure.Sdk.Tools.GithubCodeownerSubscriber
+namespace Azure.Sdk.Tools.NotificationConfiguration
 {
     /// <summary>
     /// Interface for interacting with GitHub

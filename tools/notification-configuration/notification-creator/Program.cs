@@ -49,8 +49,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             var notificationConfiguratorLogger = loggerFactory.CreateLogger<NotificationConfigurator>();
 
             var devOpsService = new AzureDevOpsService(devOpsConnection, devOpsServiceLogger);
-            var gitHubServiceLogger = loggerFactory.CreateLogger<GitHubService>();
-            var gitHubService = new GitHubService(gitHubServiceLogger);
+            var gitHubService = new GitHubService(loggerFactory.CreateLogger<GitHubService>());
             var credential = new ClientSecretCredential(
                 Environment.GetEnvironmentVariable(aadTenantVar),
                 Environment.GetEnvironmentVariable(aadAppIdVar),
@@ -59,10 +58,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 credential,
                 loggerFactory.CreateLogger<GitHubToAADConverter>()
             );
-            var configurator = new NotificationConfigurator(devOpsService, notificationConfiguratorLogger);
+            var configurator = new NotificationConfigurator(devOpsService,
+                gitHubService, notificationConfiguratorLogger);
             await configurator.ConfigureNotifications(
                 project,
                 pathPrefix,
+                githubToAadResolver,
                 persistChanges: !dryRun,
                 strategy: selectionStrategy);
 

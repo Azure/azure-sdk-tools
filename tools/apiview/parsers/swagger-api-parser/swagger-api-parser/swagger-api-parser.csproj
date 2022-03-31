@@ -8,7 +8,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>swagger_api_parser</RootNamespace>
     <PackageOutputPath>./nupkg</PackageOutputPath>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +21,11 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
   </ItemGroup>
 
 </Project>

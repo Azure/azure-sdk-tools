@@ -523,26 +523,41 @@
             {
                 var continuationToken = string.Empty;
                 var buildIds = new[] { build.Id };
+                
                 var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
                 var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
 
-                do
-                {
-                    var page = await testResultsClient.QueryTestRunsAsync2(
-                        build.Project.Id,
-                        minLastUpdatedDate,
-                        maxLastUpdatedDate,
-                        continuationToken: continuationToken,
-                        buildIds: buildIds
-                    );
+                var rangeStart = minLastUpdatedDate;
 
-                    foreach (var testRun in page)
+                while(rangeStart < maxLastUpdatedDate)
+                {
+                    // Ado limits test run queries to a 7 day range, so we'll chunk on 6 days.
+                    var rangeEnd = rangeStart.AddDays(6);
+                    if(rangeEnd > maxLastUpdatedDate)
                     {
-                        await UploadTestRunBlobAsync(account, build, testRun);
+                        rangeEnd = maxLastUpdatedDate;
                     }
 
-                    continuationToken = page.ContinuationToken;
-                } while (!string.IsNullOrEmpty(continuationToken));
+                    do
+                    {
+                        var page = await testResultsClient.QueryTestRunsAsync2(
+                            build.Project.Id,
+                            rangeStart,
+                            rangeEnd,
+                            continuationToken: continuationToken,
+                            buildIds: buildIds
+                        );
+
+                        foreach (var testRun in page)
+                        {
+                            await UploadTestRunBlobAsync(account, build, testRun);
+                        }
+
+                        continuationToken = page.ContinuationToken;
+                    } while (!string.IsNullOrEmpty(continuationToken));
+
+                    rangeStart = rangeEnd;
+                }                
             }
             catch (Exception ex)
             {

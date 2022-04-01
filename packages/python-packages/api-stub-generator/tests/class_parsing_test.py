@@ -178,4 +178,10 @@ class TestClassParsing:
 
     def test_decorators(self):
         class_node = ClassNode(name="SomethingWithDecorators", namespace="test", parent_node=None, obj=SomethingWithDecorators, pkg_root_namespace=self.pkg_namespace)
-        assert len(class_node.child_nodes) == 3
+        assert len(class_node.child_nodes) == 2
+
+        node1 = class_node.child_nodes[0]
+        assert node1.annotations == ["@my_decorator"]
+
+        node2 = class_node.child_nodes[1]
+        assert node2.annotations == ["@my_decorator"]

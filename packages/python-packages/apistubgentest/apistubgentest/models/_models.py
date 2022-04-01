@@ -10,8 +10,16 @@ from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
+import functools
 from six import with_metaclass
 from typing import Any, overload, TypedDict, Union
+
+
+def my_decorator(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        pass
+    return wrapper
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
@@ -186,16 +194,10 @@ class SomethingWithOverloads:
 
 class SomethingWithDecorators:
 
-    class MyDecorator:
-        def __init__(self, function):
-            pass
-        def __call__(self, *args, **kwargs):
-            return
-
-    @MyDecorator
+    @my_decorator
     async def name_async(self):
         return "Test"
 
-    @MyDecorator
+    @my_decorator
     def name_sync(self):
         return "Test"

@@ -163,9 +163,7 @@ class ClassNode(NodeEntityBase):
         # Find any ivar from docstring
         self._parse_ivars()
 
-
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
-        overloads = self._parse_overloads()
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
@@ -177,6 +175,8 @@ class ClassNode(NodeEntityBase):
                 members = inspect.getmembers(self.obj)
         else:
             members = inspect.getmembers(self.obj)
+
+        overloads = self._parse_overloads()
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
@@ -211,14 +211,27 @@ class ClassNode(NodeEntityBase):
 
             if self.is_enum and isinstance(child_obj, self.obj):
                 self.child_nodes.append(
-                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
+                    EnumNode(
+                        name=name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj
+                    )
+                )
+            elif inspect.isclass(child_obj):
+                self.child_nodes.append(
+                    ClassNode(
+                        name=child_obj.name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj,
+                        pkg_root_namespace=self.pkg_root_namespace
+                    )
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(
-                        PropertyNode(self.namespace, self, name, child_obj)
-                    )
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
                 self._handle_class_variable(child_obj, name, value=str(child_obj))
 

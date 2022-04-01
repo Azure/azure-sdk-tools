@@ -56,6 +56,8 @@ def get_qualified_name(obj, namespace: str) -> str:
 
     if module_name.startswith("astroid"):
         return obj.as_string()
+    elif module_name == "types":
+        return str(obj)
 
     if obj is Parameter.empty:
         return None

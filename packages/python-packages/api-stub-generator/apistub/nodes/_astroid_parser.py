@@ -1,4 +1,5 @@
 import astroid
+import inspect
 from ._base_node import get_qualified_name
 from ._argtype import ArgType
 
@@ -24,7 +25,7 @@ class AstroidArgumentParser:
         try:
             return self._node.default_value(name).as_string()
         except astroid.NoDefault:
-            return None
+            return inspect.Parameter.empty
 
     def _argtype(self, name, idx, annotations, type_comments):
         if annotations:
@@ -33,7 +34,7 @@ class AstroidArgumentParser:
             argtype = type_comments[idx]
         else:
             argtype = None
-        return get_qualified_name(argtype, self._namespace)
+        return get_qualified_name(argtype, self._namespace) if argtype else None
 
     def _parse_args(self):
         for (idx, arg) in enumerate(self._node.args):
@@ -55,12 +56,12 @@ class AstroidArgumentParser:
             else:
                 kwarg_type = None
             # This wonky logic matches the existing code
-            arg = ArgType(kwarg_name, argtype=kwarg_type, default=None, keyword="keyword", func_node=self._parent)
+            arg = ArgType(kwarg_name, argtype=kwarg_type, default=inspect.Parameter.empty, keyword="keyword", func_node=self._parent)
             arg.argname = f"**{kwarg_name}"
             self.args[arg.argname] = arg
 
     def _parse_posonly_args(self):
-        for (idx, arg) in enumerate(self._node.args):
+        for (idx, arg) in enumerate(self._node.posonlyargs):
             name = arg.name
             argtype = self._argtype(name, idx, self._node.posonlyargs_annotations, self._node.type_comment_posonlyargs)
             default = self._default_value(name)
@@ -73,6 +74,6 @@ class AstroidArgumentParser:
                 argtype = self._node.varargannotation.as_string()
             else:
                 argtype = None
-            arg = ArgType(name, argtype=argtype, default=None, keyword=None, func_node=self._parent)
+            arg = ArgType(name, argtype=argtype, default=inspect.Parameter.empty, keyword=None, func_node=self._parent)
             arg.argname = f"*{name}"
             self.args[name] = arg

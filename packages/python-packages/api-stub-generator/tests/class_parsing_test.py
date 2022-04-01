@@ -34,6 +34,14 @@ class TestClassParsing:
                 actual_type = node.type
                 assert actual_type == check_type
 
+    def _check_arg_nodes(self, nodes, checks):
+        assert len(nodes) == len(checks)
+        for (i, node) in enumerate(nodes.values()):
+            (check_name, check_type, check_val) = checks[i]
+            assert node.argname == check_name
+            assert node.argtype == check_type
+            assert node.default == check_val
+
     def test_typed_dict_class(self):
         class_node = ClassNode(name="FakeTypedDict", namespace="test", parent_node=None, obj=FakeTypedDict, pkg_root_namespace=self.pkg_namespace)
         self._check_nodes(class_node.child_nodes, [
@@ -95,32 +103,79 @@ class TestClassParsing:
 
     def test_overloads(self):
         class_node = ClassNode(name="SomethingWithOverloads", namespace="test", parent_node=None, obj=SomethingWithOverloads, pkg_root_namespace=self.pkg_namespace)
-        assert len(class_node.child_nodes) == 3
+        assert len(class_node.child_nodes) == 6
+
         node1 = class_node.child_nodes[0]
         assert "@overload" in node1.annotations
-        assert node1.args["input_"].argtype == "Optional[int]"
-        assert node1.args["input_"].default == "1"
-        assert node1.args["test"].argtype == "Optional[bool]"
-        assert node1.args["test"].default == "False"
+        assert node1.name == "double"
+        self._check_arg_nodes(node1.args, [
+            ("self", None, None),
+            ("input", "Optional[int]", "1"),
+            ("*", None, None),
+            ("test", "Optional[bool]", "False"),
+            ("**kwargs", None, None)
+        ])
         assert node1.return_type == "int"
 
         node2 = class_node.child_nodes[1]
         assert "@overload" in node2.annotations
-        assert node2.args["input_"].argtype == "Optional[Sequence[int]]"
-        assert node2.args["input_"].default == "[1]"
-        assert node2.args["test"].argtype == "Optional[bool]"
-        assert node2.args["test"].default == "False"
+        assert node2.name == "double"
+        self._check_arg_nodes(node2.args, [
+            ("self", None, None),
+            ("input", "Optional[Sequence[int]]", "[1]"),
+            ("*", None, None),
+            ("test", "Optional[bool]", "False"),
+            ("**kwargs", None, None)
+        ])
         assert node2.return_type == "list[int]"
 
         node3 = class_node.child_nodes[2]
         assert "@overload" not in node3.annotations
-        # TODO: This should not have all the weird collections annotations
-        assert node3.args["input_"].argtype == "int | collections.abc.Sequence[int, collections.abc.Sequence[int]]"
-        assert node3.args["input_"].default == None
-        assert node3.args["test"].argtype == "Optional[bool]"
-        assert node3.args["test"].default == "False"
-        assert node3.return_type == "int | list[int, list[int]]"        
-        
+        assert node3.name == "double"
+        self._check_arg_nodes(node3.args, [
+            ("self", None, None),
+            # This should not have all the weird collections annotations, but they
+            # don't appear in the actual APIView.
+            ("input", "int | collections.abc.Sequence[int]", None),
+            ("*", None, None),
+            ("test", "Optional[bool]", "False"),
+            ("**kwargs", None, None)
+        ])
+        assert node3.return_type == "int | list[int]"
+
+        node4 = class_node.child_nodes[3]
+        assert "@overload" in node4.annotations
+        assert node4.name == "something"
+        self._check_arg_nodes(node4.args, [
+            ("self", None, None),
+            ("id", "str", None),
+            ("*args", None, None),
+            ("**kwargs", None, None)
+        ])
+        assert node4.return_type == "str"
+
+        node5 = class_node.child_nodes[4]
+        assert "@overload" in node5.annotations
+        assert node5.name == "something"
+        self._check_arg_nodes(node5.args, [
+            ("self", None, None),
+            ("id", "int", None),
+            ("*args", None, None),
+            ("**kwargs", None, None)
+        ])
+        assert node5.return_type == "str"
+
+        node6 = class_node.child_nodes[5]
+        assert "@overload" not in node6.annotations
+        assert node6.name == "something"
+        self._check_arg_nodes(node6.args, [
+            ("self", None, None),
+            ("id", "int | str", None),
+            ("*args", None, None),
+            ("**kwargs", None, None)
+        ])
+        assert node5.return_type == "str"
+
     def test_decorators(self):
         class_node = ClassNode(name="SomethingWithDecorators", namespace="test", parent_node=None, obj=SomethingWithDecorators, pkg_root_namespace=self.pkg_namespace)
         assert len(class_node.child_nodes) == 3

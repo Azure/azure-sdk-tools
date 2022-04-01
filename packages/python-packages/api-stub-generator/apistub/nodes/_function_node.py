@@ -135,14 +135,14 @@ class FunctionNode(NodeEntityBase):
                 self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
         else:
             # Logic for when we only have the node, not the function object itself
+            # Should only apply to @overload cases
             parser = AstroidArgumentParser(self.node.args, self.namespace, self)
             self.args.update(parser.args)
-            # TODO: We don't really support pos-only args. This will treat them like regular args
+            # # TODO: We don't really support pos-only args. This will treat them like regular args
             self.args.update(parser.posargs)
             self.kw_args = parser.kwargs
             if self.node.returns:
                 self.return_type = get_qualified_name(self.node.returns, self.namespace)
-
         self._parse_docstring()
         self._parse_typehint()
         self._order_final_args()

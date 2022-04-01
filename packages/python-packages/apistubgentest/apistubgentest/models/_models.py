@@ -160,17 +160,28 @@ class SomePoorlyNamedObject:
 class SomethingWithOverloads:
 
     @overload
-    async def double(input_: int = 1, *, test: bool = False, **kwargs) -> int:
+    def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int:
         ...
 
     @overload
-    async def double(input_: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
+    def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
         ...
 
-    async def double(input_: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
-        if isinstance(input_, Sequence):
-            return [i * 2 for i in input_]
-        return input_ * 2
+    async def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+        if isinstance(input, Sequence):
+            return [i * 2 for i in input]
+        return input * 2
+
+    @overload
+    def something(self, id: str, *args, **kwargs) -> str:
+        ...
+
+    @overload
+    def something(self, id: int, *args, **kwargs) -> str:
+        ...
+
+    def something(self, id: int | str, *args, **kwargs) -> str:
+        return str(id)
 
 
 class SomethingWithDecorators:

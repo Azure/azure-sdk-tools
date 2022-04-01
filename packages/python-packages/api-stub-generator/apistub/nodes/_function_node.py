@@ -1,10 +1,10 @@
-import ast
 import logging
 import inspect
 from collections import OrderedDict
 import astroid
 import re
 
+from ._astroid_parser import AstroidArgumentParser
 from ._docstring_parser import DocstringParser
 from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -134,28 +134,12 @@ class FunctionNode(NodeEntityBase):
             if sig.return_annotation:
                 self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
         else:
-            class EmptyIterator:
-                def __iter__(self):
-                    return self
-                def __next__(self):
-                    return None
-
             # Logic for when we only have the node, not the function object itself
-            argdata = self.node.args
-            args = zip(argdata.args, argdata.annotations, argdata.type_comment_args, argdata.defaults)
-            kwargs = zip(argdata.kwonlyargs, argdata.kwonlyargs_annotations, argdata.type_comment_kwonlyargs, argdata.kw_defaults)
-            posargs = zip(argdata.posonlyargs, argdata.posonlyargs_annotations, argdata.type_comment_posonlyargs, EmptyIterator())
-
-            for (props, annotation, type_comment, default) in args:
-                argname = props.name
-                self.args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword=None, func_node=self)
-            for (props, annotation, type_comment,default) in posargs:
-                argname = props.name
-                self.args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword=None, func_node=self)
-            for (props, annotation, type_comment,default) in kwargs:
-                argname = props.name
-                self.kw_args[argname] = ArgType(argname, argtype=get_qualified_name(annotation, self.namespace), default=default.as_string(), keyword="keyword", func_node=self)
-
+            parser = AstroidArgumentParser(self.node.args, self.namespace, self)
+            self.args.update(parser.args)
+            # TODO: We don't really support pos-only args. This will treat them like regular args
+            self.args.update(parser.posargs)
+            self.kw_args = parser.kwargs
             if self.node.returns:
                 self.return_type = get_qualified_name(self.node.returns, self.namespace)
 
@@ -174,14 +158,13 @@ class FunctionNode(NodeEntityBase):
         #  if present from the signature inspection
         kwargs_param = None
         kwargs_name = None
-        if not kwargs_param:
-            for argname in self.args:
-                # find kwarg params with a different name, like config
-                if argname.startswith("**"):
-                    kwargs_name = argname
-                    break
-            if kwargs_name:
-                kwargs_param = self.args.pop(kwargs_name, None)
+        for argname in self.args:
+            # find kwarg params with a different name, like config
+            if argname.startswith("**"):
+                kwargs_name = argname
+                break
+        if kwargs_name:
+            kwargs_param = self.args.pop(kwargs_name, None)
 
         # add keyword args
         if self.kw_args:

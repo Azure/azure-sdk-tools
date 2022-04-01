@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
             {
                 telemetryClient.TrackMetric(new MetricTelemetry
                 {
-                    Name = "AdoBuildLogBundle MessageLatencyMs",
+                    Name = "AdoBuildComplete MessageLatencyMs",
                     Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
                 });
             }

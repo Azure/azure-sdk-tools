@@ -162,6 +162,7 @@
             if (logs == null || logs.Count == 0)
             {
                 logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                return;
             }
 
             var bundles = BuildLogBundles(account, build, timeline, logs);

@@ -28,35 +28,35 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Resolve-RecordingJson" {
-    It "Should find basic recording.json" {
+  Context "Resolve-AssetsJson" {
+    It "Should find basic assets.json" {
       $files = @(
         "a/b.json",
         "a/b/c.json"
       )
 
-      $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
       $testLocation.GetType().Name | Should -Be "String"
 
-      $Result = Resolve-RecordingJson -TargetPath $testLocation
-      $recordingLocation = $Result.RecordingJsonLocation
-      $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
+      $Result = Resolve-AssetsJson -TargetPath $testLocation
+      $recordingLocation = $Result.AssetsJsonLocation
+      $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
     }
 
-    It "Should should traverse upwards to find recording.json." {
+    It "Should should traverse upwards to find assets.json." {
       $files = @(
         "a/b.json",
         "a/b/c.json"
       )
 
-      $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
       try {
         Push-Location -Path (Join-Path $testLocation "a" "b")
-        $Result = Resolve-RecordingJson -TargetPath $testLocation
-        $recordingLocation = $Result.RecordingJsonLocation
-        $recordingLocation | Should -Be (Join-Path $testLocation "recording.json")
+        $Result = Resolve-AssetsJson -TargetPath $testLocation
+        $recordingLocation = $Result.AssetsJsonLocation
+        $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
       }
       finally {
         Pop-Location
@@ -69,32 +69,22 @@ Describe "AssetsModuleTests" {
         "a/b/c.json"
       )
 
-      $testLocation = Describe-TestFolder -RecordingJsonContent "" -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent "" -Files $files
       
       try {
         Push-Location -Path (Join-Path $testLocation "a" "b")
-        { Resolve-RecordingJson -TargetPath $testLocation } | Should -Throw
+        { Resolve-AssetsJson -TargetPath $testLocation } | Should -Throw
       }
       finally {
         Pop-Location
       }
     }
 
-    It "Should should not attempt to calculate relative path where not possible." {
+    It "Should should calculate relative path from root of repo to the target assets.json." {
+      $Result = Resolve-AssetsJson -TargetPath $PSScriptRoot
+      $expectedValue = (Join-Path "./" "eng" "common" "asset-sync" "assets.json")
 
-      $testLocation = Describe-TestFolder -RecordingJsonContent (Get-Basic-RecordingJson) -Files $files
-      $Result = Resolve-RecordingJson -TargetPath $testLocation
-      $expectedValue = ""
-
-      $recordingLocation = $Result.RecordingJsonRelativeLocation
-      $recordingLocation | Should -Be $expectedValue
-    }
-
-    It "Should should calculate relative path from root of repo to the target recording.json." {
-      $Result = Resolve-RecordingJson -TargetPath $PSScriptRoot
-      $expectedValue = (Join-Path "./" "eng" "common" "asset-sync" "recording.json")
-
-      $recordingLocation = $Result.RecordingJsonRelativeLocation
+      $recordingLocation = $Result.AssetsJsonRelativeLocation
       $recordingLocation | Should -Be $expectedValue
     }
   }
@@ -102,8 +92,8 @@ Describe "AssetsModuleTests" {
   Context "Resolve-Assets" {
     It "Should resolve the asset store location." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson
-      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      $jsonContent = Get-Basic-AssetsJson
+      Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
 
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
       $result = Resolve-AssetStore-Location
@@ -113,8 +103,8 @@ Describe "AssetsModuleTests" {
 
     It "Should should resolve a standard assets repo." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson -RandomizeRepoId $false
-      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      $jsonContent = Get-Basic-AssetsJson -RandomizeRepoId $false
+      Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
       $result = Resolve-AssetRepo-Location -Config $jsonContent
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "Azure.azure-sdk-for-python-assets")
 
@@ -123,10 +113,10 @@ Describe "AssetsModuleTests" {
 
     It "Should should resolve a custom repoId." {
       $files = @()
-      $jsonContent = Get-Basic-RecordingJson
+      $jsonContent = Get-Basic-AssetsJson
       $jsonContent.AssetsRepoId = "custom"
 
-      Describe-TestFolder -RecordingJsonContent $jsonContent -Files $files
+      Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
       $result = Resolve-AssetRepo-Location -Config $jsonContent
       $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "custom")
       
@@ -136,20 +126,20 @@ Describe "AssetsModuleTests" {
 
   Context "Initialize-Assets-Repo" {
     It "Should create assets repo for standard sync." {
-      $JsonContent = Get-Basic-RecordingJson
-      $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
+      $JsonContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
     }
 
     It "Should recognize an initialized repository and no-op." {
-      $JsonContent = Get-Basic-RecordingJson
-      $testLocation = Describe-TestFolder -RecordingJsonContent $JsonContent -Files $files
+      $JsonContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
     }
 
-    It "Should create a service level recording.json based off main." {
+    It "Should create a service level assets.json based off main." {
 
     }
 
-    It "Should initialize language repo with a new recording.json at sdk/<service> if necessary" {
+    It "Should initialize language repo with a new assets.json at sdk/<service> if necessary" {
 
     }
   }

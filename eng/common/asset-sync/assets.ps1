@@ -7,10 +7,10 @@ $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 
 <#
 .SYNOPSIS
-Checks the contents of a directory, then returns a tuple of booleans @("recordingJsonPresent", "isRootFolder").
+Checks the contents of a directory, then returns a tuple of booleans @("assetsJsonPresent", "isRootFolder").
 .DESCRIPTION
-Evaluates a directory by checking its contents. First value of the tuple is whether or not a "recording.json" file 
-is present A "root" directory is one where a recording.json is present OR where we are as far up the file tree as 
+Evaluates a directory by checking its contents. First value of the tuple is whether or not a "assets.json" file 
+is present A "root" directory is one where a assets.json is present OR where we are as far up the file tree as 
 we can possibly ascend. 
 
 .PARAMETER TargetPath
@@ -23,7 +23,7 @@ Function Evaluate-Target-Dir {
     )
 
     $isFile = Test-Path $TargetPath -PathType Leaf
-    $foundRecording = $false
+    $foundConfig = $false
     $foundRoot = $false
 
     if ($isFile) {
@@ -35,8 +35,8 @@ Function Evaluate-Target-Dir {
 
     foreach($file in $files)
     {
-        if($file.Name.ToLower() -eq "recording.json"){
-            $foundRecording = $true
+        if($file.Name.ToLower() -eq "assets.json"){
+            $foundConfig = $true
         }
 
         # need to ensure that if we're outside a git repo, we will still break out eventually.
@@ -46,21 +46,21 @@ Function Evaluate-Target-Dir {
     }
 
     return @(
-        $foundRecording, $foundRoot
+        $foundConfig, $foundRoot
     )
 }
 
 <#
 .SYNOPSIS
-Traverses up from a provided target directory to find a recording JSON, parses it, and returns the location and JSON content.
+Traverses up from a provided target directory to find a assets JSON, parses it, and returns the location and JSON content.
 
 .DESCRIPTION
-Traverses upwards until it hits either a `.git` folder or a `recording.json` file. Throws an exception if it can't find a recording.json before it hits root.
+Traverses upwards until it hits either a `.git` folder or a `assets.json` file. Throws an exception if it can't find a assets.json before it hits root.
 
 .PARAMETER TargetPath
 Optional argument specifying the directory to start traversing up from. If not provided, current working directory will be used.
 #>
-Function Resolve-RecordingJson {
+Function Resolve-AssetsJson {
     param (
         [Parameter(Mandatory = $false)]
         [string] $TargetPath
@@ -78,19 +78,19 @@ Function Resolve-RecordingJson {
     while (-not $foundConfig -and -not $reachedRoot){
         $pathForManipulation, $remainder = Split-Path $props
 
-        $found_config, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
+        $foundConfig, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
 
     if ($foundConfig){
-        $discoveredPath = Join-Path $pathForManipulation "recording.json"
+        $discoveredPath = Join-Path $pathForManipulation "assets.json"
     }
     else {
-        throw "Unable to locate recording.json"
+        throw "Unable to locate assets.json"
     }
 
-    # path to recording Json
+    # path to assets Json
     $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
-    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "RecordingJsonLocation" -Value "$discoveredPath"
+    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonLocation" -Value "$discoveredPath"
 
     $relPath = ""
 
@@ -104,8 +104,8 @@ Function Resolve-RecordingJson {
         }
     }
 
-    # relative path to recording Json from within path
-    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "RecordingJsonRelativeLocation" -Value $relPath
+    # relative path to assets Json from within path
+    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonRelativeLocation" -Value $relPath
 
     return $config
 }
@@ -142,15 +142,14 @@ Function Resolve-AssetRepo-Location {
     $repoName = $Config.AssetsRepo.Replace("/", ".")
 
     # this is where we will need to handle the multi-copying of the repository.
-    # to begin with, we will use the relative path of the recording json in combination with the
+    # to begin with, we will use the relative path of the assets json in combination with the
     # Repo/RepoId to create a unique hash. In the future, we will need to take the targeted commit into account,
     # and resolve conflicts
     if ($Config.AssetsRepoId) {
         $repoName = $Config.AssetsRepoId
     }
 
-    $repoNameHashed = Join-Path $repoName $Config.RecordingJsonRelativeLocation
-
+    $repoNameHashed = Join-Path $repoName $Config.AssetsJsonRelativeLocation
 
 
     $repoPath = (Join-Path $assetsLocation $repoName)
@@ -204,13 +203,13 @@ Function Is-AssetsRepo-Initialized {
 
 <#
 .SYNOPSIS
-Initializes a recordings repo based on a recordings.json file. 
+Initializes a recordings repo based on an assets.json file. 
 
 .DESCRIPTION
 This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed recording.json content.
+A PSCustomObject that contains an auto-parsed assets.json content.
 
 .PARAMETER ForceReinitialize
 Should this assets repo be renewed regardless of current status?
@@ -267,9 +266,9 @@ Function Reset-AssetsRepo {
 
         # need to figure out the sparse checkouts if we want to optimize this as much as possible
         # for prototyping checking out the whole repo is fine
-        if($RecordingRepoSHA){
-            Write-Host "git checkout $RecordingRepoSHA"
-            git checkout $RecordingRepoSHA
+        if($AssetsRepoSHA){
+            Write-Host "git checkout $AssetsRepoSHA"
+            git checkout $AssetsRepoSHA
             Write-Host "git pull"
             git pull
         }
@@ -281,12 +280,12 @@ Function Reset-AssetsRepo {
 
 <#
 .SYNOPSIS
-This function's purpose is solely to update a recording.json (both config and on file) with a new recording SHA.
+This function's purpose is solely to update a assets.json (both config and on file) with a new recording SHA.
 
 .DESCRIPTION
 
 #>
-Function Update-Recording-Json {
+Function Update-AssetsJson {
     param(
         $Config,
         $NewSHA

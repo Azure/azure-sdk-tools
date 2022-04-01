@@ -1,8 +1,8 @@
-Function Get-Basic-RecordingJson {
+Function Get-Basic-AssetsJson {
   param(
     [boolean]$RandomizeRepoId = $true
   )
-  $result = (Get-Content -Raw -Path (Join-Path $PSScriptRoot "recording.json") | ConvertFrom-Json)
+  $result = (Get-Content -Raw -Path (Join-Path $PSScriptRoot "assets.json") | ConvertFrom-Json)
 
   if ($RandomizeRepoId) {
     Add-Member -InputObject $result -MemberType "NoteProperty" -Name "AssetRepoId" -Value (New-Guid).ToString()
@@ -43,26 +43,26 @@ Function Get-TestPath {
 
 Function Describe-TestFolder{
   param(
-    # if provided, this content will be written to a recording.json at root of area, or
+    # if provided, this content will be written to a assets.json at root of area, or
     # somewhere else in the generated file tree.
-    [string] $RecordingJsonContent, 
+    [string] $AssetsJsonContent, 
     # Files is a set of relative paths that will form the basis of the environment on disk
-    # ["a/", "b.json", "b/c.json", "b/d/c.json", "a/recording.json" ]
+    # ["a/", "b.json", "b/c.json", "b/d/c.json", "a/assets.json" ]
     [string[]] $Files
   )
   
   $testPath = Get-TestPath
 
-  $recordingJsonLocation = Join-Path $testPath "recording.json"
+  $assetJsonLocation = Join-Path $testPath "assets.json"
   
   foreach($file in $files){
-    if($file.ToLower().EndsWith("recording.json")){
-      $recordingJsonLocation = Join-Path $testPath $file
+    if($file.ToLower().EndsWith("assets.json")){
+      $assetJsonLocation = Join-Path $testPath $file
     }
   }
   
-  if ($RecordingJsonContent){
-    Set-Content -Value ($RecordingJsonContent | ConvertTo-Json) -Path $recordingJsonLocation | Out-Null
+  if ($AssetsJsonContent){
+    Set-Content -Value ($AssetsJsonContent | ConvertTo-Json) -Path $assetJsonLocation | Out-Null
   }
 
   foreach($file in $Files){
@@ -70,7 +70,7 @@ Function Describe-TestFolder{
     $resolvedFilePath = (Join-Path $testPath $file)
 
     if ($ext){
-      if ($ext -eq ".json" -and -not $file.EndsWith("recording.json")){
+      if ($ext -eq ".json" -and -not $file.EndsWith("assets.json")){
         $directory = Split-Path $resolvedFilePath
 
         if (-not (Test-Path $directory)){
@@ -87,5 +87,6 @@ Function Describe-TestFolder{
     }
   }
 
+  Write-Host $testPath
   return $testPath
 }

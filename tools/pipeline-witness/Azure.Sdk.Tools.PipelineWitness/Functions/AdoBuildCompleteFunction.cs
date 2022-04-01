@@ -2,7 +2,8 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Storage.Queues.Models;
-
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -11,31 +12,40 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
 {
     public class AdoBuildCompleteFunction
     {
-        public AdoBuildCompleteFunction(ILogger<AdoBuildCompleteFunction> logger, BlobUploadProcessor runProcessor)
+        private ILogger logger;
+        private BlobUploadProcessor runProcessor;
+        private readonly TelemetryClient telemetryClient;
+
+        public AdoBuildCompleteFunction(ILogger<AdoBuildCompleteFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
+            this.telemetryClient = telemetryClient;
         }
-
-        private ILogger logger;
-        private BlobUploadProcessor runProcessor;
 
         [FunctionName("AdoBuildComplete")]
         public async Task Run([QueueTrigger("%BuildCompleteQueueName%")]QueueMessage message)
         {
             logger.LogInformation("Processing build.complete event.");
-            var messageBody = message.MessageText;
-            logger.LogInformation("Message body was: {messageBody}", messageBody);
 
+            if (message.InsertedOn.HasValue)
+            {
+                telemetryClient.TrackMetric(new MetricTelemetry
+                {
+                    Name = "AdoBuildLogBundle MessageLatencyMs",
+                    Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
+                });
+            }
+            
             logger.LogInformation("Extracting content from message.");
 
-            var devopsEvent = JObject.Parse(messageBody);
+            var devopsEvent = JObject.Parse(message.MessageText);
 
             var buildUrl = devopsEvent["resource"]?.Value<string>("url");
 
             if (buildUrl == null)
             {
-                this.logger.LogError("Message contained no build url. Message body: {MessageBody}", messageBody);
+                this.logger.LogError("Message contained no build url. Message body: {MessageBody}", message.MessageText);
                 return;
             }
 

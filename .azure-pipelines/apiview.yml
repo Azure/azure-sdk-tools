@@ -129,7 +129,7 @@ stages:
               DOTNET_MULTILEVEL_LOOKUP: 0
 
           - pwsh: |
-               Write-Host "Bundling stable version of python api-stub-generator"
+              Write-Host "Bundling stable version of python api-stub-generator"
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
             displayName: 'Bundle Python API Parser'
 

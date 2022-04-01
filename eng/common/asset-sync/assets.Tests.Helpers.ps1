@@ -87,6 +87,5 @@ Function Describe-TestFolder{
     }
   }
 
-  Write-Host $testPath
   return $testPath
 }

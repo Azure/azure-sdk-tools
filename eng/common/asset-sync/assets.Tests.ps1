@@ -106,19 +106,21 @@ Describe "AssetsModuleTests" {
       $jsonContent = Get-Basic-AssetsJson -RandomizeRepoId $false
       Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
       $result = Resolve-AssetRepo-Location -Config $jsonContent
-      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "Azure.azure-sdk-for-python-assets")
+      $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
 
       $result | Should -Be $expectedLocation.ToString()
     }
 
     It "Should should resolve a custom repoId." {
-      $files = @()
       $jsonContent = Get-Basic-AssetsJson
       $jsonContent.AssetsRepoId = "custom"
 
       Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
       $result = Resolve-AssetRepo-Location -Config $jsonContent
-      $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "custom")
+      $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
+
+      $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
       
       $result | Should -Be $expectedLocation.ToString()
     }

@@ -47,6 +47,7 @@
   - [Integration Checklist](#integration-checklist)
   - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
     - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
+  - [Follow-Ups](#follow-ups)
 
 ## What is the problem? Why?
 
@@ -599,3 +600,7 @@ For more than a few of the storage recordings, some request bodies are obviously
 ## Follow-Ups
 
 - [ ] Need to resolve what the nighty automation would _actually look like._.
+- [ ] Can we target commits instead of branches/tags? That would allow us to move things around under the hood and actually squash if we needed to
+  - [ ] Do we make these tags bidirectional? As in they can also contain the local SHA of the language repo at the time of push?
+- [ ] Use `.bat`/`.sh` shims to the powershell script. That's what we do with the New-TestResources script
+- [ ] Can we add telemetry to the tooling?

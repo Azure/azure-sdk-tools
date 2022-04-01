@@ -149,10 +149,9 @@ Function Resolve-AssetRepo-Location {
         $repoName = $Config.AssetsRepoId
     }
 
-    $repoNameHashed = Join-Path $repoName $Config.AssetsJsonRelativeLocation
+    $repoNameHashed = Get-MD5-Hash -Input ((Join-Path $repoName $Config.AssetsJsonRelativeLocation).ToString())
 
-
-    $repoPath = (Join-Path $assetsLocation $repoName)
+    $repoPath = (Join-Path $assetsLocation $repoNameHashed.Hash)
     
     if (-not (Test-Path $repoPath)){
         mkdir -p $repoPath | Out-Null

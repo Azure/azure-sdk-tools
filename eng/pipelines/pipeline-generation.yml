@@ -37,27 +37,27 @@ jobs:
   timeoutInMinutes: 120
   strategy:
     matrix:
-      # Java:
-      #   RepositoryName: azure-sdk-for-java
-      #   Prefix: java
-      #   PublicOptions: ''
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Android:
-      #   RepositoryName: azure-sdk-for-android
-      #   Prefix: android
-      #   PublicOptions: ''
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+      Java:
+        RepositoryName: azure-sdk-for-java
+        Prefix: java
+        PublicOptions: ''
+        InternalOptions: >-
+          --variablegroup ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Android:
+        RepositoryName: azure-sdk-for-android
+        Prefix: android
+        PublicOptions: ''
+        InternalOptions: >-
+          --variablegroup ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
       JavaScript:
         RepositoryName: azure-sdk-for-js
         Prefix: js
@@ -69,63 +69,63 @@ jobs:
           --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
           --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
         TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Python:
-      #   RepositoryName: azure-sdk-for-python
-      #   Prefix: python
-      #   PublicOptions: ''
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Net:
-      #   RepositoryName: azure-sdk-for-net
-      #   Prefix: net
-      #   PublicOptions: ''
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.AzureSDK_Nuget_Release_Pipeline_Secrets }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Cpp:
-      #   RepositoryName: azure-sdk-for-cpp
-      #   Prefix: cpp
-      #   PublicOptions: ''
-      #   # Resource Provisioner is in InternalOptions and not TestOptions because C++ includes live tests in the unified pipelines
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #     --variablegroup ${{ parameters.Cache_Secrets_for_CPP }} 
-      # iOS:
-      #   RepositoryName: azure-sdk-for-ios
-      #   Prefix: ios
-      #   PublicOptions: ''
-      #   # Resource Provisioner is in InternalOptions and not TestOptions because iOS includes live tests in the unified pipelines
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #     --variablegroup ${{ parameters.AzureSDK_CocoaPods_Release_Pipeline_Secrets}}
-      # Go:
-      #   RepositoryName: azure-sdk-for-go
-      #   Prefix: go
-      #   PublicOptions: ''
-      #   # Resource Provisioner is in InternalOptions and not TestOptions because Go includes live tests in the unified pipelines
-      #   InternalOptions: >-
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
-      #     --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
-      #     --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #   GenerateUnifiedWeekly: true
+      Python:
+        RepositoryName: azure-sdk-for-python
+        Prefix: python
+        PublicOptions: ''
+        InternalOptions: >-
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Net:
+        RepositoryName: azure-sdk-for-net
+        Prefix: net
+        PublicOptions: ''
+        InternalOptions: >-
+          --variablegroup ${{ parameters.AzureSDK_Nuget_Release_Pipeline_Secrets }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestOptions: '--variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Cpp:
+        RepositoryName: azure-sdk-for-cpp
+        Prefix: cpp
+        PublicOptions: ''
+        # Resource Provisioner is in InternalOptions and not TestOptions because C++ includes live tests in the unified pipelines
+        InternalOptions: >-
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
+          --variablegroup ${{ parameters.Cache_Secrets_for_CPP }} 
+      iOS:
+        RepositoryName: azure-sdk-for-ios
+        Prefix: ios
+        PublicOptions: ''
+        # Resource Provisioner is in InternalOptions and not TestOptions because iOS includes live tests in the unified pipelines
+        InternalOptions: >-
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
+          --variablegroup ${{ parameters.AzureSDK_CocoaPods_Release_Pipeline_Secrets}}
+      Go:
+        RepositoryName: azure-sdk-for-go
+        Prefix: go
+        PublicOptions: ''
+        # Resource Provisioner is in InternalOptions and not TestOptions because Go includes live tests in the unified pipelines
+        InternalOptions: >-
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHub }}
+          --variablegroup ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          --variablegroup ${{ parameters.Secrets_for_DevOps_Notification_Configuration_and_User_Resolution }}
+          --variablegroup ${{ parameters.APIReview_AutoCreate_Configurations }}
+          --variablegroup ${{ parameters.Secrets_for_Resource_Provisioner }}
+        GenerateUnifiedWeekly: true
   steps:
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |

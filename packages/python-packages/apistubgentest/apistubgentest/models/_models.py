@@ -22,6 +22,15 @@ def my_decorator(fn):
     return wrapper
 
 
+def another_decorator(value):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            return value
+        return wrapper
+    return decorator
+
+
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
     def __getitem__(self, name: str):
         pass
@@ -196,8 +205,16 @@ class SomethingWithDecorators:
 
     @my_decorator
     async def name_async(self):
-        return "Test"
+        pass
 
     @my_decorator
     def name_sync(self):
-        return "Test"
+        pass
+
+    @another_decorator("Test")
+    async def complex_decorator_async(self):
+        pass
+
+    @another_decorator("Test")
+    def complex_decorator_sync(self):
+        pass

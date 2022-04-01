@@ -84,10 +84,8 @@ class FunctionNode(NodeEntityBase):
             self.namespace_id += ":async"
         
         # Turn any decorators into annotation
-        try:
-            self.annotations = [f"@{x.name}" for x in self.node.decorators.nodes if hasattr(x, "name")]
-        except:
-            pass
+        if self.node.decorators:
+            self.annotations = [f"@{x.as_string()}" for x in self.node.decorators.nodes]
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()

@@ -148,9 +148,12 @@ class ClassNode(NodeEntityBase):
             if not func.decorators:
                 continue
             for node in func.decorators.nodes:
-                if node.name == "overload":
-                    overload_node = FunctionNode(self.namespace, self, node=func)
-                    overload_nodes.append(overload_node)
+                try:
+                    if node.name == "overload":
+                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_nodes.append(overload_node)
+                except AttributeError:
+                    continue
         return overload_nodes
 
     def _inspect(self):

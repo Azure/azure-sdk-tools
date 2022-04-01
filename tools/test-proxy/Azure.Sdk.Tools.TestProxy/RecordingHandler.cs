@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
+            "Host",
             "Proxy-Connection",
         };
 
@@ -137,6 +138,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
+
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
             var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
@@ -292,8 +294,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                 }
             }
-
-            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
 
             return upstreamRequest;
         }

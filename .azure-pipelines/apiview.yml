@@ -46,7 +46,7 @@ variables:
   ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
-  GoVersion: '1.15'
+  GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:

@@ -39,29 +39,43 @@ Describe "AssetsModuleTests" {
       
       $testLocation.GetType().Name | Should -Be "String"
 
-      $Result = Resolve-AssetsJson -TargetPath $testLocation
-      $recordingLocation = $Result.AssetsJsonLocation
+      $Config = Resolve-AssetsJson -TargetPath $testLocation
+      $recordingLocation = $Config.AssetsJsonLocation
       $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
     }
 
     It "Should should traverse upwards to find assets.json." {
       $files = @(
-        "a/b.json",
-        "a/b/c.json"
+        "sdk/storage/",
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
       )
-
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
-      try {
-        Push-Location -Path (Join-Path $testLocation "a" "b")
-        $Result = Resolve-AssetsJson -TargetPath $testLocation
-        $recordingLocation = $Result.AssetsJsonLocation
-        $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
-      }
-      finally {
-        Pop-Location
-      }
+      $Result = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
+      $recordingLocation = $Result.AssetsJsonLocation
+      $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
     }
+
+    It "Should be able to resolve the assets json based on CWD" {
+      # $files = @(
+      #   "sdk/storage/",
+      #   "sdk/storage/assets.json",
+      #   "sdk/storage/azure-storage-blob/awesome.json"
+      # )
+      # $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+      
+      # try {
+      #   Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
+      #   $Result = Resolve-AssetsJson
+      #   $recordingLocation = $Result.AssetsJsonLocation
+      #   $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+      # }
+      # finally {
+      #   Pop-Location
+      # }
+    }
+
 
     It "Should should error when unable to find a recording json." {
       $files = @(
@@ -126,23 +140,38 @@ Describe "AssetsModuleTests" {
     }
   }
 
+  Context "Assets Json Updates" {
+    It "Should update a targeted recording.json w/ a new SHA and output without mangling the json file." {
+      
+    }
+  }
+
   Context "Initialize-Assets-Repo" {
     It "Should create assets repo for standard sync." {
-      $JsonContent = Get-Basic-AssetsJson
-      $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+
+      $config = Resolve-AssetsJson -TargetPath $testLocation
+
+      Initialize-AssetsRepo -Config $config
     }
 
     It "Should recognize an initialized repository and no-op." {
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
       $JsonContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
     }
 
-    It "Should create a service level assets.json based off main." {
-
-    }
-
     It "Should initialize language repo with a new assets.json at sdk/<service> if necessary" {
-
+      # TODO
     }
   }
 

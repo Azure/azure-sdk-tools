@@ -76,7 +76,7 @@ Function Resolve-AssetsJson {
     $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
 
     while (-not $foundConfig -and -not $reachedRoot){
-        $pathForManipulation, $remainder = Split-Path $props
+        $pathForManipulation, $remainder = Split-Path $pathForManipulation
 
         $foundConfig, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
@@ -91,8 +91,6 @@ Function Resolve-AssetsJson {
     # path to assets Json
     $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
     Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonLocation" -Value "$discoveredPath"
-
-    $relPath = ""
 
     if($discoveredPath.StartsWith($REPO_ROOT)) {
         try {
@@ -221,22 +219,18 @@ Function Initialize-AssetsRepo {
         [boolean] $ForceReinitialize = $false
     )
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    Write-Host $assetRepo
 
     if ($ForceReinitialize)
     {
         Remove-Item -Force -R "$assetRepo/*"
     }
     
-    $isInitialized = $false
+    Write-Host "git clone --filter=blob:none --no-checkout `"https://github.com/$($Config.AssetsRepo)`" $assetRepo"
+    git clone --filter=blob:none --no-checkout "https://github.com/$($Config.AssetsRepo)" $assetRepo
 
-    if(-not $isInitialized){
-        try {
-            Push-Location $assetRepo
-            git clone --filter=blob:none --no-checkout "https://github.com/$($Config.AssetsRepo)" .
-        }
-        finally {
-            Pop-Location
-        }
+    if($LASTEXITCODE -gt 0){
+        throw "Unable to clone to directory $assetRepo"
     }
 }
 

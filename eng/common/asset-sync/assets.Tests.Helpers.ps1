@@ -53,17 +53,30 @@ Function Describe-TestFolder{
   
   $testPath = Get-TestPath
 
+  Set-Content -Path (Join-Path $testPath ".git") -Value ""
+
   $assetJsonLocation = Join-Path $testPath "assets.json"
-  
+
   foreach($file in $files){
     if($file.ToLower().EndsWith("assets.json")){
+      
       $assetJsonLocation = Join-Path $testPath $file
+
+      $directory = Split-Path $assetJsonLocation
+
+      if (-not (Test-Path $directory)){
+        mkdir -p $directory | Out-Null
+      }
     }
   }
-  
+
   if ($AssetsJsonContent){
     Set-Content -Value ($AssetsJsonContent | ConvertTo-Json) -Path $assetJsonLocation | Out-Null
   }
+
+
+  Write-Host $assetJsonLocation
+  
 
   foreach($file in $Files){
     $ext = [System.IO.Path]::GetExtension($file)

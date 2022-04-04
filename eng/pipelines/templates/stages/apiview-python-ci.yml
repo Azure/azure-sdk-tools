@@ -84,7 +84,7 @@ stages:
               tox -e pytest,stubgen
             displayName: 'Test Python Package Parser'
 
-  - ${{if or(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: 'Release'
       dependsOn: Build
       condition: Succeeded()

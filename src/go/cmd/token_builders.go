@@ -75,33 +75,29 @@ func makeStructTokens(name *string, s Struct, list *[]Token) {
 	makeToken(nil, nil, "struct", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
-	if s.AnonymousFields == nil && s.Fields == nil {
+	for _, v1 := range s.AnonymousFields {
+		v := v1 + "-" + *name
 		makeToken(nil, nil, "", newline, list)
 		makeToken(nil, nil, "\t", whitespace, list)
-		makeToken(nil, nil, "// no exported fields", comment, list)
-	} else {
-		for _, v1 := range s.AnonymousFields {
-			v := v1 + "-" + *name
-			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v, nil, v1, typeName, list)
-		}
-		keys := []string{}
-		for k := range s.Fields {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, field := range keys {
-			typ := s.Fields[field]
-			defID := field + "-" + *name
-			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&defID, nil, field, typeName, list)
-			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, typ, memberName, list)
-		}
+		makeToken(&v, nil, v1, typeName, list)
 	}
-	makeToken(nil, nil, "", newline, list)
+	keys := make([]string, 0, len(s.Fields))
+	for k := range s.Fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, field := range keys {
+		typ := s.Fields[field]
+		defID := field + "-" + *name
+		makeToken(nil, nil, "", newline, list)
+		makeToken(nil, nil, "\t", whitespace, list)
+		makeToken(&defID, nil, field, typeName, list)
+		makeToken(nil, nil, " ", whitespace, list)
+		makeToken(nil, nil, typ, memberName, list)
+	}
+	if len(s.AnonymousFields)+len(s.Fields) > 0 {
+		makeToken(nil, nil, "", newline, list)
+	}
 	makeToken(nil, nil, "}", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)

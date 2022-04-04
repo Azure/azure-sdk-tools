@@ -1,0 +1,123 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/pipelines/templates/stages/apiview-python-ci.yml
+      - packages/python-packages/api-stub-generator
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/pipelines/templates/stages/apiview-python-ci.yml
+      - packages/python-packages/api-stub-generator
+
+variables:
+  PythonVersion: '3.10.2'
+  PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
+  FeedName: 'public/azure-sdk-apiview-tools'
+  ArtifactName: 'apiviewparserpython'
+
+stages:
+  - stage: 'Build'
+    jobs:
+      - job: 'Build'
+
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: MMSUbuntu20.04
+
+        steps:
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '$(PythonVersion)'
+
+          - script: |
+              python --version
+              pip install virtualenv aiohttp chardet trio bdist_wheel
+            displayName: 'Setup Python Environment'
+          
+          - pwsh: |
+              Write-Host "Bundling stable version of python api-stub-generator"
+              python $(PythonParserPackagePath)/setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+            displayName: 'Build Python API Parser'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: $(ArtifactName)
+              
+
+      - job: 'Test'
+
+        dependsOn:
+          - 'Build'
+
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: MMSUbuntu20.04
+
+        steps:
+
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '$(PythonVersion)'
+
+          - script: |
+              python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+            displayName: 'Verify Python APIView version consistency'
+
+          - script: |
+              cd $(Build.SourcesDirectory)/$(PythonParserPackagePath)
+              pip install tox
+              tox -e pytest,stubgen
+            displayName: 'Test Python Package Parser'
+
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: 'Release Python Parser'
+      dependsOn: Build
+      condition: Succeeded()
+      jobs:
+      - job: PublishPackage
+        displayName: 'Publish api-stub-generator package to devops feed'
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: MMSUbuntu20.04
+        steps:
+        - checkout: none
+        - download: current
+          artifact: $(ArtifactName)
+          timeoutInMinutes: 5
+
+        - task: UsePythonVersion@0
+
+        - script: |
+            set -e
+            pip install twine
+          displayName: Install Twine
+
+        - task: TwineAuthenticate@0
+          displayName: 'Twine Authenticate to feed'
+          inputs:
+            artifactFeeds: $(FeedName)
+
+        - task: PipAuthenticate@1
+          displayName: 'Pip Authenticate to feed'
+          inputs:
+            artifactFeeds: $(FeedName)
+            onlyAddExtraIndex: false
+
+        - pwsh: |
+            twine upload --repository $(FeedName) --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/$(ArtifactName)/*.whl
+            echo "Uploaded whl to devops feed $(FeedName)"
+          displayName: 'Publish package'

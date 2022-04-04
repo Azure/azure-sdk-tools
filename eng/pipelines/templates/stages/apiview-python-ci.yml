@@ -25,7 +25,7 @@ pr:
 variables:
   PythonVersion: '3.10.2'
   PythonParserPackagePath: 'packages/python-packages/api-stub-generator'
-  FeedName: 'public/azure-sdk-apiview-tools'
+  FeedName: 'public/azure-sdk-api-review-tools'
   ArtifactName: 'apiviewparserpython'
 
 stages:

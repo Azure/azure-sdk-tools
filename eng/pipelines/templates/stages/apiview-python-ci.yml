@@ -44,7 +44,7 @@ stages:
 
           - script: |
               python --version
-              pip install virtualenv aiohttp chardet trio bdist_wheel
+              pip install virtualenv aiohttp chardet trio
             displayName: 'Setup Python Environment'
           
           - pwsh: |

@@ -49,7 +49,7 @@ stages:
           
           - pwsh: |
               Write-Host "Bundling stable version of python api-stub-generator"
-              python $(PythonParserPackagePath)/setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+              python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
             displayName: 'Build Python API Parser'
             workingDirectory: $(Build.SourcesDirectory)/$(PythonParserPackagePath)
 

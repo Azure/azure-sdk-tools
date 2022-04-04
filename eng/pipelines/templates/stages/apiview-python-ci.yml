@@ -85,7 +85,7 @@ stages:
             displayName: 'Test Python Package Parser'
 
   - ${{if or(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: 'Release Python Parser'
+    - stage: 'Release'
       dependsOn: Build
       condition: Succeeded()
       jobs:

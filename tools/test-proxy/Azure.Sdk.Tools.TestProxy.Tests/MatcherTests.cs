@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var sessionForRetrieval = TestHelpers.LoadRecordSession(file);
             var identicalRequest = TestHelpers.LoadRecordSession(file).Session.Entries[0];
-            var result = identicalRequest.Request.Headers[targetHeader][0] = overrideValue;
+            identicalRequest.Request.Headers[targetHeader][0] = overrideValue;
 
             var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, RecordMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
         }

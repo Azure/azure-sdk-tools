@@ -97,9 +97,6 @@ stages:
         steps:
         - checkout: none
         - download: current
-          artifact: $(ArtifactName)
-          timeoutInMinutes: 5
-
         - task: UsePythonVersion@0
 
         - script: |

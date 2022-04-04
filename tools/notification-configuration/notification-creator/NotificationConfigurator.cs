@@ -25,6 +25,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private const int MaxTeamNameLength = 64;        
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
+        // A cache on the code owners github identity to ms alias.
+        private readonly Dictionary<string, string> codeOwnerCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -200,7 +202,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 // Get set of team members in the CODEOWNERS file
                 var codeownerPrincipals = codeOwnerEntry.Owners
-                    .Select(contact => gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact));
+                    .Select(contact => (codeOwnerCache.ContainsKey(contact) ?
+                    codeOwnerCache[contact] : gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact)));
 
                 var codeownersDescriptorsTasks = codeownerPrincipals
                     .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))

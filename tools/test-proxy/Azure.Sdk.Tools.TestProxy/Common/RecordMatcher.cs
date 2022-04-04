@@ -256,7 +256,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             return new[] { string.Join(", ",
                 values.Select(value =>
-                    string.Join("; ", value.Split(';').Select(part => part.Trim())))) };
+                // parameter
+                    string.Join(", ", value.Split(',').Select(part => part.Trim())))
+                // header
+                .Select(value =>
+                    string.Join("; ", value.Split(";").Select(part => part.Trim()))))};
         }
 
         public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)

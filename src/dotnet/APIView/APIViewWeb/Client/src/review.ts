@@ -5,6 +5,7 @@
   const SHOW_DOC_HREF = ".show-document";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
   const SHOW_DIFFONLY_HREF = ".show-diffonly";
+  const HIDE_LINE_NUMBERS = "#hide-line-numbers";
 
   hideCheckboxIfNoDocs();
 
@@ -20,6 +21,10 @@
 
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
     $(SHOW_DIFFONLY_HREF)[0].click();
+  });
+
+  $(HIDE_LINE_NUMBERS).on("click", e => {
+    $(".line-number").toggleClass("d-none");
   });
 
   // Diff button
@@ -38,6 +43,32 @@
         window.location.href = url as string;
       }
     });
+  });
+
+  $('.row-fold-elipsis, .row-fold-caret').on('click', function() {
+    var parentRow = $(this).parents('.code-line');
+    var parentRowClasses = parentRow.attr('class');
+    if (parentRowClasses) {
+      var foldableClassPrefix = parentRowClasses.split(' ').filter(c => c.endsWith('-parent'))[0].replace("-parent","");
+      $(`.${foldableClassPrefix}-content`).toggleClass("d-none");
+    }
+    parentRow.find(".row-fold-elipsis").toggleClass("d-none");
+    var caretIcon = parentRow.find(".row-fold-caret").children("i");
+    var caretClasses =  caretIcon.attr("class");
+    if (caretClasses)
+    {
+      var caretDirection = caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0];
+      if (caretDirection.endsWith("right"))
+      {
+        caretIcon.removeClass("fa-angle-right");
+        caretIcon.addClass("fa-angle-down");
+      }
+      else
+      {
+        caretIcon.removeClass("fa-angle-down");
+        caretIcon.addClass("fa-angle-right");
+      }
+    }
   });
 
   // enable tooltip and popover

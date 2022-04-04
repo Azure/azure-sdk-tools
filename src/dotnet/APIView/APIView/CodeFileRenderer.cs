@@ -21,10 +21,15 @@ namespace ApiView
         private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff)
         {
             var stringBuilder = new StringBuilder();
+            // this will be used to track nested foldable panels if present
+            var foldableParentStack = new Stack<string>();
             string currentId = null;
             bool isDocumentationRange = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
+            // IF isfoldableRange is set then child nodes will be named as content of parent node
+            bool isFoldableRange = false;
+            string nodeName = null;
 
             foreach (var token in node)
             {
@@ -38,7 +43,14 @@ namespace ApiView
                 switch(token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId));
+                        // Set parent and content class if current line is infoldable panel
+                        string lineClass = "";
+                        if (nodeName != null)
+                        {
+                            lineClass = nodeName + (isFoldableRange ?"-content" : "-parent");
+                        }
+
+                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass));
                         currentId = null;
                         stringBuilder.Clear();
                         break;
@@ -67,6 +79,33 @@ namespace ApiView
 
                     case CodeFileTokenKind.SkipDiffRangeEnd:
                         isSkipDiffRange = false;
+                        break;
+
+                    case CodeFileTokenKind.FoldableParentToken:
+                        // In case of nested foldable panel, push current parent name to stack
+                        if (nodeName != null)
+                        {
+                            foldableParentStack.Push(nodeName);
+                        }
+                        nodeName = token.Value;
+                        break;
+
+                    case CodeFileTokenKind.FoldableContentStart:
+                        isFoldableRange = true;
+                        break;
+
+                    case CodeFileTokenKind.FoldableContentEnd:
+                        // Foldable content panel is completed.
+                        // Pop previous parent or reset foldable range if no longer a foldable panel.
+                        if (foldableParentStack.Count > 0)
+                        {
+                            nodeName = foldableParentStack.Pop();
+                        }
+                        else
+                        {
+                            isFoldableRange = false;
+                            nodeName = null;
+                        }
                         break;
 
                     default:

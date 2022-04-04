@@ -4,7 +4,8 @@ trigger: none
 pr: none
 
 pool:
-  vmImage: ubuntu-latest
+  name: azsdk-pool-mms-ubuntu-2004-general
+  vmImage: MMSUbuntu20.04
 
 jobs:
   - job: SyncRepos
@@ -18,18 +19,18 @@ jobs:
         Repos:
 
           Azure/azure-rest-api-specs:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
           Azure/azure-sdk-for-go:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-go-pr:
               azure-sdk/azure-sdk-for-go:
               azure-sdk/azure-sdk-for-go-pr:
 
           Azure/azure-sdk-for-java:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-java-pr:
               azure-sdk/azure-sdk-for-java:
               azure-sdk/azure-sdk-for-java-pr:
@@ -41,24 +42,24 @@ jobs:
               azure-sdk/azure-sdk-for-js-pr:
 
           Azure/azure-sdk-for-net:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-net-pr:
               azure-sdk/azure-sdk-for-net:
               azure-sdk/azure-sdk-for-net-pr:
 
           Azure/azure-sdk-for-python:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
           Azure/azure-sdk-for-ios:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-ios-pr:
               azure-sdk/azure-sdk-for-ios:
 
           Azure/azure-sdk-for-android:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-android-pr:
               azure-sdk/azure-sdk-for-android:
 
@@ -69,35 +70,35 @@ jobs:
 
           Azure/azure-cli:
             Branch: dev
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-cli-pr:
 
           Azure/azure-cli-extensions:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-cli-extensions-pr:
               azure-sdk/azure-cli-extensions:
               azure-sdk/azure-cli-extensions-pr:
-              
+
           Azure/azure-libraries-for-java:
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-libraries-for-java-pr:
-              
+
           Microsoft/vcpkg:
             TargetRepos:
               azure-sdk/vcpkg:
 
           Azure/azure-docs-sdk-java:
-            TargetRepos: 
+            TargetRepos:
               azure-sdk/azure-docs-sdk-java:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
-        
+
           Azure/azure-sdk-for-python:
             Branch: release/v3
-            TargetRepos: 
+            TargetRepos:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:

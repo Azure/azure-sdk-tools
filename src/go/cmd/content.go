@@ -434,12 +434,6 @@ func getMethodName(s string) string {
 func isOnUnexportedMember(s string) bool {
 	r := regexp.MustCompile(`(\(([a-z|A-Z]{1}) (\*){0,1}([a-z]+)([a-z|A-Z]*)\))`)
 	return r.MatchString(s)
-	// for _, l := range s {
-	// 	if unicode.IsLetter(l) {
-	// 		return string(l) == strings.ToLower(string(l))
-	// 	}
-	// }
-	// return false
 }
 
 // isExampleOrTest returns true if the string passed in begins with "Example" or "Test", this is used

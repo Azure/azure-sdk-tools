@@ -167,18 +167,18 @@
 
             var bundles = BuildLogBundles(account, build, timeline, logs);
 
-            foreach (var bundle in bundles)
+            if (bundles.Count == 1)
+            {
+                await ProcessBuildLogBundleAsync(bundles[0]);
+            }
+            else
             {
                 // If there's more than one bundle, we need to fan out the logs to multiple queue messages
-                if (bundles.Count > 1)
+                foreach (var bundle in bundles)
                 {
                     await EnqueueBuildLogBundleAsync(bundle);
                 }
-                else
-                {
-                    await ProcessBuildLogBundleAsync(bundle);
-                }
-            }
+            }            
         }
 
         public async Task ProcessBuildLogBundleAsync(BuildLogBundle buildLogBundle)

@@ -32,14 +32,14 @@ extends:
     TestSteps:
     - template: /eng/pipelines/templates/steps/use-python-version.yml
       parameters:
-        versionSpec: '${{ parameters.PythonVersion }}'
+        versionSpec: '3.10.2'
 
     - script: |
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'
 
     - script: |
-        cd $(Build.SourcesDirectory)/${{ parameters.PackagePath }}
+        cd $(Build.SourcesDirectory)/packages/python-packages/api-stub-generator
         pip install tox
         tox -e pytest,stubgen
       displayName: 'Test Python Package Parser'

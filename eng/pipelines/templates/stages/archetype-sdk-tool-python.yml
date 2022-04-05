@@ -1,3 +1,23 @@
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10.2'
+- name: PackagePath
+  type: string
+  default: ''
+- name: FeedName
+  type: string
+  default: ''
+- name: ArtifactName
+  type: string
+  default: ''
+- name: PackageName
+  type: string
+  default: ''
+- name: TestSteps
+  type: object
+  default: []
+
 trigger:
   branches:
     include:
@@ -19,26 +39,6 @@ pr:
   paths:
     include:
       - eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
-
-parameters:
-- name: PythonVersion
-  type: string
-  default: '3.10.2'
-- name: PackagePath
-  type: string
-  default: ''
-- name: FeedName
-  type: string
-  default: ''
-- name: ArtifactName
-  type: string
-  default: ''
-- name: PackageName
-  type: string
-  default: ''
-- name: TestSteps
-  type: object
-  default: []
 
 stages:
   - stage: 'Build'

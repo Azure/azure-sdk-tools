@@ -18,28 +18,6 @@ parameters:
   type: object
   default: []
 
-trigger:
-  branches:
-    include:
-      - main
-      - feature/*
-      - release/*
-      - hotfix/*
-  paths:
-    include:
-      - eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
-
-pr:
-  branches:
-    include:
-      - main
-      - feature/*
-      - release/*
-      - hotfix/*
-  paths:
-    include:
-      - eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
-
 stages:
   - stage: 'Build'
     jobs:

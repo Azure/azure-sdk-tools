@@ -135,7 +135,8 @@ class ClassNode(NodeEntityBase):
             )
 
     """ Uses AST parsing to look for @overload decorated functions
-        because inspect cannot see these.
+        because inspect cannot see these. Note that this will not
+        find overloads for module-level functions.
     """
     def _parse_overloads(self) -> List[FunctionNode]:
         overload_nodes = []

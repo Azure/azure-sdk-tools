@@ -257,10 +257,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return new[] {
                 string.Join(", ", values
                     .Select(value =>
-                        // parameter
                         string.Join(", ", value.Split(',').Select(part => part.Trim())))
                     .Select(value =>
-                        // header
                         string.Join("; ", value.Split(";").Select(part => part.Trim())))
                 )
             };

@@ -59,7 +59,7 @@ stages:
             vmImage: MMSUbuntu20.04
 
           steps:
-            - ${{ parameters.BeforeTestSteps }}
+            - ${{ parameters.TestSteps }}
 
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
     - stage: 'Release'

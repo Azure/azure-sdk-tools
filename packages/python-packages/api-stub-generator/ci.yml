@@ -26,7 +26,7 @@ extends:
   parameters:
     PythonVersion: '3.10.2'
     PackagePath: 'packages/python-packages/api-stub-generator'
-    FeedName: 'public/azure-sdk-api-review-tools'
+    FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'apiviewparserpython'
     PackageName: 'Python API View Parser'
     TestSteps:

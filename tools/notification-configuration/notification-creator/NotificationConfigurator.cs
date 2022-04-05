@@ -60,9 +60,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
 
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
-                    // await EnsureScheduledBuildFailSubscriptionExists(pipeline, parentTeam, persistChanges);
-
-                    // Associate
                 }
             }
         }
@@ -162,6 +159,10 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 if (persistChanges)
                 {
                     result = await service.UpdateTeamForProjectAsync(pipeline.Project.Id.ToString(), result);
+                    if (purpose == TeamPurpose.ParentNotificationTeam)
+                    {
+                        await EnsureScheduledBuildFailSubscriptionExists(pipeline, result, true);
+                    }
                 }
             }
 
@@ -202,8 +203,13 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 // Get set of team members in the CODEOWNERS file
                 var codeownerPrincipals = codeOwnerEntry.Owners
-                    .Select(contact => (codeOwnerCache.ContainsKey(contact) ?
-                    codeOwnerCache[contact] : gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact)));
+                    .Select(contact => {
+                        if (!codeOwnerCache.ContainsKey(contact))
+                        {
+                            codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        }
+                        return codeOwnerCache[contact];
+                    });
 
                 var codeownersDescriptorsTasks = codeownerPrincipals
                     .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))

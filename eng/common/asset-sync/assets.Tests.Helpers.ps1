@@ -23,11 +23,11 @@ Function Get-TestFolder {
 }
 
 Function Get-TestPath {
-  $usePersistentStorage = $env:USE_LOCAL_TEST_PATHS
+  $disablePermanentStorage = $env:USE_TESTDRIVE
 
   $localTempPath = Get-TestFolder
 
-  if (-not $usePersistentStorage){
+  if ($disablePermanentStorage){
     $testPath = "TestDrive:\$([Guid]::NewGuid())\"
     
     mkdir $testPath | Out-Null
@@ -36,7 +36,7 @@ Function Get-TestPath {
   else {
     $testPath = (Join-Path $localTempPath "$([Guid]::NewGuid())")
 
-    $result = mkdir -p $testPath | Out-Null
+    mkdir -p $testPath | Out-Null
     return $testPath
   }
 }
@@ -45,7 +45,7 @@ Function Describe-TestFolder{
   param(
     # if provided, this content will be written to a assets.json at root of area, or
     # somewhere else in the generated file tree.
-    [string] $AssetsJsonContent, 
+    [PSCustomObject] $AssetsJsonContent, 
     # Files is a set of relative paths that will form the basis of the environment on disk
     # ["a/", "b.json", "b/c.json", "b/d/c.json", "a/assets.json" ]
     [string[]] $Files
@@ -53,8 +53,7 @@ Function Describe-TestFolder{
   
   $testPath = Get-TestPath
 
-  Set-Content -Path (Join-Path $testPath ".git") -Value ""
-
+  "test content" | Set-Content -Path (Join-Path $testPath ".git")
   $assetJsonLocation = Join-Path $testPath "assets.json"
 
   foreach($file in $files){
@@ -71,12 +70,8 @@ Function Describe-TestFolder{
   }
 
   if ($AssetsJsonContent){
-    Set-Content -Value ($AssetsJsonContent | ConvertTo-Json) -Path $assetJsonLocation | Out-Null
+    $AssetsJsonContent | ConvertTo-Json | Set-Content -Path $assetJsonLocation | Out-Null
   }
-
-
-  Write-Host $assetJsonLocation
-  
 
   foreach($file in $Files){
     $ext = [System.IO.Path]::GetExtension($file)

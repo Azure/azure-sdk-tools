@@ -219,7 +219,6 @@ Function Initialize-AssetsRepo {
         [boolean] $ForceReinitialize = $false
     )
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
-    Write-Host $assetRepo
 
     if ($ForceReinitialize)
     {
@@ -276,7 +275,7 @@ Function Reset-AssetsRepo {
 This function's purpose is solely to update a assets.json (both config and on file) with a new recording SHA.
 
 .DESCRIPTION
-
+Retrieves the location of the target recording.json by looking at a property of the Config object.
 #>
 Function Update-AssetsJson {
     param(
@@ -284,7 +283,17 @@ Function Update-AssetsJson {
         $NewSHA
     )
     
-    Write-Host "Update!"
+    $jsonAtRest = Get-Content $Config.AssetsJsonLocation | ConvertFrom-Json
+
+    # update the sha in our current live config
+    $Config.SHA = $NewSHA
+
+    # ensure it is propogated to disk
+    $jsonAtRest.SHA = $NewSHA
+
+    $jsonAtRest | ConvertTo-Json | Set-Content -Path $Config.AssetsJsonLocation
+
+    return $Config
 }
 
 <#

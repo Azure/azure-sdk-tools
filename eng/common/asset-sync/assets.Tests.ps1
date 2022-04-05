@@ -8,6 +8,12 @@ BeforeAll {
   if ((Test-Path $testPath)){
     Remove-Item -Recurse -Force $testPath
   }
+
+  # wipe the assets repo
+  $location = Resolve-AssetStore-Location
+  if ((Test-Path $location)){
+    Remove-Item -Recurse -Force $location
+  }
 }
 
 Describe "AssetsModuleTests" {
@@ -109,9 +115,8 @@ Describe "AssetsModuleTests" {
       $jsonContent = Get-Basic-AssetsJson
       Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
 
-      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
       $result = Resolve-AssetStore-Location
-
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
       $result | Should -Be $expectedLocation.ToString()
     }
 
@@ -142,7 +147,13 @@ Describe "AssetsModuleTests" {
 
   Context "Assets Json Updates" {
     It "Should update a targeted recording.json w/ a new SHA and output without mangling the json file." {
-      
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
+      $config = Resolve-AssetsJson -TargetPath $testLocation
+
+      $config.AssetsJsonLocation
+
+
+
     }
   }
 
@@ -150,10 +161,10 @@ Describe "AssetsModuleTests" {
     It "Should create assets repo for standard sync." {
       $files = @(
         "sdk/storage/",
-        "sdk/storage/assets.json",
         "sdk/storage/azure-storage-blob/awesome.json"
       )
-      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+      $assetsContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
 
       $config = Resolve-AssetsJson -TargetPath $testLocation
 

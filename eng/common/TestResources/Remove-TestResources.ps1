@@ -20,8 +20,14 @@ param (
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
     [string] $ResourceGroupName,
 
+    [Parameter(ParameterSetName = 'ResourceGroupTag', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroupTag+Provisioner', Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [object] $ResourceGroupTags,
+
     [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroupTag+Provisioner', Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string] $TenantId,
 
@@ -31,17 +37,21 @@ param (
 
     [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroupTag+Provisioner', Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $ProvisionerApplicationId,
 
     [Parameter(ParameterSetName = 'Default+Provisioner', Mandatory = $true)]
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner', Mandatory = $true)]
+    [Parameter(ParameterSetName = 'ResourceGroupTag+Provisioner', Mandatory = $true)]
     [string] $ProvisionerApplicationSecret,
 
     [Parameter(ParameterSetName = 'Default', Position = 0)]
     [Parameter(ParameterSetName = 'Default+Provisioner')]
     [Parameter(ParameterSetName = 'ResourceGroup')]
+    [Parameter(ParameterSetName = 'ResourceGroupTag')]
     [Parameter(ParameterSetName = 'ResourceGroup+Provisioner')]
+    [Parameter(ParameterSetName = 'ResourceGroupTag+Provisioner', Mandatory = $true)]
     [string] $ServiceDirectory,
 
     [Parameter()]
@@ -101,6 +111,77 @@ function Retry([scriptblock] $Action, [int] $Attempts = 5) {
     }
 }
 
+function GetResourceGroupsWithTags([object]$tags) {
+    if (!$tags) {
+        return @{}
+    }
+    foreach ($tag in $tags.GetEnumerator()) {
+        if ([string]::IsNullOrEmpty($tag.Value)) {
+            # Prevent deletion from running with empty tags, as it will delete
+            # all groups with matching tag key and is likely unintended.
+            Write-Error "Tag value for key '$tag.Key' cannot be empty."
+            exit 1
+        }
+    }
+    # The `-Tag` parameter of Remove-ResourceGroups does not support multiple keys.
+    # https://github.com/Azure/azure-powershell/issues/9367
+    $single = $tags.GetEnumerator() | Select-Object -First 1
+    $partialMatches = Get-AzResourceGroup -Tag @{ $single.Key = $single.Value }
+    if (!$partialMatches) {
+        return @{}
+    }
+
+    $fullMatches = $partialMatches | Where-Object {
+        foreach ($tag in $tags.GetEnumerator()) {
+            if (!$_.Tags.ContainsKey($tag.Key)) {
+                return $false
+            }
+            if ($_.Tags[$tag.Key] -ne $tag.Value) {
+                return $false
+            }
+        }
+        return $true
+    }
+
+    return $fullMatches
+}
+
+function RemoveResourceGroup([string]$name) {
+    $verifyDeleteScript = {
+        try {
+            $group = Get-AzResourceGroup -name $name
+        } catch {
+            if ($_.ToString().Contains("Provided resource group does not exist")) {
+                Write-Verbose "Resource group '$name' not found. Continuing..."
+                return
+            }
+            throw $_
+        }
+
+        if ($group.ProvisioningState -ne "Deleting")
+        {
+            throw "Resource group is in '$($group.ProvisioningState)' state, expected 'Deleting'"
+        }
+    }
+
+    # Get any resources that can be purged after the resource group is deleted coerced into a collection even if empty.
+    $purgeableResources = Get-PurgeableGroupResources $name
+
+    Log "Deleting resource group '$name'"
+    if ($Force -and !$purgeableResources) {
+        Remove-AzResourceGroup -Name "$name" -Force:$Force -AsJob
+        Write-Verbose "Running background job to delete resource group '$name'"
+
+        Retry $verifyDeleteScript 3
+    } else {
+        # Don't swallow interactive confirmation when Force is false
+        Remove-AzResourceGroup -Name "$name" -Force:$Force
+    }
+
+    # Now purge the resources that should have been deleted with the resource group.
+    Remove-PurgeableResources $purgeableResources
+}
+
 if ($ProvisionerApplicationId) {
     $null = Disable-AzContextAutosave -Scope Process
 
@@ -125,7 +206,7 @@ if ($ProvisionerApplicationId) {
 
 $context = Get-AzContext
 
-if (!$ResourceGroupName) {
+if (!$ResourceGroupName -and !$ResourceGroupTags) {
     # Make sure $BaseName is set.
     if (!$BaseName) {
         $UserName = if ($env:USER) { $env:USER } else { "${env:USERNAME}" }
@@ -199,39 +280,14 @@ if ($ServiceDirectory) {
     Get-ChildItem -Path $root -Filter test-resources.json.env -Recurse | Remove-Item -Force:$Force
 }
 
-$verifyDeleteScript = {
-    try {
-        $group = Get-AzResourceGroup -name $ResourceGroupName
-    } catch {
-        if ($_.ToString().Contains("Provided resource group does not exist")) {
-            Write-Verbose "Resource group '$ResourceGroupName' not found. Continuing..."
-            return
-        }
-        throw $_
+if ($ResourceGroupTags) {
+    $groups = GetResourceGroupsWithTags $ResourceGroupTags
+    foreach ($group in $groups) {
+        RemoveResourceGroup $group.ResourceGroupName
     }
-
-    if ($group.ProvisioningState -ne "Deleting")
-    {
-        throw "Resource group is in '$($group.ProvisioningState)' state, expected 'Deleting'"
-    }
-}
-
-# Get any resources that can be purged after the resource group is deleted coerced into a collection even if empty.
-$purgeableResources = Get-PurgeableGroupResources $ResourceGroupName
-
-Log "Deleting resource group '$ResourceGroupName'"
-if ($Force -and !$purgeableResources) {
-    Remove-AzResourceGroup -Name "$ResourceGroupName" -Force:$Force -AsJob
-    Write-Verbose "Running background job to delete resource group '$ResourceGroupName'"
-
-    Retry $verifyDeleteScript 3
 } else {
-    # Don't swallow interactive confirmation when Force is false
-    Remove-AzResourceGroup -Name "$ResourceGroupName" -Force:$Force
+    RemoveResourceGroup $ResourceGroupName
 }
-
-# Now purge the resources that should have been deleted with the resource group.
-Remove-PurgeableResources $purgeableResources
 
 $exitActions.Invoke()
 
@@ -254,6 +310,9 @@ This will delete the resource group named 'rg-<baseName>'
 
 .PARAMETER ResourceGroupName
 The name of the resource group to delete.
+
+.PARAMETER ResourceGroupTags
+Delete all resource groups with matching tags.
 
 .PARAMETER TenantId
 The tenant ID of a service principal when a provisioner is specified.

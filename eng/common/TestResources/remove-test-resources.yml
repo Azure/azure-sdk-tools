@@ -4,6 +4,7 @@
 parameters:
   ServiceDirectory: ''
   SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
+  RemoveMultipleForJob: false
 
 # SubscriptionConfiguration will be splat into the parameters of the test
 # resources script. It should be JSON in the form:
@@ -27,12 +28,19 @@ steps:
         ${{ parameters.SubscriptionConfiguration }}
       "@ | ConvertFrom-Json -AsHashtable;
 
+      $resourceGroupParameter = @{}
+      if ($${{ parameters.RemoveMultipleForJob }}) {
+        $resourceGroupParameter.ResourceGroupTags = @{ BuildId = "$(Build.BuildId)"; BuildJob = "$(Agent.JobName)" }
+      } else {
+        $resourceGroupParameter.ResourceGroupName = "${env:AZURE_RESOURCEGROUP_NAME}"
+      }
+
       eng/common/TestResources/Remove-TestResources.ps1 `
-        -ResourceGroupName "${env:AZURE_RESOURCEGROUP_NAME}" `
         -ServiceDirectory "${{ parameters.ServiceDirectory }}" `
+        @resourceGroupParameter `
         @subscriptionConfiguration `
         -Force `
         -Verbose
     displayName: Remove test resources
-    condition: ne(variables['AZURE_RESOURCEGROUP_NAME'], '')
+    condition: or(ne(variables['AZURE_RESOURCEGROUP_NAME'], ''), eq(parameters.RemoveMultipleForJob, true))
     continueOnError: true

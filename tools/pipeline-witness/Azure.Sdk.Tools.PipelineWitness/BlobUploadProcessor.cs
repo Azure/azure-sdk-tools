@@ -227,16 +227,19 @@
 
                 var logRecord = logRecords.FirstOrDefault();
 
-                // Job logs are typically a copy of their child Task logs with an extra start and end log line.  We intentionally skip the
-                // redundant log lines from the Job record and keep the ones from the Task records.
+                // Job logs are typically just a duplication of their child task logs with the addition of extra start and end lines.
+                // If we can, we skip the redundant lines.
                 if (string.Equals(logRecord?.RecordType, "job", StringComparison.OrdinalIgnoreCase))
                 {
+                    // find all of the child task records
                     var childRecords = timeline.Records.Where(x => x.ParentId == logRecord.Id);
                     
+                    // sum the line counts for all of the child task records
                     var childLineCount = childRecords
                         .Where(x => x.Log != null && logsById.ContainsKey(x.Log.Id))
                         .Sum(x => logsById[x.Log.Id].LineCount);
                     
+                    // if the job's line count is the task line count + 2, then we can skip the job log
                     if (log.LineCount == childLineCount + 2)                    
                     {
                         this.logger.LogTrace("Skipping redundant logs for build {BuildId}, job {RecordId}, log {LogId}", build.Id, logRecord.Id, log.Id);

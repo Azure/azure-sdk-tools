@@ -19,7 +19,7 @@ parameters:
   default: []
 
 variables:
-  - template: ../variables/globals.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
 
 stages:
   - stage: 'Build'

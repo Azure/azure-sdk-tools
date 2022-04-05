@@ -35,6 +35,13 @@ extends:
       dockerFile: 'tools/test-proxy/docker/dockerfile'
       stableTags:
       - 'latest'
+    - name: test_proxy_linux_arm64
+      pool: 'ubuntu-20.04'
+      dockerRepo: 'engsys/testproxy-lin-arm64'
+      prepareScript: tools/test-proxy/docker/prepare.ps1
+      dockerFile: 'tools/test-proxy/docker/dockerfile-arm64'
+      stableTags:
+      - 'latest'
     - name: test_proxy_windows
       pool: 'windows-2019'
       dockerRepo: 'engsys/testproxy-win'

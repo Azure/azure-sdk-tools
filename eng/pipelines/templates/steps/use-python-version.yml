@@ -21,6 +21,6 @@ steps:
 
   # use
   - task: UsePythonVersion@0
-    displayName: "Use Python $(PythonVersion)"
+    displayName: "Use Python ${{ parameters.versionSpec }}"
     inputs:
       versionSpec: ${{ parameters.versionSpec }}

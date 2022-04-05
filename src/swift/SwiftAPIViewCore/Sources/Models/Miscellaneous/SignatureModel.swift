@@ -91,7 +91,7 @@ class SignatureModel: Tokenizable {
         }
     }
 
-    init(params: [FunctionSignature.Parameter], result: Type? = nil, resultAttributes: Attributes? = nil) {
+    init(params: [FunctionSignature.Parameter], result: Type?, resultAttributes: Attributes?) {
         async = nil
         throwing = nil
         if let resultType = result {

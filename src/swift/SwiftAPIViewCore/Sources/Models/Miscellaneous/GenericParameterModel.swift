@@ -57,6 +57,6 @@ class GenericParameterModel: Tokenizable {
                 a.punctuation(",", postfixSpace: true)
             }
         }
-        a.punctuation(">", postfixSpace: true)
+        a.punctuation(">")
     }
 }

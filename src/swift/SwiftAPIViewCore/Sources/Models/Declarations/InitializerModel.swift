@@ -63,7 +63,7 @@ class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
         }
         genericParamClause = GenericParameterModel(from: decl.genericParameterClause)
         genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
-        signature = SignatureModel(params: decl.parameterList)
+        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil)
     }
 
     init(from decl: ProtocolDeclaration.InitializerMember, parent: ProtocolModel) {
@@ -82,7 +82,7 @@ class InitializerModel: Tokenizable, Commentable, AccessLevelProtocol {
         }
         genericParamClause = GenericParameterModel(from: decl.genericParameter)
         genericWhereClause = GenericWhereModel(from: decl.genericWhere)
-        signature = SignatureModel(params: decl.parameterList)
+        signature = SignatureModel(params: decl.parameterList, result: nil, resultAttributes: nil)
     }
 
     func tokenize(apiview a: APIViewModel) {

@@ -116,7 +116,7 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
             a.punctuation("=", prefixSpace: true, postfixSpace: true)
             a.literal(defaultValue)
         }
-        a.newline()
         getterSetterBlock?.tokenize(apiview: a)
+        a.newline()
     }
 }

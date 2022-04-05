@@ -142,8 +142,7 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
     func tokenize(apiview a: APIViewModel) {
         a.keyword("precedencegroup", postfixSpace: true)
         a.typeDeclaration(name: name, definitionId: definitionId)
-        a.whitespace()
-        a.punctuation("{")
+        a.punctuation("{", prefixSpace: true)
         a.newline()
         a.indent {
             members.forEach { member in

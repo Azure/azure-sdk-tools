@@ -65,8 +65,7 @@ class PackageModel: Tokenizable, Linkable {
         a.text("package")
         a.whitespace()
         a.text(name, definitionId: definitionId)
-        a.whitespace()
-        a.punctuation("{")
+        a.punctuation("{", prefixSpace: true)
         a.newline()
         a.indent {
             for member in members {

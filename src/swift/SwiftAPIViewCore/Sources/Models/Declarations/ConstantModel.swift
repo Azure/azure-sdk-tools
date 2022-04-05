@@ -61,8 +61,8 @@ class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
         a.member(name: name, definitionId: lineId)
         a.punctuation(":", postfixSpace: true)
         typeModel.tokenize(apiview: a)
-        a.punctuation("=", prefixSpace: true, postfixSpace: true)
         if let defaultValue = defaultValue {
+            a.punctuation("=", prefixSpace: true, postfixSpace: true)
             a.literal(defaultValue)
         }
         a.newline()

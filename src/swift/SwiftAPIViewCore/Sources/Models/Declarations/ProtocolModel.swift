@@ -52,23 +52,31 @@ class ProtocolModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevel
     var members: [Tokenizable]
     var extensions: [ExtensionModel]
 
+    /// Grammar Summary:
+    ///     protocol-associated-type-declaration → attributes opt access-level-modifier opt associatedtype typealias-name type-inheritance-clause opt typealias-assignment opt generic-where-clause opt
     struct AssociatedTypeModel: Tokenizable, Commentable {
 
         var lineId: String?
         var name: String
+        var attributes: AttributesModel?
         var typeInheritance: TypeInheritanceModel?
+        var genericWhere: GenericWhereModel?
 
         init(from source: ProtocolDeclaration.AssociativityTypeMember, parent: ProtocolModel) {
             let name = source.name.textDescription
             self.name = name
             lineId = identifier(forName: name, withPrefix: parent.definitionId)
+            attributes = AttributesModel(from: source.attributes)
             typeInheritance = TypeInheritanceModel(from: source.typeInheritance)
+            genericWhere = GenericWhereModel(from: source.genericWhere)
         }
 
         func tokenize(apiview a: APIViewModel) {
+            attributes?.tokenize(apiview: a)
             a.keyword("associatedtype", postfixSpace: true)
             a.member(name: name, definitionId: lineId)
             typeInheritance?.tokenize(apiview: a)
+            genericWhere?.tokenize(apiview: a)
             a.newline()
         }
     }

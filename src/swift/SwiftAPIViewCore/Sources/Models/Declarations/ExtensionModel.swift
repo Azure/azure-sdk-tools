@@ -88,10 +88,9 @@ class ExtensionModel: Tokenizable, Commentable {
         }
         a.keyword("extension", postfixSpace: true)
         typeModel.tokenize(apiview: a)
-        a.whitespace()
         typeInheritanceClause?.tokenize(apiview: a)
         genericWhereClause?.tokenize(apiview: a)
-        a.punctuation("{")
+        a.punctuation("{", prefixSpace: true)
         a.newline()
         a.indent {
             members.forEach { member in

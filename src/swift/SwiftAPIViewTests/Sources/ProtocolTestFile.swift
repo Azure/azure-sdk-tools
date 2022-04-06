@@ -53,7 +53,7 @@ public protocol RandomNumberGenerator {
 
 // Protocol with mutating function requirement
 
-protocol Togglable {
+public protocol Togglable {
     mutating func toggle()
 }
 
@@ -179,7 +179,7 @@ public func wishHappyBirthday(to celebrator: Named & Aged) {
 
 // Optional protocol requirements
 
-@objc protocol CounterDataSource {
+@objc public protocol CounterDataSource {
     @objc optional func increment(forCount count: Int) -> Int
     @objc optional var fixedIncrement: Int { get }
 }

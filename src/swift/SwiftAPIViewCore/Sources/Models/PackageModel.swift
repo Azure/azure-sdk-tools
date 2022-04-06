@@ -81,5 +81,7 @@ class PackageModel: Tokenizable, Linkable {
             guard let member = member as? Linkable else { continue }
             member.navigationTokenize(apiview: a)
         }
+        // sort the root navigation elements by name
+        a.navigation.sort { $0.name < $1.name }
     }
 }

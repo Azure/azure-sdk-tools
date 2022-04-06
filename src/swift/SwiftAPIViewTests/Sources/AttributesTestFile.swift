@@ -24,50 +24,36 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
-struct AttributeModel: Tokenizable {
+// Using @available to rename a protocol
 
-    /// Name of the attribute
-    var name: String
-
-    /// Optional argument clause
-    var argumentClause: String?
-
-    /// Whether the attribute is rendered inline or on a separate line
-    var isInline: Bool
-
-    init(from clause: Attribute) {
-        name = "@\(clause.name)"
-        argumentClause = clause.argumentClause?.textDescription
-        // display atributes with no arguments as inline
-        isInline = argumentClause == nil
-    }
-
-    func tokenize(apiview a: APIViewModel) {
-        a.keyword(name)
-        if let argument = argumentClause {
-            a.text(argument)
-        }
-        isInline ? a.whitespace() : a.newline()
-    }
+public protocol MyRenamedProtocol {
+    // A protocol named MyProtocol was subsequent release renames MyProtocol
 }
 
-class AttributesModel: Tokenizable {
+@available(*, unavailable, renamed: "MyRenamedProtocol")
+public typealias MyProtocol = MyRenamedProtocol
 
-    var attributes: [AttributeModel]
+// Using @available to specify OS versions
 
-    init(from clause: Attributes) {
-        self.attributes = [AttributeModel]()
-        clause.forEach { attr in
-            self.attributes.append(AttributeModel(from: attr))
-        }
-    }
+@available(iOS 10.0, macOS 10.12, *)
+public class MyClass {
+    // class definition
+}
 
-    func tokenize(apiview a: APIViewModel) {
-        attributes.forEach { attribute in
-            attribute.tokenize(apiview: a)
-        }
+// Using @available to specify swift version
+
+@available(swift 3.0.2)
+@available(macOS 10.12, *)
+public struct MyStruct {
+    // struct definition
+}
+
+// Using @objc
+
+public class ExampleClass: NSObject {
+    @objc public var enabled: Bool {
+        return true
     }
 }

@@ -27,19 +27,6 @@
 import AST
 import Foundation
 
-// TODO: Create separate type models for these??
-//type → function-type
-//type → array-type
-//type → dictionary-type
-//type → type-identifier
-//type → tuple-type
-//type → optional-type
-//type → implicitly-unwrapped-optional-type
-//type → protocol-composition-type
-//type → opaque-type
-//type → metatype-type
-//type → any-type
-//type → self-type
 
 class TypeModel: Tokenizable {
 

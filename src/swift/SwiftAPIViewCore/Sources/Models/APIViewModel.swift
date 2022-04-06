@@ -220,9 +220,13 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     /// Register the declaration of a new type
-    func typeDeclaration(name: String, definitionId: String? = nil) {
+    func typeDeclaration(name: String, definitionId: String?) {
+        guard let definitionId = definitionId else {
+            SharedLogger.fail("Type declaration '\(name)' does not have a definition ID.")
+        }
         checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
+        definitionIds.insert(definitionId)
         add(token: item)
     }
 

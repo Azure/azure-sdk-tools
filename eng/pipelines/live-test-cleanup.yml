@@ -17,7 +17,7 @@ parameters:
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureUSGovernment - Resource Cleanup
         SubscriptionConfigurations:
-          - $(sub-config-cn-test-resources)
+          - $(sub-config-gov-test-resources)
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureChinaCloud - Resource Cleanup

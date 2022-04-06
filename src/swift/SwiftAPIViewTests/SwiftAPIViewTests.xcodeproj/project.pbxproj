@@ -8,13 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		0A8407B627F4B2F400801E60 /* SwiftAPIViewTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */; };
-		0A8407CC27F4B38000801E60 /* ExpectFile1.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0A8407C527F4B38000801E60 /* ExpectFile1.txt */; };
 		0A8407CD27F4B38000801E60 /* ProtocolTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */; };
 		0A8407CE27F4B38000801E60 /* ExtensionTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407C727F4B38000801E60 /* ExtensionTestFile.swift */; };
 		0A8407CF27F4B38000801E60 /* SwiftAPIViewTests.h in Headers */ = {isa = PBXBuildFile; fileRef = 0A8407C827F4B38000801E60 /* SwiftAPIViewTests.h */; };
-		0A8407D027F4B38000801E60 /* TestFile2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407C927F4B38000801E60 /* TestFile2.swift */; };
-		0A8407D127F4B38000801E60 /* TestFile1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407CA27F4B38000801E60 /* TestFile1.swift */; };
 		0A8407D227F4B38000801E60 /* GenericsTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407CB27F4B38000801E60 /* GenericsTestFile.swift */; };
+		0A94E1DC27FE01650002198E /* OperatorTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94E1DB27FE01650002198E /* OperatorTestFile.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,13 +28,11 @@
 /* Begin PBXFileReference section */
 		0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftAPIViewTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A8407B527F4B2F400801E60 /* SwiftAPIViewTestsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAPIViewTestsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		0A8407C527F4B38000801E60 /* ExpectFile1.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ExpectFile1.txt; path = Sources/ExpectFile1.txt; sourceTree = "<group>"; };
 		0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProtocolTestFile.swift; path = Sources/ProtocolTestFile.swift; sourceTree = "<group>"; };
 		0A8407C727F4B38000801E60 /* ExtensionTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ExtensionTestFile.swift; path = Sources/ExtensionTestFile.swift; sourceTree = "<group>"; };
 		0A8407C827F4B38000801E60 /* SwiftAPIViewTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SwiftAPIViewTests.h; path = Sources/SwiftAPIViewTests.h; sourceTree = "<group>"; };
-		0A8407C927F4B38000801E60 /* TestFile2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestFile2.swift; path = Sources/TestFile2.swift; sourceTree = "<group>"; };
-		0A8407CA27F4B38000801E60 /* TestFile1.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TestFile1.swift; path = Sources/TestFile1.swift; sourceTree = "<group>"; };
 		0A8407CB27F4B38000801E60 /* GenericsTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GenericsTestFile.swift; path = Sources/GenericsTestFile.swift; sourceTree = "<group>"; };
+		0A94E1DB27FE01650002198E /* OperatorTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = OperatorTestFile.swift; path = Sources/OperatorTestFile.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,14 +57,12 @@
 		0A8407A327F4B2F300801E60 = {
 			isa = PBXGroup;
 			children = (
-				0A8407C527F4B38000801E60 /* ExpectFile1.txt */,
+				0A94E1DB27FE01650002198E /* OperatorTestFile.swift */,
 				0A8407C727F4B38000801E60 /* ExtensionTestFile.swift */,
 				0A8407CB27F4B38000801E60 /* GenericsTestFile.swift */,
+				0A8407AE27F4B2F300801E60 /* Products */,
 				0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */,
 				0A8407C827F4B38000801E60 /* SwiftAPIViewTests.h */,
-				0A8407CA27F4B38000801E60 /* TestFile1.swift */,
-				0A8407C927F4B38000801E60 /* TestFile2.swift */,
-				0A8407AE27F4B2F300801E60 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
@@ -174,7 +168,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A8407CC27F4B38000801E60 /* ExpectFile1.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,10 +186,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				0A8407CD27F4B38000801E60 /* ProtocolTestFile.swift in Sources */,
+				0A94E1DC27FE01650002198E /* OperatorTestFile.swift in Sources */,
 				0A8407CE27F4B38000801E60 /* ExtensionTestFile.swift in Sources */,
-				0A8407D027F4B38000801E60 /* TestFile2.swift in Sources */,
 				0A8407D227F4B38000801E60 /* GenericsTestFile.swift in Sources */,
-				0A8407D127F4B38000801E60 /* TestFile1.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

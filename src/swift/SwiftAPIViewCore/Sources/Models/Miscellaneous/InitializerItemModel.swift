@@ -27,34 +27,33 @@
 import AST
 import Foundation
 
-class TypeInheritanceModel: Tokenizable {
+struct InitializerItemModel: Tokenizable {
 
-    var isClassRequirement: Bool
-    var typeList: [TypeModel]
+    let name: String
+    let typeModel: TypeModel?
+    let defaultValue: String?
 
-    init?(from clause: TypeInheritanceClause?) {
-        guard let clause = clause else { return nil }
-        self.isClassRequirement = clause.classRequirement
-        self.typeList = [TypeModel]()
-        clause.typeInheritanceList.forEach { item in
-            typeList.append(TypeModel(from: item))
-        }
+    init(from source: PatternInitializer) {
+        name = source.name!
+        typeModel = source.typeModel
+        defaultValue = source.defaultValue
+    }
+
+    init(name: String, typeModel: TypeModel?, defaultValue: String?) {
+        self.name = name
+        self.typeModel = typeModel
+        self.defaultValue = defaultValue
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.punctuation(":", postfixSpace: true)
-        if isClassRequirement {
-            a.keyword("class")
-            if typeList.count > 0 { a.punctuation(",", postfixSpace: true) }
+        a.member(name: name, definitionId: nil)
+        if let typeModel = typeModel {
+            a.punctuation(":", postfixSpace: true)
+            typeModel.tokenize(apiview: a)
         }
-        let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            param.useShorthand = false
-            param.tokenize(apiview: a)
-            if idx != stopIdx {
-                a.punctuation(",", postfixSpace: true)
-            }
+        if let defaultValue = defaultValue {
+            a.punctuation("=", prefixSpace: true, postfixSpace: true)
+            a.literal(defaultValue)
         }
-        a.whitespace()
     }
 }

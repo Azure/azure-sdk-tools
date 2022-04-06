@@ -57,9 +57,7 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
     var attributes: AttributesModel
     var modifiers: DeclarationModifiersModel
     var accessLevel: AccessLevelModifier
-    var name: String
-    var typeModel: TypeModel
-    var defaultValue: String?
+    var initializers: [InitializerItemModel]
     var getterSetterBlock: GetterSetterModel?
 
     init(from decl: VariableDeclaration, parent: Linkable) {
@@ -69,38 +67,32 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
         getterSetterBlock = nil
         switch decl.body {
         case let .initializerList(initializerList):
-            name = initializerList.name
-            typeModel = initializerList.typeModel
-            defaultValue = initializerList.defaultValue
+            initializers = initializerList.compactMap { InitializerItemModel(from: $0) }
         case let .codeBlock(ident, typeAnno, _):
-            typeModel = TypeModel(from: typeAnno)
-            name = ident.textDescription
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
-            typeModel = TypeModel(from: typeAnno)
-            name = ident.textDescription
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
         case let .getterSetterBlock(ident, typeAnno, _):
-            typeModel = TypeModel(from: typeAnno)
-            name = ident.textDescription
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
             // the willSetDidSet block is irrelevant from an API perspective
             // so we ignore it.
-            typeModel = TypeModel(from: typeAnno!)
-            name = ident.textDescription
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno!), defaultValue: nil)]
             guard expression == nil else {
                 SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
             }
         }
-        lineId = identifier(forName: name, withPrefix: parent.definitionId)
+        // Since we preserve these on a single line, base the line ID on the first name
+        lineId = identifier(forName: initializers.first!.name, withPrefix: parent.definitionId)
     }
 
     init(from decl: ProtocolDeclaration.PropertyMember, parent: ProtocolModel) {
         let name = decl.name.textDescription
-        self.name = name
+        initializers = [InitializerItemModel(name: name, typeModel: TypeModel(from: decl.typeAnnotation), defaultValue: nil)]
         lineId = identifier(forName: name, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = modifiers.accessLevel ?? .internal
-        typeModel = TypeModel(from: decl.typeAnnotation)
         getterSetterBlock = GetterSetterModel(from: decl.getterSetterKeywordBlock)
     }
 
@@ -109,12 +101,12 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
         attributes.tokenize(apiview: a)
         modifiers.tokenize(apiview: a)
         a.keyword("var", postfixSpace: true)
-        a.member(name: name, definitionId: lineId)
-        a.punctuation(":", postfixSpace: true)
-        typeModel.tokenize(apiview: a)
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
+        let stopIdx = initializers.count - 1
+        for (idx, item) in initializers.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
         getterSetterBlock?.tokenize(apiview: a)
         a.newline()

@@ -67,6 +67,26 @@ public func findIndex<T: Equatable>(of valueToFind: T, in array:[T]) -> Int? {
 
 // Associated type with constraint
 
+public struct ContainerStack<Element: Equatable>: Container {
+    public var items: [Element] = []
+    public mutating func push(_ item: Element) {
+        items.append(item)
+    }
+    public mutating func pop() -> Element {
+        return items.removeLast()
+    }
+    // conformance to the Container protocol
+    public mutating func append(_ item: Element) {
+        self.push(item)
+    }
+    public var count: Int {
+        return items.count
+    }
+    public subscript(i: Int) -> Element {
+        return items[i]
+    }
+}
+
 public protocol Container {
     associatedtype Item: Equatable
     mutating func append(_ item: Item)
@@ -74,8 +94,8 @@ public protocol Container {
     subscript(i: Int) -> Item { get }
 }
 
-public struct IntStack: Container {
-    // original IntStack implementation
+public struct IntContainerStack: Container {
+    // original IntContainerStack implementation
     var items: [Int] = []
     mutating func push(_ item: Int) {
         items.append(item)
@@ -96,34 +116,34 @@ public struct IntStack: Container {
     }
 }
 
-// TODO: Using protocol in its associated type constraints
+// Using protocol in its associated type constraints
 
 public protocol SuffixableContainer: Container {
     associatedtype Suffix: SuffixableContainer where Suffix.Item == Item
     func suffix(_ size: Int) -> Suffix
 }
 
-//extension Stack: SuffixableContainer {
-//    public func suffix(_ size: Int) -> Stack {
-//        var result = Stack()
-//        for index in (count-size)..<count {
-//            result.append(self[index])
-//        }
-//        return result
-//    }
-//    // Inferred that Suffix is Stack.
-//}
-//
-//extension IntStack: SuffixableContainer {
-//    func suffix(_ size: Int) -> Stack<Int> {
-//        var result = Stack<Int>()
-//        for index in (count-size)..<count {
-//            result.append(self[index])
-//        }
-//        return result
-//    }
-//    // Inferred that Suffix is Stack<Int>.
-//}
+extension ContainerStack: SuffixableContainer {
+    public func suffix(_ size: Int) -> ContainerStack {
+        var result = ContainerStack()
+        for index in (count-size)..<count {
+            result.append(self[index])
+        }
+        return result
+    }
+    // Inferred that Suffix is ContainerStack.
+}
+
+extension IntContainerStack: SuffixableContainer {
+    public func suffix(_ size: Int) -> ContainerStack<Int> {
+        var result = ContainerStack<Int>()
+        for index in (count-size)..<count {
+            result.append(self[index])
+        }
+        return result
+    }
+    // Inferred that Suffix is ContainerStack<Int>.
+}
 
 // Generic where clauses
 

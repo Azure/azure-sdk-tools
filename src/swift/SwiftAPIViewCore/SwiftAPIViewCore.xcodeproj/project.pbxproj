@@ -55,6 +55,7 @@
 		0A846A2A27879D0400C967A8 /* Declaration+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1827879D0400C967A8 /* Declaration+Extensions.swift */; };
 		0A846A2B27879D0400C967A8 /* APIViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1927879D0400C967A8 /* APIViewManager.swift */; };
 		0A846A2F27879E7800C967A8 /* SwiftAPIViewCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */; };
+		0A94E1D827FD00CC0002198E /* InitializerItemModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94E1D727FD00CC0002198E /* InitializerItemModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +116,7 @@
 		0A846A1827879D0400C967A8 /* Declaration+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Declaration+Extensions.swift"; sourceTree = "<group>"; };
 		0A846A1927879D0400C967A8 /* APIViewManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIViewManager.swift; sourceTree = "<group>"; };
 		0A846A342787A88E00C967A8 /* CoreInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = CoreInfo.plist; sourceTree = "<group>"; };
+		0A94E1D727FD00CC0002198E /* InitializerItemModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializerItemModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +173,7 @@
 				0A84079127F25A8A00801E60 /* SignatureModel.swift */,
 				0A84077427EE56CD00801E60 /* TypeInheritanceModel.swift */,
 				0A846A1427879D0400C967A8 /* TypeModel.swift */,
+				0A94E1D727FD00CC0002198E /* InitializerItemModel.swift */,
 			);
 			path = Miscellaneous;
 			sourceTree = "<group>";
@@ -399,6 +402,7 @@
 				0A84079227F25A8A00801E60 /* SignatureModel.swift in Sources */,
 				0A84075427ED297600801E60 /* StructModel.swift in Sources */,
 				0A846A1F27879D0400C967A8 /* Logger.swift in Sources */,
+				0A94E1D827FD00CC0002198E /* InitializerItemModel.swift in Sources */,
 				0A84074627ED28C500801E60 /* ClassModel.swift in Sources */,
 				0A846A2027879D0400C967A8 /* URL+Extensions.swift in Sources */,
 				0A84077127EE56B400801E60 /* GenericParameterModel.swift in Sources */,

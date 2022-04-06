@@ -38,19 +38,14 @@ class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
     var attributes: AttributesModel
     var modifiers: DeclarationModifiersModel
     var accessLevel: AccessLevelModifier
-    var name: String
-    var typeModel: TypeModel
-    var defaultValue: String?
+    var initializers: [InitializerItemModel]
 
     init(from decl: ConstantDeclaration, parent: Linkable) {
-        let name = decl.initializerList.name
-        self.name = name
-        lineId = identifier(forName: name, withPrefix: parent.definitionId)
+        initializers = decl.initializerList.compactMap { InitializerItemModel(from: $0) }
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)
         accessLevel = decl.accessLevel ?? .internal
-        typeModel = decl.initializerList.typeModel
-        defaultValue = decl.initializerList.defaultValue
+        lineId = identifier(forName: initializers.first!.name, withPrefix: parent.definitionId)
     }
 
     func tokenize(apiview a: APIViewModel) {
@@ -58,12 +53,12 @@ class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
         attributes.tokenize(apiview: a)
         modifiers.tokenize(apiview: a)
         a.keyword("let", postfixSpace: true)
-        a.member(name: name, definitionId: lineId)
-        a.punctuation(":", postfixSpace: true)
-        typeModel.tokenize(apiview: a)
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
+        let stopIdx = initializers.count - 1
+        for (idx, item) in initializers.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
         a.newline()
     }

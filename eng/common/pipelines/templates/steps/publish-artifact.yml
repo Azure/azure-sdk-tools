@@ -10,10 +10,12 @@ parameters:
   ArtifactName: ''
   ArtifactPath: ''
   CustomCondition: true
+  ContinueOnError: false
 
 steps:
   - task: PublishPipelineArtifact@1
     condition: and(succeeded(), ${{ parameters.CustomCondition }})
+    continueOnError: ${{ parameters.ContinueOnError }}
     displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
     inputs:
       artifactName: '${{ parameters.ArtifactName }}'

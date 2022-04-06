@@ -19,7 +19,7 @@ parameters:
         SubscriptionConfigurations:
           - $(sub-config-gov-test-resources)
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
-        # AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-WhatIf"
       - DisplayName: AzureChinaCloud - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-cn-test-resources)

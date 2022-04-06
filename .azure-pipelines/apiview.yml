@@ -46,7 +46,7 @@ variables:
   ProtocolParserPackagePath: 'packages/python-packages/protocol-stub-generator'
   TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
   GoParserPackagePath: 'src/go'
-  GoVersion: '1.15'
+  GoVersion: '1.18'
   NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
@@ -128,13 +128,9 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
-          
           - pwsh: |
-              $branch = git symbolic-ref --short HEAD
-              git checkout api-stub-generator_v$(PythonParserVersion)
               Write-Host "Bundling stable version of python api-stub-generator"
               copy-item -Path $(PythonParserPackagePath) -Destination $(Build.ArtifactStagingDirectory)/APIViewWeb/api-stub-generator -Recurse -Force
-              git checkout $branch
             displayName: 'Bundle Python API Parser'
 
           - task: DotNetCoreCLI@2

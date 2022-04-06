@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "",
   "scripts": {
     "start": "node dist/changelogToolCli.js",
@@ -23,10 +23,8 @@
     "colors": "1.4.0",
     "command-line-args": "^5.1.1",
     "comment-json": "^4.1.0",
-    "es5-ext": "0.10.53",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.10",
-    "log": "^6.0.0",
     "parse-ts-to-ast": "^0.1.1",
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",

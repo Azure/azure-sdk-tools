@@ -1,6 +1,13 @@
 # Change Log - @azure-tools/mock-service-host
 
 
+## 0.1.13
+2022-04-03
+
+### Patches
+
+- Use npm-shrinkwrap.json to lock installation dependencies.
+
 ## 0.1.12
 2022-03-03
 

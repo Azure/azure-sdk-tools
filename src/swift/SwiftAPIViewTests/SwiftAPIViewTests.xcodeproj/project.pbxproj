@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A34D58D27FE333A008A76A6 /* AttributesTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D58C27FE333A008A76A6 /* AttributesTestFile.swift */; };
+		0A34D59127FE3D2A008A76A6 /* EnumerationsTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A34D59027FE3D2A008A76A6 /* EnumerationsTestFile.swift */; };
 		0A8407B627F4B2F400801E60 /* SwiftAPIViewTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */; };
 		0A8407CD27F4B38000801E60 /* ProtocolTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */; };
 		0A8407CE27F4B38000801E60 /* ExtensionTestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A8407C727F4B38000801E60 /* ExtensionTestFile.swift */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		0A34D58C27FE333A008A76A6 /* AttributesTestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AttributesTestFile.swift; path = Sources/AttributesTestFile.swift; sourceTree = "<group>"; };
+		0A34D59027FE3D2A008A76A6 /* EnumerationsTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = EnumerationsTestFile.swift; path = Sources/EnumerationsTestFile.swift; sourceTree = "<group>"; };
 		0A8407AD27F4B2F300801E60 /* SwiftAPIViewTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftAPIViewTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A8407B527F4B2F400801E60 /* SwiftAPIViewTestsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAPIViewTestsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProtocolTestFile.swift; path = Sources/ProtocolTestFile.swift; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 				0A34D58C27FE333A008A76A6 /* AttributesTestFile.swift */,
 				0A94E1DB27FE01650002198E /* OperatorTestFile.swift */,
 				0A8407C727F4B38000801E60 /* ExtensionTestFile.swift */,
+				0A34D59027FE3D2A008A76A6 /* EnumerationsTestFile.swift */,
 				0A8407CB27F4B38000801E60 /* GenericsTestFile.swift */,
 				0A8407AE27F4B2F300801E60 /* Products */,
 				0A8407C627F4B38000801E60 /* ProtocolTestFile.swift */,
@@ -189,6 +192,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0A8407CD27F4B38000801E60 /* ProtocolTestFile.swift in Sources */,
+				0A34D59127FE3D2A008A76A6 /* EnumerationsTestFile.swift in Sources */,
 				0A34D58D27FE333A008A76A6 /* AttributesTestFile.swift in Sources */,
 				0A94E1DC27FE01650002198E /* OperatorTestFile.swift in Sources */,
 				0A8407CE27F4B38000801E60 /* ExtensionTestFile.swift in Sources */,

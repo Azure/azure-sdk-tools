@@ -57,7 +57,7 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
 
             init(from element: TupleType.Element) {
                 name = element.name?.textDescription
-                typeModel = TypeModel(from: element)
+                typeModel = TypeModel(from: element.type)
             }
 
             func tokenize(apiview a: APIViewModel) {
@@ -96,16 +96,21 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
 
         var lineId: String?
         var name: String
+        var isIndirect: Bool
         var associatedValues: AssociatedValuesModel?
 
-        init(from source: EnumDeclaration.UnionStyleEnumCase.Case, parent: EnumModel) {
+        init(from source: EnumDeclaration.UnionStyleEnumCase.Case, isIndirect: Bool, parent: EnumModel) {
             let name = source.name.textDescription
             self.name = name
+            self.isIndirect = isIndirect
             lineId = identifier(forName: name, withPrefix: parent.definitionId)
             associatedValues = AssociatedValuesModel(from: source.tuple)
         }
 
         func tokenize(apiview a: APIViewModel) {
+            if isIndirect {
+                a.keyword("indirect", postfixSpace: true)
+            }
             a.keyword("case", postfixSpace: true)
             a.member(name: name, definitionId: lineId)
             associatedValues?.tokenize(apiview: a)
@@ -185,7 +190,7 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
                 }
             case let .union(enumCase):
                 enumCase.cases.forEach { item in
-                    members.append(UnionStyleCase(from: item, parent: self))
+                    members.append(UnionStyleCase(from: item, isIndirect: enumCase.isIndirect, parent: self))
                 }
             case let .rawValue(enumCase):
                 enumCase.cases.forEach { item in

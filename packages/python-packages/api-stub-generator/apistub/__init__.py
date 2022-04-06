@@ -21,6 +21,7 @@ __all__ = [
 
 
 def console_entry_point():
+    print("Running api-stub-generator version {}".format(__version__))
     stub_generator = StubGenerator()
     apiview = stub_generator.generate_tokens()
     json_tokens = stub_generator.serialize(apiview)

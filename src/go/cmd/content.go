@@ -322,7 +322,18 @@ func (c *content) parseStruct(tokenList *[]Token) {
 	sort.Strings(keys)
 	for _, k := range keys {
 		makeStructTokens(&k, c.Structs[k], tokenList)
-		c.searchForCtors(k, tokenList)
+		ctors := c.searchForCtors(k)
+		if len(ctors) > 0 {
+			keys := make([]string, 0, len(ctors))
+			for k := range ctors {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				k2 := k
+				makeFuncTokens(&k2, ctors[k], tokenList)
+			}
+		}
 		c.searchForMethods(k, tokenList)
 		if consts := c.filterDeclarations(k, c.Consts, tokenList); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
@@ -333,17 +344,30 @@ func (c *content) parseStruct(tokenList *[]Token) {
 	}
 }
 
-// searchForCtors will search through all of the exported Funcs for a constructor for the name of the
-// type that is passed as a param.
-func (c *content) searchForCtors(s string, tokenList *[]Token) {
-	for i, f := range c.Funcs {
-		n := getCtorName(i)
-		if s == n {
-			makeFuncTokens(&i, f, tokenList)
-			delete(c.Funcs, i)
-			return
+// searchForCtors searches through exported Funcs for constructors of a type,
+// given that type's name. A Func is a constructor of type T when:
+// 1. it has no receiver
+// 2. its name begins with "New"
+// 3. it returns T or *T
+func (c *content) searchForCtors(s string) map[string]Func {
+	ctors := map[string]Func{}
+	for name, f := range c.Funcs {
+		// assumes s starts with a method receiver, if any
+		if !strings.HasPrefix(name, "New") {
+			continue
+		}
+		for _, rt := range f.Returns {
+			if before, _, found := strings.Cut(rt, "["); found {
+				// ignore type parameters when matching
+				rt = before
+			}
+			if rt == s || rt == "*"+s {
+				ctors[name] = f
+				delete(c.Funcs, name)
+			}
 		}
 	}
+	return ctors
 }
 
 // filterDeclarations returns a subset of decls containing only items matching the specified type, deleting them from the given map

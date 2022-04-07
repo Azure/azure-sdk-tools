@@ -32,6 +32,19 @@ Describe "AssetsModuleTests" {
       $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." ".." )
       $Value | Should -Be @($false, $false)
     }
+
+    It "Should recognize root in a test directory."{
+      $files = @(
+        "sdk/assets.json"
+      )
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+
+      $result = Evaluate-Target-Dir -TargetPath $testLocation
+      $result | Should -Be @($false, $true)
+
+      $result = Evaluate-Target-Dir -TargetPath (Join-Path $testLocation "sdk")
+      $result | Should -Be @($true, $false)
+    }
   }
 
   Context "Resolve-AssetsJson" {
@@ -64,24 +77,23 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should be able to resolve the assets json based on CWD" {
-      # $files = @(
-      #   "sdk/storage/",
-      #   "sdk/storage/assets.json",
-      #   "sdk/storage/azure-storage-blob/awesome.json"
-      # )
-      # $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
-      # try {
-      #   Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
-      #   $Result = Resolve-AssetsJson
-      #   $recordingLocation = $Result.AssetsJsonLocation
-      #   $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
-      # }
-      # finally {
-      #   Pop-Location
-      # }
+      try {
+        Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
+        $Result = Resolve-AssetsJson
+        $recordingLocation = $Result.AssetsJsonLocation
+        $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+      }
+      finally {
+        Pop-Location
+      }
     }
-
 
     It "Should should error when unable to find a recording json." {
       $files = @(
@@ -101,8 +113,15 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should should calculate relative path from root of repo to the target assets.json." {
-      $Result = Resolve-AssetsJson -TargetPath $PSScriptRoot
-      $expectedValue = (Join-Path "./" "eng" "common" "asset-sync" "assets.json")
+      $files = @(
+        "pylintrc"
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+
+      $Result = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )
+      $expectedValue = (Join-Path "./" "sdk" "storage" "assets.json")
 
       $recordingLocation = $Result.AssetsJsonRelativeLocation
       $recordingLocation | Should -Be $expectedValue
@@ -145,15 +164,19 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Assets Json Updates" {
+  Context "Update-AssetsJson" {
     It "Should update a targeted recording.json w/ a new SHA and output without mangling the json file." {
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
       $config = Resolve-AssetsJson -TargetPath $testLocation
 
       $config.AssetsJsonLocation
+    }
 
+    It "Should no-op if no change." {
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
+      $config = Resolve-AssetsJson -TargetPath $testLocation
 
-
+      $config.AssetsJsonLocation
     }
   }
 
@@ -172,13 +195,15 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should recognize an initialized repository and no-op." {
-      $files = @(
-        "sdk/storage/",
-        "sdk/storage/assets.json",
-        "sdk/storage/azure-storage-blob/awesome.json"
-      )
+      $files = @()
       $JsonContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
+      $config = Resolve-AssetsJson -TargetPath $testLocation
+
+      Initialize-AssetsRepo -Config $config
+
+      $parsedResult = Is-AssetsRepo-Initialized -Config $config
+      $parsedResult | Should -Be $true
     }
 
     It "Should initialize language repo with a new assets.json at sdk/<service> if necessary" {
@@ -186,5 +211,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
+  Context "Push-AssetsRepo-Update" {
 
+  }
 }

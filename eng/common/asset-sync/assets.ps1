@@ -8,6 +8,7 @@ $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 <#
 .SYNOPSIS
 Checks the contents of a directory, then returns a tuple of booleans @("assetsJsonPresent", "isRootFolder").
+
 .DESCRIPTION
 Evaluates a directory by checking its contents. First value of the tuple is whether or not a "assets.json" file 
 is present A "root" directory is one where a assets.json is present OR where we are as far up the file tree as 
@@ -27,7 +28,7 @@ Function Evaluate-Target-Dir {
     $foundRoot = $false
 
     if ($isFile) {
-        Write-Error "Evaluated a file `"$TargetPath`" as a directory. Exiting."
+        throw "Evaluated a file `"$TargetPath`" as a directory. Exiting."
     }
 
     # we need to force to ensure we grab hidden files in the directory dump
@@ -49,6 +50,40 @@ Function Evaluate-Target-Dir {
         $foundConfig, $foundRoot
     )
 }
+
+<#
+.SYNOPSIS
+Gets the relative path of the assets json within the target repo.
+
+.PARAMETER Config
+The config
+#>
+Function AscendToRepoRoot {
+    param(
+        [Parameter(Mandatory = $false)]
+        [string] $StartPath
+    )
+    $pathForManipulation = $StartPath
+    if(Test-Path $StartPath -PathType Leaf){
+        $pathForManipulation = Split-Path $pathForManipulation
+    }
+
+    $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+
+    while (-not $reachedRoot){
+        $pathForManipulation, $remainder = Split-Path $pathForManipulation
+
+        $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+    }
+
+    if ($reachedRoot){
+        return $pathForManipulation
+    }
+    else {
+        throw "Unable to the root of the git repo."
+    }
+}
+
 
 <#
 .SYNOPSIS
@@ -78,7 +113,7 @@ Function Resolve-AssetsJson {
     while (-not $foundConfig -and -not $reachedRoot){
         $pathForManipulation, $remainder = Split-Path $pathForManipulation
 
-        $foundConfig, $reached_root = Evaluate-Target-Dir -TargetPath $pathForManipulation
+        $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
 
     if ($foundConfig){
@@ -92,18 +127,18 @@ Function Resolve-AssetsJson {
     $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
     Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonLocation" -Value "$discoveredPath"
 
-    if($discoveredPath.StartsWith($REPO_ROOT)) {
+    $relPath = AscendToRepoRoot -StartPath $discoveredPath
+    if($relPath){
         try {
-            Push-Location $REPO_ROOT
+            Push-Location $relPath
             $relPath = Resolve-Path -Relative -Path $discoveredPath
         }
         finally {
             Pop-Location
         }
+        # relative path to assets Json from within path
+        Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonRelativeLocation" -Value $relPath
     }
-
-    # relative path to assets Json from within path
-    Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonRelativeLocation" -Value $relPath
 
     return $config
 }
@@ -169,8 +204,6 @@ Function Get-Default-Branch {
 <#
 .SYNOPSIS
 This function returns a boolean that indicates whether or not the assets repo has been initialized.
-
-.DESCRIPTION
 #>
 Function Is-AssetsRepo-Initialized {
     param(
@@ -182,10 +215,14 @@ Function Is-AssetsRepo-Initialized {
 
     try {
         Push-Location $assetRepoLocation
+        $gitLocation = Join-Path $assetRepoLocation ".git"
 
-        $originData = (git remote show origin)
-
-        $result = $originData.Contains($Config.AssetsRepo)
+        if (Test-Path $gitLocation){
+            $result = $true
+        }
+        else{
+            $result = $false
+        }
     }
     catch {
         Write-Host $_
@@ -196,6 +233,46 @@ Function Is-AssetsRepo-Initialized {
     }
 
     return $result
+}
+
+
+<#
+.SYNOPSIS
+Given a configuration, determine which paths must be added to the sparse checkout of the assets repo.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json content.
+
+#>
+Function Resolve-CheckoutPaths {
+    param(
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config
+    )
+
+    return (Join-Path $Config.AssetsRepoPrefixPath $Config.AssetsJsonRelativeLocation)
+}
+
+<#
+.SYNOPSIS
+Given a configuration, determine the _current_ target path.
+
+.DESCRIPTION 
+Determines the presence of a branch on the git repo. If the relevant auto/<service> branch does not exist, 
+#>
+Function Resolve-TargetBranch {
+    param(
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config
+    )
+    $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    try {
+        Push-Location $assetRepo
+        git show-ref refs/heads/$Config.AssetsRepoBranch --quiet
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 <#
@@ -219,18 +296,45 @@ Function Initialize-AssetsRepo {
         [boolean] $ForceReinitialize = $false
     )
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    $initialized = Is-AssetsRepo-Initialized -Config $Config
+    $workCompleted = $false
 
     if ($ForceReinitialize)
     {
         Remove-Item -Force -R "$assetRepo/*"
+        $initialized = $false
     }
-    
-    Write-Host "git clone --filter=blob:none --no-checkout `"https://github.com/$($Config.AssetsRepo)`" $assetRepo"
-    git clone --filter=blob:none --no-checkout "https://github.com/$($Config.AssetsRepo)" $assetRepo
 
-    if($LASTEXITCODE -gt 0){
-        throw "Unable to clone to directory $assetRepo"
+    if (-not $initialized){
+        try {
+            Push-Location $assetRepo
+        
+            Write-Verbose "git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) ."
+            git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) .
+
+            $targetPath = Resolve-CheckoutPaths -Config $Config
+            $targetBranch = Resolve-TargetBranch -Config $Config
+
+            Write-Verbose "git sparse-checkout init"
+            git sparse-checkout init
+
+            Write-Verbose "git sparse-checkout set '/*' '!/*/' $targetPath"
+            git sparse-checkout set '/*' '!/*/' $targetPath
+            
+            Write-Verbose "git checkout $targetBranch"
+            git checkout $targetBranch
+            
+            if($LASTEXITCODE -gt 0){
+                throw "Unable to clone to directory $assetRepo"
+            }
+            $workCompleted = $true
+        }
+        finally {
+            Pop-Location
+        }
     }
+
+    return $workCompleted
 }
 
 <#

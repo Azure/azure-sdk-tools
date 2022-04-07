@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using swagger_api_parser;
 using Xunit;
 using Xunit.Abstractions;
@@ -78,17 +79,19 @@ public class UtilsTest
             "/deviceupdate/{instanceId}/management/deviceDiagnostics/logCollections/{operationId}/detailedStatus"
         };
         var node = Utils.BuildPathTree(paths);
-        foreach (var child in node.Children)
-        {
-            this.output.WriteLine(child.CommonPath);
-            foreach (var subchild in child.Children)
+        var firstLevelPath = node.Children.Select(child => child.CommonPath).ToList();
+
+        Assert.Equal(firstLevelPath,
+            new List<string>()
             {
-                if (subchild.CommonPath.Length > 0)
-                {
-                    this.output.WriteLine($"  {subchild.CommonPath}");
-                }
-            }
-        }
+                "/deviceupdate/{instanceId}/management/deviceclasses",
+                "/deviceupdate/{instanceId}/management/deviceDiagnostics/logCollections",
+                "/deviceupdate/{instanceId}/management/devices",
+                "/deviceupdate/{instanceId}/management/devicetags",
+                "/deviceupdate/{instanceId}/management/groups",
+                "/deviceupdate/{instanceId}/management/operations",
+                "/deviceupdate/{instanceId}"
+            });
     }
 
     [Fact]
@@ -209,9 +212,20 @@ public class UtilsTest
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups/{hostGroupName}/hosts/{hostName}/restart"
         };
         var node = Utils.BuildPathTree(paths);
-        this.output.WriteLine(node.CommonPath);
-        
+        var firstLevelPath = node.Children.Select(child => child.CommonPath).ToList();
+        Assert.Equal(firstLevelPath, new List<string>()
+        {
+            "/providers/Microsoft.Compute/operations",
+            "/subscriptions/{subscriptionId}/providers/Microsoft.Compute",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/availabilitySets",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/capacityReservationGroups",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/hostGroups",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/images",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/proximityPlacementGroups",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/restorePointCollections",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/sshPublicKeys",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines",
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets"
+        });
     }
-    
 }
-

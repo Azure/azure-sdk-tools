@@ -39,14 +39,14 @@ class SignatureModel: Tokenizable {
         var name: String
         var typeModel: TypeAnnotationModel
         var defaultValue: String?
-        var isVarargs: Bool
+        var isVariadic: Bool
 
         init(from source: FunctionSignature.Parameter) {
             name = source.externalName?.textDescription ?? source.localName.textDescription
             typeModel = TypeAnnotationModel(from: source.typeAnnotation)!
             // TODO: This may not be a good assumption
             defaultValue = source.defaultArgumentClause?.textDescription
-            isVarargs = source.isVarargs
+            isVariadic = source.isVarargs
         }
 
         func tokenize(apiview a: APIViewModel) {
@@ -57,7 +57,7 @@ class SignatureModel: Tokenizable {
                 a.punctuation("=", prefixSpace: true, postfixSpace: true)
                 a.literal(defaultValue)
             }
-            if isVarargs {
+            if isVariadic {
                 a.text("...")
             }
         }

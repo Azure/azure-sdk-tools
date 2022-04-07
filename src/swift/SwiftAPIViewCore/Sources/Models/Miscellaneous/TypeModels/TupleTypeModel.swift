@@ -68,6 +68,7 @@ struct TupleTypeModel: TypeModel {
 
     func tokenize(apiview a: APIViewModel) {
         opaque.tokenize(apiview: a)
+        a.punctuation("(")
         let stopIdx = elements.count - 1
         for (idx, element) in elements.enumerated() {
             element.tokenize(apiview: a)
@@ -75,6 +76,7 @@ struct TupleTypeModel: TypeModel {
                 a.punctuation(",", postfixSpace: true)
             }
         }
+        a.punctuation(")")
         optional.tokenize(apiview: a)
     }
 }

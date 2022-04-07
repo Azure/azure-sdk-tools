@@ -32,21 +32,33 @@ struct FunctionTypeModel: TypeModel {
     struct ArgumentModel: Tokenizable {
         let externalName: String?
         let localName: String?
-        let type: TypeModel
+        let typeModel: TypeModel
         let attributes: AttributesModel?
-        let isInOutParameter: Bool
+        let isInOut: Bool
         let isVariadic: Bool
 
         init(from source: FunctionType.Argument) {
             externalName = source.externalName?.textDescription
             localName = source.localName?.textDescription
-            self.type = source.type.toTokenizable()!
+            typeModel = source.type.toTokenizable()!
             attributes = AttributesModel(from: source.attributes)
-            isInOutParameter = source.isInOutParameter
+            isInOut = source.isInOutParameter
             isVariadic = source.isVariadic
         }
 
-        func tokenize(apiview: APIViewModel) {
+        func tokenize(apiview a: APIViewModel) {
+            if let name = externalName ?? localName {
+                a.member(name: name)
+                a.punctuation(":", postfixSpace: true)
+            }
+            attributes?.tokenize(apiview: a)
+            if isInOut {
+                a.keyword("inout", prefixSpace: true, postfixSpace: true)
+            }
+            typeModel.tokenize(apiview: a)
+            if isVariadic {
+                a.text("...")
+            }
         }
     }
 

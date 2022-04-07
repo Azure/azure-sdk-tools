@@ -224,3 +224,23 @@ public extension Container {
             return result
     }
 }
+
+// Opaque types
+
+public protocol Shape {
+    func draw() -> String
+}
+
+public struct Square: Shape {
+    public var size: Int
+    public func draw() -> String {
+        let line = String(repeating: "*", count: size)
+        let result = Array<String>(repeating: line, count: size)
+        return result.joined(separator: "\n")
+    }
+}
+
+public func makeTrapezoid() -> some Shape {
+    // Some more implementation stuff goes here
+    return Square(size: 2)
+}

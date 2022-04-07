@@ -50,6 +50,7 @@ class ConstantModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     func tokenize(apiview a: APIViewModel) {
         guard APIViewModel.publicModifiers.contains(accessLevel) else { return }
+        a.lineIdMarker(definitionId: lineId)
         attributes.tokenize(apiview: a)
         modifiers.tokenize(apiview: a)
         a.keyword("let", postfixSpace: true)

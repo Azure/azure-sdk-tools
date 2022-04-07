@@ -25,9 +25,12 @@ func ExampleServicesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -37,7 +40,7 @@ func ExampleServicesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json
@@ -47,24 +50,27 @@ func ExampleServicesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.ServiceResource{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.StringPtr("<name>"),
-				Tier: to.StringPtr("<tier>"),
+				Name: to.Ptr("<name>"),
+				Tier: to.Ptr("<tier>"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -75,7 +81,7 @@ func ExampleServicesClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json
@@ -85,13 +91,16 @@ func ExampleServicesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<service-name>",
-		nil)
+		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -110,24 +119,27 @@ func ExampleServicesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.ServiceResource{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.StringPtr("<name>"),
-				Tier: to.StringPtr("<tier>"),
+				Name: to.Ptr("<name>"),
+				Tier: to.Ptr("<tier>"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -138,7 +150,7 @@ func ExampleServicesClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListTestKeys.json
@@ -148,9 +160,12 @@ func ExampleServicesClient_ListTestKeys() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.ListTestKeys(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -160,7 +175,7 @@ func ExampleServicesClient_ListTestKeys() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientListTestKeysResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_RegenerateTestKey.json
@@ -170,14 +185,17 @@ func ExampleServicesClient_RegenerateTestKey() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.RegenerateTestKey(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.RegenerateTestKeyRequestPayload{
-			KeyType: test.TestKeyTypePrimary.ToPtr(),
+			KeyType: to.Ptr(test.TestKeyTypePrimary),
 		},
 		nil)
 	if err != nil {
@@ -185,7 +203,7 @@ func ExampleServicesClient_RegenerateTestKey() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientRegenerateTestKeyResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_DisableTestEndpoint.json
@@ -195,9 +213,12 @@ func ExampleServicesClient_DisableTestEndpoint() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	_, err = client.DisableTestEndpoint(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -215,9 +236,12 @@ func ExampleServicesClient_EnableTestEndpoint() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.EnableTestEndpoint(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -227,7 +251,7 @@ func ExampleServicesClient_EnableTestEndpoint() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientEnableTestEndpointResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CheckNameAvailability.json
@@ -237,14 +261,17 @@ func ExampleServicesClient_CheckNameAvailability() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.CheckNameAvailability(ctx,
 		"<location>",
 		test.NameAvailabilityParameters{
-			Name: to.StringPtr("<name>"),
-			Type: to.StringPtr("<type>"),
+			Name: to.Ptr("<name>"),
+			Type: to.Ptr("<type>"),
 		},
 		nil)
 	if err != nil {
@@ -252,7 +279,7 @@ func ExampleServicesClient_CheckNameAvailability() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ServicesClientCheckNameAvailabilityResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
@@ -262,20 +289,20 @@ func ExampleServicesClient_ListBySubscription() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListBySubscription(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -289,21 +316,21 @@ func ExampleServicesClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

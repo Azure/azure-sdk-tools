@@ -23,20 +23,23 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<availability-set-name>",
 		test.AvailabilitySet{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			AdditionalProperties: map[string]*string{
-				"anyProperty": to.StringPtr("fakeValue"),
+				"anyProperty": to.Ptr("fakeValue"),
 			},
 			Properties: &test.AvailabilitySetProperties{
-				PlatformFaultDomainCount:  to.Int32Ptr(2),
-				PlatformUpdateDomainCount: to.Int32Ptr(20),
+				PlatformFaultDomainCount:  to.Ptr[int32](2),
+				PlatformUpdateDomainCount: to.Ptr[int32](20),
 			},
 		},
 		nil)
@@ -45,7 +48,7 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.AvailabilitySetsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
@@ -55,20 +58,20 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
-	pager := client.ListBySubscription(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.StringPtr("<expand>")})
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	client, err := test.NewAvailabilitySetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
+	pager := client.ListBySubscription(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("<expand>")})
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

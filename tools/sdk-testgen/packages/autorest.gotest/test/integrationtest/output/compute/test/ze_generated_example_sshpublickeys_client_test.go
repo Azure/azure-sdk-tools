@@ -23,16 +23,19 @@ func ExampleSSHPublicKeysClient_Create() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Create(ctx,
 		"<resource-group-name>",
 		"<ssh-public-key-name>",
 		test.SSHPublicKeyResource{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.SSHPublicKeyResourceProperties{
-				PublicKey: to.StringPtr("<public-key>"),
+				PublicKey: to.Ptr("<public-key>"),
 			},
 		},
 		nil)
@@ -41,7 +44,7 @@ func ExampleSSHPublicKeysClient_Create() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SSHPublicKeysClientCreateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetAnSshPublicKey.json
@@ -51,9 +54,12 @@ func ExampleSSHPublicKeysClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<ssh-public-key-name>",
@@ -63,7 +69,7 @@ func ExampleSSHPublicKeysClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SSHPublicKeysClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GenerateSshKeyPair.json
@@ -73,9 +79,12 @@ func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GenerateKeyPair(ctx,
 		"<resource-group-name>",
 		"<ssh-public-key-name>",
@@ -85,5 +94,5 @@ func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SSHPublicKeysClientGenerateKeyPairResult
+	_ = res
 }

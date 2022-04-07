@@ -25,9 +25,12 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -35,9 +38,9 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 		"<vm-extension-name>",
 		test.VirtualMachineScaleSetVMExtension{
 			Properties: &test.VirtualMachineExtensionProperties{
-				Type:                    to.StringPtr("<type>"),
-				AutoUpgradeMinorVersion: to.BoolPtr(true),
-				Publisher:               to.StringPtr("<publisher>"),
+				Type:                    to.Ptr("<type>"),
+				AutoUpgradeMinorVersion: to.Ptr(true),
+				Publisher:               to.Ptr("<publisher>"),
 				Settings: map[string]interface{}{
 					"UserName": "xyz@microsoft.com",
 					"items": []interface{}{
@@ -64,10 +67,10 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 					"styleSettings": map[string]interface{}{},
 					"test":          float64(1),
 				},
-				TypeHandlerVersion: to.StringPtr("<type-handler-version>"),
+				TypeHandlerVersion: to.Ptr("<type-handler-version>"),
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetVMExtensionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -78,7 +81,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMExtensionsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json
@@ -88,9 +91,12 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -98,16 +104,16 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 		"<vm-extension-name>",
 		test.VirtualMachineScaleSetVMExtensionUpdate{
 			Properties: &test.VirtualMachineExtensionUpdateProperties{
-				Type:                    to.StringPtr("<type>"),
-				AutoUpgradeMinorVersion: to.BoolPtr(true),
-				Publisher:               to.StringPtr("<publisher>"),
+				Type:                    to.Ptr("<type>"),
+				AutoUpgradeMinorVersion: to.Ptr(true),
+				Publisher:               to.Ptr("<publisher>"),
 				Settings: map[string]interface{}{
 					"UserName": "xyz@microsoft.com",
 				},
-				TypeHandlerVersion: to.StringPtr("<type-handler-version>"),
+				TypeHandlerVersion: to.Ptr("<type-handler-version>"),
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetVMExtensionsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -118,7 +124,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMExtensionsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json
@@ -128,15 +134,18 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<vm-extension-name>",
-		nil)
+		&test.VirtualMachineScaleSetVMExtensionsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -155,9 +164,12 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -169,7 +181,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMExtensionsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMExtensions.json
@@ -179,9 +191,12 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMExtensionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.List(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -192,5 +207,5 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_List() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMExtensionsClientListResult
+	_ = res
 }

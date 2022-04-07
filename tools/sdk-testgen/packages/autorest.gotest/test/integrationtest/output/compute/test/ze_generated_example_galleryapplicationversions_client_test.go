@@ -25,38 +25,41 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		"<gallery-application-version-name>",
 		test.GalleryApplicationVersion{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.GalleryApplicationVersionProperties{
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
-					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
+					EndOfLifeDate:      to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Ptr[int32](1),
+					StorageAccountType: to.Ptr(test.StorageAccountTypeStandardLRS),
 					TargetRegions: []*test.TargetRegion{
 						{
-							Name:                 to.StringPtr("<name>"),
-							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
+							Name:                 to.Ptr("<name>"),
+							RegionalReplicaCount: to.Ptr[int32](1),
+							StorageAccountType:   to.Ptr(test.StorageAccountTypeStandardLRS),
 						}},
 					ManageActions: &test.UserArtifactManage{
-						Install: to.StringPtr("<install>"),
-						Remove:  to.StringPtr("<remove>"),
+						Install: to.Ptr("<install>"),
+						Remove:  to.Ptr("<remove>"),
 					},
 					Source: &test.UserArtifactSource{
-						MediaLink: to.StringPtr("<media-link>"),
+						MediaLink: to.Ptr("<media-link>"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.GalleryApplicationVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -67,7 +70,7 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationVersionsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json
@@ -77,9 +80,12 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -88,26 +94,26 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		test.GalleryApplicationVersionUpdate{
 			Properties: &test.GalleryApplicationVersionProperties{
 				PublishingProfile: &test.GalleryApplicationVersionPublishingProfile{
-					EndOfLifeDate:      to.TimePtr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
-					ReplicaCount:       to.Int32Ptr(1),
-					StorageAccountType: test.StorageAccountTypeStandardLRS.ToPtr(),
+					EndOfLifeDate:      to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2019-07-01T07:00:00Z"); return t }()),
+					ReplicaCount:       to.Ptr[int32](1),
+					StorageAccountType: to.Ptr(test.StorageAccountTypeStandardLRS),
 					TargetRegions: []*test.TargetRegion{
 						{
-							Name:                 to.StringPtr("<name>"),
-							RegionalReplicaCount: to.Int32Ptr(1),
-							StorageAccountType:   test.StorageAccountTypeStandardLRS.ToPtr(),
+							Name:                 to.Ptr("<name>"),
+							RegionalReplicaCount: to.Ptr[int32](1),
+							StorageAccountType:   to.Ptr(test.StorageAccountTypeStandardLRS),
 						}},
 					ManageActions: &test.UserArtifactManage{
-						Install: to.StringPtr("<install>"),
-						Remove:  to.StringPtr("<remove>"),
+						Install: to.Ptr("<install>"),
+						Remove:  to.Ptr("<remove>"),
 					},
 					Source: &test.UserArtifactSource{
-						MediaLink: to.StringPtr("<media-link>"),
+						MediaLink: to.Ptr("<media-link>"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.GalleryApplicationVersionsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -118,7 +124,7 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationVersionsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplicationVersionWithReplicationStatus.json
@@ -128,21 +134,24 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		"<gallery-application-version-name>",
-		&test.GalleryApplicationVersionsClientGetOptions{Expand: test.ReplicationStatusTypesReplicationStatus.ToPtr()})
+		&test.GalleryApplicationVersionsClientGetOptions{Expand: to.Ptr(test.ReplicationStatusTypesReplicationStatus)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationVersionsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json
@@ -152,15 +161,18 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		"<gallery-application-version-name>",
-		nil)
+		&test.GalleryApplicationVersionsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -179,23 +191,23 @@ func ExampleGalleryApplicationVersionsClient_ListByGalleryApplication() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByGalleryApplication("<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

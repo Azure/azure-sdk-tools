@@ -35,9 +35,9 @@ var (
 	customDomainName           = getEnv("CUSTOM_DOMAIN_NAME", "")
 	dnsResourceGroup           = getEnv("DNS_RESOURCE_GROUP", "")
 	dnsSubscriptionId          = getEnv("DNS_SUBSCRIPTION_ID", "")
-	location                   = getEnv("LOCATION", "eastus")
+	location                   = getEnv("LOCATION", "westus")
 	mysqlKey                   = getEnv("MYSQL_KEY", "")
-	resourceGroupName          = getEnv("RESOURCE_GROUP_NAME", "")
+	resourceGroupName          = getEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	subscriptionId             = getEnv("AZURE_SUBSCRIPTION_ID", "")
 	userAssignedIdentity       = getEnv("USER_ASSIGNED_IDENTITY", "")
 )
@@ -82,11 +82,11 @@ func prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend := createDeployment("Generate_Unique_ServiceName", &deployment)
-	serviceName = deploymentExtend.Properties.Outputs["serviceName"].(map[string]interface{})["value"].(string)
+	serviceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["serviceName"].(map[string]interface{})["value"].(string)
 
 	// From step Create_Application_Insight_Instance
 	template = map[string]interface{}{
@@ -128,11 +128,11 @@ func prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend = createDeployment("Create_Application_Insight_Instance", &deployment)
-	insightsInstrumentationKey = deploymentExtend.Properties.Outputs["insightsInstrumentationKey"].(map[string]interface{})["value"].(string)
+	insightsInstrumentationKey = deploymentExtend.Properties.Outputs.(map[string]interface{})["insightsInstrumentationKey"].(map[string]interface{})["value"].(string)
 
 	// From step Add_Dns_Cname_Record
 	template = map[string]interface{}{
@@ -197,7 +197,7 @@ func prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_ = createDeployment("Add_Dns_Cname_Record", &deployment)
@@ -207,12 +207,15 @@ func springSample() {
 	var relativePath string
 	var uploadUrl string
 	// From step Services_CheckNameAvailability
-	servicesClient := test.NewServicesClient(subscriptionId, cred, nil)
+	servicesClient, err := test.NewServicesClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	_, err = servicesClient.CheckNameAvailability(ctx,
 		location,
 		test.NameAvailabilityParameters{
-			Name: to.StringPtr(serviceName),
-			Type: to.StringPtr("Microsoft.AppPlatform/Spring"),
+			Name: to.Ptr(serviceName),
+			Type: to.Ptr("Microsoft.AppPlatform/Spring"),
 		},
 		nil)
 	if err != nil {
@@ -220,25 +223,25 @@ func springSample() {
 	}
 
 	// From step Services_CreateOrUpdate
-	servicesClientCreateOrUpdatePollerResponse, err := servicesClient.BeginCreateOrUpdate(ctx,
+	servicesClientCreateOrUpdateResponse, err := servicesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ServiceResource{
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.StringPtr("S0"),
-				Tier: to.StringPtr("Standard"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -253,24 +256,24 @@ func springSample() {
 	}
 
 	// From step Services_Update
-	servicesClientUpdatePollerResponse, err := servicesClient.BeginUpdate(ctx,
+	servicesClientUpdateResponse, err := servicesClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ServiceResource{
 			Tags: map[string]*string{
-				"created-by": to.StringPtr("api-test"),
-				"hello":      to.StringPtr("world"),
+				"created-by": to.Ptr("api-test"),
+				"hello":      to.Ptr("world"),
 			},
 			SKU: &test.SKU{
-				Name: to.StringPtr("S0"),
-				Tier: to.StringPtr("Standard"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -298,7 +301,7 @@ func springSample() {
 		resourceGroupName,
 		serviceName,
 		test.RegenerateTestKeyRequestPayload{
-			KeyType: test.TestKeyTypePrimary.ToPtr(),
+			KeyType: to.Ptr(test.TestKeyTypePrimary),
 		},
 		nil)
 	if err != nil {
@@ -315,23 +318,26 @@ func springSample() {
 	}
 
 	// From step Certificates_CreateOrUpdate
-	certificatesClient := test.NewCertificatesClient(subscriptionId, cred, nil)
+	certificatesClient, err := test.NewCertificatesClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	certificateName := "asc-certificate"
-	certificatesClientCreateOrUpdatePollerResponse, err := certificatesClient.BeginCreateOrUpdate(ctx,
+	certificatesClientCreateOrUpdateResponse, err := certificatesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		certificateName,
 		test.CertificateResource{
 			Properties: &test.CertificateProperties{
-				KeyVaultCertName: to.StringPtr("pfx-cert"),
-				VaultURI:         to.StringPtr("https://integration-test-prod.vault.azure.net/"),
+				KeyVaultCertName: to.Ptr("pfx-cert"),
+				VaultURI:         to.Ptr("https://integration-test-prod.vault.azure.net/"),
 			},
 		},
-		nil)
+		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -351,81 +357,77 @@ func springSample() {
 	certificatesClientListPager := certificatesClient.List(resourceGroupName,
 		serviceName,
 		nil)
-	for certificatesClientListPager.NextPage(ctx) {
-		err = certificatesClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range certificatesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for certificatesClientListPager.More() {
 	}
 
 	// From step ConfigServers_Validate
-	configServersClient := test.NewConfigServersClient(subscriptionId, cred, nil)
-	configServersClientValidatePollerResponse, err := configServersClient.BeginValidate(ctx,
+	configServersClient, err := test.NewConfigServersClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	configServersClientValidateResponse, err := configServersClient.BeginValidate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerSettings{
 			GitProperty: &test.ConfigServerGitProperty{
-				Label: to.StringPtr("master"),
+				Label: to.Ptr("master"),
 				SearchPaths: []*string{
-					to.StringPtr("/")},
-				URI: to.StringPtr("https://github.com/VSChina/asc-config-server-test-public.git"),
+					to.Ptr("/")},
+				URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientValidatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientValidateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step ConfigServers_UpdatePut
-	configServersClientUpdatePutPollerResponse, err := configServersClient.BeginUpdatePut(ctx,
+	configServersClientUpdatePutResponse, err := configServersClient.BeginUpdatePut(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.StringPtr("master"),
+						Label: to.Ptr("master"),
 						SearchPaths: []*string{
-							to.StringPtr("/")},
-						URI: to.StringPtr("https://github.com/VSChina/asc-config-server-test-public.git"),
+							to.Ptr("/")},
+						URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePutPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePutResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step ConfigServers_UpdatePatch
-	configServersClientUpdatePatchPollerResponse, err := configServersClient.BeginUpdatePatch(ctx,
+	configServersClientUpdatePatchResponse, err := configServersClient.BeginUpdatePatch(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						URI: to.StringPtr("https://github.com/azure-samples/spring-petclinic-microservices-config"),
+						URI: to.Ptr("https://github.com/azure-samples/spring-petclinic-microservices-config"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePatchPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePatchResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -440,22 +442,25 @@ func springSample() {
 	}
 
 	// From step MonitoringSettings_UpdatePut
-	monitoringSettingsClient := test.NewMonitoringSettingsClient(subscriptionId, cred, nil)
-	monitoringSettingsClientUpdatePutPollerResponse, err := monitoringSettingsClient.BeginUpdatePut(ctx,
+	monitoringSettingsClient, err := test.NewMonitoringSettingsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	monitoringSettingsClientUpdatePutResponse, err := monitoringSettingsClient.BeginUpdatePut(ctx,
 		resourceGroupName,
 		serviceName,
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.StringPtr(insightsInstrumentationKey),
-				AppInsightsSamplingRate:       to.Float64Ptr(50),
-				TraceEnabled:                  to.BoolPtr(true),
+				AppInsightsInstrumentationKey: to.Ptr(insightsInstrumentationKey),
+				AppInsightsSamplingRate:       to.Ptr[float64](50),
+				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePutPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePutResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -470,49 +475,52 @@ func springSample() {
 	}
 
 	// From step MonitoringSettings_UpdatePatch
-	monitoringSettingsClientUpdatePatchPollerResponse, err := monitoringSettingsClient.BeginUpdatePatch(ctx,
+	monitoringSettingsClientUpdatePatchResponse, err := monitoringSettingsClient.BeginUpdatePatch(ctx,
 		resourceGroupName,
 		serviceName,
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsSamplingRate: to.Float64Ptr(100),
+				AppInsightsSamplingRate: to.Ptr[float64](100),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePatchPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePatchResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Create
-	appsClient := test.NewAppsClient(subscriptionId, cred, nil)
-	appsClientCreateOrUpdatePollerResponse, err := appsClient.BeginCreateOrUpdate(ctx,
+	appsClient, err := test.NewAppsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	appsClientCreateOrUpdateResponse, err := appsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("mydeployment1"),
-				EnableEndToEndTLS:    to.BoolPtr(false),
-				Fqdn:                 to.StringPtr(appName + ".mydomain.com"),
-				HTTPSOnly:            to.BoolPtr(false),
-				Public:               to.BoolPtr(false),
+				ActiveDeploymentName: to.Ptr("mydeployment1"),
+				EnableEndToEndTLS:    to.Ptr(false),
+				Fqdn:                 to.Ptr(appName + ".mydomain.com"),
+				HTTPSOnly:            to.Ptr(false),
+				Public:               to.Ptr(false),
 			},
 		},
-		nil)
+		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -528,9 +536,12 @@ func springSample() {
 	}
 
 	// From step Deployments_CreateOrUpdate_Default
-	deploymentsClient := test.NewDeploymentsClient(subscriptionId, cred, nil)
+	deploymentsClient, err := test.NewDeploymentsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	deploymentName := "default"
-	deploymentsClientCreateOrUpdatePollerResponse, err := deploymentsClient.BeginCreateOrUpdate(ctx,
+	deploymentsClientCreateOrUpdateResponse, err := deploymentsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -538,32 +549,32 @@ func springSample() {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				DeploymentSettings: &test.DeploymentSettings{
-					CPU: to.Int32Ptr(1),
+					CPU: to.Ptr[int32](1),
 					EnvironmentVariables: map[string]*string{
-						"env": to.StringPtr("test"),
+						"env": to.Ptr("test"),
 					},
-					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
-					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
+					JvmOptions:     to.Ptr("-Xms1G -Xmx3G"),
+					MemoryInGB:     to.Ptr[int32](3),
+					RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceTypeJar.ToPtr(),
-					ArtifactSelector: to.StringPtr("sub-module-1"),
-					RelativePath:     to.StringPtr("<default>"),
-					Version:          to.StringPtr("1.0"),
+					Type:             to.Ptr(test.UserSourceTypeJar),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr("<default>"),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 			SKU: &test.SKU{
-				Name:     to.StringPtr("S0"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     to.StringPtr("Standard"),
+				Name:     to.Ptr("S0"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -581,56 +592,56 @@ func springSample() {
 	}
 
 	// From step Apps_Update_ActiveDeployment
-	appsClientUpdatePollerResponse, err := appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponse, err := appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("default"),
+				ActiveDeploymentName: to.Ptr("default"),
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Update_Disk
-	appsClientUpdatePollerResponse, err = appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponse, err = appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("/data"),
-					SizeInGB:  to.Int32Ptr(10),
+					MountPath: to.Ptr("/data"),
+					SizeInGB:  to.Ptr[int32](10),
 				},
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("/tmpdisk"),
-					SizeInGB:  to.Int32Ptr(3),
+					MountPath: to.Ptr("/tmpdisk"),
+					SizeInGB:  to.Ptr[int32](3),
 				},
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -639,20 +650,16 @@ func springSample() {
 	appsClientListPager := appsClient.List(resourceGroupName,
 		serviceName,
 		nil)
-	for appsClientListPager.NextPage(ctx) {
-		err = appsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range appsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for appsClientListPager.More() {
 	}
 
 	// From step Bindings_Create
-	bindingsClient := test.NewBindingsClient(subscriptionId, cred, nil)
+	bindingsClient, err := test.NewBindingsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	bindingName := "mysql-binding"
-	bindingsClientCreateOrUpdatePollerResponse, err := bindingsClient.BeginCreateOrUpdate(ctx,
+	bindingsClientCreateOrUpdateResponse, err := bindingsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -663,22 +670,22 @@ func springSample() {
 					"databaseName": "mysqldb",
 					"username":     "test",
 				},
-				Key:        to.StringPtr(mysqlKey),
-				ResourceID: to.StringPtr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
+				Key:        to.Ptr(mysqlKey),
+				ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Bindings_Update
 	bindingName = "mysql-binding"
-	bindingsClientUpdatePollerResponse, err := bindingsClient.BeginUpdate(ctx,
+	bindingsClientUpdateResponse, err := bindingsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -689,15 +696,15 @@ func springSample() {
 					"databaseName": "mysqldb2",
 					"username":     "test2",
 				},
-				Key:        to.StringPtr(mysqlKey),
-				ResourceID: to.StringPtr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
+				Key:        to.Ptr(mysqlKey),
+				ResourceID: to.Ptr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -719,28 +726,21 @@ func springSample() {
 		serviceName,
 		appName,
 		nil)
-	for bindingsClientListPager.NextPage(ctx) {
-		err = bindingsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range bindingsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for bindingsClientListPager.More() {
 	}
 
 	// From step Bindings_Delete
 	bindingName = "mysql-binding"
-	bindingsClientDeletePollerResponse, err := bindingsClient.BeginDelete(ctx,
+	bindingsClientDeleteResponse, err := bindingsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		bindingName,
-		nil)
+		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -751,7 +751,7 @@ func springSample() {
 		serviceName,
 		appName,
 		test.CustomDomainValidatePayload{
-			Name: to.StringPtr(customDomainName),
+			Name: to.Ptr(customDomainName),
 		},
 		nil)
 	if err != nil {
@@ -759,44 +759,47 @@ func springSample() {
 	}
 
 	// From step CustomDomains_CreateOrUpdate
-	customDomainsClient := test.NewCustomDomainsClient(subscriptionId, cred, nil)
+	customDomainsClient, err := test.NewCustomDomainsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	domainName := dnsCname + "." + customDomainName
-	customDomainsClientCreateOrUpdatePollerResponse, err := customDomainsClient.BeginCreateOrUpdate(ctx,
+	customDomainsClientCreateOrUpdateResponse, err := customDomainsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		domainName,
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName: to.StringPtr("asc-certificate"),
+				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step CustomDomains_Update
 	domainName = dnsCname + "." + customDomainName
-	customDomainsClientUpdatePollerResponse, err := customDomainsClient.BeginUpdate(ctx,
+	customDomainsClientUpdateResponse, err := customDomainsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		domainName,
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName: to.StringPtr("asc-certificate"),
+				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -818,14 +821,7 @@ func springSample() {
 		serviceName,
 		appName,
 		nil)
-	for customDomainsClientListPager.NextPage(ctx) {
-		err = customDomainsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range customDomainsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for customDomainsClientListPager.More() {
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -895,14 +891,14 @@ func springSample() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_ = createDeployment("Upload_File", &deployment)
 
 	// From step Deployments_CreateOrUpdate
 	deploymentName = "blue"
-	deploymentsClientCreateOrUpdatePollerResponse, err = deploymentsClient.BeginCreateOrUpdate(ctx,
+	deploymentsClientCreateOrUpdateResponse, err = deploymentsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -910,104 +906,104 @@ func springSample() {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				DeploymentSettings: &test.DeploymentSettings{
-					CPU: to.Int32Ptr(1),
+					CPU: to.Ptr[int32](1),
 					EnvironmentVariables: map[string]*string{
-						"env": to.StringPtr("test"),
+						"env": to.Ptr("test"),
 					},
-					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
-					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
+					JvmOptions:     to.Ptr("-Xms1G -Xmx3G"),
+					MemoryInGB:     to.Ptr[int32](3),
+					RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceTypeJar.ToPtr(),
-					ArtifactSelector: to.StringPtr("sub-module-1"),
-					RelativePath:     to.StringPtr(relativePath),
-					Version:          to.StringPtr("1.0"),
+					Type:             to.Ptr(test.UserSourceTypeJar),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr(relativePath),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 			SKU: &test.SKU{
-				Name:     to.StringPtr("S0"),
-				Capacity: to.Int32Ptr(2),
-				Tier:     to.StringPtr("Standard"),
+				Name:     to.Ptr("S0"),
+				Capacity: to.Ptr[int32](2),
+				Tier:     to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Update
-	appsClientUpdatePollerResponse, err = appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponse, err = appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("blue"),
+				ActiveDeploymentName: to.Ptr("blue"),
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Restart
 	deploymentName = "blue"
-	deploymentsClientRestartPollerResponse, err := deploymentsClient.BeginRestart(ctx,
+	deploymentsClientRestartResponse, err := deploymentsClient.BeginRestart(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientRestartPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientRestartResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Stop
 	deploymentName = "blue"
-	deploymentsClientStopPollerResponse, err := deploymentsClient.BeginStop(ctx,
+	deploymentsClientStopResponse, err := deploymentsClient.BeginStop(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStopPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStopResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Start
 	deploymentName = "blue"
-	deploymentsClientStartPollerResponse, err := deploymentsClient.BeginStart(ctx,
+	deploymentsClientStartResponse, err := deploymentsClient.BeginStart(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStartPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStartResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -1029,154 +1025,118 @@ func springSample() {
 		serviceName,
 		appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
-	for deploymentsClientListPager.NextPage(ctx) {
-		err = deploymentsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range deploymentsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for deploymentsClientListPager.More() {
 	}
 
 	// From step Deployments_ListForCluster
 	deploymentsClientListForClusterPager := deploymentsClient.ListForCluster(resourceGroupName,
 		serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
-	for deploymentsClientListForClusterPager.NextPage(ctx) {
-		err = deploymentsClientListForClusterPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range deploymentsClientListForClusterPager.PageResponse().Value {
-			_ = v
-		}
+	for deploymentsClientListForClusterPager.More() {
 	}
 
 	// From step Services_List
 	servicesClientListPager := servicesClient.List(resourceGroupName,
 		nil)
-	for servicesClientListPager.NextPage(ctx) {
-		err = servicesClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range servicesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for servicesClientListPager.More() {
 	}
 
 	// From step Services_ListBySubscription
 	servicesClientListBySubscriptionPager := servicesClient.ListBySubscription(nil)
-	for servicesClientListBySubscriptionPager.NextPage(ctx) {
-		err = servicesClientListBySubscriptionPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range servicesClientListBySubscriptionPager.PageResponse().Value {
-			_ = v
-		}
+	for servicesClientListBySubscriptionPager.More() {
 	}
 
 	// From step Deployments_Delete
 	deploymentName = "blue"
-	deploymentsClientDeletePollerResponse, err := deploymentsClient.BeginDelete(ctx,
+	deploymentsClientDeleteResponse, err := deploymentsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step CustomDomains_Delete
 	domainName = dnsCname + "." + customDomainName
-	customDomainsClientDeletePollerResponse, err := customDomainsClient.BeginDelete(ctx,
+	customDomainsClientDeleteResponse, err := customDomainsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		domainName,
-		nil)
+		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Delete
 	appName := "app01"
-	appsClientDeletePollerResponse, err := appsClient.BeginDelete(ctx,
+	appsClientDeleteResponse, err := appsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
-		nil)
+		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Certificates_Delete
 	certificateName = "asc-certificate"
-	certificatesClientDeletePollerResponse, err := certificatesClient.BeginDelete(ctx,
+	certificatesClientDeleteResponse, err := certificatesClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		certificateName,
-		nil)
+		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Services_Delete
-	servicesClientDeletePollerResponse, err := servicesClient.BeginDelete(ctx,
+	servicesClientDeleteResponse, err := servicesClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
-		nil)
+		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Skus_List
-	sKUsClient := test.NewSKUsClient(subscriptionId, cred, nil)
+	sKUsClient, err := test.NewSKUsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	sKUsClientListPager := sKUsClient.List(nil)
-	for sKUsClientListPager.NextPage(ctx) {
-		err = sKUsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range sKUsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for sKUsClientListPager.More() {
 	}
 
 	// From step Operations_List
-	operationsClient := test.NewOperationsClient(cred, nil)
+	operationsClient, err := test.NewOperationsClient(cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.NextPage(ctx) {
-		err = operationsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range operationsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for operationsClientListPager.More() {
 	}
 }
 
@@ -1240,7 +1200,7 @@ func cleanup() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_ = createDeployment("delete_cname_record", &deployment)
@@ -1249,11 +1209,14 @@ func cleanup() {
 func createResourceGroup() error {
 	rand.Seed(time.Now().UnixNano())
 	resourceGroupName = fmt.Sprintf("go-sdk-sample-%d", rand.Intn(1000))
-	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	param := armresources.ResourceGroup{
-		Location: to.StringPtr(location),
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
 	}
-	_, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	param := armresources.ResourceGroup{
+		Location: to.Ptr(location),
+	}
+	_, err = rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1261,8 +1224,11 @@ func createResourceGroup() error {
 }
 
 func deleteResourceGroup() error {
-	resourceGroup := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	pollerResponse, err := resourceGroup.BeginDelete(ctx, resourceGroupName, nil)
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	pollerResponse, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -1281,7 +1247,10 @@ func getEnv(key, fallback string) string {
 }
 
 func createDeployment(deploymentName string, deployment *armresources.Deployment) *armresources.DeploymentExtended {
-	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	deployClient, err := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	poller, err := deployClient.BeginCreateOrUpdate(
 		ctx,
 		resourceGroupName,

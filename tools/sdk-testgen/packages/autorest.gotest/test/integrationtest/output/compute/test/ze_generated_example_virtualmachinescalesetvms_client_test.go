@@ -25,14 +25,19 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
+			ResumeToken: "",
+		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -51,9 +56,12 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -64,7 +72,7 @@ func ExampleVirtualMachineScaleSetVMsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetVMInstanceViewAutoPlacedOnDedicatedHostGroup.json
@@ -74,9 +82,12 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -87,7 +98,7 @@ func ExampleVirtualMachineScaleSetVMsClient_GetInstanceView() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMsClientGetInstanceViewResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RetrieveBootDiagnosticsDataVMScaleSetVM.json
@@ -97,20 +108,23 @@ func ExampleVirtualMachineScaleSetVMsClient_RetrieveBootDiagnosticsData() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&test.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Int32Ptr(60)})
+		&test.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMsClientRetrieveBootDiagnosticsDataResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/SimulateEvictionOfVmssVM.json
@@ -120,9 +134,12 @@ func ExampleVirtualMachineScaleSetVMsClient_SimulateEviction() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	_, err = client.SimulateEviction(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -141,19 +158,22 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginRunCommand(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		test.RunCommandInput{
-			CommandID: to.StringPtr("<command-id>"),
+			CommandID: to.Ptr("<command-id>"),
 			Script: []*string{
-				to.StringPtr("# Test multi-line string\r\nWrite-Host Hello World!")},
+				to.Ptr("# Test multi-line string\r\nWrite-Host Hello World!")},
 		},
-		nil)
+		&test.VirtualMachineScaleSetVMsClientBeginRunCommandOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -164,5 +184,5 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMsClientRunCommandResult
+	_ = res
 }

@@ -25,9 +25,12 @@ func ExampleRestorePointsClient_BeginCreate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreate(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -35,10 +38,10 @@ func ExampleRestorePointsClient_BeginCreate() {
 		test.RestorePoint{
 			ExcludeDisks: []*test.APIEntityReference{
 				{
-					ID: to.StringPtr("<id>"),
+					ID: to.Ptr("<id>"),
 				}},
 		},
-		nil)
+		&test.RestorePointsClientBeginCreateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -57,9 +60,12 @@ func ExampleRestorePointsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -70,5 +76,5 @@ func ExampleRestorePointsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.RestorePointsClientGetResult
+	_ = res
 }

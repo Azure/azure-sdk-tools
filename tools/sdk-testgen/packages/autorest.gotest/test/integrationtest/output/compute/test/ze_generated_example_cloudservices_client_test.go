@@ -25,56 +25,60 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginCreateOrUpdateOptions{Parameters: &test.CloudService{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.CloudServiceProperties{
-				Configuration: to.StringPtr("<configuration>"),
+				Configuration: to.Ptr("<configuration>"),
 				NetworkProfile: &test.CloudServiceNetworkProfile{
 					LoadBalancerConfigurations: []*test.LoadBalancerConfiguration{
 						{
-							Name: to.StringPtr("<name>"),
+							Name: to.Ptr("<name>"),
 							Properties: &test.LoadBalancerConfigurationProperties{
 								FrontendIPConfigurations: []*test.LoadBalancerFrontendIPConfiguration{
 									{
-										Name: to.StringPtr("<name>"),
+										Name: to.Ptr("<name>"),
 										Properties: &test.LoadBalancerFrontendIPConfigurationProperties{
 											PublicIPAddress: &test.SubResource{
-												ID: to.StringPtr("<id>"),
+												ID: to.Ptr("<id>"),
 											},
 										},
 									}},
 							},
 						}},
 				},
-				PackageURL: to.StringPtr("<package-url>"),
+				PackageURL: to.Ptr("<package-url>"),
 				RoleProfile: &test.CloudServiceRoleProfile{
 					Roles: []*test.CloudServiceRoleProfileProperties{
 						{
-							Name: to.StringPtr("<name>"),
+							Name: to.Ptr("<name>"),
 							SKU: &test.CloudServiceRoleSKU{
-								Name:     to.StringPtr("<name>"),
-								Capacity: to.Int64Ptr(1),
-								Tier:     to.StringPtr("<tier>"),
+								Name:     to.Ptr("<name>"),
+								Capacity: to.Ptr[int64](1),
+								Tier:     to.Ptr("<tier>"),
 							},
 						},
 						{
-							Name: to.StringPtr("<name>"),
+							Name: to.Ptr("<name>"),
 							SKU: &test.CloudServiceRoleSKU{
-								Name:     to.StringPtr("<name>"),
-								Capacity: to.Int64Ptr(1),
-								Tier:     to.StringPtr("<tier>"),
+								Name:     to.Ptr("<name>"),
+								Capacity: to.Ptr[int64](1),
+								Tier:     to.Ptr("<tier>"),
 							},
 						}},
 				},
-				UpgradeMode: test.CloudServiceUpgradeModeAuto.ToPtr(),
+				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -86,7 +90,7 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServicesClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json
@@ -96,17 +100,21 @@ func ExampleCloudServicesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginUpdateOptions{Parameters: &test.CloudServiceUpdate{
 			Tags: map[string]*string{
-				"Documentation": to.StringPtr("RestAPI"),
+				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -118,7 +126,7 @@ func ExampleCloudServicesClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServicesClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json
@@ -128,13 +136,16 @@ func ExampleCloudServicesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		nil)
+		&test.CloudServicesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -153,9 +164,12 @@ func ExampleCloudServicesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -165,7 +179,7 @@ func ExampleCloudServicesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServicesClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceInstanceViewWithMultiRole.json
@@ -175,9 +189,12 @@ func ExampleCloudServicesClient_GetInstanceView() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetInstanceView(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -187,7 +204,7 @@ func ExampleCloudServicesClient_GetInstanceView() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServicesClientGetInstanceViewResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServicesInSubscription.json
@@ -197,20 +214,20 @@ func ExampleCloudServicesClient_ListAll() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListAll(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -224,21 +241,21 @@ func ExampleCloudServicesClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -252,13 +269,16 @@ func ExampleCloudServicesClient_BeginStart() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginStart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		nil)
+		&test.CloudServicesClientBeginStartOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -277,13 +297,16 @@ func ExampleCloudServicesClient_BeginPowerOff() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginPowerOff(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		nil)
+		&test.CloudServicesClientBeginPowerOffOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -302,17 +325,21 @@ func ExampleCloudServicesClient_BeginRestart() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginRestart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginRestartOptions{Parameters: &test.RoleInstances{
 			RoleInstances: []*string{
-				to.StringPtr("ContosoFrontend_IN_0"),
-				to.StringPtr("ContosoBackend_IN_1")},
+				to.Ptr("ContosoFrontend_IN_0"),
+				to.Ptr("ContosoBackend_IN_1")},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -332,17 +359,21 @@ func ExampleCloudServicesClient_BeginReimage() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginReimageOptions{Parameters: &test.RoleInstances{
 			RoleInstances: []*string{
-				to.StringPtr("ContosoFrontend_IN_0"),
-				to.StringPtr("ContosoBackend_IN_1")},
+				to.Ptr("ContosoFrontend_IN_0"),
+				to.Ptr("ContosoBackend_IN_1")},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -362,17 +393,21 @@ func ExampleCloudServicesClient_BeginRebuild() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginRebuild(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginRebuildOptions{Parameters: &test.RoleInstances{
 			RoleInstances: []*string{
-				to.StringPtr("ContosoFrontend_IN_0"),
-				to.StringPtr("ContosoBackend_IN_1")},
+				to.Ptr("ContosoFrontend_IN_0"),
+				to.Ptr("ContosoBackend_IN_1")},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -392,17 +427,21 @@ func ExampleCloudServicesClient_BeginDeleteInstances() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDeleteInstances(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServicesClientBeginDeleteInstancesOptions{Parameters: &test.RoleInstances{
 			RoleInstances: []*string{
-				to.StringPtr("ContosoFrontend_IN_0"),
-				to.StringPtr("ContosoBackend_IN_1")},
+				to.Ptr("ContosoFrontend_IN_0"),
+				to.Ptr("ContosoBackend_IN_1")},
 		},
+			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

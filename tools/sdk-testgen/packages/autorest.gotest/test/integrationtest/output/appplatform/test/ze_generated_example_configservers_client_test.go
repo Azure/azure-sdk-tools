@@ -25,9 +25,12 @@ func ExampleConfigServersClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -37,7 +40,7 @@ func ExampleConfigServersClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ConfigServersClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json
@@ -47,9 +50,12 @@ func ExampleConfigServersClient_BeginUpdatePut() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -57,15 +63,15 @@ func ExampleConfigServersClient_BeginUpdatePut() {
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.StringPtr("<label>"),
+						Label: to.Ptr("<label>"),
 						SearchPaths: []*string{
-							to.StringPtr("/")},
-						URI: to.StringPtr("<uri>"),
+							to.Ptr("/")},
+						URI: to.Ptr("<uri>"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -76,7 +82,7 @@ func ExampleConfigServersClient_BeginUpdatePut() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ConfigServersClientUpdatePutResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json
@@ -86,9 +92,12 @@ func ExampleConfigServersClient_BeginUpdatePatch() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -96,15 +105,15 @@ func ExampleConfigServersClient_BeginUpdatePatch() {
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.StringPtr("<label>"),
+						Label: to.Ptr("<label>"),
 						SearchPaths: []*string{
-							to.StringPtr("/")},
-						URI: to.StringPtr("<uri>"),
+							to.Ptr("/")},
+						URI: to.Ptr("<uri>"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -115,7 +124,7 @@ func ExampleConfigServersClient_BeginUpdatePatch() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ConfigServersClientUpdatePatchResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json
@@ -125,21 +134,24 @@ func ExampleConfigServersClient_BeginValidate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	client, err := test.NewConfigServersClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginValidate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.ConfigServerSettings{
 			GitProperty: &test.ConfigServerGitProperty{
-				Label: to.StringPtr("<label>"),
+				Label: to.Ptr("<label>"),
 				SearchPaths: []*string{
-					to.StringPtr("/")},
-				URI: to.StringPtr("<uri>"),
+					to.Ptr("/")},
+				URI: to.Ptr("<uri>"),
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -150,5 +162,5 @@ func ExampleConfigServersClient_BeginValidate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ConfigServersClientValidateResult
+	_ = res
 }

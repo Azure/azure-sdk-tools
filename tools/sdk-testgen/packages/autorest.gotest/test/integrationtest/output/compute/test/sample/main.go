@@ -28,8 +28,8 @@ var (
 	cred              azcore.TokenCredential
 	fakeStepVar       = "signalrswaggertest4"
 	resourceName      = "signalrswaggertest4"
-	location          = getEnv("LOCATION", "eastus")
-	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "")
+	location          = getEnv("LOCATION", "westus")
+	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	subscriptionId    = getEnv("AZURE_SUBSCRIPTION_ID", "")
 )
 
@@ -48,7 +48,10 @@ func main() {
 
 func prepare() {
 	// From step Delete-proximity-placement-group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	_, err = proximityPlacementGroupsClient.Delete(ctx,
 		resourceGroupName,
 		resourceName,
@@ -91,22 +94,25 @@ func microsoftSignalrserviceBasicCrudSample() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend := createDeployment("Generate_Unique_Name", &deployment)
-	name = deploymentExtend.Properties.Outputs["name"].(map[string]interface{})["value"].(string)
-	resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
+	name = deploymentExtend.Properties.Outputs.(map[string]interface{})["name"].(map[string]interface{})["value"].(string)
+	resourceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["resourceName"].(map[string]interface{})["value"].(string)
 
 	// From step Create-or-Update-a-proximity-placement-group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	proximityPlacementGroupsClientCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(ctx,
 		resourceGroupName,
 		resourceName,
 		test.ProximityPlacementGroup{
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: to.Ptr(test.ProximityPlacementGroupTypeStandard),
 			},
 		},
 		nil)
@@ -125,69 +131,75 @@ func microsoftSignalrserviceBasicCrudSample() {
 	}
 
 	// From step Create_a_vm_with_Host_Encryption_using_encryptionAtHost_property
-	virtualMachinesClient := test.NewVirtualMachinesClient(subscriptionId, cred, nil)
+	virtualMachinesClient, err := test.NewVirtualMachinesClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	fakeStepVar := "signalrswaggertest6"
-	virtualMachinesClientCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
+	virtualMachinesClientCreateOrUpdateResponse, err := virtualMachinesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		"myVM",
 		test.VirtualMachine{
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Plan: &test.Plan{
-				Name:      to.StringPtr(fakeStepVar),
-				Product:   to.StringPtr("windows-data-science-vm"),
-				Publisher: to.StringPtr("microsoft-ads"),
+				Name:      to.Ptr(fakeStepVar),
+				Product:   to.Ptr("windows-data-science-vm"),
+				Publisher: to.Ptr("microsoft-ads"),
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: to.Ptr(test.VirtualMachineSizeTypesStandardDS1V2),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
 						{
-							ID: to.StringPtr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.Ptr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &test.NetworkInterfaceReferenceProperties{
-								Primary: to.BoolPtr(true),
+								Primary: to.Ptr(true),
 							},
 						}},
 				},
 				OSProfile: &test.OSProfile{
-					AdminPassword: to.StringPtr("{your-password}"),
-					AdminUsername: to.StringPtr("{your-username}"),
-					ComputerName:  to.StringPtr("myVM"),
+					AdminPassword: to.Ptr("{your-password}"),
+					AdminUsername: to.Ptr("{your-username}"),
+					ComputerName:  to.Ptr("myVM"),
 				},
 				SecurityProfile: &test.SecurityProfile{
-					EncryptionAtHost: to.BoolPtr(true),
+					EncryptionAtHost: to.Ptr(true),
 				},
 				StorageProfile: &test.StorageProfile{
 					ImageReference: &test.ImageReference{
-						Offer:     to.StringPtr("windows-data-science-vm"),
-						Publisher: to.StringPtr(fakeScenarioVar),
-						SKU:       to.StringPtr("windows2016"),
-						Version:   to.StringPtr("latest"),
+						Offer:     to.Ptr("windows-data-science-vm"),
+						Publisher: to.Ptr(fakeScenarioVar),
+						SKU:       to.Ptr("windows2016"),
+						Version:   to.Ptr("latest"),
 					},
 					OSDisk: &test.OSDisk{
-						Name:         to.StringPtr("myVMosdisk"),
-						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
+						Name:         to.Ptr("myVMosdisk"),
+						Caching:      to.Ptr(test.CachingTypesReadOnly),
+						CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: to.Ptr(test.StorageAccountTypesStandardLRS),
 						},
 					},
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = virtualMachinesClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = virtualMachinesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 }
 func microsoftSignalrserviceDeleteonlySample() {
 	// From step Delete_proximity_placement_group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	_, err = proximityPlacementGroupsClient.Delete(ctx,
 		resourceGroupName,
 		resourceName,
@@ -200,11 +212,14 @@ func microsoftSignalrserviceDeleteonlySample() {
 func createResourceGroup() error {
 	rand.Seed(time.Now().UnixNano())
 	resourceGroupName = fmt.Sprintf("go-sdk-sample-%d", rand.Intn(1000))
-	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	param := armresources.ResourceGroup{
-		Location: to.StringPtr(location),
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
 	}
-	_, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	param := armresources.ResourceGroup{
+		Location: to.Ptr(location),
+	}
+	_, err = rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -212,8 +227,11 @@ func createResourceGroup() error {
 }
 
 func deleteResourceGroup() error {
-	resourceGroup := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	pollerResponse, err := resourceGroup.BeginDelete(ctx, resourceGroupName, nil)
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	pollerResponse, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -232,7 +250,10 @@ func getEnv(key, fallback string) string {
 }
 
 func createDeployment(deploymentName string, deployment *armresources.Deployment) *armresources.DeploymentExtended {
-	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	deployClient, err := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	poller, err := deployClient.BeginCreateOrUpdate(
 		ctx,
 		resourceGroupName,

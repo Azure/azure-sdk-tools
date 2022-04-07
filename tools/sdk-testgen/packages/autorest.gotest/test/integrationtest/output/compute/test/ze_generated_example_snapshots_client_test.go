@@ -25,23 +25,26 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<snapshot-name>",
 		test.Snapshot{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
-					CreateOption:     test.DiskCreateOptionImport.ToPtr(),
-					SourceURI:        to.StringPtr("<source-uri>"),
-					StorageAccountID: to.StringPtr("<storage-account-id>"),
+					CreateOption:     to.Ptr(test.DiskCreateOptionImport),
+					SourceURI:        to.Ptr("<source-uri>"),
+					StorageAccountID: to.Ptr("<storage-account-id>"),
 				},
 			},
 		},
-		nil)
+		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -52,7 +55,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SnapshotsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutASnapshot.json
@@ -62,9 +65,12 @@ func ExampleSnapshotsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<snapshot-name>",
@@ -74,7 +80,7 @@ func ExampleSnapshotsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SnapshotsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListSnapshotsInAResourceGroup.json
@@ -84,21 +90,21 @@ func ExampleSnapshotsClient_ListByResourceGroup() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -112,20 +118,20 @@ func ExampleSnapshotsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

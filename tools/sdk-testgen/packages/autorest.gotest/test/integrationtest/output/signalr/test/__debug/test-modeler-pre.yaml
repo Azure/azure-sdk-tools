@@ -2419,6 +2419,9 @@ schemas:
                       - schema: *ref_37
                         readOnly: true
                         serializedName: info
+                        extensions:
+                          x-internal-autorest-anonymous-schema:
+                            anonymous: true
                         language:
                           default:
                             name: info
@@ -2442,7 +2445,6 @@ schemas:
                         description: ErrorAdditionalInfo - The resource management error additional info.
                         marshallingFormat: json
                         namespace: ''
-                        omitType: true
                     protocol: {}
                   language:
                     default:
@@ -2479,7 +2481,6 @@ schemas:
                 hasArrayMap: true
                 marshallingFormat: json
                 namespace: ''
-                omitType: true
             protocol: {}
           serializedName: error
           language:
@@ -2506,12 +2507,11 @@ schemas:
           description: ErrorResponse - Common error response for all Azure Resource Manager APIs to return error details for failed operations. (This also follows the OData error response format.).
           marshallingFormat: json
           namespace: ''
-          omitType: true
           summary: Error response
       protocol: {}
     - *ref_35
     - *ref_38
-    - &ref_189
+    - &ref_183
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -2553,7 +2553,7 @@ schemas:
           marshallingFormat: json
           namespace: ''
       protocol: {}
-    - &ref_192
+    - &ref_187
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -2603,7 +2603,7 @@ schemas:
           marshallingFormat: json
           namespace: ''
       protocol: {}
-    - &ref_342
+    - &ref_269
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -2769,7 +2769,7 @@ schemas:
       protocol: {}
     - *ref_51
     - *ref_52
-    - &ref_203
+    - &ref_193
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -3535,6 +3535,9 @@ schemas:
                         protocol: {}
                       - schema: *ref_86
                         serializedName: tags
+                        extensions:
+                          x-internal-autorest-anonymous-schema:
+                            anonymous: true
                         language:
                           default:
                             name: tags
@@ -3867,6 +3870,9 @@ schemas:
                               - schema: *ref_100
                                 required: false
                                 serializedName: properties
+                                extensions:
+                                  x-internal-autorest-anonymous-schema:
+                                    anonymous: true
                                 language:
                                   default:
                                     name: properties
@@ -4473,6 +4479,9 @@ schemas:
                         protocol: {}
                       - schema: *ref_118
                         serializedName: userAssignedIdentities
+                        extensions:
+                          x-internal-autorest-anonymous-schema:
+                            anonymous: true
                         language:
                           default:
                             name: userAssignedIdentities
@@ -4629,7 +4638,7 @@ schemas:
     - *ref_136
     - *ref_137
     - *ref_81
-    - &ref_295
+    - &ref_243
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -4709,7 +4718,7 @@ schemas:
           marshallingFormat: json
           namespace: ''
       protocol: {}
-    - &ref_356
+    - &ref_277
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -4765,7 +4774,7 @@ schemas:
           marshallingFormat: json
           namespace: ''
       protocol: {}
-    - &ref_412
+    - &ref_311
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -4825,7 +4834,7 @@ schemas:
     - *ref_144
     - *ref_145
     - *ref_146
-    - &ref_306
+    - &ref_249
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -4855,7 +4864,7 @@ schemas:
           marshallingFormat: json
           namespace: ''
       protocol: {}
-    - &ref_426
+    - &ref_319
       type: object
       apiVersions:
         - version: 2021-06-01-preview
@@ -4935,7 +4944,7 @@ schemas:
     - *ref_169
     - *ref_170
 globalParameters:
-  - &ref_188
+  - &ref_182
     schema: *ref_1
     implementation: Client
     required: true
@@ -4993,7 +5002,7 @@ globalParameters:
 operationGroups:
   - $key: Operations
     operations:
-      - &ref_179
+      - operationId: Operations_List
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
@@ -5098,7 +5107,7 @@ operationGroups:
             azureARM: true
             clientName: OperationsClient
             openApiType: arm
-            optionalParamGroup: &ref_494
+            optionalParamGroup: &ref_353
               schema:
                 type: object
                 language:
@@ -5112,77 +5121,38 @@ operationGroups:
               serializedName: OperationsClientListOptions
               language:
                 default: &ref_178
-                  name: OperationsClientListOptions
+                  name: options
                   description: OperationsClientListOptions contains the optional parameters for the OperationsClient.List method.
                 go: *ref_178
               protocol: {}
-            pageableType: &ref_487
-              name: OperationsClientListPager
-              op: *ref_179
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listOperation
               requestMethod: listCreateRequest
               responseMethod: listHandleResponse
-            responseEnv: &ref_515
+            responseEnv: &ref_374
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_180
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_180
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_180
+                  schema: *ref_175
+                  serializedName: OperationList
                   language:
-                    default: &ref_181
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_181
-                  protocol: {}
-                - &ref_186
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_184
-                        schema: *ref_175
-                        serializedName: OperationList
-                        language:
-                          default: &ref_182
-                            name: OperationList
-                            description: Result of the request to list REST API operations. It contains a list of operations.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_182
-                        protocol: {}
-                    language:
-                      default: &ref_183
-                        name: OperationsClientListResult
-                        description: OperationsClientListResult contains the result from method OperationsClient.List.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_183
-                    protocol: {}
-                  serializedName: OperationsClientListResult
-                  language:
-                    default: &ref_185
-                      name: OperationsClientListResult
-                      description: Contains the result of the operation.
+                    default: &ref_179
+                      name: OperationList
+                      description: Result of the request to list REST API operations. It contains a list of operations.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_184
-                    go: *ref_185
+                    go: *ref_179
                   protocol: {}
               language:
-                default: &ref_187
+                default: &ref_181
                   name: OperationsClientListResponse
                   description: OperationsClientListResponse contains the response from method OperationsClient.List.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_186
-                go: *ref_187
+                  resultProp: *ref_180
+                go: *ref_181
               protocol: {}
         protocol: {}
     language:
@@ -5197,11 +5167,12 @@ operationGroups:
     protocol: {}
   - $key: SignalR
     operations:
-      - apiVersions:
+      - operationId: SignalR_CheckNameAvailability
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_191
+          - &ref_186
             schema: *ref_1
             implementation: Method
             required: true
@@ -5218,11 +5189,12 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-        requests:
-          - parameters:
-              - &ref_190
-                schema: *ref_189
+          - *ref_182
+        requestMediaTypes:
+          application/json: &ref_185
+            parameters:
+              - &ref_184
+                schema: *ref_183
                 implementation: Method
                 required: true
                 language:
@@ -5253,7 +5225,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_190
+              - *ref_184
             language:
               default:
                 name: ''
@@ -5269,10 +5241,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_185
         signatureParameters:
-          - *ref_191
+          - *ref_186
         responses:
-          - schema: *ref_192
+          - schema: *ref_187
             language:
               default:
                 name: ''
@@ -5332,95 +5306,59 @@ operationGroups:
             azureARM: true
             clientName: SignalRClient
             openApiType: arm
-            optionalParamGroup: &ref_495
+            optionalParamGroup: &ref_354
               schema:
                 type: object
                 language:
-                  default: &ref_193
+                  default: &ref_188
                     name: SignalRClientCheckNameAvailabilityOptions
                     description: SignalRClientCheckNameAvailabilityOptions contains the optional parameters for the SignalRClient.CheckNameAvailability method.
-                  go: *ref_193
+                  go: *ref_188
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRClientCheckNameAvailabilityOptions
               language:
-                default: &ref_194
-                  name: SignalRClientCheckNameAvailabilityOptions
+                default: &ref_189
+                  name: options
                   description: SignalRClientCheckNameAvailabilityOptions contains the optional parameters for the SignalRClient.CheckNameAvailability method.
-                go: *ref_194
+                go: *ref_189
               protocol: {}
             protocolNaming:
               internalMethod: checkNameAvailability
               requestMethod: checkNameAvailabilityCreateRequest
               responseMethod: checkNameAvailabilityHandleResponse
-            responseEnv: &ref_516
+            responseEnv: &ref_375
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_195
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_195
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_191
+                  schema: *ref_187
+                  serializedName: NameAvailability
                   language:
-                    default: &ref_196
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_196
-                  protocol: {}
-                - &ref_201
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_199
-                        schema: *ref_192
-                        serializedName: NameAvailability
-                        language:
-                          default: &ref_197
-                            name: NameAvailability
-                            description: Result of the request to check name availability. It contains a flag and possible reason of failure.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_197
-                        protocol: {}
-                    language:
-                      default: &ref_198
-                        name: SignalRClientCheckNameAvailabilityResult
-                        description: SignalRClientCheckNameAvailabilityResult contains the result from method SignalRClient.CheckNameAvailability.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_198
-                    protocol: {}
-                  serializedName: SignalRClientCheckNameAvailabilityResult
-                  language:
-                    default: &ref_200
-                      name: SignalRClientCheckNameAvailabilityResult
-                      description: Contains the result of the operation.
+                    default: &ref_190
+                      name: NameAvailability
+                      description: Result of the request to check name availability. It contains a flag and possible reason of failure.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_199
-                    go: *ref_200
+                    go: *ref_190
                   protocol: {}
               language:
-                default: &ref_202
+                default: &ref_192
                   name: SignalRClientCheckNameAvailabilityResponse
                   description: SignalRClientCheckNameAvailabilityResponse contains the response from method SignalRClient.CheckNameAvailability.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_201
-                go: *ref_202
+                  resultProp: *ref_191
+                go: *ref_192
               protocol: {}
         protocol: {}
-      - &ref_206
+      - operationId: SignalR_ListBySubscription
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
+          - *ref_182
         requests:
           - parameters:
               - schema: *ref_174
@@ -5454,7 +5392,7 @@ operationGroups:
                 uri: '{$host}'
         signatureParameters: []
         responses:
-          - schema: *ref_203
+          - schema: *ref_193
             language:
               default:
                 name: ''
@@ -5595,101 +5533,62 @@ operationGroups:
             azureARM: true
             clientName: SignalRClient
             openApiType: arm
-            optionalParamGroup: &ref_496
+            optionalParamGroup: &ref_355
               schema:
                 type: object
                 language:
-                  default: &ref_204
+                  default: &ref_194
                     name: SignalRClientListBySubscriptionOptions
                     description: SignalRClientListBySubscriptionOptions contains the optional parameters for the SignalRClient.ListBySubscription method.
-                  go: *ref_204
+                  go: *ref_194
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRClientListBySubscriptionOptions
               language:
-                default: &ref_205
-                  name: SignalRClientListBySubscriptionOptions
+                default: &ref_195
+                  name: options
                   description: SignalRClientListBySubscriptionOptions contains the optional parameters for the SignalRClient.ListBySubscription method.
-                go: *ref_205
+                go: *ref_195
               protocol: {}
-            pageableType: &ref_488
-              name: SignalRClientListBySubscriptionPager
-              op: *ref_206
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listBySubscription
               requestMethod: listBySubscriptionCreateRequest
               responseMethod: listBySubscriptionHandleResponse
-            responseEnv: &ref_517
+            responseEnv: &ref_376
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_207
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_207
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_197
+                  schema: *ref_193
+                  serializedName: ResourceInfoList
                   language:
-                    default: &ref_208
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_208
-                  protocol: {}
-                - &ref_213
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_211
-                        schema: *ref_203
-                        serializedName: ResourceInfoList
-                        language:
-                          default: &ref_209
-                            name: ResourceInfoList
-                            description: Object that includes an array of resources and a possible link for next set.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_209
-                        protocol: {}
-                    language:
-                      default: &ref_210
-                        name: SignalRClientListBySubscriptionResult
-                        description: SignalRClientListBySubscriptionResult contains the result from method SignalRClient.ListBySubscription.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_210
-                    protocol: {}
-                  serializedName: SignalRClientListBySubscriptionResult
-                  language:
-                    default: &ref_212
-                      name: SignalRClientListBySubscriptionResult
-                      description: Contains the result of the operation.
+                    default: &ref_196
+                      name: ResourceInfoList
+                      description: Object that includes an array of resources and a possible link for next set.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_211
-                    go: *ref_212
+                    go: *ref_196
                   protocol: {}
               language:
-                default: &ref_214
+                default: &ref_198
                   name: SignalRClientListBySubscriptionResponse
                   description: SignalRClientListBySubscriptionResponse contains the response from method SignalRClient.ListBySubscription.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_213
-                go: *ref_214
+                  resultProp: *ref_197
+                go: *ref_198
               protocol: {}
         protocol: {}
-      - &ref_218
+      - operationId: SignalR_ListByResourceGroup
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_215
+          - *ref_182
+          - &ref_199
             schema: *ref_1
             implementation: Method
             required: true
@@ -5737,9 +5636,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_215
+          - *ref_199
         responses:
-          - schema: *ref_203
+          - schema: *ref_193
             language:
               default:
                 name: ''
@@ -5881,100 +5780,62 @@ operationGroups:
             azureARM: true
             clientName: SignalRClient
             openApiType: arm
-            optionalParamGroup: &ref_497
+            optionalParamGroup: &ref_356
               schema:
                 type: object
                 language:
-                  default: &ref_216
+                  default: &ref_200
                     name: SignalRClientListByResourceGroupOptions
                     description: SignalRClientListByResourceGroupOptions contains the optional parameters for the SignalRClient.ListByResourceGroup method.
-                  go: *ref_216
+                  go: *ref_200
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRClientListByResourceGroupOptions
               language:
-                default: &ref_217
-                  name: SignalRClientListByResourceGroupOptions
+                default: &ref_201
+                  name: options
                   description: SignalRClientListByResourceGroupOptions contains the optional parameters for the SignalRClient.ListByResourceGroup method.
-                go: *ref_217
+                go: *ref_201
               protocol: {}
-            pageableType: &ref_489
-              name: SignalRClientListByResourceGroupPager
-              op: *ref_218
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listByResourceGroup
               requestMethod: listByResourceGroupCreateRequest
               responseMethod: listByResourceGroupHandleResponse
-            responseEnv: &ref_518
+            responseEnv: &ref_377
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_219
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_219
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_203
+                  schema: *ref_193
+                  serializedName: ResourceInfoList
                   language:
-                    default: &ref_220
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_220
-                  protocol: {}
-                - &ref_225
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_223
-                        schema: *ref_203
-                        serializedName: ResourceInfoList
-                        language:
-                          default: &ref_221
-                            name: ResourceInfoList
-                            description: Object that includes an array of resources and a possible link for next set.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_221
-                        protocol: {}
-                    language:
-                      default: &ref_222
-                        name: SignalRClientListByResourceGroupResult
-                        description: SignalRClientListByResourceGroupResult contains the result from method SignalRClient.ListByResourceGroup.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_222
-                    protocol: {}
-                  serializedName: SignalRClientListByResourceGroupResult
-                  language:
-                    default: &ref_224
-                      name: SignalRClientListByResourceGroupResult
-                      description: Contains the result of the operation.
+                    default: &ref_202
+                      name: ResourceInfoList
+                      description: Object that includes an array of resources and a possible link for next set.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_223
-                    go: *ref_224
+                    go: *ref_202
                   protocol: {}
               language:
-                default: &ref_226
+                default: &ref_204
                   name: SignalRClientListByResourceGroupResponse
                   description: SignalRClientListByResourceGroupResponse contains the response from method SignalRClient.ListByResourceGroup.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_225
-                go: *ref_226
+                  resultProp: *ref_203
+                go: *ref_204
               protocol: {}
         protocol: {}
-      - apiVersions:
+      - operationId: SignalR_Get
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_227
+          - *ref_182
+          - &ref_205
             schema: *ref_1
             implementation: Method
             required: true
@@ -5990,7 +5851,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_228
+          - &ref_206
             schema: *ref_1
             implementation: Method
             required: true
@@ -6038,8 +5899,8 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_227
-          - *ref_228
+          - *ref_205
+          - *ref_206
         responses:
           - schema: *ref_53
             language:
@@ -6179,96 +6040,60 @@ operationGroups:
             azureARM: true
             clientName: SignalRClient
             openApiType: arm
-            optionalParamGroup: &ref_498
+            optionalParamGroup: &ref_357
               schema:
                 type: object
                 language:
-                  default: &ref_229
+                  default: &ref_207
                     name: SignalRClientGetOptions
                     description: SignalRClientGetOptions contains the optional parameters for the SignalRClient.Get method.
-                  go: *ref_229
+                  go: *ref_207
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRClientGetOptions
               language:
-                default: &ref_230
-                  name: SignalRClientGetOptions
+                default: &ref_208
+                  name: options
                   description: SignalRClientGetOptions contains the optional parameters for the SignalRClient.Get method.
-                go: *ref_230
+                go: *ref_208
               protocol: {}
             protocolNaming:
               internalMethod: get
               requestMethod: getCreateRequest
               responseMethod: getHandleResponse
-            responseEnv: &ref_519
+            responseEnv: &ref_378
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_231
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_231
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_210
+                  schema: *ref_53
+                  serializedName: ResourceInfo
                   language:
-                    default: &ref_232
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_232
-                  protocol: {}
-                - &ref_237
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_235
-                        schema: *ref_53
-                        serializedName: ResourceInfo
-                        language:
-                          default: &ref_233
-                            name: ResourceInfo
-                            description: A class represent a resource.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_233
-                        protocol: {}
-                    language:
-                      default: &ref_234
-                        name: SignalRClientGetResult
-                        description: SignalRClientGetResult contains the result from method SignalRClient.Get.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_234
-                    protocol: {}
-                  serializedName: SignalRClientGetResult
-                  language:
-                    default: &ref_236
-                      name: SignalRClientGetResult
-                      description: Contains the result of the operation.
+                    default: &ref_209
+                      name: ResourceInfo
+                      description: A class represent a resource.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_235
-                    go: *ref_236
+                    go: *ref_209
                   protocol: {}
               language:
-                default: &ref_238
+                default: &ref_211
                   name: SignalRClientGetResponse
                   description: SignalRClientGetResponse contains the response from method SignalRClient.Get.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_237
-                go: *ref_238
+                  resultProp: *ref_210
+                go: *ref_211
               protocol: {}
         protocol: {}
-      - &ref_252
+      - operationId: SignalR_CreateOrUpdate
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_240
+          - *ref_182
+          - &ref_214
             schema: *ref_1
             implementation: Method
             required: true
@@ -6284,7 +6109,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_241
+          - &ref_215
             schema: *ref_1
             implementation: Method
             required: true
@@ -6300,9 +6125,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_239
+        requestMediaTypes:
+          application/json: &ref_213
+            parameters:
+              - &ref_212
                 schema: *ref_53
                 implementation: Method
                 required: true
@@ -6334,7 +6160,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_239
+              - *ref_212
             language:
               default:
                 name: ''
@@ -6350,9 +6176,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_213
         signatureParameters:
-          - *ref_240
-          - *ref_241
+          - *ref_214
+          - *ref_215
         responses:
           - schema: *ref_53
             language:
@@ -6663,142 +6491,77 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRClient
-            finalResponseEnv: &ref_520
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_242
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_242
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_243
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_243
-                  protocol: {}
-                - &ref_248
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_246
-                        schema: *ref_53
-                        serializedName: ResourceInfo
-                        language:
-                          default: &ref_244
-                            name: ResourceInfo
-                            description: A class represent a resource.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_244
-                        protocol: {}
-                    language:
-                      default: &ref_245
-                        name: SignalRClientCreateOrUpdateResult
-                        description: SignalRClientCreateOrUpdateResult contains the result from method SignalRClient.CreateOrUpdate.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_245
-                    protocol: {}
-                  serializedName: SignalRClientCreateOrUpdateResult
-                  language:
-                    default: &ref_247
-                      name: SignalRClientCreateOrUpdateResult
-                      description: Contains the result of the operation.
-                      byValue: true
-                      embeddedType: true
-                      resultField: *ref_246
-                    go: *ref_247
-                  protocol: {}
-              language:
-                default: &ref_249
-                  name: SignalRClientCreateOrUpdateResponse
-                  description: SignalRClientCreateOrUpdateResponse contains the response from method SignalRClient.CreateOrUpdate.
-                  responseType: true
-                  resultEnv: *ref_248
-                go: *ref_249
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_499
+            optionalParamGroup: &ref_358
               schema:
                 type: object
                 language:
-                  default: &ref_250
+                  default: &ref_216
                     name: SignalRClientBeginCreateOrUpdateOptions
                     description: SignalRClientBeginCreateOrUpdateOptions contains the optional parameters for the SignalRClient.BeginCreateOrUpdate method.
-                  go: *ref_250
+                  go: *ref_216
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_217
+                        name: string
+                        description: ''
+                      go: *ref_217
+                    protocol: {}
+                  language:
+                    default: &ref_218
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_218
+                  protocol: {}
               required: false
               serializedName: SignalRClientBeginCreateOrUpdateOptions
               language:
-                default: &ref_251
-                  name: SignalRClientBeginCreateOrUpdateOptions
+                default: &ref_219
+                  name: options
                   description: SignalRClientBeginCreateOrUpdateOptions contains the optional parameters for the SignalRClient.BeginCreateOrUpdate method.
-                go: *ref_251
+                go: *ref_219
               protocol: {}
-            pollerType: &ref_257
-              name: SignalRClientCreateOrUpdatePoller
-              op: *ref_252
             protocolNaming:
               internalMethod: createOrUpdate
               requestMethod: createOrUpdateCreateRequest
               responseMethod: createOrUpdateHandleResponse
-            responseEnv: &ref_521
+            responseEnv: &ref_379
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_253
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_253
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_221
+                  schema: *ref_53
+                  serializedName: ResourceInfo
                   language:
-                    default: &ref_254
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_254
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_255
-                        name: SignalRClientCreateOrUpdatePoller
-                        description: poller
-                      go: *ref_255
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_256
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_256
+                    default: &ref_220
+                      name: ResourceInfo
+                      description: A class represent a resource.
+                      byValue: true
+                      embeddedType: true
+                    go: *ref_220
                   protocol: {}
               language:
-                default: &ref_258
-                  name: SignalRClientCreateOrUpdatePollerResponse
-                  description: SignalRClientCreateOrUpdatePollerResponse contains the response from method SignalRClient.CreateOrUpdate.
-                  isLRO: true
-                  pollerInfo: *ref_257
+                default: &ref_222
+                  name: SignalRClientCreateOrUpdateResponse
+                  description: SignalRClientCreateOrUpdateResponse contains the response from method SignalRClient.CreateOrUpdate.
+                  forLRO: true
+                  marshallingFormat: json
                   responseType: true
-                go: *ref_258
+                  resultProp: *ref_221
+                go: *ref_222
               protocol: {}
         protocol: {}
-      - &ref_266
+      - operationId: SignalR_Delete
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_259
+          - *ref_182
+          - &ref_223
             schema: *ref_1
             implementation: Method
             required: true
@@ -6814,7 +6577,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_260
+          - &ref_224
             schema: *ref_1
             implementation: Method
             required: true
@@ -6862,8 +6625,8 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_259
-          - *ref_260
+          - *ref_223
+          - *ref_224
         responses:
           - language:
               default:
@@ -6942,108 +6705,63 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRClient
-            finalResponseEnv: &ref_522
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_261
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_261
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_262
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_262
-                  protocol: {}
-              language:
-                default: &ref_263
-                  name: SignalRClientDeleteResponse
-                  description: SignalRClientDeleteResponse contains the response from method SignalRClient.Delete.
-                  responseType: true
-                go: *ref_263
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_500
+            optionalParamGroup: &ref_359
               schema:
                 type: object
                 language:
-                  default: &ref_264
+                  default: &ref_225
                     name: SignalRClientBeginDeleteOptions
                     description: SignalRClientBeginDeleteOptions contains the optional parameters for the SignalRClient.BeginDelete method.
-                  go: *ref_264
+                  go: *ref_225
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_226
+                        name: string
+                        description: ''
+                      go: *ref_226
+                    protocol: {}
+                  language:
+                    default: &ref_227
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_227
+                  protocol: {}
               required: false
               serializedName: SignalRClientBeginDeleteOptions
               language:
-                default: &ref_265
-                  name: SignalRClientBeginDeleteOptions
+                default: &ref_228
+                  name: options
                   description: SignalRClientBeginDeleteOptions contains the optional parameters for the SignalRClient.BeginDelete method.
-                go: *ref_265
+                go: *ref_228
               protocol: {}
-            pollerType: &ref_271
-              name: SignalRClientDeletePoller
-              op: *ref_266
             protocolNaming:
               internalMethod: deleteOperation
               requestMethod: deleteCreateRequest
               responseMethod: deleteHandleResponse
-            responseEnv: &ref_523
+            responseEnv: &ref_380
               type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_267
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_267
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_268
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_268
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_269
-                        name: SignalRClientDeletePoller
-                        description: poller
-                      go: *ref_269
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_270
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_270
-                  protocol: {}
               language:
-                default: &ref_272
-                  name: SignalRClientDeletePollerResponse
-                  description: SignalRClientDeletePollerResponse contains the response from method SignalRClient.Delete.
-                  isLRO: true
-                  pollerInfo: *ref_271
+                default: &ref_229
+                  name: SignalRClientDeleteResponse
+                  description: SignalRClientDeleteResponse contains the response from method SignalRClient.Delete.
+                  forLRO: true
                   responseType: true
-                go: *ref_272
+                go: *ref_229
               protocol: {}
         protocol: {}
-      - &ref_286
+      - operationId: SignalR_Update
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_274
+          - *ref_182
+          - &ref_232
             schema: *ref_1
             implementation: Method
             required: true
@@ -7059,7 +6777,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_275
+          - &ref_233
             schema: *ref_1
             implementation: Method
             required: true
@@ -7075,9 +6793,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_273
+        requestMediaTypes:
+          application/json: &ref_231
+            parameters:
+              - &ref_230
                 schema: *ref_53
                 implementation: Method
                 required: true
@@ -7109,7 +6828,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_273
+              - *ref_230
             language:
               default:
                 name: ''
@@ -7125,9 +6844,11 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_231
         signatureParameters:
-          - *ref_274
-          - *ref_275
+          - *ref_232
+          - *ref_233
         responses:
           - schema: *ref_53
             language:
@@ -7335,141 +7056,77 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRClient
-            finalResponseEnv: &ref_524
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_276
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_276
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_277
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_277
-                  protocol: {}
-                - &ref_282
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_280
-                        schema: *ref_53
-                        serializedName: ResourceInfo
-                        language:
-                          default: &ref_278
-                            name: ResourceInfo
-                            description: A class represent a resource.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_278
-                        protocol: {}
-                    language:
-                      default: &ref_279
-                        name: SignalRClientUpdateResult
-                        description: SignalRClientUpdateResult contains the result from method SignalRClient.Update.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_279
-                    protocol: {}
-                  serializedName: SignalRClientUpdateResult
-                  language:
-                    default: &ref_281
-                      name: SignalRClientUpdateResult
-                      description: Contains the result of the operation.
-                      byValue: true
-                      embeddedType: true
-                      resultField: *ref_280
-                    go: *ref_281
-                  protocol: {}
-              language:
-                default: &ref_283
-                  name: SignalRClientUpdateResponse
-                  description: SignalRClientUpdateResponse contains the response from method SignalRClient.Update.
-                  responseType: true
-                  resultEnv: *ref_282
-                go: *ref_283
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_501
+            optionalParamGroup: &ref_360
               schema:
                 type: object
                 language:
-                  default: &ref_284
+                  default: &ref_234
                     name: SignalRClientBeginUpdateOptions
                     description: SignalRClientBeginUpdateOptions contains the optional parameters for the SignalRClient.BeginUpdate method.
-                  go: *ref_284
+                  go: *ref_234
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_235
+                        name: string
+                        description: ''
+                      go: *ref_235
+                    protocol: {}
+                  language:
+                    default: &ref_236
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_236
+                  protocol: {}
               required: false
               serializedName: SignalRClientBeginUpdateOptions
               language:
-                default: &ref_285
-                  name: SignalRClientBeginUpdateOptions
+                default: &ref_237
+                  name: options
                   description: SignalRClientBeginUpdateOptions contains the optional parameters for the SignalRClient.BeginUpdate method.
-                go: *ref_285
+                go: *ref_237
               protocol: {}
-            pollerType: &ref_291
-              name: SignalRClientUpdatePoller
-              op: *ref_286
             protocolNaming:
               internalMethod: update
               requestMethod: updateCreateRequest
               responseMethod: updateHandleResponse
-            responseEnv: &ref_525
+            responseEnv: &ref_381
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_287
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_287
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_239
+                  schema: *ref_53
+                  serializedName: ResourceInfo
                   language:
-                    default: &ref_288
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_288
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_289
-                        name: SignalRClientUpdatePoller
-                        description: poller
-                      go: *ref_289
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_290
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_290
+                    default: &ref_238
+                      name: ResourceInfo
+                      description: A class represent a resource.
+                      byValue: true
+                      embeddedType: true
+                    go: *ref_238
                   protocol: {}
               language:
-                default: &ref_292
-                  name: SignalRClientUpdatePollerResponse
-                  description: SignalRClientUpdatePollerResponse contains the response from method SignalRClient.Update.
-                  isLRO: true
-                  pollerInfo: *ref_291
+                default: &ref_240
+                  name: SignalRClientUpdateResponse
+                  description: SignalRClientUpdateResponse contains the response from method SignalRClient.Update.
+                  forLRO: true
+                  marshallingFormat: json
                   responseType: true
-                go: *ref_292
+                  resultProp: *ref_239
+                go: *ref_240
               protocol: {}
         protocol: {}
-      - apiVersions:
+      - operationId: SignalR_ListKeys
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_293
+          - *ref_182
+          - &ref_241
             schema: *ref_1
             implementation: Method
             required: true
@@ -7485,7 +7142,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_294
+          - &ref_242
             schema: *ref_1
             implementation: Method
             required: true
@@ -7533,10 +7190,10 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_293
-          - *ref_294
+          - *ref_241
+          - *ref_242
         responses:
-          - schema: *ref_295
+          - schema: *ref_243
             language:
               default:
                 name: ''
@@ -7591,96 +7248,60 @@ operationGroups:
             azureARM: true
             clientName: SignalRClient
             openApiType: arm
-            optionalParamGroup: &ref_502
+            optionalParamGroup: &ref_361
               schema:
                 type: object
                 language:
-                  default: &ref_296
+                  default: &ref_244
                     name: SignalRClientListKeysOptions
                     description: SignalRClientListKeysOptions contains the optional parameters for the SignalRClient.ListKeys method.
-                  go: *ref_296
+                  go: *ref_244
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRClientListKeysOptions
               language:
-                default: &ref_297
-                  name: SignalRClientListKeysOptions
+                default: &ref_245
+                  name: options
                   description: SignalRClientListKeysOptions contains the optional parameters for the SignalRClient.ListKeys method.
-                go: *ref_297
+                go: *ref_245
               protocol: {}
             protocolNaming:
               internalMethod: listKeys
               requestMethod: listKeysCreateRequest
               responseMethod: listKeysHandleResponse
-            responseEnv: &ref_526
+            responseEnv: &ref_382
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_298
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_298
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_247
+                  schema: *ref_243
+                  serializedName: SignalRKeys
                   language:
-                    default: &ref_299
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_299
-                  protocol: {}
-                - &ref_304
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_302
-                        schema: *ref_295
-                        serializedName: SignalRKeys
-                        language:
-                          default: &ref_300
-                            name: SignalRKeys
-                            description: A class represents the access keys of the resource.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_300
-                        protocol: {}
-                    language:
-                      default: &ref_301
-                        name: SignalRClientListKeysResult
-                        description: SignalRClientListKeysResult contains the result from method SignalRClient.ListKeys.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_301
-                    protocol: {}
-                  serializedName: SignalRClientListKeysResult
-                  language:
-                    default: &ref_303
-                      name: SignalRClientListKeysResult
-                      description: Contains the result of the operation.
+                    default: &ref_246
+                      name: SignalRKeys
+                      description: A class represents the access keys of the resource.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_302
-                    go: *ref_303
+                    go: *ref_246
                   protocol: {}
               language:
-                default: &ref_305
+                default: &ref_248
                   name: SignalRClientListKeysResponse
                   description: SignalRClientListKeysResponse contains the response from method SignalRClient.ListKeys.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_304
-                go: *ref_305
+                  resultProp: *ref_247
+                go: *ref_248
               protocol: {}
         protocol: {}
-      - &ref_320
+      - operationId: SignalR_RegenerateKey
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_308
+          - *ref_182
+          - &ref_252
             schema: *ref_1
             implementation: Method
             required: true
@@ -7696,7 +7317,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_309
+          - &ref_253
             schema: *ref_1
             implementation: Method
             required: true
@@ -7712,10 +7333,11 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_307
-                schema: *ref_306
+        requestMediaTypes:
+          application/json: &ref_251
+            parameters:
+              - &ref_250
+                schema: *ref_249
                 implementation: Method
                 required: true
                 language:
@@ -7746,7 +7368,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_307
+              - *ref_250
             language:
               default:
                 name: ''
@@ -7762,11 +7384,13 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_251
         signatureParameters:
-          - *ref_308
-          - *ref_309
+          - *ref_252
+          - *ref_253
         responses:
-          - schema: *ref_295
+          - schema: *ref_243
             language:
               default:
                 name: ''
@@ -7828,142 +7452,77 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRClient
-            finalResponseEnv: &ref_527
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_310
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_310
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_311
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_311
-                  protocol: {}
-                - &ref_316
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_314
-                        schema: *ref_295
-                        serializedName: SignalRKeys
-                        language:
-                          default: &ref_312
-                            name: SignalRKeys
-                            description: A class represents the access keys of the resource.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_312
-                        protocol: {}
-                    language:
-                      default: &ref_313
-                        name: SignalRClientRegenerateKeyResult
-                        description: SignalRClientRegenerateKeyResult contains the result from method SignalRClient.RegenerateKey.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_313
-                    protocol: {}
-                  serializedName: SignalRClientRegenerateKeyResult
-                  language:
-                    default: &ref_315
-                      name: SignalRClientRegenerateKeyResult
-                      description: Contains the result of the operation.
-                      byValue: true
-                      embeddedType: true
-                      resultField: *ref_314
-                    go: *ref_315
-                  protocol: {}
-              language:
-                default: &ref_317
-                  name: SignalRClientRegenerateKeyResponse
-                  description: SignalRClientRegenerateKeyResponse contains the response from method SignalRClient.RegenerateKey.
-                  responseType: true
-                  resultEnv: *ref_316
-                go: *ref_317
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_503
+            optionalParamGroup: &ref_362
               schema:
                 type: object
                 language:
-                  default: &ref_318
+                  default: &ref_254
                     name: SignalRClientBeginRegenerateKeyOptions
                     description: SignalRClientBeginRegenerateKeyOptions contains the optional parameters for the SignalRClient.BeginRegenerateKey method.
-                  go: *ref_318
+                  go: *ref_254
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_255
+                        name: string
+                        description: ''
+                      go: *ref_255
+                    protocol: {}
+                  language:
+                    default: &ref_256
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_256
+                  protocol: {}
               required: false
               serializedName: SignalRClientBeginRegenerateKeyOptions
               language:
-                default: &ref_319
-                  name: SignalRClientBeginRegenerateKeyOptions
+                default: &ref_257
+                  name: options
                   description: SignalRClientBeginRegenerateKeyOptions contains the optional parameters for the SignalRClient.BeginRegenerateKey method.
-                go: *ref_319
+                go: *ref_257
               protocol: {}
-            pollerType: &ref_325
-              name: SignalRClientRegenerateKeyPoller
-              op: *ref_320
             protocolNaming:
               internalMethod: regenerateKey
               requestMethod: regenerateKeyCreateRequest
               responseMethod: regenerateKeyHandleResponse
-            responseEnv: &ref_528
+            responseEnv: &ref_383
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_321
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_321
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_259
+                  schema: *ref_243
+                  serializedName: SignalRKeys
                   language:
-                    default: &ref_322
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_322
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_323
-                        name: SignalRClientRegenerateKeyPoller
-                        description: poller
-                      go: *ref_323
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_324
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_324
+                    default: &ref_258
+                      name: SignalRKeys
+                      description: A class represents the access keys of the resource.
+                      byValue: true
+                      embeddedType: true
+                    go: *ref_258
                   protocol: {}
               language:
-                default: &ref_326
-                  name: SignalRClientRegenerateKeyPollerResponse
-                  description: SignalRClientRegenerateKeyPollerResponse contains the response from method SignalRClient.RegenerateKey.
-                  isLRO: true
-                  pollerInfo: *ref_325
+                default: &ref_260
+                  name: SignalRClientRegenerateKeyResponse
+                  description: SignalRClientRegenerateKeyResponse contains the response from method SignalRClient.RegenerateKey.
+                  forLRO: true
+                  marshallingFormat: json
                   responseType: true
-                go: *ref_326
+                  resultProp: *ref_259
+                go: *ref_260
               protocol: {}
         protocol: {}
-      - &ref_334
+      - operationId: SignalR_Restart
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_327
+          - *ref_182
+          - &ref_261
             schema: *ref_1
             implementation: Method
             required: true
@@ -7979,7 +7538,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_328
+          - &ref_262
             schema: *ref_1
             implementation: Method
             required: true
@@ -8027,8 +7586,8 @@ operationGroups:
                 method: post
                 uri: '{$host}'
         signatureParameters:
-          - *ref_327
-          - *ref_328
+          - *ref_261
+          - *ref_262
         responses:
           - language:
               default:
@@ -8097,98 +7656,53 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRClient
-            finalResponseEnv: &ref_529
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_329
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_329
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_330
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_330
-                  protocol: {}
-              language:
-                default: &ref_331
-                  name: SignalRClientRestartResponse
-                  description: SignalRClientRestartResponse contains the response from method SignalRClient.Restart.
-                  responseType: true
-                go: *ref_331
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_504
+            optionalParamGroup: &ref_363
               schema:
                 type: object
                 language:
-                  default: &ref_332
+                  default: &ref_263
                     name: SignalRClientBeginRestartOptions
                     description: SignalRClientBeginRestartOptions contains the optional parameters for the SignalRClient.BeginRestart method.
-                  go: *ref_332
+                  go: *ref_263
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_264
+                        name: string
+                        description: ''
+                      go: *ref_264
+                    protocol: {}
+                  language:
+                    default: &ref_265
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_265
+                  protocol: {}
               required: false
               serializedName: SignalRClientBeginRestartOptions
               language:
-                default: &ref_333
-                  name: SignalRClientBeginRestartOptions
+                default: &ref_266
+                  name: options
                   description: SignalRClientBeginRestartOptions contains the optional parameters for the SignalRClient.BeginRestart method.
-                go: *ref_333
+                go: *ref_266
               protocol: {}
-            pollerType: &ref_339
-              name: SignalRClientRestartPoller
-              op: *ref_334
             protocolNaming:
               internalMethod: restart
               requestMethod: restartCreateRequest
               responseMethod: restartHandleResponse
-            responseEnv: &ref_530
+            responseEnv: &ref_384
               type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_335
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_335
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_336
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_336
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_337
-                        name: SignalRClientRestartPoller
-                        description: poller
-                      go: *ref_337
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_338
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_338
-                  protocol: {}
               language:
-                default: &ref_340
-                  name: SignalRClientRestartPollerResponse
-                  description: SignalRClientRestartPollerResponse contains the response from method SignalRClient.Restart.
-                  isLRO: true
-                  pollerInfo: *ref_339
+                default: &ref_267
+                  name: SignalRClientRestartResponse
+                  description: SignalRClientRestartResponse contains the response from method SignalRClient.Restart.
+                  forLRO: true
                   responseType: true
-                go: *ref_340
+                go: *ref_267
               protocol: {}
         protocol: {}
     language:
@@ -8201,16 +7715,16 @@ operationGroups:
         clientCtorName: NewSignalRClient
         clientName: SignalRClient
         clientParams:
-          - *ref_188
+          - *ref_182
     protocol: {}
   - $key: Usages
     operations:
-      - &ref_345
+      - operationId: Usages_List
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_341
+          - &ref_268
             schema: *ref_1
             implementation: Method
             required: true
@@ -8227,7 +7741,7 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
+          - *ref_182
         requests:
           - parameters:
               - schema: *ref_174
@@ -8260,9 +7774,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_341
+          - *ref_268
         responses:
-          - schema: *ref_342
+          - schema: *ref_269
             language:
               default:
                 name: ''
@@ -8336,91 +7850,52 @@ operationGroups:
             azureARM: true
             clientName: UsagesClient
             openApiType: arm
-            optionalParamGroup: &ref_505
+            optionalParamGroup: &ref_364
               schema:
                 type: object
                 language:
-                  default: &ref_343
+                  default: &ref_270
                     name: UsagesClientListOptions
                     description: UsagesClientListOptions contains the optional parameters for the UsagesClient.List method.
-                  go: *ref_343
+                  go: *ref_270
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: UsagesClientListOptions
               language:
-                default: &ref_344
-                  name: UsagesClientListOptions
+                default: &ref_271
+                  name: options
                   description: UsagesClientListOptions contains the optional parameters for the UsagesClient.List method.
-                go: *ref_344
+                go: *ref_271
               protocol: {}
-            pageableType: &ref_490
-              name: UsagesClientListPager
-              op: *ref_345
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listOperation
               requestMethod: listCreateRequest
               responseMethod: listHandleResponse
-            responseEnv: &ref_531
+            responseEnv: &ref_385
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_346
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_346
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_273
+                  schema: *ref_269
+                  serializedName: SignalRUsageList
                   language:
-                    default: &ref_347
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_347
-                  protocol: {}
-                - &ref_352
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_350
-                        schema: *ref_342
-                        serializedName: SignalRUsageList
-                        language:
-                          default: &ref_348
-                            name: SignalRUsageList
-                            description: Object that includes an array of the resource usages and a possible link for next set.
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_348
-                        protocol: {}
-                    language:
-                      default: &ref_349
-                        name: UsagesClientListResult
-                        description: UsagesClientListResult contains the result from method UsagesClient.List.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_349
-                    protocol: {}
-                  serializedName: UsagesClientListResult
-                  language:
-                    default: &ref_351
-                      name: UsagesClientListResult
-                      description: Contains the result of the operation.
+                    default: &ref_272
+                      name: SignalRUsageList
+                      description: Object that includes an array of the resource usages and a possible link for next set.
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_350
-                    go: *ref_351
+                    go: *ref_272
                   protocol: {}
               language:
-                default: &ref_353
+                default: &ref_274
                   name: UsagesClientListResponse
                   description: UsagesClientListResponse contains the response from method UsagesClient.List.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_352
-                go: *ref_353
+                  resultProp: *ref_273
+                go: *ref_274
               protocol: {}
         protocol: {}
     language:
@@ -8433,18 +7908,18 @@ operationGroups:
         clientCtorName: NewUsagesClient
         clientName: UsagesClient
         clientParams:
-          - *ref_188
+          - *ref_182
     protocol: {}
   - $key: SignalRPrivateEndpointConnections
     operations:
-      - &ref_359
+      - operationId: SignalRPrivateEndpointConnections_List
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_354
+          - *ref_182
+          - &ref_275
             schema: *ref_1
             implementation: Method
             required: true
@@ -8460,7 +7935,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_355
+          - &ref_276
             schema: *ref_1
             implementation: Method
             required: true
@@ -8508,10 +7983,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_354
-          - *ref_355
+          - *ref_275
+          - *ref_276
         responses:
-          - schema: *ref_356
+          - schema: *ref_277
             language:
               default:
                 name: ''
@@ -8589,98 +8064,60 @@ operationGroups:
             azureARM: true
             clientName: SignalRPrivateEndpointConnectionsClient
             openApiType: arm
-            optionalParamGroup: &ref_506
+            optionalParamGroup: &ref_365
               schema:
                 type: object
                 language:
-                  default: &ref_357
+                  default: &ref_278
                     name: SignalRPrivateEndpointConnectionsClientListOptions
                     description: SignalRPrivateEndpointConnectionsClientListOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.List method.
-                  go: *ref_357
+                  go: *ref_278
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRPrivateEndpointConnectionsClientListOptions
               language:
-                default: &ref_358
-                  name: SignalRPrivateEndpointConnectionsClientListOptions
+                default: &ref_279
+                  name: options
                   description: SignalRPrivateEndpointConnectionsClientListOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.List method.
-                go: *ref_358
+                go: *ref_279
               protocol: {}
-            pageableType: &ref_491
-              name: SignalRPrivateEndpointConnectionsClientListPager
-              op: *ref_359
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listOperation
               requestMethod: listCreateRequest
               responseMethod: listHandleResponse
-            responseEnv: &ref_532
+            responseEnv: &ref_386
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_360
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_360
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_281
+                  schema: *ref_277
+                  serializedName: PrivateEndpointConnectionList
                   language:
-                    default: &ref_361
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_361
-                  protocol: {}
-                - &ref_366
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_364
-                        schema: *ref_356
-                        serializedName: PrivateEndpointConnectionList
-                        language:
-                          default: &ref_362
-                            name: PrivateEndpointConnectionList
-                            description: A list of private endpoint connections
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_362
-                        protocol: {}
-                    language:
-                      default: &ref_363
-                        name: SignalRPrivateEndpointConnectionsClientListResult
-                        description: SignalRPrivateEndpointConnectionsClientListResult contains the result from method SignalRPrivateEndpointConnectionsClient.List.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_363
-                    protocol: {}
-                  serializedName: SignalRPrivateEndpointConnectionsClientListResult
-                  language:
-                    default: &ref_365
-                      name: SignalRPrivateEndpointConnectionsClientListResult
-                      description: Contains the result of the operation.
+                    default: &ref_280
+                      name: PrivateEndpointConnectionList
+                      description: A list of private endpoint connections
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_364
-                    go: *ref_365
+                    go: *ref_280
                   protocol: {}
               language:
-                default: &ref_367
+                default: &ref_282
                   name: SignalRPrivateEndpointConnectionsClientListResponse
                   description: SignalRPrivateEndpointConnectionsClientListResponse contains the response from method SignalRPrivateEndpointConnectionsClient.List.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_366
-                go: *ref_367
+                  resultProp: *ref_281
+                go: *ref_282
               protocol: {}
         protocol: {}
-      - apiVersions:
+      - operationId: SignalRPrivateEndpointConnections_Get
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_368
+          - &ref_283
             schema: *ref_1
             implementation: Method
             required: true
@@ -8697,8 +8134,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_369
+          - *ref_182
+          - &ref_284
             schema: *ref_1
             implementation: Method
             required: true
@@ -8714,7 +8151,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_370
+          - &ref_285
             schema: *ref_1
             implementation: Method
             required: true
@@ -8762,9 +8199,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_368
-          - *ref_369
-          - *ref_370
+          - *ref_283
+          - *ref_284
+          - *ref_285
         responses:
           - schema: *ref_78
             language:
@@ -8840,93 +8277,58 @@ operationGroups:
             azureARM: true
             clientName: SignalRPrivateEndpointConnectionsClient
             openApiType: arm
-            optionalParamGroup: &ref_507
+            optionalParamGroup: &ref_366
               schema:
                 type: object
                 language:
-                  default: &ref_371
+                  default: &ref_286
                     name: SignalRPrivateEndpointConnectionsClientGetOptions
                     description: SignalRPrivateEndpointConnectionsClientGetOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.Get method.
-                  go: *ref_371
+                  go: *ref_286
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRPrivateEndpointConnectionsClientGetOptions
               language:
-                default: &ref_372
-                  name: SignalRPrivateEndpointConnectionsClientGetOptions
+                default: &ref_287
+                  name: options
                   description: SignalRPrivateEndpointConnectionsClientGetOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.Get method.
-                go: *ref_372
+                go: *ref_287
               protocol: {}
             protocolNaming:
               internalMethod: get
               requestMethod: getCreateRequest
               responseMethod: getHandleResponse
-            responseEnv: &ref_533
+            responseEnv: &ref_387
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_373
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_373
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_289
+                  schema: *ref_78
+                  serializedName: PrivateEndpointConnection
                   language:
-                    default: &ref_374
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_374
-                  protocol: {}
-                - &ref_379
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_377
-                        schema: *ref_78
-                        serializedName: PrivateEndpointConnection
-                        language:
-                          default: &ref_375
-                            name: PrivateEndpointConnection
-                            description: A private endpoint connection to an azure resource
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_375
-                        protocol: {}
-                    language:
-                      default: &ref_376
-                        name: SignalRPrivateEndpointConnectionsClientGetResult
-                        description: SignalRPrivateEndpointConnectionsClientGetResult contains the result from method SignalRPrivateEndpointConnectionsClient.Get.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_376
-                    protocol: {}
-                  serializedName: SignalRPrivateEndpointConnectionsClientGetResult
-                  language:
-                    default: &ref_378
-                      name: SignalRPrivateEndpointConnectionsClientGetResult
-                      description: Contains the result of the operation.
+                    default: &ref_288
+                      name: PrivateEndpointConnection
+                      description: A private endpoint connection to an azure resource
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_377
-                    go: *ref_378
+                    go: *ref_288
                   protocol: {}
               language:
-                default: &ref_380
+                default: &ref_290
                   name: SignalRPrivateEndpointConnectionsClientGetResponse
                   description: SignalRPrivateEndpointConnectionsClientGetResponse contains the response from method SignalRPrivateEndpointConnectionsClient.Get.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_379
-                go: *ref_380
+                  resultProp: *ref_289
+                go: *ref_290
               protocol: {}
         protocol: {}
-      - apiVersions:
+      - operationId: SignalRPrivateEndpointConnections_Update
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_382
+          - &ref_293
             schema: *ref_1
             implementation: Method
             required: true
@@ -8943,8 +8345,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_383
+          - *ref_182
+          - &ref_294
             schema: *ref_1
             implementation: Method
             required: true
@@ -8960,7 +8362,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_384
+          - &ref_295
             schema: *ref_1
             implementation: Method
             required: true
@@ -8976,9 +8378,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_381
+        requestMediaTypes:
+          application/json: &ref_292
+            parameters:
+              - &ref_291
                 schema: *ref_78
                 implementation: Method
                 required: true
@@ -9010,7 +8413,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_381
+              - *ref_291
             language:
               default:
                 name: ''
@@ -9026,10 +8429,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_292
         signatureParameters:
-          - *ref_382
-          - *ref_383
-          - *ref_384
+          - *ref_293
+          - *ref_294
+          - *ref_295
         responses:
           - schema: *ref_78
             language:
@@ -9115,94 +8520,58 @@ operationGroups:
             azureARM: true
             clientName: SignalRPrivateEndpointConnectionsClient
             openApiType: arm
-            optionalParamGroup: &ref_508
+            optionalParamGroup: &ref_367
               schema:
                 type: object
                 language:
-                  default: &ref_385
+                  default: &ref_296
                     name: SignalRPrivateEndpointConnectionsClientUpdateOptions
                     description: SignalRPrivateEndpointConnectionsClientUpdateOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.Update method.
-                  go: *ref_385
+                  go: *ref_296
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRPrivateEndpointConnectionsClientUpdateOptions
               language:
-                default: &ref_386
-                  name: SignalRPrivateEndpointConnectionsClientUpdateOptions
+                default: &ref_297
+                  name: options
                   description: SignalRPrivateEndpointConnectionsClientUpdateOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.Update method.
-                go: *ref_386
+                go: *ref_297
               protocol: {}
             protocolNaming:
               internalMethod: update
               requestMethod: updateCreateRequest
               responseMethod: updateHandleResponse
-            responseEnv: &ref_534
+            responseEnv: &ref_388
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_387
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_387
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_299
+                  schema: *ref_78
+                  serializedName: PrivateEndpointConnection
                   language:
-                    default: &ref_388
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_388
-                  protocol: {}
-                - &ref_393
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_391
-                        schema: *ref_78
-                        serializedName: PrivateEndpointConnection
-                        language:
-                          default: &ref_389
-                            name: PrivateEndpointConnection
-                            description: A private endpoint connection to an azure resource
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_389
-                        protocol: {}
-                    language:
-                      default: &ref_390
-                        name: SignalRPrivateEndpointConnectionsClientUpdateResult
-                        description: SignalRPrivateEndpointConnectionsClientUpdateResult contains the result from method SignalRPrivateEndpointConnectionsClient.Update.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_390
-                    protocol: {}
-                  serializedName: SignalRPrivateEndpointConnectionsClientUpdateResult
-                  language:
-                    default: &ref_392
-                      name: SignalRPrivateEndpointConnectionsClientUpdateResult
-                      description: Contains the result of the operation.
+                    default: &ref_298
+                      name: PrivateEndpointConnection
+                      description: A private endpoint connection to an azure resource
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_391
-                    go: *ref_392
+                    go: *ref_298
                   protocol: {}
               language:
-                default: &ref_394
+                default: &ref_300
                   name: SignalRPrivateEndpointConnectionsClientUpdateResponse
                   description: SignalRPrivateEndpointConnectionsClientUpdateResponse contains the response from method SignalRPrivateEndpointConnectionsClient.Update.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_393
-                go: *ref_394
+                  resultProp: *ref_299
+                go: *ref_300
               protocol: {}
         protocol: {}
-      - &ref_403
+      - operationId: SignalRPrivateEndpointConnections_Delete
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_395
+          - &ref_301
             schema: *ref_1
             implementation: Method
             required: true
@@ -9219,8 +8588,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_396
+          - *ref_182
+          - &ref_302
             schema: *ref_1
             implementation: Method
             required: true
@@ -9236,7 +8605,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_397
+          - &ref_303
             schema: *ref_1
             implementation: Method
             required: true
@@ -9284,9 +8653,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_395
-          - *ref_396
-          - *ref_397
+          - *ref_301
+          - *ref_302
+          - *ref_303
         responses:
           - language:
               default:
@@ -9366,98 +8735,53 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRPrivateEndpointConnectionsClient
-            finalResponseEnv: &ref_535
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_398
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_398
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_399
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_399
-                  protocol: {}
-              language:
-                default: &ref_400
-                  name: SignalRPrivateEndpointConnectionsClientDeleteResponse
-                  description: SignalRPrivateEndpointConnectionsClientDeleteResponse contains the response from method SignalRPrivateEndpointConnectionsClient.Delete.
-                  responseType: true
-                go: *ref_400
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_509
+            optionalParamGroup: &ref_368
               schema:
                 type: object
                 language:
-                  default: &ref_401
+                  default: &ref_304
                     name: SignalRPrivateEndpointConnectionsClientBeginDeleteOptions
                     description: SignalRPrivateEndpointConnectionsClientBeginDeleteOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.BeginDelete method.
-                  go: *ref_401
+                  go: *ref_304
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_305
+                        name: string
+                        description: ''
+                      go: *ref_305
+                    protocol: {}
+                  language:
+                    default: &ref_306
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_306
+                  protocol: {}
               required: false
               serializedName: SignalRPrivateEndpointConnectionsClientBeginDeleteOptions
               language:
-                default: &ref_402
-                  name: SignalRPrivateEndpointConnectionsClientBeginDeleteOptions
+                default: &ref_307
+                  name: options
                   description: SignalRPrivateEndpointConnectionsClientBeginDeleteOptions contains the optional parameters for the SignalRPrivateEndpointConnectionsClient.BeginDelete method.
-                go: *ref_402
+                go: *ref_307
               protocol: {}
-            pollerType: &ref_408
-              name: SignalRPrivateEndpointConnectionsClientDeletePoller
-              op: *ref_403
             protocolNaming:
               internalMethod: deleteOperation
               requestMethod: deleteCreateRequest
               responseMethod: deleteHandleResponse
-            responseEnv: &ref_536
+            responseEnv: &ref_389
               type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_404
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_404
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_405
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_405
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_406
-                        name: SignalRPrivateEndpointConnectionsClientDeletePoller
-                        description: poller
-                      go: *ref_406
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_407
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_407
-                  protocol: {}
               language:
-                default: &ref_409
-                  name: SignalRPrivateEndpointConnectionsClientDeletePollerResponse
-                  description: SignalRPrivateEndpointConnectionsClientDeletePollerResponse contains the response from method SignalRPrivateEndpointConnectionsClient.Delete.
-                  isLRO: true
-                  pollerInfo: *ref_408
+                default: &ref_308
+                  name: SignalRPrivateEndpointConnectionsClientDeleteResponse
+                  description: SignalRPrivateEndpointConnectionsClientDeleteResponse contains the response from method SignalRPrivateEndpointConnectionsClient.Delete.
+                  forLRO: true
                   responseType: true
-                go: *ref_409
+                go: *ref_308
               protocol: {}
         protocol: {}
     language:
@@ -9470,18 +8794,18 @@ operationGroups:
         clientCtorName: NewSignalRPrivateEndpointConnectionsClient
         clientName: SignalRPrivateEndpointConnectionsClient
         clientParams:
-          - *ref_188
+          - *ref_182
     protocol: {}
   - $key: SignalRPrivateLinkResources
     operations:
-      - &ref_415
+      - operationId: SignalRPrivateLinkResources_List
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_410
+          - *ref_182
+          - &ref_309
             schema: *ref_1
             implementation: Method
             required: true
@@ -9497,7 +8821,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_411
+          - &ref_310
             schema: *ref_1
             implementation: Method
             required: true
@@ -9545,10 +8869,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_410
-          - *ref_411
+          - *ref_309
+          - *ref_310
         responses:
-          - schema: *ref_412
+          - schema: *ref_311
             language:
               default:
                 name: ''
@@ -9624,91 +8948,52 @@ operationGroups:
             azureARM: true
             clientName: SignalRPrivateLinkResourcesClient
             openApiType: arm
-            optionalParamGroup: &ref_510
+            optionalParamGroup: &ref_369
               schema:
                 type: object
                 language:
-                  default: &ref_413
+                  default: &ref_312
                     name: SignalRPrivateLinkResourcesClientListOptions
                     description: SignalRPrivateLinkResourcesClientListOptions contains the optional parameters for the SignalRPrivateLinkResourcesClient.List method.
-                  go: *ref_413
+                  go: *ref_312
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRPrivateLinkResourcesClientListOptions
               language:
-                default: &ref_414
-                  name: SignalRPrivateLinkResourcesClientListOptions
+                default: &ref_313
+                  name: options
                   description: SignalRPrivateLinkResourcesClientListOptions contains the optional parameters for the SignalRPrivateLinkResourcesClient.List method.
-                go: *ref_414
+                go: *ref_313
               protocol: {}
-            pageableType: &ref_492
-              name: SignalRPrivateLinkResourcesClientListPager
-              op: *ref_415
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listOperation
               requestMethod: listCreateRequest
               responseMethod: listHandleResponse
-            responseEnv: &ref_537
+            responseEnv: &ref_390
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_416
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_416
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_315
+                  schema: *ref_311
+                  serializedName: PrivateLinkResourceList
                   language:
-                    default: &ref_417
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_417
-                  protocol: {}
-                - &ref_422
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_420
-                        schema: *ref_412
-                        serializedName: PrivateLinkResourceList
-                        language:
-                          default: &ref_418
-                            name: PrivateLinkResourceList
-                            description: Contains a list of PrivateLinkResource and a possible link to query more results
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_418
-                        protocol: {}
-                    language:
-                      default: &ref_419
-                        name: SignalRPrivateLinkResourcesClientListResult
-                        description: SignalRPrivateLinkResourcesClientListResult contains the result from method SignalRPrivateLinkResourcesClient.List.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_419
-                    protocol: {}
-                  serializedName: SignalRPrivateLinkResourcesClientListResult
-                  language:
-                    default: &ref_421
-                      name: SignalRPrivateLinkResourcesClientListResult
-                      description: Contains the result of the operation.
+                    default: &ref_314
+                      name: PrivateLinkResourceList
+                      description: Contains a list of PrivateLinkResource and a possible link to query more results
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_420
-                    go: *ref_421
+                    go: *ref_314
                   protocol: {}
               language:
-                default: &ref_423
+                default: &ref_316
                   name: SignalRPrivateLinkResourcesClientListResponse
                   description: SignalRPrivateLinkResourcesClientListResponse contains the response from method SignalRPrivateLinkResourcesClient.List.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_422
-                go: *ref_423
+                  resultProp: *ref_315
+                go: *ref_316
               protocol: {}
         protocol: {}
     language:
@@ -9721,18 +9006,18 @@ operationGroups:
         clientCtorName: NewSignalRPrivateLinkResourcesClient
         clientName: SignalRPrivateLinkResourcesClient
         clientParams:
-          - *ref_188
+          - *ref_182
     protocol: {}
   - $key: SignalRSharedPrivateLinkResources
     operations:
-      - &ref_429
+      - operationId: SignalRSharedPrivateLinkResources_List
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
           - *ref_173
-          - *ref_188
-          - &ref_424
+          - *ref_182
+          - &ref_317
             schema: *ref_1
             implementation: Method
             required: true
@@ -9748,7 +9033,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_425
+          - &ref_318
             schema: *ref_1
             implementation: Method
             required: true
@@ -9796,10 +9081,10 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_424
-          - *ref_425
+          - *ref_317
+          - *ref_318
         responses:
-          - schema: *ref_426
+          - schema: *ref_319
             language:
               default:
                 name: ''
@@ -9868,98 +9153,60 @@ operationGroups:
             azureARM: true
             clientName: SignalRSharedPrivateLinkResourcesClient
             openApiType: arm
-            optionalParamGroup: &ref_511
+            optionalParamGroup: &ref_370
               schema:
                 type: object
                 language:
-                  default: &ref_427
+                  default: &ref_320
                     name: SignalRSharedPrivateLinkResourcesClientListOptions
                     description: SignalRSharedPrivateLinkResourcesClientListOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.List method.
-                  go: *ref_427
+                  go: *ref_320
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRSharedPrivateLinkResourcesClientListOptions
               language:
-                default: &ref_428
-                  name: SignalRSharedPrivateLinkResourcesClientListOptions
+                default: &ref_321
+                  name: options
                   description: SignalRSharedPrivateLinkResourcesClientListOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.List method.
-                go: *ref_428
+                go: *ref_321
               protocol: {}
-            pageableType: &ref_493
-              name: SignalRSharedPrivateLinkResourcesClientListPager
-              op: *ref_429
             paging:
               nextLinkName: NextLink
             protocolNaming:
               internalMethod: listOperation
               requestMethod: listCreateRequest
               responseMethod: listHandleResponse
-            responseEnv: &ref_538
+            responseEnv: &ref_391
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_430
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_430
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_323
+                  schema: *ref_319
+                  serializedName: SharedPrivateLinkResourceList
                   language:
-                    default: &ref_431
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_431
-                  protocol: {}
-                - &ref_436
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_434
-                        schema: *ref_426
-                        serializedName: SharedPrivateLinkResourceList
-                        language:
-                          default: &ref_432
-                            name: SharedPrivateLinkResourceList
-                            description: A list of shared private link resources
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_432
-                        protocol: {}
-                    language:
-                      default: &ref_433
-                        name: SignalRSharedPrivateLinkResourcesClientListResult
-                        description: SignalRSharedPrivateLinkResourcesClientListResult contains the result from method SignalRSharedPrivateLinkResourcesClient.List.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_433
-                    protocol: {}
-                  serializedName: SignalRSharedPrivateLinkResourcesClientListResult
-                  language:
-                    default: &ref_435
-                      name: SignalRSharedPrivateLinkResourcesClientListResult
-                      description: Contains the result of the operation.
+                    default: &ref_322
+                      name: SharedPrivateLinkResourceList
+                      description: A list of shared private link resources
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_434
-                    go: *ref_435
+                    go: *ref_322
                   protocol: {}
               language:
-                default: &ref_437
+                default: &ref_324
                   name: SignalRSharedPrivateLinkResourcesClientListResponse
                   description: SignalRSharedPrivateLinkResourcesClientListResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.List.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_436
-                go: *ref_437
+                  resultProp: *ref_323
+                go: *ref_324
               protocol: {}
         protocol: {}
-      - apiVersions:
+      - operationId: SignalRSharedPrivateLinkResources_Get
+        apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_438
+          - &ref_325
             schema: *ref_1
             implementation: Method
             required: true
@@ -9976,8 +9223,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_439
+          - *ref_182
+          - &ref_326
             schema: *ref_1
             implementation: Method
             required: true
@@ -9993,7 +9240,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_440
+          - &ref_327
             schema: *ref_1
             implementation: Method
             required: true
@@ -10041,9 +9288,9 @@ operationGroups:
                 method: get
                 uri: '{$host}'
         signatureParameters:
-          - *ref_438
-          - *ref_439
-          - *ref_440
+          - *ref_325
+          - *ref_326
+          - *ref_327
         responses:
           - schema: *ref_79
             language:
@@ -10110,94 +9357,58 @@ operationGroups:
             azureARM: true
             clientName: SignalRSharedPrivateLinkResourcesClient
             openApiType: arm
-            optionalParamGroup: &ref_512
+            optionalParamGroup: &ref_371
               schema:
                 type: object
                 language:
-                  default: &ref_441
+                  default: &ref_328
                     name: SignalRSharedPrivateLinkResourcesClientGetOptions
                     description: SignalRSharedPrivateLinkResourcesClientGetOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.Get method.
-                  go: *ref_441
+                  go: *ref_328
                 protocol: {}
               originalParameter: []
               required: false
               serializedName: SignalRSharedPrivateLinkResourcesClientGetOptions
               language:
-                default: &ref_442
-                  name: SignalRSharedPrivateLinkResourcesClientGetOptions
+                default: &ref_329
+                  name: options
                   description: SignalRSharedPrivateLinkResourcesClientGetOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.Get method.
-                go: *ref_442
+                go: *ref_329
               protocol: {}
             protocolNaming:
               internalMethod: get
               requestMethod: getCreateRequest
               responseMethod: getHandleResponse
-            responseEnv: &ref_539
+            responseEnv: &ref_392
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_443
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_443
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_331
+                  schema: *ref_79
+                  serializedName: SharedPrivateLinkResource
                   language:
-                    default: &ref_444
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_444
-                  protocol: {}
-                - &ref_449
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_447
-                        schema: *ref_79
-                        serializedName: SharedPrivateLinkResource
-                        language:
-                          default: &ref_445
-                            name: SharedPrivateLinkResource
-                            description: Describes a Shared Private Link Resource
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_445
-                        protocol: {}
-                    language:
-                      default: &ref_446
-                        name: SignalRSharedPrivateLinkResourcesClientGetResult
-                        description: SignalRSharedPrivateLinkResourcesClientGetResult contains the result from method SignalRSharedPrivateLinkResourcesClient.Get.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_446
-                    protocol: {}
-                  serializedName: SignalRSharedPrivateLinkResourcesClientGetResult
-                  language:
-                    default: &ref_448
-                      name: SignalRSharedPrivateLinkResourcesClientGetResult
-                      description: Contains the result of the operation.
+                    default: &ref_330
+                      name: SharedPrivateLinkResource
+                      description: Describes a Shared Private Link Resource
                       byValue: true
                       embeddedType: true
-                      resultField: *ref_447
-                    go: *ref_448
+                    go: *ref_330
                   protocol: {}
               language:
-                default: &ref_450
+                default: &ref_332
                   name: SignalRSharedPrivateLinkResourcesClientGetResponse
                   description: SignalRSharedPrivateLinkResourcesClientGetResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.Get.
+                  marshallingFormat: json
                   responseType: true
-                  resultEnv: *ref_449
-                go: *ref_450
+                  resultProp: *ref_331
+                go: *ref_332
               protocol: {}
         protocol: {}
-      - &ref_465
+      - operationId: SignalRSharedPrivateLinkResources_CreateOrUpdate
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_452
+          - &ref_335
             schema: *ref_1
             implementation: Method
             required: true
@@ -10214,8 +9425,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_453
+          - *ref_182
+          - &ref_336
             schema: *ref_1
             implementation: Method
             required: true
@@ -10231,7 +9442,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_454
+          - &ref_337
             schema: *ref_1
             implementation: Method
             required: true
@@ -10247,9 +9458,10 @@ operationGroups:
             protocol:
               http:
                 in: path
-        requests:
-          - parameters:
-              - &ref_451
+        requestMediaTypes:
+          application/json: &ref_334
+            parameters:
+              - &ref_333
                 schema: *ref_79
                 implementation: Method
                 required: true
@@ -10281,7 +9493,7 @@ operationGroups:
                   http:
                     in: header
             signatureParameters:
-              - *ref_451
+              - *ref_333
             language:
               default:
                 name: ''
@@ -10297,10 +9509,12 @@ operationGroups:
                 mediaTypes:
                   - application/json
                 uri: '{$host}'
+        requests:
+          - *ref_334
         signatureParameters:
-          - *ref_452
-          - *ref_453
-          - *ref_454
+          - *ref_335
+          - *ref_336
+          - *ref_337
         responses:
           - schema: *ref_79
             language:
@@ -10401,140 +9615,75 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRSharedPrivateLinkResourcesClient
-            finalResponseEnv: &ref_540
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_455
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_455
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_456
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_456
-                  protocol: {}
-                - &ref_461
-                  schema:
-                    type: object
-                    properties:
-                      - &ref_459
-                        schema: *ref_79
-                        serializedName: SharedPrivateLinkResource
-                        language:
-                          default: &ref_457
-                            name: SharedPrivateLinkResource
-                            description: Describes a Shared Private Link Resource
-                            byValue: true
-                            embeddedType: true
-                          go: *ref_457
-                        protocol: {}
-                    language:
-                      default: &ref_458
-                        name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult
-                        description: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult contains the result from method SignalRSharedPrivateLinkResourcesClient.CreateOrUpdate.
-                        marshallingFormat: json
-                        responseType: true
-                      go: *ref_458
-                    protocol: {}
-                  serializedName: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult
-                  language:
-                    default: &ref_460
-                      name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult
-                      description: Contains the result of the operation.
-                      byValue: true
-                      embeddedType: true
-                      resultField: *ref_459
-                    go: *ref_460
-                  protocol: {}
-              language:
-                default: &ref_462
-                  name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResponse
-                  description: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.CreateOrUpdate.
-                  responseType: true
-                  resultEnv: *ref_461
-                go: *ref_462
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_513
+            optionalParamGroup: &ref_372
               schema:
                 type: object
                 language:
-                  default: &ref_463
+                  default: &ref_338
                     name: SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions
                     description: SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.BeginCreateOrUpdate method.
-                  go: *ref_463
+                  go: *ref_338
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_339
+                        name: string
+                        description: ''
+                      go: *ref_339
+                    protocol: {}
+                  language:
+                    default: &ref_340
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_340
+                  protocol: {}
               required: false
               serializedName: SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions
               language:
-                default: &ref_464
-                  name: SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions
+                default: &ref_341
+                  name: options
                   description: SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.BeginCreateOrUpdate method.
-                go: *ref_464
+                go: *ref_341
               protocol: {}
-            pollerType: &ref_470
-              name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdatePoller
-              op: *ref_465
             protocolNaming:
               internalMethod: createOrUpdate
               requestMethod: createOrUpdateCreateRequest
               responseMethod: createOrUpdateHandleResponse
-            responseEnv: &ref_541
+            responseEnv: &ref_393
               type: object
               properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_466
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_466
-                    protocol: {}
-                  serializedName: RawResponse
+                - &ref_343
+                  schema: *ref_79
+                  serializedName: SharedPrivateLinkResource
                   language:
-                    default: &ref_467
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_467
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_468
-                        name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdatePoller
-                        description: poller
-                      go: *ref_468
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_469
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_469
+                    default: &ref_342
+                      name: SharedPrivateLinkResource
+                      description: Describes a Shared Private Link Resource
+                      byValue: true
+                      embeddedType: true
+                    go: *ref_342
                   protocol: {}
               language:
-                default: &ref_471
-                  name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdatePollerResponse
-                  description: SignalRSharedPrivateLinkResourcesClientCreateOrUpdatePollerResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.CreateOrUpdate.
-                  isLRO: true
-                  pollerInfo: *ref_470
+                default: &ref_344
+                  name: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResponse
+                  description: SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.CreateOrUpdate.
+                  forLRO: true
+                  marshallingFormat: json
                   responseType: true
-                go: *ref_471
+                  resultProp: *ref_343
+                go: *ref_344
               protocol: {}
         protocol: {}
-      - &ref_480
+      - operationId: SignalRSharedPrivateLinkResources_Delete
         apiVersions:
           - version: 2021-06-01-preview
         parameters:
           - *ref_172
-          - &ref_472
+          - &ref_345
             schema: *ref_1
             implementation: Method
             required: true
@@ -10551,8 +9700,8 @@ operationGroups:
               http:
                 in: path
           - *ref_173
-          - *ref_188
-          - &ref_473
+          - *ref_182
+          - &ref_346
             schema: *ref_1
             implementation: Method
             required: true
@@ -10568,7 +9717,7 @@ operationGroups:
             protocol:
               http:
                 in: path
-          - &ref_474
+          - &ref_347
             schema: *ref_1
             implementation: Method
             required: true
@@ -10616,9 +9765,9 @@ operationGroups:
                 method: delete
                 uri: '{$host}'
         signatureParameters:
-          - *ref_472
-          - *ref_473
-          - *ref_474
+          - *ref_345
+          - *ref_346
+          - *ref_347
         responses:
           - language:
               default:
@@ -10698,98 +9847,53 @@ operationGroups:
               If the operation fails it returns an *azcore.ResponseError type.
             azureARM: true
             clientName: SignalRSharedPrivateLinkResourcesClient
-            finalResponseEnv: &ref_542
-              type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_475
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_475
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_476
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_476
-                  protocol: {}
-              language:
-                default: &ref_477
-                  name: SignalRSharedPrivateLinkResourcesClientDeleteResponse
-                  description: SignalRSharedPrivateLinkResourcesClientDeleteResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.Delete.
-                  responseType: true
-                go: *ref_477
-              protocol: {}
             openApiType: arm
-            optionalParamGroup: &ref_514
+            optionalParamGroup: &ref_373
               schema:
                 type: object
                 language:
-                  default: &ref_478
+                  default: &ref_348
                     name: SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions
                     description: SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.BeginDelete method.
-                  go: *ref_478
+                  go: *ref_348
                 protocol: {}
-              originalParameter: []
+              originalParameter:
+                - schema:
+                    type: string
+                    language:
+                      default: &ref_349
+                        name: string
+                        description: ''
+                      go: *ref_349
+                    protocol: {}
+                  language:
+                    default: &ref_350
+                      name: ResumeToken
+                      description: Resumes the LRO from the provided token.
+                      byValue: true
+                    go: *ref_350
+                  protocol: {}
               required: false
               serializedName: SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions
               language:
-                default: &ref_479
-                  name: SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions
+                default: &ref_351
+                  name: options
                   description: SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions contains the optional parameters for the SignalRSharedPrivateLinkResourcesClient.BeginDelete method.
-                go: *ref_479
+                go: *ref_351
               protocol: {}
-            pollerType: &ref_485
-              name: SignalRSharedPrivateLinkResourcesClientDeletePoller
-              op: *ref_480
             protocolNaming:
               internalMethod: deleteOperation
               requestMethod: deleteCreateRequest
               responseMethod: deleteHandleResponse
-            responseEnv: &ref_543
+            responseEnv: &ref_394
               type: object
-              properties:
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_481
-                        name: http.Response
-                        description: raw HTTP response
-                      go: *ref_481
-                    protocol: {}
-                  serializedName: RawResponse
-                  language:
-                    default: &ref_482
-                      name: RawResponse
-                      description: RawResponse contains the underlying HTTP response.
-                    go: *ref_482
-                  protocol: {}
-                - schema:
-                    type: object
-                    language:
-                      default: &ref_483
-                        name: SignalRSharedPrivateLinkResourcesClientDeletePoller
-                        description: poller
-                      go: *ref_483
-                    protocol: {}
-                  serializedName: Poller
-                  language:
-                    default: &ref_484
-                      name: Poller
-                      description: Poller contains an initialized poller.
-                    go: *ref_484
-                  protocol: {}
               language:
-                default: &ref_486
-                  name: SignalRSharedPrivateLinkResourcesClientDeletePollerResponse
-                  description: SignalRSharedPrivateLinkResourcesClientDeletePollerResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.Delete.
-                  isLRO: true
-                  pollerInfo: *ref_485
+                default: &ref_352
+                  name: SignalRSharedPrivateLinkResourcesClientDeleteResponse
+                  description: SignalRSharedPrivateLinkResourcesClientDeleteResponse contains the response from method SignalRSharedPrivateLinkResourcesClient.Delete.
+                  forLRO: true
                   responseType: true
-                go: *ref_486
+                go: *ref_352
               protocol: {}
         protocol: {}
     language:
@@ -10802,12 +9906,12 @@ operationGroups:
         clientCtorName: NewSignalRSharedPrivateLinkResourcesClient
         clientName: SignalRSharedPrivateLinkResourcesClient
         clientParams:
-          - *ref_188
+          - *ref_182
     protocol: {}
 security:
   authenticationRequired: true
   schemes:
-    - type: AADToken
+    - type: OAuth2
       scopes:
         - https://management.azure.com/.default
 language:
@@ -10824,74 +9928,49 @@ language:
     headAsBoolean: true
     openApiType: arm
     packageName: test
-    pageableTypes:
-      - *ref_487
-      - *ref_488
-      - *ref_489
-      - *ref_490
-      - *ref_491
-      - *ref_492
-      - *ref_493
     parameterGroups:
-      - *ref_494
-      - *ref_495
-      - *ref_496
-      - *ref_497
-      - *ref_498
-      - *ref_499
-      - *ref_500
-      - *ref_501
-      - *ref_502
-      - *ref_503
-      - *ref_504
-      - *ref_505
-      - *ref_506
-      - *ref_507
-      - *ref_508
-      - *ref_509
-      - *ref_510
-      - *ref_511
-      - *ref_512
-      - *ref_513
-      - *ref_514
-    pollerTypes:
-      - *ref_257
-      - *ref_271
-      - *ref_291
-      - *ref_325
-      - *ref_339
-      - *ref_408
-      - *ref_470
-      - *ref_485
+      - *ref_353
+      - *ref_354
+      - *ref_355
+      - *ref_356
+      - *ref_357
+      - *ref_358
+      - *ref_359
+      - *ref_360
+      - *ref_361
+      - *ref_362
+      - *ref_363
+      - *ref_364
+      - *ref_365
+      - *ref_366
+      - *ref_367
+      - *ref_368
+      - *ref_369
+      - *ref_370
+      - *ref_371
+      - *ref_372
+      - *ref_373
     responseEnvelopes:
-      - *ref_515
-      - *ref_516
-      - *ref_517
-      - *ref_518
-      - *ref_519
-      - *ref_520
-      - *ref_521
-      - *ref_522
-      - *ref_523
-      - *ref_524
-      - *ref_525
-      - *ref_526
-      - *ref_527
-      - *ref_528
-      - *ref_529
-      - *ref_530
-      - *ref_531
-      - *ref_532
-      - *ref_533
-      - *ref_534
-      - *ref_535
-      - *ref_536
-      - *ref_537
-      - *ref_538
-      - *ref_539
-      - *ref_540
-      - *ref_541
-      - *ref_542
-      - *ref_543
+      - *ref_374
+      - *ref_375
+      - *ref_376
+      - *ref_377
+      - *ref_378
+      - *ref_379
+      - *ref_380
+      - *ref_381
+      - *ref_382
+      - *ref_383
+      - *ref_384
+      - *ref_385
+      - *ref_386
+      - *ref_387
+      - *ref_388
+      - *ref_389
+      - *ref_390
+      - *ref_391
+      - *ref_392
+      - *ref_393
+      - *ref_394
 protocol:
   http: {}

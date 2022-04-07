@@ -22,9 +22,12 @@ func ExampleDiskRestorePointClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -36,7 +39,7 @@ func ExampleDiskRestorePointClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DiskRestorePointClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListDiskRestorePointsInVmRestorePoint.json
@@ -46,23 +49,23 @@ func ExampleDiskRestorePointClient_ListByRestorePoint() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByRestorePoint("<resource-group-name>",
 		"<restore-point-collection-name>",
 		"<vm-restore-point-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

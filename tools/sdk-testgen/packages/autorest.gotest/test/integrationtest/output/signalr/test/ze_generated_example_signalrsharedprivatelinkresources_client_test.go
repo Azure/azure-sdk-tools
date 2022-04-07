@@ -25,22 +25,22 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<resource-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -54,9 +54,12 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<shared-private-link-resource-name>",
 		"<resource-group-name>",
@@ -67,7 +70,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SignalRSharedPrivateLinkResourcesClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json
@@ -77,21 +80,24 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<shared-private-link-resource-name>",
 		"<resource-group-name>",
 		"<resource-name>",
 		test.SharedPrivateLinkResource{
 			Properties: &test.SharedPrivateLinkResourceProperties{
-				GroupID:               to.StringPtr("<group-id>"),
-				PrivateLinkResourceID: to.StringPtr("<private-link-resource-id>"),
-				RequestMessage:        to.StringPtr("<request-message>"),
+				GroupID:               to.Ptr("<group-id>"),
+				PrivateLinkResourceID: to.Ptr("<private-link-resource-id>"),
+				RequestMessage:        to.Ptr("<request-message>"),
 			},
 		},
-		nil)
+		&test.SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -102,7 +108,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SignalRSharedPrivateLinkResourcesClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json
@@ -112,14 +118,17 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<shared-private-link-resource-name>",
 		"<resource-group-name>",
 		"<resource-name>",
-		nil)
+		&test.SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return

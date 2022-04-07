@@ -23,20 +23,23 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
 		test.RestorePointCollection{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Tags: map[string]*string{
-				"myTag1": to.StringPtr("tagValue1"),
+				"myTag1": to.Ptr("tagValue1"),
 			},
 			Properties: &test.RestorePointCollectionProperties{
 				Source: &test.RestorePointCollectionSourceProperties{
-					ID: to.StringPtr("<id>"),
+					ID: to.Ptr("<id>"),
 				},
 			},
 		},
@@ -46,7 +49,7 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.RestorePointCollectionsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollection.json
@@ -56,9 +59,12 @@ func ExampleRestorePointCollectionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<restore-point-collection-name>",
@@ -68,7 +74,7 @@ func ExampleRestorePointCollectionsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.RestorePointCollectionsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetRestorePointCollectionsInAResourceGroup.json
@@ -78,21 +84,21 @@ func ExampleRestorePointCollectionsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -106,20 +112,20 @@ func ExampleRestorePointCollectionsClient_ListAll() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListAll(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

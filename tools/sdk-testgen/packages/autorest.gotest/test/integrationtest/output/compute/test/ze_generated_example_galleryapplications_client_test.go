@@ -25,24 +25,27 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		test.GalleryApplication{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.GalleryApplicationProperties{
-				Description:         to.StringPtr("<description>"),
-				Eula:                to.StringPtr("<eula>"),
-				PrivacyStatementURI: to.StringPtr("<privacy-statement-uri>"),
-				ReleaseNoteURI:      to.StringPtr("<release-note-uri>"),
-				SupportedOSType:     test.OperatingSystemTypesWindows.ToPtr(),
+				Description:         to.Ptr("<description>"),
+				Eula:                to.Ptr("<eula>"),
+				PrivacyStatementURI: to.Ptr("<privacy-statement-uri>"),
+				ReleaseNoteURI:      to.Ptr("<release-note-uri>"),
+				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		nil)
+		&test.GalleryApplicationsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -53,7 +56,7 @@ func ExampleGalleryApplicationsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json
@@ -63,23 +66,26 @@ func ExampleGalleryApplicationsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
 		test.GalleryApplicationUpdate{
 			Properties: &test.GalleryApplicationProperties{
-				Description:         to.StringPtr("<description>"),
-				Eula:                to.StringPtr("<eula>"),
-				PrivacyStatementURI: to.StringPtr("<privacy-statement-uri>"),
-				ReleaseNoteURI:      to.StringPtr("<release-note-uri>"),
-				SupportedOSType:     test.OperatingSystemTypesWindows.ToPtr(),
+				Description:         to.Ptr("<description>"),
+				Eula:                to.Ptr("<eula>"),
+				PrivacyStatementURI: to.Ptr("<privacy-statement-uri>"),
+				ReleaseNoteURI:      to.Ptr("<release-note-uri>"),
+				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		nil)
+		&test.GalleryApplicationsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -90,7 +96,7 @@ func ExampleGalleryApplicationsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryApplication.json
@@ -100,9 +106,12 @@ func ExampleGalleryApplicationsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -113,7 +122,7 @@ func ExampleGalleryApplicationsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryApplicationsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json
@@ -123,14 +132,17 @@ func ExampleGalleryApplicationsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-application-name>",
-		nil)
+		&test.GalleryApplicationsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -149,22 +161,22 @@ func ExampleGalleryApplicationsClient_ListByGallery() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryApplicationsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByGallery("<resource-group-name>",
 		"<gallery-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

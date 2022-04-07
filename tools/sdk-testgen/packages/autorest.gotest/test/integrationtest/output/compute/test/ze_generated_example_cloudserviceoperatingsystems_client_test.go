@@ -22,9 +22,12 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetOSVersion(ctx,
 		"<location>",
 		"<os-version-name>",
@@ -34,7 +37,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSVersion() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServiceOperatingSystemsClientGetOSVersionResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSVersions.json
@@ -44,21 +47,21 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSVersions() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListOSVersions("<location>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -72,9 +75,12 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetOSFamily(ctx,
 		"<location>",
 		"<os-family-name>",
@@ -84,7 +90,7 @@ func ExampleCloudServiceOperatingSystemsClient_GetOSFamily() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServiceOperatingSystemsClientGetOSFamilyResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceOSFamilies.json
@@ -94,21 +100,21 @@ func ExampleCloudServiceOperatingSystemsClient_ListOSFamilies() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServiceOperatingSystemsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListOSFamilies("<location>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

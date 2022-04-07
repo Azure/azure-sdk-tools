@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace swagger_api_parser
 {
@@ -60,6 +61,13 @@ namespace swagger_api_parser
             }
 
             return string.Join("/", commonPathList);
+        }
+        
+        public static string GetResourceProviderFromPath(string path)
+        {
+            const string resourceProviderPattern = "/providers/(:?[^{/]+)";
+            var match = Regex.Match(path, resourceProviderPattern, RegexOptions.RightToLeft);
+            return match.Success ? match.Groups[1].Value : "";
         }
 
         public static PathNode BuildPathTree(IEnumerable<string> paths)

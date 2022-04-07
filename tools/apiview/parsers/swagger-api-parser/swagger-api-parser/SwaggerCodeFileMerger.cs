@@ -30,13 +30,6 @@ namespace swagger_api_parser;
             }
         }
 
-        static string GetResourceProviderFromPath(string path)
-        {
-            const string resourceProviderPattern = "/providers/(:?[^{/]+)";
-            var match = Regex.Match(path, resourceProviderPattern, RegexOptions.RightToLeft);
-            return match.Success ? match.Groups[1].Value : "";
-        }
-
         private static NavigationItem[] RebuildNavigation(IEnumerable<NavigationItem> navigation,
             string swaggerFileName)
         {
@@ -74,23 +67,14 @@ namespace swagger_api_parser;
 
             void BuildAggregatedPaths(NavigationItem path, string commonPath)
             {
-                var resourceProvider = GetResourceProviderFromPath(path.Text);
                 path.ChildItems = Array.Empty<NavigationItem>();
-
-                // For Azure management plane API the API path is too long to present, To resolve this issue, we need to add the path to the aggregated paths.
-                // For Azure data plane API. We use commonPath to aggregate the paths.
-                var index = path.Text.LastIndexOf(resourceProvider, StringComparison.Ordinal);
-
-                path.ChildItems = Array.Empty<NavigationItem>();
-                var apiPath = resourceProvider == "" ? commonPath : path.Text[..(index + resourceProvider.Length)];
-
-                if (aggregatedPaths.TryGetValue(apiPath, out NavigationItem[] existing))
+                if (aggregatedPaths.TryGetValue(commonPath, out NavigationItem[] existing))
                 {
-                    aggregatedPaths[apiPath] = existing.Concat(new NavigationItem[] {path}).ToArray();
+                    aggregatedPaths[commonPath] = existing.Concat(new NavigationItem[] {path}).ToArray();
                 }
                 else
                 {
-                    aggregatedPaths.Add(apiPath, new NavigationItem[] {path});
+                    aggregatedPaths.Add(commonPath, new NavigationItem[] {path});
                 }
             }
 
@@ -105,10 +89,20 @@ namespace swagger_api_parser;
                 {
                     // extract operationIds from path 
                     var allPaths = item.ChildItems.Select(x => x.Text).ToArray();
-                    var commonPath = Utils.GetCommonPath(allPaths);
-                    Console.WriteLine(commonPath);
+                    PathNode node = Utils.BuildPathTree(allPaths);
+                    var firstLevelPath = node.Children.Select(child => child.CommonPath).ToList();
+                    
+                    // var commonPath = Utils.GetCommonPath(allPaths);
+                    
+                    // Console.WriteLine(commonPath);
                     foreach (var path in item.ChildItems)
                     {
+                        var commonPath = "";
+                        foreach (var it in firstLevelPath.Where(it => path.Text.Contains(it)))
+                        {
+                            commonPath = it;
+                            break;
+                        }
                         BuildOperationIdNavigationItem(path);
                         BuildAggregatedPaths(path, commonPath);
                     }
@@ -129,6 +123,12 @@ namespace swagger_api_parser;
                 foreach (var path in pathItems)
                 {
                     path.Text = path.Text[aggregatedPath.Length..];
+                    
+                    // If sub path is empty, should be root path "/"
+                    if (path.Text == "")
+                    {
+                        path.Text = "/";
+                    }
                     parentNavigationItem.ChildItems =
                         parentNavigationItem.ChildItems.Concat(new NavigationItem[] {path}).ToArray();
                 }

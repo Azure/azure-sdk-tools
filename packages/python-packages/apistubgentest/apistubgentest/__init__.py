@@ -7,5 +7,6 @@
 # --------------------------------------------------------------------------
 
 from ._version import VERSION
+from ._client import SomeClient
 
 __version__ = VERSION

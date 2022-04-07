@@ -525,7 +525,6 @@ namespace APIViewWeb.Repositories
         public async void UpdateReviewBackground()
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
-            await SyncPackageDisplayServiceName(reviews);
             foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
             {
                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
@@ -544,11 +543,14 @@ namespace APIViewWeb.Repositories
                     _telemetryClient.StopOperation(operation);
                 }
             }
+
+            await SyncPackageDisplayServiceName();
         }
 
-        private async Task SyncPackageDisplayServiceName(IEnumerable<ReviewModel> reviews)
+        private async Task SyncPackageDisplayServiceName()
         {
-            foreach (var review in reviews)
+            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
+            foreach (var review in reviews.Where(r => r.ServiceName == null || r.ServiceName == "Other"))
             {
                 var newServiceName = review.ServiceName ?? "Other";
                 var newDisplayName = review.PackageDisplayName ?? "Other";
@@ -565,6 +567,8 @@ namespace APIViewWeb.Repositories
                     review.PackageDisplayName = newDisplayName;
                     await _reviewsRepository.UpsertReviewAsync(review);
                 }
+                // Wait before processing next review to delay background task
+                await Task.Delay(1000);
             }
         }
 

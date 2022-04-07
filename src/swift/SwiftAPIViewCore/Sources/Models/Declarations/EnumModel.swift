@@ -57,7 +57,7 @@ class EnumModel: Tokenizable, Linkable, Commentable, Extensible, AccessLevelProt
 
             init(from element: TupleType.Element) {
                 name = element.name?.textDescription
-                typeModel = TypeModel(from: element.type)
+                typeModel = element.type.toTokenizable()!
             }
 
             func tokenize(apiview a: APIViewModel) {

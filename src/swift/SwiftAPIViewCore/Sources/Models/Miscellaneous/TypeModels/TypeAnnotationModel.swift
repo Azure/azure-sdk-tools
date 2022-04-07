@@ -27,33 +27,31 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct TypeAnnotationModel: Tokenizable {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    var type: TypeModel
+    var attributes: AttributesModel?
+    var isInOut: Bool
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
+    init?(from source: TypeAnnotation?) {
+        guard let source = source else { return nil }
+        type = source.type.toTokenizable()!
+        attributes = AttributesModel(from: source.attributes)
+        isInOut = source.isInOutParameter
     }
 
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init?(from source: TypeModel?) {
+        guard let source = source else { return nil }
+        type = source
+        attributes = nil
+        isInOut = false
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+        attributes?.tokenize(apiview: a)
+        if isInOut {
+            a.keyword("inout", prefixSpace: true, postfixSpace: true)
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        type.tokenize(apiview: a)
     }
 }

@@ -27,33 +27,28 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct ProtocolCompositionModel: TypeModel {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var protocolTypes: [TypeModel]
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
-
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init(from source: ProtocolCompositionType) {
+        protocolTypes = [TypeModel]()
+        source.protocolTypes.forEach { item in
+            protocolTypes.append(item.toTokenizable()!)
+        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+        opaque.tokenize(apiview: a)
+        let stopIdx = protocolTypes.count - 1
+        for (idx, item) in protocolTypes.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation("&", prefixSpace:true, postfixSpace: true)
+            }
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        optional.tokenize(apiview: a)
     }
 }

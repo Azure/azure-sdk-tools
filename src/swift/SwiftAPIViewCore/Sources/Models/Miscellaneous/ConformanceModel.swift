@@ -48,20 +48,20 @@ class GenericRequirementModel: Tokenizable {
     var mode: Mode
 
     init(key: Type, value: Type, mode: Mode) {
-        self.key = TypeModel(from: key)
-        self.value = TypeModel(from: value)
+        self.key = key.toTokenizable()!
+        self.value = value.toTokenizable()!
         self.mode = mode
     }
 
     init(key: Identifier, value: Type, mode: Mode) {
-        self.key = TypeModel(from: key)
-        self.value = TypeModel(from: value)
+        self.key = TypeIdentifierModel(name: key.textDescription)
+        self.value = value.toTokenizable()!
         self.mode = mode
     }
 
     init(key: Identifier, value: Identifier, mode: Mode) {
-        self.key = TypeModel(from: key)
-        self.value = TypeModel(from: value)
+        self.key = TypeIdentifierModel(name: key.textDescription)
+        self.value = TypeIdentifierModel(name: value.textDescription)
         self.mode = mode
     }
 

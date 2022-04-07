@@ -27,33 +27,31 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+class GenericArgumentModel: Tokenizable {
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
+    /// The list of type or protocol conformances
+    var typeList: [TypeModel]
 
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init?(from clause: GenericArgumentClause?) {
+        guard let clause = clause else { return nil }
+        self.typeList = [TypeModel]()
+        clause.argumentList.forEach { param in
+            if let model = param.toTokenizable() {
+                typeList.append(model)
+            }
+        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+        a.punctuation("<")
+        let stopIdx = typeList.count - 1
+        for (idx, param) in typeList.enumerated() {
+            param.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        a.punctuation(">")
     }
 }

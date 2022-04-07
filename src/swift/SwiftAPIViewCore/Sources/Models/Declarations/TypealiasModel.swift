@@ -51,7 +51,7 @@ class TypealiasModel: Tokenizable, Linkable, Commentable, AccessLevelProtocol {
         accessLevel = decl.accessLevel ?? .internal
         name = decl.name.textDescription
         genericParamClause = GenericParameterModel(from: decl.generic)
-        assignment = TypeModel(from: decl.assignment)
+        assignment = decl.assignment.toTokenizable()!
     }
 
     func tokenize(apiview a: APIViewModel) {

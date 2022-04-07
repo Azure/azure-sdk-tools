@@ -42,7 +42,7 @@ class ExtensionModel: Tokenizable, Commentable {
         lineId = identifier(forName: decl.type.textDescription, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         accessLevel = decl.accessLevel
-        self.typeModel = TypeModel(from: decl.type)
+        self.typeModel = decl.type.toTokenizable()!
         typeInheritanceClause = TypeInheritanceModel(from: decl.typeInheritanceClause)
         genericWhereClause = GenericWhereModel(from: decl.genericWhereClause)
         members = [AccessLevelProtocol]()

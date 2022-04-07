@@ -24,36 +24,54 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import AST
 
-struct InitializerItemModel: Tokenizable {
+enum OptionalKind: Tokenizable {
+    case optional
+    case implicitlyUnwrapped
+    case none
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
-
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
-
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    var value: String? {
+        switch self {
+        case .optional:
+            return "?"
+        case .implicitlyUnwrapped:
+            return "!"
+        default:
+            return nil
+        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
-        }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
+        if let val = value {
+            a.punctuation(val)
         }
     }
+}
+
+enum OpaqueKind: Tokenizable {
+    case opaque
+    case none
+
+    var value: String? {
+        switch self {
+        case .opaque:
+            return "some"
+        default:
+            return nil
+        }
+    }
+
+    func tokenize(apiview a: APIViewModel) {
+        if let val = value {
+            a.keyword(val, prefixSpace: true, postfixSpace: true)
+        }
+    }
+}
+
+/// Conforming type objects can be serialized into APIView tokens.
+protocol TypeModel: Tokenizable {
+    var optional: OptionalKind { get set }
+    var opaque: OpaqueKind { get set }
 }

@@ -27,33 +27,39 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct DictionaryTypeModel: TypeModel {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var useShorthand = true
+    var keyType: TypeModel
+    var valueType: TypeModel
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
-
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init(from source: DictionaryType) {
+        keyType = source.keyType.toTokenizable()!
+        valueType = source.valueType.toTokenizable()!
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
+        opaque.tokenize(apiview: a)
+        if useShorthand {
+            a.punctuation("[")
+            keyType.tokenize(apiview: a)
             a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+            valueType.tokenize(apiview: a)
+            a.punctuation("]")
+        } else {
+            a.typeReference(name: "Dictionary")
+            a.punctuation("<")
+            a.typeReference(name: "Key")
+            a.punctuation(":", postfixSpace: true)
+            keyType.tokenize(apiview: a)
+            a.punctuation(",", postfixSpace: true)
+            a.typeReference(name: "Value")
+            a.punctuation(":", postfixSpace: true)
+            valueType.tokenize(apiview: a)
+            a.punctuation(">")
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        optional.tokenize(apiview: a)
     }
 }

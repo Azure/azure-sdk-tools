@@ -27,33 +27,29 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct ArrayTypeModel: TypeModel {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var useShorthand = true
+    var elementType: TypeModel
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
-
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init(from source: ArrayType) {
+        self.elementType = source.elementType.toTokenizable()!
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+        opaque.tokenize(apiview: a)
+        if useShorthand {
+            a.punctuation("[", prefixSpace: true)
+            elementType.tokenize(apiview: a)
+            a.punctuation("]")
+        } else {
+            a.typeReference(name: "Array")
+            a.punctuation("<")
+            elementType.tokenize(apiview: a)
+            a.punctuation(">")
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        optional.tokenize(apiview: a)
     }
 }

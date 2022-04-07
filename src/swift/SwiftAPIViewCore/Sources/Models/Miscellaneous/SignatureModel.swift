@@ -37,13 +37,13 @@ class SignatureModel: Tokenizable {
     struct ParameterModel: Tokenizable {
 
         var name: String
-        var typeModel: TypeModel
+        var typeModel: TypeAnnotationModel
         var defaultValue: String?
         var isVarargs: Bool
 
         init(from source: FunctionSignature.Parameter) {
             name = source.externalName?.textDescription ?? source.localName.textDescription
-            typeModel = TypeModel(from: source.typeAnnotation)
+            typeModel = TypeAnnotationModel(from: source.typeAnnotation)!
             // TODO: This may not be a good assumption
             defaultValue = source.defaultArgumentClause?.textDescription
             isVarargs = source.isVarargs
@@ -85,7 +85,7 @@ class SignatureModel: Tokenizable {
             parameters.append(ParameterModel(from: param))
         }
         if let resultType = sig.result?.type {
-            result = TypeModel(from: resultType)
+            result = resultType.toTokenizable()!
         } else {
             result = nil
         }
@@ -95,7 +95,7 @@ class SignatureModel: Tokenizable {
         async = nil
         throwing = nil
         if let resultType = result {
-            self.result = TypeModel(from: resultType)
+            self.result = resultType.toTokenizable()!
         }
         parameters = [ParameterModel]()
         params.forEach { param in

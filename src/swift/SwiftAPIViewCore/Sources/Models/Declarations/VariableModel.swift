@@ -69,15 +69,15 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
         case let .initializerList(initializerList):
             initializers = initializerList.compactMap { InitializerItemModel(from: $0) }
         case let .codeBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
         case let .getterSetterKeywordBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
         case let .getterSetterBlock(ident, typeAnno, _):
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
         case let .willSetDidSetBlock(ident, typeAnno, expression, _):
             // the willSetDidSet block is irrelevant from an API perspective
             // so we ignore it.
-            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeModel(from: typeAnno!), defaultValue: nil)]
+            initializers = [InitializerItemModel(name: ident.textDescription, typeModel: TypeAnnotationModel(from: typeAnno), defaultValue: nil)]
             guard expression == nil else {
                 SharedLogger.fail("Expression not implemented. Please contact the SDK team.")
             }
@@ -88,7 +88,7 @@ class VariableModel: Tokenizable, Commentable, AccessLevelProtocol {
 
     init(from decl: ProtocolDeclaration.PropertyMember, parent: ProtocolModel) {
         let name = decl.name.textDescription
-        initializers = [InitializerItemModel(name: name, typeModel: TypeModel(from: decl.typeAnnotation), defaultValue: nil)]
+        initializers = [InitializerItemModel(name: name, typeModel: TypeAnnotationModel(from: decl.typeAnnotation), defaultValue: nil)]
         lineId = identifier(forName: name, withPrefix: parent.definitionId)
         attributes = AttributesModel(from: decl.attributes)
         modifiers = DeclarationModifiersModel(from: decl.modifiers)

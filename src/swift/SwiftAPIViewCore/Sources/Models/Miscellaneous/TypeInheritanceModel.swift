@@ -37,7 +37,7 @@ class TypeInheritanceModel: Tokenizable {
         self.isClassRequirement = clause.classRequirement
         self.typeList = [TypeModel]()
         clause.typeInheritanceList.forEach { item in
-            typeList.append(TypeModel(from: item))
+            typeList.append(TypeIdentifierModel(from: item))
         }
     }
 
@@ -48,9 +48,8 @@ class TypeInheritanceModel: Tokenizable {
             if typeList.count > 0 { a.punctuation(",", postfixSpace: true) }
         }
         let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            param.useShorthand = false
-            param.tokenize(apiview: a)
+        for (idx, item) in typeList.enumerated() {
+            item.tokenize(apiview: a)
             if idx != stopIdx {
                 a.punctuation(",", postfixSpace: true)
             }

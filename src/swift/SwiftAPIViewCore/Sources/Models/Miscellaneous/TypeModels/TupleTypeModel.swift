@@ -27,36 +27,54 @@
 import AST
 import Foundation
 
+struct TupleTypeModel: TypeModel {
 
-class GenericParameterModel: Tokenizable {
+    struct TupleElementModel: Tokenizable {
+        let type: TypeModel
+        let name: String?
+        let attributes: AttributesModel?
+        let isInOutParameter: Bool
 
-    /// The list of type or protocol conformances
-    var typeList: [Tokenizable]
+        init(from source: TupleType.Element) {
+            type = source.type.toTokenizable()!
+            name = source.name?.textDescription
+            attributes = AttributesModel(from: source.attributes)
+            isInOutParameter = source.isInOutParameter
+        }
 
-    init?(from clause: GenericParameterClause?) {
-        guard let clause = clause else { return nil }
-        self.typeList = [Tokenizable]()
-        clause.parameterList.forEach { param in
-            switch param {
-            case let .identifier(type1):
-                typeList.append(TypeIdentifierModel(name: type1.textDescription))
-            case let .protocolConformance(type1, protocol2):
-                typeList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
-            case let .typeConformance(type1, type2):
-                typeList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+        func tokenize(apiview a: APIViewModel) {
+            if isInOutParameter {
+                a.keyword("inout", postfixSpace: true)
             }
+            attributes?.tokenize(apiview: a)
+            if let name = name {
+                a.member(name: name)
+                a.punctuation(":", postfixSpace: true)
+            }
+            type.tokenize(apiview: a)
+        }
+    }
+
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var elements: [TupleElementModel]
+
+    init(from source: TupleType) {
+        elements = [TupleElementModel]()
+        source.elements.forEach { element in
+            elements.append(TupleElementModel(from: element))
         }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.punctuation("<")
-        let stopIdx = typeList.count - 1
-        for (idx, param) in typeList.enumerated() {
-            param.tokenize(apiview: a)
+        opaque.tokenize(apiview: a)
+        let stopIdx = elements.count - 1
+        for (idx, element) in elements.enumerated() {
+            element.tokenize(apiview: a)
             if idx != stopIdx {
                 a.punctuation(",", postfixSpace: true)
             }
         }
-        a.punctuation(">")
+        optional.tokenize(apiview: a)
     }
 }

@@ -36,13 +36,13 @@ extension PatternInitializer {
     var typeModel: TypeModel? {
         if case let typeAnno as IdentifierPattern = pattern,
             let typeInfo = typeAnno.typeAnnotation?.type {
-            return TypeModel(from: typeInfo)
+            return typeInfo.toTokenizable()
         }
         if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeModel(name: literalExpression.kind.textDescription)
+            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
         }
         if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeModel(name: functionExpression.postfixExpression.textDescription)
+            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
         }
         return nil
     }

@@ -27,33 +27,28 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct MetatypeTypeModel: TypeModel {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var type: TypeModel
+    var metatype: String
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
-    }
-
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    init(from source: MetatypeType) {
+        type = source.referenceType.toTokenizable()!
+        switch source.kind {
+        case .protocol:
+            metatype = "Protocol"
+        case .type:
+            metatype = "Type"
+        }
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
-        }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        opaque.tokenize(apiview: a)
+        type.tokenize(apiview: a)
+        a.punctuation(".")
+        a.typeReference(name: metatype)
+        optional.tokenize(apiview: a)
     }
 }

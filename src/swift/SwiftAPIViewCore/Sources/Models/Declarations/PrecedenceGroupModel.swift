@@ -79,7 +79,7 @@ class PrecedenceGroupModel: Tokenizable, Commentable, Linkable {
             self.keyword = keyword
             self.groups = [TypeModel]()
             identifiers.forEach { item in
-                self.groups.append(TypeModel(from: item))
+                self.groups.append(TypeIdentifierModel(name: item.textDescription))
             }
         }
 

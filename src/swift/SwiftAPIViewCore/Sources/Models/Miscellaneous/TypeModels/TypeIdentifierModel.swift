@@ -27,33 +27,53 @@
 import AST
 import Foundation
 
-struct InitializerItemModel: Tokenizable {
+struct TypeIdentifierModel: TypeModel {
 
-    let name: String
-    let typeModel: TypeAnnotationModel?
-    let defaultValue: String?
+    struct TypeNameModel: Tokenizable {
 
-    init(from source: PatternInitializer) {
-        name = source.name!
-        typeModel = TypeAnnotationModel(from: source.typeModel)
-        defaultValue = source.defaultValue
+        let name: String
+        let genericArgument: GenericArgumentModel?
+
+        init(from source: TypeIdentifier.TypeName) {
+            name = source.name.textDescription
+            genericArgument = GenericArgumentModel(from: source.genericArgumentClause)
+        }
+
+        init(name: String) {
+            self.name = name
+            self.genericArgument = nil
+        }
+
+        func tokenize(apiview a: APIViewModel) {
+            a.typeReference(name: name)
+            genericArgument?.tokenize(apiview: a)
+        }
     }
 
-    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
-        self.name = name
-        self.typeModel = typeModel
-        self.defaultValue = defaultValue
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var names: [TypeNameModel]
+
+    init(from source: TypeIdentifier) {
+        names = [TypeNameModel]()
+        source.names.forEach { item in
+            names.append(TypeNameModel(from: item))
+        }
+    }
+
+    init(name: String) {
+        names = [TypeNameModel(name: name)]
     }
 
     func tokenize(apiview a: APIViewModel) {
-        a.member(name: name, definitionId: nil)
-        if let typeModel = typeModel {
-            a.punctuation(":", postfixSpace: true)
-            typeModel.tokenize(apiview: a)
+        opaque.tokenize(apiview: a)
+        let stopIdx = names.count - 1
+        for (idx, name) in names.enumerated() {
+            name.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(".")
+            }
         }
-        if let defaultValue = defaultValue {
-            a.punctuation("=", prefixSpace: true, postfixSpace: true)
-            a.literal(defaultValue)
-        }
+        optional.tokenize(apiview: a)
     }
 }

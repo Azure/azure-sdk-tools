@@ -5,6 +5,7 @@
 # --------------------------------------------------------------------------
 
 from apistub.nodes import ClassNode, FunctionNode
+from apistubgentest import TypeHintingClient
 
 from typing import Optional, Any, List, Union
 
@@ -103,3 +104,21 @@ class TestFunctionParsing:
 
         func_node = FunctionNode("test", None, TestClass.with_python3_union_typehint, "test")
         assert func_node.return_type == "List[Union[str, int]]"
+
+
+    def test_non_typehint_with_string_defaults(self):
+        func_node = FunctionNode("test", None, TypeHintingClient.some_method_non_optional, "test")
+        arg1 = func_node.args["docstring_type"]
+        assert arg1.argtype == "str"
+        assert arg1.default == "string"
+        arg2 = func_node.args["typehint_type"]
+        assert arg2.argtype == "str"
+        assert arg2.default == "string"
+
+        func_node = FunctionNode("test", None, TypeHintingClient.some_method_with_optionals, "test")
+        arg1 = func_node.args["labeled_optional"]
+        assert arg1.argtype == "Optional[str]"
+        assert arg1.default == "string"
+        arg2 = func_node.args["union_with_none"]
+        assert arg1.argtype == "Optional[str]"
+        assert arg1.default == "string"

@@ -44,8 +44,8 @@ func CreateAPIView(pkgDir, outputDir string) error {
 		p.c.parseFunc(tokenList)
 		navItems := p.c.generateNavChildItems()
 		nav = append(nav, Navigation{
-			Text:         &n,
-			NavigationId: &n,
+			Text:         n,
+			NavigationId: n,
 			ChildItems:   navItems,
 		})
 	}

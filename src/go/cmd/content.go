@@ -492,81 +492,71 @@ func (c *content) parseFunc(tokenList *[]Token) {
 // For structs, a navigation item will only point to the struct definition and not methods or functions related to the struct.
 // For funcs, global funcs that are not constructors for any structs will have a direct navigation item.
 func (c *content) generateNavChildItems() []Navigation {
-	childItems := []Navigation{}
-	types := []string{}
-	keys := []string{}
-	for _, s := range c.Consts {
-		keys = append(keys, s.Type)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		if !includesType(types, k) {
-			types = append(types, k)
-			temp := k
-			childItems = append(childItems, Navigation{
-				Text:         &temp,
-				NavigationId: &temp,
-				ChildItems:   []Navigation{},
-				Tags: &map[string]string{
-					"TypeKind": "enum",
-				},
-			})
-		}
-	}
-	keys = []string{}
-	for i := range c.Interfaces {
-		keys = append(keys, i)
-	}
-	sort.Strings(keys)
-	for k := range keys {
-		childItems = append(childItems, Navigation{
-			Text:         &keys[k],
-			NavigationId: &keys[k],
+	items := []Navigation{}
+	for n := range c.Consts {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
-				"TypeKind": "interface",
+				"TypeKind": "enum",
 			},
 		})
 	}
-	keys = []string{}
-	for i := range c.Structs {
-		keys = append(keys, i)
-	}
-	sort.Strings(keys)
-	clientsFirst := []string{}
-	for i, k := range keys {
-		if strings.HasSuffix(k, "Client") {
-			clientsFirst = append(clientsFirst, k)
-			keys = append(keys[:i], keys[i+1:]...)
-		}
-	}
-	clientsFirst = append(clientsFirst, keys...)
-	for k := range clientsFirst {
-		childItems = append(childItems, Navigation{
-			Text:         &clientsFirst[k],
-			NavigationId: &clientsFirst[k],
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "struct",
-			},
-		})
-	}
-	keys = []string{}
-	for i := range c.Funcs {
-		keys = append(keys, i)
-	}
-	sort.Strings(keys)
-	for k := range keys {
-		childItems = append(childItems, Navigation{
-			Text:         &keys[k],
-			NavigationId: &keys[k],
+	for n := range c.Funcs {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "unknown",
 			},
 		})
 	}
-	return childItems
+	for n := range c.Interfaces {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
+			ChildItems:   []Navigation{},
+			Tags: &map[string]string{
+				"TypeKind": "interface",
+			},
+		})
+	}
+	for n := range c.SimpleTypes {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
+			ChildItems:   []Navigation{},
+			Tags: &map[string]string{
+				"TypeKind": "struct",
+			},
+		})
+	}
+	for n := range c.Structs {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
+			ChildItems:   []Navigation{},
+			Tags: &map[string]string{
+				"TypeKind": "class",
+			},
+		})
+	}
+	for n := range c.Vars {
+		items = append(items, Navigation{
+			Text:         n,
+			NavigationId: n,
+			ChildItems:   []Navigation{},
+			Tags: &map[string]string{
+				"TypeKind": "unknown",
+			},
+		})
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Text < items[j].Text
+	})
+	return items
 }
 
 func isExported(name string) bool {

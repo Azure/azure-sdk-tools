@@ -56,8 +56,8 @@ type Token struct {
 }
 
 type Navigation struct {
-	Text         *string            `json:"Text"`
-	NavigationId *string            `json:"NavigationId"`
+	Text         string             `json:"Text"`
+	NavigationId string             `json:"NavigationId"`
 	ChildItems   []Navigation       `json:"ChildItems"`
 	Tags         *map[string]string `json:"Tags"`
 }

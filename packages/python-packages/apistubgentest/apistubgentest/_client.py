@@ -196,5 +196,5 @@ class SpecialArgsClient:
 
 class PylintCheckerViolationsClient:
 
-    def with_too_many_args(self, a: str, b: str, c: str, d: str, e:str , f: str, g: str, h:str) -> None:
+    def with_too_many_args(self, a: str, b: str, c: str, d: str, e:str , f: str, g: str, h: str, **kwargs: Any) -> None:
         pass

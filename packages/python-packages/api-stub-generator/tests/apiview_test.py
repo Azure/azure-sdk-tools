@@ -58,5 +58,9 @@ class TestApiView:
         stub_gen = StubGenerator(args=args)
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
-        assert len(apiview.diagnostics) == 3
-        assert len(PylintParser.get_unclaimed()) == 0
+        unclaimed = PylintParser.get_unclaimed()
+        assert len(apiview.diagnostics) == 1
+        assert apiview.diagnostics[0].target_id.endswith("too_many_pos_args")
+        # The "needs copyright header" error corresponds to a file, which isn't direclty
+        # represented in APIView
+        assert len(unclaimed) == 1

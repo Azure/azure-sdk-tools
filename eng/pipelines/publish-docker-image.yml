@@ -95,7 +95,26 @@ jobs:
           vmImage: 'MMSUbuntu20.04'
 
         steps:
+          - task: Docker@2
+            displayName: Login to ACR
+            inputs:
+              command: login
+              containerRegistry: ${{ parameters.ContainerRegistry }}
+
           - pwsh: |
-              $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/' | ConvertFrom-Json -AsHashtable
-              Write-Host $configurations
-            displayName: Dump Configuration
+              $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
+              $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
+                -DockerDeploymentJson $configurations `
+                -ContainerRegistry "${{ parameters.ContainerRegistry }}"
+                -ImageTag "${{ parameters.ImageTag }}"
+                -DevopsVariable "ManifestVariable" `
+            displayName: Generate Manifest Variable
+
+          - pwsh: |
+              docker manifest create ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ parameters.ImageTag }} $(ManifestVariable)
+            displayName: Generate Manifest
+
+          - pwsh: |
+              docker manifest push ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ parameters.ImageTag }}
+            displayName: Upload Manifest
+

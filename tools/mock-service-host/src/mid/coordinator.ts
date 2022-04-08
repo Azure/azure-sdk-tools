@@ -298,35 +298,44 @@ export class Coordinator {
             if (lroCallback !== null || req.query?.[LRO_CALLBACK] === 'true') {
                 if (req.query?.[LRO_CALLBACK] === 'true') {
                     // lro callback
-                    // if 201 response exist, need to return 200 response
-                    if (this.findResponse(exampleResponses, HttpStatusCode.CREATED)) {
+                    // if 202 response exist, need to return 200/201/204 response
+                    if (this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)) {
                         const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
                         if (result) {
                             ;[code, ret] = result
                             ret = this.setStatusToSuccess(ret)
                         } else {
-                            // if no 200 response, throw exception
-                            throw new WrongExampleResponse()
-                        }
-                    } else {
-                        // if 202 response exist, need to return 200/204 response
-                        if (this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)) {
-                            const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            const result = this.findResponse(
+                                exampleResponses,
+                                HttpStatusCode.NO_CONTENT
+                            )
                             if (result) {
                                 ;[code, ret] = result
                                 ret = this.setStatusToSuccess(ret)
                             } else {
                                 const result = this.findResponse(
                                     exampleResponses,
-                                    HttpStatusCode.NO_CONTENT
+                                    HttpStatusCode.CREATED
                                 )
                                 if (result) {
                                     ;[code, ret] = result
                                     ret = this.setStatusToSuccess(ret)
                                 } else {
-                                    // if no 200/204 response, throw exception
+                                    // if no 200/201/204 response, throw exception
                                     throw new WrongExampleResponse()
                                 }
+                            }
+                        }
+                    } else {
+                        // if 201 response exist, need to return 200 response
+                        if (this.findResponse(exampleResponses, HttpStatusCode.CREATED)) {
+                            const result = this.findResponse(exampleResponses, HttpStatusCode.OK)
+                            if (result) {
+                                ;[code, ret] = result
+                                ret = this.setStatusToSuccess(ret)
+                            } else {
+                                // if no 200 response, throw exception
+                                throw new WrongExampleResponse()
                             }
                         } else {
                             // otherwise, need to return 200 response
@@ -341,17 +350,17 @@ export class Coordinator {
                         }
                     }
                 } else {
-                    // lro first call, try to get 201 first
-                    const result = this.findResponse(exampleResponses, HttpStatusCode.CREATED)
+                    // lro first call, try to get 202 first
+                    const result = this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
                     if (result) {
                         ;[code, ret] = result
-                        this.setAsyncHeader(res, lroCallback)
+                        this.setLocationHeader(res, lroCallback)
                     } else {
-                        // if no 201 response, then try to get 202
-                        const result = this.findResponse(exampleResponses, HttpStatusCode.ACCEPTED)
+                        // if no 202 response, then try to get 201
+                        const result = this.findResponse(exampleResponses, HttpStatusCode.CREATED)
                         if (result) {
                             ;[code, ret] = result
-                            this.setLocationHeader(res, lroCallback)
+                            this.setAsyncHeader(res, lroCallback)
                         } else {
                             // last, get 200 related response
                             const result = this.findResponse(exampleResponses, HttpStatusCode.OK)

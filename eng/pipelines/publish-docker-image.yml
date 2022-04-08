@@ -1,13 +1,27 @@
-# Additional sample inputs can be found in `eng/containers/ci.yml`, but here is one here.
+# Additional sample inputs can be found in `eng/containers/ci.yml`, but here is an example.
 # - name: test_proxy_linux
-#   pool: 'ubuntu-20.04'
+#   pool: 'azsdk-pool-mms-ubuntu-2004-general'
+#   vmImage: 'MMSUbuntu20.04'
 #   dockerRepo: 'engsys/testproxy-lin'
+#   additionalDockerBuildArgs: ''
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
+#   excludeFromManifest: true/false
 #   dockerFile: 'tools/test-proxy/docker/dockerfile'
+#   stableTags:
+#   - 'latest'
+
+# A "ManifestDeployment" is a secondary deployment that can be used to map multiple docker tags to a single platform-sensitive one. It waits until
+# all previous tag deployments are created, then triggers a manifest upload that bundles all tags configured in DockerDeployments. To exclude an item from the
+# manifest upload, set deployment config property excludeFromManifest to true.
+# - name: test_proxy_manifest
+#   dockerRepo: 'engsys/testproxy'
 #   stableTags:
 #   - 'latest'
 parameters:
   - name: DockerDeployments
+    type: object
+    default: []
+  - name: ManifestDeployment
     type: object
     default: []
   - name: ImageTag
@@ -24,7 +38,8 @@ jobs:
     - job: container_build_${{ config.name }}
       displayName: Build ${{ config.name }} Image
       pool:
-        vmImage: ${{ config.pool }}
+        name: ${{ config.pool }}
+        vmImage: ${{ config.vmImage }}
       steps:
         - ${{ if config.prepareScript }}:
           - pwsh: |
@@ -36,7 +51,7 @@ jobs:
             command: build
             Dockerfile: ${{ config.dockerFile }}
             tags: ${{ parameters.ImageTag }}
-            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}'
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }} ${{ config.AdditionalDockerArgs }}'
 
         - ${{ if parameters.Publish }}:
           - task: Docker@2
@@ -67,3 +82,20 @@ jobs:
                   repository: ${{ config.dockerRepo }}
                   command: push
                   tags: ${{ stableTag }}
+
+  - ${{ if parameters.ManifestDeployment and parameters.Publish }}:
+    - ${{ each deployment in parameters.ManifestDeployment }}:
+      - job: container_build_${{ deployment.name }}
+        displayName: Build ${{ deployment.name }} Manifest
+        dependsOn:
+          - ${{ each config in parameters.DockerDeployments }}:
+            - container_build_${{ config.name }}
+        pool:
+          name: 'azsdk-pool-mms-ubuntu-2004-general'
+          vmImage: 'MMSUbuntu20.04'
+
+        steps:
+          - pwsh: |
+              $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/' | ConvertFrom-Json -AsHashtable
+              Write-Host $configurations
+            displayName: Dump Configuration

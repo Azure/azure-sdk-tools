@@ -4,6 +4,9 @@ from typing import Optional, Union, List, Any
 
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
+from azure.core import PipelineClient
+from typing import Optional, Union
+
 
 class DefaultValuesClient:
 
@@ -194,7 +197,11 @@ class SpecialArgsClient:
         pass
 
 
-class PylintCheckerViolationsClient:
+class PylintCheckerViolationsClient(PipelineClient):
+
+    def __init__(self, endpoint: str, connection_string: str):
+        self.endpoint = endpoint
+        self.connection_string = connection_string
 
     def with_too_many_args(self, a: str, b: str, c: str, d: str, e:str , f: str, g: str, h: str, **kwargs: Any) -> None:
         pass

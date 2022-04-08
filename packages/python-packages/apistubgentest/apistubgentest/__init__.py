@@ -7,5 +7,6 @@
 # --------------------------------------------------------------------------
 
 from ._version import VERSION
+from ._client import TypeHintingClient
 
 __version__ = VERSION

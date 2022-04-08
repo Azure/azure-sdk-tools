@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.2.12 (Unreleased)
+Fixed issue where types would appear wrapped in "Optional" even though
+  they do not accept `None`.
+Fixed issue where, in some cases, string literal default values would not appear wrapped
+  in quotes.
+
 ## Version 0.2.11 (2022-04-06)
 Added __main__ to execute as module
 

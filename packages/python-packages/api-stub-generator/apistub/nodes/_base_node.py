@@ -65,6 +65,7 @@ def get_qualified_name(obj, namespace):
     if hasattr(obj, "__module__"):
         module_name = getattr(obj, "__module__")
 
+    wrap_optional = False
     args = []
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
@@ -73,9 +74,12 @@ def get_qualified_name(obj, namespace):
             arg_string = str(arg)
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)
-                # we ignore NoneType since Optional implies that NoneType is
-                # acceptable
-                if value != "NoneType":
+                if value == "NoneType":
+                    # we ignore NoneType since Optional implies that NoneType is
+                    # acceptable
+                    if not name.startswith("Optional"):
+                        wrap_optional = True
+                else:
                     args.append(value)
             elif forward_ref_regex.match(arg_string):
                 value = forward_ref_regex.search(arg_string).group(1)
@@ -94,4 +98,6 @@ def get_qualified_name(obj, namespace):
     if args and "[" not in value:
         arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"
+    if wrap_optional:
+        value = f"Optional[{value}]"
     return value

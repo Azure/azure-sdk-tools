@@ -107,7 +107,7 @@ class TestFunctionParsing:
 
 
     def test_non_typehint_with_string_defaults(self):
-        func_node = FunctionNode("test", None, TypeHintingClient.some_method_non_optional, "test")
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_non_optional)
         arg1 = func_node.args["docstring_type"]
         assert arg1.argtype == "str"
         assert arg1.default == "string"
@@ -115,7 +115,7 @@ class TestFunctionParsing:
         assert arg2.argtype == "str"
         assert arg2.default == "string"
 
-        func_node = FunctionNode("test", None, TypeHintingClient.some_method_with_optionals, "test")
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_with_optionals)
         arg1 = func_node.args["labeled_optional"]
         assert arg1.argtype == "Optional[str]"
         assert arg1.default == "string"

@@ -184,7 +184,7 @@ class SomethingWithOverloads:
     def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
         ...
 
-    async def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+    def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
         if isinstance(input, Sequence):
             return [i * 2 for i in input]
         return input * 2

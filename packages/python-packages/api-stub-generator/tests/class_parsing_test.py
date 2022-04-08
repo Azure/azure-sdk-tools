@@ -110,9 +110,9 @@ class TestClassParsing:
         assert node1.name == "double"
         self._check_arg_nodes(node1.args, [
             ("self", None, None),
-            ("input", "Optional[int]", "1"),
+            ("input", "int", "1"),
             ("*", None, None),
-            ("test", "Optional[bool]", "False"),
+            ("test", "bool", "False"),
             ("**kwargs", None, None)
         ])
         assert node1.return_type == "int"
@@ -122,9 +122,9 @@ class TestClassParsing:
         assert node2.name == "double"
         self._check_arg_nodes(node2.args, [
             ("self", None, None),
-            ("input", "Optional[Sequence[int]]", "[1]"),
+            ("input", "Sequence[int]", "[1]"),
             ("*", None, None),
-            ("test", "Optional[bool]", "False"),
+            ("test", "bool", "False"),
             ("**kwargs", None, None)
         ])
         assert node2.return_type == "list[int]"
@@ -138,7 +138,7 @@ class TestClassParsing:
             # don't appear in the actual APIView.
             ("input", "int | collections.abc.Sequence[int]", None),
             ("*", None, None),
-            ("test", "Optional[bool]", "False"),
+            ("test", "bool", "False"),
             ("**kwargs", None, None)
         ])
         assert node3.return_type == "int | list[int]"

@@ -83,7 +83,6 @@ export class MockTestDataRender extends BaseDataRender {
                     break;
                 }
             }
-            example.pageableType = example.operation.language.go.pageableType.name;
         }
 
         example.checkResponse =
@@ -105,7 +104,14 @@ export class MockTestDataRender extends BaseDataRender {
             this.replaceValueFunc = (rawValue: any, exampleValue: ExampleValue): any => {
                 // mock-test will change all ProvisioningState to Succeeded
                 if (exampleValue.language?.go?.name === 'ProvisioningState') {
-                    return 'Succeeded';
+                    if (
+                        exampleValue.schema.type !== SchemaType.SealedChoice ||
+                        (exampleValue.schema as ChoiceSchema).choices.filter((choice) => choice.value === 'Succeeded').length > 0
+                    ) {
+                        return 'Succeeded';
+                    } else {
+                        return (exampleValue.schema as ChoiceSchema).choices[0].value;
+                    }
                 }
                 return rawValue;
             };
@@ -114,26 +120,25 @@ export class MockTestDataRender extends BaseDataRender {
                 example.responseTypePointer = false;
                 example.responseType = 'Value';
             } else {
-                let responseEnv = op.language.go.responseEnv;
-                if (isLROOperation(op)) {
-                    responseEnv = op.language.go.finalResponseEnv;
-                }
+                const responseEnv = op.language.go.responseEnv;
 
-                if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.serialization?.xml?.name) {
-                    example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.byValue;
-                    example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.name;
-                    if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.isDiscriminator === true) {
-                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
-                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                if (responseEnv.language.go?.resultProp.schema.serialization?.xml?.name) {
+                    example.responseTypePointer = !responseEnv.language.go?.resultProp.schema.language.go?.byValue;
+                    example.responseType = responseEnv.language.go?.resultProp.schema.language.go?.name;
+                    if (responseEnv.language.go?.resultProp.schema.isDiscriminator === true) {
+                        example.responseIsDiscriminator = true;
+                        example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
+                        example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
                             &${example.responseOutput},
                         }`;
                     }
                 } else {
-                    example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.byValue;
-                    example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.name;
-                    if (responseEnv.language.go?.resultEnv.language.go?.resultField.isDiscriminator === true) {
-                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
-                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                    example.responseTypePointer = !responseEnv.language.go?.resultProp.language.go?.byValue;
+                    example.responseType = responseEnv.language.go?.resultProp.language.go?.name;
+                    if (responseEnv.language.go?.resultProp.isDiscriminator === true) {
+                        example.responseIsDiscriminator = true;
+                        example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
+                        example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
                             &${example.responseOutput},
                         }`;
                     }
@@ -155,9 +160,14 @@ export class MockTestDataRender extends BaseDataRender {
     }
 
     // get GO code of single parameter for one operation invoke
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[], isClient = false): string {
         // get corresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
+            // ignore resumeToken param in options
+            if (name === 'ResumeToken') {
+                return '""';
+            }
             // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
             const isPolymophismValue = param?.schema?.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true;
             const isPtr: boolean = isPolymophismValue || !(param.required || param.language.go.byValue === true);
@@ -167,12 +177,8 @@ export class MockTestDataRender extends BaseDataRender {
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(param));
                 }
             }
-            // if client param, only subscription will have no corresponding example value
-            if (isClient) {
-                return this.getSubscriptionValue(param);
-            } else {
-                return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
-            }
+
+            return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
         };
 
         if ((parameter as GroupProperty).originalParameter) {
@@ -198,10 +204,6 @@ export class MockTestDataRender extends BaseDataRender {
             return ret;
         }
         return findExampleParameter(paramName, parameter);
-    }
-
-    protected getSubscriptionValue(param: Parameter) {
-        return '"<' + Helper.toKebabCase(this.getLanguageName(param)) + '>"';
     }
 
     protected getDefaultValue(param: Parameter | ExampleValue, isPtr: boolean, elemByVal = false) {
@@ -412,17 +414,17 @@ export class MockTestDataRender extends BaseDataRender {
 
         if (isPtr) {
             const ptrConverts = {
-                string: 'StringPtr',
-                bool: 'BoolPtr',
-                'time.Time': 'TimePtr',
-                int32: 'Int32Ptr',
-                int64: 'Int64Ptr',
-                float32: 'Float32Ptr',
-                float64: 'Float64Ptr',
+                string: 'Ptr',
+                bool: 'Ptr',
+                'time.Time': 'Ptr',
+                int32: 'Ptr[int32]',
+                int64: 'Ptr[int64]',
+                float32: 'Ptr[float32]',
+                float64: 'Ptr[float64]',
             };
 
             if ([SchemaType.Choice, SchemaType.SealedChoice].indexOf(schema.type) >= 0) {
-                ret += '.ToPtr()';
+                ret = `to.Ptr(${ret})`;
             } else if (Object.prototype.hasOwnProperty.call(ptrConverts, goType)) {
                 ret = `to.${ptrConverts[goType]}(${ret})`;
                 this.context.importManager.add('github.com/Azure/azure-sdk-for-go/sdk/azcore/to');

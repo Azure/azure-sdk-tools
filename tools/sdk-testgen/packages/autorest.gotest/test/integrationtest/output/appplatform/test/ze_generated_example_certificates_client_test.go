@@ -25,9 +25,12 @@ func ExampleCertificatesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -38,7 +41,7 @@ func ExampleCertificatesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CertificatesClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json
@@ -48,21 +51,24 @@ func ExampleCertificatesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		"<certificate-name>",
 		test.CertificateResource{
 			Properties: &test.CertificateProperties{
-				CertVersion:      to.StringPtr("<cert-version>"),
-				KeyVaultCertName: to.StringPtr("<key-vault-cert-name>"),
-				VaultURI:         to.StringPtr("<vault-uri>"),
+				CertVersion:      to.Ptr("<cert-version>"),
+				KeyVaultCertName: to.Ptr("<key-vault-cert-name>"),
+				VaultURI:         to.Ptr("<vault-uri>"),
 			},
 		},
-		nil)
+		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -73,7 +79,7 @@ func ExampleCertificatesClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CertificatesClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json
@@ -83,14 +89,17 @@ func ExampleCertificatesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		"<certificate-name>",
-		nil)
+		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -109,22 +118,22 @@ func ExampleCertificatesClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	client, err := test.NewCertificatesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<service-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

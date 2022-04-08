@@ -25,9 +25,12 @@ func ExampleBindingsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -39,7 +42,7 @@ func ExampleBindingsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.BindingsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json
@@ -49,9 +52,12 @@ func ExampleBindingsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -63,11 +69,11 @@ func ExampleBindingsClient_BeginCreateOrUpdate() {
 					"apiType":      "SQL",
 					"databaseName": "db1",
 				},
-				Key:        to.StringPtr("<key>"),
-				ResourceID: to.StringPtr("<resource-id>"),
+				Key:        to.Ptr("<key>"),
+				ResourceID: to.Ptr("<resource-id>"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -78,7 +84,7 @@ func ExampleBindingsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.BindingsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json
@@ -88,15 +94,18 @@ func ExampleBindingsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
 		"<binding-name>",
-		nil)
+		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -115,9 +124,12 @@ func ExampleBindingsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -129,10 +141,10 @@ func ExampleBindingsClient_BeginUpdate() {
 					"apiType":      "SQL",
 					"databaseName": "db1",
 				},
-				Key: to.StringPtr("<key>"),
+				Key: to.Ptr("<key>"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -143,7 +155,7 @@ func ExampleBindingsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.BindingsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
@@ -153,23 +165,23 @@ func ExampleBindingsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewBindingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewBindingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

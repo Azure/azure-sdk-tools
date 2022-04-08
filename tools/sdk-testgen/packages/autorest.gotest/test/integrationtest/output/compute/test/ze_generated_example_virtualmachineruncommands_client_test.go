@@ -25,21 +25,21 @@ func ExampleVirtualMachineRunCommandsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<location>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -53,9 +53,12 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<location>",
 		"<command-id>",
@@ -65,7 +68,7 @@ func ExampleVirtualMachineRunCommandsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineRunCommandsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json
@@ -75,35 +78,38 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
 		"<run-command-name>",
 		test.VirtualMachineRunCommand{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.VirtualMachineRunCommandProperties{
-				AsyncExecution: to.BoolPtr(false),
+				AsyncExecution: to.Ptr(false),
 				Parameters: []*test.RunCommandInputParameter{
 					{
-						Name:  to.StringPtr("<name>"),
-						Value: to.StringPtr("<value>"),
+						Name:  to.Ptr("<name>"),
+						Value: to.Ptr("<value>"),
 					},
 					{
-						Name:  to.StringPtr("<name>"),
-						Value: to.StringPtr("<value>"),
+						Name:  to.Ptr("<name>"),
+						Value: to.Ptr("<value>"),
 					}},
-				RunAsPassword: to.StringPtr("<run-as-password>"),
-				RunAsUser:     to.StringPtr("<run-as-user>"),
+				RunAsPassword: to.Ptr("<run-as-password>"),
+				RunAsUser:     to.Ptr("<run-as-user>"),
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.StringPtr("<script>"),
+					Script: to.Ptr("<script>"),
 				},
-				TimeoutInSeconds: to.Int32Ptr(3600),
+				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		nil)
+		&test.VirtualMachineRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -114,7 +120,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineRunCommandsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json
@@ -124,9 +130,12 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -134,11 +143,11 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 		test.VirtualMachineRunCommandUpdate{
 			Properties: &test.VirtualMachineRunCommandProperties{
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.StringPtr("<script>"),
+					Script: to.Ptr("<script>"),
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachineRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -149,7 +158,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineRunCommandsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json
@@ -159,14 +168,17 @@ func ExampleVirtualMachineRunCommandsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
 		"<run-command-name>",
-		nil)
+		&test.VirtualMachineRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -185,9 +197,12 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetByVirtualMachine(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
@@ -198,7 +213,7 @@ func ExampleVirtualMachineRunCommandsClient_GetByVirtualMachine() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineRunCommandsClientGetByVirtualMachineResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListRunCommandsInVM.json
@@ -208,22 +223,22 @@ func ExampleVirtualMachineRunCommandsClient_ListByVirtualMachine() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByVirtualMachine("<resource-group-name>",
 		"<vm-name>",
 		&test.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

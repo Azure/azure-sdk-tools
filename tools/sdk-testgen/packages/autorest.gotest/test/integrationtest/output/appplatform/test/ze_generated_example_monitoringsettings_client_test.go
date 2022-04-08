@@ -25,9 +25,12 @@ func ExampleMonitoringSettingsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -37,7 +40,7 @@ func ExampleMonitoringSettingsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.MonitoringSettingsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json
@@ -47,20 +50,23 @@ func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.StringPtr("<app-insights-instrumentation-key>"),
-				AppInsightsSamplingRate:       to.Float64Ptr(10),
-				TraceEnabled:                  to.BoolPtr(true),
+				AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+				AppInsightsSamplingRate:       to.Ptr[float64](10),
+				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -71,7 +77,7 @@ func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 		return
 	}
 	// TODO: use response item
-	_ = res.MonitoringSettingsClientUpdatePutResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json
@@ -81,20 +87,23 @@ func ExampleMonitoringSettingsClient_BeginUpdatePatch() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.StringPtr("<app-insights-instrumentation-key>"),
-				AppInsightsSamplingRate:       to.Float64Ptr(10),
-				TraceEnabled:                  to.BoolPtr(true),
+				AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+				AppInsightsSamplingRate:       to.Ptr[float64](10),
+				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -105,5 +114,5 @@ func ExampleMonitoringSettingsClient_BeginUpdatePatch() {
 		return
 	}
 	// TODO: use response item
-	_ = res.MonitoringSettingsClientUpdatePatchResult
+	_ = res
 }

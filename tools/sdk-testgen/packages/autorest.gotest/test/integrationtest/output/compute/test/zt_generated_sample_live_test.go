@@ -12,12 +12,9 @@ import (
 	"context"
 	"testing"
 
-	"time"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/stretchr/testify/suite"
@@ -41,8 +38,8 @@ func (testsuite *SampleTestSuite) SetupSuite() {
 	testsuite.cred, testsuite.options = testutil.GetCredAndClientOptions(testsuite.T())
 	testsuite.fakeStepVar = "signalrswaggertest4"
 	testsuite.resourceName = "signalrswaggertest4"
-	testsuite.location = testutil.GetEnv("LOCATION", "eastus")
-	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "")
+	testsuite.location = testutil.GetEnv("LOCATION", "westus")
+	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	testsuite.subscriptionId = testutil.GetEnv("AZURE_SUBSCRIPTION_ID", "")
 
 	testutil.StartRecording(testsuite.T(), "sdk/resourcemanager//test/testdata")
@@ -65,7 +62,8 @@ func TestSampleTestSuite(t *testing.T) {
 func (testsuite *SampleTestSuite) Prepare() {
 	var err error
 	// From step Delete-proximity-placement-group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	_, err = proximityPlacementGroupsClient.Delete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.resourceName,
@@ -107,23 +105,24 @@ func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceBasicCrud() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend, err := testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Generate_Unique_Name", &deployment)
 	testsuite.Require().NoError(err)
-	name = deploymentExtend.Properties.Outputs["name"].(map[string]interface{})["value"].(string)
-	testsuite.resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
+	name = deploymentExtend.Properties.Outputs.(map[string]interface{})["name"].(map[string]interface{})["value"].(string)
+	testsuite.resourceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["resourceName"].(map[string]interface{})["value"].(string)
 
 	// From step Create-or-Update-a-proximity-placement-group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	proximityPlacementGroupsClientCreateOrUpdateResponse, err := proximityPlacementGroupsClient.CreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.resourceName,
 		test.ProximityPlacementGroup{
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: to.Ptr(test.ProximityPlacementGroupTypeStandard),
 			},
 		},
 		nil)
@@ -138,78 +137,68 @@ func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceBasicCrud() {
 	testsuite.Require().NoError(err)
 
 	// From step Create_a_vm_with_Host_Encryption_using_encryptionAtHost_property
-	virtualMachinesClient := test.NewVirtualMachinesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	virtualMachinesClient, err := test.NewVirtualMachinesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	testsuite.fakeStepVar = "signalrswaggertest6"
-	virtualMachinesClientCreateOrUpdatePollerResponse, err := virtualMachinesClient.BeginCreateOrUpdate(testsuite.ctx,
+	virtualMachinesClientCreateOrUpdateResponse, err := virtualMachinesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		"myVM",
 		test.VirtualMachine{
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Plan: &test.Plan{
-				Name:      to.StringPtr(testsuite.fakeStepVar),
-				Product:   to.StringPtr("windows-data-science-vm"),
-				Publisher: to.StringPtr("microsoft-ads"),
+				Name:      to.Ptr(testsuite.fakeStepVar),
+				Product:   to.Ptr("windows-data-science-vm"),
+				Publisher: to.Ptr("microsoft-ads"),
 			},
 			Properties: &test.VirtualMachineProperties{
 				HardwareProfile: &test.HardwareProfile{
-					VMSize: test.VirtualMachineSizeTypesStandardDS1V2.ToPtr(),
+					VMSize: to.Ptr(test.VirtualMachineSizeTypesStandardDS1V2),
 				},
 				NetworkProfile: &test.NetworkProfile{
 					NetworkInterfaces: []*test.NetworkInterfaceReference{
 						{
-							ID: to.StringPtr("/subscriptions/" + testsuite.subscriptionId + "/resourceGroups/" + testsuite.resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
+							ID: to.Ptr("/subscriptions/" + testsuite.subscriptionId + "/resourceGroups/" + testsuite.resourceGroupName + "/providers/Microsoft.Network/networkInterfaces/{existing-nic-name}"),
 							Properties: &test.NetworkInterfaceReferenceProperties{
-								Primary: to.BoolPtr(true),
+								Primary: to.Ptr(true),
 							},
 						}},
 				},
 				OSProfile: &test.OSProfile{
-					AdminPassword: to.StringPtr("{your-password}"),
-					AdminUsername: to.StringPtr("{your-username}"),
-					ComputerName:  to.StringPtr("myVM"),
+					AdminPassword: to.Ptr("{your-password}"),
+					AdminUsername: to.Ptr("{your-username}"),
+					ComputerName:  to.Ptr("myVM"),
 				},
 				SecurityProfile: &test.SecurityProfile{
-					EncryptionAtHost: to.BoolPtr(true),
+					EncryptionAtHost: to.Ptr(true),
 				},
 				StorageProfile: &test.StorageProfile{
 					ImageReference: &test.ImageReference{
-						Offer:     to.StringPtr("windows-data-science-vm"),
-						Publisher: to.StringPtr(fakeScenarioVar),
-						SKU:       to.StringPtr("windows2016"),
-						Version:   to.StringPtr("latest"),
+						Offer:     to.Ptr("windows-data-science-vm"),
+						Publisher: to.Ptr(fakeScenarioVar),
+						SKU:       to.Ptr("windows2016"),
+						Version:   to.Ptr("latest"),
 					},
 					OSDisk: &test.OSDisk{
-						Name:         to.StringPtr("myVMosdisk"),
-						Caching:      test.CachingTypesReadOnly.ToPtr(),
-						CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
+						Name:         to.Ptr("myVMosdisk"),
+						Caching:      to.Ptr(test.CachingTypesReadOnly),
+						CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 						ManagedDisk: &test.ManagedDiskParameters{
-							StorageAccountType: test.StorageAccountTypesStandardLRS.ToPtr(),
+							StorageAccountType: to.Ptr(test.StorageAccountTypesStandardLRS),
 						},
 					},
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = virtualMachinesClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if virtualMachinesClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = virtualMachinesClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = virtualMachinesClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, virtualMachinesClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 }
 func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceDeleteonly() {
 	var err error
 	// From step Delete_proximity_placement_group
-	proximityPlacementGroupsClient := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	proximityPlacementGroupsClient, err := test.NewProximityPlacementGroupsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	_, err = proximityPlacementGroupsClient.Delete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.resourceName,

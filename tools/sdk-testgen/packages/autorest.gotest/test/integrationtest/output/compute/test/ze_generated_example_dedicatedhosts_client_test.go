@@ -25,26 +25,29 @@ func ExampleDedicatedHostsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDedicatedHostsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<host-group-name>",
 		"<host-name>",
 		test.DedicatedHost{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Tags: map[string]*string{
-				"department": to.StringPtr("HR"),
+				"department": to.Ptr("HR"),
 			},
 			Properties: &test.DedicatedHostProperties{
-				PlatformFaultDomain: to.Int32Ptr(1),
+				PlatformFaultDomain: to.Ptr[int32](1),
 			},
 			SKU: &test.SKU{
-				Name: to.StringPtr("<name>"),
+				Name: to.Ptr("<name>"),
 			},
 		},
-		nil)
+		&test.DedicatedHostsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -55,7 +58,7 @@ func ExampleDedicatedHostsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DedicatedHostsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHost.json
@@ -65,9 +68,12 @@ func ExampleDedicatedHostsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDedicatedHostsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<host-group-name>",
@@ -78,5 +84,5 @@ func ExampleDedicatedHostsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DedicatedHostsClientGetResult
+	_ = res
 }

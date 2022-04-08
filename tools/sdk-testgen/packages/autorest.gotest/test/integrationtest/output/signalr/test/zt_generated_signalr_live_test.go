@@ -12,12 +12,9 @@ import (
 	"context"
 	"testing"
 
-	"time"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/stretchr/testify/suite"
@@ -37,8 +34,8 @@ type SignalrTestSuite struct {
 func (testsuite *SignalrTestSuite) SetupSuite() {
 	testsuite.ctx = context.Background()
 	testsuite.cred, testsuite.options = testutil.GetCredAndClientOptions(testsuite.T())
-	testsuite.location = testutil.GetEnv("LOCATION", "eastus")
-	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "")
+	testsuite.location = testutil.GetEnv("LOCATION", "westus")
+	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	testsuite.subscriptionId = testutil.GetEnv("AZURE_SUBSCRIPTION_ID", "")
 
 	testutil.StartRecording(testsuite.T(), "sdk/resourcemanager//test/testdata")
@@ -86,121 +83,110 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend, err := testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Generate_Unique_Name", &deployment)
 	testsuite.Require().NoError(err)
-	resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
+	resourceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["resourceName"].(map[string]interface{})["value"].(string)
 
 	// From step SignalR_CheckNameAvailability
-	signalRClient := test.NewSignalRClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	signalRClient, err := test.NewSignalRClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	_, err = signalRClient.CheckNameAvailability(testsuite.ctx,
 		testsuite.location,
 		test.NameAvailabilityParameters{
-			Name: to.StringPtr(resourceName),
-			Type: to.StringPtr("Microsoft.SignalRService/SignalR"),
+			Name: to.Ptr(resourceName),
+			Type: to.Ptr("Microsoft.SignalRService/SignalR"),
 		},
 		nil)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_CreateOrUpdate
-	signalRClientCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
+	signalRClientCreateOrUpdateResponse, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
+				Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
 			},
-			Kind: test.ServiceKindSignalR.ToPtr(),
+			Kind: to.Ptr(test.ServiceKindSignalR),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
-						to.StringPtr("https://foo.com"),
-						to.StringPtr("https://bar.com")},
+						to.Ptr("https://foo.com"),
+						to.Ptr("https://bar.com")},
 				},
-				DisableAADAuth:   to.BoolPtr(false),
-				DisableLocalAuth: to.BoolPtr(false),
+				DisableAADAuth:   to.Ptr(false),
+				DisableLocalAuth: to.Ptr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("Serverless"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("True"),
+						Value:      to.Ptr("True"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLActionDeny.ToPtr(),
+					DefaultAction: to.Ptr(test.ACLActionDeny),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestTypeServerConnection.ToPtr()},
-							Name: to.StringPtr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								to.Ptr(test.SignalRRequestTypeServerConnection)},
+							Name: to.Ptr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestTypeClientConnection.ToPtr()},
+							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
+					ClientCertEnabled: to.Ptr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
+								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.StringPtr("api://example"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.StringPtr("*"),
-							EventPattern:    to.StringPtr("connect,disconnect"),
-							HubPattern:      to.StringPtr("*"),
-							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.StringPtr("Standard_S1"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+				Name:     to.Ptr("Standard_S1"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		nil)
+		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = signalRClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if signalRClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = signalRClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = signalRClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, signalRClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step SignalR_Get
 	_, err = signalRClient.Get(testsuite.ctx,
@@ -210,102 +196,90 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Update
-	signalRClientUpdatePollerResponse, err := signalRClient.BeginUpdate(testsuite.ctx,
+	signalRClientUpdateResponse, err := signalRClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
+				Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
 			},
-			Kind: test.ServiceKindSignalR.ToPtr(),
+			Kind: to.Ptr(test.ServiceKindSignalR),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
-						to.StringPtr("https://foo.com"),
-						to.StringPtr("https://bar.com")},
+						to.Ptr("https://foo.com"),
+						to.Ptr("https://bar.com")},
 				},
-				DisableAADAuth:   to.BoolPtr(false),
-				DisableLocalAuth: to.BoolPtr(false),
+				DisableAADAuth:   to.Ptr(false),
+				DisableLocalAuth: to.Ptr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("Serverless"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("True"),
+						Value:      to.Ptr("True"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLActionDeny.ToPtr(),
+					DefaultAction: to.Ptr(test.ACLActionDeny),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestTypeServerConnection.ToPtr()},
-							Name: to.StringPtr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								to.Ptr(test.SignalRRequestTypeServerConnection)},
+							Name: to.Ptr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestTypeClientConnection.ToPtr()},
+							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
+					ClientCertEnabled: to.Ptr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
+								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.StringPtr("api://example"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.StringPtr("*"),
-							EventPattern:    to.StringPtr("connect,disconnect"),
-							HubPattern:      to.StringPtr("*"),
-							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.StringPtr("Standard_S1"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+				Name:     to.Ptr("Standard_S1"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		nil)
+		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = signalRClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if signalRClientUpdatePollerResponse.Poller.Done() {
-				_, err = signalRClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = signalRClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, signalRClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step SignalR_ListKeys
 	_, err = signalRClient.ListKeys(testsuite.ctx,
@@ -315,112 +289,58 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_RegenerateKey
-	signalRClientRegenerateKeyPollerResponse, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
+	signalRClientRegenerateKeyResponse, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.RegenerateKeyParameters{
-			KeyType: test.KeyTypePrimary.ToPtr(),
+			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		nil)
+		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = signalRClientRegenerateKeyPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if signalRClientRegenerateKeyPollerResponse.Poller.Done() {
-				_, err = signalRClientRegenerateKeyPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = signalRClientRegenerateKeyPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, signalRClientRegenerateKeyResponse)
+	testsuite.Require().NoError(err)
 
 	// From step SignalR_Restart
-	signalRClientRestartPollerResponse, err := signalRClient.BeginRestart(testsuite.ctx,
+	signalRClientRestartResponse, err := signalRClient.BeginRestart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		nil)
+		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = signalRClientRestartPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if signalRClientRestartPollerResponse.Poller.Done() {
-				_, err = signalRClientRestartPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = signalRClientRestartPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, signalRClientRestartResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Usages_List
-	usagesClient := test.NewUsagesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	usagesClient, err := test.NewUsagesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	usagesClientListPager := usagesClient.List(testsuite.location,
 		nil)
-	for usagesClientListPager.NextPage(testsuite.ctx) {
-		err = usagesClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range usagesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for usagesClientListPager.More() {
 	}
 
 	// From step SignalR_ListByResourceGroup
 	signalRClientListByResourceGroupPager := signalRClient.ListByResourceGroup(testsuite.resourceGroupName,
 		nil)
-	for signalRClientListByResourceGroupPager.NextPage(testsuite.ctx) {
-		err = signalRClientListByResourceGroupPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range signalRClientListByResourceGroupPager.PageResponse().Value {
-			_ = v
-		}
+	for signalRClientListByResourceGroupPager.More() {
 	}
 
 	// From step SignalR_ListBySubscription
 	signalRClientListBySubscriptionPager := signalRClient.ListBySubscription(nil)
-	for signalRClientListBySubscriptionPager.NextPage(testsuite.ctx) {
-		err = signalRClientListBySubscriptionPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range signalRClientListBySubscriptionPager.PageResponse().Value {
-			_ = v
-		}
+	for signalRClientListBySubscriptionPager.More() {
 	}
 
 	// From step Operations_List
-	operationsClient := test.NewOperationsClient(testsuite.cred, testsuite.options)
+	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.NextPage(testsuite.ctx) {
-		err = operationsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range operationsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for operationsClientListPager.More() {
 	}
 
 	// From step SignalR_Delete
-	signalRClientDeletePollerResponse, err := signalRClient.BeginDelete(testsuite.ctx,
+	signalRClientDeleteResponse, err := signalRClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		nil)
+		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = signalRClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if signalRClientDeletePollerResponse.Poller.Done() {
-				_, err = signalRClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = signalRClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, signalRClientDeleteResponse)
+	testsuite.Require().NoError(err)
 }

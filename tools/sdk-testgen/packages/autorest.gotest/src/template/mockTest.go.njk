@@ -15,6 +15,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+    "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
     "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -41,20 +42,23 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
     })
 	{%- endif %}
 	{%- if loop.first %}
-	defer func() {
-		if r := recover(); r != nil {
-			t.Fatal("stacktrace from panic: \n" + string(debug.Stack()))
-		}
-	}()
-	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+    if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+        return
+	}
     {%- else %}
-    client = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
-	{%- endif %}
+    client, err = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+        return
+	}
+    {%- endif %}
 	{%- if example.returnInfo.length == 2 %}
         {%- if example.isLRO %}
             poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
         {%- else %}
-            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
+            {% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
         {%- endif %}
         if err != nil {
             t.Fatalf("Failed to get result for example {{example.originalFile}}: %v", err)
@@ -67,27 +71,19 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
         {%- endif %}
     {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
         pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersOutput}})
-        for {
-            nextResult := pager.NextPage(ctx)
-            if err := pager.Err(); err != nil {
+        for pager.More() {
+            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := pager.NextPage(ctx)
+            if err != nil {
                 t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
+                break
             }
             {%- if example.checkResponse and verifyResponse%}
             // Response check
-            if nextResult {
-                pagerExampleRes := {{example.responseOutput}}
-                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}}) {
-                    exampleResJson, _ := json.Marshal(pagerExampleRes)
-                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}pager.PageResponse().{{example.responseType}})
-                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-                }
-            } else {
-                t.Logf("Page end.")
-                break
-            }
-            {%- else %}
-            if !nextResult {
-                break
+            pagerExampleRes := {{example.responseOutput}}
+            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+                exampleResJson, _ := json.Marshal(pagerExampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
             }
             {%- endif %}
         }
@@ -96,27 +92,19 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
     {%- endif %}
 
     {%- if example.isLRO and example.isPageable and example.checkResponse %}
-        for {
-            nextResult := res.NextPage(ctx)
-            if err := res.Err(); err != nil {
+        for res.More() {
+            {% if example.checkResponse and verifyResponse%}nextResult{% else %}_{% endif %}, err := res.NextPage(ctx)
+            if err != nil {
                 t.Fatalf("Failed to advance page for example {{example.originalFile}}: %v", err)
+                break
             }
             {%- if example.checkResponse and verifyResponse%}
             // Response check
-            if nextResult {
-                pagerExampleRes := {{example.responseOutput}}
-                if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}}) {
-                    exampleResJson, _ := json.Marshal(pagerExampleRes)
-                    mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.PageResponse().{{example.responseType}})
-                    t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-                }
-            } else {
-                t.Logf("Page end.")
-                break
-            }
-            {%- else %}
-            if !nextResult {
-                break
+            pagerExampleRes := {{example.responseOutput}}
+            if !reflect.DeepEqual(pagerExampleRes, {% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+                exampleResJson, _ := json.Marshal(pagerExampleRes)
+                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}nextResult{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
             }
             {%- endif %}
         }
@@ -124,16 +112,11 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
         
     {%- if example.checkResponse and not example.isPageable and verifyResponse%}
         // Response check
-        {
-            exampleRes := {{example.responseOutput}}
-            {%- if example.responseHasLROState %}
-            exampleRes.Properties.ProvisioningState = {{packageName}}.ProvisioningStateSucceeded.ToPtr()
-            {%- endif %}
-            if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}}) {
-                exampleResJson, _ := json.Marshal(exampleRes)
-                mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res.{{example.responseType}})
-                t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
-            }
+        exampleRes {%- if loop.first %}:{% endif %}= {{example.responseOutput}}
+        if !reflect.DeepEqual(exampleRes, {% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %}) {
+            exampleResJson, _ := json.Marshal(exampleRes)
+            mockResJson, _ := json.Marshal({% if example.responseTypePointer %}*{% endif %}res{% if not example.responseIsDiscriminator %}.{{example.responseType}}{% endif %})
+            t.Fatalf("Mock response is not equal to example response for example {{example.originalFile}}:\nmock response: %s\nexample response: %s", mockResJson, exampleResJson)
         }
     {%- endif %}
     {%- if not loop.last %}
@@ -181,8 +164,15 @@ func setUp() {
 				IncludeBody: true,
 			},
 			Transport: client,
+            Cloud: cloud.Configuration{
+				Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+					cloud.ResourceManager: {
+						Audience: mockHost,
+						Endpoint: mockHost,
+					},
+				},
+			},
 		},
-		Endpoint: arm.Endpoint(mockHost),
 	}
 }
 

@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "3.0.0",
+      "tag": "@autorest/gotest_v3.0.0",
+      "date": "Thu, 07 Apr 2022 12:22:32 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Support latest GO codegen with generic feature."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.1",
       "tag": "@autorest/gotest_v2.2.1",
       "date": "Tue, 29 Mar 2022 01:56:58 GMT",

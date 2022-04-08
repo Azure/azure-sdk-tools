@@ -25,9 +25,12 @@ func ExampleCustomDomainsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -39,7 +42,7 @@ func ExampleCustomDomainsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CustomDomainsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json
@@ -49,9 +52,12 @@ func ExampleCustomDomainsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -59,11 +65,11 @@ func ExampleCustomDomainsClient_BeginCreateOrUpdate() {
 		"<domain-name>",
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName:   to.StringPtr("<cert-name>"),
-				Thumbprint: to.StringPtr("<thumbprint>"),
+				CertName:   to.Ptr("<cert-name>"),
+				Thumbprint: to.Ptr("<thumbprint>"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -74,7 +80,7 @@ func ExampleCustomDomainsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CustomDomainsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json
@@ -84,15 +90,18 @@ func ExampleCustomDomainsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
 		"<domain-name>",
-		nil)
+		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -111,9 +120,12 @@ func ExampleCustomDomainsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<service-name>",
@@ -121,11 +133,11 @@ func ExampleCustomDomainsClient_BeginUpdate() {
 		"<domain-name>",
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName:   to.StringPtr("<cert-name>"),
-				Thumbprint: to.StringPtr("<thumbprint>"),
+				CertName:   to.Ptr("<cert-name>"),
+				Thumbprint: to.Ptr("<thumbprint>"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -136,7 +148,7 @@ func ExampleCustomDomainsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CustomDomainsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
@@ -146,23 +158,23 @@ func ExampleCustomDomainsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	client, err := test.NewCustomDomainsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

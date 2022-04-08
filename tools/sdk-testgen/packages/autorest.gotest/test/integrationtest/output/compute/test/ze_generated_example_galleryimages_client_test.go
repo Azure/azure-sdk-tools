@@ -25,27 +25,30 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-image-name>",
 		test.GalleryImage{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.StringPtr("<offer>"),
-					Publisher: to.StringPtr("<publisher>"),
-					SKU:       to.StringPtr("<sku>"),
+					Offer:     to.Ptr("<offer>"),
+					Publisher: to.Ptr("<publisher>"),
+					SKU:       to.Ptr("<sku>"),
 				},
-				OSState: test.OperatingSystemStateTypesGeneralized.ToPtr(),
-				OSType:  test.OperatingSystemTypesWindows.ToPtr(),
+				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
+				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		nil)
+		&test.GalleryImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -56,7 +59,7 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryImagesClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json
@@ -66,26 +69,29 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-image-name>",
 		test.GalleryImageUpdate{
 			Properties: &test.GalleryImageProperties{
-				HyperVGeneration: test.HyperVGenerationV1.ToPtr(),
+				HyperVGeneration: to.Ptr(test.HyperVGenerationV1),
 				Identifier: &test.GalleryImageIdentifier{
-					Offer:     to.StringPtr("<offer>"),
-					Publisher: to.StringPtr("<publisher>"),
-					SKU:       to.StringPtr("<sku>"),
+					Offer:     to.Ptr("<offer>"),
+					Publisher: to.Ptr("<publisher>"),
+					SKU:       to.Ptr("<sku>"),
 				},
-				OSState: test.OperatingSystemStateTypesGeneralized.ToPtr(),
-				OSType:  test.OperatingSystemTypesWindows.ToPtr(),
+				OSState: to.Ptr(test.OperatingSystemStateTypesGeneralized),
+				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		nil)
+		&test.GalleryImagesClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -96,7 +102,7 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryImagesClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/GetAGalleryImage.json
@@ -106,9 +112,12 @@ func ExampleGalleryImagesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
@@ -119,7 +128,7 @@ func ExampleGalleryImagesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GalleryImagesClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json
@@ -129,14 +138,17 @@ func ExampleGalleryImagesClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-image-name>",
-		nil)
+		&test.GalleryImagesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -155,22 +167,22 @@ func ExampleGalleryImagesClient_ListByGallery() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByGallery("<resource-group-name>",
 		"<gallery-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

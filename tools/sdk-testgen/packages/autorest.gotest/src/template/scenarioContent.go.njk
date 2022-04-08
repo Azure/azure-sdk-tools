@@ -8,7 +8,8 @@ var err error
         {%- set example = step.exampleModel %}
         {%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.clientName) %}
         {%- if allVariables.indexOf(clientVariable)<0 %}
-    {{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}testsuite.cred, testsuite.options)
+    {{clientVariable}}, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}testsuite.cred, testsuite.options)
+    testsuite.Require().NoError(err)
         {%- set _ = allVariables.push(clientVariable) %}
         {%- endif %}
     {%- endif %}
@@ -38,42 +39,38 @@ var err error
             {%- set _ = allVariables.push(resVariable) %}
             {%- endif %}
             {%- endif %}
-            if recording.GetRecordMode() == recording.PlaybackMode {
-                for {
-                    _, err = {{pollerVariable}}.Poller.Poll(testsuite.ctx)
-                    testsuite.Require().NoError(err)
-                    if {{pollerVariable}}.Poller.Done() {
-                        {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = {{pollerVariable}}.Poller.FinalResponse(testsuite.ctx)
-                        testsuite.Require().NoError(err)
-                        break
-                    }
-                }
-            } else {
-                {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = {{pollerVariable}}.PollUntilDone(testsuite.ctx, 10*time.Second)
-                testsuite.Require().NoError(err)
-            }
+            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = testutil.PullResultForTest(ctx, {{pollerVariable}})
+            testsuite.Require().NoError(err)
             {%- endif %}
         {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-            {%- set pagerVariable = jsFunc.genVariableName(example.pageableType) %}
+            {%- set pagerVariable = clientVariable + example.opName + 'Pager' %}
             {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
-            for {{pagerVariable}}.NextPage(testsuite.ctx) {
-                err = {{pagerVariable}}.Err()
-                testsuite.Require().NoError(err)
-                for _, v := range {{pagerVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+            for {{pagerVariable}}.More() {
+                {%- if example.checkResponse %}
+                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
+                    testsuite.Require().NoError(err)
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set newVariableConfigs = variableConfigs.slice(1) %}
+                        {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- else %}
             {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
         {%- endif %}
 
         {%- if example.isLRO and example.isPageable %}
-            for {{resVariable}}.NextPage(testsuite.ctx) {
-                err = {{resVariable}}.Err()
-                testsuite.Require().NoError(err)
-                for _, v := range {{resVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+            for {{resVariable}}.More() {
+                {%- if example.checkResponse %}
+                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
+                    testsuite.Require().NoError(err)
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set newVariableConfigs = variableConfigs.slice(1) %}
+                        {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- endif %}
 
@@ -95,14 +92,14 @@ var err error
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
     {%- if step.armTemplatePayload.outputs %}
     deploymentExtend, err {%- if firstDeploymentOutput %}:{%- set firstDeploymentOutput = false %}{%- endif %}= testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "{{step.step}}", &deployment)
     testsuite.Require().NoError(err)
     {%- for k,v in step.armTemplatePayload.outputs %}
-    {% if globalVariables.indexOf(k)>=0 %}testsuite.{% endif %}{{k}} = deploymentExtend.Properties.Outputs["{{k}}"].(map[string]interface{})["value"].(string)
+    {% if globalVariables.indexOf(k)>=0 %}testsuite.{% endif %}{{k}} = deploymentExtend.Properties.Outputs.(map[string]interface{})["{{k}}"].(map[string]interface{})["value"].(string)
     {%- endfor %}
     {%- else %}
     _, err = testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "{{step.step}}", &deployment)

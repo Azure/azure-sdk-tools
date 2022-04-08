@@ -44,12 +44,10 @@ func (testsuite *{{testCaseName}}TestSuite) SetupSuite() {
     {%- endfor %}
     {%- for variable, _ in requiredVariablesDefault %}
     {%- if not variables.hasOwnProperty(variable) %}
-        {%- if variable === "location" %}
-        testsuite.location = testutil.GetEnv("LOCATION", "eastus")
-        {%- elif variable === "subscriptionId" %}
+        {%- if variable === "subscriptionId" %}
         testsuite.subscriptionId = testutil.GetEnv("AZURE_SUBSCRIPTION_ID", "")
         {%- else %}
-        testsuite.{{variable}} = testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault['variable']}}")
+        testsuite.{{variable}} = testutil.GetEnv("{{jsFunc.toSnakeCase(variable).toUpperCase()}}", "{{requiredVariablesDefault[variable]}}")
         {%- endif %}
     {%- endif %}
     {%- endfor %}

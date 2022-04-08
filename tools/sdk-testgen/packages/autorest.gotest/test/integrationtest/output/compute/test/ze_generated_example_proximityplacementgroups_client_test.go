@@ -23,16 +23,19 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
 		test.ProximityPlacementGroup{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.ProximityPlacementGroupProperties{
-				ProximityPlacementGroupType: test.ProximityPlacementGroupTypeStandard.ToPtr(),
+				ProximityPlacementGroupType: to.Ptr(test.ProximityPlacementGroupTypeStandard),
 			},
 		},
 		nil)
@@ -41,7 +44,7 @@ func ExampleProximityPlacementGroupsClient_CreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ProximityPlacementGroupsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PatchAProximityPlacementGroup.json
@@ -51,15 +54,18 @@ func ExampleProximityPlacementGroupsClient_Update() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Update(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
 		test.ProximityPlacementGroupUpdate{
 			Tags: map[string]*string{
-				"additionalProp1": to.StringPtr("string"),
+				"additionalProp1": to.Ptr("string"),
 			},
 		},
 		nil)
@@ -68,7 +74,7 @@ func ExampleProximityPlacementGroupsClient_Update() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ProximityPlacementGroupsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteAProximityPlacementGroup.json
@@ -78,9 +84,12 @@ func ExampleProximityPlacementGroupsClient_Delete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	_, err = client.Delete(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -98,9 +107,12 @@ func ExampleProximityPlacementGroupsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<proximity-placement-group-name>",
@@ -110,7 +122,7 @@ func ExampleProximityPlacementGroupsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.ProximityPlacementGroupsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListProximityPlacementGroupsInASubscription.json
@@ -120,20 +132,20 @@ func ExampleProximityPlacementGroupsClient_ListBySubscription() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListBySubscription(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -147,21 +159,21 @@ func ExampleProximityPlacementGroupsClient_ListByResourceGroup() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewProximityPlacementGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

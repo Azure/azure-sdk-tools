@@ -25,10 +25,12 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 		log.Fatalf("failed to obtain a credential: %v", err)
         return
 	}
-
 	ctx := context.Background()
-	client := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
-
+	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
+    if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+        return
+	}
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}
 	poller, err {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
@@ -48,16 +50,13 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	{%- endif %}
 	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
 	pager {% if loop.first %}:{% endif %}= client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
-	for {
-        nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+        nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
             return
 		}
-        if !nextResult {
-            break
-        }
-		for _, v := range pager.PageResponse().{{example.pageableItemName}} {
+		for _, v := range nextResult.{{example.pageableItemName}} {
             // TODO: use page item
             _ = v
 		}
@@ -66,16 +65,13 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	client.{{example.opName}}({{example.methodParametersPlaceholderOutput}})
 	{%- endif %}
     {%- if example.isLRO and example.isPageable and example.checkResponse %}
-    for {
-        nextResult := res.NextPage(ctx)
-		if err := res.Err(); err != nil {
+    for res.More() {
+        nextResult, err := res.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
             return
 		}
-        if !nextResult {
-            break
-        }
-		for _, v := range res.PageResponse().{{example.pageableItemName}} {
+		for _, v := range nextResult.{{example.pageableItemName}} {
             // TODO: use page item
             _ = v
 		}
@@ -83,7 +79,7 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
     {%- endif %}
 	{%- if example.checkResponse and not example.isPageable%}
     // TODO: use response item
-    _ = res.{% if example.isMultiRespOperation %}Value{% else %}{{example.operationGroup.language.go.clientName}}{{example.operation.language.go.name}}Result{% endif %}
+    _ = res
 	{%- endif %}
 }
 {% endif %}

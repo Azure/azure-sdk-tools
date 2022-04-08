@@ -22,22 +22,22 @@ func ExampleSharedGalleryImagesClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<location>",
 		"<gallery-unique-name>",
 		&test.SharedGalleryImagesClientListOptions{SharedTo: nil})
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -51,9 +51,12 @@ func ExampleSharedGalleryImagesClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
+	client, err := test.NewSharedGalleryImagesClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<location>",
 		"<gallery-unique-name>",
@@ -64,5 +67,5 @@ func ExampleSharedGalleryImagesClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SharedGalleryImagesClientGetResult
+	_ = res
 }

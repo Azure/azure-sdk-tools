@@ -25,36 +25,39 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<run-command-name>",
 		test.VirtualMachineRunCommand{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.VirtualMachineRunCommandProperties{
-				AsyncExecution: to.BoolPtr(false),
+				AsyncExecution: to.Ptr(false),
 				Parameters: []*test.RunCommandInputParameter{
 					{
-						Name:  to.StringPtr("<name>"),
-						Value: to.StringPtr("<value>"),
+						Name:  to.Ptr("<name>"),
+						Value: to.Ptr("<value>"),
 					},
 					{
-						Name:  to.StringPtr("<name>"),
-						Value: to.StringPtr("<value>"),
+						Name:  to.Ptr("<name>"),
+						Value: to.Ptr("<value>"),
 					}},
-				RunAsPassword: to.StringPtr("<run-as-password>"),
-				RunAsUser:     to.StringPtr("<run-as-user>"),
+				RunAsPassword: to.Ptr("<run-as-password>"),
+				RunAsUser:     to.Ptr("<run-as-user>"),
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.StringPtr("<script>"),
+					Script: to.Ptr("<script>"),
 				},
-				TimeoutInSeconds: to.Int32Ptr(3600),
+				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetVMRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -65,7 +68,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMRunCommandsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json
@@ -75,9 +78,12 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -86,11 +92,11 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 		test.VirtualMachineRunCommandUpdate{
 			Properties: &test.VirtualMachineRunCommandProperties{
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.StringPtr("<script>"),
+					Script: to.Ptr("<script>"),
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetVMRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -101,7 +107,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMRunCommandsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json
@@ -111,15 +117,18 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<run-command-name>",
-		nil)
+		&test.VirtualMachineScaleSetVMRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -138,9 +147,12 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -152,7 +164,7 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetVMRunCommandsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetVMRunCommands.json
@@ -162,23 +174,23 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		&test.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

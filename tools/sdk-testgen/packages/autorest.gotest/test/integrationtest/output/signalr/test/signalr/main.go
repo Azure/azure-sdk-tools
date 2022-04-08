@@ -26,8 +26,8 @@ var (
 	err               error
 	ctx               context.Context
 	cred              azcore.TokenCredential
-	location          = getEnv("LOCATION", "eastus")
-	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "")
+	location          = getEnv("LOCATION", "westus")
+	resourceGroupName = getEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	subscriptionId    = getEnv("AZURE_SUBSCRIPTION_ID", "")
 )
 
@@ -70,19 +70,22 @@ func signalrSample() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend := createDeployment("Generate_Unique_Name", &deployment)
-	resourceName = deploymentExtend.Properties.Outputs["resourceName"].(map[string]interface{})["value"].(string)
+	resourceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["resourceName"].(map[string]interface{})["value"].(string)
 
 	// From step SignalR_CheckNameAvailability
-	signalRClient := test.NewSignalRClient(subscriptionId, cred, nil)
+	signalRClient, err := test.NewSignalRClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	_, err = signalRClient.CheckNameAvailability(ctx,
 		location,
 		test.NameAvailabilityParameters{
-			Name: to.StringPtr(resourceName),
-			Type: to.StringPtr("Microsoft.SignalRService/SignalR"),
+			Name: to.Ptr(resourceName),
+			Type: to.Ptr("Microsoft.SignalRService/SignalR"),
 		},
 		nil)
 	if err != nil {
@@ -90,91 +93,91 @@ func signalrSample() {
 	}
 
 	// From step SignalR_CreateOrUpdate
-	signalRClientCreateOrUpdatePollerResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
+	signalRClientCreateOrUpdateResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
+				Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
 			},
-			Kind: test.ServiceKindSignalR.ToPtr(),
+			Kind: to.Ptr(test.ServiceKindSignalR),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
-						to.StringPtr("https://foo.com"),
-						to.StringPtr("https://bar.com")},
+						to.Ptr("https://foo.com"),
+						to.Ptr("https://bar.com")},
 				},
-				DisableAADAuth:   to.BoolPtr(false),
-				DisableLocalAuth: to.BoolPtr(false),
+				DisableAADAuth:   to.Ptr(false),
+				DisableLocalAuth: to.Ptr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("Serverless"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("True"),
+						Value:      to.Ptr("True"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLActionDeny.ToPtr(),
+					DefaultAction: to.Ptr(test.ACLActionDeny),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestTypeServerConnection.ToPtr()},
-							Name: to.StringPtr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								to.Ptr(test.SignalRRequestTypeServerConnection)},
+							Name: to.Ptr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestTypeClientConnection.ToPtr()},
+							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
+					ClientCertEnabled: to.Ptr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
+								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.StringPtr("api://example"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.StringPtr("*"),
-							EventPattern:    to.StringPtr("connect,disconnect"),
-							HubPattern:      to.StringPtr("*"),
-							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.StringPtr("Standard_S1"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+				Name:     to.Ptr("Standard_S1"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		nil)
+		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientCreateOrUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -189,91 +192,91 @@ func signalrSample() {
 	}
 
 	// From step SignalR_Update
-	signalRClientUpdatePollerResponse, err := signalRClient.BeginUpdate(ctx,
+	signalRClientUpdateResponse, err := signalRClient.BeginUpdate(ctx,
 		resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
-			Location: to.StringPtr(location),
+			Location: to.Ptr(location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Identity: &test.ManagedIdentity{
-				Type: test.ManagedIdentityTypeSystemAssigned.ToPtr(),
+				Type: to.Ptr(test.ManagedIdentityTypeSystemAssigned),
 			},
-			Kind: test.ServiceKindSignalR.ToPtr(),
+			Kind: to.Ptr(test.ServiceKindSignalR),
 			Properties: &test.SignalRProperties{
 				Cors: &test.SignalRCorsSettings{
 					AllowedOrigins: []*string{
-						to.StringPtr("https://foo.com"),
-						to.StringPtr("https://bar.com")},
+						to.Ptr("https://foo.com"),
+						to.Ptr("https://bar.com")},
 				},
-				DisableAADAuth:   to.BoolPtr(false),
-				DisableLocalAuth: to.BoolPtr(false),
+				DisableAADAuth:   to.Ptr(false),
+				DisableLocalAuth: to.Ptr(false),
 				Features: []*test.SignalRFeature{
 					{
-						Flag:       test.FeatureFlagsServiceMode.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsServiceMode),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("Serverless"),
+						Value:      to.Ptr("Serverless"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableConnectivityLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("True"),
+						Value:      to.Ptr("True"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableMessagingLogs.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableMessagingLogs),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					},
 					{
-						Flag:       test.FeatureFlagsEnableLiveTrace.ToPtr(),
+						Flag:       to.Ptr(test.FeatureFlagsEnableLiveTrace),
 						Properties: map[string]*string{},
-						Value:      to.StringPtr("False"),
+						Value:      to.Ptr("False"),
 					}},
 				NetworkACLs: &test.SignalRNetworkACLs{
-					DefaultAction: test.ACLActionDeny.ToPtr(),
+					DefaultAction: to.Ptr(test.ACLActionDeny),
 					PrivateEndpoints: []*test.PrivateEndpointACL{
 						{
 							Allow: []*test.SignalRRequestType{
-								test.SignalRRequestTypeServerConnection.ToPtr()},
-							Name: to.StringPtr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
+								to.Ptr(test.SignalRRequestTypeServerConnection)},
+							Name: to.Ptr(resourceName + ".1fa229cd-bf3f-47f0-8c49-afb36723997e"),
 						}},
 					PublicNetwork: &test.NetworkACL{
 						Allow: []*test.SignalRRequestType{
-							test.SignalRRequestTypeClientConnection.ToPtr()},
+							to.Ptr(test.SignalRRequestTypeClientConnection)},
 					},
 				},
-				PublicNetworkAccess: to.StringPtr("Enabled"),
+				PublicNetworkAccess: to.Ptr("Enabled"),
 				TLS: &test.SignalRTLSSettings{
-					ClientCertEnabled: to.BoolPtr(false),
+					ClientCertEnabled: to.Ptr(false),
 				},
 				Upstream: &test.ServerlessUpstreamSettings{
 					Templates: []*test.UpstreamTemplate{
 						{
 							Auth: &test.UpstreamAuthSettings{
-								Type: test.UpstreamAuthTypeManagedIdentity.ToPtr(),
+								Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
 								ManagedIdentity: &test.ManagedIdentitySettings{
-									Resource: to.StringPtr("api://example"),
+									Resource: to.Ptr("api://example"),
 								},
 							},
-							CategoryPattern: to.StringPtr("*"),
-							EventPattern:    to.StringPtr("connect,disconnect"),
-							HubPattern:      to.StringPtr("*"),
-							URLTemplate:     to.StringPtr("https://example.com/chat/api/connect"),
+							CategoryPattern: to.Ptr("*"),
+							EventPattern:    to.Ptr("connect,disconnect"),
+							HubPattern:      to.Ptr("*"),
+							URLTemplate:     to.Ptr("https://example.com/chat/api/connect"),
 						}},
 				},
 			},
 			SKU: &test.ResourceSKU{
-				Name:     to.StringPtr("Standard_S1"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     test.SignalRSKUTierStandard.ToPtr(),
+				Name:     to.Ptr("Standard_S1"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		nil)
+		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientUpdatePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -288,95 +291,73 @@ func signalrSample() {
 	}
 
 	// From step SignalR_RegenerateKey
-	signalRClientRegenerateKeyPollerResponse, err := signalRClient.BeginRegenerateKey(ctx,
+	signalRClientRegenerateKeyResponse, err := signalRClient.BeginRegenerateKey(ctx,
 		resourceGroupName,
 		resourceName,
 		test.RegenerateKeyParameters{
-			KeyType: test.KeyTypePrimary.ToPtr(),
+			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		nil)
+		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientRegenerateKeyPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientRegenerateKeyResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step SignalR_Restart
-	signalRClientRestartPollerResponse, err := signalRClient.BeginRestart(ctx,
+	signalRClientRestartResponse, err := signalRClient.BeginRestart(ctx,
 		resourceGroupName,
 		resourceName,
-		nil)
+		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientRestartPollerResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientRestartResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Usages_List
-	usagesClient := test.NewUsagesClient(subscriptionId, cred, nil)
+	usagesClient, err := test.NewUsagesClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	usagesClientListPager := usagesClient.List(location,
 		nil)
-	for usagesClientListPager.NextPage(ctx) {
-		err = usagesClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range usagesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for usagesClientListPager.More() {
 	}
 
 	// From step SignalR_ListByResourceGroup
 	signalRClientListByResourceGroupPager := signalRClient.ListByResourceGroup(resourceGroupName,
 		nil)
-	for signalRClientListByResourceGroupPager.NextPage(ctx) {
-		err = signalRClientListByResourceGroupPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range signalRClientListByResourceGroupPager.PageResponse().Value {
-			_ = v
-		}
+	for signalRClientListByResourceGroupPager.More() {
 	}
 
 	// From step SignalR_ListBySubscription
 	signalRClientListBySubscriptionPager := signalRClient.ListBySubscription(nil)
-	for signalRClientListBySubscriptionPager.NextPage(ctx) {
-		err = signalRClientListBySubscriptionPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range signalRClientListBySubscriptionPager.PageResponse().Value {
-			_ = v
-		}
+	for signalRClientListBySubscriptionPager.More() {
 	}
 
 	// From step Operations_List
-	operationsClient := test.NewOperationsClient(cred, nil)
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.NextPage(ctx) {
-		err = operationsClientListPager.Err()
-		if err != nil {
-			panic(err)
-		}
-		for _, v := range operationsClientListPager.PageResponse().Value {
-			_ = v
-		}
-	}
-
-	// From step SignalR_Delete
-	signalRClientDeletePollerResponse, err := signalRClient.BeginDelete(ctx,
-		resourceGroupName,
-		resourceName,
-		nil)
+	operationsClient, err := test.NewOperationsClient(cred, nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientDeletePollerResponse.PollUntilDone(ctx, 10*time.Second)
+	operationsClientListPager := operationsClient.List(nil)
+	for operationsClientListPager.More() {
+	}
+
+	// From step SignalR_Delete
+	signalRClientDeleteResponse, err := signalRClient.BeginDelete(ctx,
+		resourceGroupName,
+		resourceName,
+		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+	if err != nil {
+		panic(err)
+	}
+	_, err = signalRClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -385,11 +366,14 @@ func signalrSample() {
 func createResourceGroup() error {
 	rand.Seed(time.Now().UnixNano())
 	resourceGroupName = fmt.Sprintf("go-sdk-sample-%d", rand.Intn(1000))
-	rgClient := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	param := armresources.ResourceGroup{
-		Location: to.StringPtr(location),
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
 	}
-	_, err := rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
+	param := armresources.ResourceGroup{
+		Location: to.Ptr(location),
+	}
+	_, err = rgClient.CreateOrUpdate(ctx, resourceGroupName, param, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -397,8 +381,11 @@ func createResourceGroup() error {
 }
 
 func deleteResourceGroup() error {
-	resourceGroup := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
-	pollerResponse, err := resourceGroup.BeginDelete(ctx, resourceGroupName, nil)
+	rgClient, err := armresources.NewResourceGroupsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
+	pollerResponse, err := rgClient.BeginDelete(ctx, resourceGroupName, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -417,7 +404,10 @@ func getEnv(key, fallback string) string {
 }
 
 func createDeployment(deploymentName string, deployment *armresources.Deployment) *armresources.DeploymentExtended {
-	deployClient := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	deployClient, err := armresources.NewDeploymentsClient(subscriptionId, cred, nil)
+	if err != nil {
+		panic(err)
+	}
 	poller, err := deployClient.BeginCreateOrUpdate(
 		ctx,
 		resourceGroupName,

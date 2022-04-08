@@ -25,21 +25,21 @@ func ExampleVirtualMachineScaleSetsClient_ListByLocation() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByLocation("<location>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -53,58 +53,61 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		test.VirtualMachineScaleSet{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.VirtualMachineScaleSetProperties{
-				Overprovision: to.BoolPtr(true),
+				Overprovision: to.Ptr(true),
 				UpgradePolicy: &test.UpgradePolicy{
-					Mode: test.UpgradeModeManual.ToPtr(),
+					Mode: to.Ptr(test.UpgradeModeManual),
 				},
 				VirtualMachineProfile: &test.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &test.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*test.VirtualMachineScaleSetNetworkConfiguration{
 							{
-								Name: to.StringPtr("<name>"),
+								Name: to.Ptr("<name>"),
 								Properties: &test.VirtualMachineScaleSetNetworkConfigurationProperties{
-									EnableIPForwarding: to.BoolPtr(true),
+									EnableIPForwarding: to.Ptr(true),
 									IPConfigurations: []*test.VirtualMachineScaleSetIPConfiguration{
 										{
-											Name: to.StringPtr("<name>"),
+											Name: to.Ptr("<name>"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &test.APIEntityReference{
-													ID: to.StringPtr("<id>"),
+													ID: to.Ptr("<id>"),
 												},
 											},
 										}},
-									Primary: to.BoolPtr(true),
+									Primary: to.Ptr(true),
 								},
 							}},
 					},
 					OSProfile: &test.VirtualMachineScaleSetOSProfile{
-						AdminPassword:      to.StringPtr("<admin-password>"),
-						AdminUsername:      to.StringPtr("<admin-username>"),
-						ComputerNamePrefix: to.StringPtr("<computer-name-prefix>"),
+						AdminPassword:      to.Ptr("<admin-password>"),
+						AdminUsername:      to.Ptr("<admin-username>"),
+						ComputerNamePrefix: to.Ptr("<computer-name-prefix>"),
 					},
 					StorageProfile: &test.VirtualMachineScaleSetStorageProfile{
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
-							Name:         to.StringPtr("<name>"),
-							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
+							Name:         to.Ptr("<name>"),
+							Caching:      to.Ptr(test.CachingTypesReadWrite),
+							CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 							Image: &test.VirtualHardDisk{
-								URI: to.StringPtr("<uri>"),
+								URI: to.Ptr("<uri>"),
 							},
 						},
 					},
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -115,7 +118,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
@@ -125,13 +128,18 @@ func ExampleVirtualMachineScaleSetsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
+			ResumeToken: "",
+		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -150,9 +158,12 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
@@ -162,5 +173,5 @@ func ExampleVirtualMachineScaleSetsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.VirtualMachineScaleSetsClientGetResult
+	_ = res
 }

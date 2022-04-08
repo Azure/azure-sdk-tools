@@ -24,14 +24,19 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginWalkUpdateDomain(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		1,
-		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
+			ResumeToken: "",
+		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -50,9 +55,12 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.GetUpdateDomain(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
@@ -63,7 +71,7 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 		return
 	}
 	// TODO: use response item
-	_ = res.CloudServicesUpdateDomainClientGetUpdateDomainResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
@@ -73,22 +81,22 @@ func ExampleCloudServicesUpdateDomainClient_ListUpdateDomains() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListUpdateDomains("<resource-group-name>",
 		"<cloud-service-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

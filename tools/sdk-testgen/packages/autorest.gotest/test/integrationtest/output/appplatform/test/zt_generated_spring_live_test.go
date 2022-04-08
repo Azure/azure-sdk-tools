@@ -12,12 +12,9 @@ import (
 	"context"
 	"testing"
 
-	"time"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/internal/recording"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/testutil"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/stretchr/testify/suite"
@@ -56,9 +53,9 @@ func (testsuite *SpringTestSuite) SetupSuite() {
 	testsuite.customDomainName = testutil.GetEnv("CUSTOM_DOMAIN_NAME", "")
 	testsuite.dnsResourceGroup = testutil.GetEnv("DNS_RESOURCE_GROUP", "")
 	testsuite.dnsSubscriptionId = testutil.GetEnv("DNS_SUBSCRIPTION_ID", "")
-	testsuite.location = testutil.GetEnv("LOCATION", "eastus")
+	testsuite.location = testutil.GetEnv("LOCATION", "westus")
 	testsuite.mysqlKey = testutil.GetEnv("MYSQL_KEY", "")
-	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "")
+	testsuite.resourceGroupName = testutil.GetEnv("RESOURCE_GROUP_NAME", "scenarioTestTempGroup")
 	testsuite.subscriptionId = testutil.GetEnv("AZURE_SUBSCRIPTION_ID", "")
 	testsuite.userAssignedIdentity = testutil.GetEnv("USER_ASSIGNED_IDENTITY", "")
 
@@ -108,12 +105,12 @@ func (testsuite *SpringTestSuite) Prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend, err := testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Generate_Unique_ServiceName", &deployment)
 	testsuite.Require().NoError(err)
-	testsuite.serviceName = deploymentExtend.Properties.Outputs["serviceName"].(map[string]interface{})["value"].(string)
+	testsuite.serviceName = deploymentExtend.Properties.Outputs.(map[string]interface{})["serviceName"].(map[string]interface{})["value"].(string)
 
 	// From step Create_Application_Insight_Instance
 	template = map[string]interface{}{
@@ -155,12 +152,12 @@ func (testsuite *SpringTestSuite) Prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	deploymentExtend, err = testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Create_Application_Insight_Instance", &deployment)
 	testsuite.Require().NoError(err)
-	testsuite.insightsInstrumentationKey = deploymentExtend.Properties.Outputs["insightsInstrumentationKey"].(map[string]interface{})["value"].(string)
+	testsuite.insightsInstrumentationKey = deploymentExtend.Properties.Outputs.(map[string]interface{})["insightsInstrumentationKey"].(map[string]interface{})["value"].(string)
 
 	// From step Add_Dns_Cname_Record
 	template = map[string]interface{}{
@@ -225,7 +222,7 @@ func (testsuite *SpringTestSuite) Prepare() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_, err = testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Add_Dns_Cname_Record", &deployment)
@@ -237,47 +234,36 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	var uploadUrl string
 	var err error
 	// From step Services_CheckNameAvailability
-	servicesClient := test.NewServicesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	servicesClient, err := test.NewServicesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	_, err = servicesClient.CheckNameAvailability(testsuite.ctx,
 		testsuite.location,
 		test.NameAvailabilityParameters{
-			Name: to.StringPtr(testsuite.serviceName),
-			Type: to.StringPtr("Microsoft.AppPlatform/Spring"),
+			Name: to.Ptr(testsuite.serviceName),
+			Type: to.Ptr("Microsoft.AppPlatform/Spring"),
 		},
 		nil)
 	testsuite.Require().NoError(err)
 
 	// From step Services_CreateOrUpdate
-	servicesClientCreateOrUpdatePollerResponse, err := servicesClient.BeginCreateOrUpdate(testsuite.ctx,
+	servicesClientCreateOrUpdateResponse, err := servicesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ServiceResource{
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Tags: map[string]*string{
-				"key1": to.StringPtr("value1"),
+				"key1": to.Ptr("value1"),
 			},
 			Properties: &test.ClusterResourceProperties{},
 			SKU: &test.SKU{
-				Name: to.StringPtr("S0"),
-				Tier: to.StringPtr("Standard"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = servicesClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if servicesClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = servicesClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = servicesClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, servicesClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Services_Get
 	_, err = servicesClient.Get(testsuite.ctx,
@@ -287,35 +273,23 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Services_Update
-	servicesClientUpdatePollerResponse, err := servicesClient.BeginUpdate(testsuite.ctx,
+	servicesClientUpdateResponse, err := servicesClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ServiceResource{
 			Tags: map[string]*string{
-				"created-by": to.StringPtr("api-test"),
-				"hello":      to.StringPtr("world"),
+				"created-by": to.Ptr("api-test"),
+				"hello":      to.Ptr("world"),
 			},
 			SKU: &test.SKU{
-				Name: to.StringPtr("S0"),
-				Tier: to.StringPtr("Standard"),
+				Name: to.Ptr("S0"),
+				Tier: to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = servicesClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if servicesClientUpdatePollerResponse.Poller.Done() {
-				_, err = servicesClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = servicesClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, servicesClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Services_DisableTestEndpoint
 	_, err = servicesClient.DisableTestEndpoint(testsuite.ctx,
@@ -336,7 +310,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.RegenerateTestKeyRequestPayload{
-			KeyType: test.TestKeyTypePrimary.ToPtr(),
+			KeyType: to.Ptr(test.TestKeyTypePrimary),
 		},
 		nil)
 	testsuite.Require().NoError(err)
@@ -349,34 +323,23 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Certificates_CreateOrUpdate
-	certificatesClient := test.NewCertificatesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	certificatesClient, err := test.NewCertificatesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	certificateName := "asc-certificate"
-	certificatesClientCreateOrUpdatePollerResponse, err := certificatesClient.BeginCreateOrUpdate(testsuite.ctx,
+	certificatesClientCreateOrUpdateResponse, err := certificatesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		certificateName,
 		test.CertificateResource{
 			Properties: &test.CertificateProperties{
-				KeyVaultCertName: to.StringPtr("pfx-cert"),
-				VaultURI:         to.StringPtr("https://integration-test-prod.vault.azure.net/"),
+				KeyVaultCertName: to.Ptr("pfx-cert"),
+				VaultURI:         to.Ptr("https://integration-test-prod.vault.azure.net/"),
 			},
 		},
-		nil)
+		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = certificatesClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if certificatesClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = certificatesClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = certificatesClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, certificatesClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Certificates_Get
 	certificateName = "asc-certificate"
@@ -391,106 +354,66 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	certificatesClientListPager := certificatesClient.List(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for certificatesClientListPager.NextPage(testsuite.ctx) {
-		err = certificatesClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range certificatesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for certificatesClientListPager.More() {
 	}
 
 	// From step ConfigServers_Validate
-	configServersClient := test.NewConfigServersClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
-	configServersClientValidatePollerResponse, err := configServersClient.BeginValidate(testsuite.ctx,
+	configServersClient, err := test.NewConfigServersClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
+	configServersClientValidateResponse, err := configServersClient.BeginValidate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerSettings{
 			GitProperty: &test.ConfigServerGitProperty{
-				Label: to.StringPtr("master"),
+				Label: to.Ptr("master"),
 				SearchPaths: []*string{
-					to.StringPtr("/")},
-				URI: to.StringPtr("https://github.com/VSChina/asc-config-server-test-public.git"),
+					to.Ptr("/")},
+				URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = configServersClientValidatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if configServersClientValidatePollerResponse.Poller.Done() {
-				_, err = configServersClientValidatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = configServersClientValidatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, configServersClientValidateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_UpdatePut
-	configServersClientUpdatePutPollerResponse, err := configServersClient.BeginUpdatePut(testsuite.ctx,
+	configServersClientUpdatePutResponse, err := configServersClient.BeginUpdatePut(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						Label: to.StringPtr("master"),
+						Label: to.Ptr("master"),
 						SearchPaths: []*string{
-							to.StringPtr("/")},
-						URI: to.StringPtr("https://github.com/VSChina/asc-config-server-test-public.git"),
+							to.Ptr("/")},
+						URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = configServersClientUpdatePutPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if configServersClientUpdatePutPollerResponse.Poller.Done() {
-				_, err = configServersClientUpdatePutPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = configServersClientUpdatePutPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, configServersClientUpdatePutResponse)
+	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_UpdatePatch
-	configServersClientUpdatePatchPollerResponse, err := configServersClient.BeginUpdatePatch(testsuite.ctx,
+	configServersClientUpdatePatchResponse, err := configServersClient.BeginUpdatePatch(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.ConfigServerResource{
 			Properties: &test.ConfigServerProperties{
 				ConfigServer: &test.ConfigServerSettings{
 					GitProperty: &test.ConfigServerGitProperty{
-						URI: to.StringPtr("https://github.com/azure-samples/spring-petclinic-microservices-config"),
+						URI: to.Ptr("https://github.com/azure-samples/spring-petclinic-microservices-config"),
 					},
 				},
 			},
 		},
-		nil)
+		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = configServersClientUpdatePatchPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if configServersClientUpdatePatchPollerResponse.Poller.Done() {
-				_, err = configServersClientUpdatePatchPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = configServersClientUpdatePatchPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, configServersClientUpdatePatchResponse)
+	testsuite.Require().NoError(err)
 
 	// From step ConfigServers_Get
 	_, err = configServersClient.Get(testsuite.ctx,
@@ -500,33 +423,22 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step MonitoringSettings_UpdatePut
-	monitoringSettingsClient := test.NewMonitoringSettingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
-	monitoringSettingsClientUpdatePutPollerResponse, err := monitoringSettingsClient.BeginUpdatePut(testsuite.ctx,
+	monitoringSettingsClient, err := test.NewMonitoringSettingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
+	monitoringSettingsClientUpdatePutResponse, err := monitoringSettingsClient.BeginUpdatePut(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.StringPtr(testsuite.insightsInstrumentationKey),
-				AppInsightsSamplingRate:       to.Float64Ptr(50),
-				TraceEnabled:                  to.BoolPtr(true),
+				AppInsightsInstrumentationKey: to.Ptr(testsuite.insightsInstrumentationKey),
+				AppInsightsSamplingRate:       to.Ptr[float64](50),
+				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = monitoringSettingsClientUpdatePutPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if monitoringSettingsClientUpdatePutPollerResponse.Poller.Done() {
-				_, err = monitoringSettingsClientUpdatePutPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = monitoringSettingsClientUpdatePutPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, monitoringSettingsClientUpdatePutResponse)
+	testsuite.Require().NoError(err)
 
 	// From step MonitoringSettings_Get
 	_, err = monitoringSettingsClient.Get(testsuite.ctx,
@@ -536,68 +448,45 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step MonitoringSettings_UpdatePatch
-	monitoringSettingsClientUpdatePatchPollerResponse, err := monitoringSettingsClient.BeginUpdatePatch(testsuite.ctx,
+	monitoringSettingsClientUpdatePatchResponse, err := monitoringSettingsClient.BeginUpdatePatch(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsSamplingRate: to.Float64Ptr(100),
+				AppInsightsSamplingRate: to.Ptr[float64](100),
 			},
 		},
-		nil)
+		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = monitoringSettingsClientUpdatePatchPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if monitoringSettingsClientUpdatePatchPollerResponse.Poller.Done() {
-				_, err = monitoringSettingsClientUpdatePatchPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = monitoringSettingsClientUpdatePatchPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, monitoringSettingsClientUpdatePatchResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_Create
-	appsClient := test.NewAppsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
-	appsClientCreateOrUpdatePollerResponse, err := appsClient.BeginCreateOrUpdate(testsuite.ctx,
+	appsClient, err := test.NewAppsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
+	appsClientCreateOrUpdateResponse, err := appsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
-			Location: to.StringPtr(testsuite.location),
+			Location: to.Ptr(testsuite.location),
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("mydeployment1"),
-				EnableEndToEndTLS:    to.BoolPtr(false),
-				Fqdn:                 to.StringPtr(testsuite.appName + ".mydomain.com"),
-				HTTPSOnly:            to.BoolPtr(false),
-				Public:               to.BoolPtr(false),
+				ActiveDeploymentName: to.Ptr("mydeployment1"),
+				EnableEndToEndTLS:    to.Ptr(false),
+				Fqdn:                 to.Ptr(testsuite.appName + ".mydomain.com"),
+				HTTPSOnly:            to.Ptr(false),
+				Public:               to.Ptr(false),
 			},
 		},
-		nil)
+		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = appsClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if appsClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = appsClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = appsClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, appsClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_Get
 	_, err = appsClient.Get(testsuite.ctx,
@@ -608,9 +497,10 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_CreateOrUpdate_Default
-	deploymentsClient := test.NewDeploymentsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	deploymentsClient, err := test.NewDeploymentsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	deploymentName := "default"
-	deploymentsClientCreateOrUpdatePollerResponse, err := deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
+	deploymentsClientCreateOrUpdateResponse, err := deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -618,43 +508,31 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				DeploymentSettings: &test.DeploymentSettings{
-					CPU: to.Int32Ptr(1),
+					CPU: to.Ptr[int32](1),
 					EnvironmentVariables: map[string]*string{
-						"env": to.StringPtr("test"),
+						"env": to.Ptr("test"),
 					},
-					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
-					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
+					JvmOptions:     to.Ptr("-Xms1G -Xmx3G"),
+					MemoryInGB:     to.Ptr[int32](3),
+					RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceTypeJar.ToPtr(),
-					ArtifactSelector: to.StringPtr("sub-module-1"),
-					RelativePath:     to.StringPtr("<default>"),
-					Version:          to.StringPtr("1.0"),
+					Type:             to.Ptr(test.UserSourceTypeJar),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr("<default>"),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 			SKU: &test.SKU{
-				Name:     to.StringPtr("S0"),
-				Capacity: to.Int32Ptr(1),
-				Tier:     to.StringPtr("Standard"),
+				Name:     to.Ptr("S0"),
+				Capacity: to.Ptr[int32](1),
+				Tier:     to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = deploymentsClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Deployments_Get
 	deploymentName = "default"
@@ -667,92 +545,64 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Apps_Update_ActiveDeployment
-	appsClientUpdatePollerResponse, err := appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponse, err := appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("default"),
+				ActiveDeploymentName: to.Ptr("default"),
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = appsClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if appsClientUpdatePollerResponse.Poller.Done() {
-				_, err = appsClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = appsClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_Update_Disk
-	appsClientUpdatePollerResponse, err = appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponse, err = appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
 				PersistentDisk: &test.PersistentDisk{
-					MountPath: to.StringPtr("/data"),
-					SizeInGB:  to.Int32Ptr(10),
+					MountPath: to.Ptr("/data"),
+					SizeInGB:  to.Ptr[int32](10),
 				},
 				TemporaryDisk: &test.TemporaryDisk{
-					MountPath: to.StringPtr("/tmpdisk"),
-					SizeInGB:  to.Int32Ptr(3),
+					MountPath: to.Ptr("/tmpdisk"),
+					SizeInGB:  to.Ptr[int32](3),
 				},
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = appsClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if appsClientUpdatePollerResponse.Poller.Done() {
-				_, err = appsClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = appsClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_List
 	appsClientListPager := appsClient.List(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for appsClientListPager.NextPage(testsuite.ctx) {
-		err = appsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range appsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for appsClientListPager.More() {
 	}
 
 	// From step Bindings_Create
-	bindingsClient := test.NewBindingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	bindingsClient, err := test.NewBindingsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	bindingName := "mysql-binding"
-	bindingsClientCreateOrUpdatePollerResponse, err := bindingsClient.BeginCreateOrUpdate(testsuite.ctx,
+	bindingsClientCreateOrUpdateResponse, err := bindingsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -763,30 +613,18 @@ func (testsuite *SpringTestSuite) TestSpring() {
 					"databaseName": "mysqldb",
 					"username":     "test",
 				},
-				Key:        to.StringPtr(testsuite.mysqlKey),
-				ResourceID: to.StringPtr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
+				Key:        to.Ptr(testsuite.mysqlKey),
+				ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = bindingsClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if bindingsClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = bindingsClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = bindingsClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, bindingsClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Bindings_Update
 	bindingName = "mysql-binding"
-	bindingsClientUpdatePollerResponse, err := bindingsClient.BeginUpdate(testsuite.ctx,
+	bindingsClientUpdateResponse, err := bindingsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -797,26 +635,14 @@ func (testsuite *SpringTestSuite) TestSpring() {
 					"databaseName": "mysqldb2",
 					"username":     "test2",
 				},
-				Key:        to.StringPtr(testsuite.mysqlKey),
-				ResourceID: to.StringPtr("/subscriptions/" + testsuite.subscriptionId + "/resourceGroups/" + testsuite.resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
+				Key:        to.Ptr(testsuite.mysqlKey),
+				ResourceID: to.Ptr("/subscriptions/" + testsuite.subscriptionId + "/resourceGroups/" + testsuite.resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		nil)
+		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = bindingsClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if bindingsClientUpdatePollerResponse.Poller.Done() {
-				_, err = bindingsClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = bindingsClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, bindingsClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Bindings_Get
 	bindingName = "mysql-binding"
@@ -833,37 +659,20 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for bindingsClientListPager.NextPage(testsuite.ctx) {
-		err = bindingsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range bindingsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for bindingsClientListPager.More() {
 	}
 
 	// From step Bindings_Delete
 	bindingName = "mysql-binding"
-	bindingsClientDeletePollerResponse, err := bindingsClient.BeginDelete(testsuite.ctx,
+	bindingsClientDeleteResponse, err := bindingsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		bindingName,
-		nil)
+		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = bindingsClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if bindingsClientDeletePollerResponse.Poller.Done() {
-				_, err = bindingsClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = bindingsClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, bindingsClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_ValidateDomain
 	_, err = appsClient.ValidateDomain(testsuite.ctx,
@@ -871,69 +680,46 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		testsuite.appName,
 		test.CustomDomainValidatePayload{
-			Name: to.StringPtr(testsuite.customDomainName),
+			Name: to.Ptr(testsuite.customDomainName),
 		},
 		nil)
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_CreateOrUpdate
-	customDomainsClient := test.NewCustomDomainsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	customDomainsClient, err := test.NewCustomDomainsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	domainName := testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientCreateOrUpdatePollerResponse, err := customDomainsClient.BeginCreateOrUpdate(testsuite.ctx,
+	customDomainsClientCreateOrUpdateResponse, err := customDomainsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		domainName,
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName: to.StringPtr("asc-certificate"),
+				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = customDomainsClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if customDomainsClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = customDomainsClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = customDomainsClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, customDomainsClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Update
 	domainName = testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientUpdatePollerResponse, err := customDomainsClient.BeginUpdate(testsuite.ctx,
+	customDomainsClientUpdateResponse, err := customDomainsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		domainName,
 		test.CustomDomainResource{
 			Properties: &test.CustomDomainProperties{
-				CertName: to.StringPtr("asc-certificate"),
+				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		nil)
+		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = customDomainsClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if customDomainsClientUpdatePollerResponse.Poller.Done() {
-				_, err = customDomainsClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = customDomainsClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, customDomainsClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Get
 	domainName = testsuite.dnsCname + "." + testsuite.customDomainName
@@ -950,12 +736,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for customDomainsClientListPager.NextPage(testsuite.ctx) {
-		err = customDomainsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range customDomainsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for customDomainsClientListPager.More() {
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -1023,7 +804,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_, err = testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "Upload_File", &deployment)
@@ -1031,7 +812,7 @@ func (testsuite *SpringTestSuite) TestSpring() {
 
 	// From step Deployments_CreateOrUpdate
 	deploymentName = "blue"
-	deploymentsClientCreateOrUpdatePollerResponse, err = deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
+	deploymentsClientCreateOrUpdateResponse, err = deploymentsClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
@@ -1039,147 +820,87 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				DeploymentSettings: &test.DeploymentSettings{
-					CPU: to.Int32Ptr(1),
+					CPU: to.Ptr[int32](1),
 					EnvironmentVariables: map[string]*string{
-						"env": to.StringPtr("test"),
+						"env": to.Ptr("test"),
 					},
-					JvmOptions:     to.StringPtr("-Xms1G -Xmx3G"),
-					MemoryInGB:     to.Int32Ptr(3),
-					RuntimeVersion: test.RuntimeVersionJava8.ToPtr(),
+					JvmOptions:     to.Ptr("-Xms1G -Xmx3G"),
+					MemoryInGB:     to.Ptr[int32](3),
+					RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
 				},
 				Source: &test.UserSourceInfo{
-					Type:             test.UserSourceTypeJar.ToPtr(),
-					ArtifactSelector: to.StringPtr("sub-module-1"),
-					RelativePath:     to.StringPtr(relativePath),
-					Version:          to.StringPtr("1.0"),
+					Type:             to.Ptr(test.UserSourceTypeJar),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr(relativePath),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 			SKU: &test.SKU{
-				Name:     to.StringPtr("S0"),
-				Capacity: to.Int32Ptr(2),
-				Tier:     to.StringPtr("Standard"),
+				Name:     to.Ptr("S0"),
+				Capacity: to.Ptr[int32](2),
+				Tier:     to.Ptr("Standard"),
 			},
 		},
-		nil)
+		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientCreateOrUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientCreateOrUpdatePollerResponse.Poller.Done() {
-				_, err = deploymentsClientCreateOrUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientCreateOrUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientCreateOrUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_Update
-	appsClientUpdatePollerResponse, err = appsClient.BeginUpdate(testsuite.ctx,
+	appsClientUpdateResponse, err = appsClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		test.AppResource{
 			Identity: &test.ManagedIdentityProperties{
-				Type:        test.ManagedIdentityTypeSystemAssigned.ToPtr(),
-				PrincipalID: to.StringPtr("principalid"),
-				TenantID:    to.StringPtr("tenantid"),
+				Type:        to.Ptr(test.ManagedIdentityTypeSystemAssigned),
+				PrincipalID: to.Ptr("principalid"),
+				TenantID:    to.Ptr("tenantid"),
 			},
 			Properties: &test.AppResourceProperties{
-				ActiveDeploymentName: to.StringPtr("blue"),
+				ActiveDeploymentName: to.Ptr("blue"),
 			},
 		},
-		nil)
+		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = appsClientUpdatePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if appsClientUpdatePollerResponse.Poller.Done() {
-				_, err = appsClientUpdatePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = appsClientUpdatePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, appsClientUpdateResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Deployments_Restart
 	deploymentName = "blue"
-	deploymentsClientRestartPollerResponse, err := deploymentsClient.BeginRestart(testsuite.ctx,
+	deploymentsClientRestartResponse, err := deploymentsClient.BeginRestart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientRestartPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientRestartPollerResponse.Poller.Done() {
-				_, err = deploymentsClientRestartPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientRestartPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientRestartResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Deployments_Stop
 	deploymentName = "blue"
-	deploymentsClientStopPollerResponse, err := deploymentsClient.BeginStop(testsuite.ctx,
+	deploymentsClientStopResponse, err := deploymentsClient.BeginStop(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientStopPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientStopPollerResponse.Poller.Done() {
-				_, err = deploymentsClientStopPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientStopPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientStopResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Deployments_Start
 	deploymentName = "blue"
-	deploymentsClientStartPollerResponse, err := deploymentsClient.BeginStart(testsuite.ctx,
+	deploymentsClientStartResponse, err := deploymentsClient.BeginStart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientStartPollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientStartPollerResponse.Poller.Done() {
-				_, err = deploymentsClientStartPollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientStartPollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientStartResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Deployments_GetLogFileUrl
 	deploymentName = "blue"
@@ -1196,182 +917,94 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		testsuite.appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
-	for deploymentsClientListPager.NextPage(testsuite.ctx) {
-		err = deploymentsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range deploymentsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for deploymentsClientListPager.More() {
 	}
 
 	// From step Deployments_ListForCluster
 	deploymentsClientListForClusterPager := deploymentsClient.ListForCluster(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
-	for deploymentsClientListForClusterPager.NextPage(testsuite.ctx) {
-		err = deploymentsClientListForClusterPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range deploymentsClientListForClusterPager.PageResponse().Value {
-			_ = v
-		}
+	for deploymentsClientListForClusterPager.More() {
 	}
 
 	// From step Services_List
 	servicesClientListPager := servicesClient.List(testsuite.resourceGroupName,
 		nil)
-	for servicesClientListPager.NextPage(testsuite.ctx) {
-		err = servicesClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range servicesClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for servicesClientListPager.More() {
 	}
 
 	// From step Services_ListBySubscription
 	servicesClientListBySubscriptionPager := servicesClient.ListBySubscription(nil)
-	for servicesClientListBySubscriptionPager.NextPage(testsuite.ctx) {
-		err = servicesClientListBySubscriptionPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range servicesClientListBySubscriptionPager.PageResponse().Value {
-			_ = v
-		}
+	for servicesClientListBySubscriptionPager.More() {
 	}
 
 	// From step Deployments_Delete
 	deploymentName = "blue"
-	deploymentsClientDeletePollerResponse, err := deploymentsClient.BeginDelete(testsuite.ctx,
+	deploymentsClientDeleteResponse, err := deploymentsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		deploymentName,
-		nil)
+		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = deploymentsClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if deploymentsClientDeletePollerResponse.Poller.Done() {
-				_, err = deploymentsClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = deploymentsClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, deploymentsClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_Delete
 	domainName = testsuite.dnsCname + "." + testsuite.customDomainName
-	customDomainsClientDeletePollerResponse, err := customDomainsClient.BeginDelete(testsuite.ctx,
+	customDomainsClientDeleteResponse, err := customDomainsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		domainName,
-		nil)
+		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = customDomainsClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if customDomainsClientDeletePollerResponse.Poller.Done() {
-				_, err = customDomainsClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = customDomainsClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, customDomainsClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Apps_Delete
 	testsuite.appName = "app01"
-	appsClientDeletePollerResponse, err := appsClient.BeginDelete(testsuite.ctx,
+	appsClientDeleteResponse, err := appsClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
-		nil)
+		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = appsClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if appsClientDeletePollerResponse.Poller.Done() {
-				_, err = appsClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = appsClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, appsClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Certificates_Delete
 	certificateName = "asc-certificate"
-	certificatesClientDeletePollerResponse, err := certificatesClient.BeginDelete(testsuite.ctx,
+	certificatesClientDeleteResponse, err := certificatesClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
 		certificateName,
-		nil)
+		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = certificatesClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if certificatesClientDeletePollerResponse.Poller.Done() {
-				_, err = certificatesClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = certificatesClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, certificatesClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Services_Delete
-	servicesClientDeletePollerResponse, err := servicesClient.BeginDelete(testsuite.ctx,
+	servicesClientDeleteResponse, err := servicesClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		testsuite.serviceName,
-		nil)
+		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
 	testsuite.Require().NoError(err)
-	if recording.GetRecordMode() == recording.PlaybackMode {
-		for {
-			_, err = servicesClientDeletePollerResponse.Poller.Poll(testsuite.ctx)
-			testsuite.Require().NoError(err)
-			if servicesClientDeletePollerResponse.Poller.Done() {
-				_, err = servicesClientDeletePollerResponse.Poller.FinalResponse(testsuite.ctx)
-				testsuite.Require().NoError(err)
-				break
-			}
-		}
-	} else {
-		_, err = servicesClientDeletePollerResponse.PollUntilDone(testsuite.ctx, 10*time.Second)
-		testsuite.Require().NoError(err)
-	}
+	_, err = testutil.PullResultForTest(ctx, servicesClientDeleteResponse)
+	testsuite.Require().NoError(err)
 
 	// From step Skus_List
-	sKUsClient := test.NewSKUsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	sKUsClient, err := test.NewSKUsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	sKUsClientListPager := sKUsClient.List(nil)
-	for sKUsClientListPager.NextPage(testsuite.ctx) {
-		err = sKUsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range sKUsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for sKUsClientListPager.More() {
 	}
 
 	// From step Operations_List
-	operationsClient := test.NewOperationsClient(testsuite.cred, testsuite.options)
+	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
+	testsuite.Require().NoError(err)
 	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.NextPage(testsuite.ctx) {
-		err = operationsClientListPager.Err()
-		testsuite.Require().NoError(err)
-		for _, v := range operationsClientListPager.PageResponse().Value {
-			_ = v
-		}
+	for operationsClientListPager.More() {
 	}
 }
 
@@ -1436,7 +1069,7 @@ func (testsuite *SpringTestSuite) Cleanup() {
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
 	_, err = testutil.CreateDeployment(testsuite.ctx, testsuite.subscriptionId, testsuite.cred, testsuite.options, testsuite.resourceGroupName, "delete_cname_record", &deployment)

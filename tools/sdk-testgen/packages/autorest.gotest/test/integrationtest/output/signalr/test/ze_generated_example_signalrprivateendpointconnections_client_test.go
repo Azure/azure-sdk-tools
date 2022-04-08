@@ -25,22 +25,22 @@ func ExampleSignalRPrivateEndpointConnectionsClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List("<resource-group-name>",
 		"<resource-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -54,9 +54,12 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<private-endpoint-connection-name>",
 		"<resource-group-name>",
@@ -67,7 +70,7 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SignalRPrivateEndpointConnectionsClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Update.json
@@ -77,9 +80,12 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Update(ctx,
 		"<private-endpoint-connection-name>",
 		"<resource-group-name>",
@@ -87,11 +93,11 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 		test.PrivateEndpointConnection{
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
-					ID: to.StringPtr("<id>"),
+					ID: to.Ptr("<id>"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-					ActionsRequired: to.StringPtr("<actions-required>"),
-					Status:          test.PrivateLinkServiceConnectionStatusApproved.ToPtr(),
+					ActionsRequired: to.Ptr("<actions-required>"),
+					Status:          to.Ptr(test.PrivateLinkServiceConnectionStatusApproved),
 				},
 			},
 		},
@@ -101,7 +107,7 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 		return
 	}
 	// TODO: use response item
-	_ = res.SignalRPrivateEndpointConnectionsClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json
@@ -111,14 +117,17 @@ func ExampleSignalRPrivateEndpointConnectionsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<private-endpoint-connection-name>",
 		"<resource-group-name>",
 		"<resource-name>",
-		nil)
+		&test.SignalRPrivateEndpointConnectionsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return

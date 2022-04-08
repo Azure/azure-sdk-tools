@@ -23,23 +23,26 @@ func ExampleDedicatedHostGroupsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.CreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<host-group-name>",
 		test.DedicatedHostGroup{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Tags: map[string]*string{
-				"department": to.StringPtr("finance"),
+				"department": to.Ptr("finance"),
 			},
 			Properties: &test.DedicatedHostGroupProperties{
-				PlatformFaultDomainCount:  to.Int32Ptr(3),
-				SupportAutomaticPlacement: to.BoolPtr(true),
+				PlatformFaultDomainCount:  to.Ptr[int32](3),
+				SupportAutomaticPlacement: to.Ptr(true),
 			},
 			Zones: []*string{
-				to.StringPtr("1")},
+				to.Ptr("1")},
 		},
 		nil)
 	if err != nil {
@@ -47,7 +50,7 @@ func ExampleDedicatedHostGroupsClient_CreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DedicatedHostGroupsClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetADedicatedHostGroup.json
@@ -57,9 +60,12 @@ func ExampleDedicatedHostGroupsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<host-group-name>",
@@ -69,5 +75,5 @@ func ExampleDedicatedHostGroupsClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DedicatedHostGroupsClientGetResult
+	_ = res
 }

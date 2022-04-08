@@ -25,24 +25,27 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<disk-name>",
 		test.Disk{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
-					CreateOption: test.DiskCreateOptionEmpty.ToPtr(),
+					CreateOption: to.Ptr(test.DiskCreateOptionEmpty),
 				},
-				DiskAccessID:        to.StringPtr("<disk-access-id>"),
-				DiskSizeGB:          to.Int32Ptr(200),
-				NetworkAccessPolicy: test.NetworkAccessPolicyAllowPrivate.ToPtr(),
+				DiskAccessID:        to.Ptr("<disk-access-id>"),
+				DiskSizeGB:          to.Ptr[int32](200),
+				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowPrivate),
 			},
 		},
-		nil)
+		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -53,7 +56,7 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DisksClientCreateOrUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json
@@ -63,19 +66,22 @@ func ExampleDisksClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<disk-name>",
 		test.DiskUpdate{
 			Properties: &test.DiskUpdateProperties{
-				BurstingEnabled: to.BoolPtr(true),
-				DiskSizeGB:      to.Int32Ptr(1024),
+				BurstingEnabled: to.Ptr(true),
+				DiskSizeGB:      to.Ptr[int32](1024),
 			},
 		},
-		nil)
+		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -86,7 +92,7 @@ func ExampleDisksClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DisksClientUpdateResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/GetInformationAboutAManagedDisk.json
@@ -96,9 +102,12 @@ func ExampleDisksClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<disk-name>",
@@ -108,7 +117,7 @@ func ExampleDisksClient_Get() {
 		return
 	}
 	// TODO: use response item
-	_ = res.DisksClientGetResult
+	_ = res
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ListManagedDisksInAResourceGroup.json
@@ -118,21 +127,21 @@ func ExampleDisksClient_ListByResourceGroup() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.ListByResourceGroup("<resource-group-name>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}
@@ -146,20 +155,20 @@ func ExampleDisksClient_List() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	pager := client.List(nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 			return
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
+		for _, v := range nextResult.Value {
 			// TODO: use page item
 			_ = v
 		}

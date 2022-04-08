@@ -25,28 +25,31 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewGallerySharingProfileClient("<subscription-id>", cred, nil)
+	client, err := test.NewGallerySharingProfileClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
 		test.SharingUpdate{
 			Groups: []*test.SharingProfileGroup{
 				{
-					Type: test.SharingProfileGroupTypesSubscriptions.ToPtr(),
+					Type: to.Ptr(test.SharingProfileGroupTypesSubscriptions),
 					IDs: []*string{
-						to.StringPtr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
-						to.StringPtr("380fd389-260b-41aa-bad9-0a83108c370b")},
+						to.Ptr("34a4ab42-0d72-47d9-bd1a-aed207386dac"),
+						to.Ptr("380fd389-260b-41aa-bad9-0a83108c370b")},
 				},
 				{
-					Type: test.SharingProfileGroupTypesAADTenants.ToPtr(),
+					Type: to.Ptr(test.SharingProfileGroupTypesAADTenants),
 					IDs: []*string{
-						to.StringPtr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
+						to.Ptr("c24c76aa-8897-4027-9b03-8f7928b54ff6")},
 				}},
-			OperationType: test.SharingUpdateOperationTypesAdd.ToPtr(),
+			OperationType: to.Ptr(test.SharingUpdateOperationTypesAdd),
 		},
-		nil)
+		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 		return
@@ -57,5 +60,5 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 		return
 	}
 	// TODO: use response item
-	_ = res.GallerySharingProfileClientUpdateResult
+	_ = res
 }

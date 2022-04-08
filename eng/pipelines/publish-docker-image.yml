@@ -83,7 +83,7 @@ jobs:
                   command: push
                   tags: ${{ stableTag }}
 
-  - ${{ if parameters.ManifestDeployment and parameters.Publish }}:
+  - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
     - ${{ each deployment in parameters.ManifestDeployment }}:
       - job: container_build_${{ deployment.name }}
         displayName: Build ${{ deployment.name }} Manifest

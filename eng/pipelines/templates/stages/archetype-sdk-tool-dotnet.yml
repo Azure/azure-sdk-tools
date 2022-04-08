@@ -27,6 +27,9 @@ parameters:
   - name: DockerTagPrefix
     type: string
     default: '1.0.0-dev'
+  - name: ManifestDeployment
+    type: object
+    default: []
 
 variables:
   - template: ../variables/globals.yml
@@ -114,4 +117,5 @@ stages:
         - template: /eng/pipelines/publish-docker-image.yml
           parameters:
             DockerDeployments: ${{ parameters.DockerDeployments }}
+            ManifestDeployment: ${{ parameters.ManifestDeployment }}
             ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

@@ -35,6 +35,7 @@ export interface ExampleExtensionResponse {
 export interface ExampleExtension {
     parameters?: Record<string, any>;
     responses?: Record<string, ExampleExtensionResponse>;
+    // eslint-disable-next-line
     'x-ms-original-file'?: string;
 }
 

@@ -37,6 +37,10 @@ if (-not ($DockerDeploymentJson)){
   exit(1)
 }
 
+if (-not ($ImageTag)){
+  Write-Error "Cannot generate a manifest targeting dependent tags without a tag to target."
+}
+
 $configs = $DockerDeploymentJson | ConvertFrom-Json
 
 foreach($config in $configs){

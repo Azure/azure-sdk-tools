@@ -3,7 +3,7 @@
 #   pool: 'azsdk-pool-mms-ubuntu-2004-general'
 #   vmImage: 'MMSUbuntu20.04'
 #   dockerRepo: 'engsys/testproxy-lin'
-#   additionalDockerBuildArgs: ''
+#   additionalDockerArgs: ''
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
 #   excludeFromManifest: true/false
 #   dockerFile: 'tools/test-proxy/docker/dockerfile'
@@ -72,7 +72,7 @@ jobs:
                   command: build
                   Dockerfile: ${{ config.dockerFile }}
                   tags: ${{ stableTag }}
-                  arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}'
+                  arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }} ${{ config.exclude }}'
 
               - task: Docker@2
                 displayName: Push ${{ config.name }}:${{ stableTag }}
@@ -105,8 +105,8 @@ jobs:
               $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
               $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
                 -DockerDeploymentJson $configurations `
-                -ContainerRegistry "${{ parameters.ContainerRegistry }}"
-                -ImageTag "${{ parameters.ImageTag }}"
+                -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
+                -ImageTag "${{ parameters.ImageTag }}" `
                 -DevopsVariable "ManifestVariable" `
             displayName: Generate Manifest Variable
 

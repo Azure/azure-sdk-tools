@@ -58,7 +58,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         logger.LogInformation("Skipping Teams and Notifications because parent or child team does not exist");
                         continue;
                     }
-
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
                 }
             }
@@ -202,14 +201,15 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                 // Get set of team members in the CODEOWNERS file
-                var codeownerPrincipals = codeOwnerEntry.Owners
-                    .Select(contact => {
-                        if (!codeOwnerCache.ContainsKey(contact))
-                        {
-                            codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
-                        }
-                        return codeOwnerCache[contact];
-                    });
+                var codeownerPrincipals = new List<String>();
+                foreach (var contact in codeOwnerEntry.Owners)
+                {
+                    if (!codeOwnerCache.ContainsKey(contact))
+                    {
+                        codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                    }
+                    codeownerPrincipals.Add(codeOwnerCache[contact]);
+                }
 
                 var codeownersDescriptorsTasks = codeownerPrincipals
                     .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))

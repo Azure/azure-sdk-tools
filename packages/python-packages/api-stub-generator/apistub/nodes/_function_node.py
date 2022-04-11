@@ -4,7 +4,7 @@ from collections import OrderedDict
 import astroid
 import re
 
-from ._astroid_parser import AstroidArgumentParser
+from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
@@ -102,46 +102,42 @@ class FunctionNode(NodeEntityBase):
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
             self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
-            
-        if self.obj:
-            # Find signature to find positional args and return type
-            sig = inspect.signature(self.obj)
-            params = sig.parameters
-            # Add all keyword only args here temporarily until docstring is parsed
-            # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
-            for argname, argvalues in params.items():
-                kind = argvalues.kind
-                keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
-                arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
 
-                # Store handle to kwarg object to replace it later
-                if kind == inspect.Parameter.VAR_KEYWORD:
-                    arg.argname = f"**{argname}"
+        parser = AstroidFunctionParser(self.node, self.namespace, self)
+        self.args.update(parser.args)
+        # # TODO: We don't really support pos-only args. This will treat them like regular args
+        self.args.update(parser.posargs)
+        self.kw_args = parser.kwargs
+        self.return_type = get_qualified_name(parser.return_type, self.namespace)
+        
+        # if self.obj:
+        #     # Find signature to find positional args and return type
+        #     sig = inspect.signature(self.obj)
+        #     params = sig.parameters
+        #     # Add all keyword only args here temporarily until docstring is parsed
+        #     # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
+        #     for argname, argvalues in params.items():
+        #         kind = argvalues.kind
+        #         keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
+        #         arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
 
-                if kind == inspect.Parameter.KEYWORD_ONLY:
-                    self.kw_args[arg.argname] = arg
-                elif kind == inspect.Parameter.VAR_POSITIONAL:
-                    # to work with docstring parsing, the key must
-                    # not have the * in it.
-                    arg.argname = f"*{argname}"
-                    self.args[argname] = arg
-                else:
-                    self.args[arg.argname] = arg
+        #         # Store handle to kwarg object to replace it later
+        #         if kind == inspect.Parameter.VAR_KEYWORD:
+        #             arg.argname = f"**{argname}"
 
-            if sig.return_annotation:
-                self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
-        else:
-            # Logic for when we only have the node, not the function object itself
-            # Should only apply to @overload cases
-            parser = AstroidArgumentParser(self.node.args, self.namespace, self)
-            self.args.update(parser.args)
-            # # TODO: We don't really support pos-only args. This will treat them like regular args
-            self.args.update(parser.posargs)
-            self.kw_args = parser.kwargs
-            if self.node.returns:
-                self.return_type = get_qualified_name(self.node.returns, self.namespace)
+        #         if kind == inspect.Parameter.KEYWORD_ONLY:
+        #             self.kw_args[arg.argname] = arg
+        #         elif kind == inspect.Parameter.VAR_POSITIONAL:
+        #             # to work with docstring parsing, the key must
+        #             # not have the * in it.
+        #             arg.argname = f"*{argname}"
+        #             self.args[argname] = arg
+        #         else:
+        #             self.args[arg.argname] = arg
+
+        #     if sig.return_annotation:
+        #         self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
         self._parse_docstring()
-        self._parse_typehint()
         self._order_final_args()
 
         if not self.return_type and is_typehint_mandatory(self.name):
@@ -237,36 +233,6 @@ class FunctionNode(NodeEntityBase):
         for g in groups:
             short_type = short_type.replace(g[0], g[1])
         return short_type
-
-
-    def _parse_typehint(self):
-
-        # Skip parsing typehint if typehint is not expected for e.g dunder or async methods
-        # and if return type is already found
-        if self.return_type and not is_typehint_mandatory(self.name) or self.is_async:
-            return
-
-        # Parse type hint to get return type and types for positional args
-        typehint_parser = TypeHintParser(self.obj)
-        # Find return type from type hint if return type is not already set
-        type_hint_ret_type = typehint_parser.ret_type
-        # Type hint must be present for all APIs. Flag it as an error if typehint is missing
-        if  not type_hint_ret_type:
-            if (is_typehint_mandatory(self.name)):
-                self.add_error("Typehint is missing for method {}".format(self.name))
-            return
-
-        if self.return_type:
-            # Verify return type is same in docstring and typehint if typehint is available
-            short_return_type = self._generate_short_type(self.return_type)
-            long_ret_type = self.return_type
-            if long_ret_type != type_hint_ret_type and short_return_type != type_hint_ret_type:
-                logging.info("Long type: {0}, Short type: {1}, Type hint return type: {2}".format(long_ret_type, short_return_type, type_hint_ret_type))
-                error_message = "The return type is described in both a type hint and docstring, but they do not match."
-                self.add_error(error_message)
-        # because the typehint isn't subject to the 2-line limit, prefer it over
-        # a type parsed from the docstring.
-        self.return_type = type_hint_ret_type or self.return_type
 
 
     def _generate_signature_token(self, apiview):

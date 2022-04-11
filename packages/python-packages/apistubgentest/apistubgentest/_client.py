@@ -19,29 +19,6 @@ class TypeHintingClient:
         # type: (...) -> str
         return "{} is {} years old.".format(name, age)
 
-    # def test_typehint(self):
-    #     parser = TypeHintParser([])
-    #     code = """
-    #     # type: (str) -> str
-    #     return val
-    #     """
-    #     expected = "str"
-    #     assert parser._parse_typehint(code) == expected
-
-    # def test_typehint_no_spaces(self):
-    #     parser = TypeHintParser([])
-    #     code = """
-    #     # type:(str)->str
-    #     return val
-    #     """
-    #     expected = "str"
-    #     assert parser._parse_typehint(code) == expected
-
-    # def test_typehint_with_pylint_disable(self):
-    #     parser = TypeHintParser([])
-    #     code = """
-    #     # type: (...) -> AnalyzeHealthcareEntitiesLROPoller[ItemPaged[Union[AnalyzeHealthcareEntitiesResult, DocumentError]]]  # pylint: disable=line-too-long
-    #     """
-    #     expected = "AnalyzeHealthcareEntitiesLROPoller[ItemPaged[Union[AnalyzeHealthcareEntitiesResult, DocumentError]]]"
-    #     assert parser._parse_typehint(code) == expected
-
+    def func_with_complex_python2_typehints(self):
+        # type: (...) -> AnalyzeSometingLROPoller[ItemPaged[Union[AnalyzeSomethingResult, DocumentError]]]  # pylint: disable=line-too-long
+        pass

@@ -122,3 +122,15 @@ class TestFunctionParsing:
         arg2 = func_node.args["union_with_none"]
         assert arg1.argtype == "Optional[str]"
         assert arg1.default == "string"
+
+    def test_python2_typehint(self):
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.func_with_python2_typehints)
+        arg1 = func_node.args["name"]
+        assert arg1.argtype == "str"
+        arg2 = func_node.args["age"]
+        assert arg2.argtype == "int"
+        assert func_node.return_type == "str"
+
+    def test_python2_complex_typehint(self):
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.func_with_complex_python2_typehints)
+        assert func_node.return_type == "AnalyzeSometingLROPoller[ItemPaged[Union[AnalyzeSomethingResult, DocumentError]]]"

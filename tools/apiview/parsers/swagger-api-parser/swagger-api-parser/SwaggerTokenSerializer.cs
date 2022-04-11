@@ -595,6 +595,10 @@ namespace swagger_api_parser
                     }
                     Fenceposter fencepost = new();
 
+                    if (nav != null && nav.IsPath)
+                    {
+                        Console.WriteLine("Path item");
+                    }
                     // Generate the listing for each property
                     foreach (JsonProperty property in values)
                     {

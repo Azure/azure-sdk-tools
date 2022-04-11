@@ -81,9 +81,6 @@ public class SwaggerCodeFileMerger
                 PathNode node = Utils.BuildPathTree(allPaths);
                 var firstLevelPath = node.Children.Select(child => child.CommonPath).ToList();
 
-                // var commonPath = Utils.GetCommonPath(allPaths);
-
-                // Console.WriteLine(commonPath);
                 foreach (var path in item.ChildItems)
                 {
                     var commonPath = "";

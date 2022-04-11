@@ -1,6 +1,7 @@
 ﻿namespace Azure.Sdk.Tools.PipelineWitness
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -11,12 +12,12 @@
     using Azure.Sdk.Tools.PipelineWitness.Services;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
-
+    using Azure.Storage.Queues;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
-    using Microsoft.WindowsAzure.Storage;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -45,15 +46,30 @@
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
+        private readonly QueueClient queueClient;
+        private readonly IOptions<PipelineWitnessSettings> options;
 
-        public BlobUploadProcessor(ILogger<BlobUploadProcessor> logger, BuildLogProvider logProvider, BlobServiceClient blobServiceClient, BuildHttpClient buildClient, TestResultsHttpClient testResultsClient)
+        public BlobUploadProcessor(
+            ILogger<BlobUploadProcessor> logger,
+            BuildLogProvider logProvider,
+            BlobServiceClient blobServiceClient,
+            QueueServiceClient queueServiceClient,
+            BuildHttpClient buildClient,
+            TestResultsHttpClient testResultsClient,
+            IOptions<PipelineWitnessSettings> options)
         {
             if (blobServiceClient == null)
             {
                 throw new ArgumentNullException(nameof(blobServiceClient));
             }
+            
+            if (queueServiceClient == null)
+            {
+                throw new ArgumentNullException(nameof(queueServiceClient));
+            }
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
             this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
             this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
@@ -61,49 +77,76 @@
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerNameTestRunsContainerName);
+            this.queueClient = queueServiceClient.GetQueueClient(this.options.Value.BuildLogBundlesQueueName);
+            this.queueClient.CreateIfNotExists();
         }
 
-        public async Task UploadBuildBlobsAsync(
-            string account,
-            Build build,
-            Timeline timeline)
+        public async Task UploadBuildBlobsAsync(string account, Guid projectId, int buildId)
         {
+            var build = await GetBuildAsync(projectId, buildId);
+
             if (build == null)
             {
-                throw new ArgumentNullException(nameof(build));
+                this.logger.LogWarning("Unable to process run due to missing build. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                return;
             }
 
+            var skipBuild = false;
+
+            // Project name is used in blob paths and cannot be empty
             if (build.Project == null)
             {
-                throw new ArgumentException("build.Project is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                skipBuild = true;
+            }
+            else if (string.IsNullOrWhiteSpace(build.Project.Name))
+            {
+                this.logger.LogWarning("Skipping build with null project property. Project: {Project}, BuildId: {BuildId}", projectId, buildId);
+                skipBuild = true;
             }
 
-            if (build.Definition == null)
+            if (build.Deleted)
             {
-                throw new ArgumentException("build.Definition is null", nameof(build));
+                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
-            // QueueTime is used in blob paths and cannot be null
-            if (build.QueueTime == null)
+            if (build.StartTime == null)
             {
-                throw new ArgumentException("build.QueueTime is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
             // FinishTime is used in blob paths and cannot be null
             if (build.FinishTime == null)
             {
-                throw new ArgumentException("build.FinishTime is null", nameof(build));
+                this.logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
-            // Project name is used in blob paths and cannot be empty
-            if (string.IsNullOrWhiteSpace(build.Project.Name))
+            // QueueTime is used in blob paths and cannot be null
+            if (build.QueueTime == null)
             {
-                throw new ArgumentException("build.Project.Name is null or whitespace", nameof(build));
+                this.logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
             }
 
+            if (build.Definition == null)
+            {
+                this.logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                skipBuild = true;
+            }
+
+            if (skipBuild)
+            {
+                return;
+            }
+    
             await UploadBuildBlobAsync(account, build);
 
             await UploadTestRunBlobsAsync(account, build);
+
+            var timeline = await this.buildClient.GetBuildTimelineAsync(projectId, buildId);
 
             if (timeline == null)
             {
@@ -116,17 +159,106 @@
 
             var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
-            if (logs == null)
+            if (logs == null || logs.Count == 0)
             {
                 logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                return;
+            }
+
+            var bundles = BuildLogBundles(account, build, timeline, logs);
+
+            if (bundles.Count == 1)
+            {
+                await ProcessBuildLogBundleAsync(bundles[0]);
             }
             else
             {
-                foreach (var log in logs)
+                // If there's more than one bundle, we need to fan out the logs to multiple queue messages
+                foreach (var bundle in bundles)
                 {
-                    await UploadLogLinesBlobAsync(account, build, log);
+                    await EnqueueBuildLogBundleAsync(bundle);
                 }
+            }            
+        }
+
+        public async Task ProcessBuildLogBundleAsync(BuildLogBundle buildLogBundle)
+        {
+            foreach (var log in buildLogBundle.TimelineLogs)
+            {
+                await UploadLogLinesBlobAsync(buildLogBundle, log);
             }
+        }
+
+        private List<BuildLogBundle> BuildLogBundles(string account, Build build, Timeline timeline, List<BuildLog> logs)
+        {
+            BuildLogBundle CreateBundle() => new BuildLogBundle
+            {
+                Account = account,
+                BuildId = build.Id,
+                ProjectId = build.Project.Id,
+                ProjectName = build.Project.Name,
+                QueueTime = build.QueueTime.Value,
+                StartTime = build.StartTime.Value,
+                FinishTime = build.FinishTime.Value,
+                DefinitionId = build.Definition.Id,
+                DefinitionName = build.Definition.Name,
+                DefinitionPath = build.Definition.Path
+            };
+
+            BuildLogBundle currentBundle;
+            var logBundles = new List<BuildLogBundle>();
+            logBundles.Add(currentBundle = CreateBundle());
+
+            var logsById = logs.ToDictionary(l => l.Id);
+
+            foreach (var log in logs)
+            {
+                if(currentBundle.TimelineLogs.Count >= this.options.Value.BuildLogBundleSize)
+                {
+                    logBundles.Add(currentBundle = CreateBundle());
+                }
+
+                var logRecords = timeline.Records.Where(x => x.Log?.Id == log.Id).ToArray();
+
+                if(logRecords.Length > 1)
+                {
+                    this.logger.LogWarning("Found multiple timeline records for build {BuildId}, log {LogId}", build.Id, log.Id);
+                }
+
+                var logRecord = logRecords.FirstOrDefault();
+
+                // Job logs are typically just a duplication of their child task logs with the addition of extra start and end lines.
+                // If we can, we skip the redundant lines.
+                if (string.Equals(logRecord?.RecordType, "job", StringComparison.OrdinalIgnoreCase))
+                {
+                    // find all of the child task records
+                    var childRecords = timeline.Records.Where(x => x.ParentId == logRecord.Id);
+                    
+                    // sum the line counts for all of the child task records
+                    var childLineCount = childRecords
+                        .Where(x => x.Log != null && logsById.ContainsKey(x.Log.Id))
+                        .Sum(x => logsById[x.Log.Id].LineCount);
+                    
+                    // if the job's line count is the task line count + 2, then we can skip the job log
+                    if (log.LineCount == childLineCount + 2)                    
+                    {
+                        this.logger.LogTrace("Skipping redundant logs for build {BuildId}, job {RecordId}, log {LogId}", build.Id, logRecord.Id, log.Id);
+                        continue;
+                    }
+                }
+
+                currentBundle.TimelineLogs.Add(new BuildLogInfo
+                {
+                    LogId = log.Id,
+                    LineCount = log.LineCount,
+                    LogCreatedOn = log.CreatedOn.Value,
+                    RecordId = logRecord?.Id,
+                    ParentRecordId = logRecord?.ParentId,
+                    RecordType = logRecord?.RecordType
+                });
+            }
+
+            return logBundles;
         }
 
         private async Task UploadBuildBlobAsync(string account, Build build)
@@ -294,74 +426,99 @@
                 throw;
             }
         }
-
-        private async Task UploadLogLinesBlobAsync(string account, Build build, BuildLog log)
+        
+        private async Task UploadLogLinesBlobAsync(BuildLogBundle build, BuildLogInfo log)
         {
             try
             {
                 // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries.
                 // i.e.  logs with a given buildid/logid are immutable and retries only add new logs.
-                var blobPath = $"{build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}-{log.Id}.jsonl";
+                var blobPath = $"{build.ProjectName}/{build.QueueTime:yyyy/MM/dd}/{build.BuildId}-{log.LogId}.jsonl";
                 var blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing log {LogId} for build {BuildId}", log.Id, build.Id);
+                    this.logger.LogInformation("Skipping existing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
                     return;
                 }
 
-                var messagesWriter = new StringBuilder();
-                var logLines = await this.logProvider.GetLogLinesAsync(build, log.Id);
-                var lastTimeStamp = log.CreatedOn;
+                this.logger.LogInformation("Processing log for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
 
-                for (var lineNumber = 1; lineNumber <= logLines.Count; lineNumber++)
+                var lineNumber = 0;
+                var characterCount = 0;
+
+                // Over an open read stream and an open write stream, one line at a time, read, process, and write to
+                // blob storage
+                using (var logStream = await this.logProvider.GetLogStreamAsync(build.ProjectName, build.BuildId, log.LogId))
+                using (var logReader = new StreamReader(logStream))
+                using (var blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions()))
+                using (var blobWriter = new StreamWriter(blobStream))
                 {
-                    var line = logLines[lineNumber - 1];
-                    var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-                    var timestamp = match.Success
-                        ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                            System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                        : lastTimeStamp;
+                    var lastTimeStamp = log.LogCreatedOn;
 
-                    var message = match.Success ? match.Groups[2].Value : line;
-
-                    if (timestamp == null)
+                    while (true)
                     {
-                        throw new Exception($"Error processing line {lineNumber}. No leading timestamp.");
-                    }
-
-                    messagesWriter.AppendLine(JsonConvert.SerializeObject(
-                        new
+                        var line = await logReader.ReadLineAsync();
+                        
+                        if (line == null)
                         {
-                            OrganizationName = account,
-                            ProjectId = build.Project?.Id,
-                            ProjectName = build.Project?.Name,
-                            BuildDefinitionId = build.Definition?.Id,
-                            BuildDefinitionPath = build.Definition?.Path,
-                            BuildDefinitionName = build.Definition?.Name,
-                            BuildId = build.Id,
-                            LogId = log.Id,
+                            break;
+                        }
+                        
+                        var isLastLine = logReader.EndOfStream;
+                        lineNumber += 1;
+                        characterCount += line.Length;
+
+                        // log lines usually follow the format:
+                        // 2022-03-30T21:38:38.7007903Z Downloading task: AzureKeyVault (1.200.0)
+                        // Sometimes, there's no leading timestamp, so we'll use the last timestamp we saw.
+                        var match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
+
+                        var timestamp = match.Success
+                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
+                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
+                            : lastTimeStamp;
+
+                        lastTimeStamp = timestamp;
+                        
+                        var message = match.Success ? match.Groups[2].Value : line;
+
+                        await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                        {
+                            OrganizationName = build.Account,
+                            ProjectId = build.ProjectId,
+                            ProjectName = build.ProjectName,
+                            BuildDefinitionId = build.DefinitionId,
+                            BuildDefinitionPath = build.DefinitionPath,
+                            BuildDefinitionName = build.DefinitionName,
+                            BuildId = build.BuildId,
+                            LogId = log.LogId,
                             LineNumber = lineNumber,
                             Length = message.Length,
-                            Timestamp = timestamp?.ToString(TimeFormat),
+                            Timestamp = timestamp.ToString(TimeFormat),
                             Message = message,
                             EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
                         }, jsonSettings));
-
-                    lastTimeStamp = timestamp;
+                    }
                 }
 
-                await blobClient.UploadAsync(new BinaryData(messagesWriter.ToString()));
+                logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, record {RecordId}, log {LogId}", characterCount, lineNumber, build.BuildId, log.RecordId, log.LogId);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring exception from existing blob for log {LogId} for build {BuildId}", log?.Id, build?.Id);
+                this.logger.LogInformation("Ignoring existing blob exception for build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing log {LogId} for build {BuildId}", log?.Id, build?.Id);
+                this.logger.LogError(ex, "Error processing build {BuildId}, record {RecordId}, log {LogId}", build.BuildId, log.RecordId, log.LogId);
                 throw;
             }
+        }
+
+        private async Task EnqueueBuildLogBundleAsync(BuildLogBundle bundle)
+        {
+            var message = JsonConvert.SerializeObject(bundle, jsonSettings);
+            await this.queueClient.SendMessageAsync(message);
         }
 
         private async Task UploadTestRunBlobsAsync(string account, Build build)
@@ -370,26 +527,41 @@
             {
                 var continuationToken = string.Empty;
                 var buildIds = new[] { build.Id };
+                
                 var minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
                 var maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
 
-                do
-                {
-                    var page = await testResultsClient.QueryTestRunsAsync2(
-                        build.Project.Id,
-                        minLastUpdatedDate,
-                        maxLastUpdatedDate,
-                        continuationToken: continuationToken,
-                        buildIds: buildIds
-                    );
+                var rangeStart = minLastUpdatedDate;
 
-                    foreach (var testRun in page)
+                while(rangeStart < maxLastUpdatedDate)
+                {
+                    // Ado limits test run queries to a 7 day range, so we'll chunk on 6 days.
+                    var rangeEnd = rangeStart.AddDays(6);
+                    if(rangeEnd > maxLastUpdatedDate)
                     {
-                        await UploadTestRunBlobAsync(account, build, testRun);
+                        rangeEnd = maxLastUpdatedDate;
                     }
 
-                    continuationToken = page.ContinuationToken;
-                } while (!string.IsNullOrEmpty(continuationToken));
+                    do
+                    {
+                        var page = await testResultsClient.QueryTestRunsAsync2(
+                            build.Project.Id,
+                            rangeStart,
+                            rangeEnd,
+                            continuationToken: continuationToken,
+                            buildIds: buildIds
+                        );
+
+                        foreach (var testRun in page)
+                        {
+                            await UploadTestRunBlobAsync(account, build, testRun);
+                        }
+
+                        continuationToken = page.ContinuationToken;
+                    } while (!string.IsNullOrEmpty(continuationToken));
+
+                    rangeStart = rangeEnd;
+                }                
             }
             catch (Exception ex)
             {
@@ -465,5 +637,21 @@
                 throw;
             }
         }
+
+        private async Task<Build> GetBuildAsync(Guid projectId, int buildId)
+        {
+            Build build = null;
+
+            try
+            {
+                build = await buildClient.GetBuildAsync(projectId, buildId);
+            }
+            catch (BuildNotFoundException)
+            {
+            }
+
+            return build;
+        }
     }
 }
+

@@ -107,7 +107,7 @@ jobs:
                 -DockerDeploymentJson $configurations `
                 -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
                 -ImageTag "${{ parameters.ImageTag }}" `
-                -DevopsVariable "ManifestVariable" `
+                -DevopsVariable "ManifestVariable"
             displayName: Generate Manifest Variable
 
           - pwsh: |

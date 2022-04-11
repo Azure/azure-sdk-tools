@@ -87,9 +87,10 @@ jobs:
     - ${{ each deployment in parameters.ManifestDeployment }}:
       - job: container_build_${{ deployment.name }}
         displayName: Build ${{ deployment.name }} Manifest
-        dependsOn:
-          - ${{ each config in parameters.DockerDeployments }}:
-            - container_build_${{ config.name }}
+        ${{ if gt(length(parameters.DockerDeployments), 0) }}:
+          dependsOn:
+            - ${{ each config in parameters.DockerDeployments }}:
+              - container_build_${{ config.name }}
         pool:
           name: 'azsdk-pool-mms-ubuntu-2004-general'
           vmImage: 'MMSUbuntu20.04'

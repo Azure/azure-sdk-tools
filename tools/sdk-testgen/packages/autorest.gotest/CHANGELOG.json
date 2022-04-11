@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "3.0.1",
+      "tag": "@autorest/gotest_v3.0.1",
+      "date": "Mon, 11 Apr 2022 09:15:12 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix wrong go version in templates."
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.0",
       "tag": "@autorest/gotest_v3.0.0",
       "date": "Thu, 07 Apr 2022 12:22:32 GMT",

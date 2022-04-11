@@ -41,7 +41,7 @@ extends:
       vmImage: 'MMSUbuntu20.04'
       dockerRepo: 'engsys/testproxy-lin-arm64'
       prepareScript: tools/test-proxy/docker/prepare.ps1
-      additionalDockerArgs: '--build-arg ARCH=-arm64v8'
+      additionalDockerArgs: '--build-arg ARCH=-arm64v8 --platform=linux/arm64'
       dockerFile: 'tools/test-proxy/docker/dockerfile'
       stableTags:
       - 'latest'

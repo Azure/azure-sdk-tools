@@ -86,7 +86,7 @@ class TestClassParsing:
         class_node = ClassNode(name="ObjectWithDefaults", namespace="test", parent_node=None, obj=ObjectWithDefaults, pkg_root_namespace=self.pkg_namespace)
         assert len(class_node.child_nodes) == 1
         init_args = class_node.child_nodes[0].args
-        assert init_args["name"].default == "Bob"
+        assert init_args["name"].default == "'Bob'"
         assert init_args["age"].default == "21"
         assert init_args["is_awesome"].default == "True"
         assert init_args["pet"].default == "PetEnum.DOG"
@@ -136,7 +136,7 @@ class TestClassParsing:
             ("self", None, None),
             # This should not have all the weird collections annotations, but they
             # don't appear in the actual APIView.
-            ("input", "int | collections.abc.Sequence[int]", None),
+            ("input", "int | Sequence[int]", None),
             ("*", None, None),
             ("test", "bool", "False"),
             ("**kwargs", None, None)

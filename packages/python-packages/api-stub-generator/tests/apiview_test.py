@@ -59,4 +59,4 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         # TODO: These will be removed soon.
-        assert len(apiview.diagnostics) == 21
+        assert len(apiview.diagnostics) == 48

@@ -104,6 +104,10 @@ class FakeObject(object):
     }
 
 
+class FakeError(object):
+    pass
+
+
 FakeTypedDict = TypedDict(
     'FakeTypedDict',
     name=str,

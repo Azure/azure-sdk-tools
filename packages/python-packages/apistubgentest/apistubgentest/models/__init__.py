@@ -7,7 +7,11 @@
 # --------------------------------------------------------------------------
 
 from ._models import (
-    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict,
+    DocstringClass,
+    FakeError,
+    FakeInventoryItemDataClass,
+    FakeObject,
+    FakeTypedDict,
     ObjectWithDefaults,
     PetEnum,
     PetEnumPy2Metaclass,
@@ -22,6 +26,7 @@ from ._models import (
 
 __all__ = (
     "DocstringClass",
+    "FakeError",
     "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",

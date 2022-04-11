@@ -10,20 +10,20 @@ using Newtonsoft.Json.Linq;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
 {
-    public class AdoBuildCompleteFunction
+    public class AzurePipelinesBuildCompleteFunction
     {
         private ILogger logger;
         private BlobUploadProcessor runProcessor;
         private readonly TelemetryClient telemetryClient;
 
-        public AdoBuildCompleteFunction(ILogger<AdoBuildCompleteFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
+        public AzurePipelinesBuildCompleteFunction(ILogger<AzurePipelinesBuildCompleteFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
             this.telemetryClient = telemetryClient;
         }
 
-        [FunctionName("AdoBuildComplete")]
+        [FunctionName("AzurePipelinesBuildComplete")]
         public async Task Run([QueueTrigger("%BuildCompleteQueueName%")]QueueMessage message)
         {
             logger.LogInformation("Processing build.complete event.");
@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
             {
                 telemetryClient.TrackMetric(new MetricTelemetry
                 {
-                    Name = "AdoBuildComplete MessageLatencyMs",
+                    Name = "AzurePipelinesBuildComplete MessageLatencyMs",
                     Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
                 });
             }

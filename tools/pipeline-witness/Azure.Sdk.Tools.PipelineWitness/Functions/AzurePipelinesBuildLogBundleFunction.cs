@@ -9,20 +9,20 @@ using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
 {
-    public class AdoBuildLogBundleFunction
+    public class AzurePipelinesBuildLogBundleFunction
     {
         private readonly ILogger logger;
         private readonly BlobUploadProcessor runProcessor;
         private readonly TelemetryClient telemetryClient;
 
-        public AdoBuildLogBundleFunction(ILogger<AdoBuildLogBundleFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
+        public AzurePipelinesBuildLogBundleFunction(ILogger<AzurePipelinesBuildLogBundleFunction> logger, BlobUploadProcessor runProcessor, TelemetryClient telemetryClient)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
             this.telemetryClient = telemetryClient;
         }
 
-        [FunctionName("AdoBuildLogBundle")]
+        [FunctionName("AzurePipelinesBuildLogBundle")]
         public async Task Run([QueueTrigger("%BuildLogBundlesQueueName%")]QueueMessage message)
         {
             logger.LogInformation("Processing build log bundle message.");
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Queue.Functions
             {
                 telemetryClient.TrackMetric(new MetricTelemetry
                 {
-                    Name = "AdoBuildLogBundle MessageLatencyMs",
+                    Name = "AzurePipelinesBuildLogBundle MessageLatencyMs",
                     Sum = DateTimeOffset.Now.Subtract(message.InsertedOn.Value).TotalMilliseconds,
                 });
             }

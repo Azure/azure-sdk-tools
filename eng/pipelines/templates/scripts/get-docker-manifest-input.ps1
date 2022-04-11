@@ -26,40 +26,23 @@ param(
   [Parameter(mandatory=$true)]
   [string] $ContainerRegistry,
   [Parameter(mandatory=$true)]
-  [string] $ImageTag,
-  [Parameter(mandatory=$false)]
-  [string] $DevopsVariable
+  [string] $ImageTag
 )
 $assembledVariable = ""
-
-if (-not ($DockerDeploymentJson)){
-  Write-Error "Cannot generate a manifest with no dependent docker deployments."
-  exit(1)
-}
-
-if (-not ($ImageTag)){
-  Write-Error "Cannot generate a manifest targeting dependent tags without a tag to target."
-}
-
 $configs = $DockerDeploymentJson | ConvertFrom-Json
 
 foreach($config in $configs){
-  if(-not ($config.excludeFromManifest)){
+  if(!$config.excludeFromManifest){
     $assembledVariable += "$ContainerRegistry.azurecr.io/$($config.dockerRepo):$ImageTag "
   }
 }
 
-if(-not ($assembledVariable)){
+if(!$assembledVariable){
   Write-Error "Unable to determine any dependent tags."
   exit(1)
 }
 
-if($DevopsVariable){
-  Write-Host "##vso[task.setvariable variable=$DevopsVariable]$assembledVariable"
-}
-else {
-  Write-Host $assembledVariable
-}
+return $assembledVariable
 
 
 

@@ -104,11 +104,12 @@ jobs:
 
           - pwsh: |
               $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
-              $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
+              $assembledDependentTags = $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
                 -DockerDeploymentJson $configurations `
                 -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
                 -ImageTag "${{ parameters.ImageTag }}" `
-                -DevopsVariable "ManifestVariable"
+
+              Write-Host "##vso[task.setvariable variable=ManifestVariable]$assembledDependentTags"
             displayName: Generate Manifest Variable
 
           - pwsh: |

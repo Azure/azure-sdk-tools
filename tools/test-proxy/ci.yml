@@ -40,7 +40,7 @@ extends:
       pool: 'azsdk-pool-mms-ubuntu-2004-general'
       vmImage: 'MMSUbuntu20.04'
       dockerRepo: 'engsys/testproxy-lin-arm64'
-      prepareScript: tools/test-proxy/docker/prepare.ps1
+      prepareScript: 'tools/test-proxy/docker/prepare.ps1 -qemu'
       additionalDockerArgs: '--build-arg ARCH=-arm64v8 --platform linux/arm64'
       dockerFile: 'tools/test-proxy/docker/dockerfile'
       stableTags:

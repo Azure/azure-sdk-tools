@@ -103,6 +103,40 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Fact]
+        public async Task TestStopRecordingThrowsOnInvalidSkipValue()
+        {
+            string targetFile = "recordings/TestStartRecordSimple_nosave.json";
+            string additionalEntryModeHeader = "request-body";
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers.Remove("x-recording-file");
+
+            httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+
+
+            var resultingException = await Assert.ThrowsAsync<HttpException>(
+               async () => controller.Stop()
+            );
+
+            Assert.Equal("When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.", resultingException.Message);
+            Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
+        }
+
         [Theory]
         [InlineData("")]
         [InlineData("request-response")]

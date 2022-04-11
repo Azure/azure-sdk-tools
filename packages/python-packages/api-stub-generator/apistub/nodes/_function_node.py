@@ -6,7 +6,6 @@ import re
 
 from ._astroid_parser import AstroidArgumentParser
 from ._docstring_parser import DocstringParser
-from ._typehint_parser import TypeHintParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 

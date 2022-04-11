@@ -1,6 +1,5 @@
 from ._base_node import NodeEntityBase
 from ._docstring_parser import DocstringParser
-from ._typehint_parser import TypeHintParser
 
 
 class PropertyNode(NodeEntityBase):
@@ -26,8 +25,7 @@ class PropertyNode(NodeEntityBase):
 
         if hasattr(self.obj, "fget"):
             # Get property type if type hint 
-            typehint_parser = TypeHintParser(getattr(self.obj, "fget"))
-            self.type = typehint_parser.ret_type
+            self._parse_typehint(getattr(self.obj, "fget"))
 
         # get type from docstring
         if hasattr(self.obj, "__doc__") and not self.type:
@@ -46,6 +44,9 @@ class PropertyNode(NodeEntityBase):
         if self.read_only:
             self.display_name += "   # Read-only"
 
+    def _parse_typehint(self, func):
+        # TODO: Parse the typehint
+        pass
 
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview

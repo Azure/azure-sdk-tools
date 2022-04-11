@@ -5,6 +5,8 @@ Fixed issue where types would appear wrapped in "Optional" even though
   they do not accept `None`.
 Fixed issue where, in some cases, string literal default values would not appear wrapped
   in quotes.
+Added support for @overloads decorators.
+Fixed issue where decorators with parameters would not appear in APIView.
 
 ## Version 0.2.11 (2022-04-06)
 Added __main__ to execute as module

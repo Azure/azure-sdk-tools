@@ -57,25 +57,25 @@ class TestClass:
 class TestFunctionParsing:
     
     def test_optional_typehint(self):
-        func_node = FunctionNode("test", None, TestClass.with_optional_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_optional_typehint)
         arg = func_node.args["description"]
         assert arg.argtype == "Optional[str]"
         assert arg.default == "..."
 
     def test_optional_docstring(self):
-        func_node = FunctionNode("test", None, TestClass.with_optional_docstring, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_optional_docstring)
         arg = func_node.args["description"]
         assert arg.argtype == "str"
         assert arg.default == "..."
 
     def test_variadic_typehints(self):
-        func_node = FunctionNode("test", None, TestClass.with_variadic_python3_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_variadic_python3_typehint)
         arg = func_node.args["vars"]
         assert arg.argname == "*vars"
         assert arg.argtype == "str"
         assert arg.default == None
 
-        func_node = FunctionNode("test", None, TestClass.with_variadic_python2_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_variadic_python2_typehint)
         arg = func_node.args["vars"]
         assert arg.argname == "*vars"
         # the type annotation comes ONLY from the docstring. The Python2 type hint is not used!
@@ -83,31 +83,31 @@ class TestFunctionParsing:
         assert arg.default == None
 
     def test_default_values(self):
-        func_node = FunctionNode("test", None, TestClass.with_default_values, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_default_values)
         assert func_node.args["foo"].default == "1"
         assert func_node.kw_args["bar"].default == "2"
         assert func_node.kw_args["baz"].default == "..."
 
     def test_typehint_and_docstring_return_types(self):
-        func_node = FunctionNode("test", None, TestClass.with_python2_list_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_python2_list_typehint)
         assert func_node.return_type == "List[TestClass]"
 
-        func_node = FunctionNode("test", None, TestClass.with_python3_list_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_python3_list_typehint)
         assert func_node.return_type == "List[TestClass]"
 
-        func_node = FunctionNode("test", None, TestClass.with_python3_str_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_python3_str_typehint)
         assert func_node.return_type == "List[str]"
 
     def test_complex_typehints(self):
-        func_node = FunctionNode("test", None, TestClass.with_python2_union_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_python2_union_typehint)
         assert func_node.return_type == "List[Union[str, int]]"
 
-        func_node = FunctionNode("test", None, TestClass.with_python3_union_typehint, "test")
+        func_node = FunctionNode("test", None, obj=TestClass.with_python3_union_typehint)
         assert func_node.return_type == "List[Union[str, int]]"
 
 
     def test_non_typehint_with_string_defaults(self):
-        func_node = FunctionNode("test", None, TypeHintingClient.some_method_non_optional, "test")
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_non_optional)
         arg1 = func_node.args["docstring_type"]
         assert arg1.argtype == "str"
         assert arg1.default == "string"
@@ -115,7 +115,7 @@ class TestFunctionParsing:
         assert arg2.argtype == "str"
         assert arg2.default == "string"
 
-        func_node = FunctionNode("test", None, TypeHintingClient.some_method_with_optionals, "test")
+        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_with_optionals)
         arg1 = func_node.args["labeled_optional"]
         assert arg1.argtype == "Optional[str]"
         assert arg1.default == "string"

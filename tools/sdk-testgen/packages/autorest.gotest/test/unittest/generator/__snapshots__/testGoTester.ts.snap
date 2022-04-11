@@ -2,8 +2,8 @@
 
 exports[`GoTestGenerator from RP agrifood Generate MockTest and SDK example 1`] = `
 Object {
-  "ze_generated_example_extensions_client_test.go": "//go:build go1.16
-// +build go1.16
+  "ze_generated_example_extensions_client_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -169,8 +169,8 @@ SkipToken: nil,
 
 
 ",
-  "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.16
-// +build go1.16
+  "ze_generated_example_farmbeatsextensions_client_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -253,8 +253,8 @@ nil)
 
 
 ",
-  "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.16
-// +build go1.16
+  "ze_generated_example_farmbeatsmodels_client_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -459,8 +459,8 @@ SkipToken: nil,
 
 
 ",
-  "ze_generated_example_locations_client_test.go": "//go:build go1.16
-// +build go1.16
+  "ze_generated_example_locations_client_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -512,8 +512,8 @@ nil)
 
 
 ",
-  "ze_generated_example_operations_client_test.go": "//go:build go1.16
-// +build go1.16
+  "ze_generated_example_operations_client_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -565,8 +565,8 @@ func ExampleOperationsClient_List() {
 
 
 ",
-  "zt_generated_mock_test.go": "//go:build go1.16
-// +build go1.16
+  "zt_generated_mock_test.go": "//go:build go1.18
+// +build go1.18
 
 
 
@@ -980,8 +980,8 @@ func (c *MockCredential) GetToken(ctx context.Context, opts policy.TokenRequestO
 
 exports[`GoTestGenerator from RP signalR Generate scenario test 1`] = `
 Object {
-  "zt_generated_signalr_live_test.go": "//go:build go1.16
-// +build go1.16
+  "zt_generated_signalr_live_test.go": "//go:build go1.18
+// +build go1.18
 
 
 

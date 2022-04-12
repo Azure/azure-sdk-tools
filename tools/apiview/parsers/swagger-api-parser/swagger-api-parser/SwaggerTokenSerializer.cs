@@ -290,6 +290,7 @@ namespace swagger_api_parser
             ///     /* Back to normal here */
             /// </summary>
             public IDisposable Scope() => new WriterScope(this);
+            
 
             /// <summary>
             /// Create a writer scope that will indent until the scope is
@@ -428,20 +429,15 @@ namespace swagger_api_parser
             public IDictionary<string, SwaggerTree> Children { get; } = new Dictionary<string, SwaggerTree>();
 
             /// <summary>
-            /// Gets the parent of the current node.
-            /// </summary>
-            private SwaggerTree _parent;
-
-            /// <summary>
             /// Gets a value indicating whether this node is the root.
             /// </summary>
-            public bool IsRoot => _parent == null;
+            public bool IsRoot => Parent == null;
 
             /// <summary>
             /// Gets a value indicating whether this node is a top-level entry.
             /// </summary>
             public bool IsTopLevel =>
-                _parent?.IsRoot == true && Text switch
+                Parent?.IsRoot == true && Text switch
                 {
                     "paths" => true,
                     "x-ms-paths" => true,
@@ -452,11 +448,16 @@ namespace swagger_api_parser
                 };
 
             /// <summary>
+            /// Gets the parent of the current node.
+            /// </summary>
+            public SwaggerTree Parent { get; private set; }
+
+            /// <summary>
             /// Gets a value indicating whether this node is a path entry.
             /// </summary>
             public bool IsPath =>
-                _parent?._parent?.IsRoot == true &&
-                (_parent.Text == "paths" || _parent.Text == "x-ms-paths");
+                Parent?.Parent?.IsRoot == true &&
+                (Parent.Text == "paths" || Parent.Text == "x-ms-paths");
 
             /// <summary>
             /// Gets a value indicating whether this node's children should be
@@ -480,7 +481,7 @@ namespace swagger_api_parser
                         Text = name,
                         LongText = longText,
                         NavigationId = navigationId,
-                        _parent = this
+                        Parent = this
                     };
                 }
                 return next;
@@ -551,12 +552,14 @@ namespace swagger_api_parser
             /// <param name="element">The JSON value.</param>
             /// <param name="nav">Optional document navigation info.</param>
             /// <param name="navigationIdPrefix"></param>
-            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "")
+            /// <param name="scopeStart"></param>
+            /// <param name="scopeEnd"></param>
+            private void Visit(JsonElement element, SwaggerTree nav = null, string navigationIdPrefix = "", string scopeStart="{", string scopeEnd="}")
             {
                 switch (element.ValueKind)
                 {
                     case JsonValueKind.Object:
-                        VisitObject(element, nav, navigationIdPrefix);
+                        VisitObject(element, nav, navigationIdPrefix, scopeStart, scopeEnd);
                         break;
                     case JsonValueKind.Array:
                         VisitArray(element, navigationIdPrefix);
@@ -580,10 +583,12 @@ namespace swagger_api_parser
             /// <param name="obj">The JSON object.</param>
             /// <param name="nav">Optional document navigation info.</param>
             /// <param name="navigationIdPrefix"></param>
-            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix)
+            /// <param name="scopeStart"></param>
+            /// <param name="scopeEnd"></param>
+            private void VisitObject(JsonElement obj, SwaggerTree nav, string navigationIdPrefix, string scopeStart = "{ ", string scopeEnd = " }")
             {
                 bool multiLine = !FitsOnOneLine(obj);
-                using (_writer.Scope("{ ", " }", multiLine))
+                using (_writer.Scope(scopeStart, scopeEnd, multiLine))
                 {
                     // Optionally sort the values
                     IEnumerable<JsonProperty> values = obj.EnumerateObject();
@@ -595,10 +600,6 @@ namespace swagger_api_parser
                     }
                     Fenceposter fencepost = new();
 
-                    if (nav != null && nav.IsPath)
-                    {
-                        Console.WriteLine("Path item");
-                    }
                     // Generate the listing for each property
                     foreach (JsonProperty property in values)
                     {
@@ -608,12 +609,16 @@ namespace swagger_api_parser
                             if (multiLine) { _writer.WriteLine(); }
                         }
 
+                        bool isPathScoop = nav is {Text: "paths" or "x-ms-paths"};
+
                         // Add the property to the current path
                         _path.Add(property.Name);
-
+                        
                         // Write the property name
                         _writer.Write(CodeFileTokenKind.Punctuation, "\"");
-                        _writer.Write(CodeFileTokenKind.MemberName, property.Name);
+                        var propertyType = isPathScoop ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
+                        _writer.Write(propertyType, property.Name);
+                       
 
                         // Create an ID for this property
 
@@ -621,6 +626,10 @@ namespace swagger_api_parser
 
                         string id = $"{idPrefix}{string.Join('-', _path).TrimStart('#')}";
                         _writer.AnnotateDefinition(id);
+                        if (isPathScoop)
+                        {
+                            _writer.Write(CodeFileTokenKind.FoldableParentToken, id);
+                        }
 
                         // Optionally add a navigation tree node
                         SwaggerTree next = null;
@@ -638,7 +647,16 @@ namespace swagger_api_parser
 
                         // Visit the value
                         _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
-                        Visit(property.Value, next, navigationIdPrefix);
+                        if (isPathScoop)
+                        {
+                            this._writer.Write(CodeFileTokenKind.FoldableContentStart, null);
+                            Visit(property.Value, next, navigationIdPrefix);
+                            this._writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
+                        }
+                        else
+                        {
+                            Visit(property.Value, next, navigationIdPrefix);
+                        }
 
                         // Make $refs linked
                         if (property.Name == "$ref" &&

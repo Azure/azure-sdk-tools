@@ -102,7 +102,17 @@ public class SwaggerCodeFileMerger
 
         foreach (var (aggregatedPath, pathItems) in aggregatedPaths)
         {
-            var parentNavigationItem = new NavigationItem() {Text = aggregatedPath, NavigationId = $"{swaggerFileName}_-paths",};
+            var resourceProvider = Utils.GetResourceProviderFromPath(aggregatedPath);
+            var firstLevelShowText = aggregatedPath;
+            if (resourceProvider != "")
+            {
+                var index = aggregatedPath.LastIndexOf(resourceProvider, StringComparison.Ordinal);
+                var managementPrefix = aggregatedPath[..(index + resourceProvider.Length)];
+                var managementShortcut = GetResourceManagementTemplatePrefix(managementPrefix, resourceProvider);
+                firstLevelShowText = aggregatedPath.Replace(managementPrefix, managementShortcut);
+            }
+
+            var parentNavigationItem = new NavigationItem() {Text = firstLevelShowText, NavigationId = $"{swaggerFileName}_-paths",};
 
             foreach (var path in pathItems)
             {
@@ -127,6 +137,15 @@ public class SwaggerCodeFileMerger
         return result.ToArray();
     }
 
+    private static string GetResourceManagementTemplatePrefix(string managementPrefix, string resourceProvider)
+    {
+        if (managementPrefix.Contains("resourceGroups"))
+        {
+            return $"/<Sub>/{resourceProvider}/<RG>";
+        }
+        return managementPrefix.Contains("subscriptions") ? $"/<Sub>/{resourceProvider}/" : $"/{resourceProvider}";
+    }
+
     public async Task GenerateCodeFile(string outputFile, string packageName)
     {
         CodeFile result = new CodeFile
@@ -139,21 +158,52 @@ public class SwaggerCodeFileMerger
             Navigation = new NavigationItem[] { }
         };
 
-
+        var globalNavigations = new NavigationItem[] { };
         foreach (var (swaggerFileName, codeFile) in this.originalResult)
         {
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(swaggerFileName);
             result.Tokens = result.Tokens.Concat(codeFile.Tokens).Select(it => it).ToArray();
-
-            // Add file name as top level to navigation
-            var navigation = new NavigationItem {Text = swaggerFileName, NavigationId = $"{swaggerFileName}_-swagger", ChildItems = RebuildNavigation(codeFile.Navigation, swaggerFileName)};
-            result.Navigation = result.Navigation.Concat(new NavigationItem[] {navigation}).ToArray();
+            globalNavigations = MergeSwaggerNavigationItems(globalNavigations, codeFile.Navigation);
         }
+
+        result.Navigation = RebuildNavigation(globalNavigations, packageName);
 
         Console.WriteLine($"Writing {outputFile}");
         var outputFilePath = Path.GetFullPath(outputFile);
         await using FileStream fileWriteStream = File.Open(outputFilePath, FileMode.Create);
         await result.SerializeAsync(fileWriteStream);
         Console.WriteLine("finished");
+    }
+
+    private static NavigationItem[] MergeSwaggerNavigationItems(IEnumerable<NavigationItem> a, IEnumerable<NavigationItem> b)
+    {
+        var result = new NavigationItem[] { };
+        var navigationItemMap = new Dictionary<string, NavigationItem>();
+
+        foreach (var item in a)
+        {
+            if (!navigationItemMap.ContainsKey(item.Text))
+            {
+                navigationItemMap.Add(item.Text, item);
+            }
+        }
+
+        foreach (var item in b)
+        {
+            if (!navigationItemMap.ContainsKey(item.Text))
+            {
+                navigationItemMap.Add(item.Text, item);
+            }
+            else
+            {
+                var existItem = navigationItemMap.GetValueOrDefault(item.Text);
+                if (existItem != null)
+                {
+                    existItem.ChildItems = existItem.ChildItems.Concat(item.ChildItems).ToArray();
+                }
+            }
+        }
+
+        return navigationItemMap.Values.ToArray();
     }
 }

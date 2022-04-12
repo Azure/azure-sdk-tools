@@ -78,6 +78,7 @@ class FunctionNode(NodeEntityBase):
         self.hidden = False
         self.node = node or astroid.extract_node(inspect.getsource(obj))
         self._inspect()
+        self.kwargs = OrderedDict(sorted(self.kwargs.items()))
 
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
@@ -146,8 +147,8 @@ class FunctionNode(NodeEntityBase):
             # if something is missing from the signature parsing, update it from the
             # docstring, if available
             for argname, signature_arg in {**self.args, **self.posargs}.items():
-                signature_arg.argtype = signature_arg.argtype or parsed_docstring.type_for(argname)
-                signature_arg.default = signature_arg.default or parsed_docstring.default_for(argname)
+                signature_arg.argtype = signature_arg.argtype if signature_arg.argtype is not None else parsed_docstring.type_for(argname)
+                signature_arg.default = signature_arg.default if signature_arg.default is not None else  parsed_docstring.default_for(argname)
 
             # if something is missing from the signature parsing, update it from the
             # docstring, if available
@@ -158,8 +159,8 @@ class FunctionNode(NodeEntityBase):
                     continue
                 remaining_docstring_kwargs.remove(argname)
                 if not kw_arg.is_required:
-                    kw_arg.argtype = kw_arg.argtype or parsed_docstring.type_for(argname)
-                    kw_arg.default = kw_arg.default or parsed_docstring.default_for(argname)
+                    kw_arg.argtype = kw_arg.argtype if kw_arg.argtype is not None else parsed_docstring.type_for(argname)
+                    kw_arg.default = kw_arg.default if kw_arg.default is not None else parsed_docstring.default_for(argname)
             
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
@@ -222,29 +223,29 @@ class FunctionNode(NodeEntityBase):
         # add postional-only marker if any posargs
         if self.posargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="/", id=self.namespace_id)
+            apiview.add_text(text="/", id=None)
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.args, apiview, use_multi_line)
         if self.special_vararg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="*")
+            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="*")
             apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
         if self.kwargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="*", id=self.namespace_id)
+            apiview.add_text(text="*", id=None)
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
         if self.special_kwarg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="**")
+            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="**")
             apiview.add_punctuation(",", False, True)
 
         # pop the final ", " tokens
-        if self._argument_count:
+        if self._argument_count():
             apiview.tokens.pop()
             apiview.tokens.pop()
 

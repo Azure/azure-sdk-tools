@@ -4,10 +4,6 @@ import inspect
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
-# Lint warnings
-TYPE_NOT_AVAILABLE = "Type is not available for {0}"
-
-TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls", "*", ]
 
 class ArgType:
     """Represents Argument type
@@ -53,12 +49,6 @@ class ArgType:
         if self.argtype:
             apiview.add_punctuation(":", False, True)
             apiview.add_type(self.argtype, self.id)
-        elif self.argname not in (TYPE_NOT_REQUIRED):
-            # Type is not available. Add lint error in review
-            error_msg = TYPE_NOT_AVAILABLE.format(self.argname)
-            apiview.add_diagnostic(error_msg, self.id)
-            if self.function_node:
-                self.function_node.add_error(error_msg)
 
         # add arg default value
         default = self.default

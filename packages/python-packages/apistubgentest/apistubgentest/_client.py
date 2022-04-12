@@ -13,6 +13,19 @@ class DefaultValuesClient:
     def with_simple_optional_defaults(name: Optional[str] = "Bill", *, age: Optional[int] = 21):
         pass
 
+    def with_falsy_optional_defaults(*, string: Optional[str] = "", int: Optional[int] = 0, bool: Optional[bool] = False):
+        pass
+
+    def with_falsy_optional_defaults_and_docstring(*, string: Optional[str] = "", int: Optional[int] = 0, bool: Optional[bool] = False):
+        """ Adds the docstring, which exposes issues.
+        
+        :keyword str string: String. Default value is "".
+        :keyword int int: Int. Default value is 0.
+        :keyword bool bool: Bool. Default value is False.
+        """
+        pass
+
+
     def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = None):
         pass
 
@@ -169,11 +182,14 @@ class SpecialArgsClient:
     def with_nonstandard_names(self, *vars, **kwds):
         pass
 
-    def with_no_args(self):
+    def with_no_args():
         pass
 
     def with_keyword_only_args(self, *, value, **kwargs):
         pass
 
     def with_positional_only_args(self, a, b, /, c):
+        pass
+
+    def with_sorted_kwargs(self, *, d, c, b, a, **kwargs):
         pass

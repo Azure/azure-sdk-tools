@@ -53,7 +53,7 @@ class ModuleNode(NodeEntityBase):
                 self.node_index.add(key, class_node)
                 self.child_nodes.append(class_node)
             elif inspect.isroutine(member_obj):
-                func_node = FunctionNode(self.namespace, self, member_obj, True)
+                func_node = FunctionNode(self.namespace, self, obj=member_obj, is_module_level=True)
                 key = "{0}.{1}".format(self.namespace, func_node.name)
                 self.node_index.add(key, func_node)
                 self.child_nodes.append(func_node)

@@ -79,7 +79,6 @@ class FunctionNode(NodeEntityBase):
         self.node = node or astroid.extract_node(inspect.getsource(obj))
         self._inspect()
 
-
     def _inspect(self):
         logging.debug("Processing function {0}".format(self.name))
 
@@ -96,7 +95,6 @@ class FunctionNode(NodeEntityBase):
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
-
 
     def _parse_function(self):
         """
@@ -119,7 +117,6 @@ class FunctionNode(NodeEntityBase):
         self.special_kwarg = parser.special_kwarg
         self.special_vararg = parser.special_vararg
         self._parse_docstring()
-
 
     def _parse_docstring(self):
         # Parse docstring to get list of keyword args, type and default value for both positional and
@@ -146,33 +143,58 @@ class FunctionNode(NodeEntityBase):
                 )
                 self.return_type = parsed_docstring.ret_type
 
-            # Update positional argument metadata from the docstring; otherwise, stick with
-            # what was parsed from the signature.
-            for argname, signature_arg in self.args.items():
-                docstring_match = parsed_docstring.pos_args.get(argname, None)
-                if not docstring_match:
-                    continue
-                signature_arg.argtype = docstring_match.argtype or signature_arg.argtype
-                signature_arg.default = docstring_match.default or signature_arg.default
+            # if something is missing from the signature parsing, update it from the
+            # docstring, if available
+            for argname, signature_arg in {**self.args, **self.posargs}.items():
+                signature_arg.argtype = signature_arg.argtype or parsed_docstring.type_for(argname)
+                signature_arg.default = signature_arg.default or parsed_docstring.default_for(argname)
 
-            # Update keyword argument metadata from the docstring; otherwise, stick with
-            # what was parsed from the signature.
-            remaining_docstring_kwargs = set(parsed_docstring.kw_args.keys())
+            # if something is missing from the signature parsing, update it from the
+            # docstring, if available
+            remaining_docstring_kwargs = set(parsed_docstring.kwargs.keys())
             for argname, kw_arg in self.kwargs.items():
-                docstring_match = parsed_docstring.kw_args.get(argname, None)
+                docstring_match = parsed_docstring.kwargs.get(argname, None)
                 if not docstring_match:
                     continue
                 remaining_docstring_kwargs.remove(argname)
                 if not kw_arg.is_required:
-                    kw_arg.argtype = kw_arg.argtype or docstring_match.argtype 
-                    kw_arg.default = kw_arg.default or docstring_match.default
+                    kw_arg.argtype = kw_arg.argtype or parsed_docstring.type_for(argname)
+                    kw_arg.default = kw_arg.default or parsed_docstring.default_for(argname)
             
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
-                self.kwargs[argname] = parsed_docstring.kw_args[argname]
+                self.kwargs[argname] = parsed_docstring.kwargs[argname]
 
-    def _has_any_args(self) -> bool:
-        return any([self.args, self.kwargs, self.special_kwarg, self.special_vararg, self.posargs])
+            # retrieve the special *args type from docstrings
+            if self.special_kwarg and not self.special_kwarg.argtype:
+                match = parsed_docstring.pos_args.get(self.special_kwarg.argname, None)
+                if match:
+                    self.special_kwarg.argtype = match.argtype
+
+            # retrieve the special **kwargs type from docstrings
+            if self.special_vararg and not self.special_vararg.argtype:
+                match = parsed_docstring.pos_args.get(self.special_vararg.argname, None)
+                if match:
+                    self.special_vararg.argtype = match.argtype
+
+    def _newline_if_needed(self, apiview, use_multi_line):
+        if use_multi_line:
+            apiview.add_newline()
+            apiview.add_whitespace()
+
+    def _argument_count(self) -> int:
+        count = len(self.posargs) + len(self.args) + len(self.kwargs)
+        if self.posargs:
+            # account for /
+            count += 1
+        if self.kwargs:
+            # account for *
+            count += 1
+        if self.special_kwarg:
+            count += 1
+        if self.special_vararg:
+            count += 1
+        return count
 
     def _generate_short_type(self, long_type):
         short_type = long_type
@@ -183,10 +205,7 @@ class FunctionNode(NodeEntityBase):
 
     def _generate_args_for_collection(self, items, apiview, use_multi_line):
         for item in items.values():
-            # Add new line if args are listed in new line
-            if use_multi_line:
-                apiview.add_newline()
-                apiview.add_whitespace()
+            self._newline_if_needed(apiview, use_multi_line)
             item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
             apiview.add_punctuation(",", False, True)
 
@@ -194,7 +213,7 @@ class FunctionNode(NodeEntityBase):
         apiview.add_punctuation("(")
 
         # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
-        use_multi_line = (len(self.args) + len(self.kwargs)) > 2
+        use_multi_line = self._argument_count() > 2
         if use_multi_line:
             apiview.begin_group()
             apiview.begin_group()
@@ -202,26 +221,30 @@ class FunctionNode(NodeEntityBase):
         self._generate_args_for_collection(self.posargs, apiview, use_multi_line)
         # add postional-only marker if any posargs
         if self.posargs:
+            self._newline_if_needed(apiview, use_multi_line)
             apiview.add_text(text="/", id=self.namespace_id)
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.args, apiview, use_multi_line)
         if self.special_vararg:
+            self._newline_if_needed(apiview, use_multi_line)
             self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="*")
             apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
         if self.kwargs:
+            self._newline_if_needed(apiview, use_multi_line)
             apiview.add_text(text="*", id=self.namespace_id)
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
         if self.special_kwarg:
+            self._newline_if_needed(apiview, use_multi_line)
             self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="**")
             apiview.add_punctuation(",", False, True)
 
         # pop the final ", " tokens
-        if self._has_any_args():
+        if self._argument_count:
             apiview.tokens.pop()
             apiview.tokens.pop()
 
@@ -233,7 +256,6 @@ class FunctionNode(NodeEntityBase):
             apiview.end_group()
         else:
             apiview.add_punctuation(")")
-
 
     def generate_tokens(self, apiview):
         """Generates token for function signature
@@ -282,7 +304,6 @@ class FunctionNode(NodeEntityBase):
         # These are well known protocol implementation
         if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
             self.errors.append(error_msg)
-        
 
     def print_errors(self):
         if self.errors:

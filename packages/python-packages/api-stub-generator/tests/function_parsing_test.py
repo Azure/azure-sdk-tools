@@ -82,6 +82,14 @@ class TestTypeHints:
             expected = "def with_list_union_return_type(self) -> List[Union[str, int]]"
             _check(actual, expected, client)
 
+    def test_datetime_typehint(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_datetime_typehint)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_datetime_typehint(self, date: datetime) -> datetime"
+            _check(actual, expected, client)    
+
 
 class TestDefaultValues:
 
@@ -112,7 +120,7 @@ class TestDefaultValues:
     def test_parsed_docstring_defaults(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_parsed_docstring_defaults)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_parsed_docstring_defaults(name: str = "Bill", age: int = 21, some_class: class = :py:class:`apistubgen.test.models.FakeObject`)'
+        expected = 'def with_parsed_docstring_defaults(name: str = "Bill", age: int = 21, some_class: class = ":py:class:`apistubgen.test.models.FakeObject`")'
         _check(actual, expected, DefaultValuesClient)
 
     def test_enum_defaults(self):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from azure.core.paging import ItemPaged
 from typing import Optional, Union, List, Any
 
@@ -58,6 +59,9 @@ class Python3TypeHintClient:
     def with_list_union_return_type(self) -> List[Union[str, int]]:
         pass
 
+    def with_datetime_typehint(self, date: datetime) -> datetime:
+        pass
+
 
 class Python2TypeHintClient:
 
@@ -92,6 +96,13 @@ class Python2TypeHintClient:
 
     def with_list_union_return_type(self):
         # type: (...) -> List[Union[str, int]]
+        pass
+
+    def with_datetime_typehint(
+        self, 
+        date # type: datetime
+    ):
+        # type: (...) -> datetime
         pass
 
 
@@ -138,6 +149,14 @@ class DocstringTypeHintClient:
         """" List union return
         
         :rtype: List[Union[str, int]]
+        """
+        pass
+
+    def with_datetime_typehint(self, date):
+        """ With datetime
+        
+        :param datetime date: Datetime
+        :rtype: datetime
         """
         pass
 

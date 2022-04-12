@@ -71,11 +71,12 @@ class TestClassParsing:
 
     def test_required_kwargs(self):
         class_node = ClassNode(name="RequiredKwargObject", namespace="test", parent_node=None, obj=RequiredKwargObject, pkg_root_namespace=self.pkg_namespace)
-        kwargs = class_node.child_nodes[0].kw_args
         args = class_node.child_nodes[0].args
+        kwargs = class_node.child_nodes[0].kwargs
+        kwarg = class_node.child_nodes[0].special_kwarg
         assert args["id"].is_required == True
         assert args["id"].default is None
-        assert args["**kwargs"].argtype == "Any"
+        assert kwarg.argtype == "Any"
 
         assert len(kwargs) == 3
         assert kwargs["name"].is_required == True

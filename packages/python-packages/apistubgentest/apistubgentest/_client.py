@@ -140,3 +140,21 @@ class DocstringTypeHintClient:
         :rtype: List[Union[str, int]]
         """
         pass
+
+
+class SpecialArgsClient:
+
+    def with_standard_names(self, *args, **kwargs):
+        pass
+
+    def with_nonstandard_names(self, *vars, **kwds):
+        pass
+
+    def with_no_args(self):
+        pass
+
+    def with_keyword_only_args(self, *, value, **kwargs):
+        pass
+
+    def with_positional_only_args(self, a, b, /, c):
+        pass

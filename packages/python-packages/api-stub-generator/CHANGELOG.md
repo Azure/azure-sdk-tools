@@ -7,6 +7,9 @@ Fixed issue where, in some cases, string literal default values would not appear
   in quotes.
 Added support for @overloads decorators.
 Fixed issue where decorators with parameters would not appear in APIView.
+Add support for positional-only arguments.
+Fixed consistency issues with how default values are displayed.
+Added full support for Python 2-style type hints.
 
 ## Version 0.2.11 (2022-04-06)
 Added __main__ to execute as module

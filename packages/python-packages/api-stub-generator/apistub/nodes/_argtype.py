@@ -35,19 +35,20 @@ class ArgType:
             self.argtype = argtype
         self.function_node = func_node
 
-    def generate_tokens(self, apiview, function_id, add_line_marker):
+    def generate_tokens(self, apiview, function_id, *, add_line_marker: bool, prefix: str = ""):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ApiVersion apiview: The ApiView
         :param str function_id: Module level Unique ID created for function 
-        :param bool include_default: Optional flag to indicate to include/exclude default value in tokens
+        :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
+        :keyword str prefix: Optional prefix for *args and **kwargs.
         """
         # Add arg name
         self.id = function_id
         if add_line_marker:
-            self.id = "{0}.param({1}".format(function_id, self.argname)
+            self.id = f"{function_id}.param({self.argname}"
             apiview.add_line_marker(self.id)
 
-        apiview.add_text(self.id, self.argname)
+        apiview.add_text(self.id, f"{prefix}{self.argname}")
         # add arg type
         if self.argtype:
             apiview.add_punctuation(":", False, True)

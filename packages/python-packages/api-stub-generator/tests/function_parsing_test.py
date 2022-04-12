@@ -9,8 +9,11 @@ from apistubgentest import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     DocstringTypeHintClient,
-    DefaultValuesClient
+    DefaultValuesClient,
+    SpecialArgsClient
 )
+
+from ._test_util import _render_string, _check, _tokenize
 
 
 def _test_arg(node, key, name, _type, default):
@@ -43,7 +46,12 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     def test_variadic_typehints(self):
-        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        clients = [
+            # TODO: Known limitation of astroid (See: https://github.com/Azure/azure-sdk-tools/issues/3131)
+            #Python2TypeHintClient,
+            Python3TypeHintClient,
+            DocstringTypeHintClient
+        ]
         for client in clients:
             node = FunctionNode("test", None, obj=client.with_variadic_typehint)
             actual = _render_string(_tokenize(node))
@@ -112,3 +120,36 @@ class TestDefaultValues:
         actual = _render_string(_tokenize(node))
         expected = 'def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG)'
         _check(actual, expected, DefaultValuesClient)
+
+
+class TestSpecialArguments:
+
+    def test_standard_names(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_standard_names)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_standard_names(self, *args, **kwargs)'
+        _check(actual, expected, SpecialArgsClient)
+
+    def test_nonstandard_names(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_nonstandard_names)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_nonstandard_names(self, *vars, **kwds)'
+        _check(actual, expected, SpecialArgsClient)
+
+    def test_no_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_no_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_no_args(self)'
+        _check(actual, expected, SpecialArgsClient)
+
+    def test_keyword_only_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_keyword_only_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_keyword_only_args(self, *, value, **kwargs)'
+        _check(actual, expected, SpecialArgsClient)
+        
+    def test_positional_only_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_positional_only_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_positional_only_args(self, a, b, /, c)'
+        _check(actual, expected, SpecialArgsClient)

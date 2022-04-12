@@ -11,7 +11,8 @@ from ._client import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     DocstringTypeHintClient,
-    DefaultValuesClient
+    DefaultValuesClient,
+    SpecialArgsClient
 )
 
 __version__ = VERSION

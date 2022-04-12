@@ -13,6 +13,8 @@ class AstroidFunctionParser:
         self._node = node
         self._args = node.args
         self._parent = func_node
+        self.special_vararg = None
+        self.special_kwarg = None
         self.args = {}
         self.kwargs = {}
         self.posargs = {}
@@ -21,7 +23,7 @@ class AstroidFunctionParser:
         self._parse_args()
         self._parse_kwargs()
         self._parse_posonly_args()
-        self._parse_varargs()
+        self._parse_kwarg_and_vararg()
 
     def _default_value(self, name):
         try:
@@ -52,16 +54,6 @@ class AstroidFunctionParser:
             argtype = self._argtype(name, idx, self._args.kwonlyargs_annotations, self._args.type_comment_kwonlyargs)
             default = self._default_value(name)
             self.kwargs[name] = ArgType(name, argtype=argtype, default=default, keyword="keyword", func_node=self._parent)
-        if self._args.kwarg:
-            kwarg_name = self._args.kwarg
-            if self._args.kwargannotation:
-                kwarg_type = self._args.kwargannotation.as_string()
-            else:
-                kwarg_type = None
-            # This wonky logic matches the existing code
-            arg = ArgType(kwarg_name, argtype=kwarg_type, default=inspect.Parameter.empty, keyword="keyword", func_node=self._parent)
-            arg.argname = f"**{kwarg_name}"
-            self.args[arg.argname] = arg
 
     def _parse_posonly_args(self):
         for (idx, arg) in enumerate(self._args.posonlyargs):
@@ -70,7 +62,7 @@ class AstroidFunctionParser:
             default = self._default_value(name)
             self.posargs[name] = ArgType(name, argtype=argtype, default=default, keyword=None, func_node=self._parent)
 
-    def _parse_varargs(self):
+    def _parse_kwarg_and_vararg(self):
         if self._args.vararg:
             name = self._args.vararg
             if self._args.varargannotation:
@@ -78,5 +70,12 @@ class AstroidFunctionParser:
             else:
                 argtype = None
             arg = ArgType(name, argtype=argtype, default=inspect.Parameter.empty, keyword=None, func_node=self._parent)
-            arg.argname = f"*{name}"
-            self.args[name] = arg
+            self.special_vararg = arg
+        if self._args.kwarg:
+            kwarg_name = self._args.kwarg
+            if self._args.kwargannotation:
+                kwarg_type = self._args.kwargannotation.as_string()
+            else:
+                kwarg_type = None
+            arg = ArgType(kwarg_name, argtype=kwarg_type, default=inspect.Parameter.empty, keyword="keyword", func_node=self._parent)
+            self.special_kwarg = arg

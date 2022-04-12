@@ -1,0 +1,104 @@
+trigger: none
+
+parameters:
+  - name: sdkGenerationName
+    type: string
+
+  - name: sdk
+    type: string
+    values:
+      - js
+      - java
+      - go
+      - net
+      - python
+
+  - name: resourceProvider
+    type: string
+
+  - name: readmeFile
+    type: string
+
+  - name: triggerType
+    type: string
+    default: ad-hoc
+    values:
+      - ad-hoc
+      - ci
+      - release
+
+  - name: serviceType
+    type: string
+    values:
+      - resource-manager
+      - data-plane
+
+  - name: specRepoType
+    type: string
+    default: github
+    values:
+      - github
+      - devops
+
+  - name: specRepoUrl
+    type: string
+
+  - name: specRepoBaseBranch
+    type: string
+
+  - name: sdkRepoType
+    type: string
+    default: github
+    values:
+      - github
+      - devops
+
+  - name: sdkRepoUrl
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+
+  - name: skippedTask
+    type: string
+
+stages:
+  - stage: SdkGeneration
+    jobs:
+      - job: SdkGeneration
+        displayName: ${{ parameters.sdkGenerationName }}-${{ parameters.sdk }}-${{ parameters.serviceType }}-${{ parameters.resourceProvider }}
+        steps:
+          - bash: |
+              curl -X PATCH -H "Content-Type: application/json" https://$(CodegenApp_Server)/codegenerations/${SDK_GENERATION_NAME} -d '{"updateParameters": {"status": "in_progress","lastPipelineBuildID": "$(Build.BuildId)"}}'
+            displayName: Notify Sdk Generation Server to Start
+            env:
+              SDK_GENERATION_NAME: ${{ parameters.sdkGenerationName }}
+
+          - template: ./pipelines/steps/environment-setup.yml
+            parameters:
+              sdk: ${{ parameters.sdk }}
+              specRepoUrl: ${{ parameters.specRepoUrl }}
+              specRepoBaseBranch: ${{ parameters.specRepoBaseBranch }}
+              sdkRepoUrl: ${{ parameters.sdkRepoUrl }}
+              sdkRepoBaseBranch: ${{ parameters.sdkRepoBaseBranch }}
+
+          - template: ./pipelines/steps/sdk-generation-tasks.yml
+            parameters:
+              sdkGenerationName: ${{ parameters.sdkGenerationName }}
+              sdk: ${{ parameters.sdk }}
+              resourceProvider: ${{ parameters.resourceProvider }}
+              readmeFile: ${{ parameters.readmeFile }}
+              triggerType: ${{ parameters.triggerType }}
+              specRepoType: ${{ parameters.specRepoType }}
+              specRepoUrl: ${{ parameters.specRepoUrl }}
+              specRepoBaseBranch: ${{ parameters.specRepoBaseBranch }}
+              sdkRepoType: ${{ parameters.sdkRepoType }}
+              sdkRepoUrl: ${{ parameters.sdkRepoUrl }}
+              sdkRepoBaseBranch: ${{ parameters.sdkRepoBaseBranch }}
+              skippedTask: ${{ parameters.skippedTask }}
+              serviceType: ${{ parameters.serviceType }}
+          - bash: |
+              curl -X PATCH -H "Content-Type: application/json" https://$(CodegenApp_Server)/codegenerations/${SDK_GENERATION_NAME} -d '{"updateParameters": {"status": "completed"}}'
+            displayName: Set Complete
+            env:
+              SDK_GENERATION_NAME: ${{ parameters.sdkGenerationName }}

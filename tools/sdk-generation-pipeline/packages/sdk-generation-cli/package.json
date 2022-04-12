@@ -1,0 +1,47 @@
+{
+  "name": "@azure-tools/sdk-generation-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "prepack": "npm run build",
+    "pack": "npm pack 2>&1"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
+    "LICENSE",
+    "README.md"
+  ],
+  "bin": {
+    "getRepoName": "dist/getRepoNameCli.js",
+    "getTasksToRun": "dist/getTasksToRunCli.js",
+    "runInitTask": "dist/runInitTaskCli.js",
+    "runGenerateAndBuildTask": "dist/runGenerateAndBuildTaskCli.js",
+    "runMockTestTask": "dist/runMockTestTaskCli.js",
+    "runLiveTestTask": "dist/runLiveTestTaskCli.js",
+    "generateResult": "dist/generateResultCli.js"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.8.0",
+    "ajv": "^6.12.6",
+    "convict": "^6.2.1",
+    "@azure-tools/sdk-generation-lib": "^1.0.0",
+    "axios": "^0.24.0"
+  },
+  "bundledDependencies": [
+    "@azure-tools/sdk-generation-lib"
+  ],
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "rimraf": "^3.0.2"
+  }
+}

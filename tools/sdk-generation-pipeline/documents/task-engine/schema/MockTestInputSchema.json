@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "packageFolder": {
+      // The path of package folder
+      "type": "string"
+    },
+    "mockServerHost": {
+      "type": "string"
+    }
+  },
+  "required": ["packageFolder", "mockServerHost"]
+}

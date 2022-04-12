@@ -1,0 +1,38 @@
+{
+  "name": "@azure-tools/sdk-generation-lib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc && npm run copy",
+    "copy": "copyfiles  -u 1 src/types/taskInputAndOuputSchemaTypes/*.json dist",
+    "prepack": "npm run build",
+    "pack": "npm pack 2>&1"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "@azure/storage-blob": "^12.8.0",
+    "ajv": "^6.12.6",
+    "colors": "^1.4.0",
+    "convict": "^6.2.1",
+    "jsonc-parser": "^3.0.0",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^3.0.2"
+  }
+}

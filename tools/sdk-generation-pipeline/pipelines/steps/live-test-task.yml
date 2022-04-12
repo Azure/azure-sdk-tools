@@ -1,0 +1,15 @@
+steps:
+  - bash: |
+      runLiveTestTask
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo -e "\033[0;31mLiveTest Task is failed"
+          exit 1
+      fi
+    displayName: Live Test
+    condition: and(contains(variables['TasksToRun'], 'liveTest'), ne(variables['PreTaskResult'], 'failure'))
+    workingDirectory: $(SDK_REPO)
+    env:
+      SDK_REPO: $(SDK_REPO)
+      PACKAGE_FOLDERS: $(PackageFolders)
+      TASKS_TO_RUN: $(TasksToRun)

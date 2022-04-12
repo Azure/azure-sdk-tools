@@ -1,0 +1,14 @@
+steps:
+  - bash: |
+      runInitTask
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo -e "\033[0;31mInit Task is failed"
+          exit 1
+      fi
+    displayName: Init
+    condition: contains(variables['TasksToRun'], 'init')
+    workingDirectory: $(SDK_REPO)
+    env:
+      SDK_REPO: $(SDK_REPO)
+      TASKS_TO_RUN: $(TasksToRun)

@@ -24,116 +24,91 @@ def _test_return(node, _type):
     assert node.return_type == _type
 
 
-class TestPython2TypeHints:
+class TestTypeHints:
 
     def test_simple_typehints(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_simple_typehints)
-        _test_arg(node, "name", "name", "str", None)
-        _test_arg(node, "age", "age", "int", None)
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_simple_typehints)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_simple_typehints(self, name: str, age: int) -> str"
+            _check(actual, expected, client)
 
     def test_complex_typehints(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_complex_typehints)
-        _test_arg(node, "value", "value", "List[ItemPaged[Union[FakeObject, FakeError]]]", None)
-        
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_complex_typehints)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_complex_typehints(self, value: List[ItemPaged[Union[FakeObject, FakeError]]])"
+            _check(actual, expected, client)
+
     def test_variadic_typehints(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_variadic_typehint)
-        _test_arg(node, "vars", "*vars", "str", None)
-        _test_arg(node, "**kwargs", "**kwargs", "Any", None)
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_variadic_typehint)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_variadic_typehint(self, *vars: str, **kwargs: Any) -> None"
+            _check(actual, expected, client)
 
     def test_str_list_return_type(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_str_list_return_type)
-        _test_return(node, "List[str]")
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_str_list_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_str_list_return_type(self) -> List[str]"
+            _check(actual, expected, client)
 
     def test_list_return_type(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_list_return_type)
-        _test_return(node, "List[TestClass]")
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_list_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_list_return_type(self) -> List[TestClass]"
+            _check(actual, expected, client)
 
     def test_list_union_return_type(self):
-        node = FunctionNode("test", None, obj=Python2TypeHintClient.with_list_union_return_type)
-        _test_return(node, "List[Union[str, int]]")
-
-
-class TestPython3TypeHints:
-
-    def test_simple_typehints(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_simple_typehints)
-        _test_arg(node, "name", "name", "str", None)
-        _test_arg(node, "age", "age", "int", None)
-
-    def test_complex_typehints(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_complex_typehints)
-        _test_arg(node, "value", "value", "List[ItemPaged[Union[FakeObject, FakeError]]]", None)
-        
-    def test_variadic_typehints(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_variadic_typehint)
-        _test_arg(node, "vars", "*vars", "str", None)
-        _test_arg(node, "**kwargs", "**kwargs", "Any", None)
-
-    def test_str_list_return_type(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_str_list_return_type)
-        _test_return(node, "List[str]")
-
-    def test_list_return_type(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_list_return_type)
-        _test_return(node, "List[TestClass]")
-
-    def test_list_union_return_type(self):
-        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_list_union_return_type)
-        _test_return(node, "List[Union[str, int]]")
-
-
-class TestDocstringTypeHints:
-
-    def test_simple_typehints(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_simple_typehints)
-        _test_arg(node, "name", "name", "str", None)
-        _test_arg(node, "age", "age", "int", None)
-
-    def test_complex_typehints(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_complex_typehints)
-        _test_arg(node, "value", "value", "List[ItemPaged[Union[FakeObject, FakeError]]]", None)
-        
-    def test_variadic_typehints(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_variadic_typehint)
-        _test_arg(node, "vars", "*vars", "str", None)
-        _test_arg(node, "**kwargs", "**kwargs", "Any", None)
-
-    def test_str_list_return_type(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_str_list_return_type)
-        _test_return(node, "List[str]")
-
-    def test_list_return_type(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_list_return_type)
-        _test_return(node, "List[TestClass]")
-
-    def test_list_union_return_type(self):
-        node = FunctionNode("test", None, obj=DocstringTypeHintClient.with_list_union_return_type)
-        _test_return(node, "List[Union[str, int]]")
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_list_union_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_list_union_return_type(self) -> List[Union[str, int]]"
+            _check(actual, expected, client)
 
 
 class TestDefaultValues:
 
     def test_simple_default(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_simple_default)
-        _test_arg(node, "name", "name", "str", "'Bill'")
-        _test_arg(node, "age", "age", "int", "21")
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_simple_default(name: str = "Bill", *, age: int = 21)'
+        _check(actual, expected, DefaultValuesClient)
 
     def test_simple_optional_default(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_simple_optional_defaults)
-        _test_arg(node, "name", "name", "Optional[str]", "'Bill'")
-        _test_arg(node, "age", "age", "Optional[int]", "21")
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_simple_optional_defaults(name: Optional[str] = "Bill", *, age: Optional[int] = 21)'
+        _check(actual, expected, DefaultValuesClient)
 
     def test_optional_none_default(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_optional_none_defaults)
-        _test_arg(node, "name", "name", "Optional[str]", "...")
-        _test_arg(node, "age", "age", "Optional[int]", "...")
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = ...)'
+        _check(actual, expected, DefaultValuesClient)
 
-    def test_class_defalt(self):
+    def test_class_default(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_class_default)
-        _test_arg(node, "my_class", "my_class", "Any", "FakeObject")
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_class_default(my_class: Any = FakeObject)'
+        _check(actual, expected, DefaultValuesClient)
 
     def test_parsed_docstring_defaults(self):
         node = FunctionNode("test", None, obj=DefaultValuesClient.with_parsed_docstring_defaults)
-        _test_arg(node, "name", "name", "str", "'Bill'")
-        _test_arg(node, "age", "age", "int", "21")
-        _test_arg(node, "some_class", "some_class", "class", ":py:class:`apistubgen.test.models.FakeObject`")
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_parsed_docstring_defaults(name: str = "Bill", age: int = 21, some_class: class = :py:class:`apistubgen.test.models.FakeObject`)'
+        _check(actual, expected, DefaultValuesClient)
+
+    def test_enum_defaults(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_enum_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG)'
+        _check(actual, expected, DefaultValuesClient)

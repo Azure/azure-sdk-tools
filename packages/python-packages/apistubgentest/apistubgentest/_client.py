@@ -1,18 +1,18 @@
 from azure.core.paging import ItemPaged
 from typing import Optional, Union, List, Any
 
-from .models import FakeObject, FakeError
+from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
 
 class DefaultValuesClient:
 
-    def with_simple_default(name: str = "Bill", age: int = 21):
+    def with_simple_default(name: str = "Bill", *, age: int = 21):
         pass
 
-    def with_simple_optional_defaults(name: Optional[str] = "Bill", age: Optional[int] = 21):
+    def with_simple_optional_defaults(name: Optional[str] = "Bill", *, age: Optional[int] = 21):
         pass
 
-    def with_optional_none_defaults(name: Optional[str] = None, age: Optional[int] = None):
+    def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = None):
         pass
 
     def with_class_default(my_class: Any = FakeObject):
@@ -23,13 +23,16 @@ class DefaultValuesClient:
 
         :param name: Some dummy value, defaults
         to "Bill". Extra text.
-        :type value: str
+        :type name: str
         :param age: Something else, defaults
         to 21. Extra text.
-        :type value: int
+        :type age: int
         :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
         :type some_class: class
         """
+        pass
+
+    def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG):
         pass
 
 
@@ -88,7 +91,7 @@ class Python2TypeHintClient:
         pass
 
     def with_list_union_return_type(self):
-        # type: (...) -> List[Union[str, int]]:
+        # type: (...) -> List[Union[str, int]]
         pass
 
 

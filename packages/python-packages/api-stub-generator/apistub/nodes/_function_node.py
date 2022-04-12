@@ -3,6 +3,7 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
+from astroid import NodeNG
 
 from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
@@ -84,7 +85,7 @@ class FunctionNode(NodeEntityBase):
         
         # Turn any decorators into annotation
         if self.node.decorators:
-            self.annotations = [f"@{x.as_string()}" for x in self.node.decorators.nodes]
+            self.annotations = [f"@{x.as_string(preserve_quotes=True)}" for x in self.node.decorators.nodes]
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
@@ -110,33 +111,6 @@ class FunctionNode(NodeEntityBase):
         self.kw_args = parser.kwargs
         self.return_type = get_qualified_name(parser.return_type, self.namespace)
         
-        # if self.obj:
-        #     # Find signature to find positional args and return type
-        #     sig = inspect.signature(self.obj)
-        #     params = sig.parameters
-        #     # Add all keyword only args here temporarily until docstring is parsed
-        #     # This is to handle the scenario for keyword arg typehint (py3 style is present in signature itself)
-        #     for argname, argvalues in params.items():
-        #         kind = argvalues.kind
-        #         keyword = "keyword" if kind == inspect.Parameter.KEYWORD_ONLY else None
-        #         arg = ArgType(name=argname, argtype=get_qualified_name(argvalues.annotation, self.namespace), default=argvalues.default, func_node=self, keyword=keyword)
-
-        #         # Store handle to kwarg object to replace it later
-        #         if kind == inspect.Parameter.VAR_KEYWORD:
-        #             arg.argname = f"**{argname}"
-
-        #         if kind == inspect.Parameter.KEYWORD_ONLY:
-        #             self.kw_args[arg.argname] = arg
-        #         elif kind == inspect.Parameter.VAR_POSITIONAL:
-        #             # to work with docstring parsing, the key must
-        #             # not have the * in it.
-        #             arg.argname = f"*{argname}"
-        #             self.args[argname] = arg
-        #         else:
-        #             self.args[arg.argname] = arg
-
-        #     if sig.return_annotation:
-        #         self.return_type = get_qualified_name(sig.return_annotation, self.namespace)
         self._parse_docstring()
         self._order_final_args()
 
@@ -272,7 +246,8 @@ class FunctionNode(NodeEntityBase):
         """Generates token for function signature
         :param ApiView: apiview
         """
-        logging.info("Processing method {0} in class {1}".format(self.name, self.parent_node.namespace_id))
+        parent_id = self.parent_node.namespace_id if self.parent_node else "???"
+        logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
             apiview.add_whitespace()

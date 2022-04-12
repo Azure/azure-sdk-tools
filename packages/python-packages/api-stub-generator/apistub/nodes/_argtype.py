@@ -1,3 +1,4 @@
+import astroid
 import inspect
 
 # Special default values that should not be treated as string literal
@@ -26,7 +27,7 @@ class ArgType:
             self.default = "..." if keyword == "keyword" else "None"
         else:
             self.is_required = False
-            self.default = str(default)
+            self.default = default
 
         if argtype and all([not self.is_required, self.default is None, not keyword in ["ivar", "param"], not argtype.startswith("Optional")]):
             self.argtype = f"Optional[{argtype}]"
@@ -59,12 +60,16 @@ class ArgType:
                 self.function_node.add_error(error_msg)
 
         # add arg default value
-        if self.default:
+        default = self.default
+        if default is not None:
             apiview.add_punctuation("=", True, True)
-            # Add string literal or numeric literal based on the content within default
-            # Ideally this should be based on arg type. But type is not available for all args
-            # We should refer to arg type instead of content when all args have type                
-            if self.default in SPECIAL_DEFAULT_VALUES or self.argtype not in ["str", "Optional[str]"]:
-                apiview.add_literal(self.default)
+            if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
+                apiview.add_stringliteral(default)
             else:
-                apiview.add_stringliteral(self.default)
+                if isinstance(default, astroid.node_classes.Name):
+                    value = default.name
+                elif hasattr(default, "as_string"):
+                    value = default.as_string()
+                else:
+                    value = str(default)
+                apiview.add_literal(value)

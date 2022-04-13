@@ -47,4 +47,4 @@ WORKDIR /proxyserver
 
 COPY --from=build /proxyserver .
 
-ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy"]
+ENTRYPOINT ["dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy", "--dump"]

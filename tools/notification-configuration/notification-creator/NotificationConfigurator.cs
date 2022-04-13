@@ -217,13 +217,35 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                 // Get set of team members in the CODEOWNERS file
-                var codeownersDescriptorsTasks = codeOwnerEntry.Owners.Select(contact => codeOwnerCache.GetValueByKey(contact, 
-                    input => GetDescriptorFromGithubIdentity(input, gitHubToAADConverter)));
-                // Get set of team members from devOps team
-                var teamDescriptorsTasks = (await service.GetMembersAsync(team)).Select(
-                    member => teamMemberCache.GetValueByKey(member.Identity.Id, input => GetDescriptorFromTeamId(input)));
-                var codeownersSet = new HashSet<string>(await Task.WhenAll(codeownersDescriptorsTasks));
-                var teamSet = new HashSet<string>(await Task.WhenAll(teamDescriptorsTasks));
+                var codeownersDescriptors = new List<String>();
+                foreach (var contact in codeOwnerEntry.Owners)
+                {
+                    if (!codeOwnerCache.ContainsKey(contact))
+                    {
+                        codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
+                        {
+                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(codeOwnerCache[contact]);
+                        }
+                    }
+                    codeownersDescriptors.Add(codeOwnerCache[contact]);
+                }
+
+
+                var codeownersSet = new HashSet<string>(codeownersDescriptors);
+                // Get set of team members in the DevOps teams
+                var teamMembers = await service.GetMembersAsync(team);
+                var teamDescriptors = new List<String>();
+                foreach (var member in teamMembers)
+                {
+                    if (!teamMemberCache.ContainsKey(member.Identity.Id))
+                    {
+                        var teamMemberDescritor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
+                        teamMemberCache[member.Identity.Id] = teamMemberDescritor;
+                    }
+                    teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
+                }
+                var teamSet = new HashSet<string>(teamDescriptors);
                 var contactsToRemove = teamSet.Except(codeownersSet);
                 var contactsToAdd = codeownersSet.Except(teamSet);
 

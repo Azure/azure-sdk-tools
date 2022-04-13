@@ -43,10 +43,10 @@ namespace Azure.Sdk.Tools.TestProxy
         /// </summary>
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="dumpConfig">Flag. Pass to dump configuration values before starting the application.</param>
+        /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
         /// <param name="version">Flag. Pass to get the version of the tool.</param>
         /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool dumpConfig = false, bool version = false, string[] args = null)
+        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, bool version = false, string[] args = null)
         {
             if (version)
             {
@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var app = host.Build();
 
-            if (dumpConfig)
+            if (dump)
             {
                 var config = app.Services?.GetService<IConfiguration>();
                 Console.WriteLine("Dumping Resolved Configuration Values:");

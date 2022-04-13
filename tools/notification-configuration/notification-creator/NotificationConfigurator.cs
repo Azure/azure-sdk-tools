@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
 using Azure.Sdk.Tools.CodeOwnersParser;
+using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration
 {
@@ -21,12 +22,17 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly AzureDevOpsService service;
         private readonly GitHubService gitHubService;
         private readonly ILogger<NotificationConfigurator> logger;
+        
+        private List<CodeOwnerEntry> codeOwnerEntries;
+
 
         private const int MaxTeamNameLength = 64;        
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
-        // A cache on the code owners github identity to ms alias.
+        // A cache on the code owners github identity to owner descriptor.
         private readonly Dictionary<string, string> codeOwnerCache = new Dictionary<string, string>();
+        // A cache on the team member to member discriptor.
+        private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {
@@ -191,65 +197,79 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     logger.LogInformation("CODEOWNERS file not found, skipping sync");
                     return;
                 }
-
                 var process = pipeline.Process as YamlProcess;
 
                 logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
+        
                 var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
                 codeOwnerEntry.FilterOutNonUserAliases();
 
                 logger.LogInformation("Matching Contacts Path = {0}, NumContacts = {1}", process.YamlFilename, codeOwnerEntry.Owners.Count);
 
                 // Get set of team members in the CODEOWNERS file
-                var codeownerPrincipals = new List<String>();
+                var codeownersDescriptors = new List<String>();
                 foreach (var contact in codeOwnerEntry.Owners)
                 {
                     if (!codeOwnerCache.ContainsKey(contact))
                     {
                         codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
+                        {
+                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(codeOwnerCache[contact]);
+                        }
                     }
-                    codeownerPrincipals.Add(codeOwnerCache[contact]);
+                    codeownersDescriptors.Add(codeOwnerCache[contact]);
                 }
 
-                var codeownersDescriptorsTasks = codeownerPrincipals
-                    .Where(userPrincipal => !string.IsNullOrEmpty(userPrincipal))
-                    .Select(userPrincipal => service.GetDescriptorForPrincipal(userPrincipal));
-                var codeownersDescriptors = await Task.WhenAll(codeownersDescriptorsTasks);
+
                 var codeownersSet = new HashSet<string>(codeownersDescriptors);
-
-                // Get set of existing team members
+                // Get set of team members in the DevOps teams
                 var teamMembers = await service.GetMembersAsync(team);
-                var teamContactTasks = teamMembers
-                    .Select(async member => await service.GetUserFromId(new Guid(member.Identity.Id)));
-                var teamContacts = await Task.WhenAll(teamContactTasks);
-                var teamDescriptors = teamContacts.Select(contact => contact.SubjectDescriptor.ToString());
+                var teamDescriptors = new List<String>();
+                foreach (var member in teamMembers)
+                {
+                    if (!teamMemberCache.ContainsKey(member.Identity.Id))
+                    {
+                        var teamMemberDescritor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
+                        teamMemberCache[member.Identity.Id] = teamMemberDescritor;
+                    }
+                    teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
+                }
                 var teamSet = new HashSet<string>(teamDescriptors);
-
-                // Synchronize contacts
                 var contactsToRemove = teamSet.Except(codeownersSet);
                 var contactsToAdd = codeownersSet.Except(teamSet);
 
-                var teamDescriptor = await service.GetDescriptorAsync(team.Id);
-
                 foreach (var descriptor in contactsToRemove)
                 {
-                    logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                    if (persistChanges)
+                    if (persistChanges && descriptor != null)
                     {
+                        var teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                        logger.LogInformation("Delete Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.RemoveMember(teamDescriptor, descriptor);
                     }
                 }
 
                 foreach (var descriptor in contactsToAdd)
                 {
-                    logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
-                    if (persistChanges)
+                    if (persistChanges && descriptor != null)
                     {
+                        var teamDescriptor = await service.GetDescriptorAsync(team.Id);
+                        logger.LogInformation("Add Contact TeamDescriptor = {0}, ContactDescriptor = {1}", teamDescriptor, descriptor);
                         await service.AddToTeamAsync(teamDescriptor, descriptor);
                     }
                 }
             }
         }
+        private async Task<string> GetDescriptorFromGithubIdentity(string input, GitHubToAADConverter gitHubToAADConverter)
+        {
+            return await service.GetDescriptorForPrincipal(gitHubToAADConverter.GetUserPrincipalNameFromGithub(input));
+        }
+
+        private async Task<string> GetDescriptorFromTeamId(string input)
+        {
+            return (await service.GetUserFromId(new Guid(input))).SubjectDescriptor.ToString();
+        }
+
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)
         {
             var definitions = await service.GetPipelinesAsync(projectName, projectPath);

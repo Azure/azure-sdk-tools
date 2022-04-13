@@ -30,9 +30,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
         // A cache on the code owners github identity to owner descriptor.
-        CacheHelper<string, string> codeOwnerCache = new CacheHelper<string, string>();
+        private readonly Dictionary<string, string> codeOwnerCache = new Dictionary<string, string>();
         // A cache on the team member to member discriptor.
-        CacheHelper<string, string> teamMemberCache = new CacheHelper<string, string>();
+        private readonly Dictionary<string, string> teamMemberCache = new Dictionary<string, string>();
 
         public NotificationConfigurator(AzureDevOpsService service, GitHubService gitHubService, ILogger<NotificationConfigurator> logger)
         {

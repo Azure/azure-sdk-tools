@@ -1,0 +1,94 @@
+parameters:
+  - name: sdkGenerationName
+    type: string
+
+  - name: sdk
+    type: string
+
+  - name: serviceType
+    type: string
+
+  - name: resourceProvider
+    type: string
+
+  - name: readmeFile
+    type: string
+
+  - name: triggerType
+    type: string
+
+  - name: specRepoType
+    type: string
+
+  - name: specRepoUrl
+    type: string
+
+  - name: specRepoBaseBranch
+    type: string
+
+  - name: sdkRepoType
+    type: string
+
+  - name: sdkRepoUrl
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+
+  - name: skippedTask
+    type: string
+
+steps:
+  - bash: |
+      getTasksToRun
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo -e "\033[0;31mGet tasks to run failed"
+          exit 1
+      fi
+    displayName: Retrieve Tasks
+    name: retrieveTasks
+    workingDirectory: $(SDK_REPO)
+    env:
+      SDK_REPO: $(SDK_REPO)
+      SKIPPED_STEPS: ${{ parameters.skippedTask }}
+
+  - template: init-task.yml
+
+  - template: after-task.yml
+    parameters:
+      sdkGenerationName: ${{ parameters.sdkGenerationName }}
+      taskName: init
+      displayTaskName: Init
+
+  - template: generate-and-build-task.yml
+    parameters:
+      readmeFile: ${{ parameters.readmeFile }}
+      sdk: ${{ parameters.sdk }}
+      resourceProvider: ${{ parameters.resourceProvider }}
+      sdkGenerationName: ${{ parameters.sdkGenerationName }}
+      serviceType: ${{ parameters.serviceType }}
+      sdkRepoBaseBranch: ${{ parameters.sdkRepoBaseBranch }}
+      sdkRepoUrl: ${{ parameters.sdkRepoUrl }}
+
+  - template: after-task.yml
+    parameters:
+      sdkGenerationName: ${{ parameters.sdkGenerationName }}
+      taskName: generateAndBuild
+      displayTaskName: Generate
+
+  - template: mock-test-task.yml
+
+  - template: after-task.yml
+    parameters:
+      sdkGenerationName: ${{ parameters.sdkGenerationName }}
+      taskName: mockTest
+      displayTaskName: Mock Test
+
+  - template: live-test-task.yml
+
+  - template: after-task.yml
+    parameters:
+      sdkGenerationName: ${{ parameters.sdkGenerationName }}
+      taskName: liveTest
+      displayTaskName: Live Test

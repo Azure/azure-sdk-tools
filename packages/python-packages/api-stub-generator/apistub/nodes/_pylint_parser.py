@@ -40,7 +40,6 @@ class PylintError:
         except Exception as err:
             # if unable to parse, leave alone
             return
-        
 
     def generate_tokens(self, apiview, target_id):
         apiview.add_diagnostic(obj=self, target_id=target_id)

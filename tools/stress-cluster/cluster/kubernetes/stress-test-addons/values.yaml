@@ -35,4 +35,8 @@ tenantId:
   test: 72f988bf-86f1-41af-91ab-2d7cd011db47
   prod: 72f988bf-86f1-41af-91ab-2d7cd011db47
   dev: 72f988bf-86f1-41af-91ab-2d7cd011db47
+provisionerAppId:
+  test: 0bb65bdf-b175-4340-8654-5a0c52899729
+  prod: de76c9fe-bc09-4967-b489-1872385929fa
+  dev: ""
 

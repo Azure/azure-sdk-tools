@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
@@ -85,30 +85,34 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            if (String.IsNullOrEmpty(file))
+            if (saveRecording)
             {
-                if (!InMemorySessions.TryAdd(sessionId, session))
+                if (String.IsNullOrEmpty(file))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    if (!InMemorySessions.TryAdd(sessionId, session))
+                    {
+                        throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    }
                 }
-            }
-            else
-            {
-                var targetPath = GetRecordingPath(file);
-
-                // Create directories above file if they don't already exist
-                var directory = Path.GetDirectoryName(targetPath);
-                if (!String.IsNullOrEmpty(directory))
+                else
                 {
-                    Directory.CreateDirectory(directory);
-                }
+                    var targetPath = GetRecordingPath(file);
 
-                using var stream = System.IO.File.Create(targetPath);
-                var options = new JsonWriterOptions { Indented = true };
-                var writer = new Utf8JsonWriter(stream, options);
-                session.Session.Serialize(writer);
-                writer.Flush();
-                stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+                    // Create directories above file if they don't already exist
+                    var directory = Path.GetDirectoryName(targetPath);
+                    if (!String.IsNullOrEmpty(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    using var stream = System.IO.File.Create(targetPath);
+                    var options = new JsonWriterOptions { Indented = true };
+                    var writer = new Utf8JsonWriter(stream, options);
+                    session.Session.Serialize(writer);
+                    writer.Flush();
+                    stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+
+                }
             }
         }
 
@@ -186,7 +190,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        private static EntryRecordMode GetRecordMode(HttpRequest request)
+        public static EntryRecordMode GetRecordMode(HttpRequest request)
         {
             EntryRecordMode mode = EntryRecordMode.Record;
             if (request.Headers.TryGetValue(SkipRecordingHeaderKey, out var values))

@@ -170,8 +170,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             var container = await GetItemContainerAsync("azure-pipelines-runs");
             await container.UpsertItemAsync(run);
-
-            await this.blobUploadProcessor.UploadBuildBlobsAsync(Account, build, timeline);
         }
 
         public async Task<Failure[]> GetFailureClassificationsAsync(Build build, Timeline timeline)

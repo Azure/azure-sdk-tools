@@ -7,7 +7,10 @@
         {%- set example = step.exampleModel %}
         {%- set clientVariable = jsFunc.uncapitalize(example.operationGroup.language.go.clientName) %}
         {%- if allVariables.indexOf(clientVariable)<0 %}
-    {{clientVariable}} := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, nil)
+    {{clientVariable}}, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, nil)
+    if err != nil {
+        panic(err)
+    }
         {%- set _ = allVariables.push(clientVariable) %}
         {%- endif %}
     {%- endif %}
@@ -40,30 +43,38 @@
             }
             {%- endif %}
         {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-            {%- set pagerVariable = jsFunc.genVariableName(example.pageableType) %}
+            {%- set pagerVariable = clientVariable + example.opName + 'Pager' %}
             {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
-            for {{pagerVariable}}.NextPage(ctx) {
-                err = {{pagerVariable}}.Err()
-                if err != nil {
-                    panic(err)
-                }
-                for _, v := range {{pagerVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+            for {{pagerVariable}}.More() {
+                {%- if example.checkResponse %}
+                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
+                    if err != nil {
+                        panic(err)
+                    }
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set newVariableConfigs = variableConfigs.slice(1) %}
+                        {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- else %}
             {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
         {%- endif %}
 
         {%- if example.isLRO and example.isPageable %}
-            for {{resVariable}}.NextPage(ctx) {
-                err = {{resVariable}}.Err()
-                if err != nil {
-                    panic(err)
-                }
-                for _, v := range {{resVariable}}.PageResponse().{{example.pageableItemName}} {
-                    _ = v
-                }
+            for {{resVariable}}.More() {
+                {%- if example.checkResponse %}
+                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
+                    if err != nil {
+                        panic(err)
+                    }
+                    {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
+                        {% set newVariableConfigs = variableConfigs.slice(1) %}
+                        {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
+                    {%- endfor %}
+                    break
+                {%- endif %}
             }
         {%- endif %}
 
@@ -85,13 +96,13 @@
 		Properties: &armresources.DeploymentProperties{
 			Template:   template,
 			Parameters: params,
-			Mode:       armresources.DeploymentModeIncremental.ToPtr(),
+			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
 		},
 	}
     {%- if step.armTemplatePayload.outputs %}
     deploymentExtend {%- if firstDeploymentOutput %}:{%- set firstDeploymentOutput = false %}{%- endif %}= createDeployment("{{step.step}}", &deployment)
     {%- for k,v in step.armTemplatePayload.outputs %}
-    {{k}} = deploymentExtend.Properties.Outputs["{{k}}"].(map[string]interface{})["value"].(string)
+    {{k}} = deploymentExtend.Properties.Outputs.(map[string]interface{})["{{k}}"].(map[string]interface{})["value"].(string)
     {%- endfor %}
     {%- else %}
     _ = createDeployment("{{step.step}}", &deployment)

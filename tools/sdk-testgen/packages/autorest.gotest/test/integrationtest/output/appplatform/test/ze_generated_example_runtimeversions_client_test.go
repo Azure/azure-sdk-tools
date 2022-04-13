@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -22,9 +22,12 @@ func ExampleRuntimeVersionsClient_ListRuntimeVersions() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 		return
 	}
-
 	ctx := context.Background()
-	client := test.NewRuntimeVersionsClient(cred, nil)
+	client, err := test.NewRuntimeVersionsClient(cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+		return
+	}
 	res, err := client.ListRuntimeVersions(ctx,
 		nil)
 	if err != nil {
@@ -32,5 +35,5 @@ func ExampleRuntimeVersionsClient_ListRuntimeVersions() {
 		return
 	}
 	// TODO: use response item
-	_ = res.RuntimeVersionsClientListRuntimeVersionsResult
+	_ = res
 }

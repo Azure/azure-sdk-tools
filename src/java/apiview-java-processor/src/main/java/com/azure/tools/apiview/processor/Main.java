@@ -105,7 +105,7 @@ public class Main {
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
         if (reviewProperties.getMavenPom() == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
-            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion));
+            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion, false));
         }
 
         return reviewProperties;

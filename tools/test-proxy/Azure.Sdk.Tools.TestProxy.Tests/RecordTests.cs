@@ -1,7 +1,4 @@
 using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Matchers;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -64,16 +61,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("recordings/TestStartRecordSimple.json")]
-        [InlineData("recordings/TestStartRecordSimplé.json")]
-        public async Task TestStopRecordingSimple(string targetFile)
+        [InlineData("recordings/TestStartRecordSimple_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimplé_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimple.json", "")]
+        [InlineData("recordings/TestStartRecordSimplé.json", "")]
+        public async Task TestStopRecordingSimple(string targetFile, string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
-
             var controller = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
@@ -86,14 +84,63 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers.Remove("x-recording-file");
 
+            if (!string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            }
+
             controller.Stop();
 
-            var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
-            Assert.True(File.Exists(fullPath));
+            if (string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                Assert.True(File.Exists(fullPath));
+            }
+            else
+            {
+                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                Assert.False(File.Exists(fullPath));
+            }
         }
 
         [Fact]
-        public async Task TestStopRecordingInMemory()
+        public async Task TestStopRecordingThrowsOnInvalidSkipValue()
+        {
+            string targetFile = "recordings/TestStartRecordSimple_nosave.json";
+            string additionalEntryModeHeader = "request-body";
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers.Remove("x-recording-file");
+
+            httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+
+
+            var resultingException = Assert.Throws<HttpException>(
+               () => controller.Stop()
+            );
+
+            Assert.Equal("When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.", resultingException.Message);
+            Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("request-response")]
+        public async Task TestStopRecordingInMemory(string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
@@ -109,10 +156,23 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId
             };
+
+            if (!string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                recordContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            }
+
             recordController.Stop();
 
-            Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
-            Assert.NotNull(testRecordingHandler.InMemorySessions[inMemId]);
+            if (string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
+                Assert.NotNull(testRecordingHandler.InMemorySessions[inMemId]);
+            }
+            else
+            {
+                Assert.True(testRecordingHandler.InMemorySessions.Count() == 0);
+            }
         }
 
         [Fact]

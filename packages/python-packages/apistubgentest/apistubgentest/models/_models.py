@@ -7,10 +7,28 @@
 # --------------------------------------------------------------------------
 
 from azure.core import CaseInsensitiveEnumMeta
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
+import functools
 from six import with_metaclass
-from typing import Any, TypedDict, Union
+from typing import Any, overload, TypedDict, Union
+
+
+def my_decorator(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        pass
+    return wrapper
+
+
+def another_decorator(value):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            return value
+        return wrapper
+    return decorator
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
@@ -149,7 +167,54 @@ class ObjectWithDefaults:
         self.is_awesome = is_awesome
         self.pet = pet
 
+
 class SomePoorlyNamedObject:
 
     def __init__(self, name: str):
         self.name = name
+
+
+class SomethingWithOverloads:
+
+    @overload
+    def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int:
+        ...
+
+    @overload
+    def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
+        ...
+
+    def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+        if isinstance(input, Sequence):
+            return [i * 2 for i in input]
+        return input * 2
+
+    @overload
+    def something(self, id: str, *args, **kwargs) -> str:
+        ...
+
+    @overload
+    def something(self, id: int, *args, **kwargs) -> str:
+        ...
+
+    def something(self, id: int | str, *args, **kwargs) -> str:
+        return str(id)
+
+
+class SomethingWithDecorators:
+
+    @my_decorator
+    async def name_async(self):
+        pass
+
+    @my_decorator
+    def name_sync(self):
+        pass
+
+    @another_decorator("Test")
+    async def complex_decorator_async(self):
+        pass
+
+    @another_decorator("Test")
+    def complex_decorator_sync(self):
+        pass

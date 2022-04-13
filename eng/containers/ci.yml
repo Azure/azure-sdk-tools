@@ -3,19 +3,22 @@ parameters:
   type: object
   default:
   - name: mock_attestation
-    pool: 'ubuntu-20.04'
+    pool: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
     dockerRepo: 'keyvault-mock-attestation'
     dockerFile: 'tools/keyvault-mock-attestation/Dockerfile'
     stableTags:
     - 'latest'
   - name: stress_watcher
-    pool: 'ubuntu-20.04'
+    pool: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
     dockerRepo: 'stress/watcher'
     dockerFile: 'tools/stress-cluster/services/Stress.Watcher/Dockerfile'
     stableTags:
     - 'latest'
   - name: stress_deploy_test_resources
-    pool: 'ubuntu-20.04'
+    pool: 'azsdk-pool-mms-ubuntu-2004-general'
+    vmImage: 'MMSUbuntu20.04'
     dockerRepo: 'stress/deploy-test-resources'
     prepareScript: tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/prepare.ps1
     dockerFile: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile'

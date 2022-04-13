@@ -4,19 +4,21 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from tkinter import Variable
-from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode, EnumNode
+from unicodedata import name
+from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,
-    ObjectWithDefaults,
     PetEnum,
     PublicPrivateClass,
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomethingWithDecorators,
-    SomethingWithOverloads
+    SomethingWithOverloads,
+    SomethingWithProperties
 )
+
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string
 
 
 class TestClassParsing:
@@ -71,25 +73,17 @@ class TestClassParsing:
 
     def test_required_kwargs(self):
         class_node = ClassNode(name="RequiredKwargObject", namespace="test", parent_node=None, obj=RequiredKwargObject, pkg_root_namespace=self.pkg_namespace)
-        kwargs = class_node.child_nodes[0].kw_args
         args = class_node.child_nodes[0].args
+        kwargs = class_node.child_nodes[0].kwargs
+        kwarg = class_node.child_nodes[0].special_kwarg
         assert args["id"].is_required == True
         assert args["id"].default is None
-        assert args["**kwargs"].argtype == "Any"
+        assert kwarg.argtype == "Any"
 
         assert len(kwargs) == 3
         assert kwargs["name"].is_required == True
         assert kwargs["age"].is_required == True
         assert kwargs["other"].is_required == False
-
-    def test_default_values(self):
-        class_node = ClassNode(name="ObjectWithDefaults", namespace="test", parent_node=None, obj=ObjectWithDefaults, pkg_root_namespace=self.pkg_namespace)
-        assert len(class_node.child_nodes) == 1
-        init_args = class_node.child_nodes[0].args
-        assert init_args["name"].default == "Bob"
-        assert init_args["age"].default == "21"
-        assert init_args["is_awesome"].default == "True"
-        assert init_args["pet"].default == "PetEnum.DOG"
 
     def test_model_aliases(self):
         class_node = ClassNode(name="SomeAwesomelyNamedObject", namespace="test", parent_node=None, obj=SomeAwesomelyNamedObject, pkg_root_namespace=self.pkg_namespace)
@@ -103,78 +97,34 @@ class TestClassParsing:
 
     def test_overloads(self):
         class_node = ClassNode(name="SomethingWithOverloads", namespace="test", parent_node=None, obj=SomethingWithOverloads, pkg_root_namespace=self.pkg_namespace)
-        assert len(class_node.child_nodes) == 6
+        lines = _render_lines(_tokenize(class_node))
+        assert lines[2].lstrip() == "@overload"
+        actual1 = _merge_lines(lines[3:10])
+        expected1 = 'def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int'
+        _check(actual1, expected1, SomethingWithOverloads)
 
-        node1 = class_node.child_nodes[0]
-        assert "@overload" in node1.annotations
-        assert node1.name == "double"
-        self._check_arg_nodes(node1.args, [
-            ("self", None, None),
-            ("input", "int", "1"),
-            ("*", None, None),
-            ("test", "bool", "False"),
-            ("**kwargs", None, None)
-        ])
-        assert node1.return_type == "int"
+        assert lines[11].lstrip() == "@overload"
+        actual2 = _merge_lines(lines[12:20])
+        expected2 = 'def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]'
+        _check(actual2, expected2, SomethingWithOverloads)
 
-        node2 = class_node.child_nodes[1]
-        assert "@overload" in node2.annotations
-        assert node2.name == "double"
-        self._check_arg_nodes(node2.args, [
-            ("self", None, None),
-            ("input", "Sequence[int]", "[1]"),
-            ("*", None, None),
-            ("test", "bool", "False"),
-            ("**kwargs", None, None)
-        ])
-        assert node2.return_type == "list[int]"
+        actual3 = _merge_lines(lines[21:28])
+        expected3 = 'def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]'
+        _check(actual2, expected2, SomethingWithOverloads)
 
-        node3 = class_node.child_nodes[2]
-        assert "@overload" not in node3.annotations
-        assert node3.name == "double"
-        self._check_arg_nodes(node3.args, [
-            ("self", None, None),
-            # This should not have all the weird collections annotations, but they
-            # don't appear in the actual APIView.
-            ("input", "int | collections.abc.Sequence[int]", None),
-            ("*", None, None),
-            ("test", "bool", "False"),
-            ("**kwargs", None, None)
-        ])
-        assert node3.return_type == "int | list[int]"
+        assert lines[28].lstrip() == "@overload"
+        actual4 = _merge_lines(lines[29:35])
+        expected4 = 'def something(self, id: str, *args, **kwargs) -> str'
+        _check(actual4, expected4, SomethingWithOverloads)
 
-        node4 = class_node.child_nodes[3]
-        assert "@overload" in node4.annotations
-        assert node4.name == "something"
-        self._check_arg_nodes(node4.args, [
-            ("self", None, None),
-            ("id", "str", None),
-            ("*args", None, None),
-            ("**kwargs", None, None)
-        ])
-        assert node4.return_type == "str"
+        assert lines[36].lstrip() == "@overload"
+        actual5 = _merge_lines(lines[37:43])
+        expected5 = 'def something(self, id: int, *args, **kwargs) -> str'
+        _check(actual5, expected5, SomethingWithOverloads)
 
-        node5 = class_node.child_nodes[4]
-        assert "@overload" in node5.annotations
-        assert node5.name == "something"
-        self._check_arg_nodes(node5.args, [
-            ("self", None, None),
-            ("id", "int", None),
-            ("*args", None, None),
-            ("**kwargs", None, None)
-        ])
-        assert node5.return_type == "str"
-
-        node6 = class_node.child_nodes[5]
-        assert "@overload" not in node6.annotations
-        assert node6.name == "something"
-        self._check_arg_nodes(node6.args, [
-            ("self", None, None),
-            ("id", "int | str", None),
-            ("*args", None, None),
-            ("**kwargs", None, None)
-        ])
-        assert node5.return_type == "str"
+        actual6 = _merge_lines(lines[44:50])
+        expected6 = 'def something(self, id: int | str, *args, **kwargs) -> str'
+        _check(actual6, expected6, SomethingWithOverloads)
 
     def test_decorators(self):
         class_node = ClassNode(name="SomethingWithDecorators", namespace="test", parent_node=None, obj=SomethingWithDecorators, pkg_root_namespace=self.pkg_namespace)
@@ -191,3 +141,16 @@ class TestClassParsing:
 
         node4 = class_node.child_nodes[3]
         assert node4.annotations == ["@my_decorator"]
+
+    def test_properties(self):
+        class_node = ClassNode(name="SomethingWithProperties", namespace="test", parent_node=None, obj=SomethingWithProperties, pkg_root_namespace=self.pkg_namespace)
+        actuals = [_render_string(_tokenize(x)) for x in class_node.child_nodes]
+        expected = [
+            "property docstring_property: Optional[str]     # Read-only",
+            "property py2_property: Optional[str]     # Read-only",
+            "property py3_property: Optional[str]     # Read-only"    
+        ]
+        for (idx, actual) in enumerate(actuals):
+            expect = expected[idx]
+            _check(actual, expect, SomethingWithProperties)
+

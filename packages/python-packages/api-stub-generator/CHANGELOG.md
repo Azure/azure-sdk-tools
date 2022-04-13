@@ -1,12 +1,16 @@
 # Release History
 
 ## Version 0.2.12 (Unreleased)
+Added support for @overloads decorators.
+Added support for positional-only arguments.
+Added full support for Python 2-style type hints.
+Fixed issue where decorators with parameters would not appear in APIView.
+Fixed consistency issues with how default values are displayed.
 Fixed issue where types would appear wrapped in "Optional" even though
   they do not accept `None`.
 Fixed issue where, in some cases, string literal default values would not appear wrapped
   in quotes.
-Added support for @overloads decorators.
-Fixed issue where decorators with parameters would not appear in APIView.
+Changed default for retrieving type info from docstrings to annotation/type comments.
 
 ## Version 0.2.11 (2022-04-06)
 Added __main__ to execute as module

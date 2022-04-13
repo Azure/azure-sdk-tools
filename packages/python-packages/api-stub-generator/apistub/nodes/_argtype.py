@@ -1,12 +1,9 @@
+import astroid
 import inspect
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
 
-# Lint warnings
-TYPE_NOT_AVAILABLE = "Type is not available for {0}"
-
-TYPE_NOT_REQUIRED = ["**kwargs", "self", "cls", "*", ]
 
 class ArgType:
     """Represents Argument type
@@ -26,7 +23,7 @@ class ArgType:
             self.default = "..." if keyword == "keyword" else "None"
         else:
             self.is_required = False
-            self.default = str(default)
+            self.default = default
 
         if argtype and all([not self.is_required, self.default is None, not keyword in ["ivar", "param"], not argtype.startswith("Optional")]):
             self.argtype = f"Optional[{argtype}]"
@@ -34,37 +31,36 @@ class ArgType:
             self.argtype = argtype
         self.function_node = func_node
 
-    def generate_tokens(self, apiview, function_id, add_line_marker):
+    def generate_tokens(self, apiview, function_id, *, add_line_marker: bool, prefix: str = ""):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ApiVersion apiview: The ApiView
         :param str function_id: Module level Unique ID created for function 
-        :param bool include_default: Optional flag to indicate to include/exclude default value in tokens
+        :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
+        :keyword str prefix: Optional prefix for *args and **kwargs.
         """
         # Add arg name
         self.id = function_id
         if add_line_marker:
-            self.id = "{0}.param({1}".format(function_id, self.argname)
+            self.id = f"{function_id}.param({self.argname}"
             apiview.add_line_marker(self.id)
 
-        apiview.add_text(self.id, self.argname)
+        apiview.add_text(self.id, f"{prefix}{self.argname}")
         # add arg type
         if self.argtype:
             apiview.add_punctuation(":", False, True)
             apiview.add_type(self.argtype, self.id)
-        elif self.argname not in (TYPE_NOT_REQUIRED):
-            # Type is not available. Add lint error in review
-            error_msg = TYPE_NOT_AVAILABLE.format(self.argname)
-            apiview.add_diagnostic(error_msg, self.id)
-            if self.function_node:
-                self.function_node.add_error(error_msg)
 
         # add arg default value
-        if self.default:
+        default = self.default
+        if default is not None:
             apiview.add_punctuation("=", True, True)
-            # Add string literal or numeric literal based on the content within default
-            # Ideally this should be based on arg type. But type is not available for all args
-            # We should refer to arg type instead of content when all args have type                
-            if self.default in SPECIAL_DEFAULT_VALUES or self.argtype not in ["str", "Optional[str]"]:
-                apiview.add_literal(self.default)
+            if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
+                apiview.add_stringliteral(default)
             else:
-                apiview.add_stringliteral(self.default)
+                if isinstance(default, astroid.node_classes.Name):
+                    value = default.name
+                elif hasattr(default, "as_string"):
+                    value = default.as_string()
+                else:
+                    value = str(default)
+                apiview.add_literal(value)

@@ -4,121 +4,200 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub.nodes import ClassNode, FunctionNode
-from apistubgentest import TypeHintingClient
+from apistub.nodes import FunctionNode, PropertyNode
+from apistubgentest import (
+    Python2TypeHintClient,
+    Python3TypeHintClient,
+    DocstringTypeHintClient,
+    DefaultValuesClient,
+    SpecialArgsClient
+)
 
-from typing import Optional, Any, List, Union
+from ._test_util import _render_string, _check, _tokenize
 
-class TestClass:
-    """ Function parsing tests."""
 
-    def with_optional_typehint(self, *, description: Optional[str] = None):
-        self.description = description
+def _test_arg(node, key, name, _type, default):
+    arg = node.args[key]
+    assert arg.argname == name
+    assert arg.argtype == _type
+    assert arg.default == default
 
-    def with_optional_docstring(self, *, description = None):
-        """ With docstring
-        :keyword description: A description
-        :paramtype description: str
-        """
-        self.description = description
 
-    def with_variadic_python3_typehint(self, *vars: str, **kwargs: "Any") -> None:
-        return None
+def _test_return(node, _type):
+    assert node.return_type == _type
 
-    def with_variadic_python2_typehint(self, *vars, **kwargs):
-        # type: (*str, **Any) -> None
-        """ With docstring
-        :param vars: Variadic argument
-        :type vars: str
-        """
-        return None
 
-    def with_default_values(self, foo="1", *, bar="2", baz=None):
-        return None
+class TestTypeHints:
 
-    def with_python2_list_typehint(self):
-        # type: () -> List[TestClass]
-        return TestClass()
+    """ Ensure simple typehints render correctly. """
+    def test_simple_typehints(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_simple_typehints)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_simple_typehints(self, name: str, age: int) -> str"
+            _check(actual, expected, client)
 
-    def with_python3_list_typehint(self) -> List["TestClass"]:
-        return TestClass()
-
-    def with_python3_str_typehint(self) -> List[str]:
-        return TestClass()
-
-    def with_python2_union_typehint(self):
-        # type: (...) -> List[Union[str, int]]
-        return ""
-
-    def with_python3_union_typehint(self) -> List[Union[str, int]]:
-        return ""
-    
-
-class TestFunctionParsing:
-    
-    def test_optional_typehint(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_optional_typehint)
-        arg = func_node.args["description"]
-        assert arg.argtype == "Optional[str]"
-        assert arg.default == "..."
-
-    def test_optional_docstring(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_optional_docstring)
-        arg = func_node.args["description"]
-        assert arg.argtype == "str"
-        assert arg.default == "..."
-
-    def test_variadic_typehints(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_variadic_python3_typehint)
-        arg = func_node.args["vars"]
-        assert arg.argname == "*vars"
-        assert arg.argtype == "str"
-        assert arg.default == None
-
-        func_node = FunctionNode("test", None, obj=TestClass.with_variadic_python2_typehint)
-        arg = func_node.args["vars"]
-        assert arg.argname == "*vars"
-        # the type annotation comes ONLY from the docstring. The Python2 type hint is not used!
-        assert arg.argtype == "str"
-        assert arg.default == None
-
-    def test_default_values(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_default_values)
-        assert func_node.args["foo"].default == "1"
-        assert func_node.kw_args["bar"].default == "2"
-        assert func_node.kw_args["baz"].default == "..."
-
-    def test_typehint_and_docstring_return_types(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_python2_list_typehint)
-        assert func_node.return_type == "List[TestClass]"
-
-        func_node = FunctionNode("test", None, obj=TestClass.with_python3_list_typehint)
-        assert func_node.return_type == "List[TestClass]"
-
-        func_node = FunctionNode("test", None, obj=TestClass.with_python3_str_typehint)
-        assert func_node.return_type == "List[str]"
-
+    """ Ensure complicated typehints render correctly. """
     def test_complex_typehints(self):
-        func_node = FunctionNode("test", None, obj=TestClass.with_python2_union_typehint)
-        assert func_node.return_type == "List[Union[str, int]]"
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_complex_typehints)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_complex_typehints(self, value: List[ItemPaged[Union[FakeObject, FakeError]]])"
+            _check(actual, expected, client)
 
-        func_node = FunctionNode("test", None, obj=TestClass.with_python3_union_typehint)
-        assert func_node.return_type == "List[Union[str, int]]"
+    """ Ensure typehints for *args and **kwargs render correctly. Note that Py2-style typehints are not supported. """
+    def test_variadic_typehints(self):
+        clients = [
+            # TODO: Known limitation of astroid (See: https://github.com/Azure/azure-sdk-tools/issues/3131)
+            # Python2TypeHintClient,
+            Python3TypeHintClient,
+            DocstringTypeHintClient
+        ]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_variadic_typehint)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_variadic_typehint(self, *vars: str, **kwargs: Any) -> None"
+            _check(actual, expected, client)
+
+    """ Ensure list type return typehint renders correctly. """
+    def test_str_list_return_type(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_str_list_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_str_list_return_type(self) -> List[str]"
+            _check(actual, expected, client)
+
+    """ Ensure list return type typehint renders correctly with a class. """
+    def test_list_return_type(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_list_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_list_return_type(self) -> List[TestClass]"
+            _check(actual, expected, client)
+
+    """ Ensure union return type typehint renders correctly. """
+    def test_list_union_return_type(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_list_union_return_type)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_list_union_return_type(self) -> List[Union[str, int]]"
+            _check(actual, expected, client)
+
+    """ Ensure datetime typehint renders correctly. """
+    def test_datetime_typehint(self):
+        clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
+        for client in clients:
+            node = FunctionNode("test", None, obj=client.with_datetime_typehint)
+            actual = _render_string(_tokenize(node))
+            expected = "def with_datetime_typehint(self, date: datetime) -> datetime"
+            _check(actual, expected, client)    
 
 
-    def test_non_typehint_with_string_defaults(self):
-        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_non_optional)
-        arg1 = func_node.args["docstring_type"]
-        assert arg1.argtype == "str"
-        assert arg1.default == "string"
-        arg2 = func_node.args["typehint_type"]
-        assert arg2.argtype == "str"
-        assert arg2.default == "string"
+class TestDefaultValues:
 
-        func_node = FunctionNode("test", None, obj=TypeHintingClient.some_method_with_optionals)
-        arg1 = func_node.args["labeled_optional"]
-        assert arg1.argtype == "Optional[str]"
-        assert arg1.default == "string"
-        arg2 = func_node.args["union_with_none"]
-        assert arg1.argtype == "Optional[str]"
-        assert arg1.default == "string"
+    """ Ensure that simple default values appear correctly. """
+    def test_simple_default(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_simple_default)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_simple_default(name: str = "Bill", *, age: int = 21)'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure that optional types with defaults display correctly. """
+    def test_simple_optional_default(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_simple_optional_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_simple_optional_defaults(name: Optional[str] = "Bill", *, age: Optional[int] = 21)'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure that falsy defaults for Optional kwargs do not translate to ... """
+    def test_falsy_optional_defaults(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_falsy_optional_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_falsy_optional_defaults(*, bool: Optional[bool] = False, int: Optional[int] = 0, string: Optional[str] = "")'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure that falsy defaults for Optional kwargs do not translate to ... when a docstring is provided. """
+    def test_falsy_optional_defaults_and_docstring(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_falsy_optional_defaults_and_docstring)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_falsy_optional_defaults_and_docstring(*, bool: Optional[bool] = False, int: Optional[int] = 0, string: Optional[str] = "")'
+        _check(actual, expected, DefaultValuesClient)
+
+
+    """ Ensures that optional values appear with the correct default annotation. `None` for normal args and `...` for kwargs. """
+    def test_optional_none_default(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_optional_none_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = ...)'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure that a default value that is a class type appears correctly. """
+    def test_class_default(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_class_default)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_class_default(my_class: Any = FakeObject)'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure docstring-parsed defaults are displayed. Note that if they cannot be cast they will appear as strings. """
+    def test_parsed_docstring_defaults(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_parsed_docstring_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_parsed_docstring_defaults(name: str = "Bill", age: int = 21, some_class: class = ":py:class:`apistubgen.test.models.FakeObject`")'
+        _check(actual, expected, DefaultValuesClient)
+
+    """ Ensure string-based enum default values can specify either a string or an enum value. """
+    def test_enum_defaults(self):
+        node = FunctionNode("test", None, obj=DefaultValuesClient.with_enum_defaults)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG)'
+        _check(actual, expected, DefaultValuesClient)
+
+
+class TestSpecialArguments:
+
+    """ Ensure the variadic and keyword-only arguments have the correct prefixes. """
+    def test_standard_names(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_standard_names)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_standard_names(self, *args, **kwargs)'
+        _check(actual, expected, SpecialArgsClient)
+
+    """ Ensure the variadic and keyword-only arguments can be given custom names. """
+    def test_nonstandard_names(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_nonstandard_names)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_nonstandard_names(self, *vars, **kwds)'
+        _check(actual, expected, SpecialArgsClient)
+
+    """ Ensure a basic function with no args renders appropriately. """
+    def test_no_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_no_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_no_args()'
+        _check(actual, expected, SpecialArgsClient)
+
+    """ Ensure keyword only argument marker (*) is displayed. """
+    def test_keyword_only_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_keyword_only_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_keyword_only_args(self, *, value, **kwargs)'
+        _check(actual, expected, SpecialArgsClient)
+        
+    """ Ensure positional only argument marker (/) is displayed. """
+    def test_positional_only_args(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_positional_only_args)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_positional_only_args(self, a, b, /, c)'
+        _check(actual, expected, SpecialArgsClient)
+
+    """ Ensure kwargs are sorted alphabetically. """
+    def test_alphabetical_kwargs(self):
+        node = FunctionNode("test", None, obj=SpecialArgsClient.with_sorted_kwargs)
+        actual = _render_string(_tokenize(node))
+        expected = 'def with_sorted_kwargs(self, *, a, b, c, d, **kwargs)'
+        _check(actual, expected, SpecialArgsClient)

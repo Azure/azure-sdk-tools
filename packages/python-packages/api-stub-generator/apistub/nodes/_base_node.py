@@ -6,6 +6,20 @@ keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
 forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
 name_regex = re.compile(r"([^[]*)")
 
+
+# Monkey patch NodeNG's as_string method
+def as_string(self, preserve_quotes=False) -> str:
+    """Get the source code that this node represents."""
+    value =  astroid.nodes.as_string.AsStringVisitor()(self)
+    if not preserve_quotes:
+        # strip any exterior quotes
+        for char in ["'", '"']:
+            value = value.replace(char, "")
+    return value
+
+astroid.NodeNG.as_string = as_string
+
+
 class NodeEntityBase:
     """This is the base class for all node types
     :param str: namespace

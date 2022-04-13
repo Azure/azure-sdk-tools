@@ -62,12 +62,20 @@ class ApiView:
             raise ValueError("Invalid intendation")
         self.indent -= 1
 
-    def add_whitespace(self):
+    def add_whitespace(self, count: int = None):
+        """ Inject appropriate whitespace for indentation,
+            or inject a specific number of whitespace characters.
+        """
         if self.indent:
             self.add_token(Token(" " * (self.indent * 4)))
+        elif count:
+            self.add_token(Token(" " * (count)))
 
     def add_space(self):
-        self.add_token(Token(" ", TokenKind.Whitespace))
+        """ Used to add a single space. Cannot add mutliple spaces.
+        """
+        if self.tokens[-1].kind != TokenKind.Whitespace:
+            self.add_token(Token(" ", TokenKind.Whitespace))
 
     def add_newline(self):
         """ Used to END a line and wrap to the next.

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
 from six import with_metaclass
-from typing import Any, overload, TypedDict, Union
+from typing import Any, overload, TypedDict, Union, Optional
 
 
 def my_decorator(fn):
@@ -102,6 +102,10 @@ class FakeObject(object):
     _SOME_THING: dict = {
         "cat": "hat"
     }
+
+
+class FakeError(object):
+    pass
 
 
 FakeTypedDict = TypedDict(
@@ -217,4 +221,24 @@ class SomethingWithDecorators:
 
     @another_decorator("Test")
     def complex_decorator_sync(self):
+        pass
+
+
+class SomethingWithProperties:
+
+    @property
+    def py3_property(self) -> Optional[str]:
+        pass
+
+    @property
+    def py2_property(self):
+        # type: () -> Optional[str]
+        pass
+
+    @property
+    def docstring_property(self):
+        """ Property
+
+        :rtype: Optional[str]
+        """
         pass

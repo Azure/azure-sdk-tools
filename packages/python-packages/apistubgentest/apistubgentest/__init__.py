@@ -7,6 +7,12 @@
 # --------------------------------------------------------------------------
 
 from ._version import VERSION
-from ._client import TypeHintingClient
+from ._client import (
+    Python2TypeHintClient,
+    Python3TypeHintClient,
+    DocstringTypeHintClient,
+    DefaultValuesClient,
+    SpecialArgsClient
+)
 
 __version__ = VERSION

@@ -7,8 +7,11 @@
 # --------------------------------------------------------------------------
 
 from ._models import (
-    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict,
-    ObjectWithDefaults,
+    DocstringClass,
+    FakeError,
+    FakeInventoryItemDataClass,
+    FakeObject,
+    FakeTypedDict,
     PetEnum,
     PetEnumPy2Metaclass,
     PetEnumPy3Metaclass,
@@ -16,16 +19,17 @@ from ._models import (
     PublicPrivateClass, RequiredKwargObject,
     SomePoorlyNamedObject as SomeAwesomelyNamedObject,
     SomethingWithDecorators,
-    SomethingWithOverloads
+    SomethingWithOverloads,
+    SomethingWithProperties
 )
 
 
 __all__ = (
     "DocstringClass",
+    "FakeError",
     "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",
-    "ObjectWithDefaults",
     "PetEnum",
     "PetEnumPy2Metaclass",
     "PetEnumPy3Metaclass",
@@ -34,5 +38,6 @@ __all__ = (
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
     "SomethingWithDecorators",
-    "SomethingWithOverloads"
+    "SomethingWithOverloads",
+    "SomethingWithProperties"
 )

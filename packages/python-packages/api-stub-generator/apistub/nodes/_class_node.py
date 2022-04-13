@@ -287,7 +287,7 @@ class ClassNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        logging.info("Processing class {}".format(self.parent_node.namespace_id))
+        logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)

@@ -53,11 +53,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             foreach (var pipeline in pipelines)
             {
-                // Get contents of CODEOWNERS
-                if (codeOwnerEntries == null)
-                {
-                    codeOwnerEntries = await InitializeCodeOwnerEntries(pipeline, gitHubService);
-                }
                 using (logger.BeginScope("Evaluate Pipeline: Name = {0}, Path = {1}, Id = {2}", pipeline.Name, pipeline.Path, pipeline.Id))
                 {
                     var parentTeam = await EnsureTeamExists(pipeline, TeamPurpose.ParentNotificationTeam, teams, gitHubToAADConverter, persistChanges);
@@ -72,18 +67,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     await EnsureSynchronizedNotificationTeamIsChild(parentTeam, childTeam, persistChanges);
                 }
             }
-        }
-
-        private async Task<List<CodeOwnerEntry>> InitializeCodeOwnerEntries(BuildDefinition pipeline, GitHubService gitHubService)
-        {
-            logger.LogInformation("Fetching CODEOWNERS file");
-            var managementUrl = new Uri(pipeline.Repository.Properties["manageUrl"]);
-            var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
-            if (codeOwnerEntries == default)
-            {
-                return null;
-            }
-            return codeOwnerEntries;
         }
 
         private async Task<WebApiTeam> EnsureTeamExists(
@@ -204,13 +187,20 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     return;
                 }
 
+                // Get contents of CODEOWNERS
+                logger.LogInformation("Fetching CODEOWNERS file");
+                var managementUrl = new Uri(pipeline.Repository.Properties["manageUrl"]);
+                var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
+
+                if (codeOwnerEntries == default)
+                {
+                    logger.LogInformation("CODEOWNERS file not found, skipping sync");
+                    return;
+                }
                 var process = pipeline.Process as YamlProcess;
 
                 logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-                if (codeOwnerEntries == null)
-                {
-                    logger.LogInformation("CODEOWNERS file not found, skipping sync");
-                }
+        
                 var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
                 codeOwnerEntry.FilterOutNonUserAliases();
 

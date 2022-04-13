@@ -4,7 +4,8 @@ param (
     [switch]$Development = $false
 )
 
-$STATIC_TEST_SECRETS_NAME="public"
+$STATIC_TEST_DOTENV_NAME="public"
+$VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
 
 function Run()
 {
@@ -42,12 +43,27 @@ function DeployStaticResources([hashtable]$params) {
             --subscription $params.subscriptionId
     }
 
+    $values = GetEnvValues
+    if ($values.provisionerAppId.$Environment) {
+        $preExistingProvisionerApp = Run az ad sp show -o json --id $values.provisionerAppId.$Environment
+        if ($preExistingProvisionerApp) {
+            Write-Host "Found pre-existing provisioner application '$($values.provisionerAppId.$Environment)'"
+            return
+        } else {
+            Write-Host "Failed to find provisioner application '$($values.provisionerAppId.$Environment)'"
+        }
+    }
+
+    $spName = "stress-provisioner-$($params.groupSuffix)"
+    Write-Host "Creating new provisioner application '$spName'."
+
     $sp = RunOrExitOnFailure az ad sp create-for-rbac `
         -o json `
-        -n "stress-provisioner-$($params.groupSuffix)" `
+        -n $spName `
         --role Owner `
         --scopes "/subscriptions/$($params.subscriptionId)"
     $spInfo = $sp | ConvertFrom-Json
+    # Force check to see if the service principal was succesfully created and propagated
     $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).objectId
 
     $credentials = @{
@@ -63,14 +79,33 @@ function DeployStaticResources([hashtable]$params) {
     $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
     $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
     (-join $dotenv) | Out-File $envFile
-    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_SECRETS_NAME
+    Run az keyvault secret set --vault-name $params.staticTestSecretsKeyvaultName --file $envFile -n $STATIC_TEST_DOTENV_NAME
     Remove-Item -Force $envFile
     if ($LASTEXITCODE) {
         exit $LASTEXITCODE
     }
+
+    SetEnvProvisioner $spInfo
 }
 
-function UpdateOutputs([hashtable]$params) {
+function GetEnvValues() {
+    $values = ConvertFrom-Yaml -Ordered (Get-Content -Raw $VALUES_FILE)
+    return $values
+}
+
+function SetEnvValues([object]$values) {
+    $values | ConvertTo-Yaml | Out-File $VALUES_FILE
+    Write-Warning "Update https://aka.ms/azsdk/stress/dashboard link page with new dashboard link: $($outputs.DASHBOARD_LINK.value)"
+    Write-Warning "$VALUES_FILE has been updated and must be checked in."
+}
+
+function SetEnvProvisioner([object]$provisioner) {
+    $values = GetEnvValues
+    $values.provisionerAppId.$Environment = $provisioner.appId
+    SetEnvValues $values
+}
+
+function SetEnvOutputs([hashtable]$params) {
     $outputs = (az deployment sub show `
         -o json `
         -n "stress-deploy-$($params.groupSuffix)" `
@@ -78,8 +113,7 @@ function UpdateOutputs([hashtable]$params) {
         --subscription $params.subscriptionId
     ) | ConvertFrom-Json
 
-    $valuesFile = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
-    $values = ConvertFrom-Yaml -Ordered (Get-Content -Raw $valuesFile)
+    $values = GetEnvValues
 
     $values.appInsightsKeySecretName.$Environment = $outputs.APPINSIGHTS_KEY_SECRET_NAME.value
     $values.debugStorageKeySecretName.$Environment = $outputs.DEBUG_STORAGE_KEY_SECRET_NAME.value
@@ -88,13 +122,10 @@ function UpdateOutputs([hashtable]$params) {
     $values.staticTestSecretsKeyvaultName.$Environment = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
     $values.clusterTestSecretsKeyvaultName.$Environment = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
     $values.secretProviderIdentity.$Environment = $outputs.SECRET_PROVIDER_CLIENT_ID.value
-    $values.subscription.$Environment = $STATIC_TEST_SECRETS_NAME
+    $values.subscription.$Environment = $STATIC_TEST_DOTENV_NAME
     $values.tenantId.$Environment = $outputs.TENANT_ID.value
 
-    $values | ConvertTo-Yaml | Out-File $valuesFile
-
-    Write-Warning "Update https://aka.ms/azsdk/stress/dashboard link page with new dashbaord link: $($outputs.DASHBOARD_LINK.value)"
-    Write-Warning "$valuesFile has been updated and must be checked in."
+    SetEnvValues $values
 }
 
 function DeployClusterResources([hashtable]$params) {
@@ -107,7 +138,7 @@ function DeployClusterResources([hashtable]$params) {
         -f $PSScriptRoot/azure/main.bicep `
         --parameters $PSScriptRoot/azure/parameters/$Environment.json
 
-    UpdateOutputs $params
+    SetEnvOutputs $params
 
     Write-Host "Importing cluster credentials"
     RunOrExitOnFailure az aks get-credentials `

@@ -8,6 +8,46 @@ import (
 	"strings"
 )
 
+var reservedNames = map[string]struct{}{
+	"string":     {},
+	"byte":       {},
+	"int":        {},
+	"int8":       {},
+	"int16":      {},
+	"int32":      {},
+	"int64":      {},
+	"float32":    {},
+	"float64":    {},
+	"rune":       {},
+	"bool":       {},
+	"map":        {},
+	"uint":       {},
+	"uint8":      {},
+	"uint16":     {},
+	"uint32":     {},
+	"uint64":     {},
+	"complex64":  {},
+	"complex128": {},
+	"error":      {},
+}
+
+type TokenType int
+
+// these values are determined by APIView
+const (
+	text          TokenType = 0
+	newline       TokenType = 1
+	whitespace    TokenType = 2
+	punctuation   TokenType = 3
+	keyword       TokenType = 6
+	lineIDMarker  TokenType = 5
+	typeName      TokenType = 4
+	memberName    TokenType = 7
+	stringLiteral TokenType = 8
+	literal       TokenType = 9
+	comment       TokenType = 10
+)
+
 // makeToken builds the Token to be added to the Token slice that is passed in as a parameter.
 // defID and navID components can be passed in as nil to indicate that there is no definition ID or
 // navigation ID that is related to that token.
@@ -21,42 +61,45 @@ func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) 
 	*list = append(*list, tok)
 }
 
-func makeStructTokens(name *string, anonFields []string, fields map[string]string, list *[]Token) {
+func makeStructTokens(name *string, s Struct, list *[]Token) {
 	n := *name
-	makeToken(nil, nil, "", newline, list)
-	makeToken(nil, nil, " ", whitespace, list)
-	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "type", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(&n, &n, *name, typeName, list)
+	if len(s.TypeParams) > 0 {
+		makeToken(nil, nil, "[", punctuation, list)
+		makeToken(nil, nil, strings.Join(s.TypeParams, ", "), memberName, list)
+		makeToken(nil, nil, "]", punctuation, list)
+	}
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "struct", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
-	if anonFields != nil || fields != nil {
-		for _, v1 := range anonFields {
-			v := v1 + "-" + *name
-			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v, nil, v1, typeName, list)
-		}
-		for k1, v1 := range fields {
-			k := k1 + "-" + *name
-			makeToken(nil, nil, "", newline, list)
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&k, nil, k1, typeName, list)
-			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, v1, memberName, list)
-		}
-	}
-	if anonFields == nil && fields == nil {
+	for _, v1 := range s.AnonymousFields {
+		v := v1 + "-" + *name
 		makeToken(nil, nil, "", newline, list)
 		makeToken(nil, nil, "\t", whitespace, list)
-		makeToken(nil, nil, "// no exported fields", comment, list)
+		makeToken(&v, nil, v1, typeName, list)
+	}
+	keys := make([]string, 0, len(s.Fields))
+	for k := range s.Fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, field := range keys {
+		typ := s.Fields[field]
+		defID := field + "-" + *name
+		makeToken(nil, nil, "", newline, list)
+		makeToken(nil, nil, "\t", whitespace, list)
+		makeToken(&defID, nil, field, typeName, list)
+		makeToken(nil, nil, " ", whitespace, list)
+		makeToken(nil, nil, typ, memberName, list)
+	}
+	if len(s.AnonymousFields)+len(s.Fields) > 0 {
 		makeToken(nil, nil, "", newline, list)
 	}
-	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "}", punctuation, list)
+	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
@@ -70,39 +113,30 @@ func makeInterfaceTokens(name *string, embeddedInterfaces []string, methods map[
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "{", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
-	if embeddedInterfaces != nil {
-		for _, v1 := range embeddedInterfaces {
-			v := v1 + "-" + n
-			makeToken(nil, nil, "\t", whitespace, list)
-			makeToken(&v, nil, v1, typeName, list)
-			makeToken(nil, nil, "", newline, list)
-		}
+	for _, v1 := range embeddedInterfaces {
+		v := v1 + "-" + n
+		makeToken(nil, nil, "\t", whitespace, list)
+		makeToken(&v, nil, v1, typeName, list)
+		makeToken(nil, nil, "", newline, list)
 	}
-	if methods != nil {
+	if len(methods) > 0 {
 		keys := []string{}
 		for k1 := range methods {
 			keys = append(keys, k1)
 		}
 		sort.Strings(keys)
 		for _, k1 := range keys {
-			makeIntFuncTokens(&k1, methods[k1], list)
+			makeToken(nil, nil, "\t", whitespace, list)
+			makeIntMethodTokens(&k1, methods[k1], list)
 			makeToken(nil, nil, "", newline, list)
 		}
 	}
 	makeToken(nil, nil, "}", punctuation, list)
 	makeToken(nil, nil, "", newline, list)
-	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
-// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
-func makeIntFuncTokens(name *string, funcs Func, list *[]Token) {
-	makeToken(nil, nil, "\t", whitespace, list)
-	// interface method definitions vary from regular method definitions slightly so they have their own independent generation function
-	makeIntMethodTokens(name, funcs.Params, funcs.Returns, list)
-}
-
-func makeFuncTokens(name *string, params, results *string, returnCount int, list *[]Token) {
+func makeFuncTokens(name *string, fn Func, list *[]Token) {
 	if isOnUnexportedMember(*name) || isExampleOrTest(*name) {
 		return
 	}
@@ -110,46 +144,44 @@ func makeFuncTokens(name *string, params, results *string, returnCount int, list
 	makeToken(nil, nil, "func", keyword, list)
 	makeToken(nil, nil, " ", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)
+	if len(fn.TypeParams) > 0 {
+		makeToken(nil, nil, "[", punctuation, list)
+		makeToken(nil, nil, strings.Join(fn.TypeParams, ", "), memberName, list)
+		makeToken(nil, nil, "]", punctuation, list)
+	}
 	makeToken(nil, nil, "(", punctuation, list)
-	if params != nil {
-		p := *params
-		tok := strings.Split(p, ",")
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], typeName, list)
+	for i, p := range fn.Params {
+		temp := strings.SplitN(p, " ", 2)
+		makeToken(nil, nil, temp[0], typeName, list)
+		makeToken(nil, nil, " ", whitespace, list)
+		makeToken(nil, nil, temp[1], memberName, list)
+		if i < len(fn.Params)-1 {
+			makeToken(nil, nil, ",", punctuation, list)
 			makeToken(nil, nil, " ", whitespace, list)
-			makeToken(nil, nil, temp[1], memberName, list)
-			if id < len(tok)-1 {
-				makeToken(nil, nil, ",", punctuation, list)
-				makeToken(nil, nil, " ", whitespace, list)
-			}
 		}
 	}
 	makeToken(nil, nil, ")", punctuation, list)
-	makeToken(nil, nil, " ", whitespace, list)
-	if results != nil {
-		r := *results
-		tok := strings.Split(r, ",")
-		if len(tok) > 1 {
+	if len(fn.Returns) > 0 {
+		makeToken(nil, nil, " ", whitespace, list)
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, "(", punctuation, list)
 		}
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], memberName, list)
-			if id < len(tok)-1 {
+		for i, t := range fn.Returns {
+			makeToken(nil, nil, t, memberName, list)
+			if i < len(fn.Returns)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
 			}
 		}
-		if len(tok) > 1 {
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
+	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
-func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string, params, results *string, returnCount int, list *[]Token) {
+func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string, fn Func, list *[]Token) {
 	if isOnUnexportedMember(name) || isExampleOrTest(name) {
 		return
 	}
@@ -169,99 +201,83 @@ func makeMethodTokens(receiverVar, receiver string, isPointer bool, name string,
 	defID := name + "-" + receiver
 	makeToken(&defID, nil, name, typeName, list)
 	makeToken(nil, nil, "(", punctuation, list)
-	if params != nil {
-		p := *params
-		tok := strings.Split(p, ",")
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], typeName, list)
-			if len(temp) == 2 {
-				makeToken(nil, nil, " ", whitespace, list)
-				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
-			}
-			if id < len(tok)-1 {
-				makeToken(nil, nil, ",", punctuation, list)
-				makeToken(nil, nil, " ", whitespace, list)
-			}
+	for i, p := range fn.Params {
+		temp := strings.Split(p, " ")
+		makeToken(nil, nil, temp[0], typeName, list)
+		if len(temp) == 2 {
+			makeToken(nil, nil, " ", whitespace, list)
+			makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+		}
+		if i < len(fn.Params)-1 {
+			makeToken(nil, nil, ",", punctuation, list)
+			makeToken(nil, nil, " ", whitespace, list)
 		}
 	}
 	makeToken(nil, nil, ")", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	if results != nil {
-		r := *results
-		tok := strings.Split(r, ",")
-		if len(tok) > 1 {
+	if len(fn.Returns) > 0 {
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, "(", punctuation, list)
 		}
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
-			makeToken(nil, nil, temp[0], memberName, list)
-			if id < len(tok)-1 {
+		for i, r := range fn.Returns {
+			makeToken(nil, nil, r, memberName, list)
+			if i < len(fn.Returns)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
 			}
 		}
-		if len(tok) > 1 {
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
+	makeToken(nil, nil, "", newline, list)
 	makeToken(nil, nil, "", newline, list)
 }
 
 // interface method definitions vary from regular method definitions slightly so they have their own independent generation function
-func makeIntMethodTokens(name *string, params, results *string, list *[]Token) {
+func makeIntMethodTokens(name *string, fn Func, list *[]Token) {
 	n := *name
 	makeToken(&n, nil, *name, typeName, list)
 	makeToken(nil, nil, "(", punctuation, list)
-	if params != nil {
-		p := *params
-		tok := strings.Split(p, ",")
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
-			tokenType := typeName
-			if len(temp) == 2 {
-				tokenType = getTypeClassification(temp[0])
-			}
-			makeToken(nil, nil, temp[0], tokenType, list)
-			if len(temp) == 2 {
-				makeToken(nil, nil, " ", whitespace, list)
-				makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
-			}
-			if id < len(tok)-1 {
-				makeToken(nil, nil, ",", punctuation, list)
-				makeToken(nil, nil, " ", whitespace, list)
-			}
-
+	for i, p := range fn.Params {
+		temp := strings.Split(p, " ")
+		tokenType := typeName
+		if len(temp) == 2 {
+			tokenType = getTypeClassification(temp[0])
+		}
+		makeToken(nil, nil, temp[0], tokenType, list)
+		if len(temp) == 2 {
+			makeToken(nil, nil, " ", whitespace, list)
+			makeToken(nil, nil, temp[1], getTypeClassification(temp[1]), list)
+		}
+		if i < len(fn.Params)-1 {
+			makeToken(nil, nil, ",", punctuation, list)
+			makeToken(nil, nil, " ", whitespace, list)
 		}
 	}
 	makeToken(nil, nil, ")", punctuation, list)
 	makeToken(nil, nil, " ", whitespace, list)
-	if results != nil && len(*results) > 0 {
-		r := *results
-		tok := strings.Split(r, ",")
-		if len(tok) > 1 {
+	if len(fn.Returns) > 0 {
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, "(", punctuation, list)
 		}
-		for id, i := range tok {
-			temp := strings.Split(i, " ")
+		for i, r := range fn.Returns {
+			temp := strings.Split(r, " ")
 			makeToken(nil, nil, temp[0], getTypeClassification(temp[0]), list)
-			if id < len(tok)-1 {
+			if i < len(fn.Returns)-1 {
 				makeToken(nil, nil, ",", punctuation, list)
 				makeToken(nil, nil, " ", whitespace, list)
 			}
 
 		}
-		if len(tok) > 1 {
+		if len(fn.Returns) > 1 {
 			makeToken(nil, nil, ")", punctuation, list)
 		}
-		makeToken(nil, nil, "", newline, list)
 	}
-	makeToken(nil, nil, "", newline, list)
 }
 
 // TODO can improve how BinaryExpr consts are represented with different colors
-func makeConstTokens(name *string, c Const, list *[]Token) {
+func makeDeclarationTokens(name *string, c Declaration, list *[]Token) {
 	n := *name
 	makeToken(nil, nil, "\t", whitespace, list)
 	makeToken(&n, nil, *name, typeName, list)

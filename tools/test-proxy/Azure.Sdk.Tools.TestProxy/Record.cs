@@ -3,11 +3,10 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -48,8 +47,20 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Stop([FromBody()] IDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            bool save = true;
+            EntryRecordMode mode = RecordingHandler.GetRecordMode(Request);
 
-            _recordingHandler.StopRecording(id, variables: variables);
+            if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.");
+            }
+
+            if (mode == EntryRecordMode.DontRecord)
+            {
+                save = false;
+            }
+
+            _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
 
         public async Task HandleRequest()

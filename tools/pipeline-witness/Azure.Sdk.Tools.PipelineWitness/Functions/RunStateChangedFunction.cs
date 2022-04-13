@@ -1,35 +1,40 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Microsoft.Azure.EventHubs;
+using Azure.Messaging.EventHubs;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Functions
 {
     public class RunStateChangedFunction
     {
-        public RunStateChangedFunction(ILogger<RunStateChangedFunction> logger, RunProcessor runProcessor)
+        private readonly ILogger logger;
+        private readonly RunProcessor runProcessor;
+        private readonly TelemetryClient telemetryClient;
+
+        public RunStateChangedFunction(ILogger<RunStateChangedFunction> logger, RunProcessor runProcessor, TelemetryClient telemetryClient)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
+            this.telemetryClient = telemetryClient;
         }
-
-        private ILogger logger;
-        private RunProcessor runProcessor;
 
         [FunctionName("RunStateChanged")]
         public async Task Run([EventHubTrigger("run-state-changed", Connection = "PipelineWitnessEventHubConnectionString", ConsumerGroup = "%EventHubConsumerGroup%")]EventData @event)
         {
             logger.LogInformation("Processing run-state-changed event.");
-            string messageBody = Encoding.UTF8.GetString(@event.Body.Array, @event.Body.Offset, @event.Body.Count);
+
+            telemetryClient.TrackMetric(new MetricTelemetry
+            {
+                Name = "RunStateChanged MessageLatencyMs",
+                Sum = DateTimeOffset.Now.Subtract(@event.EnqueuedTime).TotalMilliseconds,
+            });
+            
+            string messageBody = Encoding.UTF8.GetString(@event.Body.Span);
             logger.LogInformation("Message body was: {messageBody}", messageBody);
 
             logger.LogInformation("Extracting content from message.");

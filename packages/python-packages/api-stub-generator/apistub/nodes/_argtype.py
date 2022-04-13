@@ -28,7 +28,7 @@ class ArgType:
             self.is_required = False
             self.default = str(default)
 
-        if argtype and not self.is_required and not keyword in ["ivar", "param"] and not argtype.startswith("Optional"):
+        if argtype and all([not self.is_required, self.default is None, not keyword in ["ivar", "param"], not argtype.startswith("Optional")]):
             self.argtype = f"Optional[{argtype}]"
         else:
             self.argtype = argtype
@@ -63,8 +63,8 @@ class ArgType:
             apiview.add_punctuation("=", True, True)
             # Add string literal or numeric literal based on the content within default
             # Ideally this should be based on arg type. But type is not available for all args
-            # We should refer to arg type instead of content when all args have type
-            if self.default in SPECIAL_DEFAULT_VALUES or self.argtype != "str":
+            # We should refer to arg type instead of content when all args have type                
+            if self.default in SPECIAL_DEFAULT_VALUES or self.argtype not in ["str", "Optional[str]"]:
                 apiview.add_literal(self.default)
             else:
                 apiview.add_stringliteral(self.default)

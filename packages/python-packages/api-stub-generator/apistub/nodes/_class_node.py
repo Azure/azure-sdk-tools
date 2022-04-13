@@ -1,7 +1,9 @@
+import astroid
 import logging
 import inspect
 from enum import Enum
 import operator
+from typing import List
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -100,9 +102,7 @@ class ClassNode(NodeEntityBase):
         # Method or Function member should only be included if it is defined in same package.
         # So this check will filter any methods defined in parent class if parent class is in non-azure package
         # for e.g. as_dict method in msrest
-        if not (
-            inspect.ismethod(func_obj) or inspect.isfunction(func_obj)
-        ) or inspect.isbuiltin(func_obj):
+        if not (inspect.ismethod(func_obj) or inspect.isfunction(func_obj)):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
@@ -134,6 +134,29 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
+    """ Uses AST parsing to look for @overload decorated functions
+        because inspect cannot see these. Note that this will not
+        find overloads for module-level functions.
+    """
+    def _parse_overloads(self) -> List[FunctionNode]:
+        overload_nodes = []
+        try:
+            class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
+        except:
+            return []
+        functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        for func in functions:
+            if not func.decorators:
+                continue
+            for node in func.decorators.nodes:
+                try:
+                    if node.name == "overload":
+                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_nodes.append(overload_node)
+                except AttributeError:
+                    continue
+        return overload_nodes
+
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
@@ -156,6 +179,8 @@ class ClassNode(NodeEntityBase):
                 members = inspect.getmembers(self.obj)
         else:
             members = inspect.getmembers(self.obj)
+
+        overloads = self._parse_overloads()
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
@@ -163,9 +188,11 @@ class ClassNode(NodeEntityBase):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
                     try:
-                        self.child_nodes.append(
-                            FunctionNode(self.namespace, self, child_obj)
-                        )
+                        func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                        func_overloads = [x for x in overloads if x.name == func_node.name]
+                        for overload in func_overloads:
+                            self.child_nodes.append(overload)
+                        self.child_nodes.append(func_node)
                     except OSError:
                         # Don't create entries for things that don't have source
                         pass
@@ -188,14 +215,27 @@ class ClassNode(NodeEntityBase):
 
             if self.is_enum and isinstance(child_obj, self.obj):
                 self.child_nodes.append(
-                    EnumNode(name=name, namespace=self.namespace, parent_node=self, obj=child_obj)
+                    EnumNode(
+                        name=name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj
+                    )
+                )
+            elif inspect.isclass(child_obj):
+                self.child_nodes.append(
+                    ClassNode(
+                        name=child_obj.name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj,
+                        pkg_root_namespace=self.pkg_root_namespace
+                    )
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(
-                        PropertyNode(self.namespace, self, name, child_obj)
-                    )
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
                 self._handle_class_variable(child_obj, name, value=str(child_obj))
 

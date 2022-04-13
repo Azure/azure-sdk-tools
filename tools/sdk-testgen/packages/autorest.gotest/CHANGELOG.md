@@ -1,6 +1,20 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Tue, 29 Mar 2022 01:56:58 GMT and should not be manually modified.
+This log was last generated on Mon, 11 Apr 2022 09:15:12 GMT and should not be manually modified.
+
+## 3.0.1
+Mon, 11 Apr 2022 09:15:12 GMT
+
+### Patches
+
+- Fix wrong go version in templates.
+
+## 3.0.0
+Thu, 07 Apr 2022 12:22:32 GMT
+
+### Breaking changes
+
+- Support latest GO codegen with generic feature.
 
 ## 2.2.1
 Tue, 29 Mar 2022 01:56:58 GMT

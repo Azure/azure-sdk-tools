@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "packageFolder": {
+      // The path of package folder
+      "type": "string"
+    }
+  },
+  "required": ["packageFolder"]
+}

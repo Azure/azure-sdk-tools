@@ -191,6 +191,8 @@ Describe "AssetsModuleTests" {
 
       $config = Resolve-AssetsJson -TargetPath $testLocation
 
+      Write-Host $config
+
       Initialize-AssetsRepo -Config $config
     }
 
@@ -212,6 +214,31 @@ Describe "AssetsModuleTests" {
   }
 
   Context "Push-AssetsRepo-Update" {
+    It "Should push a new branch/commit to a non-existent target branch." {
+      $recordingJsonContent = [PSCustomObject]@{
+        AssetsRepo = "Azure/azure-sdk-assets-integration"
+        AssetsRepoPrefixPath = "python/recordings/"
+        AssetsRepoId = ""
+        AssetsRepoBranch = "scenario_new_push"
+        SHA = "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
+      }
+    }
+    
+    It "Should push a clean new commmit to the target branch" {
 
+    }
+
+    It "Should push a new commit on top of an existing one." {
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $assetsContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+
+      $config = Resolve-AssetsJson -TargetPath $testLocation
+
+      Initialize-AssetsRepo -Config $config
+    }
   }
 }

@@ -51,7 +51,7 @@ class TestTypeHints:
     def test_variadic_typehints(self):
         clients = [
             # TODO: Known limitation of astroid (See: https://github.com/Azure/azure-sdk-tools/issues/3131)
-            #Python2TypeHintClient,
+            # Python2TypeHintClient,
             Python3TypeHintClient,
             DocstringTypeHintClient
         ]

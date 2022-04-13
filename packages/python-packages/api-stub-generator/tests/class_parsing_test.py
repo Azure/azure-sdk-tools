@@ -146,9 +146,9 @@ class TestClassParsing:
         class_node = ClassNode(name="SomethingWithProperties", namespace="test", parent_node=None, obj=SomethingWithProperties, pkg_root_namespace=self.pkg_namespace)
         actuals = [_render_string(_tokenize(x)) for x in class_node.child_nodes]
         expected = [
-            "property docstring_property: Optional[str] # Read-only",
-            "property py2_property: Optional[str] # Read-only",
-            "property py3_property: Optional[str] # Read-only"    
+            "property docstring_property: Optional[str]     # Read-only",
+            "property py2_property: Optional[str]     # Read-only",
+            "property py3_property: Optional[str]     # Read-only"    
         ]
         for (idx, actual) in enumerate(actuals):
             expect = expected[idx]

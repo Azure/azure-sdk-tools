@@ -62,7 +62,7 @@ class PropertyNode(NodeEntityBase):
         apiview.add_space()
         apiview.add_type(self.type)  # TODO: Pass navigation ID if it is internal type
         if self.read_only:
-            apiview.add_space()
+            apiview.add_whitespace(count=5)
             apiview.add_literal("# Read-only")
 
 

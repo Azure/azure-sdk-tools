@@ -186,12 +186,13 @@ class FunctionNode(NodeEntityBase):
             item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
             apiview.add_punctuation(",", False, True)
 
-    def _generate_signature_token(self, apiview):
+    def _generate_signature_token(self, apiview, use_multi_line):
         apiview.add_punctuation("(")
 
-        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
-        use_multi_line = self._argument_count() > 2
         if use_multi_line:
+            # render errors directly below definition line
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)
             apiview.begin_group()
             apiview.begin_group()
 
@@ -238,6 +239,9 @@ class FunctionNode(NodeEntityBase):
         """Generates token for function signature
         :param ApiView: apiview
         """
+        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
+        use_multi_line = self._argument_count() > 2
+
         parent_id = self.parent_node.namespace_id if self.parent_node else "???"
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
@@ -258,15 +262,19 @@ class FunctionNode(NodeEntityBase):
             add_cross_language_id=True
         )
         # Add parameters
-        self._generate_signature_token(apiview)
+        self._generate_signature_token(apiview, use_multi_line)
         if self.return_type:
             apiview.add_punctuation("->", True, True)
             # Add line marker id if signature is displayed in multi lines
-            if len(self.args) > 2:
+            if use_multi_line:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
         apiview.add_newline()
+        if not use_multi_line:
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)            
+
 
     def print_errors(self):
         if self.errors:

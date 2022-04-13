@@ -8,11 +8,12 @@
 
 from ._version import VERSION
 from ._client import (
+    DefaultValuesClient,
+    DocstringTypeHintClient,
+    PylintCheckerViolationsClient,
     Python2TypeHintClient,
     Python3TypeHintClient,
-    DocstringTypeHintClient,
-    DefaultValuesClient,
-    SpecialArgsClient
+    SpecialArgsClient,
 )
 
 __version__ = VERSION

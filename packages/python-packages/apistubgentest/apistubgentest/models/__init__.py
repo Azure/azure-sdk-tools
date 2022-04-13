@@ -19,7 +19,8 @@ from ._models import (
     PublicPrivateClass, RequiredKwargObject,
     SomePoorlyNamedObject as SomeAwesomelyNamedObject,
     SomethingWithDecorators,
-    SomethingWithOverloads
+    SomethingWithOverloads,
+    SomethingWithProperties
 )
 
 
@@ -37,5 +38,6 @@ __all__ = (
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
     "SomethingWithDecorators",
-    "SomethingWithOverloads"
+    "SomethingWithOverloads",
+    "SomethingWithProperties"
 )

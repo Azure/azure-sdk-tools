@@ -67,7 +67,10 @@ class ApiView:
             self.add_token(Token(" " * (self.indent * 4)))
 
     def add_space(self):
-        self.add_token(Token(" ", TokenKind.Whitespace))
+        """ Used to add a single space. Cannot add mutliple spaces.
+        """
+        if self.tokens[-1].kind != TokenKind.Whitespace:
+            self.add_token(Token(" ", TokenKind.Whitespace))
 
     def add_newline(self):
         """ Used to END a line and wrap to the next.

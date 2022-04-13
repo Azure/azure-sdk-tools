@@ -4,6 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from unicodedata import name
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,
@@ -13,10 +14,11 @@ from apistubgentest.models import (
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomethingWithDecorators,
-    SomethingWithOverloads
+    SomethingWithOverloads,
+    SomethingWithProperties
 )
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string
 
 
 class TestClassParsing:
@@ -139,3 +141,16 @@ class TestClassParsing:
 
         node4 = class_node.child_nodes[3]
         assert node4.annotations == ["@my_decorator"]
+
+    def test_properties(self):
+        class_node = ClassNode(name="SomethingWithProperties", namespace="test", parent_node=None, obj=SomethingWithProperties, pkg_root_namespace=self.pkg_namespace)
+        actuals = [_render_string(_tokenize(x)) for x in class_node.child_nodes]
+        expected = [
+            "property docstring_property: Optional[str] # Read-only",
+            "property py2_property: Optional[str] # Read-only",
+            "property py3_property: Optional[str] # Read-only"    
+        ]
+        for (idx, actual) in enumerate(actuals):
+            expect = expected[idx]
+            _check(actual, expect, SomethingWithProperties)
+

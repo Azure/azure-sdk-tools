@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub.nodes import FunctionNode
+from apistub.nodes import FunctionNode, PropertyNode
 from apistubgentest import (
     Python2TypeHintClient,
     Python3TypeHintClient,

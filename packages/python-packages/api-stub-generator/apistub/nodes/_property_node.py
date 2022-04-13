@@ -1,5 +1,9 @@
-from ._base_node import NodeEntityBase
+import astroid
+import inspect
+
+from ._base_node import NodeEntityBase, get_qualified_name
 from ._docstring_parser import DocstringParser
+from ._astroid_parser import AstroidFunctionParser
 
 
 class PropertyNode(NodeEntityBase):
@@ -10,7 +14,7 @@ class PropertyNode(NodeEntityBase):
         super().__init__(namespace, parent_node, obj)
         self.obj = obj
         self.read_only = True
-        self.type = ""
+        self.type = None
         self.errors = []
         self.name = name
         self._inspect()
@@ -25,7 +29,9 @@ class PropertyNode(NodeEntityBase):
 
         if hasattr(self.obj, "fget"):
             # Get property type if type hint 
-            self._parse_typehint(getattr(self.obj, "fget"))
+            node = astroid.extract_node(inspect.getsource(self.obj.fget))
+            parser = AstroidFunctionParser(node, self.namespace, None)
+            self.type = get_qualified_name(parser.return_type, self.namespace)
 
         # get type from docstring
         if hasattr(self.obj, "__doc__") and not self.type:
@@ -44,10 +50,6 @@ class PropertyNode(NodeEntityBase):
         if self.read_only:
             self.display_name += "   # Read-only"
 
-    def _parse_typehint(self, func):
-        # TODO: Parse the typehint
-        pass
-
     def generate_tokens(self, apiview):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
@@ -60,7 +62,7 @@ class PropertyNode(NodeEntityBase):
         apiview.add_space()
         apiview.add_type(self.type)  # TODO: Pass navigation ID if it is internal type
         if self.read_only:
-            apiview.add_whitespace()
+            apiview.add_space()
             apiview.add_literal("# Read-only")
 
 

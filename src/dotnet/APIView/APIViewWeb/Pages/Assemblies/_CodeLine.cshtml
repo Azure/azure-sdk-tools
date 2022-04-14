@@ -10,18 +10,37 @@
         _ => ""
     };
 
-    string foldableClass = Model.CodeLine.LineClass;
+    string foldableClass = Model.CodeLine.LineClass.ToLower().Replace(".","-");
 }
 
 <tr class="code-line @lineClass @foldableClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
-    <td class="line-number @lineClass">@Model.LineNumber</td>
-    <td class="line-comment-button-cell">
-        @if (!isRemoved && Model.CodeLine.ElementId != null)
-        {
-            <a class="line-comment-button">+</a>
-        }
+    <td class="line-details">
+        <table>
+            <tr>
+                <td class="line-number @lineClass"><span>@Model.LineNumber</span></td>
+                <td class="line-details-button-cell">
+                    @if (!isRemoved && Model.CodeLine.ElementId != null)
+                    {
+                        <a class="line-comment-button">+</a>
+                    }
+                    else
+                    {
+                       <a class="line-comment-button" style="visibility: hidden;">+</a> // Added for visual consistency
+                    }
+                </td>
+                <td class="line-details-button-cell">
+                    @if (foldableClass.EndsWith("-parent"))
+                    {
+                        <span><i class="fa-solid fa-angle-right"></i></span>
+                    }
+                </td>
+            </tr>
+        </table>
     </td>
     <td class="code @lineClass">
+        @{
+            string collapseMenu = foldableClass.EndsWith("-parent") ? "<i class='fa-solid fa-ellipsis ml-2 mt-2'></i>" : "";
+        }
         @if (Model.Kind == DiffLineKind.Removed)
         {
             <span class="code-inner">&nbsp;-&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>

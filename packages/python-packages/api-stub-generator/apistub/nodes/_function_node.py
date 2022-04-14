@@ -3,8 +3,8 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
-from astroid import NodeNG
 
+from ._annotation_parser import FunctionAnnotationParser
 from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -52,7 +52,10 @@ class FunctionNode(NodeEntityBase):
         # Some of the methods wont be listed in API review
         # For e.g. ABC methods if class implements all ABC methods
         self.hidden = False
-        self.node = node or astroid.extract_node(inspect.getsource(obj))
+        try:
+            self.node = node or astroid.extract_node(inspect.getsource(obj))
+        except OSError:
+            self.node = None
         self._inspect()
         self.kwargs = OrderedDict(sorted(self.kwargs.items()))
 
@@ -67,32 +70,29 @@ class FunctionNode(NodeEntityBase):
             self.namespace_id += ":async"
         
         # Turn any decorators into annotation
-        if self.node.decorators:
+        if self.node and self.node.decorators:
             self.annotations = [f"@{x.as_string(preserve_quotes=True)}" for x in self.node.decorators.nodes]
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
 
     def _parse_function(self):
-        """
-        Find positional and keyword arguements, type and default value and return type of method
-        Parsing logic will follow below order to identify these information
-        1. Identify args, types, default and ret type using inspect
-        2. Parse type annotations if inspect doesn't have complete info
-        3. Parse docstring to find keyword arguements
-        4. Parse type hints
-        """
+        """ Find positional and keyword arguments, type and default value and return type of method."""
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
             self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
 
-        parser = AstroidFunctionParser(self.node, self.namespace, self)
-        self.args = parser.args
-        self.posargs = parser.posargs
-        self.kwargs = parser.kwargs
-        self.return_type = get_qualified_name(parser.return_type, self.namespace)
-        self.special_kwarg = parser.special_kwarg
-        self.special_vararg = parser.special_vararg
+        if self.node:
+            parser = AstroidFunctionParser(self.node, self.namespace, self)
+        else:
+            parser = FunctionAnnotationParser(self.obj, self.namespace, self)
+        if parser:
+            self.args = parser.args
+            self.posargs = parser.posargs
+            self.kwargs = parser.kwargs
+            self.return_type = get_qualified_name(parser.return_type, self.namespace)
+            self.special_kwarg = parser.special_kwarg
+            self.special_vararg = parser.special_vararg
         self._parse_docstring()
 
     def _parse_docstring(self):
@@ -268,7 +268,7 @@ class FunctionNode(NodeEntityBase):
             apiview.add_punctuation("->", True, True)
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
-                line_id = "{}.returntype".format(self.namespace_id)
+                line_id = f"{self.namespace_id}.returntype"
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
         apiview.add_newline()

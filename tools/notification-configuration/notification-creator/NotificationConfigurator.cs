@@ -226,8 +226,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     if (!teamMemberCache.ContainsKey(member.Identity.Id))
                     {
-                        var teamMemberDescritor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
-                        teamMemberCache[member.Identity.Id] = teamMemberDescritor;
+                        var teamMemberDescriptor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
+                        teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
                     }
                     teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
                 }

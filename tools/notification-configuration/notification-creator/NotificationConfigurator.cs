@@ -1,4 +1,4 @@
-﻿using common.Helpers;
+using common.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -217,11 +217,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         }
                         else
                         {
-                            logger.LogInformation("Cannot fetch the user principal from github id {0}", contact);
-                            codeOwnerCache[contact] = userPrincipal;
+                            logger.LogInformation("Cannot find the user principal for github {0}", contact);
+                            codeOwnerCache[contact] = null;
                         }
-                        codeownersDescriptors.Add(codeOwnerCache[contact]);
                     }
+                    codeownersDescriptors.Add(codeOwnerCache[contact]);
                 }
 
 

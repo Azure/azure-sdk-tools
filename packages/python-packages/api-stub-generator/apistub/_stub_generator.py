@@ -88,7 +88,6 @@ class StubGenerator:
             logging.getLogger().setLevel(logging.DEBUG)
         PylintParser.parse(self.pkg_path)
 
-
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
@@ -118,7 +117,6 @@ class StubGenerator:
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
         return apiview
-
 
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON
@@ -195,6 +193,7 @@ class StubGenerator:
         # Generate tokens
         modules = self.module_dict.keys()
         for m in modules:
+            self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
             self.module_dict[m].generate_tokens(apiview)

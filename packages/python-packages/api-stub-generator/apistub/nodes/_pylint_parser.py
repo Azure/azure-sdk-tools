@@ -29,7 +29,7 @@ class PylintError:
             self.path = self.path[(len(f"{pkg_name}\\\\") - 1):]
         code = self.symbol[0]
         self.level = DiagnosticLevel.ERROR if code in "EF" else DiagnosticLevel.WARNING
-        self.claimed = False
+        self.owner = None
         self._parse_help_link()
 
     def _parse_help_link(self):
@@ -74,24 +74,25 @@ class PylintParser:
         cls.items = [PylintError(pkg_name, **x) for x in json_items if x["message-id"][1:3] == PylintParser.AZURE_CHECKER_CODE]
 
     @classmethod
-    def get_items(cls, obj) -> List[PylintError]:
-        results = []
+    def match_items(cls, obj) -> None:
         try:
             source_file = inspect.getsourcefile(obj)
             (source_lines, start_line) = inspect.getsourcelines(obj)
             end_line = start_line + len(source_lines) - 1
-        except:
-            return results
-
+        except Exception as err:
+            return
         for item in cls.items:
             item_path = item.path
             if source_file.endswith(item_path):
-                # only include linter warnings associated with the first line of a code block
-                if item.line == start_line:
-                    item.claimed = True
-                    results.append(item)
-        return results
+                # nested items will overwrite the ownership of their
+                # containing parent.
+                if item.line >= start_line and item.line <= end_line:
+                    item.owner = str(obj)
+
+    @classmethod
+    def get_items(cls, obj) -> List[PylintError]:
+        return [x for x in cls.items if x.owner == str(obj)]
 
     @classmethod
     def get_unclaimed(cls) -> List[PylintError]:
-        return [x for x in cls.items if x.claimed == False]
+        return [x for x in cls.items if not x.owner]

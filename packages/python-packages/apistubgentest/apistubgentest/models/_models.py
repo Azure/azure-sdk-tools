@@ -218,6 +218,7 @@ class SomethingWithDecorators:
         pass
 
 
+# pylint:disable=docstring-missing-return
 class SomethingWithProperties:
 
     @property

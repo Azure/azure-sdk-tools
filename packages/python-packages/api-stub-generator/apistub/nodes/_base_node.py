@@ -41,7 +41,8 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name
         self.child_nodes = []
-        self.pylint_errors = PylintParser.get_items(obj)
+        self.pylint_errors = []
+        PylintParser.match_items(obj)
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name
@@ -61,6 +62,11 @@ class NodeEntityBase:
             for c in self.child_nodes:
                 c.generate_tokens(apiview)
             apiview.end_group()
+
+    def generate_diagnostics(self):
+        self.pylint_errors = PylintParser.get_items(self.obj)
+        for child in self.child_nodes or []:
+            child.generate_diagnostics()
 
 def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.

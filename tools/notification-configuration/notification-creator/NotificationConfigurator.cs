@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
 using Azure.Sdk.Tools.CodeOwnersParser;
-using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration
 {
@@ -22,11 +21,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly AzureDevOpsService service;
         private readonly GitHubService gitHubService;
         private readonly ILogger<NotificationConfigurator> logger;
-        
-        private List<CodeOwnerEntry> codeOwnerEntries;
 
-
-        private const int MaxTeamNameLength = 64;        
+        private const int MaxTeamNameLength = 64;
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
         // A cache on the code owners github identity to owner descriptor.
@@ -84,7 +80,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
                 string fullTeamName = teamName + $"{pipeline.Name}";
                 teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
-                if (fullTeamName.Length > teamName.Length) {
+                if (fullTeamName.Length > teamName.Length)
+                {
                     logger.LogWarning($"Notification team name (length {fullTeamName.Length}) will be truncated to {teamName}");
                 }
             }
@@ -173,12 +170,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             if (purpose == TeamPurpose.SynchronizedNotificationTeam)
             {
-                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, persistChanges);
+                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, gitHubService, persistChanges);
             }
             return result;
         }
 
-        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, bool persistChanges)
+        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, GitHubService gitHubService, bool persistChanges)
         {
             using (logger.BeginScope("Team Name = {0}", team.Name))
             {
@@ -200,7 +197,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var process = pipeline.Process as YamlProcess;
 
                 logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-        
+
                 var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
                 codeOwnerEntry.FilterOutNonUserAliases();
 
@@ -212,13 +209,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     if (!codeOwnerCache.ContainsKey(contact))
                     {
-                        codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        // TODO: Better to have retry if no success on this call.
+                        var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
                         if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
                         {
-                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(codeOwnerCache[contact]);
+                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
+                            codeownersDescriptors.Add(codeOwnerCache[contact]);
                         }
                     }
-                    codeownersDescriptors.Add(codeOwnerCache[contact]);
                 }
 
 
@@ -230,8 +228,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     if (!teamMemberCache.ContainsKey(member.Identity.Id))
                     {
-                        var teamMemberDescritor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
-                        teamMemberCache[member.Identity.Id] = teamMemberDescritor;
+                        var teamMemberDescriptor = (await service.GetUserFromId(new Guid(member.Identity.Id))).SubjectDescriptor.ToString();
+                        teamMemberCache[member.Identity.Id] = teamMemberDescriptor;
                     }
                     teamDescriptors.Add(teamMemberCache[member.Identity.Id]);
                 }
@@ -259,15 +257,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
                 }
             }
-        }
-        private async Task<string> GetDescriptorFromGithubIdentity(string input, GitHubToAADConverter gitHubToAADConverter)
-        {
-            return await service.GetDescriptorForPrincipal(gitHubToAADConverter.GetUserPrincipalNameFromGithub(input));
-        }
-
-        private async Task<string> GetDescriptorFromTeamId(string input)
-        {
-            return (await service.GetUserFromId(new Guid(input))).SubjectDescriptor.ToString();
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)

@@ -38,11 +38,6 @@ extends:
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'
 
-    # - script: |
-    #     pip install requests
-    #     python $(Build.SourcesDirectory)/eng/scripts/check_pylintrc.py
-    #   displayName: 'Verify local pylintrc in sync with Azure SDK for Python'
-
     - script: |
         cd $(Build.SourcesDirectory)/packages/python-packages/api-stub-generator
         pip install tox

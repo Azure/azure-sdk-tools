@@ -8,6 +8,7 @@ from azure.core import PipelineClient
 from typing import Optional, Union
 
 
+# pylint:disable=docstring-missing-return,docstring-missing-rtype
 class DefaultValuesClient:
 
     def with_simple_default(name: str = "Bill", *, age: int = 21) -> None:
@@ -54,6 +55,7 @@ class DefaultValuesClient:
         pass
 
 
+# pylint:disable=docstring-missing-return,docstring-missing-rtype
 class Python3TypeHintClient:
 
     def with_simple_typehints(self, name: str, age: int) -> str:
@@ -80,6 +82,7 @@ class Python3TypeHintClient:
         pass
 
 
+# pylint:disable=docstring-missing-return,docstring-missing-rtype
 class Python2TypeHintClient:
 
     def with_simple_typehints(
@@ -124,7 +127,7 @@ class Python2TypeHintClient:
         pass
 
 
-# pylint:disable=client-method-missing-type-annotations
+# pylint:disable=client-method-missing-type-annotations,docstring-missing-return,docstring-missing-rtype
 class DocstringTypeHintClient:
     def with_simple_typehints(self, name, age):
         """ Simple typehints
@@ -143,6 +146,7 @@ class DocstringTypeHintClient:
         """
         pass
 
+    # pylint:disable=docstring-should-be-keyword
     def with_variadic_typehint(self, *vars, **kwargs):
         """ Variadic typehint
         :param str vars: Args

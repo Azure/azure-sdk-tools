@@ -54,6 +54,7 @@ class DocstringClass:
         :type another: str
         :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
         :type some_class: class
+        :return: Some string.
         :rtype: str
         """
         return f"{value} {another} {some_class}"
@@ -75,6 +76,7 @@ class PetEnumPy3MetaclassAlt(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta)
     DEFAULT = "cat"
 
 
+# pylint:disable=docstring-missing-param
 class FakeObject(object):
     """Fake Object
 

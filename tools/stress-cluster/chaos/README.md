@@ -297,14 +297,14 @@ pre-defines a lot of the kubernetes config boilerplate needed to configure stres
 
 ### Manifest Special Fields
 
-For kubernetes manifests in in the stress test helm chart `templates` directory that are wrapped by any of the
+For kubernetes manifests in the stress test helm chart `templates` directory that are wrapped by any of the
 `stress-test-addons` (see [examples](#job-manifest)[below](#chaos-manifest)) templates, several special helper fields
 are made available in the template context.
 
 - `{{ .Values.image }}`
   - The docker image published by the stress test deploy script
 - `{{ .Stress.Scenario }}`
-  - If using [Scenarios](#scenarios-and-valuesyaml), this value maps to the individual scenario a template for which a
+  - If using [Scenarios](#scenarios-and-valuesyaml), this value maps to the individual scenario for which a
     template is being generated.
 - `{{ .Stress.ResourceGroupName }}`
   - If deploying live resources for a test job, the name of the resource group.

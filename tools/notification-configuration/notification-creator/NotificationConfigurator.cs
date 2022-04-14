@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly GitHubService gitHubService;
         private readonly ILogger<NotificationConfigurator> logger;
 
-        private const int MaxTeamNameLength = 64;        
+        private const int MaxTeamNameLength = 64;
         // Type 2 maps to a pipeline YAML file in the repository
         private const int PipelineYamlProcessType = 2;
         // A cache on the code owners github identity to owner descriptor.
@@ -80,7 +80,8 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 // https://docs.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops#teams
                 string fullTeamName = teamName + $"{pipeline.Name}";
                 teamName = StringHelper.MaxLength(fullTeamName, MaxTeamNameLength);
-                if (fullTeamName.Length > teamName.Length) {
+                if (fullTeamName.Length > teamName.Length)
+                {
                     logger.LogWarning($"Notification team name (length {fullTeamName.Length}) will be truncated to {teamName}");
                 }
             }
@@ -196,7 +197,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 var process = pipeline.Process as YamlProcess;
 
                 logger.LogInformation("Searching CODEOWNERS for matching path for {0}", process.YamlFilename);
-        
+
                 var codeOwnerEntry = CodeOwnersFile.FindOwnersForClosestMatch(codeOwnerEntries, process.YamlFilename);
                 codeOwnerEntry.FilterOutNonUserAliases();
 
@@ -210,11 +211,16 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     {
                         // TODO: Better to have retry if no success on this call.
                         var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
-                        if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
+                        if (!string.IsNullOrEmpty(userPrincipal))
                         {
                             codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
-                            codeownersDescriptors.Add(codeOwnerCache[contact]);
                         }
+                        else
+                        {
+                            logger.LogInformation("Cannot fetch the user principal from github id {0}", contact);
+                            codeOwnerCache[contact] = userPrincipal;
+                        }
+                        codeownersDescriptors.Add(codeOwnerCache[contact]);
                     }
                 }
 

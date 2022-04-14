@@ -210,7 +210,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     {
                         // TODO: Better to have retry if no success on this call.
                         var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
-                        if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
+                        if (!string.IsNullOrEmpty(userPrincipal))
                         {
                             codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
                             codeownersDescriptors.Add(codeOwnerCache[contact]);

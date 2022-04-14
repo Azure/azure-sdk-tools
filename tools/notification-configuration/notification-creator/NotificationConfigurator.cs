@@ -208,13 +208,14 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 {
                     if (!codeOwnerCache.ContainsKey(contact))
                     {
-                        codeOwnerCache[contact] = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        // TODO: Better to have retry if no success on this call.
+                        var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
                         if (!string.IsNullOrEmpty(codeOwnerCache[contact]))
                         {
-                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(codeOwnerCache[contact]);
+                            codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
+                            codeownersDescriptors.Add(codeOwnerCache[contact]);
                         }
                     }
-                    codeownersDescriptors.Add(codeOwnerCache[contact]);
                 }
 
 

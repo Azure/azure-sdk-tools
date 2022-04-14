@@ -217,10 +217,11 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         }
                         else
                         {
-                            codeOwnerCache[contact] = userPrincipal;
+                            logger.LogInformation("Cannot find the user principal for github {0}", contact);
+                            codeOwnerCache[contact] = null;
                         }
-                        codeownersDescriptors.Add(codeOwnerCache[contact]);
                     }
+                    codeownersDescriptors.Add(codeOwnerCache[contact]);
                 }
 
 

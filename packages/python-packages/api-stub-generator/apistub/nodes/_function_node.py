@@ -275,10 +275,3 @@ class FunctionNode(NodeEntityBase):
         if not use_multi_line:
             for err in self.pylint_errors:
                 err.generate_tokens(apiview, self.namespace_id)            
-
-
-    def print_errors(self):
-        if self.errors:
-            print("  method: {}".format(self.name))
-            for e in self.errors:
-                print("      {}".format(e))

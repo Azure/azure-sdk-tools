@@ -33,9 +33,3 @@ class VariableNode(NodeEntityBase):
                 apiview.add_stringliteral(self.value)
             else:
                 apiview.add_literal(self.value)
-
-    def print_errors(self):
-        if self.errors:
-            print("{0}: {1}".format("ivar" if self.is_ivar else "cvar", self.name))
-            for e in self.errors:
-                print("    {}".format(e))

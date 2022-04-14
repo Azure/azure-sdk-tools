@@ -2,8 +2,10 @@ import astroid
 from inspect import Parameter
 import re
 
-keyword_regex = re.compile(r"<(class|enum) '([a-zA-Z._]+)'>")
-forward_ref_regex = re.compile(r"ForwardRef\('([a-zA-Z._]+)'\)")
+from ._pylint_parser import PylintParser
+
+keyword_regex = re.compile(r"<(class|enum) '([\w.]+)'>")
+forward_ref_regex = re.compile(r"ForwardRef\('([\w.]+)'\)")
 name_regex = re.compile(r"([^[]*)")
 
 
@@ -39,7 +41,8 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name
         self.child_nodes = []
-        self.errors = []
+        self.pylint_errors = []
+        PylintParser.match_items(obj)
 
     def generate_id(self):
         """Generates ID for current object using parent object's ID and name
@@ -54,11 +57,16 @@ class NodeEntityBase:
         :param ApiView: apiview
         """
         if self.child_nodes:
-            apiview.add_text("", self.display_name)
+            apiview.add_text(self.display_name)
             apiview.begin_group()
             for c in self.child_nodes:
                 c.generate_tokens(apiview)
             apiview.end_group()
+
+    def generate_diagnostics(self):
+        self.pylint_errors = PylintParser.get_items(self.obj)
+        for child in self.child_nodes or []:
+            child.generate_diagnostics()
 
 def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.

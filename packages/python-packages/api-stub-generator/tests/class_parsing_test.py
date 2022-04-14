@@ -4,12 +4,11 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from unicodedata import name
 from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,
-    PetEnum,
+    PetEnumPy3MetaclassAlt,
     PublicPrivateClass,
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
@@ -49,7 +48,7 @@ class TestClassParsing:
         self._check_nodes(class_node.child_nodes, [
             (KeyNode, '"age"', "int"),
             (KeyNode, '"name"', "str"),
-            (KeyNode, '"union"', f"Union[bool, {self.pkg_namespace}.FakeObject, PetEnum]")
+            (KeyNode, '"union"', f"Union[bool, {self.pkg_namespace}.FakeObject, PetEnumPy3MetaclassAlt]")
         ])
 
     def test_object(self):
@@ -58,7 +57,7 @@ class TestClassParsing:
             (VariableNode, "PUBLIC_CONST", "str"),
             (VariableNode, "age", "int"),
             (VariableNode, "name", "str"),
-            (VariableNode, "union", "Union[bool, PetEnum]"),
+            (VariableNode, "union", "Union[bool, PetEnumPy3MetaclassAlt]"),
             (FunctionNode, "__init__", None)
         ])
 
@@ -90,7 +89,7 @@ class TestClassParsing:
         assert class_node.name == "SomeAwesomelyNamedObject"
 
     def test_enum(self):
-        class_node = ClassNode(name="PetEnum", namespace="test", parent_node=None, obj=PetEnum, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(name="PetEnumPy3MetaclassAlt", namespace="test", parent_node=None, obj=PetEnumPy3MetaclassAlt, pkg_root_namespace=self.pkg_namespace)
         assert len(class_node.child_nodes) == 3
         names = [x.name for x in class_node.child_nodes]
         assert names == ["CAT", "DEFAULT", "DOG"]

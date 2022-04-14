@@ -54,17 +54,10 @@ class DocstringClass:
         :type another: str
         :param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
         :type some_class: class
+        :return: Some string.
         :rtype: str
         """
         return f"{value} {another} {some_class}"
-
-
-class PetEnumPy2Metaclass(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)):
-    """A test enum for Py2 way of doing case-insensitive enum
-    """
-    DOG = "dog"
-    CAT = "cat"
-    DEFAULT = "cat"
 
 
 class PetEnumPy3Metaclass(str, Enum, metaclass = CaseInsensitiveEnumMeta):
@@ -75,7 +68,7 @@ class PetEnumPy3Metaclass(str, Enum, metaclass = CaseInsensitiveEnumMeta):
     DEFAULT = "cat"
 
 
-class PetEnum(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
+class PetEnumPy3MetaclassAlt(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
     """A test enum
     """
     DOG = "dog"
@@ -83,15 +76,16 @@ class PetEnum(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):
     DEFAULT = "cat"
 
 
+# pylint:disable=docstring-missing-param
 class FakeObject(object):
     """Fake Object
 
     :ivar str name: Name
     :ivar int age: Age
     :ivar union: Union
-    :vartype union: Union[bool, PetEnum]
+    :vartype union: Union[bool, PetEnumPy3MetaclassAlt]
     """
-    def __init__(self, name: str, age: int, union: Union[bool, PetEnum]):
+    def __init__(self, name: str, age: int, union: Union[bool, PetEnumPy3MetaclassAlt]):
         self.name = name
         self.age = age
         self.union = union
@@ -112,7 +106,7 @@ FakeTypedDict = TypedDict(
     'FakeTypedDict',
     name=str,
     age=int,
-    union=Union[bool, FakeObject, PetEnum]
+    union=Union[bool, FakeObject, PetEnumPy3MetaclassAlt]
 )
 
 
@@ -165,7 +159,7 @@ class RequiredKwargObject:
 
 class ObjectWithDefaults:
 
-    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnum = PetEnum.DOG):
+    def __init__(self, name: str = "Bob", age: int = 21, is_awesome: bool = True, pet: PetEnumPy3MetaclassAlt = PetEnumPy3MetaclassAlt.DOG):
         self.name = name
         self.age = age
         self.is_awesome = is_awesome
@@ -224,6 +218,7 @@ class SomethingWithDecorators:
         pass
 
 
+# pylint:disable=docstring-missing-return
 class SomethingWithProperties:
 
     @property

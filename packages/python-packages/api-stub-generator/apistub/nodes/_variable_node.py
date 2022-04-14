@@ -21,7 +21,7 @@ class VariableNode(NodeEntityBase):
         """
         apiview.add_keyword("ivar" if self.is_ivar else "cvar", False, True)
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.name)
         # Add type
         if self.type:
             apiview.add_punctuation(":", False, True)
@@ -33,9 +33,3 @@ class VariableNode(NodeEntityBase):
                 apiview.add_stringliteral(self.value)
             else:
                 apiview.add_literal(self.value)
-
-    def print_errors(self):
-        if self.errors:
-            print("{0}: {1}".format("ivar" if self.is_ivar else "cvar", self.name))
-            for e in self.errors:
-                print("    {}".format(e))

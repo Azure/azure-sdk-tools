@@ -1,9 +1,12 @@
 # Release History
 
-## Version 0.2.12 (Unreleased)
+## Version 0.3.0 (Unreleased)
 Added support for @overloads decorators.
 Added support for positional-only arguments.
 Added full support for Python 2-style type hints.
+Added support for `--source-url` which allows you to specify a link to the
+  pull request that the APIView is generated for that will appear in the
+  APIView preamble. Intended primarily for use by other automation tools.
 Fixed issue where decorators with parameters would not appear in APIView.
 Fixed consistency issues with how default values are displayed.
 Fixed issue where types would appear wrapped in "Optional" even though
@@ -11,6 +14,10 @@ Fixed issue where types would appear wrapped in "Optional" even though
 Fixed issue where, in some cases, string literal default values would not appear wrapped
   in quotes.
 Changed default for retrieving type info from docstrings to annotation/type comments.
+APIView will now display diagnostics only for custom pylint rule violations
+  described in the `azure-sdk-for-python` repo.
+Removed custom APIView diagnostic messages that existed in prior versions.
+Removed the `--hide-report` option.
 
 ## Version 0.2.11 (2022-04-06)
 Added __main__ to execute as module

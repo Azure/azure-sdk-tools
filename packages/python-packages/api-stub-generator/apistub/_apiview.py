@@ -1,8 +1,7 @@
 from json import JSONEncoder
 import logging
 import re
-import importlib
-import inspect
+import os
 import platform
 
 from ._node_index import NodeIndex
@@ -15,11 +14,8 @@ from ._metadata_map import MetadataMap
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
-TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
-TYPE_OR_SEPERATOR = " or "
-
-# Lint warnings
-SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
+TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\\d._]+)")
+TYPE_OR_SEPARATOR = " or "
 
 
 class ApiView:
@@ -27,9 +23,23 @@ class ApiView:
     :param str pkg_name: The package name.
     :param str namespace: The package namespace.
     :param MetadataMap metadata_map: A metadata mapping object.
+    :param str source_url: An optional source URL to display in the preamble.
     """
 
-    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None):
+    @classmethod
+    def get_root_path(cls):
+        """ Looks for the root of the api-stub-generator package.
+        """
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+        while os.path.split(path)[1]:
+            dirname = os.path.split(path)[1]
+            if dirname == "api-stub-generator":
+                return path
+            else:
+                path = os.path.split(path)[0]
+        return None
+
+    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
         self.name = pkg_name
         self.version = 0
         self.version_string = ""
@@ -44,6 +54,9 @@ class ApiView:
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        if source_url:
+            self.set_blank_lines(1)
+            self.add_literal(f"# Source URL: {source_url}")
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
         self.set_blank_lines(2)
 
@@ -115,16 +128,16 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def add_line_marker(self, text):
+    def add_line_marker(self, line_id):
         token = Token("", TokenKind.LineIdMarker)
-        token.definition_id = text
+        token.definition_id = line_id
         self.add_token(token)
 
-    def add_text(self, id, text, add_cross_language_id=False):
+    def add_text(self, text, *, definition_id=None, add_cross_language_id=False):
         token = Token(text, TokenKind.Text)
-        token.definition_id = id
+        self.definition_id = definition_id
         if add_cross_language_id:
-            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(id, None)
+            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(definition_id, None)
         self.add_token(token)
 
     def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
@@ -136,6 +149,8 @@ class ApiView:
 
 
     def add_type(self, type_name, line_id=None):
+        # TODO: add_type should require an ArgType or similar object so we can link *all* types
+
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
             return
@@ -144,8 +159,8 @@ class ApiView:
         logging.debug("Processing type {}".format(type_name))
         # Check if multiple types are listed with 'or' seperator
         # Encode multiple types with or separator into Union
-        if TYPE_OR_SEPERATOR in type_name:
-            types = [t.strip() for t in type_name.split(TYPE_OR_SEPERATOR) if t != TYPE_OR_SEPERATOR]
+        if TYPE_OR_SEPARATOR in type_name:
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 
@@ -160,17 +175,10 @@ class ApiView:
         navigate_to_id = self.node_index.get_id(type_full_name)
         if navigate_to_id:
             token.navigate_to_id = navigate_to_id
-        elif type_name.startswith("~") and line_id:
-            # Check if type name is importable. If type name is incorrect in docstring then it wont be importable
-            # If type name is importable then it's a valid type name. Source link wont be available if type is from 
-            # different package
-            if not is_valid_type_name(type_full_name):
-                # Navigation ID is missing for internal type, add diagnostic error
-                self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.value), line_id)            
         self.add_token(token)
 
 
-    def _add_type_token(self, type_name, line_id = None):
+    def _add_type_token(self, type_name, line_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
         types = re.search(TYPE_NAME_REGEX, type_name)
@@ -193,8 +201,8 @@ class ApiView:
             self.add_punctuation(type_name)        
 
 
-    def add_diagnostic(self, text, line_id):
-        self.diagnostics.append(Diagnostic(line_id, text))
+    def add_diagnostic(self, *, obj, target_id):
+        self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
 
 
     def add_member(self, name, id):
@@ -285,16 +293,3 @@ class Navigation:
 
     def add_child(self, child):
         self.child_items.append(child)
-
-
-def is_valid_type_name(type_name):
-    try:
-        module_end_index = type_name.rfind(".")
-        if module_end_index > 0:
-            module_name = type_name[:module_end_index]
-            class_name = type_name[module_end_index+1:]
-            mod = importlib.import_module(module_name)
-            return class_name in [x[0] for x in inspect.getmembers(mod)]
-    except:
-        logging.error("Failed to import {}".format(type_name))    
-    return False

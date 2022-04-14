@@ -59,7 +59,6 @@ class ClassNode(NodeEntityBase):
     def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
-        self.errors = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
         self._name = self.name
@@ -160,6 +159,7 @@ class ClassNode(NodeEntityBase):
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
+
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
@@ -292,9 +292,9 @@ class ClassNode(NodeEntityBase):
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
-        if self._name != self.name:
-            apiview.add_diagnostic(f"Alias '{self.name}' does not match __name__ '{self._name}'.", self.namespace_id)
+        apiview.add_text(self.full_name, definition_id=self.namespace_id, add_cross_language_id=True)
+        for err in self.pylint_errors:
+            err.generate_tokens(apiview, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
@@ -340,17 +340,3 @@ class ClassNode(NodeEntityBase):
             # Add punctuation between types
             if index < list_len - 1:
                 apiview.add_punctuation(",", False, True)
-
-
-    def print_errors(self):
-        has_error = False
-        # Check if atleast one error is present in child nodes
-        for c in self.child_nodes:
-            if hasattr(c, "errors") and c.errors:
-                has_error = True
-                break
-        if has_error:
-            print("-"*150)
-            print("class {}".format(self.full_name))
-            for c in self.child_nodes:
-                c.print_errors()

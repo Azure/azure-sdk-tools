@@ -111,8 +111,3 @@ class ModuleNode(NodeEntityBase):
                 child_nav.tags = NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
                 navigation.add_child(child_nav)
             return navigation
-
-
-    def print_errors(self):
-        for c in self.child_nodes:
-            c.print_errors()

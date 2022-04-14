@@ -44,7 +44,7 @@ class ArgType:
             self.id = f"{function_id}.param({self.argname}"
             apiview.add_line_marker(self.id)
 
-        apiview.add_text(self.id, f"{prefix}{self.argname}")
+        apiview.add_text(f"{prefix}{self.argname}")
         # add arg type
         if self.argtype:
             apiview.add_punctuation(":", False, True)

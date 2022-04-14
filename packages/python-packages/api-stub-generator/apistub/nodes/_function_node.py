@@ -11,34 +11,10 @@ from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
 
 
-VALIDATION_REQUIRED_DUNDER = ["__init__",]
-KWARG_NOT_REQUIRED_METHODS = ["close",]
-TYPEHINT_NOT_REQUIRED_METHODS = ["close", "__init__"]
-REGEX_ITEM_PAGED = "(~[\w.]*\.)?([\w]*)\s?[\[\(][^\n]*[\]\)]"
-PAGED_TYPES = ["ItemPaged", "AsyncItemPaged",]
-# Methods that are implementation of known interface should be excluded from lint check
-# for e.g. get, update, keys
-LINT_EXCLUSION_METHODS = [
-    "get",
-    "has_key",
-    "items",
-    "keys",
-    "update",
-    "values",
-    "close",    
-]
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
 # Regex is used to find shorten such instances in complex type
 # for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
-REGEX_FIND_LONG_TYPE = "((?:~?)[\w.]+\.+([\w]+))"
-
-
-def is_kwarg_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in KWARG_NOT_REQUIRED_METHODS
-
-
-def is_typehint_mandatory(func_name):
-    return not func_name.startswith("_") and func_name not in TYPEHINT_NOT_REQUIRED_METHODS
+REGEX_FIND_LONG_TYPE = r"((?:~?)[\\w.]+\.+([\\w]+))"
 
 
 class FunctionNode(NodeEntityBase):
@@ -210,12 +186,13 @@ class FunctionNode(NodeEntityBase):
             item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
             apiview.add_punctuation(",", False, True)
 
-    def _generate_signature_token(self, apiview):
+    def _generate_signature_token(self, apiview, use_multi_line):
         apiview.add_punctuation("(")
 
-        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
-        use_multi_line = self._argument_count() > 2
         if use_multi_line:
+            # render errors directly below definition line
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)
             apiview.begin_group()
             apiview.begin_group()
 
@@ -223,25 +200,25 @@ class FunctionNode(NodeEntityBase):
         # add postional-only marker if any posargs
         if self.posargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="/", id=None)
+            apiview.add_text("/")
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.args, apiview, use_multi_line)
         if self.special_vararg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="*")
+            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="*")
             apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
         if self.kwargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="*", id=None)
+            apiview.add_text("*")
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
         if self.special_kwarg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="**")
+            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="**")
             apiview.add_punctuation(",", False, True)
 
         # pop the final ", " tokens
@@ -262,6 +239,9 @@ class FunctionNode(NodeEntityBase):
         """Generates token for function signature
         :param ApiView: apiview
         """
+        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
+        use_multi_line = self._argument_count() > 2
+
         parent_id = self.parent_node.namespace_id if self.parent_node else "???"
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
@@ -278,36 +258,20 @@ class FunctionNode(NodeEntityBase):
         apiview.add_keyword("def", False, True)
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
-            self.namespace_id, self.full_name if self.is_module_level else self.name,
+            self.full_name if self.is_module_level else self.name,
+            definition_id=self.namespace_id,
             add_cross_language_id=True
         )
         # Add parameters
-        self._generate_signature_token(apiview)
+        self._generate_signature_token(apiview, use_multi_line)
         if self.return_type:
             apiview.add_punctuation("->", True, True)
             # Add line marker id if signature is displayed in multi lines
-            if len(self.args) > 2:
+            if use_multi_line:
                 line_id = "{}.returntype".format(self.namespace_id)
                 apiview.add_line_marker(line_id)
             apiview.add_type(self.return_type)
         apiview.add_newline()
-
-        if self.errors:
-            for e in self.errors:
-                apiview.add_diagnostic(e, self.namespace_id)
-
-    def add_error(self, error_msg):
-        # Ignore errors for lint check excluded methods
-        if self.name in LINT_EXCLUSION_METHODS:
-            return
-
-        # Hide all diagnostics for now for dunder methods
-        # These are well known protocol implementation
-        if not self.name.startswith("_") or self.name in VALIDATION_REQUIRED_DUNDER:
-            self.errors.append(error_msg)
-
-    def print_errors(self):
-        if self.errors:
-            print("  method: {}".format(self.name))
-            for e in self.errors:
-                print("      {}".format(e))
+        if not use_multi_line:
+            for err in self.pylint_errors:
+                err.generate_tokens(apiview, self.namespace_id)            

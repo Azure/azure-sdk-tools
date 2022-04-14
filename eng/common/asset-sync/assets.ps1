@@ -249,8 +249,11 @@ Function Resolve-CheckoutPaths {
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
     )
+    $assetsJsonPath = $Config.AssetsJsonRelativeLocation
 
-    return (Join-Path $Config.AssetsRepoPrefixPath $Config.AssetsJsonRelativeLocation)
+    $assetsJsonFolder = Split-Path $Config.AssetsJsonRelativeLocation
+
+    return (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder)
 }
 
 <#
@@ -305,7 +308,7 @@ Function Initialize-AssetsRepo {
         $initialized = $false
     }
 
-    if (-not $initialized){
+    if (!$initialized){
         try {
             Push-Location $assetRepo
         
@@ -412,8 +415,32 @@ Function Push-AssetsRepo-Update {
     )
 
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    try {
+        Push-Location $assetRepo
+
+        git status
+    }
+    catch {
+        Write-Host $_
+    }
+    finally {
+        Pop-Location
+    }
 
     $newSha = "I have a new SHA!"
+
+    # if there are changes, check to see if we're the latest commit
+
+    # if we are based off the latest commit, add the changes, push
+
+    # if we are NOT based off the latest commit, we will need to:
+    #  stash changes 
+    #  check that SHA out
+    #  then unstash changes
+    
+    # return new SHA
+
+    Update-AssetsJson -Config $Config -NewSHA $newSha
 
     return $newSha
 }

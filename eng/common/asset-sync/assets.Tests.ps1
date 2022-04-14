@@ -180,7 +180,31 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Initialize-Assets-Repo" {
+  Context "Resolve-CheckoutPaths" {
+    It "Should correctly resolve a non-root checkout path format" {
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $assetsContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+
+      $checkoutPaths = Resolve-CheckoutPaths -Config $assetsContent
+
+      
+    }
+
+    It "Should correctly resolve a root checkout path" {
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $assetsContent = Get-Basic-AssetsJson
+      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+    }
+  }
+
+  Context "Initialize-AssetsRepo" {
     It "Should create assets repo for standard sync." {
       $files = @(
         "sdk/storage/",
@@ -194,6 +218,10 @@ Describe "AssetsModuleTests" {
       Write-Host $config
 
       Initialize-AssetsRepo -Config $config
+      $assetLocation = Resolve-AssetRepo-Location -Config $config
+      
+      
+
     }
 
     It "Should recognize an initialized repository and no-op." {
@@ -215,13 +243,36 @@ Describe "AssetsModuleTests" {
 
   Context "Push-AssetsRepo-Update" {
     It "Should push a new branch/commit to a non-existent target branch." {
-      $recordingJsonContent = [PSCustomObject]@{
+      $recordingJson = [PSCustomObject]@{
         AssetsRepo = "Azure/azure-sdk-assets-integration"
         AssetsRepoPrefixPath = "python/recordings/"
         AssetsRepoId = ""
         AssetsRepoBranch = "scenario_new_push"
         SHA = "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
       }
+
+      $files = @(
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_timeout.json",
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_server_error.json",
+        "sdk/tables/azure-data-tables/assets.json"
+      )
+
+      # prepare the test area
+      $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJsonContent.AssetsRepoBranch
+      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+
+      # initialize the assets repo and copy changes into it
+      Initialize-AssetsRepo -Config $config
+      $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
+      
+      foreach($file in $files){
+        $sourcePath = Join-Path $testFolder $file 
+        $targetPath = Join-Path $assetRepoFolder $config.AssetsRepoPrefixPath $file
+
+        Copy-Item -Path $sourcePath -Destination $targetPath
+      }
+      
+      Push-AssetsRepo-Update -Config $Config
     }
     
     It "Should push a clean new commmit to the target branch" {

@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.2.12 (Unreleased)
+## Version 0.3.0 (Unreleased)
 Added support for @overloads decorators.
 Added support for positional-only arguments.
 Added full support for Python 2-style type hints.

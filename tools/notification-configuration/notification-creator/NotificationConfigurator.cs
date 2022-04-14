@@ -214,8 +214,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                         if (!string.IsNullOrEmpty(userPrincipal))
                         {
                             codeOwnerCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);
-                            codeownersDescriptors.Add(codeOwnerCache[contact]);
                         }
+                        else
+                        {
+                            codeOwnerCache[contact] = userPrincipal;
+                        }
+                        codeownersDescriptors.Add(codeOwnerCache[contact]);
                     }
                 }
 

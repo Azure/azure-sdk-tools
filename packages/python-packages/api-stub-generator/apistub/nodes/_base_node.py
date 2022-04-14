@@ -56,7 +56,7 @@ class NodeEntityBase:
         :param ApiView: apiview
         """
         if self.child_nodes:
-            apiview.add_text("", self.display_name)
+            apiview.add_text(self.display_name)
             apiview.begin_group()
             for c in self.child_nodes:
                 c.generate_tokens(apiview)

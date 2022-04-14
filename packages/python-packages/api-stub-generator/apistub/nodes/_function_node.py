@@ -200,25 +200,25 @@ class FunctionNode(NodeEntityBase):
         # add postional-only marker if any posargs
         if self.posargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="/", id=None)
+            apiview.add_text("/")
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.args, apiview, use_multi_line)
         if self.special_vararg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="*")
+            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="*")
             apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
         if self.kwargs:
             self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text(text="*", id=None)
+            apiview.add_text("*")
             apiview.add_punctuation(",", False, True)
 
         self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
         if self.special_kwarg:
             self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=False, prefix="**")
+            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=True, prefix="**")
             apiview.add_punctuation(",", False, True)
 
         # pop the final ", " tokens
@@ -258,7 +258,8 @@ class FunctionNode(NodeEntityBase):
         apiview.add_keyword("def", False, True)
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
-            self.namespace_id, self.full_name if self.is_module_level else self.name,
+            self.full_name if self.is_module_level else self.name,
+            definition_id=self.namespace_id,
             add_cross_language_id=True
         )
         # Add parameters

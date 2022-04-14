@@ -33,7 +33,7 @@ class TestApiView:
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
-        apiview.add_text(None, "Something")
+        apiview.add_text("Something")
         apiview.add_newline()
         # subsequent calls result in no change
         apiview.add_newline()
@@ -45,7 +45,7 @@ class TestApiView:
         apiview.set_blank_lines(3)
         assert self._count_newlines(apiview) == 4 # +1 for carriage return
 
-        apiview.add_text(None, "Something")
+        apiview.add_text("Something")
         apiview.add_newline()
         apiview.set_blank_lines(1)
         apiview.set_blank_lines(5)

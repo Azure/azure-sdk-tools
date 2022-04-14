@@ -36,5 +36,3 @@ def console_entry_point():
         )
     with open(out_file_path, "w") as json_file:
         json_file.write(json_tokens)
-
-

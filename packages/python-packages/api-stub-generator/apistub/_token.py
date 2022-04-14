@@ -1,4 +1,3 @@
-import os
 from ._token_kind import TokenKind
 
 

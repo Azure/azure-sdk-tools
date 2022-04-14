@@ -103,6 +103,7 @@ class StubGenerator:
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
+        # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
         

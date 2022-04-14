@@ -20,7 +20,7 @@ class EnumNode(NodeEntityBase):
         :param ApiView: apiview
         """
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.name, definition_id=self.namespace_id)
         apiview.add_space()
         apiview.add_punctuation("=")
         apiview.add_space()

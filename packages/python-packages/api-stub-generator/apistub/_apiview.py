@@ -128,16 +128,16 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def add_line_marker(self, text):
+    def add_line_marker(self, line_id):
         token = Token("", TokenKind.LineIdMarker)
-        token.definition_id = text
+        token.definition_id = line_id
         self.add_token(token)
 
-    def add_text(self, id, text, add_cross_language_id=False):
+    def add_text(self, text, *, definition_id=None, add_cross_language_id=False):
         token = Token(text, TokenKind.Text)
-        token.definition_id = id
+        self.definition_id = definition_id
         if add_cross_language_id:
-            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(id, None)
+            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(definition_id, None)
         self.add_token(token)
 
     def add_keyword(self, keyword, prefix_space=False, postfix_space=False):

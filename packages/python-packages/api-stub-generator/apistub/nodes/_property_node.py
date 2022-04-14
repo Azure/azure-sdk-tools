@@ -56,7 +56,7 @@ class PropertyNode(NodeEntityBase):
         apiview.add_keyword("property")
         apiview.add_space()
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.name)
         apiview.add_punctuation(":")
         apiview.add_space()
         apiview.add_type(self.type)

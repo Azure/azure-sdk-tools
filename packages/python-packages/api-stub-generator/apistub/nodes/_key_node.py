@@ -16,10 +16,10 @@ class KeyNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        apiview.add_text(None, "key")
+        apiview.add_text("key")
         apiview.add_space()
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text("", self.name)
+        apiview.add_text(self.name)
         apiview.add_punctuation(":")
         apiview.add_space()
         apiview.add_type(self.type)

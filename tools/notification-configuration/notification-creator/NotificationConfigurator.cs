@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using System;
 using Azure.Sdk.Tools.CodeOwnersParser;
-using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration
 {
@@ -22,9 +21,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
         private readonly AzureDevOpsService service;
         private readonly GitHubService gitHubService;
         private readonly ILogger<NotificationConfigurator> logger;
-        
-        private List<CodeOwnerEntry> codeOwnerEntries;
-
 
         private const int MaxTeamNameLength = 64;        
         // Type 2 maps to a pipeline YAML file in the repository
@@ -173,12 +169,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
             if (purpose == TeamPurpose.SynchronizedNotificationTeam)
             {
-                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, persistChanges);
+                await SyncTeamWithCodeOwnerFile(pipeline, result, gitHubToAADConverter, gitHubService, persistChanges);
             }
             return result;
         }
 
-        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, bool persistChanges)
+        private async Task SyncTeamWithCodeOwnerFile(BuildDefinition pipeline, WebApiTeam team, GitHubToAADConverter gitHubToAADConverter, GitHubService gitHubService, bool persistChanges)
         {
             using (logger.BeginScope("Team Name = {0}", team.Name))
             {
@@ -259,15 +255,6 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     }
                 }
             }
-        }
-        private async Task<string> GetDescriptorFromGithubIdentity(string input, GitHubToAADConverter gitHubToAADConverter)
-        {
-            return await service.GetDescriptorForPrincipal(gitHubToAADConverter.GetUserPrincipalNameFromGithub(input));
-        }
-
-        private async Task<string> GetDescriptorFromTeamId(string input)
-        {
-            return (await service.GetUserFromId(new Guid(input))).SubjectDescriptor.ToString();
         }
 
         private async Task<IEnumerable<BuildDefinition>> GetPipelinesAsync(string projectName, string projectPath, PipelineSelectionStrategy strategy)

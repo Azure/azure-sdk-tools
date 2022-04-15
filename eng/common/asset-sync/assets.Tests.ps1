@@ -14,6 +14,12 @@ BeforeAll {
   if ((Test-Path $location)){
     Remove-Item -Recurse -Force $location
   }
+
+  Set-StrictMode -Version 3
+}
+
+AfterAll {
+  DeInitialize-Integration-Branches
 }
 
 Describe "AssetsModuleTests" {
@@ -142,8 +148,9 @@ Describe "AssetsModuleTests" {
     It "Should should resolve a standard assets repo." {
       $files = @()
       $jsonContent = Get-Basic-AssetsJson -RandomizeRepoId $false
-      Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
-      $result = Resolve-AssetRepo-Location -Config $jsonContent
+      $testPath = Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
+      $config = Resolve-AssetsJson -TargetPath $testPath
+      $result = Resolve-AssetRepo-Location -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
 
@@ -154,8 +161,9 @@ Describe "AssetsModuleTests" {
       $jsonContent = Get-Basic-AssetsJson
       $jsonContent.AssetsRepoId = "custom"
 
-      Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
-      $result = Resolve-AssetRepo-Location -Config $jsonContent
+      $testPath = Describe-TestFolder -AssetsJsonContent $jsonContent -Files @()
+      $config = Resolve-AssetsJson -TargetPath $testPath
+      $result = Resolve-AssetRepo-Location -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
 
       $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
@@ -220,11 +228,8 @@ Describe "AssetsModuleTests" {
 
       $config = Resolve-AssetsJson -TargetPath $testLocation
 
-      Write-Host $config
-
       Initialize-AssetsRepo -Config $config
       $assetLocation = Resolve-AssetRepo-Location -Config $config
-      
     }
 
     It "Should recognize an initialized repository and no-op." {
@@ -239,18 +244,19 @@ Describe "AssetsModuleTests" {
       $parsedResult | Should -Be $true
     }
 
-    It "Should initialize language repo with a new assets.json at sdk/<service> if necessary" {
+    It "Should initialize language repo with a new assets.json at sdk/ if necessary" {
       # TODO
     }
   }
 
   Context "Push-AssetsRepo-Update" {
     It "Should push a new branch/commit to a non-existent target branch." {
+      $sourceBranch = "scenario_new_push"
       $recordingJson = [PSCustomObject]@{
         AssetsRepo = "Azure/azure-sdk-assets-integration"
         AssetsRepoPrefixPath = "python/recordings/"
         AssetsRepoId = ""
-        AssetsRepoBranch = "scenario_new_push"
+        AssetsRepoBranch = "$sourceBranch"
         SHA = "786b4f3d380d9c36c91f5f146ce4a7661ffee3b9"
       }
 
@@ -261,7 +267,8 @@ Describe "AssetsModuleTests" {
       )
 
       # prepare the test area
-      $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJsonContent.AssetsRepoBranch
+      $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
+
       $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
       # initialize the assets repo and copy changes into it
@@ -272,9 +279,16 @@ Describe "AssetsModuleTests" {
         $sourcePath = Join-Path $testFolder $file 
         $targetPath = Join-Path $assetRepoFolder $config.AssetsRepoPrefixPath $file
 
-        Copy-Item -Path $sourcePath -Destination $targetPath -Force
+        $targetFolder = Split-Path $targetPath
+        if(-not (Test-Path $targetFolder)){
+          mkdir -p $targetFolder
+        }
+
+        Copy-Item  -Force -Path $sourcePath -Destination $targetPath
       }
       
+      $config.AssetsRepoBranch | Should -not -Be $sourceBranch
+
       Push-AssetsRepo-Update -Config $Config
     }
     

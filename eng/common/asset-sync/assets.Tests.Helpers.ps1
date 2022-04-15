@@ -47,8 +47,71 @@ Function Initialize-Integration-Branches {
     [string] $TestGuid
   )
 
-  Write-Host "Clone branch, create a new branch based on it, push up. Return reference branch name"
+  $adjustedBranchName = "test_$($TestGuid)_$($Config.AssetsRepoBranch)"
+  $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
+  mkdir $tempPath | Out-Null
+  
+  if($LASTEXITCODE -ne 0){
+    Write-Error "Unable to create Temp Directory"
+  }
+  
+  try {
+    Push-Location $tempPath
+    Write-Host "git clone https://github.com/Azure/azure-sdk-assets-integration ."
+    git clone https://github.com/Azure/azure-sdk-assets-integration .
 
+    Write-Host "git ls-remote --heads https://github.com/Azure/azure-sdk-assets-integration $($Config.AssetsRepoBranch)"
+    $lsremoteResponse = git ls-remote --heads https://github.com/Azure/azure-sdk-assets-integration $Config.AssetsRepoBranch
+    
+    Write-Host $lsremoteResponse
+    Write-Host $adjustedBranchName
+    if($lsremoteResponse){
+      Write-Host "git checkout $($Config.AssetsRepoBranch)"
+      Write-Host "git checkout -b $adjustedBranchName"
+      Write-Host "git push origin $adjustedBranchName"
+    }
+   }
+  catch {
+    Write-Error $_
+  }
+  finally {
+    Pop-Location
+    Remove-Item -Force -Recurse $tempPath
+  }
+
+  return $adjustedBranchName
+}
+
+Function DeInitialize-Integration-Branches {
+  $targetedRepo = @("Azure/Azure-sdk-assets-integration")
+  Write-Host "Cleaning up $targetedRepo"
+
+  $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
+  mkdir $tempPath | Out-Null
+  
+  if($LASTEXITCODE -ne 0){
+    Write-Error "Unable to create Temp Directory"
+  }
+  
+  try {
+    Push-Location $tempPath
+    git clone https://github.com/Azure/azure-sdk-assets-integration .
+
+    $branches = git branch
+
+    foreach($branch in $branches){
+      if($branch.StartsWith("test_")){
+        Write-Host "git push origin --delete $branch"
+      }
+    }
+   }
+  catch {
+    Write-Error $_
+  }
+  finally {
+    Pop-Location
+    Remove-Item -Force -Recurse $tempPath
+  } 
 }
 
 <#
@@ -80,7 +143,7 @@ Function Describe-TestFolder{
 
   if($IntegrationBranch){
     $testGuid = Split-Path $testPath -Leaf
-    $new_target_branch = Initialize-Integration-Branches -Config $Config -TestGuid $testGuid
+    $new_target_branch = Initialize-Integration-Branches -Config $AssetsJsonContent -TestGuid $testGuid
     $AssetsJsonContent.AssetsRepoBranch = $new_target_branch
   }
 

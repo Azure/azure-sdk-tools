@@ -1,3 +1,5 @@
+Set-StrictMode -Version 3
+
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
 # this methodology for any global variables that can be considered constants
 . (Join-Path $PSScriptRoot ".." "scripts" "common.ps1" )
@@ -263,7 +265,6 @@ Function Resolve-CheckoutPaths {
         return $Config.AssetsRepoPrefixPath
     }
     else {
-        
         return (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder)
     }
 }
@@ -439,20 +440,24 @@ Function Push-AssetsRepo-Update {
         Pop-Location
     }
 
-    $newSha = "I have a new SHA!"
 
     # if there are changes, check to see if we're the latest commit
 
+
     # if we are based off the latest commit, add the changes, push
+
 
     # if we are NOT based off the latest commit, we will need to:
     #  stash changes 
     #  check that SHA out
     #  then unstash changes
     
-    # return new SHA
+    # commit w/ details
+    # after commit, but before push:
+    $newSha = git rev-parse HEAD
+
+    # git push $targetBranch
 
     Update-AssetsJson -Config $Config -NewSHA $newSha
-
     return $newSha
 }

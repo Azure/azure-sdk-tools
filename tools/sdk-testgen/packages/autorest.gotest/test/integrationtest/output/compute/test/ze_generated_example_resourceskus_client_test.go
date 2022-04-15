@@ -16,7 +16,7 @@ import (
 )
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2019-04-01/examples/ListAvailableResourceSkus.json
-func ExampleResourceSKUsClient_List() {
+func ExampleResourceSKUsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -28,7 +28,7 @@ func ExampleResourceSKUsClient_List() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(&test.ResourceSKUsClientListOptions{Filter: nil})
+	pager := client.NewListPager(&test.ResourceSKUsClientListOptions{Filter: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {

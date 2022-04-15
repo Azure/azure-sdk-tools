@@ -19,7 +19,7 @@ import (
 )
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachinesInASubscriptionByLocation.json
-func ExampleVirtualMachinesClient_ListByLocation() {
+func ExampleVirtualMachinesClient_NewListByLocationPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -31,7 +31,7 @@ func ExampleVirtualMachinesClient_ListByLocation() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByLocation("<location>",
+	pager := client.NewListByLocationPager("<location>",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -304,7 +304,7 @@ func ExampleVirtualMachinesClient_Generalize() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailableVmSizes_VirtualMachines.json
-func ExampleVirtualMachinesClient_ListAvailableSizes() {
+func ExampleVirtualMachinesClient_NewListAvailableSizesPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -316,7 +316,7 @@ func ExampleVirtualMachinesClient_ListAvailableSizes() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListAvailableSizes("<resource-group-name>",
+	pager := client.NewListAvailableSizesPager("<resource-group-name>",
 		"<vm-name>",
 		nil)
 	for pager.More() {

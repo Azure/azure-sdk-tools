@@ -354,10 +354,10 @@ func springSample() {
 	}
 
 	// From step Certificates_List
-	certificatesClientListPager := certificatesClient.List(resourceGroupName,
+	certificatesClientNewListPagerPager := certificatesClient.NewListPager(resourceGroupName,
 		serviceName,
 		nil)
-	for certificatesClientListPager.More() {
+	for certificatesClientNewListPagerPager.More() {
 	}
 
 	// From step ConfigServers_Validate
@@ -647,10 +647,10 @@ func springSample() {
 	}
 
 	// From step Apps_List
-	appsClientListPager := appsClient.List(resourceGroupName,
+	appsClientNewListPagerPager := appsClient.NewListPager(resourceGroupName,
 		serviceName,
 		nil)
-	for appsClientListPager.More() {
+	for appsClientNewListPagerPager.More() {
 	}
 
 	// From step Bindings_Create
@@ -722,11 +722,11 @@ func springSample() {
 	}
 
 	// From step Bindings_List
-	bindingsClientListPager := bindingsClient.List(resourceGroupName,
+	bindingsClientNewListPagerPager := bindingsClient.NewListPager(resourceGroupName,
 		serviceName,
 		appName,
 		nil)
-	for bindingsClientListPager.More() {
+	for bindingsClientNewListPagerPager.More() {
 	}
 
 	// From step Bindings_Delete
@@ -817,11 +817,11 @@ func springSample() {
 	}
 
 	// From step CustomDomains_List
-	customDomainsClientListPager := customDomainsClient.List(resourceGroupName,
+	customDomainsClientNewListPagerPager := customDomainsClient.NewListPager(resourceGroupName,
 		serviceName,
 		appName,
 		nil)
-	for customDomainsClientListPager.More() {
+	for customDomainsClientNewListPagerPager.More() {
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -1021,29 +1021,29 @@ func springSample() {
 	}
 
 	// From step Deployments_List
-	deploymentsClientListPager := deploymentsClient.List(resourceGroupName,
+	deploymentsClientNewListPagerPager := deploymentsClient.NewListPager(resourceGroupName,
 		serviceName,
 		appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
-	for deploymentsClientListPager.More() {
+	for deploymentsClientNewListPagerPager.More() {
 	}
 
 	// From step Deployments_ListForCluster
-	deploymentsClientListForClusterPager := deploymentsClient.ListForCluster(resourceGroupName,
+	deploymentsClientNewListForClusterPagerPager := deploymentsClient.NewListForClusterPager(resourceGroupName,
 		serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
-	for deploymentsClientListForClusterPager.More() {
+	for deploymentsClientNewListForClusterPagerPager.More() {
 	}
 
 	// From step Services_List
-	servicesClientListPager := servicesClient.List(resourceGroupName,
+	servicesClientNewListPagerPager := servicesClient.NewListPager(resourceGroupName,
 		nil)
-	for servicesClientListPager.More() {
+	for servicesClientNewListPagerPager.More() {
 	}
 
 	// From step Services_ListBySubscription
-	servicesClientListBySubscriptionPager := servicesClient.ListBySubscription(nil)
-	for servicesClientListBySubscriptionPager.More() {
+	servicesClientNewListBySubscriptionPagerPager := servicesClient.NewListBySubscriptionPager(nil)
+	for servicesClientNewListBySubscriptionPagerPager.More() {
 	}
 
 	// From step Deployments_Delete
@@ -1126,8 +1126,8 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	sKUsClientListPager := sKUsClient.List(nil)
-	for sKUsClientListPager.More() {
+	sKUsClientNewListPagerPager := sKUsClient.NewListPager(nil)
+	for sKUsClientNewListPagerPager.More() {
 	}
 
 	// From step Operations_List
@@ -1135,8 +1135,8 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.More() {
+	operationsClientNewListPagerPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPagerPager.More() {
 	}
 }
 

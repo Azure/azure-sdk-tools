@@ -169,7 +169,7 @@ func ExampleDeploymentsClient_BeginUpdate() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
-func ExampleDeploymentsClient_List() {
+func ExampleDeploymentsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -181,7 +181,7 @@ func ExampleDeploymentsClient_List() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("<resource-group-name>",
+	pager := client.NewListPager("<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
 		&test.DeploymentsClientListOptions{Version: []string{}})
@@ -199,7 +199,7 @@ func ExampleDeploymentsClient_List() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
-func ExampleDeploymentsClient_ListForCluster() {
+func ExampleDeploymentsClient_NewListForClusterPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -211,7 +211,7 @@ func ExampleDeploymentsClient_ListForCluster() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListForCluster("<resource-group-name>",
+	pager := client.NewListForClusterPager("<resource-group-name>",
 		"<service-name>",
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for pager.More() {

@@ -324,20 +324,20 @@ func signalrSample() {
 	if err != nil {
 		panic(err)
 	}
-	usagesClientListPager := usagesClient.List(location,
+	usagesClientNewListPagerPager := usagesClient.NewListPager(location,
 		nil)
-	for usagesClientListPager.More() {
+	for usagesClientNewListPagerPager.More() {
 	}
 
 	// From step SignalR_ListByResourceGroup
-	signalRClientListByResourceGroupPager := signalRClient.ListByResourceGroup(resourceGroupName,
+	signalRClientNewListByResourceGroupPagerPager := signalRClient.NewListByResourceGroupPager(resourceGroupName,
 		nil)
-	for signalRClientListByResourceGroupPager.More() {
+	for signalRClientNewListByResourceGroupPagerPager.More() {
 	}
 
 	// From step SignalR_ListBySubscription
-	signalRClientListBySubscriptionPager := signalRClient.ListBySubscription(nil)
-	for signalRClientListBySubscriptionPager.More() {
+	signalRClientNewListBySubscriptionPagerPager := signalRClient.NewListBySubscriptionPager(nil)
+	for signalRClientNewListBySubscriptionPagerPager.More() {
 	}
 
 	// From step Operations_List
@@ -345,8 +345,8 @@ func signalrSample() {
 	if err != nil {
 		panic(err)
 	}
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.More() {
+	operationsClientNewListPagerPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPagerPager.More() {
 	}
 
 	// From step SignalR_Delete

@@ -52,7 +52,7 @@ func ExampleAvailabilitySetsClient_CreateOrUpdate() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListAvailabilitySetsInASubscription.json
-func ExampleAvailabilitySetsClient_ListBySubscription() {
+func ExampleAvailabilitySetsClient_NewListBySubscriptionPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -64,7 +64,7 @@ func ExampleAvailabilitySetsClient_ListBySubscription() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListBySubscription(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("<expand>")})
+	pager := client.NewListBySubscriptionPager(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("<expand>")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {

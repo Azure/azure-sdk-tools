@@ -99,7 +99,7 @@ func ExampleCloudServiceRoleInstancesClient_GetInstanceView() {
 }
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceRolesInstances.json
-func ExampleCloudServiceRoleInstancesClient_List() {
+func ExampleCloudServiceRoleInstancesClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
@@ -111,7 +111,7 @@ func ExampleCloudServiceRoleInstancesClient_List() {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("<resource-group-name>",
+	pager := client.NewListPager("<resource-group-name>",
 		"<cloud-service-name>",
 		&test.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for pager.More() {

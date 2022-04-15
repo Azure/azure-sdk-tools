@@ -8,6 +8,10 @@ import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/cha
 import {generateExtraFiles} from "../utils/generateExtraFiles";
 import {RunningEnvironment} from "../../utils/runningEnvironment";
 import {getOutputPackageInfo} from "../../utils/getOutputPackageInfo";
+import { addApiViewInfo } from "../../utils/addApiViewInfo";
+import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml";
+import { changeRushJson } from "../../utils/changeRushJson";
+import { getRelativePackagePath } from "../utils/utils";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -76,7 +80,8 @@ export async function generateRLCInPipeline(options: {
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
             const packageName = packageJson.name;
             logger.logGreen(`Generate some other files for ${packageName} in ${packagePath}...`);
-            await generateExtraFiles(packagePath, packageName, options.sdkRepo);
+            await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, false);
+            await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
@@ -105,6 +110,7 @@ export async function generateRLCInPipeline(options: {
                         outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
                     }
                 }
+                addApiViewInfo(outputPackageInfo, packagePath, changedPackageDirectory);
             }
         } catch (e) {
             logger.logError('Error:');

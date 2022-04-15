@@ -230,6 +230,10 @@ Describe "AssetsModuleTests" {
 
       Initialize-AssetsRepo -Config $config
       $assetLocation = Resolve-AssetRepo-Location -Config $config
+
+      $result = Is-AssetsRepo-Initialized -Config $config
+
+      $result | Should -Be "$true"
     }
 
     It "Should recognize an initialized repository and no-op." {
@@ -245,7 +249,7 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should initialize language repo with a new assets.json at sdk/ if necessary" {
-      # TODO
+      # TODO, do we even need this?
     }
   }
 

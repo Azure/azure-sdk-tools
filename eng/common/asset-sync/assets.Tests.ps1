@@ -121,7 +121,7 @@ Describe "AssetsModuleTests" {
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
 
       $Result = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )
-      $expectedValue = (Join-Path "./" "sdk" "storage" "assets.json")
+      $expectedValue = (Join-Path "sdk" "storage" "assets.json")
 
       $recordingLocation = $Result.AssetsJsonRelativeLocation
       $recordingLocation | Should -Be $expectedValue
@@ -181,26 +181,31 @@ Describe "AssetsModuleTests" {
   }
 
   Context "Resolve-CheckoutPaths" {
-    It "Should correctly resolve a non-root checkout path format" {
+    It "Should correctly resolve a non-root checkout path format." {
       $files = @(
         "sdk/storage/",
+        "sdk/storage/assets.json",
         "sdk/storage/azure-storage-blob/awesome.json"
       )
       $assetsContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+      $config = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
 
-      $checkoutPaths = Resolve-CheckoutPaths -Config $assetsContent
-
-      
+      $checkoutPaths = Resolve-CheckoutPaths -Config $config
+      $checkoutPaths | Should -Be (Join-Path "recordings" "sdk" "storage")
     }
 
-    It "Should correctly resolve a root checkout path" {
+    It "Should correctly resolve a root checkout path." {
       $files = @(
         "sdk/storage/",
         "sdk/storage/azure-storage-blob/awesome.json"
       )
       $assetsContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+      $config = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
+
+      $checkoutPaths = Resolve-CheckoutPaths -Config $config
+      $checkoutPaths | Should -Be "recordings/"
     }
   }
 
@@ -220,8 +225,6 @@ Describe "AssetsModuleTests" {
       Initialize-AssetsRepo -Config $config
       $assetLocation = Resolve-AssetRepo-Location -Config $config
       
-      
-
     }
 
     It "Should recognize an initialized repository and no-op." {
@@ -269,7 +272,7 @@ Describe "AssetsModuleTests" {
         $sourcePath = Join-Path $testFolder $file 
         $targetPath = Join-Path $assetRepoFolder $config.AssetsRepoPrefixPath $file
 
-        Copy-Item -Path $sourcePath -Destination $targetPath
+        Copy-Item -Path $sourcePath -Destination $targetPath -Force
       }
       
       Push-AssetsRepo-Update -Config $Config

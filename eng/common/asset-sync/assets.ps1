@@ -132,10 +132,15 @@ Function Resolve-AssetsJson {
         try {
             Push-Location $relPath
             $relPath = Resolve-Path -Relative -Path $discoveredPath
+
+            # relpaths are returned with ".\<blah>"
+            # given that, we need to get rid of it. This has possiiblity for bugs down the line.
+            $relPath = $relPath.Substring(2)
         }
         finally {
             Pop-Location
         }
+
         # relative path to assets Json from within path
         Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonRelativeLocation" -Value $relPath
     }
@@ -225,7 +230,7 @@ Function Is-AssetsRepo-Initialized {
         }
     }
     catch {
-        Write-Host $_
+        Write-Error $_
         $result = $false
     }
     finally {
@@ -253,7 +258,14 @@ Function Resolve-CheckoutPaths {
 
     $assetsJsonFolder = Split-Path $Config.AssetsJsonRelativeLocation
 
-    return (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder)
+    if(!$assetsJsonFolder -or $assetsJsonFolder -in @(".", "./", ".\"))
+    {
+        return $Config.AssetsRepoPrefixPath
+    }
+    else {
+        
+        return (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder)
+    }
 }
 
 <#
@@ -356,19 +368,19 @@ Function Reset-AssetsRepo {
         $assetRepo = Resolve-AssetRepo-Location -Config $Config
         Push-Location  $assetRepo
 
-        Write-Host "git checkout *"
+        Write-Verbose "git checkout *"
         git checkout *
-        Write-Host "git clean -xdf"
+        Write-Verbose "git clean -xdf"
         git clean -xdf
-        Write-Host "git reset --hard (Get-Default-Branch)"
+        Write-Verbose "git reset --hard (Get-Default-Branch)"
         git reset --hard (Get-Default-Branch)
 
         # need to figure out the sparse checkouts if we want to optimize this as much as possible
         # for prototyping checking out the whole repo is fine
         if($AssetsRepoSHA){
-            Write-Host "git checkout $AssetsRepoSHA"
+            Write-Verbose "git checkout $AssetsRepoSHA"
             git checkout $AssetsRepoSHA
-            Write-Host "git pull"
+            Write-Verbose "git pull"
             git pull
         }
     }
@@ -421,7 +433,7 @@ Function Push-AssetsRepo-Update {
         git status
     }
     catch {
-        Write-Host $_
+        Write-Error $_
     }
     finally {
         Pop-Location

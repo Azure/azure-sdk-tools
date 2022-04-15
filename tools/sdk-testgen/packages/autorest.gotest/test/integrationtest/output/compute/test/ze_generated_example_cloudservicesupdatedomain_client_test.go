@@ -12,107 +12,93 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"time"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
-import (
-	"encoding/json"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	"github.com/Azure/azure-sdk-for-go/sdk/compute/armcompute"
-	"reflect"
-	"time"
-)
-
-
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-        return
+		return
 	}
 	ctx := context.Background()
 	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
-    if err != nil {
+	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
+		return
 	}
 	poller, err := client.BeginWalkUpdateDomain(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-1,
-&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
-ResumeToken: "",
-})
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		1,
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
+			ResumeToken: "",
+		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-        return
+		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-        return
+		return
 	}
 }
-
-
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetCloudServiceUpdateDomain.json
 func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-        return
+		return
 	}
 	ctx := context.Background()
 	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
-    if err != nil {
+	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
+		return
 	}
 	res, err := client.GetUpdateDomain(ctx,
-"<resource-group-name>",
-"<cloud-service-name>",
-1,
-nil)
+		"<resource-group-name>",
+		"<cloud-service-name>",
+		1,
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-        return
+		return
 	}
-    // TODO: use response item
-    _ = res
+	// TODO: use response item
+	_ = res
 }
-
-
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListCloudServiceUpdateDomains.json
 func ExampleCloudServicesUpdateDomainClient_NewListUpdateDomainsPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-        return
+		return
 	}
 	ctx := context.Background()
 	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
-    if err != nil {
+	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
+		return
 	}
 	pager := client.NewListUpdateDomainsPager("<resource-group-name>",
-"<cloud-service-name>",
-nil)
+		"<cloud-service-name>",
+		nil)
 	for pager.More() {
-        nextResult, err := pager.NextPage(ctx)
+		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-            return
+			return
 		}
 		for _, v := range nextResult.Value {
-            // TODO: use page item
-            _ = v
+			// TODO: use page item
+			_ = v
 		}
 	}
 }
-
-

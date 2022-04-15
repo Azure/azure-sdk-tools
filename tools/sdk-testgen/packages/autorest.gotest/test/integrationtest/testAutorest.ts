@@ -46,7 +46,7 @@ async function runAutorest(readmePath: string, extraOption: string[]) {
     });
 }
 function getExtraOption(outputFolder: string) {
-    return [`--output-folder=${outputFolder}`, '--use=@autorest/go@4.0.0-preview.38', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0'];
+    return [`--output-folder=${outputFolder}`, '--use=@autorest/go@4.0.0-preview.39', '--file-prefix="zz_generated_"', '--track2', '--go', '--debug', '--module-version=0.1.0'];
 }
 
 async function runSingleTest(swaggerDir: string, rp: string, extraOption: string[], outputFolder: string, tempOutputFolder: string): Promise<boolean> {

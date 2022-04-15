@@ -47,7 +47,7 @@ func TestOperations_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -120,7 +120,7 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListBySubscription(nil)
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -261,7 +261,7 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -1074,7 +1074,7 @@ func TestUsages_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("eastus",
+	pager := client.NewListPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -1124,7 +1124,7 @@ func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {
@@ -1311,7 +1311,7 @@ func TestSignalRPrivateLinkResources_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {
@@ -1363,7 +1363,7 @@ func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
 		nil)
 	for pager.More() {

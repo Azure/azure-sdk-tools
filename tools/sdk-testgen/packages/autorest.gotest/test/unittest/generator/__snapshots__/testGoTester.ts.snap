@@ -135,7 +135,7 @@ nil)
 
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Extensions_ListByFarmBeats.json
-func ExampleExtensionsClient_ListByFarmBeats() {
+func ExampleExtensionsClient_NewListByFarmBeatsPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
@@ -147,7 +147,7 @@ func ExampleExtensionsClient_ListByFarmBeats() {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-	pager := client.ListByFarmBeats(\\"<resource-group-name>\\",
+	pager := client.NewListByFarmBeatsPager(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
 &armagrifood.ExtensionsClientListByFarmBeatsOptions{ExtensionIDs: []string{},
 ExtensionCategories: []string{},
@@ -194,7 +194,7 @@ import (
 
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/FarmBeatsExtensions_List.json
-func ExampleFarmBeatsExtensionsClient_List() {
+func ExampleFarmBeatsExtensionsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
@@ -206,7 +206,7 @@ func ExampleFarmBeatsExtensionsClient_List() {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-	pager := client.List(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
+	pager := client.NewListPager(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
 FarmBeatsExtensionNames: []string{},
 ExtensionCategories: []string{},
 PublisherIDs: []string{},
@@ -397,7 +397,7 @@ nil)
 
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/FarmBeatsModels_ListBySubscription.json
-func ExampleFarmBeatsModelsClient_ListBySubscription() {
+func ExampleFarmBeatsModelsClient_NewListBySubscriptionPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
@@ -409,7 +409,7 @@ func ExampleFarmBeatsModelsClient_ListBySubscription() {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-	pager := client.ListBySubscription(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
+	pager := client.NewListBySubscriptionPager(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
 	for pager.More() {
@@ -428,7 +428,7 @@ SkipToken: nil,
 
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/FarmBeatsModels_ListByResourceGroup.json
-func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
+func ExampleFarmBeatsModelsClient_NewListByResourceGroupPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
@@ -440,7 +440,7 @@ func ExampleFarmBeatsModelsClient_ListByResourceGroup() {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-	pager := client.ListByResourceGroup(\\"<resource-group-name>\\",
+	pager := client.NewListByResourceGroupPager(\\"<resource-group-name>\\",
 &armagrifood.FarmBeatsModelsClientListByResourceGroupOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -537,7 +537,7 @@ import (
 
 
 // Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/agrifood/resource-manager/Microsoft.AgFoodPlatform/preview/2020-05-12-preview/examples/Operations_List.json
-func ExampleOperationsClient_List() {
+func ExampleOperationsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
@@ -549,7 +549,7 @@ func ExampleOperationsClient_List() {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -687,7 +687,7 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-        pager := client.ListByFarmBeats(\\"examples-rg\\",
+        pager := client.NewListByFarmBeatsPager(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
 &armagrifood.ExtensionsClientListByFarmBeatsOptions{ExtensionIDs: []string{},
 ExtensionCategories: []string{},
@@ -711,7 +711,7 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-        pager := client.List(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
+        pager := client.NewListPager(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
 FarmBeatsExtensionNames: []string{},
 ExtensionCategories: []string{},
 PublisherIDs: []string{},
@@ -831,7 +831,7 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-        pager := client.ListBySubscription(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
+        pager := client.NewListBySubscriptionPager(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
         for pager.More() {
@@ -851,7 +851,7 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-        pager := client.ListByResourceGroup(\\"examples-rg\\",
+        pager := client.NewListByResourceGroupPager(\\"examples-rg\\",
 &armagrifood.FarmBeatsModelsClientListByResourceGroupOptions{MaxPageSize: nil,
 SkipToken: nil,
 })
@@ -908,7 +908,7 @@ func TestOperations_List(t *testing.T) {
 		log.Fatalf(\\"failed to create client: %v\\", err)
         return
 	}
-        pager := client.List(nil)
+        pager := client.NewListPager(nil)
         for pager.More() {
             _, err := pager.NextPage(ctx)
             if err != nil {
@@ -1324,30 +1324,30 @@ resourceName,
     // From step Usages_List
     usagesClient, err := test.NewUsagesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
     testsuite.Require().NoError(err)
-            usagesClientListPager:= usagesClient.List(testsuite.location,
+            usagesClientNewListPagerPager:= usagesClient.NewListPager(testsuite.location,
 nil)
-            for usagesClientListPager.More() {
+            for usagesClientNewListPagerPager.More() {
             }
 
     
     // From step SignalR_ListByResourceGroup
-            signalRClientListByResourceGroupPager:= signalRClient.ListByResourceGroup(testsuite.resourceGroupName,
+            signalRClientNewListByResourceGroupPagerPager:= signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
 nil)
-            for signalRClientListByResourceGroupPager.More() {
+            for signalRClientNewListByResourceGroupPagerPager.More() {
             }
 
     
     // From step SignalR_ListBySubscription
-            signalRClientListBySubscriptionPager:= signalRClient.ListBySubscription(nil)
-            for signalRClientListBySubscriptionPager.More() {
+            signalRClientNewListBySubscriptionPagerPager:= signalRClient.NewListBySubscriptionPager(nil)
+            for signalRClientNewListBySubscriptionPagerPager.More() {
             }
 
     
     // From step Operations_List
     operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
     testsuite.Require().NoError(err)
-            operationsClientListPager:= operationsClient.List(nil)
-            for operationsClientListPager.More() {
+            operationsClientNewListPagerPager:= operationsClient.NewListPager(nil)
+            for operationsClientNewListPagerPager.More() {
             }
 
     

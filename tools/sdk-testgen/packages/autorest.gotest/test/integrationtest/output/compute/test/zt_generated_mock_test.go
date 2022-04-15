@@ -111,7 +111,7 @@ func TestAvailabilitySets_ListBySubscription(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListBySubscription(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("Faked for test: +ge+2020, %3E2012")})
+	pager := client.NewListBySubscriptionPager(&test.AvailabilitySetsClientListBySubscriptionOptions{Expand: to.Ptr("Faked for test: +ge+2020, %3E2012")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -360,7 +360,7 @@ func TestProximityPlacementGroups_ListBySubscription(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListBySubscription(nil)
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -410,7 +410,7 @@ func TestProximityPlacementGroups_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -949,7 +949,7 @@ func TestVirtualMachines_ListByLocation(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByLocation("eastus",
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -5891,7 +5891,7 @@ func TestVirtualMachines_ListAvailableSizes(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListAvailableSizes("myResourceGroup",
+	pager := client.NewListAvailableSizesPager("myResourceGroup",
 		"myVmName",
 		nil)
 	for pager.More() {
@@ -6237,7 +6237,7 @@ func TestVirtualMachineScaleSets_ListByLocation(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByLocation("eastus",
+	pager := client.NewListByLocationPager("eastus",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -11625,7 +11625,7 @@ func TestImages_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -11690,7 +11690,7 @@ func TestImages_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -11963,7 +11963,7 @@ func TestRestorePointCollections_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -12027,7 +12027,7 @@ func TestRestorePointCollections_ListAll(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListAll(nil)
+	pager := client.NewListAllPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -12986,7 +12986,7 @@ func TestVirtualMachineRunCommands_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("SoutheastAsia",
+	pager := client.NewListPager("SoutheastAsia",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -13357,7 +13357,7 @@ func TestVirtualMachineRunCommands_ListByVirtualMachine(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByVirtualMachine("myResourceGroup",
+	pager := client.NewListByVirtualMachinePager("myResourceGroup",
 		"myVM",
 		&test.VirtualMachineRunCommandsClientListByVirtualMachineOptions{Expand: nil})
 	for pager.More() {
@@ -13638,7 +13638,7 @@ func TestVirtualMachineScaleSetVMRunCommands_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myvmScaleSet",
 		"0",
 		&test.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
@@ -13694,7 +13694,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(&test.ResourceSKUsClientListOptions{Filter: nil})
+	pager := client.NewListPager(&test.ResourceSKUsClientListOptions{Filter: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -13886,7 +13886,7 @@ func TestResourceSKUs_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager = client.List(&test.ResourceSKUsClientListOptions{Filter: to.Ptr("location eq 'westus'")})
+	pager = client.NewListPager(&test.ResourceSKUsClientListOptions{Filter: to.Ptr("location eq 'westus'")})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -15129,7 +15129,7 @@ func TestDisks_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -15261,7 +15261,7 @@ func TestDisks_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -15627,7 +15627,7 @@ func TestSnapshots_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -15698,7 +15698,7 @@ func TestSnapshots_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -16188,7 +16188,7 @@ func TestDiskEncryptionSets_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -16266,7 +16266,7 @@ func TestDiskEncryptionSets_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -16343,7 +16343,7 @@ func TestDiskEncryptionSets_ListAssociatedResources(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListAssociatedResources("myResourceGroup",
+	pager := client.NewListAssociatedResourcesPager("myResourceGroup",
 		"myDiskEncryptionSet",
 		nil)
 	for pager.More() {
@@ -16579,7 +16579,7 @@ func TestDiskAccesses_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -16654,7 +16654,7 @@ func TestDiskAccesses_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -16888,7 +16888,7 @@ func TestDiskAccesses_ListPrivateEndpointConnections(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListPrivateEndpointConnections("myResourceGroup",
+	pager := client.NewListPrivateEndpointConnectionsPager("myResourceGroup",
 		"myDiskAccess",
 		nil)
 	for pager.More() {
@@ -16974,7 +16974,7 @@ func TestDiskRestorePoint_ListByRestorePoint(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByRestorePoint("myResourceGroup",
+	pager := client.NewListByRestorePointPager("myResourceGroup",
 		"rpc",
 		"vmrp",
 		nil)
@@ -17262,7 +17262,7 @@ func TestGalleries_ListByResourceGroup(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByResourceGroup("myResourceGroup",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -17304,7 +17304,7 @@ func TestGalleries_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -17525,7 +17525,7 @@ func TestGalleryImages_ListByGallery(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByGallery("myResourceGroup",
+	pager := client.NewListByGalleryPager("myResourceGroup",
 		"myGalleryName",
 		nil)
 	for pager.More() {
@@ -18958,7 +18958,7 @@ func TestGalleryImageVersions_ListByGalleryImage(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByGalleryImage("myResourceGroup",
+	pager := client.NewListByGalleryImagePager("myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
 		nil)
@@ -19208,7 +19208,7 @@ func TestGalleryApplications_ListByGallery(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByGallery("myResourceGroup",
+	pager := client.NewListByGalleryPager("myResourceGroup",
 		"myGalleryName",
 		nil)
 	for pager.More() {
@@ -19562,7 +19562,7 @@ func TestGalleryApplicationVersions_ListByGalleryApplication(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListByGalleryApplication("myResourceGroup",
+	pager := client.NewListByGalleryApplicationPager("myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
 		nil)
@@ -19716,7 +19716,7 @@ func TestSharedGalleries_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myLocation",
+	pager := client.NewListPager("myLocation",
 		&test.SharedGalleriesClientListOptions{SharedTo: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -19785,7 +19785,7 @@ func TestSharedGalleryImages_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myLocation",
+	pager := client.NewListPager("myLocation",
 		"galleryUniqueName",
 		&test.SharedGalleryImagesClientListOptions{SharedTo: nil})
 	for pager.More() {
@@ -19876,7 +19876,7 @@ func TestSharedGalleryImageVersions_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myLocation",
+	pager := client.NewListPager("myLocation",
 		"galleryUniqueName",
 		"myGalleryImageName",
 		&test.SharedGalleryImageVersionsClientListOptions{SharedTo: nil})
@@ -20063,7 +20063,7 @@ func TestCloudServiceRoleInstances_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("ConstosoRG",
+	pager := client.NewListPager("ConstosoRG",
 		"{cs-name}",
 		&test.CloudServiceRoleInstancesClientListOptions{Expand: nil})
 	for pager.More() {
@@ -20282,7 +20282,7 @@ func TestCloudServiceRoles_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("ConstosoRG",
+	pager := client.NewListPager("ConstosoRG",
 		"{cs-name}",
 		nil)
 	for pager.More() {
@@ -21114,7 +21114,7 @@ func TestCloudServices_ListAll(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListAll(nil)
+	pager := client.NewListAllPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -21210,7 +21210,7 @@ func TestCloudServices_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("ConstosoRG",
+	pager := client.NewListPager("ConstosoRG",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -21525,7 +21525,7 @@ func TestCloudServicesUpdateDomain_ListUpdateDomains(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListUpdateDomains("ConstosoRG",
+	pager := client.NewListUpdateDomainsPager("ConstosoRG",
 		"{cs-name}",
 		nil)
 	for pager.More() {
@@ -21603,7 +21603,7 @@ func TestCloudServiceOperatingSystems_ListOSVersions(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListOSVersions("westus2",
+	pager := client.NewListOSVersionsPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -21703,7 +21703,7 @@ func TestCloudServiceOperatingSystems_ListOSFamilies(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListOSFamilies("westus2",
+	pager := client.NewListOSFamiliesPager("westus2",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

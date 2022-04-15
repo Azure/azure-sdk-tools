@@ -572,7 +572,7 @@ func TestServices_ListBySubscription(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListBySubscription(nil)
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -650,7 +650,7 @@ func TestServices_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -1299,7 +1299,7 @@ func TestApps_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		nil)
 	for pager.More() {
@@ -1576,7 +1576,7 @@ func TestBindings_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
@@ -1752,7 +1752,7 @@ func TestCertificates_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myService",
 		nil)
 	for pager.More() {
@@ -1959,7 +1959,7 @@ func TestCustomDomains_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
@@ -2258,7 +2258,7 @@ func TestDeployments_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		&test.DeploymentsClientListOptions{Version: []string{}})
@@ -2328,7 +2328,7 @@ func TestDeployments_ListForCluster(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.ListForCluster("myResourceGroup",
+	pager := client.NewListForClusterPager("myResourceGroup",
 		"myservice",
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for pager.More() {
@@ -2472,7 +2472,7 @@ func TestOperations_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -2554,7 +2554,7 @@ func TestSKUs_List(t *testing.T) {
 		log.Fatalf("failed to create client: %v", err)
 		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {

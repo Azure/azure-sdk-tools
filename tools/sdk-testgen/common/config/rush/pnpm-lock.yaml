@@ -3,7 +3,7 @@ lockfileVersion: 5.3
 specifiers:
   '@autorest/codemodel': 4.18.2
   '@autorest/extension-base': ~3.4.4
-  '@autorest/go': ~4.0.0-preview.38
+  '@autorest/go': ~4.0.0-preview.39
   '@azure-tools/codegen': ~2.9.0
   '@azure-tools/linq': ~3.1.0
   '@rush-temp/gotest': file:./projects/gotest.tgz
@@ -36,7 +36,7 @@ specifiers:
 dependencies:
   '@autorest/codemodel': 4.18.2
   '@autorest/extension-base': 3.4.4
-  '@autorest/go': 4.0.0-preview.38
+  '@autorest/go': 4.0.0-preview.39
   '@azure-tools/codegen': 2.9.1
   '@azure-tools/linq': 3.1.263
   '@rush-temp/gotest': file:projects/gotest.tgz
@@ -92,8 +92,8 @@ packages:
       vscode-jsonrpc: 3.6.2
     dev: false
 
-  /@autorest/go/4.0.0-preview.38:
-    resolution: {integrity: sha512-DbOvc2DZLphpRAZwERjqzglmXLT3AkoK6eWOy2bLfdoyZzuByUjEyGgQyzSO5Jmes7yE4dh0Vvnje5m9uFNXpg==}
+  /@autorest/go/4.0.0-preview.39:
+    resolution: {integrity: sha512-71ORnz5v3pLnvN8pXi8ZtaaapyFVH9uG+ULSNnXoRToYymvFMX/ZOdsSdzlKqXwJDlgUPU57HN9FvxIYou9E9w==}
     engines: {node: '>=10.12.0'}
     dependencies:
       '@autorest/codemodel': 4.18.2
@@ -8263,13 +8263,13 @@ packages:
     dev: false
 
   file:projects/gotest.tgz:
-    resolution: {integrity: sha512-feQn07Z3uqOk/2RzFxdppnLumGUMh+YV8+hw2/bO8dPlb/eoZQJLds8FmrUdiA/6U38vthMjQmn6UNtKB+0PGA==, tarball: file:projects/gotest.tgz}
+    resolution: {integrity: sha512-X9IzaYbp+M995DLKkLDBDB2pRg26iV6ueLNEbZq48a8A/2Bt6iHsRnsHeUAwjAbVmcQyX8N89qrCTH51xX5nkQ==, tarball: file:projects/gotest.tgz}
     name: '@rush-temp/gotest'
     version: 0.0.0
     dependencies:
       '@autorest/codemodel': 4.18.2
       '@autorest/extension-base': 3.4.4
-      '@autorest/go': 4.0.0-preview.38
+      '@autorest/go': 4.0.0-preview.39
       '@azure-tools/codegen': 2.9.1
       '@azure-tools/linq': 3.1.263
       '@types/jest': 26.0.24

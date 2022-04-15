@@ -257,12 +257,7 @@ form.comment {
     padding-right: 12px;
     text-align: right;
     white-space: nowrap;
-    vertical-align: top;
     width: auto;
-}
-
-.line-number-hidden {
-    display: none;
 }
 
 .line-comment-button:hover {
@@ -666,7 +661,11 @@ mark {
     padding: 0.01rem;
 }
 
-tr[class$="-content"]
-{
-    //visibility: hidden;
+.row-fold-elipsis {
+    margin-left: 8px;
+}
+
+.row-fold-elipsis i {
+    position: relative;
+    top: 2px;
 }

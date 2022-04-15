@@ -11,9 +11,10 @@
     };
 
     string foldableClass = Model.CodeLine.LineClass.ToLower().Replace(".","-");
+    string collapseClass = foldableClass.EndsWith("-content") ? "d-none" : "";
 }
 
-<tr class="code-line @lineClass @foldableClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="code-line @lineClass @foldableClass @collapseClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
     <td class="line-details">
         <table>
             <tr>
@@ -31,7 +32,7 @@
                 <td class="line-details-button-cell">
                     @if (foldableClass.EndsWith("-parent"))
                     {
-                        <span><i class="fa-solid fa-angle-right"></i></span>
+                        <span class="row-fold-caret"><i class="fa-solid fa-angle-right"></i></span>
                     }
                 </td>
             </tr>
@@ -39,7 +40,8 @@
     </td>
     <td class="code @lineClass">
         @{
-            string collapseMenu = foldableClass.EndsWith("-parent") ? "<i class='fa-solid fa-ellipsis ml-2 mt-2'></i>" : "";
+            string collapseMenu = foldableClass.EndsWith("-parent") ? "<span class='row-fold-elipsis'><i class='fa-solid fa-ellipsis'></i></span>" : "";
+            
         }
         @if (Model.Kind == DiffLineKind.Removed)
         {
@@ -51,7 +53,7 @@
         }
         else 
         {
-            <span class="code-inner">&nbsp;&nbsp;&nbsp;@Html.Raw(Model.CodeLine.DisplayString)</span>
+            <span class="code-inner">&nbsp;&nbsp;&nbsp;@Html.Raw(Model.CodeLine.DisplayString)@Html.Raw(collapseMenu)</span> 
         }
     </td>
 </tr>

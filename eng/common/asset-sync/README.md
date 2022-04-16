@@ -47,6 +47,7 @@
   - [Integration Checklist](#integration-checklist)
   - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
     - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
+  - [Conclusions](#conclusions)
   - [Follow-Ups](#follow-ups)
 
 ## What is the problem? Why?
@@ -596,6 +597,9 @@ Where the difficulty _really_ lies is in the weird situations that folks will in
 
 For more than a few of the storage recordings, some request bodies are obviously made up of generated content. We can significantly reduce the amount of data that is actually needed to be stored by allowing the test-proxy to _fill in_ these request bodies based on a known seed value (maybe from the original request body?).
 
+## Conclusions
+
+[After a discussion with the Engineering System team, the external git repo option was selected.](https://microsoft-my.sharepoint.com/:v:/p/scbedd/EXiLEz0k7H5Pqr4rWNkjb7cBw7riqgguGmvYc1iP7gIM9g). We will finish a prototype in powershell and revisit after it is complete.
 
 ## Follow-Ups
 

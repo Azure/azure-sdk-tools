@@ -253,7 +253,12 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Push-AssetsRepo-Update" {
+  # each of the tests in this context is resolving one of the known cases when pushing changes to an auto commit branch
+  # In order:
+  #    - Auto Branch Doesn't Exist Yet, Go Off Main
+  #    - Auto Branch Exists, we're on the latest commit
+  #    - Auto Branch Exists, we're on a commit from the past
+    Context "Push-AssetsRepo-Update" {
     It "Should push a new branch/commit to a non-existent target branch." {
       $sourceBranch = "scenario_new_push"
       $recordingJson = [PSCustomObject]@{
@@ -297,10 +302,27 @@ Describe "AssetsModuleTests" {
     }
     
     It "Should push a clean new commmit to the target branch" {
+      $sourceBranch = "scenario_clean_push"
+      $recordingJson = [PSCustomObject]@{
+        AssetsRepo = "Azure/azure-sdk-assets-integration"
+        AssetsRepoPrefixPath = "python/recordings/"
+        AssetsRepoId = ""
+        AssetsRepoBranch = "$sourceBranch"
+        SHA = ""
+      }
 
+      $files = @(
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_timeout.json",
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_server_error.json",
+        "sdk/tables/assets.json"
+      )
+
+      # prepare the test area
+      $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
+      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables")
     }
 
-    It "Should push a new commit on top of an existing one." {
+    It "Should push a new commit on top of an existing one. Doing a pre-fetch if necessary." {
       $files = @(
         "sdk/storage/",
         "sdk/storage/azure-storage-blob/awesome.json"

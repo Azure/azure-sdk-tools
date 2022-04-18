@@ -23,13 +23,11 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
@@ -40,12 +38,10 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 		&test.DiskAccessesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -56,13 +52,11 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
@@ -76,12 +70,10 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 		&test.DiskAccessesClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -92,13 +84,11 @@ func ExampleDiskAccessesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
@@ -106,7 +96,6 @@ func ExampleDiskAccessesClient_Get() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -117,13 +106,11 @@ func ExampleDiskAccessesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
@@ -131,12 +118,10 @@ func ExampleDiskAccessesClient_BeginDelete() {
 		&test.DiskAccessesClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -145,13 +130,11 @@ func ExampleDiskAccessesClient_NewListByResourceGroupPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListByResourceGroupPager("<resource-group-name>",
 		nil)
@@ -159,7 +142,6 @@ func ExampleDiskAccessesClient_NewListByResourceGroupPager() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -173,20 +155,17 @@ func ExampleDiskAccessesClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -200,13 +179,11 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.GetPrivateLinkResources(ctx,
 		"<resource-group-name>",
@@ -214,7 +191,6 @@ func ExampleDiskAccessesClient_GetPrivateLinkResources() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -225,13 +201,11 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdateAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
@@ -248,12 +222,10 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 		&test.DiskAccessesClientBeginUpdateAPrivateEndpointConnectionOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -264,13 +236,11 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.GetAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
@@ -279,7 +249,6 @@ func ExampleDiskAccessesClient_GetAPrivateEndpointConnection() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -290,13 +259,11 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDeleteAPrivateEndpointConnection(ctx,
 		"<resource-group-name>",
@@ -305,12 +272,10 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 		&test.DiskAccessesClientBeginDeleteAPrivateEndpointConnectionOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -319,13 +284,11 @@ func ExampleDiskAccessesClient_NewListPrivateEndpointConnectionsPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewDiskAccessesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPrivateEndpointConnectionsPager("<resource-group-name>",
 		"<disk-access-name>",
@@ -334,7 +297,6 @@ func ExampleDiskAccessesClient_NewListPrivateEndpointConnectionsPager() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item

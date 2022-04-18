@@ -23,13 +23,11 @@ func ExampleVirtualMachinesClient_NewListByLocationPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListByLocationPager("<location>",
 		nil)
@@ -37,7 +35,6 @@ func ExampleVirtualMachinesClient_NewListByLocationPager() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -51,13 +48,11 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
@@ -109,12 +104,10 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -125,13 +118,11 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
@@ -189,12 +180,10 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -205,13 +194,11 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
@@ -221,12 +208,10 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -235,13 +220,11 @@ func ExampleVirtualMachinesClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
@@ -249,7 +232,6 @@ func ExampleVirtualMachinesClient_Get() {
 		&test.VirtualMachinesClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -260,13 +242,11 @@ func ExampleVirtualMachinesClient_InstanceView() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.InstanceView(ctx,
 		"<resource-group-name>",
@@ -274,7 +254,6 @@ func ExampleVirtualMachinesClient_InstanceView() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -285,13 +264,11 @@ func ExampleVirtualMachinesClient_Generalize() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.Generalize(ctx,
 		"<resource-group-name>",
@@ -299,7 +276,6 @@ func ExampleVirtualMachinesClient_Generalize() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 }
 
@@ -308,13 +284,11 @@ func ExampleVirtualMachinesClient_NewListAvailableSizesPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListAvailableSizesPager("<resource-group-name>",
 		"<vm-name>",
@@ -323,7 +297,6 @@ func ExampleVirtualMachinesClient_NewListAvailableSizesPager() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item
@@ -337,13 +310,11 @@ func ExampleVirtualMachinesClient_BeginReapply() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginReapply(ctx,
 		"<resource-group-name>",
@@ -351,12 +322,10 @@ func ExampleVirtualMachinesClient_BeginReapply() {
 		&test.VirtualMachinesClientBeginReapplyOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -365,13 +334,11 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginReimage(ctx,
 		"<resource-group-name>",
@@ -383,12 +350,10 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -397,13 +362,11 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.RetrieveBootDiagnosticsData(ctx,
 		"<resource-group-name>",
@@ -411,7 +374,6 @@ func ExampleVirtualMachinesClient_RetrieveBootDiagnosticsData() {
 		&test.VirtualMachinesClientRetrieveBootDiagnosticsDataOptions{SasURIExpirationTimeInMinutes: to.Ptr[int32](60)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -422,13 +384,11 @@ func ExampleVirtualMachinesClient_SimulateEviction() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.SimulateEviction(ctx,
 		"<resource-group-name>",
@@ -436,7 +396,6 @@ func ExampleVirtualMachinesClient_SimulateEviction() {
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 }
 
@@ -445,13 +404,11 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginAssessPatches(ctx,
 		"<resource-group-name>",
@@ -459,12 +416,10 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 		&test.VirtualMachinesClientBeginAssessPatchesOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -475,13 +430,11 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginInstallPatches(ctx,
 		"<resource-group-name>",
@@ -499,12 +452,10 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 		&test.VirtualMachinesClientBeginInstallPatchesOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -515,13 +466,11 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewVirtualMachinesClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRunCommand(ctx,
 		"<resource-group-name>",
@@ -532,12 +481,10 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 		&test.VirtualMachinesClientBeginRunCommandOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res

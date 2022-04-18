@@ -31,13 +31,11 @@ func ExampleExtensionsClient_Create() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	_, err = client.Create(ctx,
 \\"<extension-id>\\",
@@ -46,7 +44,6 @@ func ExampleExtensionsClient_Create() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
 }
 
@@ -57,13 +54,11 @@ func ExampleExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.Get(ctx,
 \\"<extension-id>\\",
@@ -72,7 +67,6 @@ func ExampleExtensionsClient_Get() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -85,13 +79,11 @@ func ExampleExtensionsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.Update(ctx,
 \\"<extension-id>\\",
@@ -100,7 +92,6 @@ func ExampleExtensionsClient_Update() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -113,13 +104,11 @@ func ExampleExtensionsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	_, err = client.Delete(ctx,
 \\"<extension-id>\\",
@@ -128,7 +117,6 @@ func ExampleExtensionsClient_Delete() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
 }
 
@@ -139,13 +127,11 @@ func ExampleExtensionsClient_NewListByFarmBeatsPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewExtensionsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	pager := client.NewListByFarmBeatsPager(\\"<resource-group-name>\\",
 \\"<farm-beats-resource-name>\\",
@@ -158,7 +144,6 @@ SkipToken: nil,
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
-            return
 		}
 		for _, v := range nextResult.Value {
             // TODO: use page item
@@ -198,13 +183,11 @@ func ExampleFarmBeatsExtensionsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsExtensionsClient(cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	pager := client.NewListPager(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
 FarmBeatsExtensionNames: []string{},
@@ -216,7 +199,6 @@ MaxPageSize: nil,
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
-            return
 		}
 		for _, v := range nextResult.Value {
             // TODO: use page item
@@ -232,20 +214,17 @@ func ExampleFarmBeatsExtensionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsExtensionsClient(cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.Get(ctx,
 \\"<farm-beats-extension-id>\\",
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -282,13 +261,11 @@ func ExampleFarmBeatsModelsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.Get(ctx,
 \\"<resource-group-name>\\",
@@ -296,7 +273,6 @@ func ExampleFarmBeatsModelsClient_Get() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -309,13 +285,11 @@ func ExampleFarmBeatsModelsClient_CreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.CreateOrUpdate(ctx,
 \\"<farm-beats-resource-name>\\",
@@ -330,7 +304,6 @@ Location: to.Ptr(\\"<location>\\"),
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -343,13 +316,11 @@ func ExampleFarmBeatsModelsClient_Update() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.Update(ctx,
 \\"<farm-beats-resource-name>\\",
@@ -363,7 +334,6 @@ Tags: map[string]*string{
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -376,13 +346,11 @@ func ExampleFarmBeatsModelsClient_Delete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	_, err = client.Delete(ctx,
 \\"<resource-group-name>\\",
@@ -390,7 +358,6 @@ func ExampleFarmBeatsModelsClient_Delete() {
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
 }
 
@@ -401,13 +368,11 @@ func ExampleFarmBeatsModelsClient_NewListBySubscriptionPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	pager := client.NewListBySubscriptionPager(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
@@ -416,7 +381,6 @@ SkipToken: nil,
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
-            return
 		}
 		for _, v := range nextResult.Value {
             // TODO: use page item
@@ -432,13 +396,11 @@ func ExampleFarmBeatsModelsClient_NewListByResourceGroupPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	pager := client.NewListByResourceGroupPager(\\"<resource-group-name>\\",
 &armagrifood.FarmBeatsModelsClientListByResourceGroupOptions{MaxPageSize: nil,
@@ -448,7 +410,6 @@ SkipToken: nil,
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
-            return
 		}
 		for _, v := range nextResult.Value {
             // TODO: use page item
@@ -488,13 +449,11 @@ func ExampleLocationsClient_CheckNameAvailability() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewLocationsClient(\\"<subscription-id>\\", cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	res, err := client.CheckNameAvailability(ctx,
 armagrifood.CheckNameAvailabilityRequest{
@@ -504,7 +463,6 @@ Type: to.Ptr(\\"<type>\\"),
 nil)
 	if err != nil {
 		log.Fatalf(\\"failed to finish the request: %v\\", err)
-        return
 	}
     // TODO: use response item
     _ = res
@@ -541,20 +499,17 @@ func ExampleOperationsClient_NewListPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf(\\"failed to obtain a credential: %v\\", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := armagrifood.NewOperationsClient(cred, nil)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
 	pager := client.NewListPager(nil)
 	for pager.More() {
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf(\\"failed to advance page: %v\\", err)
-            return
 		}
 		for _, v := range nextResult.Value {
             // TODO: use page item
@@ -613,7 +568,6 @@ func TestExtensions_Create(t *testing.T) {
 	client, err := armagrifood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             _, err = client.Create(ctx,
 \\"provider.extension\\",
@@ -631,7 +585,6 @@ func TestExtensions_Get(t *testing.T) {
 	client, err := armagrifood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.Get(ctx,
 \\"provider.extension\\",
@@ -649,7 +602,6 @@ func TestExtensions_Update(t *testing.T) {
 	client, err := armagrifood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.Update(ctx,
 \\"provider.extension\\",
@@ -667,7 +619,6 @@ func TestExtensions_Delete(t *testing.T) {
 	client, err := armagrifood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             _, err = client.Delete(ctx,
 \\"provider.extension\\",
@@ -685,7 +636,6 @@ func TestExtensions_ListByFarmBeats(t *testing.T) {
 	client, err := armagrifood.NewExtensionsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
         pager := client.NewListByFarmBeatsPager(\\"examples-rg\\",
 \\"examples-farmbeatsResourceName\\",
@@ -709,7 +659,6 @@ func TestFarmBeatsExtensions_List(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsExtensionsClient(cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
         pager := client.NewListPager(&armagrifood.FarmBeatsExtensionsClientListOptions{FarmBeatsExtensionIDs: []string{},
 FarmBeatsExtensionNames: []string{},
@@ -732,7 +681,6 @@ func TestFarmBeatsExtensions_Get(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsExtensionsClient(cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.Get(ctx,
 \\"DTN.ContentServices\\",
@@ -748,7 +696,6 @@ func TestFarmBeatsModels_Get(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.Get(ctx,
 \\"examples-rg\\",
@@ -765,7 +712,6 @@ func TestFarmBeatsModels_CreateOrUpdate(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.CreateOrUpdate(ctx,
 \\"examples-farmbeatsResourceName\\",
@@ -789,7 +735,6 @@ func TestFarmBeatsModels_Update(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.Update(ctx,
 \\"examples-farmBeatsResourceName\\",
@@ -812,7 +757,6 @@ func TestFarmBeatsModels_Delete(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             _, err = client.Delete(ctx,
 \\"examples-rg\\",
@@ -829,7 +773,6 @@ func TestFarmBeatsModels_ListBySubscription(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
         pager := client.NewListBySubscriptionPager(&armagrifood.FarmBeatsModelsClientListBySubscriptionOptions{MaxPageSize: nil,
 SkipToken: nil,
@@ -849,7 +792,6 @@ func TestFarmBeatsModels_ListByResourceGroup(t *testing.T) {
 	client, err := armagrifood.NewFarmBeatsModelsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
         pager := client.NewListByResourceGroupPager(\\"examples-rg\\",
 &armagrifood.FarmBeatsModelsClientListByResourceGroupOptions{MaxPageSize: nil,
@@ -870,7 +812,6 @@ func TestLocations_CheckNameAvailability(t *testing.T) {
 	client, err := armagrifood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err := client.CheckNameAvailability(ctx,
 armagrifood.CheckNameAvailabilityRequest{
@@ -887,7 +828,6 @@ nil)
     client, err = armagrifood.NewLocationsClient(\\"11111111-2222-3333-4444-555555555555\\", cred, &options)
 	if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
             res, err = client.CheckNameAvailability(ctx,
 armagrifood.CheckNameAvailabilityRequest{
@@ -906,7 +846,6 @@ func TestOperations_List(t *testing.T) {
 	client, err := armagrifood.NewOperationsClient(cred, &options)
     if err != nil {
 		log.Fatalf(\\"failed to create client: %v\\", err)
-        return
 	}
         pager := client.NewListPager(nil)
         for pager.More() {

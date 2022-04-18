@@ -23,13 +23,11 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
@@ -62,12 +60,10 @@ func ExampleGalleryApplicationVersionsClient_BeginCreateOrUpdate() {
 		&test.GalleryApplicationVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -78,13 +74,11 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"<resource-group-name>",
@@ -116,12 +110,10 @@ func ExampleGalleryApplicationVersionsClient_BeginUpdate() {
 		&test.GalleryApplicationVersionsClientBeginUpdateOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -132,13 +124,11 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
@@ -148,7 +138,6 @@ func ExampleGalleryApplicationVersionsClient_Get() {
 		&test.GalleryApplicationVersionsClientGetOptions{Expand: to.Ptr(test.ReplicationStatusTypesReplicationStatus)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	// TODO: use response item
 	_ = res
@@ -159,13 +148,11 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
@@ -175,12 +162,10 @@ func ExampleGalleryApplicationVersionsClient_BeginDelete() {
 		&test.GalleryApplicationVersionsClientBeginDeleteOptions{ResumeToken: ""})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-		return
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-		return
 	}
 }
 
@@ -189,13 +174,11 @@ func ExampleGalleryApplicationVersionsClient_NewListByGalleryApplicationPager() 
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-		return
 	}
 	ctx := context.Background()
 	client, err := test.NewGalleryApplicationVersionsClient("<subscription-id>", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListByGalleryApplicationPager("<resource-group-name>",
 		"<gallery-name>",
@@ -205,7 +188,6 @@ func ExampleGalleryApplicationVersionsClient_NewListByGalleryApplicationPager() 
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-			return
 		}
 		for _, v := range nextResult.Value {
 			// TODO: use page item

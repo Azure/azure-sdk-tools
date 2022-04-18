@@ -45,7 +45,6 @@ func TestServices_Get(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -119,7 +118,6 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -206,7 +204,6 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	client, err = test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -307,7 +304,6 @@ func TestServices_Delete(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -330,7 +326,6 @@ func TestServices_Update(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -419,7 +414,6 @@ func TestServices_ListTestKeys(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListTestKeys(ctx,
 		"myResourceGroup",
@@ -451,7 +445,6 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.RegenerateTestKey(ctx,
 		"myResourceGroup",
@@ -486,7 +479,6 @@ func TestServices_DisableTestEndpoint(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.DisableTestEndpoint(ctx,
 		"myResourceGroup",
@@ -505,7 +497,6 @@ func TestServices_EnableTestEndpoint(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.EnableTestEndpoint(ctx,
 		"myResourceGroup",
@@ -537,7 +528,6 @@ func TestServices_CheckNameAvailability(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
@@ -570,7 +560,6 @@ func TestServices_ListBySubscription(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
@@ -648,7 +637,6 @@ func TestServices_List(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		nil)
@@ -727,7 +715,6 @@ func TestConfigServers_Get(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -768,7 +755,6 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
@@ -825,7 +811,6 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
@@ -882,7 +867,6 @@ func TestConfigServers_Validate(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginValidate(ctx,
 		"myResourceGroup",
@@ -922,7 +906,6 @@ func TestMonitoringSettings_Get(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -961,7 +944,6 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
@@ -1011,7 +993,6 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
@@ -1061,7 +1042,6 @@ func TestApps_Get(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1116,7 +1096,6 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1193,7 +1172,6 @@ func TestApps_Delete(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -1217,7 +1195,6 @@ func TestApps_Update(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1297,7 +1274,6 @@ func TestApps_List(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"myservice",
@@ -1357,7 +1333,6 @@ func TestApps_ValidateDomain(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ValidateDomain(ctx,
 		"myResourceGroup",
@@ -1390,7 +1365,6 @@ func TestBindings_Get(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1434,7 +1408,6 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1492,7 +1465,6 @@ func TestBindings_Delete(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -1517,7 +1489,6 @@ func TestBindings_Update(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1574,7 +1545,6 @@ func TestBindings_List(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"myservice",
@@ -1623,7 +1593,6 @@ func TestCertificates_Get(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1669,7 +1638,6 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1726,7 +1694,6 @@ func TestCertificates_Delete(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -1750,7 +1717,6 @@ func TestCertificates_List(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"myService",
@@ -1801,7 +1767,6 @@ func TestCustomDomains_Get(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1838,7 +1803,6 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1885,7 +1849,6 @@ func TestCustomDomains_Delete(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -1910,7 +1873,6 @@ func TestCustomDomains_Update(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1957,7 +1919,6 @@ func TestCustomDomains_List(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"myservice",
@@ -1999,7 +1960,6 @@ func TestDeployments_Get(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -2064,7 +2024,6 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -2152,7 +2111,6 @@ func TestDeployments_Delete(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -2177,7 +2135,6 @@ func TestDeployments_Update(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -2256,7 +2213,6 @@ func TestDeployments_List(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"myservice",
@@ -2326,7 +2282,6 @@ func TestDeployments_ListForCluster(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListForClusterPager("myResourceGroup",
 		"myservice",
@@ -2395,7 +2350,6 @@ func TestDeployments_Start(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginStart(ctx,
 		"myResourceGroup",
@@ -2420,7 +2374,6 @@ func TestDeployments_Stop(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginStop(ctx,
 		"myResourceGroup",
@@ -2445,7 +2398,6 @@ func TestDeployments_Restart(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
@@ -2470,7 +2422,6 @@ func TestOperations_List(t *testing.T) {
 	client, err := test.NewOperationsClient(cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager(nil)
 	for pager.More() {
@@ -2511,7 +2462,6 @@ func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 	client, err := test.NewRuntimeVersionsClient(cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListRuntimeVersions(ctx,
 		nil)
@@ -2552,7 +2502,6 @@ func TestSKUs_List(t *testing.T) {
 	client, err := test.NewSKUsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager(nil)
 	for pager.More() {

@@ -13,6 +13,7 @@ import {changeReadmeMd} from "./utils/changeReadmeMd";
 import {RunningEnvironment} from "../utils/runningEnvironment";
 import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
 import {getReleaseTool} from "./utils/getReleaseTool";
+import { addApiViewInfo } from "../utils/addApiViewInfo";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -125,6 +126,7 @@ export async function generateMgmt(options: {
                         outputPackageInfo.artifacts.push(path.join(changedPackageDirectory, file));
                     }
                 }
+                addApiViewInfo(outputPackageInfo, packagePath, changedPackageDirectory);
             }
         } catch (e) {
             logger.logError('Error:');

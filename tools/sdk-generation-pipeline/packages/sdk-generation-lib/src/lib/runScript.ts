@@ -87,7 +87,7 @@ export async function runScript(runOptions: RunOptions, options: {
 
     } catch (e) {
         cmdRet.code = -1;
-        logger.error(e.stack);
+        logger.error(`${e.message}\n${e.stack}`);
         executeResult = 'failed';
     }
     let storeLog = false;

@@ -308,7 +308,7 @@ Initializes a recordings repo based on an assets.json file.
 This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json content.
+A PSCustomObject that contains an auto-parsed assets.json content from Resolve-AssetsJson.
 
 .PARAMETER ForceReinitialize
 Should this assets repo be renewed regardless of current status?
@@ -427,20 +427,86 @@ Function Update-AssetsJson {
 
 <#
 .SYNOPSIS
-This function returns a boolean that indicates whether or not the assets repo has been initialized.
+This function assumes a set of changes and attempts to use the provided config to automatically push a commit to the configured branch and repo combination.
 
-.DESCRIPTION
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json content from Resolve-AssetsJson.
+
 #>
 Function Push-AssetsRepo-Update {
     param(
         [PSCustomObject]$Config
     )
+    $newSha = $Config.SHA
+    $gitUser = git config --global user.name
+    $autoCommitMessage = "Automatic asset update from $gitUser."
 
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
     try {
         Push-Location $assetRepo
+        $statusResult = git status --porcelain
 
-        git status
+        if(!$statusResult){
+            Write-Host "No pending changes."
+            exit(0)
+        }
+
+        $alreadyLatestSHA = $true
+        $retrievedLatestSHA = git rev-parse origin/$($Config.AssetsRepoBranch)
+
+        # if the above command fails with code 128, the target auto commit branch does not exist, and we need to create it
+        if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){
+            Write-Host "Need to checkout new branch based on current changes."
+            $alreadyLatestSHA = $true
+        }
+        elseif ($LASTEXITCODE -ne 0) {
+            Write-Error "A non-code-128 error is not expected here. Check git command output above."
+            exit(1)
+        }
+        # if the branch already exists, we need to check to see if we're actually on the latest commit 
+        else {
+            if($retrievedLatestSHA -ne $Config.SHA){
+                $alreadyLatestSHA = $false
+            }
+        }
+
+        Write-Host "Based off latest commit: $alreadyLatestSHA"
+        
+        # if we are based off the latest commit (or it's a nonexistent branch), all we gotta do is checkout a new branch of the correct name and push it.
+        if($alreadyLatestSHA) {
+            Write-Host "git checkout -b $($Config.AssetsRepoBranch)"
+            git checkout -b $($Config.AssetsRepoBranch)
+            Write-Host "git add -A ."
+            git add -A .
+            Write-Host "git commit -m `"$autoCommitMessage`""
+            git commit -m "$autoCommitMessage"
+            Write-Host "git push origin $($Config.AssetsRepoBranch)"
+            git push origin $($Config.AssetsRepoBranch)
+        }
+        else {
+            # TODO is there a noticable downside to stash versus saving our own patchfile like in git-branch-push?
+            Write-Host "git stash"
+            git stash
+
+            # TODO we want to only fetch the latest commit, instead of the entire branch
+            Write-Host "git fetch origin $($Config.AssetsRepoBranch)"
+            git fetch origin $($Config.AssetsRepoBranch)
+            Write-Host "git checkout origin $($Config.AssetsRepoBranch)"
+            git checkout origin $($Config.AssetsRepoBranch)
+
+            Write-Host "git stash pop"
+            git stash pop
+
+            Write-Host "git add -A ."
+            git add -A .
+            Write-Host "git commit -m `"$autoCommitMessage`""
+            git commit -m "$autoCommitMessage"
+            Write-Host "git push origin $($Config.AssetsRepoBranch)"
+            git push origin $($Config.AssetsRepoBranch)
+        }
+
+        $newSha = git rev-parse HEAD
+        Update-AssetsJson -Config $Config -NewSHA $newSha
     }
     catch {
         Write-Error $_
@@ -448,39 +514,6 @@ Function Push-AssetsRepo-Update {
     finally {
         Pop-Location
     }
-    # do we have changes?
 
-    $alreadyLatestSHA = $true
-    $retrievedLatestSHA = git rev-parse origin/$($Config.AssetsRepoBranch)
-
-    # if we've been based off of `main` due to the fact that there is no currently existing target branch, the above command will fail with code 128
-    if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){
-        Write-Host "Need to checkout new branch based on current changes."
-    }
-    elseif ($LASTEXITCODE -ne 0) {
-        Write-Error "A non-code-128 error is not expected here. Check git command output above."
-        exit(1)
-    }
-    
-    if($retrievedLatestSHA -ne $Config.SHA){
-        $alreadyLatestSHA = $false
-    }
-
-    if($alreadyLatestSHA){
-        # if we are based off the latest commit, add the changes to current branch
-    }
-    else{
-        # if we are NOT based off the latest commit, we will need to:
-        #  stash changes 
-        #  check that SHA out
-        #  then unstash changes
-    }
-    
-    # after commit, but before push:
-    $newSha = git rev-parse HEAD
-    Write-Host "New SHA is $newSha"
-    # git push $targetBranch
-
-    Update-AssetsJson -Config $Config -NewSHA $newSha
     return $newSha
 }

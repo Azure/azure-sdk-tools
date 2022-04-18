@@ -5,13 +5,13 @@ BeforeAll {
   # wipe the test runs 
   $testPath = Get-TestFolder
   
-  if ((Test-Path $testPath)){
+  if (Test-Path $testPath){
     Remove-Item -Recurse -Force $testPath
   }
 
   # wipe the assets repo
   $location = Resolve-AssetStore-Location
-  if ((Test-Path $location)){
+  if (Test-Path $location){
     Remove-Item -Recurse -Force $location
   }
 
@@ -19,7 +19,9 @@ BeforeAll {
 }
 
 AfterAll {
-  DeInitialize-Integration-Branches
+  if(!($env:DISABLE_INTEGRATION_BRANCH_CLEANUP)){
+    DeInitialize-Integration-Branches
+  }
 }
 
 Describe "AssetsModuleTests" {
@@ -281,38 +283,37 @@ Describe "AssetsModuleTests" {
       Initialize-AssetsRepo -Config $config
       $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
       
-      # foreach($file in $files){
-      #   $sourcePath = Join-Path $testFolder $file 
-      #   $targetPath = Join-Path $assetRepoFolder $config.AssetsRepoPrefixPath $file
+      foreach($file in $files){
+        $sourcePath = Join-Path $testFolder $file 
+        $targetPath = Join-Path $assetRepoFolder $config.AssetsRepoPrefixPath $file
 
-      #   $targetFolder = Split-Path $targetPath
-      #   if(-not (Test-Path $targetFolder)){
-      #     mkdir -p $targetFolder
-      #   }
+        $targetFolder = Split-Path $targetPath
+        if(-not (Test-Path $targetFolder)){
+          mkdir -p $targetFolder
+        }
 
-      #   Copy-Item  -Force -Path $sourcePath -Destination $targetPath
-      # }
-      # $config.AssetsRepoBranch | Should -not -Be $sourceBranch
+        Copy-Item  -Force -Path $sourcePath -Destination $targetPath
+      }
+      $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Write-Host $assetRepoFolder
+      Push-AssetsRepo-Update -Config $Config
 
-      # Push-AssetsRepo-Update -Config $Config
-
-      # grab the remote json
-      # try {
-      #   Push-Location $assetRepoFolder
-      #   $repoBranchSHA = git rev-parse origin/$($config.AssetsRepoBranch) --quiet
-      # }
-      # finally {
-      #   Pop-Location
-      # }
+      try {
+        Push-Location $assetRepoFolder
+        $repoBranchSHA = git rev-parse origin/$($config.AssetsRepoBranch) --quiet
+      }
+      finally {
+        Pop-Location
+      }
 
       # re-parse from the on-disk json
-      # $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+      $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
-      # reparsed config from disk should match the updated sha should match the SHA we get back from the repo
-      # $repoBranchSHA | Should -Be $config.SHA
-      # $configReparsed.SHA | Should -Be $config.SHA
+      # re-parsed config from disk should
+      #  -> match the updated sha
+      #  -> match the SHA we get back from the repo
+      $repoBranchSHA | Should -Be $config.SHA
+      $configReparsed.SHA | Should -Be $config.SHA
     }
     
     It "Should push a clean new commmit to the target branch." {

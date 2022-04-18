@@ -67,8 +67,15 @@ Function Initialize-Integration-Branches {
     Write-Host $adjustedBranchName
     if($lsremoteResponse){
       Write-Host "git checkout $($Config.AssetsRepoBranch)"
+      Write-Host "git checkout *"
+      Write-Host "git clean -xdf"
       Write-Host "git checkout -b $adjustedBranchName"
       Write-Host "git push origin $adjustedBranchName"
+      git checkout $Config.AssetsRepoBranch
+      git checkout *
+      git clean -xdf
+      git checkout -b $adjustedBranchName
+      git push origin $adjustedBranchName
     }
    }
   catch {
@@ -97,11 +104,15 @@ Function DeInitialize-Integration-Branches {
     Push-Location $tempPath
     git clone https://github.com/Azure/azure-sdk-assets-integration .
 
-    $branches = git branch
-
+    $branches = git branch -a
+    
     foreach($branch in $branches){
-      if($branch.StartsWith("test_")){
-        Write-Host "git push origin --delete $branch"
+      $adjustedName = $branch.Replace("remotes/origin/", "").Trim()
+      if($adjustedName.Contains("test_")){
+        Write-Host "`"$adjustedName`""
+
+        git checkout $adjustedName
+        git push origin --delete $adjustedName
       }
     }
    }

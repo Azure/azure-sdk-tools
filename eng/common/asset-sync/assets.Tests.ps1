@@ -255,9 +255,9 @@ Describe "AssetsModuleTests" {
 
   # each of the tests in this context is resolving one of the known cases when pushing changes to an auto commit branch
   # In order:
-  #    - Auto Branch Doesn't Exist Yet, Go Off Main
-  #    - Auto Branch Exists, we're on the latest commit
-  #    - Auto Branch Exists, we're on a commit from the past
+  #    - Auto Branch Doesn't Exist Yet, Go Off Main, push to new branch
+  #    - Auto Branch Exists, we're on the latest commit, push new commit to branch
+  #    - Auto Branch Exists, we're on a commit from the past, push new commit to branch
     Context "Push-AssetsRepo-Update" {
     It "Should push a new branch/commit to a non-existent target branch." {
       $sourceBranch = "scenario_new_push"
@@ -275,12 +275,9 @@ Describe "AssetsModuleTests" {
         "sdk/tables/azure-data-tables/assets.json"
       )
 
-      # prepare the test area
       $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
-
       $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
-      # initialize the assets repo and copy changes into it
       Initialize-AssetsRepo -Config $config
       $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
       
@@ -295,20 +292,19 @@ Describe "AssetsModuleTests" {
 
         Copy-Item  -Force -Path $sourcePath -Destination $targetPath
       }
-      
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Push-AssetsRepo-Update -Config $Config
+      # Push-AssetsRepo-Update -Config $Config
     }
     
-    It "Should push a clean new commmit to the target branch" {
+    It "Should push a clean new commmit to the target branch." {
       $sourceBranch = "scenario_clean_push"
       $recordingJson = [PSCustomObject]@{
         AssetsRepo = "Azure/azure-sdk-assets-integration"
         AssetsRepoPrefixPath = "python/recordings/"
         AssetsRepoId = ""
         AssetsRepoBranch = "$sourceBranch"
-        SHA = ""
+        SHA = "e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7"
       }
 
       $files = @(
@@ -317,22 +313,36 @@ Describe "AssetsModuleTests" {
         "sdk/tables/assets.json"
       )
 
-      # prepare the test area
       $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
       $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables")
+      $config.AssetsRepoBranch | Should -not -Be $sourceBranch
+
+      # Initialize-AssetsRepo -Config $config
+      # $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
     }
 
     It "Should push a new commit on top of an existing one. Doing a pre-fetch if necessary." {
+      $sourceBranch = "scenario_conflict_push"
+      $recordingJson = [PSCustomObject]@{
+        AssetsRepo = "Azure/azure-sdk-assets-integration"
+        AssetsRepoPrefixPath = "python/recordings/"
+        AssetsRepoId = ""
+        AssetsRepoBranch = "$sourceBranch"
+        SHA = "e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7"
+      }
+
       $files = @(
-        "sdk/storage/",
-        "sdk/storage/azure-storage-blob/awesome.json"
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_timeout.json",
+        "sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_retry_on_server_error.json",
+        "sdk/tables/assets.json"
       )
-      $assetsContent = Get-Basic-AssetsJson
-      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
 
-      $config = Resolve-AssetsJson -TargetPath $testLocation
+      $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
+      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables")
+      $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Initialize-AssetsRepo -Config $config
+      # Initialize-AssetsRepo -Config $config
+      # $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
     }
   }
 }

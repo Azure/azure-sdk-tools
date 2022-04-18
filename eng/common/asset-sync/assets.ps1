@@ -274,7 +274,7 @@ Function Resolve-CheckoutPaths {
 Given a configuration, determine the _current_ target path.
 
 .DESCRIPTION 
-Determines the presence of a branch on the git repo. If the relevant auto/<service> branch does not exist, 
+Determines the presence of a branch on the git repo. If the relevant auto/<service> branch does not exist, we should use main.
 #>
 Function Resolve-TargetBranch {
     param(
@@ -282,13 +282,21 @@ Function Resolve-TargetBranch {
         [PSCustomObject] $Config
     )
     $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    $branch = "main"
     try {
         Push-Location $assetRepo
-        git show-ref refs/heads/$Config.AssetsRepoBranch --quiet
+        
+        $latestCommit = git rev-parse "origin/$($Config.AssetsRepoBranch)"
+
+        if($LASTEXITCODE -eq 0) {
+            $branch = $Config.AssetsRepoBranch
+        }
     }
     finally {
         Pop-Location
     }
+
+    return $branch
 }
 
 <#
@@ -439,20 +447,34 @@ Function Push-AssetsRepo-Update {
     finally {
         Pop-Location
     }
+    # do we have changes?
 
+    $alreadyLatestSHA = $true
+    $retrievedLatestSHA = git rev-parse origin/$Config.AssetsRepoBranch
 
-    # if there are changes, check to see if we're the latest commit
-
-
-    # if we are based off the latest commit, add the changes, push
-
-
-    # if we are NOT based off the latest commit, we will need to:
-    #  stash changes 
-    #  check that SHA out
-    #  then unstash changes
+    # if we've been based off of `main` due to the fact that there is no currently existing target branch, the above command will fail with code 128
+    if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){
+        Write-Host "Need to checkout new branch based on current changes."
+    }
+    elseif ($LASTEXITCODE -ne 0) {
+        Write-Error "A non-code-128 error is not expected here. Check git command output above."
+        exit(1)
+    }
     
-    # commit w/ details
+    if($retrievedLatestSHA -ne $Config.SHA){
+        $alreadyLatestSHA = $false
+    }
+
+    if($alreadyLatestSHA){
+        # if we are based off the latest commit, add the changes to current branch
+    }
+    else{
+        # if we are NOT based off the latest commit, we will need to:
+        #  stash changes 
+        #  check that SHA out
+        #  then unstash changes
+    }
+    
     # after commit, but before push:
     $newSha = git rev-parse HEAD
 

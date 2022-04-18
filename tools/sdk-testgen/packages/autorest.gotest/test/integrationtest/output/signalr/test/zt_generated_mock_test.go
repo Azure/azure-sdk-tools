@@ -45,7 +45,6 @@ func TestOperations_List(t *testing.T) {
 	client, err := test.NewOperationsClient(cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager(nil)
 	for pager.More() {
@@ -85,7 +84,6 @@ func TestSignalR_CheckNameAvailability(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
@@ -118,7 +116,6 @@ func TestSignalR_ListBySubscription(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
@@ -259,7 +256,6 @@ func TestSignalR_ListByResourceGroup(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
@@ -401,7 +397,6 @@ func TestSignalR_Get(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -538,7 +533,6 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -756,7 +750,6 @@ func TestSignalR_Delete(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
@@ -779,7 +772,6 @@ func TestSignalR_Update(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -997,7 +989,6 @@ func TestSignalR_ListKeys(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListKeys(ctx,
 		"myResourceGroup",
@@ -1023,7 +1014,6 @@ func TestSignalR_RegenerateKey(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRegenerateKey(ctx,
 		"myResourceGroup",
@@ -1049,7 +1039,6 @@ func TestSignalR_Restart(t *testing.T) {
 	client, err := test.NewSignalRClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
@@ -1072,7 +1061,6 @@ func TestUsages_List(t *testing.T) {
 	client, err := test.NewUsagesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("eastus",
 		nil)
@@ -1122,7 +1110,6 @@ func TestSignalRPrivateEndpointConnections_List(t *testing.T) {
 	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
@@ -1176,7 +1163,6 @@ func TestSignalRPrivateEndpointConnections_Get(t *testing.T) {
 	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
@@ -1225,7 +1211,6 @@ func TestSignalRPrivateEndpointConnections_Update(t *testing.T) {
 	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Update(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
@@ -1285,7 +1270,6 @@ func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
 	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
@@ -1309,7 +1293,6 @@ func TestSignalRPrivateLinkResources_List(t *testing.T) {
 	client, err := test.NewSignalRPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
@@ -1361,7 +1344,6 @@ func TestSignalRSharedPrivateLinkResources_List(t *testing.T) {
 	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	pager := client.NewListPager("myResourceGroup",
 		"mySignalRService",
@@ -1404,7 +1386,6 @@ func TestSignalRSharedPrivateLinkResources_Get(t *testing.T) {
 	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"upstream",
@@ -1442,7 +1423,6 @@ func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"upstream",
@@ -1491,7 +1471,6 @@ func TestSignalRSharedPrivateLinkResources_Delete(t *testing.T) {
 	client, err := test.NewSignalRSharedPrivateLinkResourcesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"upstream",

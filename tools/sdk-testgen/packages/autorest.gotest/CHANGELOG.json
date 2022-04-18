@@ -2,6 +2,18 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "3.1.1",
+      "tag": "@autorest/gotest_v3.1.1",
+      "date": "Mon, 18 Apr 2022 06:25:24 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix wrong log.Fatalf usage."
+          }
+        ]
+      }
+    },
+    {
       "version": "3.1.0",
       "tag": "@autorest/gotest_v3.1.0",
       "date": "Fri, 15 Apr 2022 03:08:44 GMT",

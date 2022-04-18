@@ -262,10 +262,11 @@ Function Resolve-CheckoutPaths {
 
     if(!$assetsJsonFolder -or $assetsJsonFolder -in @(".", "./", ".\"))
     {
-        return $Config.AssetsRepoPrefixPath
+        return $Config.AssetsRepoPrefixPath.Replace("`\", "/")
     }
     else {
-        return (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder)
+        $result = (Join-Path $Config.AssetsRepoPrefixPath $assetsJsonFolder).Replace("`\", "/")
+        return $result
     }
 }
 
@@ -333,20 +334,20 @@ Function Initialize-AssetsRepo {
         try {
             Push-Location $assetRepo
         
-            Write-Verbose "git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) ."
+            Write-Host "git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) ."
             git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) .
 
             $targetPath = Resolve-CheckoutPaths -Config $Config
             $targetBranch = Resolve-TargetBranch -Config $Config
 
-            Write-Verbose "git sparse-checkout init"
+            Write-Host "git sparse-checkout init"
             git sparse-checkout init
 
-            Write-Verbose "git sparse-checkout set '/*' '!/*/' $targetPath"
+            Write-Host "git sparse-checkout set '/*' '!/*/' $targetPath"
             git sparse-checkout set '/*' '!/*/' $targetPath
             
-            Write-Verbose "git checkout $targetBranch"
-            git checkout $targetBranch
+            Write-Host "git checkout $($Config.SHA)"
+            git checkout $($Config.SHA)
             
             if($LASTEXITCODE -gt 0){
                 throw "Unable to clone to directory $assetRepo"
@@ -377,19 +378,19 @@ Function Reset-AssetsRepo {
         $assetRepo = Resolve-AssetRepo-Location -Config $Config
         Push-Location  $assetRepo
 
-        Write-Verbose "git checkout *"
+        Write-Host "git checkout *"
         git checkout *
-        Write-Verbose "git clean -xdf"
+        Write-Host "git clean -xdf"
         git clean -xdf
-        Write-Verbose "git reset --hard (Get-Default-Branch)"
+        Write-Host "git reset --hard (Get-Default-Branch)"
         git reset --hard (Get-Default-Branch)
 
         # need to figure out the sparse checkouts if we want to optimize this as much as possible
         # for prototyping checking out the whole repo is fine
         if($AssetsRepoSHA){
-            Write-Verbose "git checkout $AssetsRepoSHA"
+            Write-Host "git checkout $AssetsRepoSHA"
             git checkout $AssetsRepoSHA
-            Write-Verbose "git pull"
+            Write-Host "git pull"
             git pull
         }
     }

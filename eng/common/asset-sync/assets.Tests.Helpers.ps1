@@ -51,10 +51,6 @@ Function Initialize-Integration-Branches {
   $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
   mkdir $tempPath | Out-Null
   
-  if($LASTEXITCODE -ne 0){
-    Write-Error "Unable to create Temp Directory"
-  }
-  
   try {
     Push-Location $tempPath
     Write-Host "git clone https://github.com/Azure/azure-sdk-assets-integration ."
@@ -95,10 +91,6 @@ Function DeInitialize-Integration-Branches {
 
   $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
   mkdir $tempPath | Out-Null
-  
-  if($LASTEXITCODE -ne 0){
-    Write-Error "Unable to create Temp Directory"
-  }
   
   try {
     Push-Location $tempPath

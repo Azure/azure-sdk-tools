@@ -294,7 +294,23 @@ Describe "AssetsModuleTests" {
       }
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      # Push-AssetsRepo-Update -Config $Config
+      Push-AssetsRepo-Update -Config $Config
+
+      # grab the remote json
+      try {
+        Push-Location $assetRepoFolder
+        $repoBranchSHA = git rev-parse origin/$($config.AssetsRepoBranch) --quiet
+      }
+      finally {
+        Pop-Location
+      }
+
+      # re-parse from the on-disk json
+      $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+
+      # reparsed config from disk should match the updated sha should match the SHA we get back from the repo
+      $repoBranchSHA | Should -Be $config.SHA
+      $configReparsed.SHA | Should -Be $config.SHA
     }
     
     It "Should push a clean new commmit to the target branch." {

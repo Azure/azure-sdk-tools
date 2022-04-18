@@ -450,7 +450,7 @@ Function Push-AssetsRepo-Update {
     # do we have changes?
 
     $alreadyLatestSHA = $true
-    $retrievedLatestSHA = git rev-parse origin/$Config.AssetsRepoBranch
+    $retrievedLatestSHA = git rev-parse origin/$($Config.AssetsRepoBranch)
 
     # if we've been based off of `main` due to the fact that there is no currently existing target branch, the above command will fail with code 128
     if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){
@@ -477,7 +477,7 @@ Function Push-AssetsRepo-Update {
     
     # after commit, but before push:
     $newSha = git rev-parse HEAD
-
+    Write-Host "New SHA is $newSha"
     # git push $targetBranch
 
     Update-AssetsJson -Config $Config -NewSHA $newSha

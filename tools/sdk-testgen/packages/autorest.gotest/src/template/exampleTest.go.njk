@@ -23,13 +23,11 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
-        return
 	}
 	ctx := context.Background()
 	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersPlaceholderOutput + ", " if example.clientParametersPlaceholderOutput else ""}}cred, nil)
     if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
 	}
 	{%- if example.returnInfo.length == 2 %}
 	{%- if example.isLRO %}
@@ -39,13 +37,11 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
 	{%- endif %}
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
-        return
 	}
 	{%- if example.isLRO %}
 	{% if example.checkResponse %}res{% else %}_{% endif %}, err {% if loop.first and example.checkResponse %}:{% endif %}= poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
 		log.Fatalf("failed to pull the result: %v", err)
-        return
 	}
 	{%- endif %}
 	{%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
@@ -54,7 +50,6 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
         nextResult, err := pager.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-            return
 		}
 		for _, v := range nextResult.{{example.pageableItemName}} {
             // TODO: use page item
@@ -69,7 +64,6 @@ func Example{{example.operationGroup.language.go.clientName}}_{{example.opName}}
         nextResult, err := res.NextPage(ctx)
 		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
-            return
 		}
 		for _, v := range nextResult.{{example.pageableItemName}} {
             // TODO: use page item

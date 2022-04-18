@@ -1,0 +1,432 @@
+==advisor==
+        azure-mgmt-advisor: True
+==agfood==
+        azure-mgmt-agfood: True
+==agrifood==
+        azure-agrifood-farming: True
+        azure-mgmt-agrifood: True
+==aks==
+        azure-mgmt-devspaces: True
+==alertsmanagement==
+        azure-mgmt-alertsmanagement: True
+==anomalydetector==
+        azure-ai-anomalydetector: True
+==apimanagement==
+        azure-mgmt-apimanagement: True
+==app==
+        azure-mgmt-app: True
+==appconfiguration==
+        azure-appconfiguration: True
+        azure-mgmt-appconfiguration: True
+==applicationinsights==
+        azure-applicationinsights: True
+        azure-mgmt-applicationinsights: True
+==appplatform==
+        azure-mgmt-appplatform: True
+==appservice==
+        azure-mgmt-web: True
+==attestation==
+        azure-mgmt-attestation: True
+        azure-security-attestation: True
+==authorization==
+        azure-mgmt-authorization: True
+==automanage==
+        azure-mgmt-automanage: True
+==automation==
+        azure-mgmt-automation: True
+==azurearcdata==
+        azure-mgmt-azurearcdata: True
+==azurestack==
+        azure-mgmt-azurestack: True
+==azurestackhci==
+        azure-mgmt-azurestackhci: True
+==baremetalinfrastructure==
+        azure-mgmt-baremetalinfrastructure: True
+==batch==
+        azure-batch: True
+        azure-mgmt-batch: True
+==batchai==
+        azure-mgmt-batchai: True
+==billing==
+        azure-mgmt-billing: True
+==botservice==
+        azure-mgmt-botservice: True
+==cdn==
+        azure-mgmt-cdn: True
+==changeanalysis==
+        azure-mgmt-changeanalysis: True
+==chaos==
+        azure-mgmt-chaos: True
+==cognitivelanguage==
+        azure-ai-language-conversations: True
+        azure-ai-language-questionanswering: True
+==cognitiveservices==
+        azure-cognitiveservices-anomalydetector: True
+        azure-cognitiveservices-formrecognizer: True
+        azure-cognitiveservices-knowledge-qnamaker: True
+        azure-cognitiveservices-language-luis: True
+        azure-cognitiveservices-language-spellcheck: True
+        azure-cognitiveservices-language-textanalytics: True
+        azure-cognitiveservices-personalizer: True
+        azure-cognitiveservices-search-autosuggest: True
+        azure-cognitiveservices-search-customimagesearch: True
+        azure-cognitiveservices-search-customsearch: True
+        azure-cognitiveservices-search-entitysearch: True
+        azure-cognitiveservices-search-imagesearch: True
+        azure-cognitiveservices-search-newssearch: True
+        azure-cognitiveservices-search-videosearch: True
+        azure-cognitiveservices-search-visualsearch: True
+        azure-cognitiveservices-search-websearch: True
+        azure-cognitiveservices-vision-computervision: True
+        azure-cognitiveservices-vision-contentmoderator: True
+        azure-cognitiveservices-vision-customvision: True
+        azure-cognitiveservices-vision-face: True
+        azure-mgmt-cognitiveservices: True
+==commerce==
+        azure-mgmt-commerce: True
+==communication==
+        azure-communication-chat: True
+        azure-communication-identity: True
+        azure-communication-networktraversal: True
+        azure-communication-phonenumbers: True
+        azure-communication-sms: True
+        azure-mgmt-communication: True
+==compute==
+        azure-mgmt-avs: True
+        azure-mgmt-compute: True
+        azure-mgmt-imagebuilder: True
+        azure-mgmt-vmwarecloudsimple: True
+==confidentialledger==
+        azure-confidentialledger: True
+        azure-mgmt-confidentialledger: True
+==confluent==
+        azure-mgmt-confluent: True
+==connectedvmware==
+        azure-mgmt-connectedvmware: True
+==consumption==
+        azure-mgmt-consumption: True
+==containerinstance==
+        azure-mgmt-containerinstance: True
+==containerregistry==
+        azure-containerregistry: True
+        azure-mgmt-containerregistry: True
+==containerservice==
+        azure-mgmt-containerservice: True
+==core==
+        azure: False : None
+        azure-common: True
+        azure-core: True
+        azure-core-tracing-opencensus: True
+        azure-core-tracing-opentelemetry: True
+        azure-mgmt: False : None
+        azure-mgmt-core: True
+        azure-servicemanagement-legacy: True
+==cosmos==
+        azure-cosmos: True
+        azure-mgmt-cosmosdb: True
+        azure-mgmt-documentdb: True
+==costmanagement==
+        azure-mgmt-costmanagement: True
+==customproviders==
+        azure-mgmt-customproviders: True
+==databox==
+        azure-mgmt-databox: True
+==databoxedge==
+        azure-mgmt-databoxedge: True
+==databricks==
+        azure-mgmt-databricks: True
+==datadog==
+        azure-mgmt-datadog: True
+==datafactory==
+        azure-mgmt-datafactory: True
+==datalake==
+        azure-mgmt-datalake-store: True
+==datamigration==
+        azure-mgmt-datamigration: True
+==dataprotection==
+        azure-mgmt-dataprotection: True
+==datashare==
+        azure-mgmt-datashare: True
+==deploymentmanager==
+        azure-mgmt-deploymentmanager: True
+==desktopvirtualization==
+        azure-mgmt-desktopvirtualization: True
+==deviceupdate==
+        azure-iot-deviceupdate: True
+        azure-mgmt-deviceupdate: True
+==devtestlabs==
+        azure-mgmt-devtestlabs: True
+==digitaltwins==
+        azure-digitaltwins-core: True
+        azure-mgmt-digitaltwins: True
+==dnsresolver==
+        azure-mgmt-dnsresolver: True
+==edgegateway==
+        azure-mgmt-edgegateway: True
+==edgeorder==
+        azure-mgmt-edgeorder: True
+==elastic==
+        azure-mgmt-elastic: True
+==eventgrid==
+        azure-eventgrid: True
+        azure-mgmt-eventgrid: True
+==eventhub==
+        azure-eventhub: True
+        azure-eventhub-checkpointstoreblob: True
+        azure-eventhub-checkpointstoreblob-aio: True
+        azure-eventhub-checkpointstoretable: True
+        azure-mgmt-eventhub: True
+==extendedlocation==
+        azure-mgmt-extendedlocation: True
+==fluidrelay==
+        azure-mgmt-fluidrelay: True
+==formrecognizer==
+        azure-ai-formrecognizer: True
+==graphrbac==
+        azure-graphrbac: True
+==hanaonazure==
+        azure-mgmt-hanaonazure: True
+==hdinsight==
+        azure-mgmt-hdinsight: True
+==healthbot==
+        azure-mgmt-healthbot: True
+==healthcareapis==
+        azure-mgmt-healthcareapis: True
+==hybridcompute==
+        azure-mgmt-hybridcompute: True
+==hybridkubernetes==
+        azure-mgmt-hybridkubernetes: True
+==hybridnetwork==
+        azure-mgmt-hybridnetwork: True
+==identity==
+        azure-identity: True
+==iothub==
+        azure-mgmt-iotcentral: True
+        azure-mgmt-iothub: True
+        azure-mgmt-iothubprovisioningservices: True
+==keyvault==
+        azure-keyvault: True
+        azure-keyvault-administration: True
+        azure-keyvault-certificates: True
+        azure-keyvault-keys: True
+        azure-keyvault-secrets: True
+        azure-mgmt-keyvault: True
+==kubernetesconfiguration==
+        azure-mgmt-kubernetesconfiguration: True
+==kusto==
+        azure-mgmt-kusto: True
+==labservices==
+        azure-mgmt-labservices: True
+==loadtestservice==
+        azure-mgmt-loadtestservice: True
+==loganalytics==
+        azure-loganalytics: True
+        azure-mgmt-loganalytics: True
+==logic==
+        azure-mgmt-logic: True
+==logz==
+        azure-mgmt-logz: True
+==machinelearning==
+        azure-mgmt-guestconfig: True
+        azure-mgmt-machinelearningcompute: True
+        azure-mgmt-machinelearningservices: True
+==maintenance==
+        azure-mgmt-maintenance: True
+==managedservices==
+        azure-mgmt-managedservices: True
+==managementgroups==
+        azure-mgmt-managementgroups: True
+==managementpartner==
+        azure-mgmt-managementpartner: True
+==maps==
+        azure-mgmt-maps: True
+==marketplaceordering==
+        azure-mgmt-marketplaceordering: True
+==media==
+        azure-media-analytics-edge: True
+        azure-mgmt-media: True
+==metricsadvisor==
+        azure-ai-metricsadvisor: True
+==mixedreality==
+        azure-mgmt-mixedreality: True
+        azure-mixedreality-authentication: True
+==mobilenetwork==
+        azure-mgmt-mobilenetwork: True
+==modelsrepository==
+        azure-iot-modelsrepository: True
+==monitor==
+        azure-mgmt-monitor: True
+        azure-monitor: False : None
+        azure-monitor-opentelemetry-exporter: True
+        azure-monitor-query: True
+==netapp==
+        azure-mgmt-netapp: True
+==network==
+        azure-mgmt-dns: True
+        azure-mgmt-frontdoor: True
+        azure-mgmt-network: False : None
+        azure-mgmt-privatedns: True
+==notificationhubs==
+        azure-mgmt-notificationhubs: True
+==nspkg==
+        azure-agrifood-nspkg: True
+        azure-ai-language-nspkg: True
+        azure-ai-nspkg: True
+        azure-ai-translation-nspkg: True
+        azure-cognitiveservices-knowledge-nspkg: True
+        azure-cognitiveservices-language-nspkg: True
+        azure-cognitiveservices-nspkg: True
+        azure-cognitiveservices-search-nspkg: True
+        azure-cognitiveservices-vision-nspkg: True
+        azure-communication-nspkg: True
+        azure-data-nspkg: True
+        azure-digitaltwins-nspkg: True
+        azure-iot-nspkg: True
+        azure-keyvault-nspkg: True
+        azure-media-nspkg: True
+        azure-messaging-nspkg: True
+        azure-mgmt-datalake-nspkg: True
+        azure-mgmt-nspkg: True
+        azure-mixedreality-nspkg: True
+        azure-monitor-nspkg: True
+        azure-nspkg: True
+        azure-purview-nspkg: True
+        azure-search-nspkg: True
+        azure-security-nspkg: True
+        azure-storage-nspkg: True
+        azure-synapse-nspkg: True
+==oep==
+        azure-mgmt-oep: True
+==operationsmanagement==
+        azure-mgmt-operationsmanagement: True
+==orbital==
+        azure-mgmt-orbital: True
+==peering==
+        azure-mgmt-peering: True
+==policyinsights==
+        azure-mgmt-policyinsights: True
+==portal==
+        azure-mgmt-portal: True
+==powerbidedicated==
+        azure-mgmt-powerbidedicated: True
+==powerbiembedded==
+        azure-mgmt-powerbiembedded: True
+==purview==
+        azure-mgmt-purview: True
+        azure-purview-administration: True
+        azure-purview-catalog: True
+        azure-purview-scanning: True
+==quantum==
+        azure-mgmt-quantum: True
+==quota==
+        azure-mgmt-quota: True
+==rdbms==
+        azure-mgmt-rdbms: True
+==recoveryservices==
+        azure-mgmt-recoveryservices: True
+        azure-mgmt-recoveryservicesbackup: True
+        azure-mgmt-recoveryservicessiterecovery: True
+==redhatopenshift==
+        azure-mgmt-redhatopenshift: True
+==redis==
+        azure-mgmt-redis: True
+==redisenterprise==
+        azure-mgmt-redisenterprise: True
+==regionmove==
+        azure-mgmt-regionmove: True
+==relay==
+        azure-mgmt-relay: True
+==remoterendering==
+        azure-mixedreality-remoterendering: True
+==reservations==
+        azure-mgmt-reservations: True
+==resourceconnector==
+        azure-mgmt-resourceconnector: True
+==resourcehealth==
+        azure-mgmt-resourcehealth: True
+==resourcemover==
+        azure-mgmt-resourcemover: True
+==resources==
+        azure-mgmt-msi: True
+        azure-mgmt-resource: True
+        azure-mgmt-resourcegraph: True
+==scheduler==
+        azure-mgmt-scheduler: True
+==schemaregistry==
+        azure-schemaregistry: True
+        azure-schemaregistry-avroencoder: True
+==search==
+        azure-mgmt-search: True
+        azure-search-documents: True
+==security==
+        azure-mgmt-security: True
+==securityinsight==
+        azure-mgmt-securityinsight: True
+==serialconsole==
+        azure-mgmt-serialconsole: True
+==servermanager==
+        azure-mgmt-servermanager: True
+==servicebus==
+        azure-mgmt-servicebus: True
+        azure-servicebus: True
+==servicefabric==
+        azure-mgmt-servicefabric: True
+        azure-servicefabric: True
+==servicefabricmanagedclusters==
+        azure-mgmt-servicefabricmanagedclusters: True
+==servicelinker==
+        azure-mgmt-servicelinker: True
+==signalr==
+        azure-mgmt-signalr: True
+==sql==
+        azure-mgmt-sql: True
+        azure-mgmt-sqlvirtualmachine: True
+==storage==
+        azure-mgmt-storage: True
+        azure-mgmt-storagecache: True
+        azure-mgmt-storageimportexport: True
+        azure-mgmt-storagesync: True
+        azure-storage: False : None
+        azure-storage-blob: True
+        azure-storage-blob-changefeed: True
+        azure-storage-file-datalake: True
+        azure-storage-file-share: True
+        azure-storage-queue: True
+==storagepool==
+        azure-mgmt-storagepool: True
+==streamanalytics==
+        azure-mgmt-streamanalytics: True
+==subscription==
+        azure-mgmt-subscription: True
+==support==
+        azure-mgmt-support: True
+==synapse==
+        azure-mgmt-synapse: True
+        azure-synapse: True
+        azure-synapse-accesscontrol: False : None
+        azure-synapse-artifacts: False : None
+        azure-synapse-managedprivateendpoints: True
+        azure-synapse-monitoring: True
+        azure-synapse-spark: False : None
+==tables==
+        azure-data-tables: True
+==template==
+        azure-template: True
+==testbase==
+        azure-mgmt-testbase: True
+==textanalytics==
+        azure-ai-textanalytics: True
+==timeseriesinsights==
+        azure-mgmt-timeseriesinsights: True
+==trafficmanager==
+        azure-mgmt-trafficmanager: True
+==translation==
+        azure-ai-translation-document: True
+==videoanalyzer==
+        azure-media-videoanalyzer-edge: True
+        azure-mgmt-videoanalyzer: True
+==webpubsub==
+        azure-messaging-webpubsubservice: True
+        azure-mgmt-webpubsub: True
+==workloadmonitor==
+        azure-mgmt-workloadmonitor: True

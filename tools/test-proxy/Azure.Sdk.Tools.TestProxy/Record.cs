@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.");
+                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.");
             }
 
             if (mode == EntryRecordMode.DontRecord)

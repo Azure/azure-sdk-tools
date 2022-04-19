@@ -98,6 +98,36 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        [HttpPost]
+        [AllowEmptyBody]
+        public async Task SetRecordingOptions([FromBody()] IDictionary<string, string> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            if(options != null)
+            {
+                if (options.Keys.Count == 0)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "At least one key is expected in the body being passed to SetRecordingOptions.");
+                }
+
+                if (options.TryGetValue("HandleRedirects", out var handleRedirectsString))
+                {
+                    if(Boolean.TryParse(handleRedirectsString, out var handleRedirectsBool)){
+                        _recordingHandler.HandleRedirects = handleRedirectsBool;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
+                    }
+                }
+            }
+            else
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
         public object GetSanitizer(string name, JsonDocument body)
         {
             return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);

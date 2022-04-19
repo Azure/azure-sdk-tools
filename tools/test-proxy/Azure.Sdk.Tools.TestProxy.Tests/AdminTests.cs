@@ -739,7 +739,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerThrowsOnMissingRequiredArgument()
+        public async Task TestAddSanitizerThrowsOnMissingRequiredArgument()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -766,7 +766,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerContinuesWithTwoRequiredParams()
+        public async Task TestAddSanitizerContinuesWithTwoRequiredParams()
         {
             var targetKey = "Content-Type";
             var targetString = "application/javascript";
@@ -795,6 +795,64 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var actualTargetKey = (string)typeof(HeaderStringSanitizer).GetField("_targetKey", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(addedSanitizer);
             Assert.Equal(targetKey, actualTargetKey);
             Assert.Equal(targetString, actualTargetString);
+        }
+
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"1\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"0\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"True\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"False\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"TRUE\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"FALSE\"}", false)]
+        public async Task TestSetRecordingOptionsHandlesValidInputs(string body, bool expectedSetting)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var requestBody = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.Body = requestBody;
+            httpContext.Request.ContentLength = requestBody.Length;
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await controller.SetRecordingOptions();
+            Assert.Equal(expectedSetting, testRecordingHandler.HandleRedirects);
+        }
+
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"anotherkey\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
+        [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
+        public async Task TestSetRecordingOptionsThrowsOnInvalidInputs(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var requestBody = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.Body = requestBody;
+            httpContext.Request.ContentLength = requestBody.Length;
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.SetRecordingOptions()
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains(errorText, assertion.Message);
         }
     }
 }

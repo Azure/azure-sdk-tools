@@ -25,7 +25,8 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public string CurrentBranch = "master";
+        public bool HandleRedirects = false;
+
         public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
@@ -44,6 +45,15 @@ namespace Azure.Sdk.Tools.TestProxy
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
             "Proxy-Connection",
+        };
+
+        public List<HttpStatusCode> RedirectStatusCodes = new List<HttpStatusCode>()
+        {
+            HttpStatusCode.Redirect,
+            HttpStatusCode.RedirectMethod,
+            HttpStatusCode.RedirectKeepVerb,
+            HttpStatusCode.PermanentRedirect,
+            HttpStatusCode.TemporaryRedirect
         };
 
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
@@ -129,6 +139,19 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
+        public async Task<HttpResponseMessage> HandleRedirectedRequestAsync(HttpRequestMessage request, HttpResponseMessage response)
+        {
+            if (HandleRedirects)
+            {
+                // TODO: follow the redirect silently
+                return response;
+            }
+            else
+            {
+                return response;
+            }
+        }
+
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
@@ -143,9 +166,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
-            var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
-            var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
-
+            if(RedirectStatusCodes.Contains(upstreamResponse.StatusCode)){
+                upstreamResponse = await HandleRedirectedRequestAsync(upstreamRequest, upstreamResponse);
+            }
 
             byte[] body = Array.Empty<byte>();
 

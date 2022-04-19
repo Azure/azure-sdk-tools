@@ -47,6 +47,7 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
 
 export type TaskResultCommon = {
     name: string;
+    pipelineBuildId: string;
     result?: PipelineResult;
     errorCount?: number;
     warningCount?: number;
@@ -83,6 +84,7 @@ export type TaskOutput = InitOutput | GenerateAndBuildOutput | TestOutput | unde
 export function setTaskResult(config: TaskBasicConfig, taskName: string) {
     taskResult = {
         name: taskName,
+        pipelineBuildId: "",
         result: 'success',
         errorCount: 0,
         warningCount: 0,

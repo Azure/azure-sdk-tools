@@ -22,3 +22,15 @@ export enum CodeGenerationPipelineTaskName {
     MockTest = 'MockTest',
     LiveTest = 'LiveTest',
 }
+
+export enum AzureSDKTasks {
+    Init = "init",
+    GenerateAndBuild = "generateAndBuild",
+    MockTest = "mockTest",
+    LiveTest = "liveTest",
+}
+
+export enum ServiceType {
+    DataPlane = "data-plane",
+    ResourceManager = "resource-manager",
+}

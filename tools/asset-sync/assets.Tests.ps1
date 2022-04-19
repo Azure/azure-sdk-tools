@@ -27,7 +27,7 @@ Describe "AssetsModuleTests" {
   Context "Evaluate-Target-Dir" {
     It "Should evaluate a root directory properly." {
       $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." "..")
-      $Value | Should -Be @($false, $true)
+      $Value | Should -Be @($false, $false)
     }
     
     It "Should evaluate a recording directory properly." {

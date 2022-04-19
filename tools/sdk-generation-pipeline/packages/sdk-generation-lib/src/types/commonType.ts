@@ -16,9 +16,14 @@ export enum RepoType {
     DevOps = 'devops',
 }
 
-export enum CodeGenerationPipelineTaskName {
-    Init = 'Init',
-    GenerateAndBuild = 'GenerateAndBuild',
-    MockTest = 'MockTest',
-    LiveTest = 'LiveTest',
+export enum AzureSDKTaskName {
+    Init = "init",
+    GenerateAndBuild = "generateAndBuild",
+    MockTest = "mockTest",
+    LiveTest = "liveTest",
+}
+
+export enum ServiceType {
+    DataPlane = "data-plane",
+    ResourceManager = "resource-manager",
 }

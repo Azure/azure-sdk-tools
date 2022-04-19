@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import { createTaskResult, TaskResult, CodeGenerationPipelineTaskName, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
+import { createTaskResult, AzureSDKTaskName, TaskResult, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
 
 function printHelp() {
-    console.log('usage: generateResult --codegenName --logfile --taskname --resultOutputPath');
+    console.log('usage: generateResult --pipelineBuildId --logfile --taskname --resultOutputPath');
     console.log('                      [--taskOutput] [--logFilter]\n');
     console.log('taskname: must be one of [Init, GenerateAndBuild, MockTest, LiveTest]');
 }
 
 async function main() {
     const args = parseArgs(process.argv);
-    const codegenName = args['codegenName'];
+    const pipelineBuildId = args['pipelineBuildId'];
     const logfile = args['logfile'];
     const logFilterStr = args['logFilter'];
     const taskname = args['taskname'];
@@ -19,9 +19,9 @@ async function main() {
     let taskOutputObj: TaskOutput = undefined;
     let logFilter: LogFilter = undefined;
 
-    if (codegenName === undefined) {
+    if (pipelineBuildId === undefined) {
         printHelp();
-        throw new Error(`codegenName is empty`);
+        throw new Error(`pipelineBuildId is empty`);
     }
     if (logfile === undefined) {
         printHelp();
@@ -30,7 +30,7 @@ async function main() {
     if (taskname === undefined) {
         printHelp();
         throw new Error(`taskname is empty`);
-    } else if (Object.values(CodeGenerationPipelineTaskName).includes(taskname)) {
+    } else if (Object.values(AzureSDKTaskName).includes(taskname)) {
         printHelp();
         throw new Error(`invalid taskname`);
     }
@@ -45,7 +45,7 @@ async function main() {
         logFilter = JSON.parse(logFilterStr);
     }
 
-    const taskResult: TaskResult = createTaskResult(codegenName, logfile, logFilter, taskname, taskOutputObj);
+    const taskResult: TaskResult = createTaskResult(pipelineBuildId, taskname, logfile, logFilter, taskOutputObj);
 
     fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), { encoding: 'utf-8' });
     console.log('Generate Success !!!');
@@ -76,3 +76,4 @@ main().catch((e) => {
     ${e.stack}`);
     process.exit(1);
 });
+

@@ -493,8 +493,8 @@ Function Push-AssetsRepo-Update {
             # TODO we want to only fetch the latest commit, instead of the entire branch
             Write-Host "git fetch origin $($Config.AssetsRepoBranch)"
             git fetch origin $($Config.AssetsRepoBranch)
-            Write-Host "git checkout origin $($Config.AssetsRepoBranch)"
-            git checkout origin $($Config.AssetsRepoBranch)
+            Write-Host "git checkout $($Config.AssetsRepoBranch)"
+            git checkout $($Config.AssetsRepoBranch)
 
             Write-Host "git stash pop"
             git stash pop

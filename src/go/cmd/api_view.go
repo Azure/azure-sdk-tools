@@ -13,9 +13,28 @@ import (
 
 // CreateAPIView generates the output file that the API view tool uses.
 func CreateAPIView(pkgDir, outputDir string) error {
-	m, err := NewModule(pkgDir)
+	review, err := createReview(pkgDir)
 	if err != nil {
 		panic(err)
+	}
+	if outputDir == "." {
+		outputDir = ""
+	} else if !strings.HasSuffix(outputDir, "/") {
+		outputDir = fmt.Sprintf("%s/", outputDir)
+	}
+	filename := fmt.Sprintf("%s%s.json", outputDir, review.Name)
+	file, _ := json.MarshalIndent(review, "", " ")
+	err = ioutil.WriteFile(filename, file, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func createReview(pkgDir string) (PackageReview, error) {
+	m, err := NewModule(pkgDir)
+	if err != nil {
+		return PackageReview{}, err
 	}
 	tokenList := &[]Token{}
 	nav := []Navigation{}
@@ -49,22 +68,10 @@ func CreateAPIView(pkgDir, outputDir string) error {
 			ChildItems:   navItems,
 		})
 	}
-	review := PackageReview{
+	return PackageReview{
 		Language:   "Go",
 		Name:       m.Name,
 		Tokens:     *tokenList,
 		Navigation: nav,
-	}
-	if outputDir == "." {
-		outputDir = ""
-	} else if !strings.HasSuffix(outputDir, "/") {
-		outputDir = fmt.Sprintf("%s/", outputDir)
-	}
-	filename := fmt.Sprintf("%s%s.json", outputDir, m.Name)
-	file, _ := json.MarshalIndent(review, "", " ")
-	err = ioutil.WriteFile(filename, file, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	}, nil
 }

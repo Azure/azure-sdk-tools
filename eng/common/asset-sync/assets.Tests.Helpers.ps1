@@ -1,3 +1,11 @@
+# This powershell script contains multiple functions that are dot-included in the BeforeAll function of assets.Tests.ps1
+#
+# Describe-TestFolder is the primary entrypoint, and is used to create a test environment given some basic setup input. This function is used to:
+#  - Create faux recording.jsons and place them in a fake language repo of any structure
+#  - Create any fake language repo structure with some random sample data
+#  - Dynamically create a copy of the assets repo within a local folder to actually create real test scenarios
+#  - Will push duplicates of test scenario branches to alternative, guid-fied branch names for actual push/pull operations.
+
 Function Get-Basic-AssetsJson {
   param(
     [boolean]$RandomizeRepoId = $true
@@ -63,15 +71,15 @@ Function Initialize-Integration-Branches {
     Write-Host $adjustedBranchName
     if($lsremoteResponse){
       Write-Host "git checkout $($Config.AssetsRepoBranch)"
+      git checkout $Config.AssetsRepoBranch | Out-Null
       Write-Host "git checkout *"
+      git checkout * | Out-Null
       Write-Host "git clean -xdf"
+      git clean -xdf | Out-Null
       Write-Host "git checkout -b $adjustedBranchName"
+      git checkout -b $adjustedBranchName | Out-Null
       Write-Host "git push origin $adjustedBranchName"
-      git checkout $Config.AssetsRepoBranch
-      git checkout *
-      git clean -xdf
-      git checkout -b $adjustedBranchName
-      git push origin $adjustedBranchName
+      git push origin $adjustedBranchName | Out-Null
     }
    }
   catch {
@@ -79,7 +87,7 @@ Function Initialize-Integration-Branches {
   }
   finally {
     Pop-Location
-    Remove-Item -Force -Recurse $tempPath
+    Remove-Item -Force -Recurse $tempPath | Out-Null
   }
 
   return $adjustedBranchName

@@ -452,7 +452,9 @@ Function Push-AssetsRepo-Update {
         }
 
         $alreadyLatestSHA = $true
+        Write-Host "git rev-parse origin/$($Config.AssetsRepoBranch)"
         $retrievedLatestSHA = git rev-parse origin/$($Config.AssetsRepoBranch)
+        Write-Host "Latest SHA is $retrievedLatestSHA."
 
         # if the above command fails with code 128, the target auto commit branch does not exist, and we need to create it
         if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){

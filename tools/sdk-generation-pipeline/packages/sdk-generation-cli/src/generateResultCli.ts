@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import { createTaskResult, TaskResult, CodeGenerationPipelineTaskName, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
+import { createTaskResult, AzureSDKTaskName, TaskResult, TaskOutput, LogFilter, logger } from '@azure-tools/sdk-generation-lib';
 
 function printHelp() {
     console.log('usage: generateResult --pipelineBuildId --logfile --taskname --resultOutputPath');
@@ -30,7 +30,7 @@ async function main() {
     if (taskname === undefined) {
         printHelp();
         throw new Error(`taskname is empty`);
-    } else if (Object.values(CodeGenerationPipelineTaskName).includes(taskname)) {
+    } else if (Object.values(AzureSDKTaskName).includes(taskname)) {
         printHelp();
         throw new Error(`invalid taskname`);
     }
@@ -76,3 +76,4 @@ main().catch((e) => {
     ${e.stack}`);
     process.exit(1);
 });
+

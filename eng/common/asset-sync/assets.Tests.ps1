@@ -2,14 +2,13 @@ BeforeAll {
   . $PSScriptRoot/assets.Tests.Helpers.ps1
   . $PSScriptRoot/assets.ps1
 
-  # wipe the test runs 
+  # clean up the temporary test repo structures
   $testPath = Get-TestFolder
-  
   if (Test-Path $testPath){
     Remove-Item -Recurse -Force $testPath
   }
 
-  # wipe the assets repo
+  # clean up local .assets folder
   $location = Resolve-AssetStore-Location
   if (Test-Path $location){
     Remove-Item -Recurse -Force $location
@@ -260,7 +259,7 @@ Describe "AssetsModuleTests" {
   #    - Auto Branch Doesn't Exist Yet, Go Off Main, push to new branch
   #    - Auto Branch Exists, we're on the latest commit, push new commit to branch
   #    - Auto Branch Exists, we're on a commit from the past, push new commit to branch
-    Context "Push-AssetsRepo-Update" {
+  Context "Push-AssetsRepo-Update" {
     It "Should push a new branch/commit to a non-existent target branch." {
       $sourceBranch = "scenario_new_push"
       $recordingJson = [PSCustomObject]@{

@@ -2,9 +2,9 @@ Set-StrictMode -Version 3
 
 # See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
 # this methodology for any global variables that can be considered constants
-. (Join-Path $PSScriptRoot ".." "scripts" "common.ps1" )
+. (Join-Path $PSScriptRoot ".." ".." "eng" "common" "scripts" "common.ps1")
 
-$REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." ".." "..")
+$REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." "..")
 $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 
 <#

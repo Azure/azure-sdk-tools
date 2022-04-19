@@ -26,7 +26,7 @@ AfterAll {
 Describe "AssetsModuleTests" {
   Context "Evaluate-Target-Dir" {
     It "Should evaluate a root directory properly." {
-      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." ".." "..")
+      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." "..")
       $Value | Should -Be @($false, $true)
     }
     
@@ -36,7 +36,7 @@ Describe "AssetsModuleTests" {
     }
   
     It "Should evaluate an transitory directory properly." {
-      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." ".." )
+      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot "..")
       $Value | Should -Be @($false, $false)
     }
 
@@ -142,7 +142,7 @@ Describe "AssetsModuleTests" {
       Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
 
       $result = Resolve-AssetStore-Location
-      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets")
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".assets")
       $result | Should -Be $expectedLocation.ToString()
     }
 
@@ -153,7 +153,7 @@ Describe "AssetsModuleTests" {
       $config = Resolve-AssetsJson -TargetPath $testPath
       $result = Resolve-AssetRepo-Location -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
-      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
+      $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".assets" "$expectedHash")
 
       $result | Should -Be $expectedLocation.ToString()
     }
@@ -167,7 +167,7 @@ Describe "AssetsModuleTests" {
       $result = Resolve-AssetRepo-Location -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
 
-      $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".assets" "$expectedHash")
+      $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".assets" "$expectedHash")
       
       $result | Should -Be $expectedLocation.ToString()
     }

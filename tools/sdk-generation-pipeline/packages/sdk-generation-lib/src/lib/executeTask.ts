@@ -10,9 +10,11 @@ import { setTaskResult, taskResult, TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
 import { runScript } from './runScript';
 import * as fs from 'fs';
+import { createTaskResult } from './generateResult';
+import { CodeGenerationPipelineTaskName } from '../types/commonType';
 
 export async function executeTask(
-    taskName: string,
+    taskName: CodeGenerationPipelineTaskName,
     runScriptOptions: RunOptions,
     cwd: string,
     inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput,
@@ -23,7 +25,6 @@ export async function executeTask(
         fs.writeFileSync(inputJsonPath, JSON.stringify(inputJson, null, 2), { encoding: 'utf-8' });
     }
     const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
-    setTaskResult(config, taskName);
     const args = [];
     if (inputJson) {
         args.push(inputJsonPath);
@@ -39,12 +40,12 @@ export async function executeTask(
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {
-            taskResult: taskResult,
+            taskResult: createTaskResult("", taskName, config.pipeFullLog, runScriptOptions.logFilter, outputJson),
             output: outputJson,
         };
     } else {
         return {
-            taskResult: taskResult,
+            taskResult: createTaskResult("", taskName, config.pipeFullLog, runScriptOptions.logFilter, undefined),
             output: undefined,
         };
     }

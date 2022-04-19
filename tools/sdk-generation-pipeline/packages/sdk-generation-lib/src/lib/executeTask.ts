@@ -11,10 +11,10 @@ import { requireJsonc } from '../utils/requireJsonc';
 import { runScript } from './runScript';
 import * as fs from 'fs';
 import { createTaskResult } from './generateResult';
-import { CodeGenerationPipelineTaskName } from '../types/commonType';
+import { AzureSDKTaskName } from '../types/commonType';
 
 export async function executeTask(
-    taskName: CodeGenerationPipelineTaskName,
+    taskName: AzureSDKTaskName,
     runScriptOptions: RunOptions,
     cwd: string,
     inputJson?: GenerateAndBuildInput | MockTestInput | LiveTestInput,

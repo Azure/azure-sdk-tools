@@ -1,4 +1,4 @@
-import { CodeGenerationPipelineTaskName } from '../types/commonType';
+import { AzureSDKTaskName } from '../types/commonType';
 import { LogFilter } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
 import { PipelineResult, TaskResultCommon, MessageRecord, RawMessageRecord, TaskOutput, TaskResult, TestTaskResult } from '../types/taskResult';
@@ -82,9 +82,9 @@ export function parseGenerateLog(pipelineBuildId: string, taskname: string, logf
     return result;
 }
 
-export function createTaskResult(pipelineBuildId: string, taskname: CodeGenerationPipelineTaskName, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
+export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
     const commonResult: TaskResultCommon = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
-    if (taskname === CodeGenerationPipelineTaskName.MockTest || taskname === CodeGenerationPipelineTaskName.LiveTest) {
+    if (taskname === AzureSDKTaskName.MockTest || taskname === AzureSDKTaskName.LiveTest) {
         if (taskOutput === undefined) {
             logger.error('taskOutput is undefined');
             return {

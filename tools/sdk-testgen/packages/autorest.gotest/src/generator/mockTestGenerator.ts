@@ -52,6 +52,9 @@ export class MockTestDataRender extends BaseDataRender {
     protected fillExampleOutput(example: GoExampleModel) {
         const op = example.operation;
         example.opName = op.language.go.name;
+        if (isPageableOperation(op) && !isLROOperation(op)) {
+            example.opName = `New${example.opName}Pager`;
+        }
         if (isLROOperation(op as any)) {
             example.opName = 'Begin' + example.opName;
             example.isLRO = true;

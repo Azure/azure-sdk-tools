@@ -29,7 +29,7 @@ class DocstringParser:
 
     def __init__(self, docstring):
         self.pos_args = OrderedDict()
-        self.kw_args = OrderedDict()
+        self.kwargs = OrderedDict()
         self.ivars = OrderedDict()
         self.ret_type = None
         self.docstring = docstring
@@ -95,7 +95,7 @@ class DocstringParser:
         elif keyword == "vartype":
             return self.ivars.get(name, None)
         elif keyword == "paramtype":
-            return self.kw_args.get(name, None)
+            return self.kwargs.get(name, None)
         else:
             logging.error(f"Unexpected keyword {keyword}.")
             return None
@@ -127,7 +127,7 @@ class DocstringParser:
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
                 arg.argtype = f"Optional[{arg.argtype}]"
-            self.kw_args[arg.argname] = arg
+            self.kwargs[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")
 
@@ -181,7 +181,7 @@ class DocstringParser:
         arg = (
             self.ivars.get(name, None) or
             self.pos_args.get(name, None) or
-            self.kw_args.get(name, None)
+            self.kwargs.get(name, None)
         )
         return arg.argtype if arg else arg
 
@@ -189,6 +189,28 @@ class DocstringParser:
         arg = (
             self.ivars.get(name, None) or
             self.pos_args.get(name, None) or
-            self.kw_args.get(name, None)
+            self.kwargs.get(name, None)
         )
-        return arg.default if arg else arg
+        if not arg:
+            return None
+        argtype = arg.argtype or self.type_for(name)
+        if not argtype:
+            return arg.default
+        try:
+            # convert "None" to None if the type is optional.
+            if argtype.startswith("Optional") and arg.default == "None":
+                return None
+            # if we have the default and the type, we should try to cast the
+            # default to that type
+            if argtype in ["bool", "Optional[bool]"]:
+                return bool(arg.default)
+            if argtype in ["int", "Optional[int]"]:
+                return int(arg.default)
+            if argtype in ["float", "Optional[float]"]:
+                return float(arg.default)
+            if argtype in ["complex", "Optional[complex]"]:
+                return complex(arg.default)
+            return arg.default
+        except:
+            # fall back to string if unable to parse
+            return arg.default

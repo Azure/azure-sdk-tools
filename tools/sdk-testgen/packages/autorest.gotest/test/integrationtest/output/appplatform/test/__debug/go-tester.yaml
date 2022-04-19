@@ -22977,7 +22977,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: ListBySubscription
+            opName: NewListBySubscriptionPager
             operation: *ref_858
             operationGroup: *ref_781
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_ListBySubscription.json
@@ -23237,7 +23237,7 @@ testModel:
             methodParametersPlaceholderOutput: |-
               "<resource-group-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_863
             operationGroup: *ref_781
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_List.json
@@ -26062,7 +26062,7 @@ testModel:
               "<resource-group-name>",
               "<service-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_973
             operationGroup: *ref_929
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_List.json
@@ -27314,7 +27314,7 @@ testModel:
               "<service-name>",
               "<app-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1035
             operationGroup: *ref_998
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_List.json
@@ -28042,7 +28042,7 @@ testModel:
               "<resource-group-name>",
               "<service-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1070
             operationGroup: *ref_1043
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_List.json
@@ -28854,7 +28854,7 @@ testModel:
               "<service-name>",
               "<app-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1112
             operationGroup: *ref_1080
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_List.json
@@ -30362,7 +30362,7 @@ testModel:
               "<app-name>",
               &test.DeploymentsClientListOptions{Version: []string{},
               }
-            opName: List
+            opName: NewListPager
             operation: *ref_1173
             operationGroup: *ref_1122
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_List.json
@@ -30602,7 +30602,7 @@ testModel:
               "<service-name>",
               &test.DeploymentsClientListForClusterOptions{Version: []string{},
               }
-            opName: ListForCluster
+            opName: NewListForClusterPager
             operation: *ref_1179
             operationGroup: *ref_1122
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_ListForCluster.json
@@ -31114,7 +31114,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1207
             operationGroup: *ref_1208
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Operations_List.json
@@ -31332,7 +31332,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: List
+            opName: NewListPager
             operation: *ref_1230
             operationGroup: *ref_1231
             originalFile: specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Skus_List.json
@@ -33890,7 +33890,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1070
                 operationGroup: *ref_1043
                 originalFile: ''
@@ -37113,7 +37113,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_973
                 operationGroup: *ref_929
                 originalFile: ''
@@ -38045,7 +38045,7 @@ testModel:
                   serviceName,
                   appName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1035
                 operationGroup: *ref_998
                 originalFile: ''
@@ -38903,7 +38903,7 @@ testModel:
                   serviceName,
                   appName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1112
                 operationGroup: *ref_1080
                 originalFile: ''
@@ -40289,7 +40289,7 @@ testModel:
                   appName,
                   &test.DeploymentsClientListOptions{Version: []string{},
                   }
-                opName: List
+                opName: NewListPager
                 operation: *ref_1173
                 operationGroup: *ref_1122
                 originalFile: ''
@@ -40575,7 +40575,7 @@ testModel:
                   serviceName,
                   &test.DeploymentsClientListForClusterOptions{Version: []string{},
                   }
-                opName: ListForCluster
+                opName: NewListForClusterPager
                 operation: *ref_1179
                 operationGroup: *ref_1122
                 originalFile: ''
@@ -40854,7 +40854,7 @@ testModel:
                 methodParametersOutput: |-
                   resourceGroupName,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_863
                 operationGroup: *ref_781
                 originalFile: ''
@@ -41160,7 +41160,7 @@ testModel:
                 isPageable: *ref_861
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: ListBySubscription
+                opName: NewListBySubscriptionPager
                 operation: *ref_858
                 operationGroup: *ref_781
                 originalFile: ''
@@ -41865,7 +41865,7 @@ testModel:
                 isPageable: *ref_1248
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1230
                 operationGroup: *ref_1231
                 originalFile: ''
@@ -42030,7 +42030,7 @@ testModel:
                 isPageable: *ref_1222
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_1207
                 operationGroup: *ref_1208
                 originalFile: ''

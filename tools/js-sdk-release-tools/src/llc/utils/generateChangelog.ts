@@ -31,17 +31,13 @@ ${originalChangeLogContent}`;
 }
 
 export async function generateChangelog(packagePath) {
-    if (fs.existsSync(path.join(packagePath, 'CHANGELOG.md'))) {
-        logger.logWarn(`Changelog already exists, and we won't generate changelog util this tool is ready.`)
-        return;
-    }
+    const jsSdkRepoPath = String(shell.pwd());
     const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
     const packageName = packageJson.name;
     const version = packageJson.version;
     const npm = new NPMScope({executionFolderPath: packagePath});
     const npmViewResult = await npm.view({packageName});
-    if (true) { // currently, released package doesn't contain review folder, so we cannot get changelog.
-    // if (npmViewResult.exitCode !== 0) {
+    if (npmViewResult.exitCode !== 0) {
         logger.logGreen(`${packageName} is first release, generating changelog`);
         generateChangelogForFirstRelease(packagePath, version);
         logger.logGreen(`Generate changelog successfully`);
@@ -60,19 +56,26 @@ export async function generateChangelog(packagePath) {
             await shell.exec('tar -xzf *.tgz');
             await shell.cd(packagePath);
             const tempReviewFolder = path.join(packagePath, 'changelog-temp', 'package', 'review');
-            let apiMdFileNPM = path.join(tempReviewFolder, fs.readdirSync(tempReviewFolder)[0]);
-            let apiMdFileLocal = path.join(packagePath, 'review', fs.readdirSync(path.join(packagePath, 'review'))[0]);
-            const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
-            if (!changelog.hasBreakingChange && !changelog.hasFeature) {
-                logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
+            if (!fs.existsSync(tempReviewFolder)) {
+                logger.logWarn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release");
+                generateChangelogForFirstRelease(packagePath, version);
             } else {
-                appendChangelog(packagePath, version, changelog);
-                logger.log('Generate changelog successfully');
+                let apiMdFileNPM = path.join(tempReviewFolder, fs.readdirSync(tempReviewFolder)[0]);
+                let apiMdFileLocal = path.join(packagePath, 'review', fs.readdirSync(path.join(packagePath, 'review'))[0]);
+                const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
+                if (!changelog.hasBreakingChange && !changelog.hasFeature) {
+                    logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
+                } else {
+                    appendChangelog(packagePath, version, changelog);
+                    logger.log('Generate changelog successfully');
+                }
             }
+
         } catch (e) {
           logger.logError(`Generate changelog failed: ${e.message}`);
         } finally {
             fs.rmSync(path.join(packagePath, 'changelog-temp'), { recursive: true, force: true });
+            await shell.cd(jsSdkRepoPath);
         }
     }
 }

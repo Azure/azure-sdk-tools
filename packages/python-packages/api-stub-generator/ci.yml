@@ -42,4 +42,3 @@ extends:
         cd $(Build.SourcesDirectory)/packages/python-packages/api-stub-generator
         pip install tox
         tox -e pytest,stubgen
-      displayName: 'Test Python Package Parser'

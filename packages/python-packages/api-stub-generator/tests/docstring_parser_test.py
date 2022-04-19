@@ -19,27 +19,6 @@ docstring_default_legacy = """
 :type some_class: class
 """
 
-docstring_default_formal = """
-:param value: Some dummy value, defaults
-  to "cat". Extra text.
-:type value: str
-:param another: Something else, defaults
-  to dog. Extra text.
-:type value: str
-:param some_class: Some kind of class type, defaults to :py:class:`apistubgen.test.models.FakeObject`.
-:type some_class: class
-"""
-
-docstring_standard_return_type = """
-Dummy docstring to verify standard return types and param types
-:rtype: str
-"""
-
-docstring_Union_return_type1 = """
-Dummy docstring to verify standard return types and param types
-:rtype: Union[str, int]
-"""
-
 docstring_union_return_type_followed_by_irrelevant_text = """
 Dummy docstring to verify standard return types and param types
 :rtype: Union(str, int)
@@ -206,13 +185,6 @@ class TestDocstringParser:
             "name": "str",
             "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
         })
-
-    def test_return_builtin_return_type(self):
-
-        self._test_return_type(docstring_standard_return_type, "str")
-
-    def test_return_union_return_type(self):
-        self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
     
     def test_return_union_return_type_followed_by_irrelevant_text(self):
         self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
@@ -239,12 +211,6 @@ class TestDocstringParser:
         # optional keyword-arguments are documented with "..."
         assert parser.default_for("country_hint") == "..."
         assert parser.default_for("documents") == None
-
-    def test_docstring_defaults_formal(self):
-        parser = DocstringParser(docstring_default_formal)
-        assert parser.default_for("value") == "cat"
-        assert parser.default_for("another") == "dog"
-        assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"
 
     def test_docstring_defaults_legacy(self):
         parser = DocstringParser(docstring_default_legacy)

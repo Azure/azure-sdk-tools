@@ -27,3 +27,4 @@
 /tools/sdk-testgen/              @changlong-liu @tadelesh
 /tools/js-sdk-release-tools/     @dw511214992 @qiaozha @MaryGao
 /tools/keyvault-mock-attestation @maorleger
+/tools/sdk-generation-pipeline   @dw511214992 @chunyu3 @zzvswxy

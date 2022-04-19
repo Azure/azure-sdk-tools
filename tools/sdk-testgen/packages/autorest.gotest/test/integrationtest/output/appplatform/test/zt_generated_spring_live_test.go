@@ -351,10 +351,10 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Certificates_List
-	certificatesClientListPager := certificatesClient.List(testsuite.resourceGroupName,
+	certificatesClientNewListPagerPager := certificatesClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for certificatesClientListPager.More() {
+	for certificatesClientNewListPagerPager.More() {
 	}
 
 	// From step ConfigServers_Validate
@@ -592,10 +592,10 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Apps_List
-	appsClientListPager := appsClient.List(testsuite.resourceGroupName,
+	appsClientNewListPagerPager := appsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		nil)
-	for appsClientListPager.More() {
+	for appsClientNewListPagerPager.More() {
 	}
 
 	// From step Bindings_Create
@@ -655,11 +655,11 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Bindings_List
-	bindingsClientListPager := bindingsClient.List(testsuite.resourceGroupName,
+	bindingsClientNewListPagerPager := bindingsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for bindingsClientListPager.More() {
+	for bindingsClientNewListPagerPager.More() {
 	}
 
 	// From step Bindings_Delete
@@ -732,11 +732,11 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step CustomDomains_List
-	customDomainsClientListPager := customDomainsClient.List(testsuite.resourceGroupName,
+	customDomainsClientNewListPagerPager := customDomainsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		nil)
-	for customDomainsClientListPager.More() {
+	for customDomainsClientNewListPagerPager.More() {
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -913,29 +913,29 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 
 	// From step Deployments_List
-	deploymentsClientListPager := deploymentsClient.List(testsuite.resourceGroupName,
+	deploymentsClientNewListPagerPager := deploymentsClient.NewListPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		testsuite.appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
-	for deploymentsClientListPager.More() {
+	for deploymentsClientNewListPagerPager.More() {
 	}
 
 	// From step Deployments_ListForCluster
-	deploymentsClientListForClusterPager := deploymentsClient.ListForCluster(testsuite.resourceGroupName,
+	deploymentsClientNewListForClusterPagerPager := deploymentsClient.NewListForClusterPager(testsuite.resourceGroupName,
 		testsuite.serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
-	for deploymentsClientListForClusterPager.More() {
+	for deploymentsClientNewListForClusterPagerPager.More() {
 	}
 
 	// From step Services_List
-	servicesClientListPager := servicesClient.List(testsuite.resourceGroupName,
+	servicesClientNewListPagerPager := servicesClient.NewListPager(testsuite.resourceGroupName,
 		nil)
-	for servicesClientListPager.More() {
+	for servicesClientNewListPagerPager.More() {
 	}
 
 	// From step Services_ListBySubscription
-	servicesClientListBySubscriptionPager := servicesClient.ListBySubscription(nil)
-	for servicesClientListBySubscriptionPager.More() {
+	servicesClientNewListBySubscriptionPagerPager := servicesClient.NewListBySubscriptionPager(nil)
+	for servicesClientNewListBySubscriptionPagerPager.More() {
 	}
 
 	// From step Deployments_Delete
@@ -996,15 +996,15 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	// From step Skus_List
 	sKUsClient, err := test.NewSKUsClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	sKUsClientListPager := sKUsClient.List(nil)
-	for sKUsClientListPager.More() {
+	sKUsClientNewListPagerPager := sKUsClient.NewListPager(nil)
+	for sKUsClientNewListPagerPager.More() {
 	}
 
 	// From step Operations_List
 	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	operationsClientListPager := operationsClient.List(nil)
-	for operationsClientListPager.More() {
+	operationsClientNewListPagerPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPagerPager.More() {
 	}
 }
 

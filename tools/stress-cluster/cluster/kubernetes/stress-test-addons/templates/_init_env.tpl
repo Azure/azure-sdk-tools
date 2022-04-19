@@ -10,7 +10,7 @@
     - name: ENV_FILE
       value: /mnt/outputs/.env
   volumeMounts:
-    - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
+    - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
     - name: static-secrets-{{ .Release.Name }}
       mountPath: "/mnt/secrets/static"

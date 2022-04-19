@@ -9962,7 +9962,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: List
+            opName: NewListPager
             operation: *ref_354
             operationGroup: *ref_355
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Operations_List.json
@@ -10155,7 +10155,7 @@ testModel:
             methodParameters: []
             methodParametersOutput: nil
             methodParametersPlaceholderOutput: nil
-            opName: ListBySubscription
+            opName: NewListBySubscriptionPager
             operation: *ref_379
             operationGroup: *ref_374
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListBySubscription.json
@@ -10830,7 +10830,7 @@ testModel:
             methodParametersPlaceholderOutput: |-
               "<resource-group-name>",
               nil
-            opName: ListByResourceGroup
+            opName: NewListByResourceGroupPager
             operation: *ref_446
             operationGroup: *ref_374
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_ListByResourceGroup.json
@@ -14971,7 +14971,7 @@ testModel:
             methodParametersPlaceholderOutput: |-
               "<location>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_494
             operationGroup: *ref_495
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/Usages_List.json
@@ -15124,7 +15124,7 @@ testModel:
               "<resource-group-name>",
               "<resource-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_509
             operationGroup: *ref_510
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_List.json
@@ -15834,7 +15834,7 @@ testModel:
               "<resource-group-name>",
               "<resource-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_533
             operationGroup: *ref_534
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateLinkResources_List.json
@@ -15998,7 +15998,7 @@ testModel:
               "<resource-group-name>",
               "<resource-name>",
               nil
-            opName: List
+            opName: NewListPager
             operation: *ref_551
             operationGroup: *ref_552
             originalFile: specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_List.json
@@ -19978,7 +19978,7 @@ testModel:
                 methodParametersOutput: |-
                   location,
                   nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_494
                 operationGroup: *ref_495
                 originalFile: ''
@@ -20156,7 +20156,7 @@ testModel:
                 methodParametersOutput: |-
                   resourceGroupName,
                   nil
-                opName: ListByResourceGroup
+                opName: NewListByResourceGroupPager
                 operation: *ref_446
                 operationGroup: *ref_374
                 originalFile: ''
@@ -20923,7 +20923,7 @@ testModel:
                 isPageable: *ref_444
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: ListBySubscription
+                opName: NewListBySubscriptionPager
                 operation: *ref_379
                 operationGroup: *ref_374
                 originalFile: ''
@@ -21684,7 +21684,7 @@ testModel:
                 isPageable: *ref_367
                 methodParameters: []
                 methodParametersOutput: nil
-                opName: List
+                opName: NewListPager
                 operation: *ref_354
                 operationGroup: *ref_355
                 originalFile: ''

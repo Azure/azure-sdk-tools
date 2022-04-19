@@ -70,6 +70,12 @@ class StubGenerator:
                 "--source-url",
                 help=("URL to the pull request URL that contains the source used to generate this APIView.")
             )
+            parser.add_argument(
+                "--skip-pylint",
+                help=("Skips running pylint on the package to obtain diagnostics."),
+                default=False,
+                action="store_true"
+            )
             self._args = parser.parse_args()
 
         pkg_path = self._parse_arg("pkg_path")

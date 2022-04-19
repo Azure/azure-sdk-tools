@@ -6,7 +6,7 @@ Generate APIView for all SDKs in the azure-sdk-for-python repo and report on any
 """
 
 import glob
-import logging
+import json
 import os
 import re
 import sys
@@ -17,6 +17,13 @@ from apistub import StubGenerator
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 PACKAGE_NAME_RE = re.compile(r"sdk\\([a-z]+)\\([a-z\-]+)\\setup.py")
+
+SKIP_PACKAGES = [
+    "core:azure",
+    "core:azure-mgmt",
+    "monitor:azure-monitor",
+    "storage:azure-storage"
+]
 
 class _Result:
     def __init__(self, *, service_dir: str, package_name: str, success: bool, error: Optional[str]):
@@ -50,6 +57,9 @@ if __name__ == '__main__':
             print(f"Couldn't parse: {path}")
             continue
 
+        if f"{service_dir}:{package_name}" in SKIP_PACKAGES:
+            continue
+
         print(f"Parsing {service_dir}/{package_name}...")
         if service_dir not in results:
             results[service_dir] = []
@@ -66,10 +76,7 @@ if __name__ == '__main__':
             success=success,
             error=error
         ))
-    for (service_dir, packages) in results.items():
-        print(f"=={service_dir}==")
-        for result in packages:
-            result_string = f"\t{result.package_name}: {result.success}"
-            if result.error:
-                result_string += f" : {error}"
-            print(result_string)
+    filename = "stubgen_report.json"
+    print(f"Saving results to {filename}...")
+    with open(filename, "w") as outfile:
+        outfile.write(json.dumps(results, indent=4))

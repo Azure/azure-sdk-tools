@@ -175,7 +175,8 @@ namespace Azure.Sdk.Tools.TestProxy
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
-            if(RedirectStatusCodes.Contains(upstreamResponse.StatusCode)){
+            if (RedirectStatusCodes.Contains(upstreamResponse.StatusCode))
+            {
                 upstreamResponse = await HandleRedirectedRequestAsync(upstreamResponse, client);
             }
 
@@ -297,9 +298,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public HttpRequestMessage CreateRedirectRequest(HttpResponseMessage response)
         {
-            var incomingRequest = response.RequestMessage;
             var upstreamRequest = new HttpRequestMessage();
-
             upstreamRequest.RequestUri = response.Headers.Location;
 
             // 303 SeeOther. "make a request targeting the location but make it a GET"
@@ -312,8 +311,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 upstreamRequest.Method = response.RequestMessage.Method;
             }
-
-            //I probably need to set the HOST header to the host of the location header.
 
             return upstreamRequest;
         }

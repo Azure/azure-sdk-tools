@@ -631,6 +631,49 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"1\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"0\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"True\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"False\"}", false)]
+        [InlineData("{ \"HandleRedirects\": \"TRUE\"}", true)]
+        [InlineData("{ \"HandleRedirects\": \"FALSE\"}", false)]
+        public void TestSetRecordingOptionsHandlesValidInputs(string body, bool expectedSetting)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            Dictionary<string, string> inputBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(body);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.Equal(expectedSetting, testRecordingHandler.HandleRedirects);
+        }
+
+        [Theory]
+        [InlineData("{ \"HandleRedirects\": \"anotherkey\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
+        [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
+        [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
+        public void TestSetRecordingOptionsThrowsOnInvalidInputs(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            
+            Dictionary<string, string> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.Contains(errorText, assertion.Message);
+        }
     }
 
     internal class MockHttpHandler : HttpMessageHandler

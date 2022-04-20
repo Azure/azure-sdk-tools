@@ -464,6 +464,41 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
+        public void SetRecordingOptions(IDictionary<string, string> options = null)
+        {
+            if (options != null)
+            {
+                if (options.Keys.Count == 0)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "At least one key is expected in the body being passed to SetRecordingOptions.");
+                }
+
+                if (options.TryGetValue("HandleRedirects", out var handleRedirectsString))
+                {
+                    if (Boolean.TryParse(handleRedirectsString, out var handleRedirectsBool))
+                    {
+                        HandleRedirects = handleRedirectsBool;
+                    }
+                    else if (handleRedirectsString.Equals("0", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = false;
+                    }
+                    else if (handleRedirectsString.Equals("1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = true;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
+                    }
+                }
+            }
+            else
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))

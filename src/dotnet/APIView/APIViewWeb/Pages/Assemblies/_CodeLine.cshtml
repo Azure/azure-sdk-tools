@@ -10,7 +10,7 @@
         _ => ""
     };
 
-    string foldableClass = Model.CodeLine.LineClass.ToLower().Replace(".","-");
+    string foldableClass = Model.CodeLine.LineClass.ToLower().Replace(".","-").Replace("/","").Replace("{","").Replace("}","").Replace("_","");
     string collapseClass = foldableClass.EndsWith("-content") ? "d-none" : "";
 }
 

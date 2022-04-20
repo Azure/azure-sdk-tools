@@ -312,6 +312,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 upstreamRequest.Method = response.RequestMessage.Method;
             }
 
+            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
+
             return upstreamRequest;
         }
 

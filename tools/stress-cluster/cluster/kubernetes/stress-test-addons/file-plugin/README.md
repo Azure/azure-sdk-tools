@@ -35,7 +35,7 @@ helm plugin add ../stress-test-addons/file-plugin
 Use local version of named `stresstestcharts` library chart:
 
 ```
-helm repo add --force-update stresstestcharts file:///home/ben/sdk/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
+helm repo add --force-update stresstestcharts file:///<local-path>/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
 helm dependency update
 ```
 

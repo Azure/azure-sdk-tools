@@ -24,13 +24,14 @@ namespace Azure.Sdk.Tools.TestProxy
             _recordingHandler = recordingHandler;
             _logger = loggerFactory.CreateLogger<Record>();
         }
-        
+
         private static readonly HttpClient s_client = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
             {
-                Timeout = TimeSpan.FromSeconds(600)
+                Timeout = TimeSpan.FromSeconds(600),
             } :
-            new HttpClient() {
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
+            {
                 Timeout = TimeSpan.FromSeconds(600)
             };
 

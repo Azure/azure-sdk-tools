@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public bool HandleRedirects = false;
+        public bool HandleRedirects = true;
 
         public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";
@@ -139,12 +139,21 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task<HttpResponseMessage> HandleRedirectedRequestAsync(HttpRequestMessage request, HttpResponseMessage response)
+        public async Task<HttpResponseMessage> HandleRedirectedRequestAsync(HttpResponseMessage response, HttpClient client)
         {
             if (HandleRedirects)
             {
-                // TODO: follow the redirect silently
-                return response;
+                var upstreamRequest = CreateRedirectRequest(response);
+                var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
+
+                if (RedirectStatusCodes.Contains(upstreamResponse.StatusCode))
+                {
+                    return await HandleRedirectedRequestAsync(upstreamResponse, client);
+                }
+                else
+                {
+                    return upstreamResponse;
+                }
             }
             else
             {
@@ -167,7 +176,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
             if(RedirectStatusCodes.Contains(upstreamResponse.StatusCode)){
-                upstreamResponse = await HandleRedirectedRequestAsync(upstreamRequest, upstreamResponse);
+                upstreamResponse = await HandleRedirectedRequestAsync(upstreamResponse, client);
             }
 
             byte[] body = Array.Empty<byte>();
@@ -284,6 +293,29 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return incomingBody.ToArray();
+        }
+
+        public HttpRequestMessage CreateRedirectRequest(HttpResponseMessage response)
+        {
+            var incomingRequest = response.RequestMessage;
+            var upstreamRequest = new HttpRequestMessage();
+
+            upstreamRequest.RequestUri = response.Headers.Location;
+
+            // 303 SeeOther. "make a request targeting the location but make it a GET"
+            if(response.StatusCode == HttpStatusCode.RedirectMethod)
+            {
+                upstreamRequest.Method = HttpMethod.Get;
+            }
+            // 307 RedirectKeepVerb. EG "make a request targeting the location but keep the original request verb"
+            else
+            {
+                upstreamRequest.Method = response.RequestMessage.Method;
+            }
+
+            //I probably need to set the HOST header to the host of the location header.
+
+            return upstreamRequest;
         }
 
         public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)

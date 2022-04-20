@@ -29,13 +29,13 @@ helm dependency update
 Add file plugin to support `file://` repositories, this only has to be done once:
 
 ```
-helm plugin add ../stress-test-addons/file-plugin
+helm plugin add <git root>/tools/stress-cluster/cluster/kubernetes/stress-test-addons/file-plugin
 ```
 
 Use local version of named `stresstestcharts` library chart:
 
 ```
-helm repo add --force-update stresstestcharts file:///<local-path>/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
+helm repo add --force-update stresstestcharts file:///<git root>/azure-sdk-tools/tools/stress-cluster/cluster/kubernetes/stress-test-addons
 helm dependency update
 ```
 

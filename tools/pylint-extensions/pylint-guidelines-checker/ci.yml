@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/pylint-extensions/pylint_guidelines_checker
+      - tools/pylint-extensions/pylint-guidelines-checker
 
 pr:
   branches:
@@ -19,13 +19,13 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/pylint-extensions/pylint_guidelines_checker
+      - tools/pylint-extensions/pylint-guidelines-checker
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
   parameters:
     PythonVersion: '3.10.2'
-    PackagePath: 'tools/pylint-extensions/pylint_guidelines_checker'
+    PackagePath: 'tools/pylint-extensions/pylint-guidelines-checker'
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'azsdkpylintplugin'
     PackageName: 'Azure SDK Pylint Plugin'
@@ -34,10 +34,9 @@ extends:
         pip install -r dev_requirements.txt
         pip install -e .
       displayName: 'Install Test Requirements'
-      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/pylint_guidelines_checker
+      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/pylint-guidelines-checker
 
     - script: |
         pytest .
       displayName: 'Test Python Linter'
-      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/pylint_guidelines_checker
-      continueOnError: true
+      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/pylint-guidelines-checker

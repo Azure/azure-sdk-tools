@@ -6,10 +6,13 @@
 import astroid
 import pylint.testutils
 import requests
+import os
 
 from azure.core import PipelineClient
 from azure.core.configuration import Configuration
-from pylint_custom_plugin import pylint_guidelines_checker as checker
+import pylint_guidelines_checker as checker
+
+TEST_FOLDER = os.path.abspath(os.path.join(__file__, ".."))
 
 class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTracingDecorators
@@ -1734,7 +1737,7 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.FileHasCopyrightHeader
 
     def test_copyright_header_acceptable(self):
-        file = open("./test_files/copyright_header_acceptable.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "copyright_header_acceptable.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -1742,7 +1745,7 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
             self.checker.visit_module(node)
 
     def test_copyright_header_violation(self):
-        file = open("./test_files/copyright_header_violation.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "copyright_header_violation.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -2761,8 +2764,7 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
             self.checker.visit_module(module_node)
     
     def test_naming_mismatch_pylint_disable(self):
-
-        file = open("./test_files/__init__.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "__init__.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -2860,7 +2862,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node)   
 
     def test_enum_file_acceptable_python_two(self):
-        file = open("./test_files/enum_checker_acceptable.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "enum_checker_acceptable.py"))
         node = astroid.parse(file.read())
         file.close()
         
@@ -2868,7 +2870,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(node.body[3])        
     
     def test_enum_file_both_violation(self):
-        file = open("./test_files/enum_checker_violation.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "enum_checker_violation.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -2933,7 +2935,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node)
     
     def test_api_version_file_class_acceptable(self):
-        file = open("./test_files/api_version_checker_acceptable_class.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "api_version_checker_acceptable_class.py"))
         node = astroid.parse(file.read())
         file.close()
     
@@ -2941,7 +2943,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(node.body[0])
 
     def test_api_version_file_init_acceptable(self):
-        file = open("./test_files/api_version_checker_acceptable_init.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "api_version_checker_acceptable_init.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -2950,7 +2952,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
 
 
     def test_api_version_file_violation(self):
-        file = open("./test_files/api_version_checker_violation.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "api_version_checker_violation.py"))
         node = astroid.parse(file.read())
         file.close()
 

@@ -87,11 +87,11 @@ func NewModule(dir string) (*Module, error) {
 			if def, ok := source.types[typeName]; ok {
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
-					p.c.addInterface(*def.p, def.n.Name.Name, n)
+					p.c.addInterface(*def.p, def.name, n)
 				case *ast.StructType:
-					p.c.addStruct(*def.p, def.n.Name.Name, def.n)
+					p.c.addStruct(*def.p, def.name, def.n)
 				case *ast.Ident:
-					p.c.addSimpleType(*p, def.n.Name.Name, def.n.Type.(*ast.Ident).Name)
+					p.c.addSimpleType(*p, def.name, def.n.Type.(*ast.Ident).Name)
 				default:
 					fmt.Printf("WARNING:  unexpected node type %T\n", def.n.Type)
 				}

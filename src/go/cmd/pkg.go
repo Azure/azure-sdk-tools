@@ -196,39 +196,6 @@ func (pkg Pkg) getText(start token.Pos, end token.Pos) string {
 	return string(pkg.files[p.Filename][p.Offset : p.Offset+int(end-start)])
 }
 
-// creates a Func object from the specified ast.FuncType
-func (pkg Pkg) buildFunc(ft *ast.FuncType) Func {
-	f := Func{}
-
-	if ft.TypeParams != nil {
-		f.TypeParams = make([]string, 0, len(ft.TypeParams.List))
-		pkg.translateFieldList(ft.TypeParams.List, func(param *string, constraint string) {
-			// constraint == "" when the parameter has no constraint
-			f.TypeParams = append(f.TypeParams, strings.TrimRight(*param+" "+constraint, " "))
-		})
-	}
-
-	if ft.Params.List != nil {
-		f.Params = make([]string, 0, len(ft.Params.List))
-		pkg.translateFieldList(ft.Params.List, func(n *string, t string) {
-			p := ""
-			if n != nil {
-				p = *n + " "
-			}
-			p += t
-			f.Params = append(f.Params, p)
-		})
-	}
-
-	if ft.Results != nil {
-		f.Returns = make([]string, 0, len(ft.Results.List))
-		pkg.translateFieldList(ft.Results.List, func(n *string, t string) {
-			f.Returns = append(f.Returns, t)
-		})
-	}
-	return f
-}
-
 // iterates over the specified field list, for each field the specified
 // callback is invoked with the name of the field and the type name.  the field
 // name can be nil, e.g. anonymous fields in structs, unnamed return types etc.

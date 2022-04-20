@@ -10,8 +10,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 )
 
 // skip adding the const type in the token list
@@ -21,12 +19,10 @@ const skip = "Untyped const"
 type content struct {
 	// the list of exported constants.
 	// key is the exported name, value is its type and value.
-	Consts map[string]Declaration `json:"consts,omitempty"`
+	Consts map[string]Declaration
 
-	// the list of exported functions and methods.
-	// key is the exported name, for methods it's prefixed with the receiver type (e.g. "Type.Method").
-	// value contains the list of params and return types.
-	Funcs map[string]Func `json:"funcs,omitempty"`
+	// Funcs maps exported function signatures (including any receiver) to definition data
+	Funcs map[string]Func
 
 	// the list of exported interfaces.
 	// key is the exported name, value contains the interface definition.
@@ -61,40 +57,17 @@ func (c content) isEmpty() bool {
 
 // adds const and var declaration to the exports list
 func (c *content) addGenDecl(pkg Pkg, g *ast.GenDecl) {
+	// a block declaration like "var ( ... )" is one GenDecl with multiple Specs
 	for _, s := range g.Specs {
 		vs := s.(*ast.ValueSpec)
-		v := getExprValue(pkg, vs.Values[0])
-		if v == "" {
-			fmt.Printf("WARNING: failed to determine value for %s\n", pkg.getText(vs.Pos(), vs.End()))
-			continue
-		}
-		decl := Declaration{Value: v}
-		// Type is nil for untyped consts
-		if vs.Type != nil {
-			switch x := vs.Type.(type) {
-			case *ast.Ident:
-				// const ETagAny ETag = "*"
-				// const PeekLock ReceiveMode = internal.PeekLock
-				decl.Type = x.Name
-			case *ast.SelectorExpr:
-				// const LogCredential log.Classification = "Credential"
-				decl.Type = x.Sel.Name
-			default:
-				fmt.Printf("WARNING: unhandled constant type %s\n", pkg.getText(vs.Type.Pos(), vs.Type.End()))
+		if len(vs.Values) > 0 {
+			v := getExprValue(pkg, vs.Values[0])
+			if v == "" {
+				fmt.Printf("WARNING: failed to determine value for %s\n", pkg.getText(vs.Pos(), vs.End()))
+				continue
 			}
-		} else if _, ok := vs.Values[0].(*ast.CallExpr); ok {
-			// const FooConst = Foo("value")
-			// var Foo = NewFoo()
-			// TODO: determining the type here requires finding the definition of the called function. We may
-			// not have encountered that yet, so we would need to set the types of these declarations after
-			// traversing the entire AST.
-		} else if cl, ok := vs.Values[0].(*ast.CompositeLit); ok {
-			// var AzureChina = Configuration{ ... }
-			decl.Type = pkg.getText(cl.Type.Pos(), cl.Type.End())
-		} else {
-			// implicitly typed const
-			decl.Type = skip
 		}
+		decl := NewDeclaration(pkg, vs)
 		// TODO handle multiple names like "var a, b = 42"
 		switch g.Tok {
 		case token.CONST:
@@ -153,20 +126,13 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, name := range keys {
-		v := c.SimpleTypes[name]
-		n := name
-		makeToken(&n, &n, "type", keyword, tokenList)
-		makeToken(nil, nil, " ", whitespace, tokenList)
-		makeToken(nil, nil, *v.Name, typeName, tokenList)
-		makeToken(nil, nil, " ", whitespace, tokenList)
-		makeToken(nil, nil, *v.UnderlyingType, text, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
-		c.searchForMethods(name, tokenList)
-		if consts := c.filterDeclarations(name, c.Consts, tokenList); len(consts) > 0 {
+		t := c.SimpleTypes[name]
+		*tokenList = append(*tokenList, t.MakeTokens()...)
+		c.searchForMethods(t.Name(), tokenList)
+		if consts := c.filterDeclarations(t.Name(), c.Consts, tokenList); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
 		}
-		if vars := c.filterDeclarations(name, c.Vars, tokenList); len(vars) > 0 {
+		if vars := c.filterDeclarations(t.Name(), c.Vars, tokenList); len(vars) > 0 {
 			c.parseDeclarations(vars, "var", tokenList)
 		}
 	}
@@ -208,27 +174,27 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 	for _, t := range types {
 		// this token parsing is performed so that const declarations of different types are declared
 		// in their own const block to make them easier to click on
-		n := t
-		makeToken(&n, nil, kind, keyword, tokenList)
-		makeToken(nil, nil, " ", whitespace, tokenList)
-		makeToken(nil, nil, "(", punctuation, tokenList)
+		makeToken(nil, nil, kind, TokenTypeKeyword, tokenList)
+		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
+		makeToken(nil, nil, "(", TokenTypePunctuation, tokenList)
 		makeToken(nil, nil, "", 1, tokenList)
 		for _, v := range finalKeys {
 			if decls[v].Type == t {
-				makeDeclarationTokens(&v, decls[v], tokenList)
+				makeToken(nil, nil, "\t", TokenTypeWhitespace, tokenList)
+				*tokenList = append(*tokenList, decls[v].MakeTokens()...)
 			}
 		}
-		makeToken(nil, nil, ")", punctuation, tokenList)
+		makeToken(nil, nil, ")", TokenTypePunctuation, tokenList)
 		makeToken(nil, nil, "", 1, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
+		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
 		c.searchForPossibleValuesMethod(t, tokenList)
 	}
 }
 
 func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 	for i, f := range c.Funcs {
-		if i == fmt.Sprintf("Possible%sValues", t) {
-			makeFuncTokens(&i, f, tokenList)
+		if f.Name() == fmt.Sprintf("Possible%sValues", t) {
+			*tokenList = append(*tokenList, f.MakeTokens()...)
 			delete(c.Funcs, i)
 			return
 		}
@@ -237,44 +203,23 @@ func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 
 // adds the specified function declaration to the exports list
 func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) {
-	// create a method sig, for methods it's a combination of the receiver type
-	// with the function name e.g. "FooReceiver.Method", else just the function name.
-	sig := ""
-	if f.Recv != nil {
-		receiver := pkg.getText(f.Recv.List[0].Type.Pos(), f.Recv.List[0].Type.End())
-		if !isExported(receiver) {
-			// skip adding methods on unexported receivers
-			return
-		}
-		name := ""
-		if len(f.Recv.List[0].Names) != 0 {
-			name = f.Recv.List[0].Names[0].Name + " "
-		}
-		sig = fmt.Sprintf("(%s%s) ", name, receiver)
+	fn := NewFunc(pkg, f)
+	name := fn.Name()
+	if fn.Receiver != "" {
+		name = fmt.Sprintf("(%s) %s", fn.Receiver, name)
 	}
-	sig += f.Name.Name
-	c.Funcs[sig] = pkg.buildFunc(f.Type)
+	if !isOnUnexportedMember(name) && !isExampleOrTest(name) {
+		c.Funcs[name] = fn
+	}
 }
 
 func (c *content) addSimpleType(pkg Pkg, name string, underlyingType string) {
-	c.SimpleTypes[name] = SimpleType{Name: &name, UnderlyingType: &underlyingType}
+	c.SimpleTypes[name] = NewSimpleType(pkg, name, underlyingType)
 }
 
 // adds the specified interface type to the exports list.
 func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) {
-	in := Interface{Methods: map[string]Func{}}
-	if i.Methods != nil {
-		for _, m := range i.Methods.List {
-			if len(m.Names) > 0 {
-				n := m.Names[0].Name
-				f := pkg.buildFunc(m.Type.(*ast.FuncType))
-				in.Methods[n] = f
-			} else {
-				n := pkg.getText(m.Type.Pos(), m.Type.End())
-				in.EmbeddedInterfaces = append(in.EmbeddedInterfaces, n)
-			}
-		}
-	}
+	in := NewInterface(name, pkg, i)
 	c.Interfaces[name] = in
 }
 
@@ -286,31 +231,13 @@ func (c *content) parseInterface(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		makeInterfaceTokens(&k, c.Interfaces[k].EmbeddedInterfaces, c.Interfaces[k].Methods, tokenList)
+		*tokenList = append(*tokenList, c.Interfaces[k].MakeTokens()...)
 	}
 }
 
 // adds the specified struct type to the exports list.
 func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) {
-	sd := Struct{}
-	if ts.TypeParams != nil {
-		sd.TypeParams = make([]string, 0, len(ts.TypeParams.List))
-		pkg.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
-			sd.TypeParams = append(sd.TypeParams, strings.TrimRight(*param+" "+constraint, " "))
-		})
-	}
-	pkg.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
-		if n == nil {
-			sd.AnonymousFields = append(sd.AnonymousFields, t)
-		} else {
-			if sd.Fields == nil {
-				sd.Fields = map[string]string{}
-			}
-			sd.Fields[*n] = t
-		}
-	})
-	sort.Strings(sd.AnonymousFields)
-	c.Structs[name] = sd
+	c.Structs[name] = NewStruct(name, pkg, ts)
 }
 
 // adds the specified struct type to the exports list.
@@ -321,8 +248,9 @@ func (c *content) parseStruct(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		makeStructTokens(&k, c.Structs[k], tokenList)
-		ctors := c.searchForCtors(k)
+		*tokenList = append(*tokenList, c.Structs[k].MakeTokens()...)
+		typeName := k
+		ctors := c.searchForCtors(typeName)
 		if len(ctors) > 0 {
 			keys := make([]string, 0, len(ctors))
 			for k := range ctors {
@@ -330,15 +258,14 @@ func (c *content) parseStruct(tokenList *[]Token) {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				k2 := k
-				makeFuncTokens(&k2, ctors[k], tokenList)
+				*tokenList = append(*tokenList, ctors[k].MakeTokens()...)
 			}
 		}
-		c.searchForMethods(k, tokenList)
-		if consts := c.filterDeclarations(k, c.Consts, tokenList); len(consts) > 0 {
+		c.searchForMethods(typeName, tokenList)
+		if consts := c.filterDeclarations(typeName, c.Consts, tokenList); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
 		}
-		if vars := c.filterDeclarations(k, c.Vars, tokenList); len(vars) > 0 {
+		if vars := c.filterDeclarations(typeName, c.Vars, tokenList); len(vars) > 0 {
 			c.parseDeclarations(vars, "var", tokenList)
 		}
 	}
@@ -351,9 +278,8 @@ func (c *content) parseStruct(tokenList *[]Token) {
 // 3. it returns T or *T
 func (c *content) searchForCtors(s string) map[string]Func {
 	ctors := map[string]Func{}
-	for name, f := range c.Funcs {
-		// assumes s starts with a method receiver, if any
-		if !strings.HasPrefix(name, "New") {
+	for key, f := range c.Funcs {
+		if f.Receiver != "" || !strings.HasPrefix(f.Name(), "New") {
 			continue
 		}
 		for _, rt := range f.Returns {
@@ -362,8 +288,8 @@ func (c *content) searchForCtors(s string) map[string]Func {
 				rt = before
 			}
 			if rt == s || rt == "*"+s {
-				ctors[name] = f
-				delete(c.Funcs, name)
+				ctors[key] = f
+				delete(c.Funcs, key)
 			}
 		}
 	}
@@ -386,43 +312,23 @@ func (c *content) filterDeclarations(typ string, decls map[string]Declaration, t
 func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	methods := map[string]Func{}
 	methodNames := []string{}
-	for name, fn := range c.Funcs {
-		_, n := getReceiver(name)
+	for key, fn := range c.Funcs {
+		_, n := getReceiver(key)
 		if before, _, found := strings.Cut(n, "["); found {
 			// ignore type parameters when matching receivers to types
 			n = before
 		}
 		if s == n || "*"+s == n {
-			methods[name] = fn
-			methodNames = append(methodNames, name)
-			delete(c.Funcs, name)
-		}
-		if isOnUnexportedMember(name) || isExampleOrTest(name) {
-			delete(c.Funcs, name)
+			methods[key] = fn
+			methodNames = append(methodNames, key)
+			delete(c.Funcs, key)
 		}
 	}
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
-		v, n := getReceiver(name)
-		isPointer := false
-		if strings.HasPrefix(n, "*") {
-			n = n[1:]
-			isPointer = true
-		}
-		makeMethodTokens(v, n, isPointer, getMethodName(name), fn, tokenList)
+		*tokenList = append(*tokenList, fn.MakeTokens()...)
 	}
-}
-
-// getCtorName returns the name of a constructor without the New prefix.
-// TODO improve this to also check the return statement on the constructor to make sure it does in fact only
-// return the name of constructors and not other functions that begin with New
-func getCtorName(s string) string {
-	if strings.HasPrefix(s, "New") {
-		ctor := s[3:]
-		return ctor
-	}
-	return ""
 }
 
 // receiverRegex captures a receiver's type and optional name
@@ -445,18 +351,10 @@ func getReceiver(s string) (string, string) {
 	return name, typ
 }
 
-// getMethodName expects a method signature in the param s and removes the receiver portion of the
-// method signature before returning the method name.
-func getMethodName(s string) string {
-	pos := strings.Index(s, ")")
-	// return the string after the first ) and add an extra index to omit the space after the receiver
-	return s[pos+2:]
-}
-
 // isOnUnexportedMember checks for method signatures that are on unexported types,
 // it will return true if the method is unexported.
 func isOnUnexportedMember(s string) bool {
-	r := regexp.MustCompile(`(\(([a-z|A-Z]{1}) (\*){0,1}([a-z]+)([a-z|A-Z]*)\))`)
+	r := regexp.MustCompile(`\([a-zA-Z]* \*?[a-z]+[a-zA-Z]*\)`)
 	return r.MatchString(s)
 }
 
@@ -472,16 +370,8 @@ func (c *content) parseFunc(tokenList *[]Token) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for i, k := range keys {
-		if isOnUnexportedMember(k) || isExampleOrTest(k) {
-			copy(keys[i:], keys[i+1:])
-			keys[len(keys)-1] = ""
-			keys = keys[:len(keys)-1]
-			delete(c.Funcs, k)
-		}
-	}
 	for _, k := range keys {
-		makeFuncTokens(&k, c.Funcs[k], tokenList)
+		*tokenList = append(*tokenList, c.Funcs[k].MakeTokens()...)
 	}
 }
 
@@ -493,60 +383,60 @@ func (c *content) parseFunc(tokenList *[]Token) {
 // For funcs, global funcs that are not constructors for any structs will have a direct navigation item.
 func (c *content) generateNavChildItems() []Navigation {
 	items := []Navigation{}
-	for n := range c.Consts {
+	for _, cst := range c.Consts {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         cst.Name(),
+			NavigationId: cst.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "enum",
 			},
 		})
 	}
-	for n := range c.Funcs {
+	for _, f := range c.Funcs {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         f.Name(),
+			NavigationId: f.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
-				"TypeKind": "unknown",
+				"TypeKind": "delegate",
 			},
 		})
 	}
-	for n := range c.Interfaces {
+	for _, i := range c.Interfaces {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         i.Name(),
+			NavigationId: i.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "interface",
 			},
 		})
 	}
-	for n := range c.SimpleTypes {
+	for _, n := range c.SimpleTypes {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         n.Name(),
+			NavigationId: n.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "struct",
 			},
 		})
 	}
-	for n := range c.Structs {
+	for _, s := range c.Structs {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         s.Name(),
+			NavigationId: s.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "class",
 			},
 		})
 	}
-	for n := range c.Vars {
+	for _, v := range c.Vars {
 		items = append(items, Navigation{
-			Text:         n,
-			NavigationId: n,
+			Text:         v.Name(),
+			NavigationId: v.ID(),
 			ChildItems:   []Navigation{},
 			Tags: &map[string]string{
 				"TypeKind": "unknown",
@@ -557,12 +447,4 @@ func (c *content) generateNavChildItems() []Navigation {
 		return items[i].Text < items[j].Text
 	})
 	return items
-}
-
-func isExported(name string) bool {
-	if string(name[0]) == "*" {
-		name = name[1:]
-	}
-	ch, _ := utf8.DecodeRuneInString(name)
-	return unicode.IsUpper(ch)
 }

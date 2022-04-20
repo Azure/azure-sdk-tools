@@ -49,11 +49,11 @@ func createReview(pkgDir string) (PackageReview, error) {
 	for _, name := range packageNames {
 		p := m.packages[name]
 		n := p.relName
-		makeToken(nil, nil, "package", memberName, tokenList)
-		makeToken(nil, nil, " ", whitespace, tokenList)
-		makeToken(&n, &n, n, typeName, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
-		makeToken(nil, nil, "", newline, tokenList)
+		makeToken(nil, nil, "package", TokenTypeMemberName, tokenList)
+		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
+		makeToken(&n, nil, n, TokenTypeTypeName, tokenList)
+		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
+		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
 		// TODO: reordering these calls reorders APIView output and can omit content
 		p.c.parseInterface(tokenList)
 		p.c.parseStruct(tokenList)
@@ -66,6 +66,9 @@ func createReview(pkgDir string) (PackageReview, error) {
 			Text:         n,
 			NavigationId: n,
 			ChildItems:   navItems,
+			Tags: &map[string]string{
+				"TypeKind": "namespace",
+			},
 		})
 	}
 	return PackageReview{

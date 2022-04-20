@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public bool HandleRedirects = true;
+        public bool HandleRedirects = false;
 
         public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";

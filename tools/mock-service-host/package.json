@@ -1,11 +1,11 @@
 {
   "name": "@azure-tools/mock-service-host",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Azure Mock Service Host",
   "main": "index.js",
   "scripts": {
     "debug": "tsc && node --max_old_space_size=4096 --inspect-brk ./dist/src/main.js",
-    "start": "tsc && node dist/src/main.js",
+    "start": "tsc && node --max_old_space_size=4096 dist/src/main.js",
     "build": "tsc && npm run copyfiles",
     "copyfiles": "copyfiles -a \"./test/testData/**/*.json\" ./dist",
     "unit-test": "npm run build && cross-env NODE_ENV=test jest --ci --reporters=default --reporters=jest-junit --config ./jest.unittest.config.js",
@@ -36,7 +36,7 @@
     "lodash": "^4.17.15",
     "mockjs": "^1.1.0",
     "oauth2-mock-server": "^3.1.0",
-    "oav": "~2.10.2",
+    "oav": "~2.12.1",
     "reflect-metadata": "^0.1.13",
     "simple-git": "^3.3.0",
     "winston": "^3.3.3"

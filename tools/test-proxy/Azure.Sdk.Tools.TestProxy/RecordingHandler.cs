@@ -48,15 +48,6 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
-        public List<HttpStatusCode> RedirectStatusCodes = new List<HttpStatusCode>()
-        {
-            HttpStatusCode.Redirect,
-            HttpStatusCode.RedirectMethod,
-            HttpStatusCode.RedirectKeepVerb,
-            HttpStatusCode.PermanentRedirect,
-            HttpStatusCode.TemporaryRedirect
-        };
-
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
         public List<ResponseTransform> Transforms { get; set; }

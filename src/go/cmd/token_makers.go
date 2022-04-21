@@ -355,9 +355,8 @@ func (s SimpleType) Name() string {
 var _ TokenMaker = (*SimpleType)(nil)
 
 type Struct struct {
-	// a list of anonymous fields
-	anonymousFields []string
-	// key/value pairs of the field names and types respectively.
+	AnonymousFields []string
+	// fields maps a field's name to the name of its type
 	fields map[string]string
 	id     string
 	name   string
@@ -375,7 +374,7 @@ func NewStruct(name string, pkg Pkg, ts *ast.TypeSpec) Struct {
 	}
 	pkg.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
-			s.anonymousFields = append(s.anonymousFields, t)
+			s.AnonymousFields = append(s.AnonymousFields, t)
 		} else {
 			if s.fields == nil {
 				s.fields = map[string]string{}
@@ -383,7 +382,7 @@ func NewStruct(name string, pkg Pkg, ts *ast.TypeSpec) Struct {
 			s.fields[*n] = t
 		}
 	})
-	sort.Strings(s.anonymousFields)
+	sort.Strings(s.AnonymousFields)
 	return s
 }
 

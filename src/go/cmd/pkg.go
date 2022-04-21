@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // Pkg represents a Go package.
@@ -168,7 +169,17 @@ func (p *Pkg) indexFile(f *ast.File) {
 					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
 				}
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addStruct(*p, x.Name.Name, x)
+				s := p.c.addStruct(*p, x.Name.Name, x)
+				for _, t := range s.AnonymousFields {
+					// if t contains "." it must be exported from another package
+					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0]))  {
+						p.diagnostics = append(p.diagnostics, Diagnostic{
+							Level:    DiagnosticLevelError,
+							TargetID: s.ID(),
+							Text:     fmt.Sprintf(`Anonymously embeds unexported struct "%s"`, t),
+						})
+					}
+				}
 			default:
 				txt := p.getText(x.Pos(), x.End())
 				fmt.Printf("\tWARNING:  unexpected node type %T: %s\n", t, txt)
@@ -200,7 +211,7 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	for _, f := range fl {
 		t := pkg.getText(f.Type.Pos(), f.Type.End())
 		if len(f.Names) == 0 {
-			// field is an unnamed func return
+			// field is an unnamed func return or anonymously embedded
 			cb(nil, t)
 		}
 		// field could have multiple names: in "type A struct { m, n int }",

@@ -85,15 +85,29 @@ func NewModule(dir string) (*Module, error) {
 				panic("haven't indexed " + impPath)
 			}
 			if def, ok := source.types[typeName]; ok {
+				var t TokenMaker
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
-					p.c.addInterface(*def.p, def.name, n)
+					t = p.c.addInterface(*def.p, def.name, n)
 				case *ast.StructType:
-					p.c.addStruct(*def.p, def.name, def.n)
+					t = p.c.addStruct(*def.p, def.name, def.n)
 				case *ast.Ident:
-					p.c.addSimpleType(*p, def.name, def.n.Type.(*ast.Ident).Name)
+					t = p.c.addSimpleType(*p, def.name, def.n.Type.(*ast.Ident).Name)
 				default:
 					fmt.Printf("WARNING:  unexpected node type %T\n", def.n.Type)
+				}
+				if t != nil && strings.Contains(qn, "internal") {
+					path := strings.TrimPrefix(qn, baseImportPath)
+					level := DiagnosticLevelInfo
+					if !strings.HasPrefix(path, m.Name) {
+						// this type is defined in another module
+						level = DiagnosticLevelWarning
+					}
+					p.diagnostics = append(p.diagnostics, Diagnostic{
+						Level:    level,
+						TargetID: t.ID(),
+						Text:     "Alias for " + path,
+					})
 				}
 			} else {
 				panic("no definition for " + qn)

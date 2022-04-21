@@ -5,6 +5,23 @@ package cmd
 
 // This file contains models comprising an APIView document
 
+type Diagnostic struct {
+	DiagnosticID string          `json:"DiagnosticId,omitempty"`
+	HelpLinkURI  string          `json:"HelpLinkUri,omitempty"`
+	Level        DiagnosticLevel `json:"Level,omitempty"`
+	// TargetID is the DefinitionID of the Token to which this diagnostic applies
+	TargetID string `json:"TargetId,omitempty"`
+	Text     string `json:"Text,omitempty"`
+}
+
+type DiagnosticLevel int
+
+const (
+	DiagnosticLevelInfo    DiagnosticLevel = 1
+	DiagnosticLevelWarning DiagnosticLevel = 2
+	DiagnosticLevelError   DiagnosticLevel = 3
+)
+
 type Navigation struct {
 	Text         string             `json:"Text"`
 	NavigationId string             `json:"NavigationId"`

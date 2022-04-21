@@ -38,6 +38,7 @@ func createReview(pkgDir string) (PackageReview, error) {
 	}
 	tokenList := &[]Token{}
 	nav := []Navigation{}
+	diagnostics := []Diagnostic{}
 	packageNames := []string{}
 	for name, p := range m.packages {
 		if strings.Contains(p.relName, "internal") || p.c.isEmpty() {
@@ -70,11 +71,13 @@ func createReview(pkgDir string) (PackageReview, error) {
 				"TypeKind": "namespace",
 			},
 		})
+		diagnostics = append(diagnostics, p.diagnostics...)
 	}
 	return PackageReview{
-		Language:   "Go",
-		Name:       m.Name,
-		Tokens:     *tokenList,
-		Navigation: nav,
+		Diagnostics: diagnostics,
+		Language:    "Go",
+		Name:        m.Name,
+		Navigation:  nav,
+		Tokens:      *tokenList,
 	}, nil
 }

@@ -17,13 +17,14 @@ import (
 
 // Pkg represents a Go package.
 type Pkg struct {
-	c          content
-	files      map[string][]byte
-	fs         *token.FileSet
-	moduleName string
-	p          *ast.Package
-	path       string
-	relName    string
+	c           content
+	diagnostics []Diagnostic
+	files       map[string][]byte
+	fs          *token.FileSet
+	moduleName  string
+	p           *ast.Package
+	path        string
+	relName     string
 
 	// typeAliases keys are type names defined in other packages that this package exports by alias.
 	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
@@ -41,6 +42,7 @@ type Pkg struct {
 func NewPkg(dir, moduleName string) (*Pkg, error) {
 	pk := &Pkg{
 		c:           newContent(),
+		diagnostics: []Diagnostic{},
 		moduleName:  moduleName,
 		path:        dir,
 		typeAliases: map[string]interface{}{},

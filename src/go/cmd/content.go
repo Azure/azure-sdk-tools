@@ -202,25 +202,27 @@ func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
 }
 
 // adds the specified function declaration to the exports list
-func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) {
+func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) Func {
 	fn := NewFunc(pkg, f)
 	name := fn.Name()
 	if fn.Receiver != "" {
 		name = fmt.Sprintf("(%s) %s", fn.Receiver, name)
 	}
-	if !isOnUnexportedMember(name) && !isExampleOrTest(name) {
-		c.Funcs[name] = fn
-	}
+	c.Funcs[name] = fn
+	return fn
 }
 
-func (c *content) addSimpleType(pkg Pkg, name string, underlyingType string) {
-	c.SimpleTypes[name] = NewSimpleType(pkg, name, underlyingType)
+func (c *content) addSimpleType(pkg Pkg, name string, underlyingType string) SimpleType {
+	t := NewSimpleType(pkg, name, underlyingType)
+	c.SimpleTypes[name] = t
+	return t
 }
 
 // adds the specified interface type to the exports list.
-func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) {
+func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) Interface {
 	in := NewInterface(name, pkg, i)
 	c.Interfaces[name] = in
+	return in
 }
 
 // adds the specified struct type to the exports list.
@@ -236,8 +238,10 @@ func (c *content) parseInterface(tokenList *[]Token) {
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) {
-	c.Structs[name] = NewStruct(name, pkg, ts)
+func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) Struct {
+	s := NewStruct(name, pkg, ts)
+	c.Structs[name] = s
+	return s
 }
 
 // adds the specified struct type to the exports list.

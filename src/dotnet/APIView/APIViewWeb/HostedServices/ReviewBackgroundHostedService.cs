@@ -19,8 +19,7 @@ namespace APIViewWeb.HostedServices
         {
             _reviewManager = reviewManager;
             // We can disable background task using app settings if required
-            var taskDisabled = configuration["BackgroundTaskDisabled"];
-            if (!String.IsNullOrEmpty(taskDisabled) && taskDisabled == "true")
+            if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled) && taskDisabled)
             {
                 _isDisabled = true;
             }

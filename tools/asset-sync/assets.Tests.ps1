@@ -27,7 +27,7 @@ Describe "AssetsModuleTests" {
   Context "Evaluate-Target-Dir" {
     It "Should evaluate a root directory properly." {
       $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." "..")
-      $Value | Should -Be @($false, $false)
+      $Value | Should -Be @($false, $true)
     }
     
     It "Should evaluate a recording directory properly." {
@@ -288,7 +288,7 @@ Describe "AssetsModuleTests" {
 
         $targetFolder = Split-Path $targetPath
         if(-not (Test-Path $targetFolder)){
-          mkdir -p $targetFolder
+          New-Item -Type Directory -Force -Path $targetFolder | Out-Null
         }
 
         Copy-Item  -Force -Path $sourcePath -Destination $targetPath
@@ -344,7 +344,7 @@ Describe "AssetsModuleTests" {
 
         $targetFolder = Split-Path $targetPath
         if(-not (Test-Path $targetFolder)){
-          mkdir -p $targetFolder
+          New-Item -Type Directory -Force -Path $targetFolder | Out-Null
         }
 
         Copy-Item  -Force -Path $sourcePath -Destination $targetPath
@@ -400,7 +400,7 @@ Describe "AssetsModuleTests" {
 
         $targetFolder = Split-Path $targetPath
         if(-not (Test-Path $targetFolder)){
-          mkdir -p $targetFolder
+          New-Item -Type Directory -Force -Path $targetFolder | Out-Null
         }
 
         Copy-Item  -Force -Path $sourcePath -Destination $targetPath

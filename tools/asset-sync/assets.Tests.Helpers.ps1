@@ -1,7 +1,7 @@
 # This powershell script contains multiple functions that are dot-included in the BeforeAll function of assets.Tests.ps1
 #
 # Describe-TestFolder is the primary entrypoint, and is used to create a test environment given some basic setup input. This function is used to:
-#  - Create faux recording.jsons and place them in a fake language repo of any structure
+#  - Create faux assets.json files and place them in a fake language repo of any structure
 #  - Create any fake language repo structure with some random sample data
 #  - Dynamically create a copy of the assets repo within a local folder to actually create real test scenarios
 #  - Will push duplicates of test scenario branches to alternative, guid-fied branch names for actual push/pull operations.
@@ -38,13 +38,13 @@ Function Get-TestPath {
   if ($disablePermanentStorage){
     $testPath = "TestDrive:\$([Guid]::NewGuid())\"
     
-    mkdir $testPath | Out-Null
+    New-Item -Type Directory -Force -Path $testPath | Out-Null
     return $testPath
   }
   else {
     $testPath = (Join-Path $localTempPath "$([Guid]::NewGuid())")
 
-    mkdir -p $testPath | Out-Null
+    New-Item -Type Directory -Force -Path $testPath | Out-Null
     return $testPath
   }
 }
@@ -57,8 +57,8 @@ Function Initialize-Integration-Branches {
 
   $adjustedBranchName = "test_$($TestGuid)_$($Config.AssetsRepoBranch)"
   $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
-  mkdir $tempPath | Out-Null
-  
+  New-Item -Type Directory -Force -Path $tempPath | Out-Null
+
   try {
     Push-Location $tempPath
     Write-Host "git clone https://github.com/Azure/azure-sdk-assets-integration ."
@@ -98,7 +98,7 @@ Function DeInitialize-Integration-Branches {
   Write-Host "Cleaning up $targetedRepo"
 
   $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
-  mkdir $tempPath | Out-Null
+  New-Item -Type Directory -Force -Path $tempPath | Out-Null
   
   try {
     Push-Location $tempPath
@@ -171,7 +171,7 @@ Function Describe-TestFolder{
       $directory = Split-Path $assetJsonLocation
 
       if (-not (Test-Path $directory)){
-        mkdir -p $directory | Out-Null
+        New-Item -Type Directory -Force -Path $directory | Out-Null
       }
     }
   }
@@ -191,15 +191,19 @@ Function Describe-TestFolder{
         $directory = Split-Path $resolvedFilePath
 
         if (-not (Test-Path $directory)){
-          mkdir -p $directory | Out-Null
+          New-Item -Type Directory -Force -Path $directory | Out-Null
         }
         
-        New-Item -Path $resolvedFilePath -ItemType File -Value ("{ `"a`": `"" + ([guid]::NewGuid().ToString()) + "`" }") | Out-Null
+        $testObj = [PSCustomObject]@{
+          a = [guid]::NewGuid().ToString()
+        } | ConvertTo-Json
+
+        New-Item -Path $resolvedFilePath -ItemType File -Value $testObj | Out-Null
       }
     }
     else {
       if (-not (Test-Path $file)){
-        mkdir -p $file | Out-Null
+        New-Item -Type Directory -Force -Path $file | Out-Null
       }
     }
   }

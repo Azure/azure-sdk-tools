@@ -152,7 +152,7 @@ Function Resolve-AssetsJson {
 
 Function Resolve-AssetStore-Location {
     if (-not (Test-Path $ASSETS_STORE)){
-        mkdir -p $ASSETS_STORE | Out-Null
+        New-Item -Type Directory -Force -Path $ASSETS_STORE | Out-Null
     }
     $ASSETS_STORE = Resolve-Path $ASSETS_STORE
 
@@ -194,7 +194,7 @@ Function Resolve-AssetRepo-Location {
     $repoPath = (Join-Path $assetsLocation $repoNameHashed.Hash)
     
     if (-not (Test-Path $repoPath)){
-        mkdir -p $repoPath | Out-Null
+        New-Item -Type Directory -Force -Path $repoPath | Out-Null
     }
     
     return $repoPath

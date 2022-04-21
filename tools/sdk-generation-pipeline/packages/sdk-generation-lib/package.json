@@ -25,7 +25,7 @@
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "ajv": "^6.12.6",
-    "colors": "^1.4.0",
+    "colors": "1.4.0",
     "convict": "^6.2.1",
     "jsonc-parser": "^3.0.0",
     "winston": "^3.3.3"

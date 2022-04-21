@@ -6,10 +6,14 @@ package cmd
 import (
 	"fmt"
 	"go/ast"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
 )
+
+// exportedFieldRgx matches exported field names like "policy.ClientOptions", "Transport", and "GetToken(...)"
+var exportedFieldRgx = regexp.MustCompile(`^(?:[a-zA-Z]*\.)?[A-Z]+[a-zA-Z]*`)
 
 type TokenMaker interface {
 	Exported() bool
@@ -260,6 +264,7 @@ func NewInterface(name string, pkg Pkg, n *ast.InterfaceType) Interface {
 			}
 		}
 	}
+	sort.Strings(in.embeddedInterfaces)
 	return in
 }
 
@@ -281,17 +286,19 @@ func (i Interface) MakeTokens() []Token {
 	makeToken(nil, nil, "interface", TokenTypeKeyword, list)
 	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 	makeToken(nil, nil, "{", TokenTypePunctuation, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	sort.Strings(i.embeddedInterfaces)
 	for _, name := range i.embeddedInterfaces {
-		defID := ID + "-" + name
-		makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-		makeToken(&defID, nil, name, TokenTypeTypeName, list)
-		makeToken(nil, nil, "", TokenTypeNewline, list)
+		if exportedFieldRgx.MatchString(name) {
+			defID := ID + "-" + name
+			makeToken(nil, nil, "", TokenTypeNewline, list)
+			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
+			makeToken(&defID, nil, name, TokenTypeTypeName, list)
+		}
 	}
 	keys := []string{}
 	for k := range i.methods {
-		keys = append(keys, k)
+		if unicode.IsUpper(rune(k[0])) {
+			keys = append(keys, k)
+		}
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
@@ -403,15 +410,21 @@ func (s Struct) MakeTokens() []Token {
 	makeToken(nil, nil, "struct", TokenTypeKeyword, list)
 	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 	makeToken(nil, nil, "{", TokenTypePunctuation, list)
-	for _, v1 := range s.anonymousFields {
-		defID := v1 + "-" + s.id
-		makeToken(nil, nil, "", TokenTypeNewline, list)
-		makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-		makeToken(&defID, nil, v1, TokenTypeTypeName, list)
+	exportedFields := false
+	for _, name := range s.AnonymousFields {
+		if exportedFieldRgx.MatchString(name) {
+			defID := name + "-" + s.id
+			makeToken(nil, nil, "", TokenTypeNewline, list)
+			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
+			makeToken(&defID, nil, name, TokenTypeTypeName, list)
+			exportedFields = true
+		}
 	}
 	keys := make([]string, 0, len(s.fields))
 	for k := range s.fields {
-		keys = append(keys, k)
+		if exportedFieldRgx.MatchString(k) {
+			keys = append(keys, k)
+		}
 	}
 	sort.Strings(keys)
 	for _, field := range keys {
@@ -422,8 +435,9 @@ func (s Struct) MakeTokens() []Token {
 		makeToken(&defID, nil, field, TokenTypeTypeName, list)
 		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 		makeToken(nil, nil, typ, TokenTypeMemberName, list)
+		exportedFields = true
 	}
-	if len(s.anonymousFields)+len(s.fields) > 0 {
+	if exportedFields {
 		makeToken(nil, nil, "", TokenTypeNewline, list)
 	}
 	makeToken(nil, nil, "}", TokenTypePunctuation, list)

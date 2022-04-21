@@ -69,12 +69,7 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 		err = fmt.Errorf(`found %d packages in "%s"`, len(packages), dir)
 		return nil, err
 	}
-	for name, p := range packages {
-		// prune non-exported nodes
-		if exp := ast.PackageExports(p); !exp {
-			err = fmt.Errorf(`package "%s" exports nothing`, name)
-			return nil, err
-		}
+	for _, p := range packages {
 		pk.p = p
 		return pk, nil
 	}

@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // skip adding the const type in the token list
@@ -121,8 +122,10 @@ func includesType(s []string, t string) bool {
 
 func (c *content) parseSimpleType(tokenList *[]Token) {
 	keys := make([]string, 0, len(c.SimpleTypes))
-	for key := range c.SimpleTypes {
-		keys = append(keys, key)
+	for name := range c.SimpleTypes {
+		if unicode.IsUpper(rune(name[0])) {
+			keys = append(keys, name)
+		}
 	}
 	sort.Strings(keys)
 	for _, name := range keys {
@@ -154,10 +157,12 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 	keys := []string{}
 	// create types slice in order to be able to separate consts by the type they represent
 	types := []string{}
-	for i, s := range decls {
-		keys = append(keys, i)
-		if !includesType(types, s.Type) {
-			types = append(types, s.Type)
+	for name, d := range decls {
+		if r := rune(name[0]); r != '_' && unicode.IsUpper(r) {
+			keys = append(keys, name)
+			if !includesType(types, d.Type) {
+				types = append(types, d.Type)
+			}
 		}
 	}
 	sort.Strings(keys)
@@ -228,8 +233,10 @@ func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) Inter
 // adds the specified struct type to the exports list.
 func (c *content) parseInterface(tokenList *[]Token) {
 	keys := []string{}
-	for s := range c.Interfaces {
-		keys = append(keys, s)
+	for name := range c.Interfaces {
+		if unicode.IsUpper(rune(name[0])) {
+			keys = append(keys, name)
+		}
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
@@ -247,8 +254,10 @@ func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) Struct {
 // adds the specified struct type to the exports list.
 func (c *content) parseStruct(tokenList *[]Token) {
 	keys := make([]string, 0, len(c.Structs))
-	for k := range c.Structs {
-		keys = append(keys, k)
+	for name := range c.Structs {
+		if unicode.IsUpper(rune(name[0])) {
+			keys = append(keys, name)
+		}
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
@@ -317,6 +326,10 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	methods := map[string]Func{}
 	methodNames := []string{}
 	for key, fn := range c.Funcs {
+		name := fn.Name()
+		if unicode.IsLower(rune(name[0])) {
+			continue
+		}
 		_, n := getReceiver(key)
 		if before, _, found := strings.Cut(n, "["); found {
 			// ignore type parameters when matching receivers to types
@@ -370,8 +383,11 @@ func isExampleOrTest(s string) bool {
 
 func (c *content) parseFunc(tokenList *[]Token) {
 	keys := make([]string, 0, len(c.Funcs))
-	for k := range c.Funcs {
-		keys = append(keys, k)
+	for key, fn := range c.Funcs {
+		name := fn.Name()
+		if !(isOnUnexportedMember(key) || isExampleOrTest(name) || unicode.IsLower(rune(name[0]))) {
+			keys = append(keys, key)
+		}
 	}
 	sort.Strings(keys)
 	for _, k := range keys {

@@ -68,7 +68,7 @@ namespace APIViewWeb
                         // fallback to just using the first one.
                         dllEntry = dllEntries.FirstOrDefault(
                             dll => Path.GetFileNameWithoutExtension(nuspecEntry.Name)
-                                .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) ?? dllEntries.First();
+                                .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) ?? dllEntry;
                     }
 
                     dllStream = dllEntry.Open();

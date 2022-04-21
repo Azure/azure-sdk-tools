@@ -17,12 +17,12 @@ from ._models import (
     PetEnumPy3MetaclassAlt,
     PublicCaseInsensitiveEnumMeta,
     PublicPrivateClass, RequiredKwargObject,
+    SomeImplementationClass,
     SomePoorlyNamedObject as SomeAwesomelyNamedObject,
     SomethingWithDecorators,
     SomethingWithOverloads,
     SomethingWithProperties
 )
-
 
 __all__ = (
     "DocstringClass",
@@ -36,6 +36,7 @@ __all__ = (
     "PublicPrivateClass",
     "RequiredKwargObject",
     "SomeAwesomelyNamedObject",
+    "SomeImplementationClass",
     "SomethingWithDecorators",
     "SomethingWithOverloads",
     "SomethingWithProperties"

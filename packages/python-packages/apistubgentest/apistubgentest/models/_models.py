@@ -6,12 +6,12 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
-from six import with_metaclass
 from typing import Any, overload, TypedDict, Union, Optional
 
 
@@ -237,3 +237,18 @@ class SomethingWithProperties:
         :rtype: Optional[str]
         """
         pass
+
+# pylint:disable=docstring-missing-rtype
+class _SomeAbstractBase(abc.ABC):
+    """ Some abstract base class. """
+
+    @property
+    @abc.abstractmethod
+    def say_hello(self) -> str:
+        """ A method to say hello. """
+        ...
+
+class SomeImplementationClass(_SomeAbstractBase):
+
+    def say_hello(self) -> str:
+        return "Hello!"

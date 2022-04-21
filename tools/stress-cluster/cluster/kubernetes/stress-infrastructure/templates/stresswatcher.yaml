@@ -1,4 +1,4 @@
-{{ $ctx := deepCopy . | merge (dict "Scenario" "watcher" ) -}}
+{{ $ctx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list . "watcher" )) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

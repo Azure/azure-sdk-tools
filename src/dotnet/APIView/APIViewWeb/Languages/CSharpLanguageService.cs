@@ -59,11 +59,13 @@ namespace APIViewWeb
 
                     var nuspecEntry = archive.Entries.Single(entry => IsNuspec(entry.Name));
 
-                    // Use the first dll that matches the nuspec name in case there are multiple dlls in the nupkg (e.g. Cosmos).
-                    var dllEntry = archive.Entries.First(
-                        entry => IsDll(entry.Name) &&
-                                 Path.GetFileNameWithoutExtension(nuspecEntry.Name)
-                                     .Equals(Path.GetFileNameWithoutExtension(entry.Name), StringComparison.OrdinalIgnoreCase));
+                    var dllEntries = archive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
+
+                    // If there are multiple dlls in the nupkg (e.g. Cosmos), use the first dll that matches the nuspec name
+                    var dllEntry = dllEntries.Length == 1 ? dllEntries.First():
+                        dllEntries.First(
+                            dll => Path.GetFileNameWithoutExtension(nuspecEntry.Name)
+                                .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase));
 
                     dllStream = dllEntry.Open();
                     var docEntry = archive.GetEntry(Path.ChangeExtension(dllEntry.FullName, ".xml"));

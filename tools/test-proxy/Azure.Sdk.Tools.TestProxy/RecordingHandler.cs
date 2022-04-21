@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public bool HandleRedirects = false;
+        public bool HandleRedirects = true;
 
         public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";
@@ -44,6 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
+            "Host",
             "Proxy-Connection",
         };
 
@@ -139,29 +140,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task<HttpResponseMessage> HandleRedirectedRequestAsync(HttpResponseMessage response, HttpClient client)
-        {
-            if (HandleRedirects)
-            {
-                var upstreamRequest = CreateRedirectRequest(response);
-                var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
-
-                if (RedirectStatusCodes.Contains(upstreamResponse.StatusCode))
-                {
-                    return await HandleRedirectedRequestAsync(upstreamResponse, client);
-                }
-                else
-                {
-                    return upstreamResponse;
-                }
-            }
-            else
-            {
-                return response;
-            }
-        }
-
-        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient redirectlessClient, HttpClient redirectableClient)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
@@ -173,11 +152,17 @@ namespace Azure.Sdk.Tools.TestProxy
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
-            var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
-            if (RedirectStatusCodes.Contains(upstreamResponse.StatusCode))
+            HttpResponseMessage upstreamResponse = null;
+
+
+            if (HandleRedirects)
             {
-                upstreamResponse = await HandleRedirectedRequestAsync(upstreamResponse, client);
+                upstreamResponse = await redirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+            }
+            else
+            {
+                upstreamResponse = await redirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
             }
 
             byte[] body = Array.Empty<byte>();
@@ -296,27 +281,6 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody.ToArray();
         }
 
-        public HttpRequestMessage CreateRedirectRequest(HttpResponseMessage response)
-        {
-            var upstreamRequest = new HttpRequestMessage();
-            upstreamRequest.RequestUri = response.Headers.Location;
-
-            // 303 SeeOther. "make a request targeting the location but make it a GET"
-            if(response.StatusCode == HttpStatusCode.RedirectMethod)
-            {
-                upstreamRequest.Method = HttpMethod.Get;
-            }
-            // 307 RedirectKeepVerb. EG "make a request targeting the location but keep the original request verb"
-            else
-            {
-                upstreamRequest.Method = response.RequestMessage.Method;
-            }
-
-            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
-
-            return upstreamRequest;
-        }
-
         public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
             var upstreamRequest = new HttpRequestMessage();
@@ -351,7 +315,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
 
             return upstreamRequest;
         }

@@ -366,7 +366,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             CreateRecordModeRequest(httpContext, "request-body");
 
             var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
             recordingHandler.StopRecording(sessionId);
 
             try
@@ -399,14 +399,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             CreateRecordModeRequest(httpContext, "request-response");
 
             var mockClient = new HttpClient(new MockHttpHandler());
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
 
             httpContext = new DefaultHttpContext();
             // send a second request that SHOULD be recorded
             CreateRecordModeRequest(httpContext);
             httpContext.Request.Headers.Remove("x-recording-skip");
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
-            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient);
+            await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient);
 
             recordingHandler.StopRecording(sessionId);
 
@@ -444,7 +444,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var mockClient = new HttpClient(new MockHttpHandler());
             HttpException resultingException = await Assert.ThrowsAsync<HttpException>(
-                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient)
+                async () => await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response, mockClient, mockClient)
             );
             Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
         }

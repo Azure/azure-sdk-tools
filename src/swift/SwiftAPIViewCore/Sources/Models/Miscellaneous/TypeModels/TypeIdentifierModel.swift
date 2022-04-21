@@ -27,28 +27,53 @@
 import AST
 import Foundation
 
+struct TypeIdentifierModel: TypeModel {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    struct TypeNameModel: Tokenizable {
+
+        let name: String
+        let genericArgument: GenericArgumentModel?
+
+        init(from source: TypeIdentifier.TypeName) {
+            name = source.name.textDescription
+            genericArgument = GenericArgumentModel(from: source.genericArgumentClause)
+        }
+
+        init(name: String) {
+            self.name = name
+            self.genericArgument = nil
+        }
+
+        func tokenize(apiview a: APIViewModel) {
+            a.typeReference(name: name)
+            genericArgument?.tokenize(apiview: a)
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var names: [TypeNameModel]
+
+    init(from source: TypeIdentifier) {
+        names = [TypeNameModel]()
+        source.names.forEach { item in
+            names.append(TypeNameModel(from: item))
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
     }
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    init(name: String) {
+        names = [TypeNameModel(name: name)]
+    }
+
+    func tokenize(apiview a: APIViewModel) {
+        opaque.tokenize(apiview: a)
+        let stopIdx = names.count - 1
+        for (idx, name) in names.enumerated() {
+            name.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(".")
+            }
+        }
+        optional.tokenize(apiview: a)
     }
 }

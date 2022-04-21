@@ -27,28 +27,31 @@
 import AST
 import Foundation
 
+struct TypeAnnotationModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var type: TypeModel
+    var attributes: AttributesModel?
+    var isInOut: Bool
+
+    init?(from source: TypeAnnotation?) {
+        guard let source = source else { return nil }
+        type = source.type.toTokenizable()!
+        attributes = AttributesModel(from: source.attributes)
+        isInOut = source.isInOutParameter
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
+    init?(from source: TypeModel?) {
+        guard let source = source else { return nil }
+        type = source
+        attributes = nil
+        isInOut = false
     }
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    func tokenize(apiview a: APIViewModel) {
+        attributes?.tokenize(apiview: a)
+        if isInOut {
+            a.keyword("inout", prefixSpace: true, postfixSpace: true)
+        }
+        type.tokenize(apiview: a)
     }
 }

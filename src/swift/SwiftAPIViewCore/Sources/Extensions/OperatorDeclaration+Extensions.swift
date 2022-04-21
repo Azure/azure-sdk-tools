@@ -27,28 +27,15 @@
 import AST
 import Foundation
 
-
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
-    }
-
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+extension OperatorDeclaration {
+    var `operator`: String {
+        switch self.kind {
+        case let .infix(opName, _):
+            return opName
+        case let .postfix(opName):
+            return opName
+        case let .prefix(opName):
+            return opName
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
     }
 }

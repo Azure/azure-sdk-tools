@@ -27,28 +27,31 @@
 import AST
 import Foundation
 
+struct DeclarationModifiersModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var accessLevel: AccessLevelModifier? = nil
+    var modifiers: [String]
+
+    init(from source: DeclarationModifiers) {
+        self.modifiers = [String]()
+        for item in source {
+            switch item {
+            case let .accessLevel(value):
+                self.accessLevel = value
+            case let .mutation(value):
+                self.modifiers.append(value.textDescription)
+            default:
+                self.modifiers.append(item.textDescription)
+            }
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        if let accessLevel = accessLevel {
+            a.keyword(accessLevel.textDescription, postfixSpace: true)
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
+        modifiers.forEach { value in
+            a.keyword(value, postfixSpace: true)
         }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
     }
 }

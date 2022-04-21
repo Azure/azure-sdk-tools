@@ -24,31 +24,36 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
+// Using @available to rename a protocol
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
-    }
+public protocol MyRenamedProtocol {
+    // A protocol named MyProtocol was subsequent release renames MyProtocol
+}
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
+@available(*, unavailable, renamed: "MyRenamedProtocol")
+public typealias MyProtocol = MyRenamedProtocol
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+// Using @available to specify OS versions
+
+@available(iOS 10.0, macOS 10.12, *)
+public class MyClass {
+    // class definition
+}
+
+// Using @available to specify swift version
+
+@available(swift 3.0.2)
+@available(macOS 10.12, *)
+public struct MyStruct {
+    // struct definition
+}
+
+// Using @objc
+
+public class ExampleClass: NSObject {
+    @objc public var enabled: Bool {
+        return true
     }
 }

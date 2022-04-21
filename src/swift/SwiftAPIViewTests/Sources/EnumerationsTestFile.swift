@@ -24,31 +24,42 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
+// Basic enum
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
-    }
+public enum CompassPoint {
+    case north
+    case south
+    case east
+    case west
+}
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
+// Associated values
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
-    }
+public enum Barcode {
+    case upc(Int, Int, Int, Int)
+    case qrCode(String)
+}
+
+// RawValue enum
+
+public enum ASCIIControlCharacter: Character {
+    case tab = "\\t"
+    case lineFeed = "\\n"
+    case carriageReturn = "\\r"
+}
+
+// Implicitly assigned value enum
+
+public enum Planet: Int {
+    case mercury = 1, venus, earth, mars, jupiter, saturn, uranus, neptune
+}
+
+// Recursive enumeration
+
+public enum ArithmeticExpression {
+    case number(Int)
+    indirect case addition(ArithmeticExpression, ArithmeticExpression)
+    indirect case multiplication(ArithmeticExpression, ArithmeticExpression)
 }

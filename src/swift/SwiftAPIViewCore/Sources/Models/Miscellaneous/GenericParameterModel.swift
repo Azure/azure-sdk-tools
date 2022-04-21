@@ -28,27 +28,35 @@ import AST
 import Foundation
 
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+class GenericParameterModel: Tokenizable {
+
+    /// The list of type or protocol conformances
+    var typeList: [Tokenizable]
+
+    init?(from clause: GenericParameterClause?) {
+        guard let clause = clause else { return nil }
+        self.typeList = [Tokenizable]()
+        clause.parameterList.forEach { param in
+            switch param {
+            case let .identifier(type1):
+                typeList.append(TypeIdentifierModel(name: type1.textDescription))
+            case let .protocolConformance(type1, protocol2):
+                typeList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
+            case let .typeConformance(type1, type2):
+                typeList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+            }
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation("<")
+        let stopIdx = typeList.count - 1
+        for (idx, param) in typeList.enumerated() {
+            param.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        a.punctuation(">")
     }
 }

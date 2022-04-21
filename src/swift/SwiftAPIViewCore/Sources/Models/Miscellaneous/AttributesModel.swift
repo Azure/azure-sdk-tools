@@ -27,28 +27,47 @@
 import AST
 import Foundation
 
+struct AttributeModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    /// Name of the attribute
+    var name: String
+
+    /// Optional argument clause
+    var argumentClause: String?
+
+    /// Whether the attribute is rendered inline or on a separate line
+    var isInline: Bool
+
+    init(from clause: Attribute) {
+        name = "@\(clause.name)"
+        argumentClause = clause.argumentClause?.textDescription
+        // display atributes with no arguments as inline
+        isInline = argumentClause == nil
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        a.keyword(name)
+        if let argument = argumentClause {
+            a.text(argument)
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
+        isInline ? a.whitespace() : a.newline()
+    }
+}
+
+class AttributesModel: Tokenizable {
+
+    var attributes: [AttributeModel]
+
+    init(from clause: Attributes) {
+        self.attributes = [AttributeModel]()
+        clause.forEach { attr in
+            self.attributes.append(AttributeModel(from: attr))
         }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
     }
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    func tokenize(apiview a: APIViewModel) {
+        attributes.forEach { attribute in
+            attribute.tokenize(apiview: a)
+        }
     }
 }

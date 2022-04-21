@@ -24,31 +24,54 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
+import AST
 
+enum OptionalKind: Tokenizable {
+    case optional
+    case implicitlyUnwrapped
+    case none
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var value: String? {
+        switch self {
+        case .optional:
+            return "?"
+        case .implicitlyUnwrapped:
+            return "!"
+        default:
+            return nil
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        if let val = value {
+            a.punctuation(val)
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
+    }
+}
+
+enum OpaqueKind: Tokenizable {
+    case opaque
+    case none
+
+    var value: String? {
+        switch self {
+        case .opaque:
+            return "some"
+        default:
+            return nil
         }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
     }
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    func tokenize(apiview a: APIViewModel) {
+        if let val = value {
+            a.keyword(val, prefixSpace: true, postfixSpace: true)
+        }
     }
+}
+
+/// Conforming type objects can be serialized into APIView tokens.
+protocol TypeModel: Tokenizable {
+    var optional: OptionalKind { get set }
+    var opaque: OpaqueKind { get set }
 }

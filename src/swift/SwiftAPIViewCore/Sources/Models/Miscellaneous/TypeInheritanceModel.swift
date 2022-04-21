@@ -27,28 +27,33 @@
 import AST
 import Foundation
 
+class TypeInheritanceModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var isClassRequirement: Bool
+    var typeList: [TypeModel]
+
+    init?(from clause: TypeInheritanceClause?) {
+        guard let clause = clause else { return nil }
+        self.isClassRequirement = clause.classRequirement
+        self.typeList = [TypeModel]()
+        clause.typeInheritanceList.forEach { item in
+            typeList.append(TypeIdentifierModel(from: item))
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation(":", postfixSpace: true)
+        if isClassRequirement {
+            a.keyword("class")
+            if typeList.count > 0 { a.punctuation(",", postfixSpace: true) }
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
+        let stopIdx = typeList.count - 1
+        for (idx, item) in typeList.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        a.whitespace()
     }
 }

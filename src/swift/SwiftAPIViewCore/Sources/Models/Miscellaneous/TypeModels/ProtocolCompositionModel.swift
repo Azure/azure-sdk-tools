@@ -27,28 +27,28 @@
 import AST
 import Foundation
 
+struct ProtocolCompositionModel: TypeModel {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var protocolTypes: [TypeModel]
+
+    init(from source: ProtocolCompositionType) {
+        protocolTypes = [TypeModel]()
+        source.protocolTypes.forEach { item in
+            protocolTypes.append(item.toTokenizable()!)
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        opaque.tokenize(apiview: a)
+        let stopIdx = protocolTypes.count - 1
+        for (idx, item) in protocolTypes.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation("&", prefixSpace:true, postfixSpace: true)
+            }
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        optional.tokenize(apiview: a)
     }
 }

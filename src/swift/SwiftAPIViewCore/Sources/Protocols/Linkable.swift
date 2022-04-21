@@ -24,31 +24,15 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 
+/// Protocol which designates that a given entity should be shown in the
+/// navigation sidebar and should be clickable to jump to definitions within
+/// APIView.
+protocol Linkable {
+    var name: String { get }
+    var definitionId: String? { get }
+    var parent: Linkable? { get }
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
-    }
-
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
-    }
+    func navigationTokenize(apiview: APIViewModel)
 }

@@ -27,28 +27,39 @@
 import AST
 import Foundation
 
+struct DictionaryTypeModel: TypeModel {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var useShorthand = true
+    var keyType: TypeModel
+    var valueType: TypeModel
+
+    init(from source: DictionaryType) {
+        keyType = source.keyType.toTokenizable()!
+        valueType = source.valueType.toTokenizable()!
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        opaque.tokenize(apiview: a)
+        if useShorthand {
+            a.punctuation("[")
+            keyType.tokenize(apiview: a)
+            a.punctuation(":", postfixSpace: true)
+            valueType.tokenize(apiview: a)
+            a.punctuation("]")
+        } else {
+            a.typeReference(name: "Dictionary")
+            a.punctuation("<")
+            a.typeReference(name: "Key")
+            a.punctuation(":", postfixSpace: true)
+            keyType.tokenize(apiview: a)
+            a.punctuation(",", postfixSpace: true)
+            a.typeReference(name: "Value")
+            a.punctuation(":", postfixSpace: true)
+            valueType.tokenize(apiview: a)
+            a.punctuation(">")
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        optional.tokenize(apiview: a)
     }
 }

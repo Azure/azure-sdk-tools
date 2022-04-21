@@ -24,39 +24,36 @@
 //
 // --------------------------------------------------------------------------
 
+import AST
 import Foundation
 
-/// APIView navigation item for the left-hand navigation sidebar
-class NavigationItem: Codable {
-    /// Name to display in the navigation sidebar
-    var name: String
-    /// Unique indentifier describing the navigation path
-    var navigationId: String
-    /// Child navigation items
-    var childItems = [NavigationItem]()
-    /// Tags which determine the type of icon displayed in the navigation pane of APIView
-    var tags: NavigationTags
+struct InitializerItemModel: Tokenizable {
 
-    init(name: String, prefix: String, typeKind: NavigationTypeKind) {
+    let name: String
+    let typeModel: TypeAnnotationModel?
+    let defaultValue: String?
+
+    init(from source: PatternInitializer) {
+        name = source.name!
+        typeModel = TypeAnnotationModel(from: source.typeModel)
+        defaultValue = source.defaultValue
+    }
+
+    init(name: String, typeModel: TypeAnnotationModel?, defaultValue: String?) {
         self.name = name
-        self.navigationId = "\(prefix).\(name)"
-        tags = NavigationTags(typeKind: typeKind)
+        self.typeModel = typeModel
+        self.defaultValue = defaultValue
     }
 
-    // MARK: Codable
-
-    enum CodingKeys: String, CodingKey {
-        case name = "Text"
-        case navigationId = "NavigationId"
-        case childItems = "ChildItems"
-        case tags = "Tags"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(navigationId, forKey: .navigationId)
-        try container.encode(childItems, forKey: .childItems)
-        try container.encode(tags, forKey: .tags)
+    func tokenize(apiview a: APIViewModel) {
+        a.member(name: name, definitionId: nil)
+        if let typeModel = typeModel {
+            a.punctuation(":", postfixSpace: true)
+            typeModel.tokenize(apiview: a)
+        }
+        if let defaultValue = defaultValue {
+            a.punctuation("=", prefixSpace: true, postfixSpace: true)
+            a.literal(defaultValue)
+        }
     }
 }

@@ -27,28 +27,28 @@
 import AST
 import Foundation
 
+struct MetatypeTypeModel: TypeModel {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var type: TypeModel
+    var metatype: String
+
+    init(from source: MetatypeType) {
+        type = source.referenceType.toTokenizable()!
+        switch source.kind {
+        case .protocol:
+            metatype = "Protocol"
+        case .type:
+            metatype = "Type"
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    func tokenize(apiview a: APIViewModel) {
+        opaque.tokenize(apiview: a)
+        type.tokenize(apiview: a)
+        a.punctuation(".")
+        a.typeReference(name: metatype)
+        optional.tokenize(apiview: a)
     }
 }

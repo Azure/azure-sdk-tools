@@ -27,28 +27,29 @@
 import AST
 import Foundation
 
+struct ArrayTypeModel: TypeModel {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var optional = OptionalKind.none
+    var opaque = OpaqueKind.none
+    var useShorthand = true
+    var elementType: TypeModel
+
+    init(from source: ArrayType) {
+        self.elementType = source.elementType.toTokenizable()!
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        opaque.tokenize(apiview: a)
+        if useShorthand {
+            a.punctuation("[", prefixSpace: true)
+            elementType.tokenize(apiview: a)
+            a.punctuation("]")
+        } else {
+            a.typeReference(name: "Array")
+            a.punctuation("<")
+            elementType.tokenize(apiview: a)
+            a.punctuation(">")
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        optional.tokenize(apiview: a)
     }
 }

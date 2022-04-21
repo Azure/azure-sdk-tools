@@ -46,17 +46,33 @@ enum TokenKind: Int, Codable {
     case memberName = 7
     /// Constants
     case stringLiteral = 8
+    /// Literals
+    case literal = 9
+    /// Comments
+    case comment = 10
+    /// Document range start
+    case documentRangeStart = 11
+    /// Document range end
+    case documentRangeEnd = 12
+    /// Deprecated range start
+    case deprecatedRangeStart = 13
+    /// Deprecated range end
+    case deprecatedRangeEnd = 14
+    /// Start range to skip APIView diff
+    case skipDiffRangeStart = 15
+    /// End range to skip APIView diff
+    case skippDiffRangeEnd = 16
 }
 
 /// An individual token item
-struct TokenItem: Codable {
-    // Allows tokens to be navigated to. Should be unique. Used as ID for comment thread.
+struct Token: Codable {
+    /// Allows tokens to be navigated to. Should be unique. Used as ID for comment thread.
     var definitionId: String?
-    // If set, clicking on the token would navigate to the other token with this ID.
+    /// If set, clicking on the token would navigate to the other token with this ID.
     var navigateToId: String?
-    // Text value
+    /// Text value
     var value: String?
-    // Token kind
+    /// Token kind
     var kind: TokenKind
 
     // MARK: Codable

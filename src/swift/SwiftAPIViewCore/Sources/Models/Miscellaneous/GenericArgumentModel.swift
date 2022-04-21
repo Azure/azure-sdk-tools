@@ -28,27 +28,30 @@ import AST
 import Foundation
 
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+class GenericArgumentModel: Tokenizable {
+
+    /// The list of type or protocol conformances
+    var typeList: [TypeModel]
+
+    init?(from clause: GenericArgumentClause?) {
+        guard let clause = clause else { return nil }
+        self.typeList = [TypeModel]()
+        clause.argumentList.forEach { param in
+            if let model = param.toTokenizable() {
+                typeList.append(model)
+            }
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        a.punctuation("<")
+        let stopIdx = typeList.count - 1
+        for (idx, param) in typeList.enumerated() {
+            param.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        a.punctuation(">")
     }
 }

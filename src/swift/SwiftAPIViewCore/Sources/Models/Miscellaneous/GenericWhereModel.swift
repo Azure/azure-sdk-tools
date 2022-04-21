@@ -27,28 +27,34 @@
 import AST
 import Foundation
 
+class GenericWhereModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    var requirementsList: [Tokenizable]
+
+    init?(from clause: GenericWhereClause?) {
+        guard let clause = clause else { return nil }
+        self.requirementsList = [Tokenizable]()
+        clause.requirementList.forEach { item in
+            switch item {
+            case let .protocolConformance(type1, protocol2):
+                requirementsList.append(GenericRequirementModel(key: type1, value: protocol2, mode: .conformance))
+            case let .typeConformance(type1, type2):
+                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .conformance))
+            case let .sameType(type1, type2):
+                requirementsList.append(GenericRequirementModel(key: type1, value: type2, mode: .equality))
+            }
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
+    func tokenize(apiview a: APIViewModel) {
+        a.keyword("where", prefixSpace: true, postfixSpace: true)
+        let stopIdx = requirementsList.count - 1
+        for (idx, item) in requirementsList.enumerated() {
+            item.tokenize(apiview: a)
+            if idx != stopIdx {
+                a.punctuation(",", postfixSpace: true)
+            }
         }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
-    }
-
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+        a.whitespace()
     }
 }

@@ -27,28 +27,47 @@
 import AST
 import Foundation
 
+class GenericRequirementModel: Tokenizable {
 
-extension PatternInitializer {
-    var name: String? {
-        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
+    enum Mode {
+        case conformance
+        case equality
+
+        var punctuation: String {
+            switch self {
+            case .conformance:
+                return ":"
+            case .equality:
+                return "=="
+            }
+        }
     }
 
-    var typeModel: TypeModel? {
-        if case let typeAnno as IdentifierPattern = pattern,
-            let typeInfo = typeAnno.typeAnnotation?.type {
-            return typeInfo.toTokenizable()
-        }
-        if case let literalExpression as LiteralExpression = initializerExpression {
-            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
-        }
-        if case let functionExpression as FunctionCallExpression = initializerExpression {
-            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
-        }
-        return nil
+    var key: TypeModel
+    var value: TypeModel
+    var mode: Mode
+
+    init(key: Type, value: Type, mode: Mode) {
+        self.key = key.toTokenizable()!
+        self.value = value.toTokenizable()!
+        self.mode = mode
     }
 
-    var defaultValue: String? {
-        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
-        return (initializerExpression as? LiteralExpression)?.textDescription
+    init(key: Identifier, value: Type, mode: Mode) {
+        self.key = TypeIdentifierModel(name: key.textDescription)
+        self.value = value.toTokenizable()!
+        self.mode = mode
+    }
+
+    init(key: Identifier, value: Identifier, mode: Mode) {
+        self.key = TypeIdentifierModel(name: key.textDescription)
+        self.value = TypeIdentifierModel(name: value.textDescription)
+        self.mode = mode
+    }
+
+    func tokenize(apiview a: APIViewModel) {
+        key.tokenize(apiview: a)
+        a.punctuation(mode.punctuation, prefixSpace: mode == .equality, postfixSpace: true)
+        value.tokenize(apiview: a)
     }
 }

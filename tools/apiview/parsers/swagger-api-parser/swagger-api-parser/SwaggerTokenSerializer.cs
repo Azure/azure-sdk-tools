@@ -646,15 +646,16 @@ namespace swagger_api_parser
                         }
 
                         // Visit the value
-                        _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                         if (isPathScoop)
                         {
+                            this._writer.Write(CodeFileTokenKind.Newline, null);
                             this._writer.Write(CodeFileTokenKind.FoldableContentStart, null);
-                            Visit(property.Value, next, navigationIdPrefix);
+                            Visit(property.Value, next, navigationIdPrefix, "", "");
                             this._writer.Write(CodeFileTokenKind.FoldableContentEnd, null);
                         }
                         else
                         {
+                            _writer.Write(CodeFileTokenKind.Punctuation, "\": ");
                             Visit(property.Value, next, navigationIdPrefix);
                         }
 

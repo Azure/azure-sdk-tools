@@ -368,10 +368,10 @@ func getReceiver(s string) (string, string) {
 	return name, typ
 }
 
-// isOnUnexportedMember checks for method signatures that are on unexported types,
-// it will return true if the method is unexported.
+// isOnUnexportedMember returns true for method signatures with unexported receivers such as
+// "(ep *entityPager[TFeed, T, TOutput]) Fetcher(ctx context.Context) ([]TOutput, error)"
 func isOnUnexportedMember(s string) bool {
-	r := regexp.MustCompile(`\([a-zA-Z]* \*?[a-z]+[a-zA-Z]*\)`)
+	r := regexp.MustCompile(`\([a-zA-Z]* \*?[a-z]+.*\)`)
 	return r.MatchString(s)
 }
 

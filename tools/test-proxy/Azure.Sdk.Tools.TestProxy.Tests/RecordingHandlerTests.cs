@@ -640,11 +640,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"HandleRedirects\": \"False\"}", false)]
         [InlineData("{ \"HandleRedirects\": \"TRUE\"}", true)]
         [InlineData("{ \"HandleRedirects\": \"FALSE\"}", false)]
+        [InlineData("{ \"HandleRedirects\": true }", true)]
+        [InlineData("{ \"HandleRedirects\": false }", false)]
+        [InlineData("{ \"HandleRedirects\": 1 }", true)]
+        [InlineData("{ \"HandleRedirects\": 0 }", false)]
         public void TestSetRecordingOptionsHandlesValidInputs(string body, bool expectedSetting)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            Dictionary<string, string> inputBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(body);
+            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
 
             testRecordingHandler.SetRecordingOptions(inputBody);
 
@@ -661,10 +665,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             
-            Dictionary<string, string> inputBody = null;
+            Dictionary<string, object> inputBody = null;
             if (!string.IsNullOrWhiteSpace(body))
             {
-                inputBody = JsonConvert.DeserializeObject<Dictionary<string, string>>(body);
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
             }
 
             var assertion = Assert.Throws<HttpException>(

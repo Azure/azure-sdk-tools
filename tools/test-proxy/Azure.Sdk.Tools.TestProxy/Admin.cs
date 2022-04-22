@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         [HttpPost]
         [AllowEmptyBody]
-        public async Task SetRecordingOptions([FromBody()] IDictionary<string, string> options = null)
+        public async Task SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
         {
             await DebugLogger.LogRequestDetailsAsync(_logger, Request);
 

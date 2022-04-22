@@ -304,8 +304,12 @@ namespace Azure.Sdk.Tools.TestProxy
                         );
                     }
                 }
-            }
 
+                if(header.Key == "x-recording-upstream-host-header")
+                {
+                    upstreamRequest.Headers.Host = header.Value;
+                }
+            }
 
             return upstreamRequest;
         }
@@ -449,7 +453,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
-        public void SetRecordingOptions(IDictionary<string, string> options = null)
+        public void SetRecordingOptions(IDictionary<string, object> options = null)
         {
             if (options != null)
             {
@@ -458,9 +462,11 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, "At least one key is expected in the body being passed to SetRecordingOptions.");
                 }
 
-                if (options.TryGetValue("HandleRedirects", out var handleRedirectsString))
+                if (options.TryGetValue("HandleRedirects", out var handleRedirectsObj))
                 {
-                    if (Boolean.TryParse(handleRedirectsString, out var handleRedirectsBool))
+                    var handleRedirectsString = $"{handleRedirectsObj}";
+
+                    if (bool.TryParse(handleRedirectsString, out var handleRedirectsBool))
                     {
                         HandleRedirects = handleRedirectsBool;
                     }

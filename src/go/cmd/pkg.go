@@ -132,25 +132,25 @@ func (p *Pkg) indexFile(f *ast.File) {
 				txt := p.getText(t.Pos(), t.End())
 				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
 				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.Ident:
 				// "type ETag string"
 				fmt.Printf("\ttype      %s %s\n", x.Name.Name, t.Name)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, t.Name)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
 			case *ast.InterfaceType:
 				if _, ok := p.types[x.Name.Name]; ok {
 					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
 				}
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
 				fmt.Printf("\tinterface %s\n", x.Name.Name)
-				in := p.c.addInterface(*p, x.Name.Name, t)
+				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, Diagnostic{
 						TargetID: in.ID(),
@@ -173,8 +173,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
 						expr := p.getText(t.Pos(), t.End())
-						fmt.Printf("\ttype      %s %s\n", x.Name.Name, expr)
-						p.c.addSimpleType(*p, x.Name.Name, expr)
+						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr)
 					}
 				}
 			case *ast.StructType:
@@ -183,7 +182,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
 				}
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				s := p.c.addStruct(*p, x.Name.Name, x)
+				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x)
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported from another package
 					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {

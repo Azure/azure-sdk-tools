@@ -88,11 +88,11 @@ func NewModule(dir string) (*Module, error) {
 				var t TokenMaker
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
-					t = p.c.addInterface(*def.p, def.name, n)
+					t = p.c.addInterface(*def.p, def.name, p.Name(), n)
 				case *ast.StructType:
-					t = p.c.addStruct(*def.p, def.name, def.n)
+					t = p.c.addStruct(*def.p, def.name, p.Name(), def.n)
 				case *ast.Ident:
-					t = p.c.addSimpleType(*p, def.name, def.n.Type.(*ast.Ident).Name)
+					t = p.c.addSimpleType(*p, def.name, p.Name(), def.n.Type.(*ast.Ident).Name)
 				default:
 					fmt.Printf("WARNING:  unexpected node type %T\n", def.n.Type)
 				}

@@ -217,15 +217,15 @@ func (c *content) addFunc(pkg Pkg, f *ast.FuncDecl) Func {
 	return fn
 }
 
-func (c *content) addSimpleType(pkg Pkg, name string, underlyingType string) SimpleType {
-	t := NewSimpleType(pkg, name, underlyingType)
+func (c *content) addSimpleType(pkg Pkg, name, packageName string, underlyingType string) SimpleType {
+	t := NewSimpleType(pkg, name, packageName, underlyingType)
 	c.SimpleTypes[name] = t
 	return t
 }
 
 // adds the specified interface type to the exports list.
-func (c *content) addInterface(pkg Pkg, name string, i *ast.InterfaceType) Interface {
-	in := NewInterface(name, pkg, i)
+func (c *content) addInterface(source Pkg, name, packageName string, i *ast.InterfaceType) Interface {
+	in := NewInterface(source, name, packageName, i)
 	c.Interfaces[name] = in
 	return in
 }
@@ -245,8 +245,8 @@ func (c *content) parseInterface(tokenList *[]Token) {
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) addStruct(pkg Pkg, name string, ts *ast.TypeSpec) Struct {
-	s := NewStruct(name, pkg, ts)
+func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSpec) Struct {
+	s := NewStruct(source, name, packageName, ts)
 	c.Structs[name] = s
 	return s
 }

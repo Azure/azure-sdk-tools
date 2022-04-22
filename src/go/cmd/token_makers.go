@@ -247,12 +247,12 @@ type Interface struct {
 	name               string
 }
 
-func NewInterface(name string, pkg Pkg, n *ast.InterfaceType) Interface {
+func NewInterface(source Pkg, name, packageName string, n *ast.InterfaceType) Interface {
 	in := Interface{
 		name:               name,
 		embeddedInterfaces: []string{},
 		methods:            map[string]Func{},
-		id:                 pkg.Name() + "." + name,
+		id:                 packageName + "." + name,
 	}
 	if n.Methods != nil {
 		for _, m := range n.Methods.List {
@@ -261,10 +261,10 @@ func NewInterface(name string, pkg Pkg, n *ast.InterfaceType) Interface {
 				if unicode.IsLower(rune(n[0])) {
 					in.Sealed = true
 				}
-				f := NewFuncForInterfaceMethod(pkg, name, m)
+				f := NewFuncForInterfaceMethod(source, name, m)
 				in.methods[n] = f
 			} else {
-				n := pkg.getText(m.Type.Pos(), m.Type.End())
+				n := source.getText(m.Type.Pos(), m.Type.End())
 				in.embeddedInterfaces = append(in.embeddedInterfaces, n)
 			}
 		}
@@ -328,8 +328,8 @@ type SimpleType struct {
 	underlyingType string
 }
 
-func NewSimpleType(pkg Pkg, name, underlyingType string) SimpleType {
-	return SimpleType{id: pkg.Name() + "." + name, name: name, underlyingType: underlyingType}
+func NewSimpleType(source Pkg, name, packageName, underlyingType string) SimpleType {
+	return SimpleType{id: packageName + "." + name, name: name, underlyingType: underlyingType}
 }
 
 func (s SimpleType) Exported() bool {
@@ -369,15 +369,15 @@ type Struct struct {
 	typeParams []string
 }
 
-func NewStruct(name string, pkg Pkg, ts *ast.TypeSpec) Struct {
-	s := Struct{name: name, id: pkg.Name() + "." + name}
+func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec) Struct {
+	s := Struct{name: name, id: packageName + "." + name}
 	if ts.TypeParams != nil {
 		s.typeParams = make([]string, 0, len(ts.TypeParams.List))
-		pkg.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
+		source.translateFieldList(ts.TypeParams.List, func(param *string, constraint string) {
 			s.typeParams = append(s.typeParams, strings.TrimRight(*param+" "+constraint, " "))
 		})
 	}
-	pkg.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
+	source.translateFieldList(ts.Type.(*ast.StructType).Fields.List, func(n *string, t string) {
 		if n == nil {
 			s.AnonymousFields = append(s.AnonymousFields, t)
 		} else {

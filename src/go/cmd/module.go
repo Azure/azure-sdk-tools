@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+// indexTestdata allows tests to index this module's testdata
+// (we never want to do that for real reviews)
+var indexTestdata bool
+
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	Name string
@@ -36,7 +40,7 @@ func NewModule(dir string) (*Module, error) {
 
 	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
-			if strings.Contains(path, "testdata") {
+			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
 			}
 			p, err := NewPkg(path, m.Name)

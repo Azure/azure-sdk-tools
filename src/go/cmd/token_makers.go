@@ -50,15 +50,18 @@ func NewDeclaration(pkg Pkg, vs *ast.ValueSpec) Declaration {
 		default:
 			fmt.Println("unhandled constant type " + pkg.getText(vs.Type.Pos(), vs.Type.End()))
 		}
-	} else if _, ok := vs.Values[0].(*ast.CallExpr); ok {
-		// const FooConst = Foo("value")
-		// var Foo = NewFoo()
-		// TODO: determining the type here requires finding the definition of the called function. We may
-		// not have encountered that yet, so we would need to set the types of these declarations after
-		// traversing the entire AST.
-	} else if cl, ok := vs.Values[0].(*ast.CompositeLit); ok {
-		// var AzureChina = Configuration{ ... }
-		decl.Type = pkg.getText(cl.Type.Pos(), cl.Type.End())
+	} else if len(vs.Values) == 1 {
+		switch t := vs.Values[0].(type) {
+		case *ast.CallExpr:
+			// const FooConst = Foo("value")
+			// var Foo = NewFoo()
+			// TODO: determining the type here requires finding the definition of the called function. We may
+			// not have encountered that yet, so we would need to set the types of these declarations after
+			// traversing the entire AST.
+		case *ast.CompositeLit:
+			// var AzureChina = Configuration{ ... }
+			decl.Type = pkg.getText(t.Type.Pos(), t.Type.End())
+		}
 	} else {
 		// implicitly typed const
 		decl.Type = skip

@@ -57,28 +57,24 @@ func (c content) isEmpty() bool {
 }
 
 // adds const and var declaration to the exports list
-func (c *content) addGenDecl(pkg Pkg, g *ast.GenDecl) {
-	// a block declaration like "var ( ... )" is one GenDecl with multiple Specs
-	for _, s := range g.Specs {
-		vs := s.(*ast.ValueSpec)
-		if len(vs.Values) > 0 {
-			v := getExprValue(pkg, vs.Values[0])
-			if v == "" {
-				fmt.Printf("WARNING: failed to determine value for %s\n", pkg.getText(vs.Pos(), vs.End()))
-				continue
-			}
-		}
-		decl := NewDeclaration(pkg, vs)
-		// TODO handle multiple names like "var a, b = 42"
-		switch g.Tok {
-		case token.CONST:
-			c.Consts[vs.Names[0].Name] = decl
-		case token.VAR:
-			c.Vars[vs.Names[0].Name] = decl
-		default:
-			fmt.Printf("WARNING: unexpected declaration kind %v", vs.Names[0].Obj.Kind)
+func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec) Declaration {
+	if len(vs.Values) > 0 {
+		v := getExprValue(pkg, vs.Values[0])
+		if v == "" {
+			fmt.Println("failed to determine value for " + pkg.getText(vs.Pos(), vs.End()))
 		}
 	}
+	decl := NewDeclaration(pkg, vs)
+	// TODO handle multiple names like "var a, b = 42"
+	switch tok {
+	case token.CONST:
+		c.Consts[vs.Names[0].Name] = decl
+	case token.VAR:
+		c.Vars[vs.Names[0].Name] = decl
+	default:
+		fmt.Printf("unexpected declaration kind %v\n", vs.Names[0].Obj.Kind)
+	}
+	return decl
 }
 
 func getExprValue(pkg Pkg, expr ast.Expr) string {

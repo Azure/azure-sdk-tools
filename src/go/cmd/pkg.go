@@ -123,7 +123,9 @@ func (p *Pkg) indexFile(f *ast.File) {
 					kind = "var  "
 				}
 				fmt.Printf("\t%s     %s\n", kind, x.Specs[0].(*ast.ValueSpec).Names[0])
-				p.c.addGenDecl(*p, x)
+				for _, s := range x.Specs {
+					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec))
+				}
 			}
 		case *ast.TypeSpec:
 			switch t := x.Type.(type) {

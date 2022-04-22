@@ -106,7 +106,7 @@ func NewModule(dir string) (*Module, error) {
 					p.diagnostics = append(p.diagnostics, Diagnostic{
 						Level:    level,
 						TargetID: t.ID(),
-						Text:     "Alias for " + path,
+						Text:     aliasFor + path,
 					})
 				}
 			} else {

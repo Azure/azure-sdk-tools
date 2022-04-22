@@ -16,6 +16,13 @@ import (
 	"unicode"
 )
 
+// diagnostic messages
+const (
+	aliasFor               = "Alias for "
+	embedsUnexportedStruct = "Anonymously embeds unexported struct "
+	sealedInterface        = "Applications can't implement this interface"
+)
+
 // Pkg represents a Go package.
 type Pkg struct {
 	c           content
@@ -143,7 +150,14 @@ func (p *Pkg) indexFile(f *ast.File) {
 				}
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
 				fmt.Printf("\tinterface %s\n", x.Name.Name)
-				p.c.addInterface(*p, x.Name.Name, t)
+				in := p.c.addInterface(*p, x.Name.Name, t)
+				if in.Sealed {
+					p.diagnostics = append(p.diagnostics, Diagnostic{
+						TargetID: in.ID(),
+						Level:    DiagnosticLevelInfo,
+						Text:     sealedInterface,
+					})
+				}
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := sdkImports[ident.Name]; ok {
@@ -172,11 +186,11 @@ func (p *Pkg) indexFile(f *ast.File) {
 				s := p.c.addStruct(*p, x.Name.Name, x)
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported from another package
-					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0]))  {
+					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
 						p.diagnostics = append(p.diagnostics, Diagnostic{
 							Level:    DiagnosticLevelError,
 							TargetID: s.ID(),
-							Text:     fmt.Sprintf(`Anonymously embeds unexported struct "%s"`, t),
+							Text:     embedsUnexportedStruct + t,
 						})
 					}
 				}

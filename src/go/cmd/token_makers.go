@@ -239,6 +239,8 @@ var _ TokenMaker = (*Func)(nil)
 
 type Interface struct {
 	TokenMaker
+	// Sealed indicates whether users can implement the interface i.e. whether it has an unexported method
+	Sealed             bool
 	embeddedInterfaces []string
 	id                 string
 	methods            map[string]Func
@@ -256,6 +258,9 @@ func NewInterface(name string, pkg Pkg, n *ast.InterfaceType) Interface {
 		for _, m := range n.Methods.List {
 			if len(m.Names) > 0 {
 				n := m.Names[0].Name
+				if unicode.IsLower(rune(n[0])) {
+					in.Sealed = true
+				}
 				f := NewFuncForInterfaceMethod(pkg, name, m)
 				in.methods[n] = f
 			} else {

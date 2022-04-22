@@ -1,4 +1,4 @@
-import {RunMockTestTaskCliConfig} from "../cliSchema/runMockTestTaskCliConfig";
+import {RunMockTestTaskCliConfig} from "../taskEngineCli/cliSchema/runMockTestTaskCliConfig";
 import * as fs from "fs";
 
 export async function processMockTestOutput(config: RunMockTestTaskCliConfig): Promise<boolean> {

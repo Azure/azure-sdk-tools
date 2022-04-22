@@ -8,7 +8,7 @@ import {runScript} from "@azure-tools/sdk-generation-lib";
 import * as fs from "fs";
 import {runMockTestTaskCliConfig, RunMockTestTaskCliConfig} from "./cliSchema/runMockTestTaskCliConfig";
 import {MockTestInput} from "@azure-tools/sdk-generation-lib";
-import {processMockTestOutput} from "./lib/processMockTestOutput";
+import {processMockTestOutput} from "../lib/processMockTestOutput";
 import {saveTaskResult, setTaskResult} from "@azure-tools/sdk-generation-lib";
 
 const config: RunMockTestTaskCliConfig = runMockTestTaskCliConfig.getProperties();

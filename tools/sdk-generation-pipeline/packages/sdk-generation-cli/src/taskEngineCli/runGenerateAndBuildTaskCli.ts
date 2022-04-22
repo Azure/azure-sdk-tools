@@ -8,7 +8,7 @@ import {runScript} from "@azure-tools/sdk-generation-lib";
 import {runGenerateAndBuildTaskCliConfig, RunGenerateAndBuildTaskCliConfig} from "./cliSchema/runGenerateAndBuildTaskCliConfig";
 import {GenerateAndBuildInput} from "@azure-tools/sdk-generation-lib";
 import * as fs from "fs";
-import {processGenerateAndBuildOutput} from "./lib/processGenerateAndBuildOutput";
+import {processGenerateAndBuildOutput} from "../lib/processGenerateAndBuildOutput";
 import {saveTaskResult, setTaskResult} from "@azure-tools/sdk-generation-lib";
 
 const config: RunGenerateAndBuildTaskCliConfig = runGenerateAndBuildTaskCliConfig.getProperties();

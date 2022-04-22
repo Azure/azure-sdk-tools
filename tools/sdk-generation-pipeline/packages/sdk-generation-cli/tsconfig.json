@@ -11,7 +11,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictNullChecks": false,
-    "declaration": true
+    "declaration": true,
+    "esModuleInterop": true
   },
   "exclude": [
     "node_modules",

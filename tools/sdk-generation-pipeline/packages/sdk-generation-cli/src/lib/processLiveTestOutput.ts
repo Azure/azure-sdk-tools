@@ -1,4 +1,4 @@
-import {RunLiveTestTaskCliConfig} from "../cliSchema/runLiveTestTaskCliConfig";
+import {RunLiveTestTaskCliConfig} from "../taskEngineCli/cliSchema/runLiveTestTaskCliConfig";
 import * as fs from "fs";
 
 export async function processLiveTestOutput(config: RunLiveTestTaskCliConfig): Promise<boolean> {

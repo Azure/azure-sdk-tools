@@ -8,7 +8,7 @@ import {runScript} from "@azure-tools/sdk-generation-lib";
 import * as fs from "fs";
 import {runLiveTestTaskCliConfig, RunLiveTestTaskCliConfig} from "./cliSchema/runLiveTestTaskCliConfig";
 import {LiveTestInput} from "@azure-tools/sdk-generation-lib";
-import {processLiveTestOutput} from "./lib/processLiveTestOutput";
+import {processLiveTestOutput} from "../lib/processLiveTestOutput";
 import {saveTaskResult, setTaskResult} from "@azure-tools/sdk-generation-lib";
 
 const config: RunLiveTestTaskCliConfig = runLiveTestTaskCliConfig.getProperties();

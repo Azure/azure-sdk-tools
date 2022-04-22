@@ -22,20 +22,24 @@
     "README.md"
   ],
   "bin": {
-    "getRepoName": "dist/getRepoNameCli.js",
-    "getTasksToRun": "dist/getTasksToRunCli.js",
-    "runInitTask": "dist/runInitTaskCli.js",
-    "runGenerateAndBuildTask": "dist/runGenerateAndBuildTaskCli.js",
-    "runMockTestTask": "dist/runMockTestTaskCli.js",
-    "runLiveTestTask": "dist/runLiveTestTaskCli.js",
-    "generateResult": "dist/generateResultCli.js"
+    "getRepoName": "dist/taskEngineCli/getRepoNameCli.js",
+    "getTasksToRun": "dist/taskEngineCli/getTasksToRunCli.js",
+    "runInitTask": "dist/taskEngineCli/runInitTaskCli.js",
+    "runGenerateAndBuildTask": "dist/taskEngineCli/runGenerateAndBuildTaskCli.js",
+    "runMockTestTask": "dist/taskEngineCli/runMockTestTaskCli.js",
+    "runLiveTestTask": "dist/taskEngineCli/runLiveTestTaskCli.js",
+    "generateResult": "dist/taskEngineCli/generateResultCli.js",
+    "docker-cli": "dist/userInterfaceCli/userInterfaceCli.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",
     "ajv": "^6.12.6",
     "convict": "^6.2.1",
     "@azure-tools/sdk-generation-lib": "^1.0.0",
-    "axios": "^0.24.0"
+    "axios": "^0.24.0",
+    "dotenv": "^16.0.0",
+    "winston": "~3.7.2",
+    "@types/convict": "^5.2.0"
   },
   "bundledDependencies": [
     "@azure-tools/sdk-generation-lib"

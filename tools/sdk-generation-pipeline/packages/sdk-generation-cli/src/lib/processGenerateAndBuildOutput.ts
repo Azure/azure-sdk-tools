@@ -1,4 +1,4 @@
-import {RunGenerateAndBuildTaskCliConfig} from "../cliSchema/runGenerateAndBuildTaskCliConfig";
+import {RunGenerateAndBuildTaskCliConfig} from "../taskEngineCli/cliSchema/runGenerateAndBuildTaskCliConfig";
 import {getGenerateAndBuildOutput} from '@azure-tools/sdk-generation-lib';
 import {requireJsonc} from '@azure-tools/sdk-generation-lib';
 import * as fs from "fs";

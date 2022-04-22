@@ -10,9 +10,9 @@ specifiers:
   colors: ^1.4.0
   convict: ^6.2.1
   copyfiles: ^2.4.1
+  dotenv: ^16.0.0
   jsonc-parser: ^3.0.0
   rimraf: ^3.0.2
-  winston: ^3.3.3
 
 dependencies:
   '@azure/storage-blob': 12.9.0
@@ -24,9 +24,9 @@ dependencies:
   colors: 1.4.0
   convict: 6.2.2
   copyfiles: 2.4.1
+  dotenv: 16.0.0
   jsonc-parser: 3.0.0
   rimraf: 3.0.2
-  winston: 3.7.2
 
 packages:
 
@@ -138,6 +138,12 @@ packages:
   /@opentelemetry/api/1.0.4:
     resolution: {integrity: sha512-BuJuXRSJNQ3QoKA6GWWDyuLpOUck+9hAXNMCnrloc1aWVoy6Xq6t9PUV08aBZ4Lutqq2LEHM486bpZqoViScog==}
     engines: {node: '>=8.0.0'}
+    dev: false
+
+  /@types/convict/5.2.2:
+    resolution: {integrity: sha512-yz26pc2bwg8YyYz/X5s/MJsUy40n54vxDdQCRENtqGfKdrmpPqXdOV8LDuHqTA0acoFxybLsJ5hc9ZYK6amDCw==}
+    dependencies:
+      '@types/node': 16.11.26
     dev: false
 
   /@types/node-fetch/2.6.1:
@@ -299,6 +305,11 @@ packages:
   /delayed-stream/1.0.0:
     resolution: {integrity: sha1-3zrhmayt+31ECqrgsp4icrJOxhk=}
     engines: {node: '>=0.4.0'}
+    dev: false
+
+  /dotenv/16.0.0:
+    resolution: {integrity: sha512-qD9WU0MPM4SWLPJy/r2Be+2WgQj8plChsyrCNQzW/0WjvcJQiKQJ9mH3ZgB3fxbUUxgc/11ZJ0Fi5KiimWGz2Q==}
+    engines: {node: '>=12'}
     dev: false
 
   /emoji-regex/8.0.0:
@@ -778,16 +789,19 @@ packages:
     dev: false
 
   file:projects/sdk-generation-cli.tgz:
-    resolution: {integrity: sha512-8q+AvfIIX9sqJyMay5T3TxVILxcCQgF1BUGkT9HaB9FdTmWMkKMWbM52BjtJsSVokmsXs+wighYjUbROfJ/BQg==, tarball: file:projects/sdk-generation-cli.tgz}
+    resolution: {integrity: sha512-K0u67ibirVYIoz+EM07Wso0sMYbKHlwKRrMZY8o6eJbFe31bvqQrF1GWBPgudYYVSWP0f0mwdSbbPLOZEGlXiQ==, tarball: file:projects/sdk-generation-cli.tgz}
     name: '@rush-temp/sdk-generation-cli'
     version: 0.0.0
     dependencies:
       '@azure/storage-blob': 12.9.0
+      '@types/convict': 5.2.2
       '@types/node': 16.11.26
       ajv: 6.12.6
       axios: 0.24.0
       convict: 6.2.2
+      dotenv: 16.0.0
       rimraf: 3.0.2
+      winston: 3.7.2
     transitivePeerDependencies:
       - debug
       - encoding

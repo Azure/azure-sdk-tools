@@ -1,4 +1,4 @@
-import * as convict from 'convict';
+import convict from 'convict';
 import {taskBasicConfig, TaskBasicConfig} from '@azure-tools/sdk-generation-lib';
 
 export class PublishLogCliConfig extends TaskBasicConfig{

@@ -1,10 +1,14 @@
 import {RunOptions} from "../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig";
 import * as path from "path";
 import {spawn} from "child_process";
-import {logger} from "../utils/logger";
+import {logger as globalLogger} from "../utils/logger";
 import {Readable} from "stream";
 import {scriptRunningState} from "../types/scriptRunningState";
 import * as fs from "fs";
+import { StringMap } from "../types";
+import { Logger } from "winston";
+
+let logger = globalLogger;
 
 export const isLineMatch = (line: string, filter: RegExp | undefined) => {
     if (filter === undefined) {
@@ -34,11 +38,18 @@ const listenOnStream = (
 export async function runScript(runOptions: RunOptions, options: {
     cwd: string;
     args?: string[];
+    envs?: StringMap<string | boolean | number>;
+    customizedLogger?: Logger;
 }): Promise<string> {
+    if (!!options?.customizedLogger) {
+        logger = options.customizedLogger;
+    }
+
     let executeResult: scriptRunningState;
     const scriptCmd = runOptions.script;
     const scriptPath = runOptions.path.trim();
-    const env = {PWD: path.resolve(options.cwd), ...process.env};
+    const env = {PWD: path.resolve(options.cwd), ...options.envs, ...process.env};
+
     for (const e of runOptions.envs) {
         env[e] = process.env[e];
     }

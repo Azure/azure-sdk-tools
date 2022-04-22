@@ -3,8 +3,8 @@ import {PublishLogCliConfig, publishLogCliConfig} from "./cliSchema/publishLogCl
 import * as fs from "fs";
 import {logger} from "@azure-tools/sdk-generation-lib";
 import {requireJsonc} from "@azure-tools/sdk-generation-lib";
-import {AzureBlobClient} from "./utils/AzureBlobClient";
-import {SdkGenerationServerClient} from "./utils/SdkGenerationServerClient";
+import {AzureBlobClient} from "../utils/AzureBlobClient";
+import {SdkGenerationServerClient} from "../utils/SdkGenerationServerClient";
 
 export async function main() {
     const config: PublishLogCliConfig = publishLogCliConfig.getProperties();

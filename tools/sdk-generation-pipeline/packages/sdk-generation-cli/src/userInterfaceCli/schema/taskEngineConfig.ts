@@ -18,6 +18,7 @@ export class TaskEngineConfig {
     initTaskLog: string;
     generateAndBuildTaskLog: string;
     mockTestTaskLog: string;
+    taskResultJson: string;
 }
 
 export const taskEngineConfig = convict<TaskEngineConfig>({
@@ -111,4 +112,10 @@ export const taskEngineConfig = convict<TaskEngineConfig>({
         format: String,
         doc: 'The relative path to mock-test-task.log. It will concat with resultOutputFolder'
     },
+    taskResultJson: {
+        default: 'taskResults.json',
+        env: 'TASK_RESULT_JSON',
+        format: String,
+        doc: 'The relative path to taskResult.json. It will concat with resultOutputFolder'
+    }
 });

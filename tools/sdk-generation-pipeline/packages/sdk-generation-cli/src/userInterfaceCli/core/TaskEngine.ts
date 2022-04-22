@@ -23,6 +23,7 @@ import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../ut
 import { Logger } from "winston";
 import { addFileLog, removeFileLog } from "../../utils/logger";
 import { execSync } from "child_process";
+import { writeFileSync } from "fs";
 
 export type TaskEngineContext = {
     logger: Logger;
@@ -49,6 +50,8 @@ export type TaskEngineContext = {
     envs?: StringMap<string | boolean | number>;
     packageFolders?: string[];
     mockServerHost?: string;
+    taskResults?: {};
+    taskResultJsonPath: string;
 }
 
 export function initializeTaskEngineContext(dockerContext: DockerContext): TaskEngineContext {
@@ -75,7 +78,8 @@ export function initializeTaskEngineContext(dockerContext: DockerContext): TaskE
         tag: dockerContext.tag,
         sdkRepo: dockerContext.sdkRepo,
         resultOutputFolder: dockerContext.resultOutputFolder ?? '/tmp/output',
-        mockServerHost: taskEngineConfigProperties.mockServerHost
+        mockServerHost: taskEngineConfigProperties.mockServerHost,
+        taskResultJsonPath: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.taskResultJson)
     }
     return taskEngineContext;
 }
@@ -97,6 +101,9 @@ async function afterRunTaskEngine(context: TaskEngineContext) {
         execSync(`chown -R ${userGroupId} ${context.sdkRepo}`, {encoding: "utf8"});
         disableFileMode(context.sdkRepo);
     }
+    if (!!context.taskResults) {
+        writeFileSync(context.taskResultJsonPath, JSON.stringify(context.taskResults, undefined, 2), 'utf-8');
+    }
 }
 
 async function getTaskToRun(context: TaskEngineContext): Promise<string[]> {
@@ -106,6 +113,10 @@ async function getTaskToRun(context: TaskEngineContext): Promise<string[]> {
     const tasksToRun: string[] = [];
     for (const task of Object.keys(codegenToSdkConfig)) {
         tasksToRun.push(task);
+        if (!context.taskResults) {
+            context.taskResults = {};
+        }
+        context.taskResults[task] = 'skipped';
     }
     context.logger.info(`Get tasks to run: ${tasksToRun.join(', ')}`);
     return tasksToRun;
@@ -125,6 +136,7 @@ async function runInitTask(context: TaskEngineContext) {
         customizedLogger: context.logger
     });
     removeFileLog(context.logger, 'init');
+    context.taskResults['init'] = executeResult === 'succeeded'? 'succeeded' : 'failed';
     if (executeResult === 'failed') {
         throw `Execute init script failed.`
     }
@@ -167,6 +179,7 @@ async function runGenerateAndBuildTask(context: TaskEngineContext) {
         customizedLogger: context.logger
     });
     removeFileLog(context.logger, 'generateAndBuild');
+    context.taskResults['generateAndBuild'] = executeResult === 'succeeded'? 'succeeded' : 'failed';
     if (executeResult === 'failed') {
         throw `Execute generateAndBuild script failed.`
     }
@@ -209,6 +222,7 @@ async function runMockTestTask(context: TaskEngineContext) {
             envs: context.envs,
             customizedLogger: context.logger
         });
+        context.taskResults['mockTest'] = executeResult === 'succeeded' && context.taskResults['mockTest'] !== 'failed'? 'succeeded' : 'failed';
         removeFileLog(context.logger, `mockTest_${formattedPackageName}`);
         if (fs.existsSync(mockTestOutputJsonPath)) {
             const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath))

@@ -21,3 +21,7 @@ export function getHeadRef(specRepo: string) {
 export function safeDirectory(sdkRepo: string) {
     execSync(`git config --global --add safe.directory ${sdkRepo}`, {encoding: "utf8", cwd: sdkRepo})
 }
+
+export function disableFileMode(sdkRepo: string) {
+    execSync(`git config core.fileMode false --replace-all`, {encoding: "utf8", cwd: sdkRepo});
+}

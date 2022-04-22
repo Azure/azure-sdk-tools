@@ -19,9 +19,10 @@ import {
 } from "@azure-tools/sdk-generation-lib";
 import * as path from "path";
 import * as fs from "fs";
-import { getHeadRef, getHeadSha, safeDirectory } from "../../utils/git";
+import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../utils/git";
 import { Logger } from "winston";
 import { addFileLog, removeFileLog } from "../../utils/logger";
+import { execSync } from "child_process";
 
 export type TaskEngineContext = {
     logger: Logger;
@@ -79,12 +80,23 @@ export function initializeTaskEngineContext(dockerContext: DockerContext): TaskE
     return taskEngineContext;
 }
 
-
 async function beforeRunTaskEngine(context: TaskEngineContext) {
     if (!!context.resultOutputFolder && !fs.existsSync(context.resultOutputFolder)) {
         fs.mkdirSync(context.resultOutputFolder, {recursive: true});
     }
     safeDirectory(context.sdkRepo);
+}
+
+async function afterRunTaskEngine(context: TaskEngineContext) {
+    if (!context.specRepo?.repoPath || !fs.existsSync(context.specRepo.repoPath)) return;
+    const userGroupId = (execSync(`stat -c "%u:%g" ${context.specRepo.repoPath}`, {encoding: "utf8"})).trim();
+    if (!!context.resultOutputFolder && fs.existsSync(context.resultOutputFolder)) {
+        execSync(`chown -R ${userGroupId} ${context.specRepo.repoPath}`);
+    }
+    if (!!context.sdkRepo && fs.existsSync(context.sdkRepo)) {
+        execSync(`chown -R ${userGroupId} ${context.sdkRepo}`, {encoding: "utf8"});
+        disableFileMode(context.sdkRepo);
+    }
 }
 
 async function getTaskToRun(context: TaskEngineContext): Promise<string[]> {
@@ -207,14 +219,18 @@ async function runMockTestTask(context: TaskEngineContext) {
 
 export async function runTaskEngine(context: TaskEngineContext) {
     await beforeRunTaskEngine(context);
-    const tasksToRun: string[] = await getTaskToRun(context);
-    if (tasksToRun.includes('init')) {
-        await runInitTask(context);
-    }
-    if (tasksToRun.includes('generateAndBuild')) {
-        await runGenerateAndBuildTask(context);
-    }
-    if (tasksToRun.includes('mockTest')) {
-        await runMockTestTask(context);
+    try {
+        const tasksToRun: string[] = await getTaskToRun(context);
+        if (tasksToRun.includes('init')) {
+            await runInitTask(context);
+        }
+        if (tasksToRun.includes('generateAndBuild')) {
+            await runGenerateAndBuildTask(context);
+        }
+        if (tasksToRun.includes('mockTest')) {
+            await runMockTestTask(context);
+        }
+    } finally {
+        await afterRunTaskEngine(context);
     }
 }

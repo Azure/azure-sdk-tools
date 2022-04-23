@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"io/fs"
@@ -29,7 +30,7 @@ func NewModule(dir string) (*Module, error) {
 		baseSDKPath = filepath.Join(before, "sdk")
 		baseImportPath = "github.com/Azure/azure-sdk-for-go/sdk/"
 	} else {
-		panic(dir + " isn't part of the Azure SDK for Go")
+		fmt.Println(dir + " isn't part of the Azure SDK for Go. Output may be incomplete or inaccurate.")
 	}
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}, path: dir}
 
@@ -41,7 +42,7 @@ func NewModule(dir string) (*Module, error) {
 			p, err := NewPkg(path, m.Name)
 			if err == nil {
 				m.packages[baseImportPath+p.Name()] = p
-			} else {
+			} else if !errors.Is(err, ErrNoPackages) {
 				fmt.Printf("error: %v\n", err)
 			}
 		}
@@ -94,7 +95,7 @@ func NewModule(dir string) (*Module, error) {
 				case *ast.Ident:
 					t = p.c.addSimpleType(*p, def.name, p.Name(), def.n.Type.(*ast.Ident).Name)
 				default:
-					fmt.Printf("WARNING:  unexpected node type %T\n", def.n.Type)
+					fmt.Printf("unexpected node type %T", def.n.Type)
 				}
 				if t != nil && strings.Contains(qn, "internal") {
 					path := strings.TrimPrefix(qn, baseImportPath)

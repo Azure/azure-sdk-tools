@@ -23,6 +23,8 @@ const (
 	sealedInterface        = "Applications can't implement this interface"
 )
 
+var ErrNoPackages = errors.New("no packages found")
+
 // Pkg represents a Go package.
 type Pkg struct {
 	c           content
@@ -73,8 +75,11 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(packages) != 1 {
-		err = fmt.Errorf(`found %d packages in "%s"`, len(packages), dir)
+	if ps := len(packages); ps != 1 {
+		err = ErrNoPackages
+		if ps > 1 {
+			err = fmt.Errorf(`found %d packages in "%s"`, ps, dir)
+		}
 		return nil, err
 	}
 	for _, p := range packages {
@@ -92,7 +97,6 @@ func (pkg Pkg) Name() string {
 
 // Index parses the package's files, adding exported types to the package's content as discovered.
 func (p *Pkg) Index() {
-	fmt.Println(p.path)
 	for _, f := range p.p.Files {
 		p.indexFile(f)
 	}
@@ -118,11 +122,6 @@ func (p *Pkg) indexFile(f *ast.File) {
 		case *ast.GenDecl:
 			if x.Tok == token.CONST || x.Tok == token.VAR {
 				// const or var declaration
-				kind := "const"
-				if x.Tok == token.VAR {
-					kind = "var  "
-				}
-				fmt.Printf("\t%s     %s\n", kind, x.Specs[0].(*ast.ValueSpec).Names[0])
 				for _, s := range x.Specs {
 					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec))
 				}
@@ -132,26 +131,19 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.Ident:
 				// "type ETag string"
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, t.Name)
 				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
 			case *ast.InterfaceType:
-				if _, ok := p.types[x.Name.Name]; ok {
-					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
-				}
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				fmt.Printf("\tinterface %s\n", x.Name.Name)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, Diagnostic{
@@ -167,10 +159,9 @@ func (p *Pkg) indexFile(f *ast.File) {
 						// Track it as an alias so we can later hoist its definition into this package.
 						qn := impPath + "." + t.Sel.Name
 						if _, ok := p.typeAliases[qn]; ok {
-							fmt.Printf("\tWARNING:  multiple aliases for '%s'\n", qn)
+							fmt.Printf("multiple aliases for %s\n" + qn)
 						}
 						p.typeAliases[qn] = x
-						fmt.Printf("\talias     %s => %s\n", t.Sel.Name, qn)
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
@@ -179,14 +170,10 @@ func (p *Pkg) indexFile(f *ast.File) {
 					}
 				}
 			case *ast.StructType:
-				fmt.Printf("\tstruct    %s\n", x.Name.Name)
-				if _, ok := p.types[x.Name.Name]; ok {
-					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
-				}
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x)
 				for _, t := range s.AnonymousFields {
-					// if t contains "." it must be exported from another package
+					// if t contains "." it must be exported
 					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
 						p.diagnostics = append(p.diagnostics, Diagnostic{
 							Level:    DiagnosticLevelError,
@@ -197,7 +184,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				}
 			default:
 				txt := p.getText(x.Pos(), x.End())
-				fmt.Printf("\tWARNING:  unexpected node type %T: %s\n", t, txt)
+				fmt.Printf("unhandled node type %T: %s\n", t, txt)
 			}
 		}
 		return true

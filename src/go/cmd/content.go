@@ -93,6 +93,10 @@ func getExprValue(pkg Pkg, expr ast.Expr) string {
 		// var AzureChina = Configuration{ LoginEndpoint: "https://login.chinacloudapi.cn/", Services: map[ServiceName]ServiceConfiguration{} }
 		txt := pkg.getText(expr.Pos(), expr.End())
 		return txt
+	case *ast.FuncLit:
+		// TODO: if we ever have a public one of these, choose a better way to format it
+		txt := pkg.getText(expr.Pos(), expr.End())
+		return txt
 	case *ast.Ident:
 		// const DefaultLinkBatching = false
 		return x.Name
@@ -102,9 +106,11 @@ func getExprValue(pkg Pkg, expr ast.Expr) string {
 	case *ast.UnaryExpr:
 		// const FooConst = -1
 		return pkg.getText(x.Pos(), x.End())
+	default:
+		fmt.Printf("unhandled expression value type %T\n", expr)
+		txt := pkg.getText(expr.Pos(), expr.End())
+		return txt
 	}
-	fmt.Printf("WARNING: unhandled constant value %s\n", pkg.getText(expr.Pos(), expr.End()))
-	return ""
 }
 
 func includesType(s []string, t string) bool {

@@ -1,6 +1,5 @@
 import * as winston from 'winston';
 import {getTaskBasicConfig, TaskBasicConfig} from "../types/taskBasicConfig";
-import { format } from "winston";
 
 function getLogger() {
     const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
@@ -44,9 +43,9 @@ function getLogger() {
         level: 'info',
         filename: config.pipeFullLog,
         options: { flags: 'w' },
-        format: format.combine(
-            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
-            format.printf((info: WinstonInfo) => {
+        format: winston.format.combine(
+            winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+            winston.format.printf((info: WinstonInfo) => {
                 const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
             })

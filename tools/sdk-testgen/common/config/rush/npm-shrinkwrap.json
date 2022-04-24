@@ -18861,7 +18861,7 @@
       "integrity": "sha1-ZcfXPUxNqE1POsMQuRj7C4Azczs=",
       "requires": {
         "abbrev": "1.0.x",
-        "async": "1.x",
+        "async": "^3.2.3",
         "escodegen": "1.8.x",
         "esprima": "2.7.x",
         "glob": "^5.0.15",
@@ -18888,11 +18888,6 @@
           "requires": {
             "sprintf-js": "~1.0.2"
           }
-        },
-        "async": {
-          "version": "1.5.2",
-          "resolved": "https://registry.npmjs.org/async/-/async-1.5.2.tgz",
-          "integrity": "sha1-7GphrlZIDAw8skHJVhjiCJL5Zyo="
         },
         "escodegen": {
           "version": "1.8.1",

@@ -3,8 +3,21 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
 import { getTaskBasicConfig, TaskBasicConfig } from './taskBasicConfig';
 import * as fs from 'fs';
+import { Column, Entity, ObjectIdColumn } from 'typeorm';
 
-export type PipelineResult = 'success' | 'failure' | 'timed_out';
+@Entity('sdkGenerationResults')
+export class TaskResultEntity {
+    @ObjectIdColumn()
+    id: string;
+    @Column()
+    key: string;
+    @Column()
+    pipelineBuildId: string;
+    @Column()
+    taskResult: TaskResult;
+}
+
+export type PipelineResult = 'success' | 'failure';
 
 export type Extra = {
     [key: string]: any;

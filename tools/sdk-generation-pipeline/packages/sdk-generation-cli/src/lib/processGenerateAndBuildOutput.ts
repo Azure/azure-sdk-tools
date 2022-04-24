@@ -1,9 +1,7 @@
 import {RunGenerateAndBuildTaskCliConfig} from "../cliSchema/runGenerateAndBuildTaskCliConfig";
-import {getGenerateAndBuildOutput} from '@azure-tools/sdk-generation-lib';
-import {requireJsonc} from '@azure-tools/sdk-generation-lib';
+import {getGenerateAndBuildOutput, requireJsonc, AzureBlobClient} from '@azure-tools/sdk-generation-lib';
 import * as fs from "fs";
 import * as path from "path";
-import {AzureBlobClient} from "../utils/AzureBlobClient";
 import {getFileListInPackageFolder} from "../utils/git";
 
 function getFiles(dir: string, files?: string[]) {
@@ -41,13 +39,13 @@ export async function processGenerateAndBuildOutput(config: RunGenerateAndBuildT
         const azureBlobClient = new AzureBlobClient(config.azureStorageBlobSasUrl, config.azureBlobContainerName);
         for (const filePath of getFileListInPackageFolder(packageFolder)) {
             if (fs.existsSync(path.join(packageFolder, filePath))) {
-                await azureBlobClient.uploadLocal(path.join(packageFolder, filePath), `${config.language}/${config.sdkGenerationName}/${packageName}/${filePath}`);
+                await azureBlobClient.publishBlob(path.join(packageFolder, filePath), `${config.language}/${config.sdkGenerationName}/${packageName}/${filePath}`);
             }
         }
 
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);
-            await azureBlobClient.uploadLocal(artifact, `${config.language}/${config.sdkGenerationName}/${artifactName}`);
+            await azureBlobClient.publishBlob(artifact, `${config.language}/${config.sdkGenerationName}/${artifactName}`);
         }
 
         // TODO: Create PR in release

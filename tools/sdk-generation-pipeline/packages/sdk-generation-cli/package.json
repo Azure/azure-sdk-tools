@@ -29,7 +29,8 @@
     "runMockTestTask": "dist/runMockTestTaskCli.js",
     "runLiveTestTask": "dist/runLiveTestTaskCli.js",
     "publishLog": "dist/publishLogCli.js",
-    "generateResult": "dist/generateResultCli.js"
+    "generateResult": "dist/generateResultCli.js",
+    "publishResult": "dist/publishResultCli.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",

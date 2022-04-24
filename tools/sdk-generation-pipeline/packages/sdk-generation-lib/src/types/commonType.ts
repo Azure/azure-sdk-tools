@@ -17,13 +17,13 @@ export enum RepoType {
 }
 
 export enum AzureSDKTaskName {
-    Init = "init",
-    GenerateAndBuild = "generateAndBuild",
-    MockTest = "mockTest",
-    LiveTest = "liveTest",
+    Init = 'init',
+    GenerateAndBuild = 'generateAndBuild',
+    MockTest = 'mockTest',
+    LiveTest = 'liveTest',
 }
 
 export enum ServiceType {
-    DataPlane = "data-plane",
-    ResourceManager = "resource-manager",
+    DataPlane = 'data-plane',
+    ResourceManager = 'resource-manager',
 }

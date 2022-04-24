@@ -1,7 +1,15 @@
 import { AzureSDKTaskName } from '../types/commonType';
 import { LogFilter } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { PipelineResult, TaskResultCommon, MessageRecord, RawMessageRecord, TaskOutput, TaskResult, TestTaskResult } from '../types/taskResult';
+import {
+    PipelineResult,
+    TaskResultCommon,
+    MessageRecord,
+    RawMessageRecord,
+    TaskOutput,
+    TaskResult,
+    TestTaskResult,
+} from '../types/taskResult';
 import { logger } from '../utils/logger';
 import { isLineMatch } from './runScript';
 import * as fs from 'fs';
@@ -29,14 +37,25 @@ export function spliteLog(fullLog: string): string[] {
     return lines;
 }
 
-export function parseGenerateLog(pipelineBuildId: string, taskname: string, logfile: string, logFilter: LogFilter): TaskResultCommon {
-    let execResult: PipelineResult = 'success';
+export function parseGenerateLog(
+    pipelineBuildId: string,
+    taskName: string,
+    logfile: string,
+    logFilter: LogFilter
+): TaskResultCommon {
     let errorNum = 0;
     let warnNum = 0;
-    const defaultErrorFilter = /(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)/g;
+    const defaultErrorFilter =
+        /(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)/g;
     const defaultWarningFilter = /warn/g;
-    const logErrorFilter: RegExp = logFilter === undefined || logFilter.error === undefined ? defaultErrorFilter : logFilter.error;
-    const logWarningFilter: RegExp = logFilter === undefined || logFilter.warning === undefined ? defaultWarningFilter : logFilter.warning;
+    const logErrorFilter: RegExp =
+        logFilter === undefined || logFilter.error === undefined
+            ? defaultErrorFilter
+            : logFilter.error;
+    const logWarningFilter: RegExp =
+        logFilter === undefined || logFilter.warning === undefined
+            ? defaultWarningFilter
+            : logFilter.warning;
     const messages: MessageRecord[] = [];
     if (fs.existsSync(logfile)) {
         const fullLog = fs.readFileSync(logfile, 'utf-8');
@@ -66,14 +85,9 @@ export function parseGenerateLog(pipelineBuildId: string, taskname: string, logf
         logger.error('logfile ' + logfile + ' does not exist.');
     }
 
-    if (errorNum !== 0) {
-        execResult = 'failure';
-    }
-
     const result: TaskResultCommon = {
-        name: taskname,
+        name: taskName,
         pipelineBuildId: pipelineBuildId,
-        result: execResult,
         errorCount: errorNum,
         warningCount: warnNum,
         messages: messages,
@@ -97,7 +111,7 @@ export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTask
     }
     if (taskname === AzureSDKTaskName.MockTest || taskname === AzureSDKTaskName.LiveTest) {
         if (taskOutput === undefined) {
-            logger.error('taskOutput is undefined');
+            logger.warn('taskOutput is undefined');
             return {
                 total: 0,
                 success: 0,

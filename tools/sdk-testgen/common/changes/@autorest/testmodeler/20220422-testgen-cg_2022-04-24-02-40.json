@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Use oav@2.12.1",
+      "type": "patch",
+      "packageName": "@autorest/testmodeler"
+    }
+  ],
+  "packageName": "@autorest/testmodeler",
+  "email": "changlong.liu@microsoft.com"
+}

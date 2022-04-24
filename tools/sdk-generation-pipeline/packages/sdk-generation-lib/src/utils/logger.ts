@@ -1,5 +1,4 @@
 import * as winston from 'winston';
-import {MessageLevel, taskResult} from "../types/taskResult";
 import {getTaskBasicConfig, TaskBasicConfig} from "../types/taskBasicConfig";
 
 function getLogger() {
@@ -45,27 +44,9 @@ function getLogger() {
         filename: config.pipeFullLog,
         options: { flags: 'w' },
         format: winston.format.combine(
+            winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
             winston.format.printf((info: WinstonInfo) => {
-                const {level} = info;
-                let msg = info.message;
-                if (info.storeLog) {
-                    if (!taskResult.messages) {
-                        taskResult.messages = [];
-                    }
-                    const l: MessageLevel = level.includes('error') || level.includes('cmderr')  ? 'Error' : (level.includes('warn') ? 'Warning' : 'Info');
-                    taskResult.messages.push({
-                        type: "Raw",
-                        level: l,
-                        message: msg,
-                        time: new Date()
-                    });
-                    if (l === 'Error') {
-                        taskResult.errorCount++;
-                        taskResult.result = 'failure';
-                    } else if (l === 'Warning') {
-                        taskResult.warningCount++;
-                    }
-                }
+                const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
             })
         )
@@ -75,7 +56,7 @@ function getLogger() {
         level: 'endsection',
         format: winston.format.combine(
             winston.format.colorize({ colors: sdkAutoLogLevels.colors }),
-            winston.format.timestamp({ format: 'hh:mm:ss.SSS' }),
+            winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
             winston.format.printf((info: WinstonInfo) => {
                 const {level} = info;
                 let msg = `${info.timestamp} ${info.level} \t${info.message}`;

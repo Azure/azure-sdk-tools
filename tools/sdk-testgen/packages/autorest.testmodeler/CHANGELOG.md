@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Tue, 29 Mar 2022 01:56:58 GMT and should not be manually modified.
+This log was last generated on Sun, 24 Apr 2022 09:41:30 GMT and should not be manually modified.
+
+## 2.2.5
+Sun, 24 Apr 2022 09:41:30 GMT
+
+### Patches
+
+- Use oav@2.12.1
 
 ## 2.2.4
 Tue, 29 Mar 2022 01:56:58 GMT

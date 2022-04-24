@@ -26,9 +26,9 @@
      * Specify one of: "pnpmVersion", "npmVersion", or "yarnVersion".  See the Rush documentation
      * for details about these alternatives.
      */
-    "pnpmVersion": "6.32.9",
+    // "pnpmVersion": "6.32.9",
 
-    // "npmVersion": "4.5.0",
+    "npmVersion": "8.7.0",
     // "yarnVersion": "1.9.4",
 
     /**

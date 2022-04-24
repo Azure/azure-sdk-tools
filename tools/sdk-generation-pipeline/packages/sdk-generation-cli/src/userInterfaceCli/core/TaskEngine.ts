@@ -136,7 +136,7 @@ async function runInitTask(context: TaskEngineContext) {
         customizedLogger: context.logger
     });
     removeFileLog(context.logger, 'init');
-    context.taskResults['init'] = executeResult === 'succeeded'? 'succeeded' : 'failed';
+    context.taskResults['init'] = executeResult === 'succeeded'? 'success' : 'failure';
     if (executeResult === 'failed') {
         throw `Execute init script failed.`
     }
@@ -179,7 +179,7 @@ async function runGenerateAndBuildTask(context: TaskEngineContext) {
         customizedLogger: context.logger
     });
     removeFileLog(context.logger, 'generateAndBuild');
-    context.taskResults['generateAndBuild'] = executeResult === 'succeeded'? 'succeeded' : 'failed';
+    context.taskResults['generateAndBuild'] = executeResult === 'succeeded'? 'success' : 'failure';
     if (executeResult === 'failed') {
         throw `Execute generateAndBuild script failed.`
     }
@@ -222,7 +222,7 @@ async function runMockTestTask(context: TaskEngineContext) {
             envs: context.envs,
             customizedLogger: context.logger
         });
-        context.taskResults['mockTest'] = executeResult === 'succeeded' && context.taskResults['mockTest'] !== 'failed'? 'succeeded' : 'failed';
+        context.taskResults['mockTest'] = executeResult === 'succeeded' && context.taskResults['mockTest'] !== 'failure'? 'success' : 'failure';
         removeFileLog(context.logger, `mockTest_${formattedPackageName}`);
         if (fs.existsSync(mockTestOutputJsonPath)) {
             const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath))

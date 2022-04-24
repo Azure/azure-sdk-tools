@@ -36,7 +36,7 @@ export function addFileLog(logger: Logger, logPath: string, taskName: string) {
         filename: logPath,
         options: {flags: 'w'},
         format: format.combine(
-            format.timestamp({format: 'hh:mm:ss.SSS'}),
+            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
             format.printf((info: WinstonInfo) => {
                 const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
@@ -62,7 +62,7 @@ export function initializeLogger(logPath: string): Logger {
         level: 'info',
         format: format.combine(
             format.colorize({colors: loggerLevels.colors}),
-            format.timestamp({format: 'hh:mm:ss.SSS'}),
+            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
             format.printf((info: WinstonInfo) => {
                 const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;

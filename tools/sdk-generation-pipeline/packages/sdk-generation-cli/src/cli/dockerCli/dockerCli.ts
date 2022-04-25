@@ -6,6 +6,7 @@ import { generateCodesInLocal, sdkToRepoMap } from "./core/generateCodesInLocal"
 import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
 import { Logger } from 'winston';
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
+import { runMockHost } from "./core/runMockHost";
 
 export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
@@ -108,6 +109,10 @@ async function main() {
     const inputParams: DockerCliConfig = dockerCliConfig.getProperties();
     const context: DockerContext = new DockerContext();
     context.initialize(inputParams);
+
+    // run mock test before everything
+    runMockHost(context);
+
     switch (context.mode) {
         case "generateCodesInLocal":
             await generateCodesInLocal(context);

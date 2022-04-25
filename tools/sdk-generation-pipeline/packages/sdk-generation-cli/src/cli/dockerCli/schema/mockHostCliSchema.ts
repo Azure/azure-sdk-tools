@@ -3,36 +3,12 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export class MockHostCliSchema {
-    readmeMdPath: string;
-    specRepo: string;
-    resultOutputFolder: string;
+export class DockerMockHostConfig {
     mockHostLogger: string;
     mockHostPath: string;
 }
 
-export const mockHostCliSchema = convict<MockHostCliSchema>({
-    readmeMdPath: {
-        default: '',
-        env: 'README_MD_PATH',
-        arg: 'readme',
-        format: String,
-        doc: 'The relative path to readme.md, which is from the root of spec repo'
-    },
-    specRepo: {
-        default: '/spec-repo',
-        env: 'SPEC_REPO',
-        arg: 'spec-repo',
-        format: String,
-        doc: 'the absolute path of the mounted spec repo'
-    },
-    resultOutputFolder: {
-        default: '/tmp/output',
-        env: 'RESULT_OUTPUT_FOLDER',
-        arg: 'result-output-folder',
-        format: String,
-        doc: 'the absolute path of output folder, which stores the result of task engine'
-    },
+export const dockerMockHostConfig = convict<DockerMockHostConfig>({
     mockHostLogger: {
         default: 'mock-host.log',
         env: 'MOCK_HOST_LOGGER',

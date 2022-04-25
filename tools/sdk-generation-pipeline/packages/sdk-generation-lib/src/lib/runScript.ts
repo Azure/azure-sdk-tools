@@ -27,7 +27,7 @@ const listenOnStream = (
         if (line.length === 0) {
             return;
         }
-        logger.log(logType, `${prefix} ${line}`, {show: true});
+        logger.log(logType, `${prefix} ${line}`);
     };
 
     stream.on('data', (data) => {

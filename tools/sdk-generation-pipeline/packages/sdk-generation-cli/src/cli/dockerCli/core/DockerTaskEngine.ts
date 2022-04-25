@@ -25,7 +25,7 @@ import { Logger } from "winston";
 import { execSync } from "child_process";
 import { writeFileSync } from "fs";
 
-export type TaskEngineContext = {
+export type DockerTaskEngineContext = {
     logger: Logger;
     configFilePath: string;
     initOutput: string;
@@ -54,44 +54,44 @@ export type TaskEngineContext = {
     taskResultJsonPath: string;
 }
 
-export function initializeTaskEngineContext(dockerContext: DockerContext): TaskEngineContext {
-    const taskEngineConfigProperties = dockerTaskEngineConfig.getProperties();
-    const taskEngineContext: TaskEngineContext = {
+export function initializeDockerTaskEngineContext(dockerContext: DockerContext): DockerTaskEngineContext {
+    const dockerTaskEngineConfigProperties = dockerTaskEngineConfig.getProperties();
+    const dockerTaskEngineContext: DockerTaskEngineContext = {
         logger: dockerContext.logger,
-        configFilePath: taskEngineConfigProperties.configFilePath,
-        initOutput: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.initOutput),
-        generateAndBuildInputJson: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.generateAndBuildInputJson),
-        generateAndBuildOutputJson: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.generateAndBuildOutputJson),
-        mockTestInputJson: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.mockTestInputJson),
-        mockTestOutputJson: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.mockTestOutputJson),
-        initTaskLog: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.initTaskLog),
-        generateAndBuildTaskLog: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.generateAndBuildTaskLog),
-        mockTestTaskLog: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.mockTestTaskLog),
+        configFilePath: dockerTaskEngineConfigProperties.configFilePath,
+        initOutput: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.initOutput),
+        generateAndBuildInputJson: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildInputJson),
+        generateAndBuildOutputJson: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildOutputJson),
+        mockTestInputJson: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestInputJson),
+        mockTestOutputJson: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestOutputJson),
+        initTaskLog: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.initTaskLog),
+        generateAndBuildTaskLog: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildTaskLog),
+        mockTestTaskLog: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestTaskLog),
         readmeMdPath: dockerContext.readmeMdPath,
         specRepo: {
             repoPath: dockerContext.specRepo,
-            headSha: taskEngineConfigProperties.headSha ?? getHeadSha(dockerContext.specRepo),
-            headRef: taskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
-            repoHttpsUrl: taskEngineConfigProperties.repoHttpsUrl
+            headSha: dockerTaskEngineConfigProperties.headSha ?? getHeadSha(dockerContext.specRepo),
+            headRef: dockerTaskEngineConfigProperties.headRef ?? getHeadRef(dockerContext.specRepo),
+            repoHttpsUrl: dockerTaskEngineConfigProperties.repoHttpsUrl
         },
-        serviceType: dockerContext.readmeMdPath.includes('data-plane') && taskEngineConfigProperties.serviceType ? 'data-plane' : 'resource-manager',
+        serviceType: dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType ? 'data-plane' : 'resource-manager',
         tag: dockerContext.tag,
         sdkRepo: dockerContext.sdkRepo,
         resultOutputFolder: dockerContext.resultOutputFolder ?? '/tmp/output',
-        mockServerHost: taskEngineConfigProperties.mockServerHost,
-        taskResultJsonPath: path.join(dockerContext.resultOutputFolder, taskEngineConfigProperties.taskResultJson)
+        mockServerHost: dockerTaskEngineConfigProperties.mockServerHost,
+        taskResultJsonPath: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson)
     }
-    return taskEngineContext;
+    return dockerTaskEngineContext;
 }
 
-async function beforeRunTaskEngine(context: TaskEngineContext) {
+async function beforeRunTaskEngine(context: DockerTaskEngineContext) {
     if (!!context.resultOutputFolder && !fs.existsSync(context.resultOutputFolder)) {
         fs.mkdirSync(context.resultOutputFolder, {recursive: true});
     }
     safeDirectory(context.sdkRepo);
 }
 
-async function afterRunTaskEngine(context: TaskEngineContext) {
+async function afterRunTaskEngine(context: DockerTaskEngineContext) {
     if (!context.specRepo?.repoPath || !fs.existsSync(context.specRepo.repoPath)) return;
     const userGroupId = (execSync(`stat -c "%u:%g" ${context.specRepo.repoPath}`, {encoding: "utf8"})).trim();
     if (!!context.resultOutputFolder && fs.existsSync(context.resultOutputFolder)) {
@@ -106,7 +106,7 @@ async function afterRunTaskEngine(context: TaskEngineContext) {
     }
 }
 
-async function getTaskToRun(context: TaskEngineContext): Promise<string[]> {
+async function getTaskToRun(context: DockerTaskEngineContext): Promise<string[]> {
     const codegenToSdkConfig: CodegenToSdkConfig = getCodegenToSdkConfig(requireJsonc(path.join(context.sdkRepo, context.configFilePath)));
     context.logger.info(`Get codegen_to_sdk_config.json`);
     context.logger.info(JSON.stringify(codegenToSdkConfig, undefined, 2));
@@ -122,7 +122,7 @@ async function getTaskToRun(context: TaskEngineContext): Promise<string[]> {
     return tasksToRun;
 }
 
-async function runInitTask(context: TaskEngineContext) {
+async function runInitTask(context: DockerTaskEngineContext) {
     const initTask = getTask(path.join(context.sdkRepo, context.configFilePath), 'init');
     if (!initTask) {
         throw `Init task is ${initTask}`;
@@ -150,7 +150,7 @@ async function runInitTask(context: TaskEngineContext) {
     }
 }
 
-async function runGenerateAndBuildTask(context: TaskEngineContext) {
+async function runGenerateAndBuildTask(context: DockerTaskEngineContext) {
     const generateAndBuildTask = getTask(path.join(context.sdkRepo, context.configFilePath), 'generateAndBuild');
     if (!generateAndBuildTask) {
         throw `Generate and build task is ${generateAndBuildTask}`;
@@ -194,7 +194,7 @@ async function runGenerateAndBuildTask(context: TaskEngineContext) {
     }
 }
 
-async function runMockTestTask(context: TaskEngineContext) {
+async function runMockTestTask(context: DockerTaskEngineContext) {
     const mockTestTask = getTask(path.join(context.sdkRepo, context.configFilePath), 'mockTest');
     if (!mockTestTask) {
         throw `Init task is ${mockTestTask}`;
@@ -234,7 +234,7 @@ async function runMockTestTask(context: TaskEngineContext) {
     }
 }
 
-export async function runTaskEngine(context: TaskEngineContext) {
+export async function runTaskEngine(context: DockerTaskEngineContext) {
     await beforeRunTaskEngine(context);
     try {
         const tasksToRun: string[] = await getTaskToRun(context);

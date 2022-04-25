@@ -44,9 +44,7 @@ export function addFileLog(logger: Logger, logPath: string, taskName: string) {
             })
         )
     });
-    if (!!taskName) {
-        fileTransportInstances[taskName] = fileTransportInstance;
-    }
+    fileTransportInstances[taskName] = fileTransportInstance;
     logger.add(fileTransportInstance);
 }
 
@@ -57,24 +55,26 @@ export function removeFileLog(logger: Logger, taskName: string) {
     logger.remove(fileTransportInstances[taskName]);
 }
 
-export function initializeLogger(logPath: string, taskName: string): Logger {
+export function initializeLogger(logPath: string, taskName: string, addConsoleLog: boolean = true): Logger {
     const logger = createLogger({
         levels: loggerLevels.levels
     });
 
     addFileLog(logger, logPath, taskName);
 
-    logger.add(new transports.Console({
-        level: 'info',
-        format: format.combine(
-            format.colorize({colors: loggerLevels.colors}),
-            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
-            format.printf((info: WinstonInfo) => {
-                const msg = `${info.timestamp} ${info.level} \t${info.message}`;
-                return msg;
-            })
-        )
-    }))
+    if (addConsoleLog) {
+        logger.add(new transports.Console({
+            level: 'info',
+            format: format.combine(
+                format.colorize({colors: loggerLevels.colors}),
+                format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+                format.printf((info: WinstonInfo) => {
+                    const msg = `${info.timestamp} ${info.level} \t${info.message}`;
+                    return msg;
+                })
+            )
+        }));
+    }
     return logger;
 }
 

@@ -1,6 +1,14 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 18 Apr 2022 06:25:24 GMT and should not be manually modified.
+This log was last generated on Mon, 25 Apr 2022 08:06:55 GMT and should not be manually modified.
+
+## 3.1.2
+Mon, 25 Apr 2022 08:06:55 GMT
+
+### Patches
+
+- Use oav@2.12.1
+- Fix some generation issue.
 
 ## 3.1.1
 Mon, 18 Apr 2022 06:25:24 GMT

@@ -2974,7 +2974,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
 class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckExceptionLogging
 
-    def test_violation(self):
+    def test_logging_exception_in_warning_str_violation(self):
         class_node, function_node = astroid.extract_node(
             """
             import logging
@@ -2995,7 +2995,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_acceptable(self):
+    def test_logging_exception_debug_str_acceptable(self):
         class_node, function_node = astroid.extract_node(
             """
             import logging
@@ -3012,7 +3012,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_acceptable_2(self):
+    def test_not_logging_exception_in_warning_acceptable(self):
         class_node, function_node = astroid.extract_node(
             """
             import logging
@@ -3029,7 +3029,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_acceptable_3(self):
+    def test_logging_exception_debug_repr_acceptable(self):
         class_node, function_node = astroid.extract_node(
             """
             import logging
@@ -3046,7 +3046,7 @@ class TestCheckExceptionLogging(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_violation_2(self):
+    def test_logging_exception_in_warning_repr_violation(self):
         class_node, function_node = astroid.extract_node(
             """
             import logging

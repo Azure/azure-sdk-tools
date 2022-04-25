@@ -104,12 +104,12 @@ func (p *Pkg) Index() {
 
 func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
-	sdkImports := map[string]string{}
+	imports := map[string]string{}
 	for _, imp := range f.Imports {
-		// ignore third party and stdlib imports because we don't want to hoist their type definitions
+		// ignore obvious stdlib packages whose definitions we don't want to hoist
 		path := strings.Trim(imp.Path.Value, `"`)
-		if strings.HasPrefix(path, "github.com/Azure/azure-sdk-for-go/sdk/") {
-			sdkImports[filepath.Base(path)] = path
+		if strings.Contains(path, "/") {
+			imports[filepath.Base(path)] = path
 		}
 	}
 
@@ -158,7 +158,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
-					if impPath, ok := sdkImports[ident.Name]; ok {
+					if impPath, ok := imports[ident.Name]; ok {
 						// This is a re-exported SDK type e.g. "type TokenCredential = shared.TokenCredential".
 						// Track it as an alias so we can later hoist its definition into this package.
 						qn := impPath + "." + t.Sel.Name

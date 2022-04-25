@@ -97,10 +97,10 @@ func NewModule(dir string) (*Module, error) {
 				default:
 					fmt.Printf("unexpected node type %T", def.n.Type)
 				}
-				if t != nil && strings.Contains(qn, "internal") {
+				if t != nil {
 					path := strings.TrimPrefix(qn, baseImportPath)
 					level := DiagnosticLevelInfo
-					if !strings.HasPrefix(path, m.Name) {
+					if !strings.Contains(path, m.Name) {
 						// this type is defined in another module
 						level = DiagnosticLevelWarning
 					}

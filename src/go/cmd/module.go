@@ -74,7 +74,8 @@ func NewModule(dir string) (*Module, error) {
 						path := filepath.Join(baseSDKPath, after)
 						pkg, err := NewPkg(path, after)
 						if err != nil {
-							panic("couldn't load " + impPath)
+							fmt.Printf("couldn't parse %s: %v", impPath, err)
+							continue
 						}
 						pkg.Index()
 						externalPackages[impPath] = pkg
@@ -83,7 +84,8 @@ func NewModule(dir string) (*Module, error) {
 				}
 			}
 			if source == nil {
-				panic("haven't indexed " + impPath)
+				fmt.Println("found no source for ", qn)
+				continue
 			}
 			if def, ok := source.types[typeName]; ok {
 				var t TokenMaker
@@ -111,7 +113,7 @@ func NewModule(dir string) (*Module, error) {
 					})
 				}
 			} else {
-				panic("no definition for " + qn)
+				fmt.Println("found no definition for " + qn)
 			}
 		}
 	}

@@ -1,6 +1,34 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Thu, 03 Mar 2022 02:23:21 GMT and should not be manually modified.
+This log was last generated on Sun, 24 Apr 2022 09:41:30 GMT and should not be manually modified.
+
+## 2.2.5
+Sun, 24 Apr 2022 09:41:30 GMT
+
+### Patches
+
+- Use oav@2.12.1
+
+## 2.2.4
+Tue, 29 Mar 2022 01:56:58 GMT
+
+### Patches
+
+- Oav loader cache problem.
+
+## 2.2.3
+Wed, 23 Mar 2022 06:19:34 GMT
+
+### Patches
+
+- upgrade @autorest/codemodel from 4.17.2 to 4.18.2
+
+## 2.2.2
+Mon, 14 Mar 2022 09:19:34 GMT
+
+### Patches
+
+- add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString
 
 ## 2.2.1
 Thu, 03 Mar 2022 02:23:21 GMT

@@ -5,7 +5,7 @@ class VariableNode(NodeEntityBase):
     """Variable node represents class and instance variable defined in a class
     """
 
-    def __init__(self, namespace, parent_node, name, type_name, value, is_ivar):
+    def __init__(self, *, namespace, parent_node, name, type_name, value, is_ivar):
         super().__init__(namespace, parent_node, type_name)
         self.name = name
         self.type = type_name
@@ -21,7 +21,7 @@ class VariableNode(NodeEntityBase):
         """
         apiview.add_keyword("ivar" if self.is_ivar else "cvar", False, True)
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.name)
         # Add type
         if self.type:
             apiview.add_punctuation(":", False, True)
@@ -29,16 +29,7 @@ class VariableNode(NodeEntityBase):
 
         if self.value:
             apiview.add_punctuation("=", True, True)
-            add_value = (
-                apiview.add_stringliteral
-                if self.type == "str"
-                else apiview.add_literal
-            )
-            add_value(self.value)
-
-
-    def print_errors(self):
-        if self.errors:
-            print("{0}: {1}".format("ivar" if self.is_ivar else "cvar", self.name))
-            for e in self.errors:
-                print("    {}".format(e))
+            if self.type in ["str", "Optional[str]"]:
+                apiview.add_stringliteral(self.value)
+            else:
+                apiview.add_literal(self.value)

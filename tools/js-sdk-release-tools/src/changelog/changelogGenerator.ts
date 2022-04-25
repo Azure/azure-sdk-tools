@@ -677,6 +677,18 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
                                             }
                                         });
                                     });
+                                    if (typeAliasFromNew.type.inherits?.length > 0) {
+                                        typeAliasFromNew.type.inherits.forEach(modelInterfaceName =>  {
+                                            const modelInterface = metaDataNew.modelInterface?.[modelInterfaceName];
+                                            if (modelInterface) {
+                                                modelInterface.properties?.forEach(pNew => {
+                                                    if (pOld.name === pNew.name) {
+                                                        find = true;
+                                                    }
+                                                });
+                                            }
+                                        })
+                                    }
                                     if (!find) {
                                         typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name);
                                     }

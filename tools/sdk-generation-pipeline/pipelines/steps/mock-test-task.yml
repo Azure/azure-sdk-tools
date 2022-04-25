@@ -1,0 +1,17 @@
+steps:
+  - bash: |
+      # start mock server
+      # TODO
+      runMockTestTask
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo -e "\033[0;31mMockTest Task is failed"
+          exit 1
+      fi
+    displayName: Mock Test
+    condition: and(contains(variables['TasksToRun'], 'mockTest'), ne(variables['PreTaskResult'], 'failure'))
+    workingDirectory: $(SDK_REPO)
+    env:
+      SDK_REPO: $(SDK_REPO)
+      PACKAGE_FOLDERS: $(PackageFolders)
+      TASKS_TO_RUN: $(TasksToRun)

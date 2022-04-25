@@ -1,0 +1,54 @@
+parameters:
+  - name: sdk
+    type: string
+
+  - name: specRepoUrl
+    type: string
+
+  - name: specRepoBaseBranch
+    type: string
+
+  - name: sdkRepoUrl
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+
+steps:
+  - task: NodeTool@0
+    displayName: Specify Node Version
+    inputs:
+      versionSpec: 14.x
+
+  - task: AzureKeyVault@2
+    displayName: Get Certificate from KeyVault
+    inputs:
+      azureSubscription: 'Azure Key Vault'
+      KeyVaultName: $(KeyVault)
+      SecretsFilter: 'sdk-generation'
+      RunAsPreJob: true
+
+  - bash: |
+      echo "$(sdk-generation)" > sdk-generation.pem
+      openssl rsa -in sdk-generation.pem -out private.key
+    displayName: Store Cert and Get Private Key
+    workingDirectory: /tmp
+
+  - bash: |
+      npm install -g @microsoft/rush
+      rush update
+      rush build
+      cd tools/sdk-generation-cli
+      rushx pack
+      PACKAGE_TGZ=`ls sdk-generation-cli-*.tgz`
+      npm install -g ${PACKAGE_TGZ}
+      npm install -g autorest
+    displayName: Setup Pipeline Runtime Environment
+
+  - bash: |
+      git clone --branch ${{ parameters.specRepoBaseBranch }} ${{ parameters.specRepoUrl }}
+      git clone --branch ${{ parameters.sdkRepoBaseBranch }} ${{ parameters.sdkRepoUrl }}
+      getRepoName SPEC_REPO ${{ parameters.specRepoUrl }}
+      getRepoName SDK_REPO ${{ parameters.sdkRepoUrl }}
+    displayName: Clone Spec Repo and Sdk Repo
+    workingDirectory: ../

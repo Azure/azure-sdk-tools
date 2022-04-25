@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -45,12 +46,6 @@ namespace Azure.Sdk.Tools.TestProxy
             "Proxy-Connection",
         };
 
-        // Headers which must be set on HttpContent instead of HttpRequestMessage
-        private static readonly string[] s_contentRequestHeaders = new string[] {
-            "Content-Length",
-            "Content-Type",
-        };
-
         public List<RecordedTestSanitizer> Sanitizers { get; set; }
 
         public List<ResponseTransform> Transforms { get; set; }
@@ -68,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId, IDictionary<string, string> variables = null)
+        public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
             if (!RecordingSessions.TryRemove(sessionId, out var fileAndSession))
             {
@@ -90,30 +85,34 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            if (String.IsNullOrEmpty(file))
+            if (saveRecording)
             {
-                if (!InMemorySessions.TryAdd(sessionId, session))
+                if (String.IsNullOrEmpty(file))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    if (!InMemorySessions.TryAdd(sessionId, session))
+                    {
+                        throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
+                    }
                 }
-            }
-            else
-            {
-                var targetPath = GetRecordingPath(file);
-
-                // Create directories above file if they don't already exist
-                var directory = Path.GetDirectoryName(targetPath);
-                if (!String.IsNullOrEmpty(directory))
+                else
                 {
-                    Directory.CreateDirectory(directory);
-                }
+                    var targetPath = GetRecordingPath(file);
 
-                using var stream = System.IO.File.Create(targetPath);
-                var options = new JsonWriterOptions { Indented = true };
-                var writer = new Utf8JsonWriter(stream, options);
-                session.Session.Serialize(writer);
-                writer.Flush();
-                stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+                    // Create directories above file if they don't already exist
+                    var directory = Path.GetDirectoryName(targetPath);
+                    if (!String.IsNullOrEmpty(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    using var stream = System.IO.File.Create(targetPath);
+                    var options = new JsonWriterOptions { Indented = true };
+                    var writer = new Utf8JsonWriter(stream, options);
+                    session.Session.Serialize(writer);
+                    writer.Flush();
+                    stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+
+                }
             }
         }
 
@@ -191,7 +190,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
-        private static EntryRecordMode GetRecordMode(HttpRequest request)
+        public static EntryRecordMode GetRecordMode(HttpRequest request)
         {
             EntryRecordMode mode = EntryRecordMode.Record;
             if (request.Headers.TryGetValue(SkipRecordingHeaderKey, out var values))
@@ -264,7 +263,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return incomingBody.ToArray();
         }
 
-        private HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
+        public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
             var upstreamRequest = new HttpRequestMessage();
             upstreamRequest.RequestUri = GetRequestUri(incomingRequest);
@@ -275,28 +274,26 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 IEnumerable<string> values = header.Value;
 
+                // can't handle PROXY_CONNECTION right now.
                 if (s_excludedRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                try
+                if (!header.Key.StartsWith("x-recording"))
                 {
-                    if (s_contentRequestHeaders.Contains(header.Key, StringComparer.OrdinalIgnoreCase))
+                    if (upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
+                        continue;
                     }
-                    else
+
+                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        if (!header.Key.StartsWith("x-recording"))
-                        {
-                            upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values);
-                        }
+                        throw new HttpException(
+                            HttpStatusCode.BadRequest,
+                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
+                        );
                     }
-                }
-                catch (Exception)
-                {
-                    // ignore
                 }
             }
 
@@ -561,7 +558,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer()
+                    new RecordedTestSanitizer(),
+                    new BodyKeySanitizer("$..access_token"),
+                    new BodyKeySanitizer("$..refresh_token")
                 };
 
                 Transforms = new List<ResponseTransform>

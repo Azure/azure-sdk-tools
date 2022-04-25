@@ -254,9 +254,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private string[] RenormalizeContentHeaders(string[] values)
         {
-            return new[] { string.Join(", ",
-                values.Select(value =>
-                    string.Join("; ", value.Split(';').Select(part => part.Trim())))) };
+            return new[] {
+                string.Join(", ", values
+                    .Select(value =>
+                        string.Join(", ", value.Split(',').Select(part => part.Trim())))
+                    .Select(value =>
+                        string.Join("; ", value.Split(";").Select(part => part.Trim())))
+                )
+            };
         }
 
         public virtual int CompareHeaderDictionaries(SortedDictionary<string, string[]> headers, SortedDictionary<string, string[]> entryHeaders, HashSet<string> ignoredHeaders, HashSet<string> excludedHeaders, StringBuilder descriptionBuilder = null)

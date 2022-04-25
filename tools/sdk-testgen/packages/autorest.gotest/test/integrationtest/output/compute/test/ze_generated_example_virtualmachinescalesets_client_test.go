@@ -1,5 +1,5 @@
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -18,132 +18,146 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
-// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
-func ExampleVirtualMachineScaleSetsClient_ListByLocation() {
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ListVirtualMachineScaleSetsInASubscriptionByLocation.json
+func ExampleVirtualMachineScaleSetsClient_NewListByLocationPager() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
-	pager := client.ListByLocation("<location>",
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
+	pager := client.NewListByLocationPager("<location>",
 		nil)
-	for {
-		nextResult := pager.NextPage(ctx)
-		if err := pager.Err(); err != nil {
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
 			log.Fatalf("failed to advance page: %v", err)
 		}
-		if !nextResult {
-			break
-		}
-		for _, v := range pager.PageResponse().Value {
-			log.Printf("Pager result: %#v\n", v)
+		for _, v := range nextResult.Value {
+			// TODO: use page item
+			_ = v
 		}
 	}
 }
 
-// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json
 func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		test.VirtualMachineScaleSet{
-			Location: to.StringPtr("<location>"),
+			Location: to.Ptr("<location>"),
 			Properties: &test.VirtualMachineScaleSetProperties{
-				Overprovision: to.BoolPtr(true),
+				Overprovision: to.Ptr(true),
 				UpgradePolicy: &test.UpgradePolicy{
-					Mode: test.UpgradeModeManual.ToPtr(),
+					Mode: to.Ptr(test.UpgradeModeManual),
 				},
 				VirtualMachineProfile: &test.VirtualMachineScaleSetVMProfile{
 					NetworkProfile: &test.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: []*test.VirtualMachineScaleSetNetworkConfiguration{
 							{
-								Name: to.StringPtr("<name>"),
+								Name: to.Ptr("<name>"),
 								Properties: &test.VirtualMachineScaleSetNetworkConfigurationProperties{
-									EnableIPForwarding: to.BoolPtr(true),
+									EnableIPForwarding: to.Ptr(true),
 									IPConfigurations: []*test.VirtualMachineScaleSetIPConfiguration{
 										{
-											Name: to.StringPtr("<name>"),
+											Name: to.Ptr("<name>"),
 											Properties: &test.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &test.APIEntityReference{
-													ID: to.StringPtr("<id>"),
+													ID: to.Ptr("<id>"),
 												},
 											},
 										}},
-									Primary: to.BoolPtr(true),
+									Primary: to.Ptr(true),
 								},
 							}},
 					},
 					OSProfile: &test.VirtualMachineScaleSetOSProfile{
-						AdminPassword:      to.StringPtr("<admin-password>"),
-						AdminUsername:      to.StringPtr("<admin-username>"),
-						ComputerNamePrefix: to.StringPtr("<computer-name-prefix>"),
+						AdminPassword:      to.Ptr("<admin-password>"),
+						AdminUsername:      to.Ptr("<admin-username>"),
+						ComputerNamePrefix: to.Ptr("<computer-name-prefix>"),
 					},
 					StorageProfile: &test.VirtualMachineScaleSetStorageProfile{
 						OSDisk: &test.VirtualMachineScaleSetOSDisk{
-							Name:         to.StringPtr("<name>"),
-							Caching:      test.CachingTypesReadWrite.ToPtr(),
-							CreateOption: test.DiskCreateOptionTypesFromImage.ToPtr(),
+							Name:         to.Ptr("<name>"),
+							Caching:      to.Ptr(test.CachingTypesReadWrite),
+							CreateOption: to.Ptr(test.DiskCreateOptionTypesFromImage),
 							Image: &test.VirtualHardDisk{
-								URI: to.StringPtr("<uri>"),
+								URI: to.Ptr("<uri>"),
 							},
 						},
 					},
 				},
 			},
 		},
-		nil)
+		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to finish the request: %v", err)
 	}
 	res, err := poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to pull the result: %v", err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsClientCreateOrUpdateResult)
+	// TODO: use response item
+	_ = res
 }
 
-// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json
 func ExampleVirtualMachineScaleSetsClient_BeginDelete() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.BoolPtr(true)})
+		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
+			ResumeToken: "",
+		})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to finish the request: %v", err)
 	}
 	_, err = poller.PollUntilDone(ctx, 30*time.Second)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to pull the result: %v", err)
 	}
 }
 
-// x-ms-original-file: specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
+// Generated from example definition: https://github.com/Azure/azure-rest-api-specs/tree/main/specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/GetVirtualMachineScaleSetAutoPlacedOnDedicatedHostGroup.json
 func ExampleVirtualMachineScaleSetsClient_Get() {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetsClient("<subscription-id>", cred, nil)
+	if err != nil {
+		log.Fatalf("failed to create client: %v", err)
+	}
 	res, err := client.Get(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		&test.VirtualMachineScaleSetsClientGetOptions{Expand: nil})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to finish the request: %v", err)
 	}
-	log.Printf("Response result: %#v\n", res.VirtualMachineScaleSetsClientGetResult)
+	// TODO: use response item
+	_ = res
 }

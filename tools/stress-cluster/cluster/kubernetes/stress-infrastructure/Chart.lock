@@ -1,9 +1,9 @@
 dependencies:
 - name: chaos-mesh
   repository: https://charts.chaos-mesh.org
-  version: v0.5.1
+  version: 2.1.4
 - name: stress-test-addons
   repository: https://stresstestcharts.blob.core.windows.net/helm/
-  version: 0.1.12
-digest: sha256:12f7cf03e2deaea7962617c193945d113091145390dc0642eddfadfe55e0aaaf
-generated: "2021-11-16T19:24:29.2765409-05:00"
+  version: 0.1.16
+digest: sha256:cb586d358c23bcad019902a793593328890fcd80981a28762561ee2b4e921f10
+generated: "2022-04-19T12:29:53.7265433-07:00"

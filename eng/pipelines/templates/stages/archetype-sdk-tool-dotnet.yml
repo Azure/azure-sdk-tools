@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211215.1
+      ref: refs/tags/azure-sdk-build-tools_20220329.1
 
 parameters:
   - name: ToolDirectory
@@ -27,6 +27,9 @@ parameters:
   - name: DockerTagPrefix
     type: string
     default: '1.0.0-dev'
+  - name: ManifestDeployment
+    type: object
+    default: []
 
 variables:
   - template: ../variables/globals.yml
@@ -114,4 +117,5 @@ stages:
         - template: /eng/pipelines/publish-docker-image.yml
           parameters:
             DockerDeployments: ${{ parameters.DockerDeployments }}
+            ManifestDeployment: ${{ parameters.ManifestDeployment }}
             ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

@@ -1,6 +1,7 @@
 from collections import OrderedDict
-import re
+import inspect
 import logging
+import re
 from ._argtype import ArgType
 
 
@@ -28,7 +29,7 @@ class DocstringParser:
 
     def __init__(self, docstring):
         self.pos_args = OrderedDict()
-        self.kw_args = OrderedDict()
+        self.kwargs = OrderedDict()
         self.ivars = OrderedDict()
         self.ret_type = None
         self.docstring = docstring
@@ -62,7 +63,7 @@ class DocstringParser:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
                 return value
-        return None
+        return inspect.Parameter.empty
 
     def _sanitize_type(self, value):
         # strip unnecessary quotes from type strings
@@ -80,7 +81,7 @@ class DocstringParser:
         # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
-            arg = ArgType(name=label, argtype=None, default=default)
+            arg = ArgType(name=label, argtype=None, default=default, keyword=keyword)
             self._update_arg(arg, keyword)
             return (arg, True)
         elif keyword in docstring_type_keywords:
@@ -94,7 +95,7 @@ class DocstringParser:
         elif keyword == "vartype":
             return self.ivars.get(name, None)
         elif keyword == "paramtype":
-            return self.kw_args.get(name, None)
+            return self.kwargs.get(name, None)
         else:
             logging.error(f"Unexpected keyword {keyword}.")
             return None
@@ -104,7 +105,7 @@ class DocstringParser:
         # and there can only be one simple type
         # Example: :param str name: The name of the thing.
         (keyword, typename, name) = tag
-        arg = ArgType(name=name, argtype=typename, default=default)
+        arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword)
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
@@ -119,10 +120,14 @@ class DocstringParser:
             # show kwarg is optional by setting default to "..."
             # also wrap the type in Optional[] so it aligns with
             # optionals identified in type hints.
+            # NOTE: docstring parser assumes all keyword arguments
+            # are optional. Signature parsing takes precedence and
+            # can tell the difference between required and optional
+            # keyword aguments.
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
                 arg.argtype = f"Optional[{arg.argtype}]"
-            self.kw_args[arg.argname] = arg
+            self.kwargs[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")
 
@@ -176,7 +181,7 @@ class DocstringParser:
         arg = (
             self.ivars.get(name, None) or
             self.pos_args.get(name, None) or
-            self.kw_args.get(name, None)
+            self.kwargs.get(name, None)
         )
         return arg.argtype if arg else arg
 
@@ -184,6 +189,28 @@ class DocstringParser:
         arg = (
             self.ivars.get(name, None) or
             self.pos_args.get(name, None) or
-            self.kw_args.get(name, None)
+            self.kwargs.get(name, None)
         )
-        return arg.default if arg else arg
+        if not arg:
+            return None
+        argtype = arg.argtype or self.type_for(name)
+        if not argtype:
+            return arg.default
+        try:
+            # convert "None" to None if the type is optional.
+            if argtype.startswith("Optional") and arg.default == "None":
+                return None
+            # if we have the default and the type, we should try to cast the
+            # default to that type
+            if argtype in ["bool", "Optional[bool]"]:
+                return bool(arg.default)
+            if argtype in ["int", "Optional[int]"]:
+                return int(arg.default)
+            if argtype in ["float", "Optional[float]"]:
+                return float(arg.default)
+            if argtype in ["complex", "Optional[complex]"]:
+                return complex(arg.default)
+            return arg.default
+        except:
+            # fall back to string if unable to parse
+            return arg.default

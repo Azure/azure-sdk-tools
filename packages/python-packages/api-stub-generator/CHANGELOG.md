@@ -1,13 +1,42 @@
 # Release History
 
-## Version 0.2.10 (Unreleased)
+## Version 0.3.0 (Unreleased)
+Added support for @overloads decorators.
+Added support for positional-only arguments.
+Added full support for Python 2-style type hints.
+Added support for `--source-url` which allows you to specify a link to the
+  pull request that the APIView is generated for that will appear in the
+  APIView preamble. Intended primarily for use by other automation tools.
+Fixed issue where decorators with parameters would not appear in APIView.
+Fixed consistency issues with how default values are displayed.
+Fixed issue where types would appear wrapped in "Optional" even though
+  they do not accept `None`.
+Fixed issue where, in some cases, string literal default values would not appear wrapped
+  in quotes.
+Changed default for retrieving type info from docstrings to annotation/type comments.
+APIView will now display diagnostics only for custom pylint rule violations
+  described in the `azure-sdk-for-python` repo.
+Removed custom APIView diagnostic messages that existed in prior versions.
+Removed the `--hide-report` option.
+
+## Version 0.2.11 (2022-04-06)
+Added __main__ to execute as module
+
+## Version 0.2.10 (2022-03-09)
 Added support for TypedDict classes.
 Added support to parse defaults from docstrings. Example
   syntax: "A value, defaults to foo."
   Also supports older, non-recommended syntax, such as:
   "A value. Default value is foo."
-Add support for "CrossLanguageDefinitionId" and a --mapping-path
+Added support for "CrossLanguageDefinitionId" and a --mapping-path
   parameter to supply the necessary mapping file.
+Fixed issue where required keyword-only arguments displayed as optional.
+Fixed issue where APIView would add a false-alarm warning to
+  paged types.
+Fixed issue where aliased models would be displayed with their non-public,
+  unaliased name. APIView will issue a diagnostic warning if `__name__` is
+  not updated to match the alias.
+Fixed issue where enums that correspond to the same value would be omitted.
 
 ## Version 0.2.9 (Unreleased)
 Fixed issue where Python 3-style type hints stopped displaying

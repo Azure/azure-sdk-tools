@@ -1,0 +1,47 @@
+parameters:
+  - name: sdkGenerationName
+    type: string
+
+  - name: sdk
+    type: string
+
+  - name: serviceType
+    type: string
+
+  - name: resourceProvider
+    type: string
+
+  - name: readmeFile
+    type: string
+
+  - name: sdkRepoUrl
+    type: string
+
+  - name: sdkRepoBaseBranch
+    type: string
+
+steps:
+  - bash: |
+      headSha=`git rev-parse HEAD`
+      export HEAD_SHA=${headSha}
+      runGenerateAndBuildTask
+      retVal=$?
+      if [ $retVal -ne 0 ]; then
+          echo -e "\033[0;31mGenerateAndBuild Task is failed"
+          exit 1
+      fi
+    workingDirectory: $(SDK_REPO)
+    condition: and(contains(variables['TasksToRun'], 'generateAndBuild'), ne(variables['PreTaskResult'], 'failure'))
+    displayName: Generate
+    env:
+      TASKS_TO_RUN: $(TasksToRun)
+      SDK_REPO: $(SDK_REPO)
+      SPEC_FOLDER: $(SPEC_REPO)
+      RELATED_README_MD_FILE: ${{ parameters.readmeFile }}
+      LANGUAGE: ${{ parameters.sdk }}
+      RESOURCE_PROVIDER: ${{ parameters.resourceProvider }}
+      AZURE_STORAGE_BLOB_SAS_URL: $(AZURE_STORAGE_BLOB_SAS_URL)
+      SDK_GENERATION_NAME: ${{ parameters.sdkGenerationName }}
+      SERVICE_TYPE: ${{ parameters.serviceType }}
+      HEAD_REF: ${{ parameters.sdkRepoBaseBranch }}
+      REPO_HTTP_URL: ${{ parameters.sdkRepoUrl }}

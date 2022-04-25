@@ -1,7 +1,9 @@
+import astroid
 import logging
 import inspect
 from enum import Enum
 import operator
+from typing import List
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -54,10 +56,13 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
-        self.errors = []
+        # This is the name obtained by NodeEntityBase from __name__.
+        # We must preserve it to detect the mismatch and issue a warning.
+        self._name = self.name
+        self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
         self.implements = []
@@ -96,9 +101,7 @@ class ClassNode(NodeEntityBase):
         # Method or Function member should only be included if it is defined in same package.
         # So this check will filter any methods defined in parent class if parent class is in non-azure package
         # for e.g. as_dict method in msrest
-        if not (
-            inspect.ismethod(func_obj) or inspect.isfunction(func_obj)
-        ) or inspect.isbuiltin(func_obj):
+        if not (inspect.ismethod(func_obj) or inspect.isfunction(func_obj)):
             return False
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
@@ -120,12 +123,43 @@ class ClassNode(NodeEntityBase):
                 var_match[0].type = type_string
         else:
             self.child_nodes.append(
-                VariableNode(self.namespace, self, name, type_string, value, False)
+                VariableNode(
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=name,
+                    type_name=type_string,
+                    value=value,
+                    is_ivar=False
+                )
             )
+
+    """ Uses AST parsing to look for @overload decorated functions
+        because inspect cannot see these. Note that this will not
+        find overloads for module-level functions.
+    """
+    def _parse_overloads(self) -> List[FunctionNode]:
+        overload_nodes = []
+        try:
+            class_node = astroid.parse(inspect.getsource(self.obj)).body[0]
+        except:
+            return []
+        functions = [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+        for func in functions:
+            if not func.decorators:
+                continue
+            for node in func.decorators.nodes:
+                try:
+                    if node.name == "overload":
+                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_nodes.append(overload_node)
+                except AttributeError:
+                    continue
+        return overload_nodes
 
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
+
         # get base classes
         self.base_class_names = self._get_base_classes()
         # Check if Enum is in Base class hierarchy
@@ -136,16 +170,29 @@ class ClassNode(NodeEntityBase):
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
 
         # find members in node
-        for name, child_obj in inspect.getmembers(self.obj):
+        # enums with duplicate values are screened out by "getmembers" so
+        # we must rely on __members__ instead.
+        if hasattr(self.obj, "__members__"):
+            try:
+                members = self.obj.__members__.items()
+            except AttributeError:
+                members = inspect.getmembers(self.obj)
+        else:
+            members = inspect.getmembers(self.obj)
+
+        overloads = self._parse_overloads()
+        for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
                     try:
-                        self.child_nodes.append(
-                            FunctionNode(self.namespace, self, child_obj)
-                        )
+                        func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                        func_overloads = [x for x in overloads if x.name == func_node.name]
+                        for overload in func_overloads:
+                            self.child_nodes.append(overload)
+                        self.child_nodes.append(func_node)
                     except OSError:
                         # Don't create entries for things that don't have source
                         pass
@@ -167,17 +214,28 @@ class ClassNode(NodeEntityBase):
                 continue
 
             if self.is_enum and isinstance(child_obj, self.obj):
-                # Enum values will be of parent instance type
-                child_obj.__name__ = name
                 self.child_nodes.append(
-                    EnumNode(self.namespace, self, child_obj)
+                    EnumNode(
+                        name=name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj
+                    )
+                )
+            elif inspect.isclass(child_obj):
+                self.child_nodes.append(
+                    ClassNode(
+                        name=child_obj.name,
+                        namespace=self.namespace,
+                        parent_node=self,
+                        obj=child_obj,
+                        pkg_root_namespace=self.pkg_root_namespace
+                    )
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(
-                        PropertyNode(self.namespace, self, name, child_obj)
-                    )
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
                 self._handle_class_variable(child_obj, name, value=str(child_obj))
 
@@ -190,7 +248,12 @@ class ClassNode(NodeEntityBase):
             docstring_parser = DocstringParser(docstring)
             for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
-                    self.namespace, self, key, var.argtype, None, True
+                    namespace=self.namespace,
+                    parent_node=self,
+                    name=key,
+                    type_name=var.argtype,
+                    value=None,
+                    is_ivar=True
                 )
                 self.child_nodes.append(ivar_node)
 
@@ -224,12 +287,14 @@ class ClassNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        logging.info("Processing class {}".format(self.parent_node.namespace_id))
+        logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.namespace_id, self.full_name, add_cross_language_id=True)
+        apiview.add_text(self.full_name, definition_id=self.namespace_id, add_cross_language_id=True)
+        for err in self.pylint_errors:
+            err.generate_tokens(apiview, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
@@ -275,17 +340,3 @@ class ClassNode(NodeEntityBase):
             # Add punctuation between types
             if index < list_len - 1:
                 apiview.add_punctuation(",", False, True)
-
-
-    def print_errors(self):
-        has_error = False
-        # Check if atleast one error is present in child nodes
-        for c in self.child_nodes:
-            if hasattr(c, "errors") and c.errors:
-                has_error = True
-                break
-        if has_error:
-            print("-"*150)
-            print("class {}".format(self.full_name))
-            for c in self.child_nodes:
-                c.print_errors()

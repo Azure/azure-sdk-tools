@@ -6,16 +6,37 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+# pylint: disable=wrong-import-position
 from ._models import (
-    DocstringClass, FakeInventoryItemDataClass, FakeObject, FakeTypedDict, PetEnum, PublicPrivateClass
+    DocstringClass,
+    FakeError,
+    FakeInventoryItemDataClass,
+    FakeObject,
+    FakeTypedDict,
+    PetEnumPy3Metaclass,
+    PetEnumPy3MetaclassAlt,
+    PublicCaseInsensitiveEnumMeta,
+    PublicPrivateClass, RequiredKwargObject,
+    SomePoorlyNamedObject as SomeAwesomelyNamedObject,
+    SomethingWithDecorators,
+    SomethingWithOverloads,
+    SomethingWithProperties
 )
 
 
 __all__ = (
     "DocstringClass",
+    "FakeError",
     "FakeInventoryItemDataClass",
     "FakeObject",
     "FakeTypedDict",
-    "PetEnum",
-    "PublicPrivateClass"
+    "PetEnumPy3Metaclass",
+    "PetEnumPy3MetaclassAlt",
+    "PublicCaseInsensitiveEnumMeta",
+    "PublicPrivateClass",
+    "RequiredKwargObject",
+    "SomeAwesomelyNamedObject",
+    "SomethingWithDecorators",
+    "SomethingWithOverloads",
+    "SomethingWithProperties"
 )

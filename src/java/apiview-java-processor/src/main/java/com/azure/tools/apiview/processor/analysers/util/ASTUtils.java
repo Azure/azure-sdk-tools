@@ -18,67 +18,156 @@ import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class ASTUtils {
+/**
+ * Abstract syntax tree (AST) utility methods.
+ */
+public final class ASTUtils {
     private static final Pattern MAKE_ID = Pattern.compile("\"| ");
 
+    /**
+     * Attempts to get the package name for a compilation unit.
+     *
+     * @param cu The compilation unit.
+     * @return An optional that may contain the package name for the compilation unit.
+     */
     public static Optional<String> getPackageName(CompilationUnit cu) {
         return cu.getPackageDeclaration().map(PackageDeclaration::getNameAsString);
     }
 
+    /**
+     * Attempts to get the package name for a type declaration.
+     * <p>
+     * If the type declaration doesn't have a package name an empty string will be returned.
+     *
+     * @param typeDeclaration The type declaration.
+     * @return The package name for the type declaration if it exists or an empty string if it doesn't.
+     */
     public static String getPackageName(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getFullyQualifiedName()
             .map(str -> str.substring(0, str.lastIndexOf(".")))
             .orElse("");
     }
 
+    /**
+     * Gets the imports of a compilation unit.
+     *
+     * @param cu The compilation unit.
+     * @return The imports of the compilation unit.
+     */
     public static Stream<String> getImports(CompilationUnit cu) {
         return cu.getImports().stream().map(ImportDeclaration::getNameAsString);
     }
 
+    /**
+     * Attempts to get the primary type declaration name for the compilation unit.
+     * <p>
+     * The class name returned is based on the file name, using the expectation that the top-level type declaration
+     * matches the file name.
+     *
+     * @param cu The compilation unit.
+     * @return The primary type declaration name for the compilation unit.
+     */
     public static Optional<String> getClassName(CompilationUnit cu) {
         return cu.getPrimaryTypeName();
     }
 
+    /**
+     * Gets all type declarations contained in the compilation unit.
+     * <p>
+     * Type declarations are classes, enums, and interfaces.
+     *
+     * @param cu The compilation unit.
+     * @return All type declarations contained in the compilation unit.
+     */
     public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
         return cu.getTypes().stream();
     }
 
+    /**
+     * Gets all public API constructors contained in a compilation unit.
+     *
+     * @param cu The compilation unit.
+     * @return All public API constructors contained in the compilation unit.
+     */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(CompilationUnit cu) {
-        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedConstructors);
+        return getClasses(cu).flatMap(ASTUtils::getPublicOrProtectedConstructors);
     }
 
+    /**
+     * Gets all public API constructors contained in a type declaration.
+     *
+     * @param typeDeclaration The type declaration.
+     * @return All public API constructors contained in the type declaration.
+     */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getConstructors().stream()
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
+    /**
+     * Gets all public API methods contained in a compilation unit.
+     *
+     * @param cu The compilation unit.
+     * @return All public API methods contained in the compilation unit.
+     */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(CompilationUnit cu) {
-        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedMethods);
+        return getClasses(cu).flatMap(ASTUtils::getPublicOrProtectedMethods);
     }
 
+    /**
+     * Gets all public API methods contained in a type declaration.
+     *
+     * @param typeDeclaration The type declaration.
+     * @return All public API methods contained in the type declaration.
+     */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getMethods().stream()
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
+    /**
+     * Gets all public API fields contained in a compilation unit.
+     *
+     * @param cu The compilation unit.
+     * @return All public API fields contained in the compilation unit.
+     */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(CompilationUnit cu) {
-        return cu.getTypes().stream().flatMap(ASTUtils::getPublicOrProtectedFields);
+        return getClasses(cu).flatMap(ASTUtils::getPublicOrProtectedFields);
     }
 
+    /**
+     * Gets all public API fields contained in a type declaration.
+     *
+     * @param typeDeclaration The type declaration.
+     * @return All public API fields contained in the type declaration.
+     */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getFields().stream()
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
+    /**
+     * Determines whether the access specifier is public or protected.
+     *
+     * @param accessSpecifier The access specifier.
+     * @return Whether the access specifier is public or protected.
+     */
     public static boolean isPublicOrProtected(AccessSpecifier accessSpecifier) {
         return (accessSpecifier == AccessSpecifier.PUBLIC) || (accessSpecifier == AccessSpecifier.PROTECTED);
     }
 
+    /**
+     * Determines whether the access specifier is package-private or private.
+     *
+     * @param accessSpecifier The access specifier.
+     * @return Whether the access specifier is package-private or private.
+     */
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
         return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
     }
@@ -108,10 +197,14 @@ public class ASTUtils {
     }
 
     /**
-     * Returns true if the type is public or protected, or it the type is an interface that is defined within another
-     * public interface.
+     * Determines whether the type declaration is a public API (public or protected).
+     * <p>
+     * This handles inner classes and interfaces by also checking the surrounding type for being a public API as well.
+     *
+     * @param type The type declaration.
+     * @return Whether the type declaration is a public API.
      */
-    public static boolean isTypeAPublicAPI(TypeDeclaration type) {
+    public static boolean isTypeAPublicAPI(TypeDeclaration<?> type) {
         Node parentNode = type.getParentNode().orElse(null);
         final boolean isTypePrivate = isPrivateOrPackagePrivate(type.getAccessSpecifier());
 
@@ -178,7 +271,7 @@ public class ASTUtils {
     /**
      * Returns true if the type is a public interface.
      */
-    public static boolean isInterfaceType(TypeDeclaration type) {
+    public static boolean isInterfaceType(TypeDeclaration<?> type) {
         if (type.isClassOrInterfaceDeclaration()) {
             return type.asClassOrInterfaceDeclaration().isInterface();
         }
@@ -186,17 +279,10 @@ public class ASTUtils {
     }
 
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        if (!nodeOptional.isPresent()) {
-            return "";
-        }
-
-        Node node = nodeOptional.get();
-        if (node instanceof TypeDeclaration<?>) {
-            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
-            return type.getFullyQualifiedName().get();
-        } else {
-            return "";
-        }
+        return nodeOptional.filter(node -> node instanceof TypeDeclaration<?>)
+            .map(node -> ((TypeDeclaration<?>) node).getFullyQualifiedName())
+            .map(Optional::get)
+            .orElse("");
     }
 
     /**
@@ -229,7 +315,9 @@ public class ASTUtils {
         }
 
         // Get the orphaned comments.
-        List<Comment> orphanedComments = bodyDeclaration.getParentNode().get().getOrphanComments();
+        List<Comment> orphanedComments = bodyDeclaration.getParentNode()
+            .map(Node::getOrphanComments)
+            .orElse(Collections.emptyList());
 
         // Traverse up the comments between the Javadoc and the body declaration.
         Optional<Comment> commentTraversalNode = bodyDeclaration.getComment();
@@ -248,9 +336,12 @@ public class ASTUtils {
             .withBeginLine(comment.getRange().get().begin.line - 1);
 
         return orphanedComments.stream()
-            .filter(c -> c.getRange().get().overlapsWith(expectedJavadocRangeOverlap))
             .filter(c -> c instanceof JavadocComment)
             .map(c -> (JavadocComment) c)
+            .filter(c -> c.getRange().map(range -> range.overlapsWith(expectedJavadocRangeOverlap)).orElse(false))
             .findFirst();
+    }
+
+    private ASTUtils() {
     }
 }

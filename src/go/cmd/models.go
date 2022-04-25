@@ -3,40 +3,8 @@
 
 package cmd
 
-import (
-	"go/ast"
-	"go/token"
-)
-
-// pkg represents a Go package.
-type pkg struct {
-	f     *token.FileSet
-	p     *ast.Package
-	files map[string][]byte
-}
-
-// content defines the set of exported constants, funcs, and structs.
-type content struct {
-	// the list of exported constants.
-	// key is the exported name, value is its type and value.
-	Consts map[string]Const `json:"consts,omitempty"`
-
-	// the list of exported functions and methods.
-	// key is the exported name, for methods it's prefixed with the receiver type (e.g. "Type.Method").
-	// value contains the list of params and return types.
-	Funcs map[string]Func `json:"funcs,omitempty"`
-
-	// the list of exported interfaces.
-	// key is the exported name, value contains the interface definition.
-	Interfaces map[string]Interface `json:"interfaces,omitempty"`
-
-	// the list of exported struct types.
-	// key is the exported name, value contains field information.
-	Structs map[string]Struct `json:"structs,omitempty"`
-}
-
-// Const is a const definition.
-type Const struct {
+// Declaration is a const or var declaration.
+type Declaration struct {
 	// the type of the constant
 	Type string `json:"type"`
 
@@ -46,13 +14,19 @@ type Const struct {
 
 // Func contains parameter and return types of a function/method.
 type Func struct {
-	// a comma-delimited list of the param types
-	Params *string `json:"params,omitempty"`
+	// Params lists the func's parameters as strings of the form "name type"
+	Params []string `json:"params,omitempty"`
 
-	// a comma-delimited list of the return types
-	Returns *string `json:"returns,omitempty"`
+	// Returns lists the func's return types
+	Returns []string `json:"returns,omitempty"`
 
-	ReturnsNum int
+	// TypeParams lists the func's type parameters as strings of the form "name constraint"
+	TypeParams []string
+}
+
+type SimpleType struct {
+	Name           *string `json:"name,omitempty"`
+	UnderlyingType *string `json:"underlyingType,omitempty"`
 }
 
 // Interface contains the list of methods for an interface.
@@ -68,6 +42,9 @@ type Struct struct {
 
 	// key/value pairs of the field names and types respectively.
 	Fields map[string]string `json:"fields,omitempty"`
+
+	// TypeParams lists the func's type parameters as strings of the form "name constraint"
+	TypeParams []string
 }
 
 // Token ...
@@ -79,14 +56,15 @@ type Token struct {
 }
 
 type Navigation struct {
-	Text         *string            `json:"Text"`
-	NavigationId *string            `json:"NavigationId"`
+	Text         string             `json:"Text"`
+	NavigationId string             `json:"NavigationId"`
 	ChildItems   []Navigation       `json:"ChildItems"`
 	Tags         *map[string]string `json:"Tags"`
 }
 
 // PackageReview ...
 type PackageReview struct {
+	Language   string       `json:"Language"`
 	Name       string       `json:"Name"`
 	Tokens     []Token      `json:"Tokens"`
 	Navigation []Navigation `json:"Navigation"`

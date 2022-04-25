@@ -7,7 +7,7 @@ import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
 export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     const testConfig = new TestConfig(await host.GetValue(''), configDefaults);
     const files = await host.listInputs();
-    Helper.execSync(`go get golang.org/x/tools/cmd/goimports`);
+    Helper.execSync(`go install golang.org/x/tools/cmd/goimports@latest`);
     for (const outputFile of files) {
         if (outputFile.endsWith('.go')) {
             const pathName = path.join(testConfig.getValue(Config.outputFolder), outputFile);

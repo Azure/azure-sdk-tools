@@ -51,4 +51,4 @@ COPY --from=build_env /proxyserver .
 EXPOSE 5001
 EXPOSE 5000
 
-ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy/"]
+ENTRYPOINT ["host-patcher.cmd", "&",  "dotnet", "Azure.Sdk.Tools.TestProxy.dll", "--storage-location", "/srv/testproxy/", "--dump"]

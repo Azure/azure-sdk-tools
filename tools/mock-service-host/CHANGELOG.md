@@ -1,5 +1,18 @@
 # Change Log - @azure-tools/mock-service-host
 
+## 0.1.14
+2022-04-21
+
+### Patches
+
+- Use oav@2.12.0 to fix security alert
+
+## 0.1.13
+2022-04-08
+
+### Patches
+
+- Fix LRO response sequence problem
 
 ## 0.1.12
 2022-03-03

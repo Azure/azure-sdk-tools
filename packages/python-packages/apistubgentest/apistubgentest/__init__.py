@@ -7,5 +7,13 @@
 # --------------------------------------------------------------------------
 
 from ._version import VERSION
+from ._client import (
+    DefaultValuesClient,
+    DocstringTypeHintClient,
+    PylintCheckerViolationsClient,
+    Python2TypeHintClient,
+    Python3TypeHintClient,
+    SpecialArgsClient,
+)
 
 __version__ = VERSION

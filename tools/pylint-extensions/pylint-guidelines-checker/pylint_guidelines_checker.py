@@ -887,16 +887,24 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         try:
             if node.parent.name.endswith("Client") and node.parent.name not in self.ignore_clients and node.is_method():
                 if node.name.startswith("list"):
-                    try:
-                        # infer_call_result gives the method return value as a string
-                        returns = next(node.infer_call_result()).as_string()
-                        if returns.find("ItemPaged") == -1 and returns.find("AsyncItemPaged") == -1:
-                            self.add_message(
-                                msgid="client-list-methods-use-paging", node=node, confidence=None
-                            )
-                    except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
-                        logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
-                        pass
+                    paging_class = False
+
+                    for inner_node in node.body:
+                        # If this is a return node
+                        if isinstance(inner_node, astroid.Return):
+
+                            try:
+                                if "def by_page" in next(inner_node.value.infer()).as_string():
+                                    paging_class = True
+
+                            except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
+                                logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
+                                pass
+
+                    if not paging_class:
+                        self.add_message(
+                            msgid="client-list-methods-use-paging", node=node, confidence=None
+                        )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass
@@ -1937,6 +1945,8 @@ def register(linter):
     linter.register_checker(CheckNamingMismatchGeneratedCode(linter))
     linter.register_checker(CheckAPIVersion(linter))
     linter.register_checker(CheckEnum(linter))
+    linter.register_checker(ClientListMethodsUseCorePaging(linter))
+
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
@@ -1947,7 +1957,6 @@ def register(linter):
     # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
     # linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
-    # linter.register_checker(ClientListMethodsUseCorePaging(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
 

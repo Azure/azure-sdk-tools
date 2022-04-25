@@ -1,7 +1,5 @@
 Set-StrictMode -Version 3
 
-# See https://stackoverflow.com/a/14440066 for a succinct explanation. We will be using
-# this methodology for any global variables that can be considered constants
 $REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." "..")
 $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 
@@ -9,7 +7,7 @@ $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
 
 <#
 .SYNOPSIS
-Checks the contents of a directory, then returns a tuple of booleans @("assetsJsonPresent", "isRootFolder").
+Checks the contents of a directory, then returns an array of booleans @(<assetsJsonPresent>, <isRootFolder>).
 
 .DESCRIPTION
 Evaluates a directory by checking its contents. First value of the tuple is whether or not a "assets.json" file 
@@ -78,12 +76,7 @@ Function AscendToRepoRoot {
         $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
     }
 
-    if ($reachedRoot){
-        return $pathForManipulation
-    }
-    else {
-        throw "Unable to the root of the git repo."
-    }
+    return $pathForManipulation
 }
 
 
@@ -135,9 +128,9 @@ Function Resolve-AssetsJson {
             Push-Location $relPath
             $relPath = Resolve-Path -Relative -Path $discoveredPath
 
-            # relpaths are returned with ".\<blah>"
-            # given that, we need to get rid of it. This has possiiblity for bugs down the line.
-            $relPath = $relPath.Substring(2)
+            # relpaths are returned with "./<blah>"
+            # given that, we need to get rid of it. This has possibility for bugs down the line.
+            $relPath = $relPath -replace "^\.\/"
         }
         finally {
             Pop-Location
@@ -223,13 +216,7 @@ Function Is-AssetsRepo-Initialized {
     try {
         Push-Location $assetRepoLocation
         $gitLocation = Join-Path $assetRepoLocation ".git"
-
-        if (Test-Path $gitLocation){
-            $result = $true
-        }
-        else{
-            $result = $false
-        }
+        $result = Test-Path $gitLocation
     }
     catch {
         Write-Error $_

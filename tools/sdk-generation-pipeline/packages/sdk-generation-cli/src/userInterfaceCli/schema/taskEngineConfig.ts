@@ -89,7 +89,7 @@ export const taskEngineConfig = convict<TaskEngineConfig>({
         doc: 'resource-manager or data-plane'
     },
     mockServerHost: {
-        default: '',
+        default: 'https://localhost:8443',
         env: 'MOCK_SERVER_HOST',
         format: String,
         doc: 'The host of mocker server'

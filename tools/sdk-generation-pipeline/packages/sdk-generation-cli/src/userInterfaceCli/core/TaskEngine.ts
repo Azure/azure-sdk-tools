@@ -142,7 +142,7 @@ async function runInitTask(context: TaskEngineContext) {
     }
     if (fs.existsSync(context.initOutput)) {
         const initOutputJson = initOutput(requireJsonc(context.initOutput));
-        context.logger.info(initOutputJson);
+        context.logger.info(JSON.stringify(initOutputJson, undefined, 2));
 
         if (initOutputJson?.envs) {
             context.envs = initOutputJson.envs;
@@ -205,16 +205,16 @@ async function runMockTestTask(context: TaskEngineContext) {
         context.logger.info(`Run MockTest for ${packageFolder}`);
 
         const inputContent: MockTestInput = {
-            packageFolder: packageFolder,
+            packageFolder: path.join(context.sdkRepo, packageFolder),
             mockServerHost: context.mockServerHost
         };
         const inputJson = JSON.stringify(inputContent, undefined, 2)
         context.logger.info(inputJson);
         const formattedPackageName = packageFolder.replace(/[^a-zA-z0-9]/g, '-');
-        const mockTestInputJsonPath = context.mockTestInputJson.replace('.json', `${formattedPackageName}.json`);
-        const mockTestOutputJsonPath = context.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`);
-        const mockTestTaskLogPath = context.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`)
-        fs.writeFileSync(context.mockTestInputJson, inputJson, {encoding: 'utf-8'});
+        const mockTestInputJsonPath = context.packageFolders.length > 1? context.mockTestInputJson.replace('.json', `${formattedPackageName}.json`) : context.mockTestInputJson;
+        const mockTestOutputJsonPath = context.packageFolders.length > 1? context.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`) : context.mockTestOutputJson;
+        const mockTestTaskLogPath = context.packageFolders.length > 1? context.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`) : context.mockTestTaskLog;
+        fs.writeFileSync(mockTestInputJsonPath, inputJson, {encoding: 'utf-8'});
         addFileLog(context.logger, mockTestTaskLogPath, `mockTest_${formattedPackageName}`);
         const executeResult = await runScript(runOptions, {
             cwd: path.resolve(context.sdkRepo),
@@ -227,6 +227,9 @@ async function runMockTestTask(context: TaskEngineContext) {
         if (fs.existsSync(mockTestOutputJsonPath)) {
             const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath))
             context.logger.info(JSON.stringify(mockTestOutputJson, undefined, 2));
+        }
+        if (context.taskResults['mockTest'] === 'failure') {
+            throw new Error('Run Mock Test Failed');
         }
     }
 }

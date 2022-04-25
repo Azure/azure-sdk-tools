@@ -51,8 +51,10 @@ RUN pip3 install --upgrade wheel PyYAML requests
 RUN npm install -g typescript
 RUN npm install -g autorest
 
-COPY packages/sdk-generation-cli/*.tgz pack.tgz
-RUN npm install -g pack.tgz
+RUN mkdir "/mock-host" && cd /mock-host && npm install @azure-tools/mock-service-host
+
+COPY packages/sdk-generation-cli/*.tgz /pack.tgz
+RUN npm install -g /pack.tgz
 
 COPY entrypoint.sh /entrypoint.sh
 

@@ -29,7 +29,8 @@
     "runMockTestTask": "dist/taskEngineCli/runMockTestTaskCli.js",
     "runLiveTestTask": "dist/taskEngineCli/runLiveTestTaskCli.js",
     "generateResult": "dist/taskEngineCli/generateResultCli.js",
-    "docker-cli": "dist/userInterfaceCli/userInterfaceCli.js"
+    "docker-cli": "dist/userInterfaceCli/userInterfaceCli.js",
+    "run-mockhost": "dist/mockHostCli/mockHostCli.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",

@@ -463,7 +463,7 @@ Function Push-AssetsRepo-Update {
         }
         elseif ($LASTEXITCODE -ne 0) {
             Write-Error "A non-code-128 error is not expected here. Check git command output above."
-            exit(1)
+            exit 1
         }
         # if the branch already exists, we need to check to see if we're actually on the latest commit 
         else {

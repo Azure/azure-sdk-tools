@@ -13,5 +13,10 @@
     <PackageReference Include="YamlDotNet" Version="6.1.1" />
     <PackageReference Include="Azure.Identity" Version="1.5.0" />
   </ItemGroup>
+  
+   <ItemGroup>
+    <ProjectReference Include="../code-owners-parser/CodeOwnersParser/Azure.Sdk.Tools.CodeOwnersParser.csproj" />
+  </ItemGroup>
+
 
 </Project>

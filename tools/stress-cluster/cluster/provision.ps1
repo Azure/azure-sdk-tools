@@ -1,11 +1,12 @@
 param (
-    [string]$Environment = 'test',
+    [string]$Environment = 'dev',
     [string]$Namespace = 'stress-infra',
     [switch]$Development = $false
 )
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
+$STRESS_CLUSTER_RESOURCE_GROUP = ""
 
 function Run()
 {
@@ -72,6 +73,7 @@ function DeployStaticResources([hashtable]$params) {
         AZURE_CLIENT_OID = $oid
         AZURE_TENANT_ID = $spInfo.tenant
         AZURE_SUBSCRIPTION_ID = $params.subscriptionId
+        STRESS_CLUSTER_RESOURCE_GROUP = $STRESS_CLUSTER_RESOURCE_GROUP
     }
 
     # Powershell on windows does not play nicely passing strings with newlines as secret values
@@ -136,14 +138,15 @@ function DeployClusterResources([hashtable]$params) {
         -n "stress-deploy-$($params.groupSuffix)" `
         -l $params.clusterLocation `
         -f $PSScriptRoot/azure/main.bicep `
-        --parameters $PSScriptRoot/azure/parameters/$Environment.json
+        --parameters $PSScriptRoot/azure/parameters/$Environment.json `
+        --parameters groupName=$STRESS_CLUSTER_RESOURCE_GROUP
 
     SetEnvOutputs $params
 
     Write-Host "Importing cluster credentials"
     RunOrExitOnFailure az aks get-credentials `
         -n $params.clusterName `
-        -g rg-stress-cluster-$($params.groupSuffix) `
+        -g $STRESS_CLUSTER_RESOURCE_GROUP `
         --overwrite `
         --subscription $params.subscriptionId
 }
@@ -186,6 +189,7 @@ function main() {
 
     if (!$Development) {
         $params = LoadEnvParams
+        $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
         DeployStaticResources $params
         DeployClusterResources $params
     }

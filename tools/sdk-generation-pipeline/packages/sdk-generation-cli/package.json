@@ -29,6 +29,7 @@
     "runMockTestTask": "dist/taskEngineCli/runMockTestTaskCli.js",
     "runLiveTestTask": "dist/taskEngineCli/runLiveTestTaskCli.js",
     "generateResult": "dist/taskEngineCli/generateResultCli.js",
+    "publishLog": "dist/publishLogCli.js",
     "docker-cli": "dist/userInterfaceCli/userInterfaceCli.js",
     "run-mockhost": "dist/mockHostCli/mockHostCli.js"
   },

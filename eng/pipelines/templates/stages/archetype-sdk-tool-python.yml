@@ -62,6 +62,10 @@ stages:
             vmImage: MMSUbuntu20.04
 
           steps:
+            - template: /eng/pipelines/templates/steps/use-python-version.yml
+              parameters:
+                versionSpec: '${{ parameters.PythonVersion }}'
+
             - ${{ parameters.TestSteps }}
 
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:

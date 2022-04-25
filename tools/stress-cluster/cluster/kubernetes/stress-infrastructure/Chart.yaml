@@ -21,13 +21,13 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
+appVersion: "1.17.0"
 
 dependencies:
 - name: chaos-mesh
-  version: 0.5.1
+  version: 2.1.4
   repository: https://charts.chaos-mesh.org
   condition: deploy.chaosmesh
 - name: stress-test-addons
-  version: 0.1.12
+  version: 0.1.16
   repository: https://stresstestcharts.blob.core.windows.net/helm/

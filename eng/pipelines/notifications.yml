@@ -50,40 +50,18 @@ stages:
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
           workingDirectory: '$(Agent.BuildDirectory)'
 
-      - task: DotNetCoreCLI@2
-        displayName: 'Install CodeOwners Subscriber'
-        inputs:
-          command: custom
-          custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeOwnersSubscriberVersion)" "Azure.Sdk.Tools.GithubCodeownerSubscriber"'
-          workingDirectory: '$(Agent.BuildDirectory)'
-
       - pwsh: |
           notification-creator `
             --organization $(Organization) `
             --project $(Project) `
             --path-prefix "\$(PathPrefix)" `
             --token-variable-name DEVOPS_TOKEN `
-            --selection-strategy Scheduled `
-            $(AdditionalParameters)
-        displayName: 'Run Team/Notification Creator'
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
-          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
-
-      - pwsh: |
-          github-codeowner-subscriber `
-            --organization $(Organization) `
-            --project $(Project) `
-            --path-prefix "\$(PathPrefix)" `
-            --dev-ops-token-var DEVOPS_TOKEN `
             --aad-app-id-var OPENSOURCE_AAD_APP_ID `
             --aad-app-secret-var OPENSOURCE_AAD_APP_SECRET `
             --aad-tenant-var OPENSOURCE_AAD_TENANT_ID `
+            --selection-strategy Scheduled `
             $(AdditionalParameters)
-        displayName: 'Run GitHub CODEOWNER Subscriber'
+        displayName: 'Run Team/Notification Creator'
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1

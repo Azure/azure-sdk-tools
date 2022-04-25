@@ -45,13 +45,11 @@ func Test{{exampleGroup.operationGroup.language.go.name}}_{{exampleGroup.operati
 	client, err := {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
     if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
 	}
     {%- else %}
     client, err = {{packageName}}.{{example.operationGroup.language.go.clientCtorName}}({{example.clientParametersOutput + ", " if example.clientParametersOutput else ""}}cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-        return
 	}
     {%- endif %}
 	{%- if example.returnInfo.length == 2 %}

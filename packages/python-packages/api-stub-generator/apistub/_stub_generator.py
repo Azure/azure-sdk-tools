@@ -32,43 +32,42 @@ logging.getLogger().setLevel(logging.ERROR)
 
 class StubGenerator:
     def __init__(self, args=None):
+        from .nodes import PylintParser
         if not args:
             parser = argparse.ArgumentParser(
-                description="Parse a python package and generate json token file to be supplied to API review tool"
+                description="Parses a Python package and generates a JSON token file for consumption by the APIView tool."
             )
             parser.add_argument(
-                "--pkg-path", required=True, help=("Package root path"),
+                "--pkg-path", required=True, help=("Path to the package source root, WHL or ZIP file."),
             )
             parser.add_argument(
                 "--temp-path", 
-                help=("Temp path to extract package"),
+                help=("Extract the package to the specified temporary path. Defaults to a random temp dir."),
                 default=tempfile.gettempdir(),
             )
             parser.add_argument(
                 "--out-path",
                 default=os.getcwd(),
-                help=("Path to generate json file with parsed tokens"),
+                help=("Path at which to write the generated JSON file. Defaults to CWD."),
             )
             parser.add_argument(
                 "--mapping-path",
                 default=None,
-                help=("Path to the 'apiview_mapping.json' file.")
+                help=("Path to an 'apiview_mapping.json' file that supplies cross-langauge definition IDs.")
             )
             parser.add_argument(
                 "--verbose",
-                help=("Enable verbose logging"),
-                default=False,
-                action="store_true",
-            )
-            parser.add_argument(
-                "--hide-report",
-                help=("Hide diagnostic report"),
+                help=("Enable verbose logging."),
                 default=False,
                 action="store_true",
             )
             parser.add_argument(
                 "--filter-namespace",
-                help=("Generate Api view only for a specific namespace"),
+                help=("Generate APIView only for a specific namespace."),
+            )
+            parser.add_argument(
+                "--source-url",
+                help=("URL to the pull request URL that contains the source used to generate this APIView.")
             )
             args = parser.parse_args()
 
@@ -82,14 +81,12 @@ class StubGenerator:
         self.pkg_path = args.pkg_path
         self.temp_path = args.temp_path
         self.out_path = args.out_path
+        self.source_url = args.source_url
         self.mapping_path = args.mapping_path
-        self.hide_report = args.hide_report
+        self.filter_namespace = args.filter_namespace or ''
         if args.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
-
-        self.filter_namespace = ''
-        if args.filter_namespace:
-            self.filter_namespace = args.filter_namespace
+        PylintParser.parse(self.pkg_path)
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
@@ -105,6 +102,7 @@ class StubGenerator:
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
+        # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
         
@@ -113,18 +111,12 @@ class StubGenerator:
             namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
+        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, source_url=self.source_url)
         if apiview.diagnostics:
-            # Show error report in console
-            if not self.hide_report:
-                print("************************** Error Report **************************")
-                for m in self.module_dict.keys():
-                    self.module_dict[m].print_errors()
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
         return apiview
-
 
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON
@@ -165,7 +157,7 @@ class StubGenerator:
         return modules
 
 
-    def _generate_tokens(self, pkg_root_path, package_name, version, namespace):
+    def _generate_tokens(self, pkg_root_path, package_name, namespace, *, source_url):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
         # Import ModuleNode.
@@ -177,7 +169,8 @@ class StubGenerator:
         apiview = ApiView(
             pkg_name=package_name,
             namespace=namespace,
-            metadata_map=mapping
+            metadata_map=mapping,
+            source_url=source_url
         )
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
@@ -200,6 +193,7 @@ class StubGenerator:
         # Generate tokens
         modules = self.module_dict.keys()
         for m in modules:
+            self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
             self.module_dict[m].generate_tokens(apiview)

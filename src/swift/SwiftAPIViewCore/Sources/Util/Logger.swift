@@ -26,8 +26,6 @@
 
 import Foundation
 
-import Foundation
-
 public enum LogLevel: Int {
     case error, warning, info, debug
 

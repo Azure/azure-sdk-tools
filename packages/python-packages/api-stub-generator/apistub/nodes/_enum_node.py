@@ -20,7 +20,7 @@ class EnumNode(NodeEntityBase):
         :param ApiView: apiview
         """
         apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.namespace_id, self.name)
+        apiview.add_text(self.name, definition_id=self.namespace_id)
         apiview.add_space()
         apiview.add_punctuation("=")
         apiview.add_space()
@@ -28,9 +28,5 @@ class EnumNode(NodeEntityBase):
             apiview.add_stringliteral(self.value)
         else:
             apiview.add_literal(str(self.value))
-
-    def print_errors(self):
-        if self.errors:
-            print("enum: {}".format(self.name))
-            for e in self.errors:
-                print("    {}".format(e))
+        for err in self.pylint_errors:
+            err.generate_tokens(apiview, self.namespace_id)

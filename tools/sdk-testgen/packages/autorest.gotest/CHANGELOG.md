@@ -1,6 +1,20 @@
 # Change Log - @autorest/gotest
 
-This log was last generated on Mon, 11 Apr 2022 09:15:12 GMT and should not be manually modified.
+This log was last generated on Mon, 18 Apr 2022 06:25:24 GMT and should not be manually modified.
+
+## 3.1.1
+Mon, 18 Apr 2022 06:25:24 GMT
+
+### Patches
+
+- Fix wrong log.Fatalf usage.
+
+## 3.1.0
+Fri, 15 Apr 2022 03:08:44 GMT
+
+### Minor changes
+
+- Upgrade to latest codegen and change list operation name.
 
 ## 3.0.1
 Mon, 11 Apr 2022 09:15:12 GMT

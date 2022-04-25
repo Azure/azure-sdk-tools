@@ -126,7 +126,7 @@ Function Resolve-AssetsJson {
     }
 
     # path to assets Json
-    $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
+    $config = (Get-Content -Raw -Path $discoveredPath | ConvertFrom-Json)
     Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonLocation" -Value "$discoveredPath"
 
     $relPath = AscendToRepoRoot -StartPath $discoveredPath

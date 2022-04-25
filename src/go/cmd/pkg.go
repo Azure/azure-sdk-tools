@@ -152,6 +152,10 @@ func (p *Pkg) indexFile(f *ast.File) {
 						Text:     sealedInterface,
 					})
 				}
+			case *ast.MapType:
+				// "type opValues map[reflect.Type]interface{}"
+				txt := p.getText(t.Pos(), t.End())
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := sdkImports[ident.Name]; ok {

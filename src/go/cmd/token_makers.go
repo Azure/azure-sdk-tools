@@ -44,9 +44,15 @@ func NewDeclaration(pkg Pkg, vs *ast.ValueSpec) Declaration {
 			// const ETagAny ETag = "*"
 			// const PeekLock ReceiveMode = internal.PeekLock
 			decl.Type = x.Name
+		case *ast.MapType:
+			// var nullables map[reflect.Type]interface{} = map[reflect.Type]interface{}{}
+			decl.Type = pkg.getText(vs.Type.Pos(), vs.Type.End())
 		case *ast.SelectorExpr:
 			// const LogCredential log.Classification = "Credential"
 			decl.Type = x.Sel.Name
+		case *ast.StarExpr:
+			// var defaultHTTPClient *http.Client
+			decl.Type = x.X.(*ast.SelectorExpr).Sel.Name
 		default:
 			fmt.Println("unhandled constant type " + pkg.getText(vs.Type.Pos(), vs.Type.End()))
 		}

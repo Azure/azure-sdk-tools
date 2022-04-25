@@ -83,12 +83,11 @@ func NewModule(dir string) (*Module, error) {
 					}
 				}
 			}
+
+			var t TokenMaker
 			if source == nil {
-				fmt.Println("found no source for ", qn)
-				continue
-			}
-			if def, ok := source.types[typeName]; ok {
-				var t TokenMaker
+				t = p.c.addSimpleType(*p, alias, p.Name(), qn)
+			} else if def, ok := source.types[typeName]; ok {
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
 					t = p.c.addInterface(*def.p, alias, p.Name(), n)
@@ -99,21 +98,21 @@ func NewModule(dir string) (*Module, error) {
 				default:
 					fmt.Printf("unexpected node type %T", def.n.Type)
 				}
-				if t != nil {
-					path := strings.TrimPrefix(qn, baseImportPath)
-					level := DiagnosticLevelInfo
-					if !strings.Contains(path, m.Name) {
-						// this type is defined in another module
-						level = DiagnosticLevelWarning
-					}
-					p.diagnostics = append(p.diagnostics, Diagnostic{
-						Level:    level,
-						TargetID: t.ID(),
-						Text:     aliasFor + path,
-					})
-				}
 			} else {
 				fmt.Println("found no definition for " + qn)
+			}
+			if t != nil {
+				path := strings.TrimPrefix(qn, baseImportPath)
+				level := DiagnosticLevelInfo
+				if !strings.Contains(path, m.Name) {
+					// this type is defined in another module
+					level = DiagnosticLevelWarning
+				}
+				p.diagnostics = append(p.diagnostics, Diagnostic{
+					Level:    level,
+					TargetID: t.ID(),
+					Text:     aliasFor + path,
+				})
 			}
 		}
 	}

@@ -19,7 +19,7 @@ export enum Config {
 export const configDefaults = {
     ...baseConfigDefaults,
     [Config.exportCodemodel]: false,
-    [Config.generateMockTest]: true,
+    [Config.generateMockTest]: false,
     [Config.generateSdkExample]: false,
     [Config.generateScenarioTest]: false,
     [Config.generateSdkSample]: false,

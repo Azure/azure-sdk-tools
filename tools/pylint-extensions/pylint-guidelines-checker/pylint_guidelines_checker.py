@@ -1923,9 +1923,10 @@ class CheckExceptionLogging(BaseChecker):
     priority = -1
     msgs = {
         "C4751": (
-            "Do not allow logging of Exception, as it can reveal personally identifiable information.",
+            "Do not allow logging of Exception, as it can reveal personally identifiable information. See Details: "
+            "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
             "exception-logging",
-            "Do not log exceptions.",
+            "Do not log exceptions with anything other than DEBUG.",
         ),
     }
     options = (
@@ -1935,7 +1936,7 @@ class CheckExceptionLogging(BaseChecker):
                 "default": False,
                 "type": "yn",
                 "metavar": "<y_or_n>",
-                "help": "Do not log exceptions",
+                "help": "Do not log exceptions with anything other than DEBUG.",
             },
         ),
     )

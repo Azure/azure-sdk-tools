@@ -626,7 +626,7 @@ func TestDedicatedHosts_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr("DSv3-Type1"),
 			},
 		},
-		&test.DedicatedHostsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateADedicatedHost.json: %v", err)
 	}
@@ -1123,7 +1123,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
@@ -1244,7 +1244,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModeOfImageDefault.json: %v", err)
 	}
@@ -1366,7 +1366,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateALinuxVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
@@ -1489,7 +1489,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithUefiSettings.json: %v", err)
 	}
@@ -1616,7 +1616,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				UserData: to.Ptr("RXhhbXBsZSBVc2VyRGF0YQ=="),
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAVmWithUserData.json: %v", err)
 	}
@@ -1755,7 +1755,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithNetworkInterfaceConfiguration.json: %v", err)
 	}
@@ -1875,7 +1875,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingAssessmentModeOfImageDefault.json: %v", err)
 	}
@@ -1998,7 +1998,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByOS.json: %v", err)
 	}
@@ -2122,7 +2122,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfAutomaticByPlatformAndEnableHotPatchingTrue.json: %v", err)
 	}
@@ -2246,7 +2246,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModeOfManual.json: %v", err)
 	}
@@ -2370,7 +2370,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAWindowsVmWithPatchSettingModesOfAutomaticByPlatform.json: %v", err)
 	}
@@ -2485,7 +2485,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageVmFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
@@ -2612,7 +2612,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageVmWithUnmanagedOsAndDataDisks.json: %v", err)
 	}
@@ -2742,7 +2742,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromACustomImage.json: %v", err)
 	}
@@ -2849,7 +2849,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromAGeneralizedSharedImage.json: %v", err)
 	}
@@ -2951,7 +2951,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmFromASpecializedSharedImage.json: %v", err)
 	}
@@ -3057,7 +3057,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAVirtualMachineScaleSetWithCustomerAssignedPlatformFaultDomain.json: %v", err)
 	}
@@ -3177,7 +3177,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmInAnAvailabilitySet.json: %v", err)
 	}
@@ -3319,7 +3319,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithDiskEncryptionSetResource.json: %v", err)
 	}
@@ -3465,7 +3465,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEncryptionAtHost.json: %v", err)
 	}
@@ -3598,7 +3598,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithScheduledEventsProfile.json: %v", err)
 	}
@@ -3728,7 +3728,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithAMarketplaceImagePlan.json: %v", err)
 	}
@@ -3853,7 +3853,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithExtensionsTimeBudget.json: %v", err)
 	}
@@ -3979,7 +3979,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithBootDiagnostics.json: %v", err)
 	}
@@ -4109,7 +4109,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithEmptyDataDisks.json: %v", err)
 	}
@@ -4249,7 +4249,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsCacheDisk.json: %v", err)
 	}
@@ -4380,7 +4380,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDiskUsingDiffDiskPlacementAsResourceDisk.json: %v", err)
 	}
@@ -4510,7 +4510,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithADiffOsDisk.json: %v", err)
 	}
@@ -4636,7 +4636,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithManagedBootDiagnostics.json: %v", err)
 	}
@@ -4754,7 +4754,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPasswordAuthentication.json: %v", err)
 	}
@@ -4867,7 +4867,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithPremiumStorage.json: %v", err)
 	}
@@ -4989,7 +4989,7 @@ func TestVirtualMachines_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAVmWithSshAuthentication.json: %v", err)
 	}
@@ -5122,7 +5122,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMDetachDataDiskUsingToBeDetachedProperty.json: %v", err)
 	}
@@ -5268,7 +5268,7 @@ func TestVirtualMachines_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVMForceDetachDataDisk.json: %v", err)
 	}
@@ -5366,9 +5366,7 @@ func TestVirtualMachines_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myVM",
-		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachine.json: %v", err)
 	}
@@ -5887,7 +5885,7 @@ func TestVirtualMachines_Reapply(t *testing.T) {
 	poller, err := client.BeginReapply(ctx,
 		"ResourceGroup",
 		"VMName",
-		&test.VirtualMachinesClientBeginReapplyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReapplyVirtualMachine.json: %v", err)
 	}
@@ -5924,7 +5922,6 @@ func TestVirtualMachines_Reimage(t *testing.T) {
 		&test.VirtualMachinesClientBeginReimageOptions{Parameters: &test.VirtualMachineReimageParameters{
 			TempDisk: to.Ptr(true),
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageVirtualMachine.json: %v", err)
@@ -5997,7 +5994,7 @@ func TestVirtualMachines_AssessPatches(t *testing.T) {
 	poller, err := client.BeginAssessPatches(ctx,
 		"myResourceGroupName",
 		"myVMName",
-		&test.VirtualMachinesClientBeginAssessPatchesOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineAssessPatches.json: %v", err)
 	}
@@ -6070,7 +6067,7 @@ func TestVirtualMachines_InstallPatches(t *testing.T) {
 				MaxPatchPublishDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
-		&test.VirtualMachinesClientBeginInstallPatchesOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineInstallPatches.json: %v", err)
 	}
@@ -6132,7 +6129,7 @@ func TestVirtualMachines_RunCommand(t *testing.T) {
 		test.RunCommandInput{
 			CommandID: to.Ptr("RunPowerShellScript"),
 		},
-		&test.VirtualMachinesClientBeginRunCommandOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VirtualMachineRunCommand.json: %v", err)
 	}
@@ -6399,7 +6396,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateACustomImageScaleSetFromAnUnmanagedGeneralizedOsImage.json: %v", err)
 	}
@@ -6550,7 +6547,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAPlatformImageScaleSetWithUnmanagedOsDisks.json: %v", err)
 	}
@@ -6698,7 +6695,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromACustomImage.json: %v", err)
 	}
@@ -6842,7 +6839,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromAGeneralizedSharedImage.json: %v", err)
 	}
@@ -6981,7 +6978,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromASpecializedSharedImage.json: %v", err)
 	}
@@ -7133,7 +7130,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScalesetWithDiskEncryptionSetResource.json: %v", err)
 	}
@@ -7313,7 +7310,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetFromWithFpgaNetworkInterface.json: %v", err)
 	}
@@ -7490,7 +7487,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEncryptionAtHost.json: %v", err)
 	}
@@ -7656,7 +7653,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithUefiSettings.json: %v", err)
 	}
@@ -7819,7 +7816,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAMarketplaceImagePlan.json: %v", err)
 	}
@@ -7979,7 +7976,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureApplicationGateway.json: %v", err)
 	}
@@ -8148,7 +8145,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAnAzureLoadBalancer.json: %v", err)
 	}
@@ -8311,7 +8308,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithAutomaticRepairs.json: %v", err)
 	}
@@ -8472,7 +8469,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithBootDiagnostics.json: %v", err)
 	}
@@ -8641,7 +8638,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithEmptyDataDisksOnEachVm.json: %v", err)
 	}
@@ -8821,7 +8818,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDiskUsingDiffDiskPlacement.json: %v", err)
 	}
@@ -8985,7 +8982,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 			},
 			SKU: &test.SKU{},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithDiffOsDisk.json: %v", err)
 	}
@@ -9164,7 +9161,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithExtensionsTimeBudget.json: %v", err)
 	}
@@ -9340,7 +9337,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithManagedBootDiagnostics.json: %v", err)
 	}
@@ -9496,7 +9493,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPasswordAuthentication.json: %v", err)
 	}
@@ -9647,7 +9644,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithPremiumStorage.json: %v", err)
 	}
@@ -9807,7 +9804,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithSshAuthentication.json: %v", err)
 	}
@@ -9970,7 +9967,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithTerminateScheduledEventEnabled.json: %v", err)
 	}
@@ -10128,7 +10125,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateAScaleSetWithUserData.json: %v", err)
 	}
@@ -10300,7 +10297,7 @@ func TestVirtualMachineScaleSets_CreateOrUpdate(t *testing.T) {
 				to.Ptr("1"),
 				to.Ptr("3")},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAScaleSetWithVMsInDifferentZones.json: %v", err)
 	}
@@ -10426,9 +10423,7 @@ func TestVirtualMachineScaleSets_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myvmScaleSet",
-		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSets.json: %v", err)
 	}
@@ -10740,7 +10735,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlobWithDiskEncryptionSet.json: %v", err)
 	}
@@ -10800,7 +10795,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromABlob.json: %v", err)
 	}
@@ -10862,7 +10857,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
@@ -10926,7 +10921,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAManagedDisk.json: %v", err)
 	}
@@ -10990,7 +10985,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshotWithDiskEncryptionSet.json: %v", err)
 	}
@@ -11054,7 +11049,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromASnapshot.json: %v", err)
 	}
@@ -11109,7 +11104,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageFromAVM.json: %v", err)
 	}
@@ -11177,7 +11172,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromABlob.json: %v", err)
 	}
@@ -11248,7 +11243,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromAManagedDisk.json: %v", err)
 	}
@@ -11323,7 +11318,7 @@ func TestImages_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateAnImageThatIncludesADataDiskFromASnapshot.json: %v", err)
 	}
@@ -11389,7 +11384,7 @@ func TestImages_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.ImagesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateImage.json: %v", err)
 	}
@@ -11987,7 +11982,7 @@ func TestRestorePoints_Create(t *testing.T) {
 					ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/vm8768_disk2_fe6ffde4f69b491ca33fb984d5bcd89f"),
 				}},
 		},
-		&test.RestorePointsClientBeginCreateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateARestorePoint.json: %v", err)
 	}
@@ -12131,7 +12126,7 @@ func TestVirtualMachineScaleSetRollingUpgrades_StartExtensionUpgrade(t *testing.
 	poller, err := client.BeginStartExtensionUpgrade(ctx,
 		"myResourceGroup",
 		"{vmss-name}",
-		&test.VirtualMachineScaleSetRollingUpgradesClientBeginStartExtensionUpgradeOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetExtensionRollingUpgrade.json: %v", err)
 	}
@@ -12193,7 +12188,7 @@ func TestVirtualMachineScaleSetVMExtensions_CreateOrUpdate(t *testing.T) {
 				TypeHandlerVersion: to.Ptr("1.2"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
@@ -12249,7 +12244,7 @@ func TestVirtualMachineScaleSetVMExtensions_Update(t *testing.T) {
 				TypeHandlerVersion: to.Ptr("1.2"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
@@ -12294,7 +12289,7 @@ func TestVirtualMachineScaleSetVMExtensions_Delete(t *testing.T) {
 		"myvmScaleSet",
 		"0",
 		"myVMExtension",
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMExtensions.json: %v", err)
 	}
@@ -12432,9 +12427,7 @@ func TestVirtualMachineScaleSetVMs_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myvmScaleSet",
 		"0",
-		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ForceDeleteVirtualMachineScaleSetVM.json: %v", err)
 	}
@@ -12737,7 +12730,7 @@ func TestVirtualMachineScaleSetVMs_RunCommand(t *testing.T) {
 			Script: []*string{
 				to.Ptr("# Test multi-line string\r\nWrite-Host Hello World!")},
 		},
-		&test.VirtualMachineScaleSetVMsClientBeginRunCommandOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/VMScaleSetRunCommand.json: %v", err)
 	}
@@ -12786,7 +12779,7 @@ func TestLogAnalytics_ExportRequestRateByInterval(t *testing.T) {
 			ToTime:              to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 			IntervalLength:      to.Ptr(test.IntervalInMinsFiveMins),
 		},
-		&test.LogAnalyticsClientBeginExportRequestRateByIntervalOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsRequestRateByInterval.json: %v", err)
 	}
@@ -12827,7 +12820,7 @@ func TestLogAnalytics_ExportThrottledRequests(t *testing.T) {
 			GroupByUserAgent:           to.Ptr(false),
 			ToTime:                     to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 		},
-		&test.LogAnalyticsClientBeginExportThrottledRequestsOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/LogAnalyticsThrottledRequests.json: %v", err)
 	}
@@ -13029,7 +13022,7 @@ func TestVirtualMachineRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateRunCommand.json: %v", err)
 	}
@@ -13093,7 +13086,7 @@ func TestVirtualMachineRunCommands_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateRunCommand.json: %v", err)
 	}
@@ -13150,7 +13143,7 @@ func TestVirtualMachineRunCommands_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myVM",
 		"myRunCommand",
-		&test.VirtualMachineRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteRunCommand.json: %v", err)
 	}
@@ -13306,7 +13299,7 @@ func TestVirtualMachineScaleSetVMRunCommands_CreateOrUpdate(t *testing.T) {
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateOrUpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
@@ -13367,7 +13360,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
@@ -13425,7 +13418,7 @@ func TestVirtualMachineScaleSetVMRunCommands_Delete(t *testing.T) {
 		"myvmScaleSet",
 		"0",
 		"myRunCommand",
-		&test.VirtualMachineScaleSetVMRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteVirtualMachineScaleSetVMRunCommands.json: %v", err)
 	}
@@ -13951,7 +13944,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowPrivate),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskAccess.json: %v", err)
 	}
@@ -14002,7 +13995,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithDiskEncryptionSet.json: %v", err)
 	}
@@ -14051,7 +14044,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByCopyingASnapshot.json: %v", err)
 	}
@@ -14098,7 +14091,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
@@ -14145,7 +14138,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
@@ -14194,7 +14187,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				OSType: to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAPlatformImage.json: %v", err)
 	}
@@ -14249,7 +14242,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskFromAnExistingManagedDisk.json: %v", err)
 	}
@@ -14301,7 +14294,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSecurityProfile.json: %v", err)
 	}
@@ -14356,7 +14349,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr(test.DiskStorageAccountTypesPremiumZRS),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithSSDZRSAccountType.json: %v", err)
 	}
@@ -14406,7 +14399,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedUploadDisk.json: %v", err)
 	}
@@ -14456,7 +14449,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				DiskSizeGB: to.Ptr[int32](200),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDiskInExtendedLocation.json: %v", err)
 	}
@@ -14506,7 +14499,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				DiskSizeGB: to.Ptr[int32](200),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAnEmptyManagedDisk.json: %v", err)
 	}
@@ -14556,7 +14549,7 @@ func TestDisks_CreateOrUpdate(t *testing.T) {
 				Name: to.Ptr(test.DiskStorageAccountTypesUltraSSDLRS),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateAManagedDiskWithLogicalSectorSize.json: %v", err)
 	}
@@ -14606,7 +14599,7 @@ func TestDisks_Update(t *testing.T) {
 				DiskSizeGB:      to.Ptr[int32](1024),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateOrUpdateABurstingEnabledManagedDisk.json: %v", err)
 	}
@@ -14654,7 +14647,7 @@ func TestDisks_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddPurchasePlan.json: %v", err)
 	}
@@ -14711,7 +14704,7 @@ func TestDisks_Update(t *testing.T) {
 				SupportsHibernation: to.Ptr(true),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToAddSupportsHibernation.json: %v", err)
 	}
@@ -14761,7 +14754,7 @@ func TestDisks_Update(t *testing.T) {
 				Tier: to.Ptr("P30"),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToChangeTier.json: %v", err)
 	}
@@ -14803,7 +14796,7 @@ func TestDisks_Update(t *testing.T) {
 				BurstingEnabled: to.Ptr(false),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToDisableBursting.json: %v", err)
 	}
@@ -14844,7 +14837,7 @@ func TestDisks_Update(t *testing.T) {
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowAll),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateAManagedDiskToRemoveDiskAccess.json: %v", err)
 	}
@@ -15248,7 +15241,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromADifferentSubscription.json: %v", err)
 	}
@@ -15295,7 +15288,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotByImportingAnUnmanagedBlobFromTheSameSubscription.json: %v", err)
 	}
@@ -15341,7 +15334,7 @@ func TestSnapshots_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateASnapshotFromAnExistingSnapshot.json: %v", err)
 	}
@@ -15662,7 +15655,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSetWithKeyVaultFromADifferentSubscription.json: %v", err)
 	}
@@ -15717,7 +15710,7 @@ func TestDiskEncryptionSets_CreateOrUpdate(t *testing.T) {
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskEncryptionSet.json: %v", err)
 	}
@@ -15774,7 +15767,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabled.json: %v", err)
 	}
@@ -15830,7 +15823,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSetWithRotationToLatestKeyVersionEnabledInProgress.json: %v", err)
 	}
@@ -15893,7 +15886,7 @@ func TestDiskEncryptionSets_Update(t *testing.T) {
 				"project":    to.Ptr("Encryption"),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskEncryptionSet.json: %v", err)
 	}
@@ -15991,7 +15984,7 @@ func TestDiskEncryptionSets_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskEncryptionSet",
-		&test.DiskEncryptionSetsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskEncryptionSet.json: %v", err)
 	}
@@ -16201,7 +16194,7 @@ func TestDiskAccesses_CreateOrUpdate(t *testing.T) {
 		test.DiskAccess{
 			Location: to.Ptr("West US"),
 		},
-		&test.DiskAccessesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/CreateADiskAccess.json: %v", err)
 	}
@@ -16245,7 +16238,7 @@ func TestDiskAccesses_Update(t *testing.T) {
 				"project":    to.Ptr("PrivateEndpoints"),
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/UpdateADiskAccess.json: %v", err)
 	}
@@ -16374,7 +16367,7 @@ func TestDiskAccesses_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myDiskAccess",
-		&test.DiskAccessesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteADiskAccess.json: %v", err)
 	}
@@ -16591,7 +16584,7 @@ func TestDiskAccesses_UpdateAPrivateEndpointConnection(t *testing.T) {
 				},
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateAPrivateEndpointConnectionOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/ApprovePrivateEndpointConnection.json: %v", err)
 	}
@@ -16677,7 +16670,7 @@ func TestDiskAccesses_DeleteAPrivateEndpointConnection(t *testing.T) {
 		"myResourceGroup",
 		"myDiskAccess",
 		"myPrivateEndpointConnection",
-		&test.DiskAccessesClientBeginDeleteAPrivateEndpointConnectionOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-12-01/examples/DeleteAPrivateEndpointConnection.json: %v", err)
 	}
@@ -16835,7 +16828,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleriesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryWithSharingProfile.json: %v", err)
 	}
@@ -16881,7 +16874,7 @@ func TestGalleries_CreateOrUpdate(t *testing.T) {
 				Description: to.Ptr("This is the gallery description."),
 			},
 		},
-		&test.GalleriesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGallery.json: %v", err)
 	}
@@ -16925,7 +16918,7 @@ func TestGalleries_Update(t *testing.T) {
 				Description: to.Ptr("This is the gallery description."),
 			},
 		},
-		&test.GalleriesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGallery.json: %v", err)
 	}
@@ -17042,7 +17035,7 @@ func TestGalleries_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myGalleryName",
-		&test.GalleriesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGallery.json: %v", err)
 	}
@@ -17159,7 +17152,7 @@ func TestGalleryImages_CreateOrUpdate(t *testing.T) {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImage.json: %v", err)
 	}
@@ -17215,7 +17208,7 @@ func TestGalleryImages_Update(t *testing.T) {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImage.json: %v", err)
 	}
@@ -17299,7 +17292,7 @@ func TestGalleryImages_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryImageName",
-		&test.GalleryImagesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImage.json: %v", err)
 	}
@@ -17418,7 +17411,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVMAsSource.json: %v", err)
 	}
@@ -17562,7 +17555,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersion.json: %v", err)
 	}
@@ -17709,7 +17702,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
@@ -17848,7 +17841,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithImageVersionAsSource.json: %v", err)
 	}
@@ -17995,7 +17988,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithSnapshotsAsSource.json: %v", err)
 	}
@@ -18129,7 +18122,7 @@ func TestGalleryImageVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryImageVersionWithVHD.json: %v", err)
 	}
@@ -18231,7 +18224,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersion.json: %v", err)
 	}
@@ -18324,7 +18317,7 @@ func TestGalleryImageVersions_Update(t *testing.T) {
 				StorageProfile: &test.GalleryImageVersionStorageProfile{},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryImageVersionWithoutSourceId.json: %v", err)
 	}
@@ -18718,7 +18711,7 @@ func TestGalleryImageVersions_Delete(t *testing.T) {
 		"myGalleryName",
 		"myGalleryImageName",
 		"1.0.0",
-		&test.GalleryImageVersionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryImageVersion.json: %v", err)
 	}
@@ -18834,7 +18827,7 @@ func TestGalleryApplications_CreateOrUpdate(t *testing.T) {
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryApplicationsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplication.json: %v", err)
 	}
@@ -18885,7 +18878,7 @@ func TestGalleryApplications_Update(t *testing.T) {
 				SupportedOSType:     to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryApplicationsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplication.json: %v", err)
 	}
@@ -18963,7 +18956,7 @@ func TestGalleryApplications_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myGalleryName",
 		"myGalleryApplicationName",
-		&test.GalleryApplicationsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplication.json: %v", err)
 	}
@@ -19051,7 +19044,7 @@ func TestGalleryApplicationVersions_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryApplicationVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/CreateOrUpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
@@ -19133,7 +19126,7 @@ func TestGalleryApplicationVersions_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.GalleryApplicationVersionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/UpdateASimpleGalleryApplicationVersion.json: %v", err)
 	}
@@ -19311,7 +19304,7 @@ func TestGalleryApplicationVersions_Delete(t *testing.T) {
 		"myGalleryName",
 		"myGalleryApplicationName",
 		"1.0.0",
-		&test.GalleryApplicationVersionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/DeleteAGalleryApplicationVersion.json: %v", err)
 	}
@@ -19409,7 +19402,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 				}},
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesAdd),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/AddToSharingProfileInAGallery.json: %v", err)
 	}
@@ -19453,7 +19446,7 @@ func TestGallerySharingProfile_Update(t *testing.T) {
 		test.SharingUpdate{
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesReset),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2020-09-30/examples/ResetSharingProfileInAGallery.json: %v", err)
 	}
@@ -19720,7 +19713,7 @@ func TestCloudServiceRoleInstances_Delete(t *testing.T) {
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstance.json: %v", err)
 	}
@@ -19925,7 +19918,7 @@ func TestCloudServiceRoleInstances_Restart(t *testing.T) {
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstance.json: %v", err)
 	}
@@ -19948,7 +19941,7 @@ func TestCloudServiceRoleInstances_Reimage(t *testing.T) {
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginReimageOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstance.json: %v", err)
 	}
@@ -19971,7 +19964,7 @@ func TestCloudServiceRoleInstances_Rebuild(t *testing.T) {
 		"{roleInstance-name}",
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServiceRoleInstancesClientBeginRebuildOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstance.json: %v", err)
 	}
@@ -20138,7 +20131,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithMultiRole.json: %v", err)
@@ -20253,7 +20245,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRole.json: %v", err)
@@ -20372,7 +20363,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndCertificate.json: %v", err)
@@ -20502,7 +20492,6 @@ func TestCloudServices_CreateOrUpdate(t *testing.T) {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/CreateCloudServiceWithSingleRoleAndRDP.json: %v", err)
@@ -20596,7 +20585,6 @@ func TestCloudServices_Update(t *testing.T) {
 				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceToIncludeTags.json: %v", err)
@@ -20679,7 +20667,7 @@ func TestCloudServices_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudService.json: %v", err)
 	}
@@ -21050,7 +21038,7 @@ func TestCloudServices_Start(t *testing.T) {
 	poller, err := client.BeginStart(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/StartCloudService.json: %v", err)
 	}
@@ -21072,7 +21060,7 @@ func TestCloudServices_PowerOff(t *testing.T) {
 	poller, err := client.BeginPowerOff(ctx,
 		"ConstosoRG",
 		"{cs-name}",
-		&test.CloudServicesClientBeginPowerOffOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/PowerOffCloudService.json: %v", err)
 	}
@@ -21099,7 +21087,6 @@ func TestCloudServices_Restart(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RestartCloudServiceRoleInstances.json: %v", err)
@@ -21127,7 +21114,6 @@ func TestCloudServices_Reimage(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/ReimageCloudServiceRoleInstances.json: %v", err)
@@ -21155,7 +21141,6 @@ func TestCloudServices_Rebuild(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/RebuildCloudServiceRoleInstances.json: %v", err)
@@ -21183,7 +21168,6 @@ func TestCloudServices_DeleteInstances(t *testing.T) {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/DeleteCloudServiceRoleInstances.json: %v", err)
@@ -21207,9 +21191,7 @@ func TestCloudServicesUpdateDomain_WalkUpdateDomain(t *testing.T) {
 		"ConstosoRG",
 		"{cs-name}",
 		1,
-		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
-			ResumeToken: "",
-		})
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/compute/resource-manager/Microsoft.Compute/stable/2021-03-01/examples/UpdateCloudServiceUpdateDomain.json: %v", err)
 	}

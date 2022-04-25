@@ -205,7 +205,7 @@ func ExampleSignalRClient_BeginCreateOrUpdate() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -231,7 +231,7 @@ func ExampleSignalRClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -332,7 +332,7 @@ func ExampleSignalRClient_BeginUpdate() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -383,7 +383,7 @@ func ExampleSignalRClient_BeginRegenerateKey() {
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -407,7 +407,7 @@ func ExampleSignalRClient_BeginRestart() {
 	poller, err := client.BeginRestart(ctx,
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

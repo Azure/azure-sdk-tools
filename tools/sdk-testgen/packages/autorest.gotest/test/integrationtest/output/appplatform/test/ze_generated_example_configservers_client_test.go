@@ -66,7 +66,7 @@ func ExampleConfigServersClient_BeginUpdatePut() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -104,7 +104,7 @@ func ExampleConfigServersClient_BeginUpdatePatch() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -138,7 +138,7 @@ func ExampleConfigServersClient_BeginValidate() {
 				URI: to.Ptr("<uri>"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

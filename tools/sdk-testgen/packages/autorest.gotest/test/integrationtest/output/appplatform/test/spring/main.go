@@ -223,7 +223,7 @@ func springSample() {
 	}
 
 	// From step Services_CreateOrUpdate
-	servicesClientCreateOrUpdateResponse, err := servicesClient.BeginCreateOrUpdate(ctx,
+	servicesClientCreateOrUpdateResponsePoller, err := servicesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ServiceResource{
@@ -237,11 +237,11 @@ func springSample() {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -256,7 +256,7 @@ func springSample() {
 	}
 
 	// From step Services_Update
-	servicesClientUpdateResponse, err := servicesClient.BeginUpdate(ctx,
+	servicesClientUpdateResponsePoller, err := servicesClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ServiceResource{
@@ -269,11 +269,11 @@ func springSample() {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -323,7 +323,7 @@ func springSample() {
 		panic(err)
 	}
 	certificateName := "asc-certificate"
-	certificatesClientCreateOrUpdateResponse, err := certificatesClient.BeginCreateOrUpdate(ctx,
+	certificatesClientCreateOrUpdateResponsePoller, err := certificatesClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		certificateName,
@@ -333,11 +333,11 @@ func springSample() {
 				VaultURI:         to.Ptr("https://integration-test-prod.vault.azure.net/"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -365,7 +365,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	configServersClientValidateResponse, err := configServersClient.BeginValidate(ctx,
+	configServersClientValidateResponsePoller, err := configServersClient.BeginValidate(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerSettings{
@@ -376,17 +376,17 @@ func springSample() {
 				URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientValidateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientValidateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step ConfigServers_UpdatePut
-	configServersClientUpdatePutResponse, err := configServersClient.BeginUpdatePut(ctx,
+	configServersClientUpdatePutResponsePoller, err := configServersClient.BeginUpdatePut(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerResource{
@@ -401,17 +401,17 @@ func springSample() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePutResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePutResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step ConfigServers_UpdatePatch
-	configServersClientUpdatePatchResponse, err := configServersClient.BeginUpdatePatch(ctx,
+	configServersClientUpdatePatchResponsePoller, err := configServersClient.BeginUpdatePatch(ctx,
 		resourceGroupName,
 		serviceName,
 		test.ConfigServerResource{
@@ -423,11 +423,11 @@ func springSample() {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = configServersClientUpdatePatchResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = configServersClientUpdatePatchResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -446,7 +446,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	monitoringSettingsClientUpdatePutResponse, err := monitoringSettingsClient.BeginUpdatePut(ctx,
+	monitoringSettingsClientUpdatePutResponsePoller, err := monitoringSettingsClient.BeginUpdatePut(ctx,
 		resourceGroupName,
 		serviceName,
 		test.MonitoringSettingResource{
@@ -456,11 +456,11 @@ func springSample() {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePutResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePutResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -475,7 +475,7 @@ func springSample() {
 	}
 
 	// From step MonitoringSettings_UpdatePatch
-	monitoringSettingsClientUpdatePatchResponse, err := monitoringSettingsClient.BeginUpdatePatch(ctx,
+	monitoringSettingsClientUpdatePatchResponsePoller, err := monitoringSettingsClient.BeginUpdatePatch(ctx,
 		resourceGroupName,
 		serviceName,
 		test.MonitoringSettingResource{
@@ -483,11 +483,11 @@ func springSample() {
 				AppInsightsSamplingRate: to.Ptr[float64](100),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = monitoringSettingsClientUpdatePatchResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = monitoringSettingsClientUpdatePatchResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -497,7 +497,7 @@ func springSample() {
 	if err != nil {
 		panic(err)
 	}
-	appsClientCreateOrUpdateResponse, err := appsClient.BeginCreateOrUpdate(ctx,
+	appsClientCreateOrUpdateResponsePoller, err := appsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -516,11 +516,11 @@ func springSample() {
 				Public:               to.Ptr(false),
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -541,7 +541,7 @@ func springSample() {
 		panic(err)
 	}
 	deploymentName := "default"
-	deploymentsClientCreateOrUpdateResponse, err := deploymentsClient.BeginCreateOrUpdate(ctx,
+	deploymentsClientCreateOrUpdateResponsePoller, err := deploymentsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -570,11 +570,11 @@ func springSample() {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -592,7 +592,7 @@ func springSample() {
 	}
 
 	// From step Apps_Update_ActiveDeployment
-	appsClientUpdateResponse, err := appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponsePoller, err := appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -606,17 +606,17 @@ func springSample() {
 				ActiveDeploymentName: to.Ptr("default"),
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Update_Disk
-	appsClientUpdateResponse, err = appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponsePoller, err = appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -637,11 +637,11 @@ func springSample() {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -659,7 +659,7 @@ func springSample() {
 		panic(err)
 	}
 	bindingName := "mysql-binding"
-	bindingsClientCreateOrUpdateResponse, err := bindingsClient.BeginCreateOrUpdate(ctx,
+	bindingsClientCreateOrUpdateResponsePoller, err := bindingsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -674,18 +674,18 @@ func springSample() {
 				ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Bindings_Update
 	bindingName = "mysql-binding"
-	bindingsClientUpdateResponse, err := bindingsClient.BeginUpdate(ctx,
+	bindingsClientUpdateResponsePoller, err := bindingsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -700,11 +700,11 @@ func springSample() {
 				ResourceID: to.Ptr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -731,16 +731,16 @@ func springSample() {
 
 	// From step Bindings_Delete
 	bindingName = "mysql-binding"
-	bindingsClientDeleteResponse, err := bindingsClient.BeginDelete(ctx,
+	bindingsClientDeleteResponsePoller, err := bindingsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		bindingName,
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = bindingsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = bindingsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -764,7 +764,7 @@ func springSample() {
 		panic(err)
 	}
 	domainName := dnsCname + "." + customDomainName
-	customDomainsClientCreateOrUpdateResponse, err := customDomainsClient.BeginCreateOrUpdate(ctx,
+	customDomainsClientCreateOrUpdateResponsePoller, err := customDomainsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -774,18 +774,18 @@ func springSample() {
 				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step CustomDomains_Update
 	domainName = dnsCname + "." + customDomainName
-	customDomainsClientUpdateResponse, err := customDomainsClient.BeginUpdate(ctx,
+	customDomainsClientUpdateResponsePoller, err := customDomainsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -795,11 +795,11 @@ func springSample() {
 				CertName: to.Ptr("asc-certificate"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -898,7 +898,7 @@ func springSample() {
 
 	// From step Deployments_CreateOrUpdate
 	deploymentName = "blue"
-	deploymentsClientCreateOrUpdateResponse, err = deploymentsClient.BeginCreateOrUpdate(ctx,
+	deploymentsClientCreateOrUpdateResponsePoller, err = deploymentsClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -927,17 +927,17 @@ func springSample() {
 				Tier:     to.Ptr("Standard"),
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Update
-	appsClientUpdateResponse, err = appsClient.BeginUpdate(ctx,
+	appsClientUpdateResponsePoller, err = appsClient.BeginUpdate(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
@@ -951,59 +951,59 @@ func springSample() {
 				ActiveDeploymentName: to.Ptr("blue"),
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Restart
 	deploymentName = "blue"
-	deploymentsClientRestartResponse, err := deploymentsClient.BeginRestart(ctx,
+	deploymentsClientRestartResponsePoller, err := deploymentsClient.BeginRestart(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientRestartResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientRestartResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Stop
 	deploymentName = "blue"
-	deploymentsClientStopResponse, err := deploymentsClient.BeginStop(ctx,
+	deploymentsClientStopResponsePoller, err := deploymentsClient.BeginStop(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStopResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStopResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Deployments_Start
 	deploymentName = "blue"
-	deploymentsClientStartResponse, err := deploymentsClient.BeginStart(ctx,
+	deploymentsClientStartResponsePoller, err := deploymentsClient.BeginStart(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientStartResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientStartResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -1048,75 +1048,75 @@ func springSample() {
 
 	// From step Deployments_Delete
 	deploymentName = "blue"
-	deploymentsClientDeleteResponse, err := deploymentsClient.BeginDelete(ctx,
+	deploymentsClientDeleteResponsePoller, err := deploymentsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		deploymentName,
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = deploymentsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = deploymentsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step CustomDomains_Delete
 	domainName = dnsCname + "." + customDomainName
-	customDomainsClientDeleteResponse, err := customDomainsClient.BeginDelete(ctx,
+	customDomainsClientDeleteResponsePoller, err := customDomainsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
 		domainName,
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = customDomainsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = customDomainsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Apps_Delete
 	appName := "app01"
-	appsClientDeleteResponse, err := appsClient.BeginDelete(ctx,
+	appsClientDeleteResponsePoller, err := appsClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		appName,
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = appsClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = appsClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Certificates_Delete
 	certificateName = "asc-certificate"
-	certificatesClientDeleteResponse, err := certificatesClient.BeginDelete(ctx,
+	certificatesClientDeleteResponsePoller, err := certificatesClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
 		certificateName,
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = certificatesClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = certificatesClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step Services_Delete
-	servicesClientDeleteResponse, err := servicesClient.BeginDelete(ctx,
+	servicesClientDeleteResponsePoller, err := servicesClient.BeginDelete(ctx,
 		resourceGroupName,
 		serviceName,
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = servicesClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = servicesClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}

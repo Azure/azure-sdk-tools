@@ -116,7 +116,7 @@ func ExampleSignalRPrivateEndpointConnectionsClient_BeginDelete() {
 		"<private-endpoint-connection-name>",
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRPrivateEndpointConnectionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

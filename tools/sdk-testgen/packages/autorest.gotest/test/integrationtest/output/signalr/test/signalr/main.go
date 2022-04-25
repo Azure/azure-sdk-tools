@@ -93,7 +93,7 @@ func signalrSample() {
 	}
 
 	// From step SignalR_CreateOrUpdate
-	signalRClientCreateOrUpdateResponse, err := signalRClient.BeginCreateOrUpdate(ctx,
+	signalRClientCreateOrUpdateResponsePoller, err := signalRClient.BeginCreateOrUpdate(ctx,
 		resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -173,11 +173,11 @@ func signalrSample() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientCreateOrUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientCreateOrUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -192,7 +192,7 @@ func signalrSample() {
 	}
 
 	// From step SignalR_Update
-	signalRClientUpdateResponse, err := signalRClient.BeginUpdate(ctx,
+	signalRClientUpdateResponsePoller, err := signalRClient.BeginUpdate(ctx,
 		resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -272,11 +272,11 @@ func signalrSample() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientUpdateResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientUpdateResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -291,30 +291,30 @@ func signalrSample() {
 	}
 
 	// From step SignalR_RegenerateKey
-	signalRClientRegenerateKeyResponse, err := signalRClient.BeginRegenerateKey(ctx,
+	signalRClientRegenerateKeyResponsePoller, err := signalRClient.BeginRegenerateKey(ctx,
 		resourceGroupName,
 		resourceName,
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientRegenerateKeyResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientRegenerateKeyResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
 	// From step SignalR_Restart
-	signalRClientRestartResponse, err := signalRClient.BeginRestart(ctx,
+	signalRClientRestartResponsePoller, err := signalRClient.BeginRestart(ctx,
 		resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientRestartResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientRestartResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -350,14 +350,14 @@ func signalrSample() {
 	}
 
 	// From step SignalR_Delete
-	signalRClientDeleteResponse, err := signalRClient.BeginDelete(ctx,
+	signalRClientDeleteResponsePoller, err := signalRClient.BeginDelete(ctx,
 		resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		panic(err)
 	}
-	_, err = signalRClientDeleteResponse.PollUntilDone(ctx, 10*time.Second)
+	_, err = signalRClientDeleteResponsePoller.PollUntilDone(ctx, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}

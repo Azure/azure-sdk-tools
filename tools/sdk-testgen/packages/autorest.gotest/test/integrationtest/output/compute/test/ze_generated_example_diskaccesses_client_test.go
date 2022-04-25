@@ -35,7 +35,7 @@ func ExampleDiskAccessesClient_BeginCreateOrUpdate() {
 		test.DiskAccess{
 			Location: to.Ptr("<location>"),
 		},
-		&test.DiskAccessesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -67,7 +67,7 @@ func ExampleDiskAccessesClient_BeginUpdate() {
 				"project":    to.Ptr("PrivateEndpoints"),
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -115,7 +115,7 @@ func ExampleDiskAccessesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<disk-access-name>",
-		&test.DiskAccessesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -219,7 +219,7 @@ func ExampleDiskAccessesClient_BeginUpdateAPrivateEndpointConnection() {
 				},
 			},
 		},
-		&test.DiskAccessesClientBeginUpdateAPrivateEndpointConnectionOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -269,7 +269,7 @@ func ExampleDiskAccessesClient_BeginDeleteAPrivateEndpointConnection() {
 		"<resource-group-name>",
 		"<disk-access-name>",
 		"<private-endpoint-connection-name>",
-		&test.DiskAccessesClientBeginDeleteAPrivateEndpointConnectionOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

@@ -65,7 +65,7 @@ func ExampleServicesClient_BeginCreateOrUpdate() {
 				Tier: to.Ptr("<tier>"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -91,7 +91,7 @@ func ExampleServicesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<service-name>",
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -126,7 +126,7 @@ func ExampleServicesClient_BeginUpdate() {
 				Tier: to.Ptr("<tier>"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

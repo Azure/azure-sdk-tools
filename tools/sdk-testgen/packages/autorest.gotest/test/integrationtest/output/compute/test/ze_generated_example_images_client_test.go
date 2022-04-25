@@ -47,7 +47,7 @@ func ExampleImagesClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.ImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -84,7 +84,7 @@ func ExampleImagesClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.ImagesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

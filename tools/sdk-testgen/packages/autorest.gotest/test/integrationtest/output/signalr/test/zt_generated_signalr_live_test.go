@@ -103,7 +103,7 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_CreateOrUpdate
-	signalRClientCreateOrUpdateResponse, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
+	signalRClientCreateOrUpdateResponsePoller, err := signalRClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -183,9 +183,9 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Get
@@ -196,7 +196,7 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Update
-	signalRClientUpdateResponse, err := signalRClient.BeginUpdate(testsuite.ctx,
+	signalRClientUpdateResponsePoller, err := signalRClient.BeginUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.ResourceInfo{
@@ -276,9 +276,9 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientUpdateResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_ListKeys
@@ -289,58 +289,58 @@ func (testsuite *SignalrTestSuite) TestSignalr() {
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_RegenerateKey
-	signalRClientRegenerateKeyResponse, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
+	signalRClientRegenerateKeyResponsePoller, err := signalRClient.BeginRegenerateKey(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientRegenerateKeyResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientRegenerateKeyResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step SignalR_Restart
-	signalRClientRestartResponse, err := signalRClient.BeginRestart(testsuite.ctx,
+	signalRClientRestartResponsePoller, err := signalRClient.BeginRestart(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientRestartResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientRestartResponsePoller)
 	testsuite.Require().NoError(err)
 
 	// From step Usages_List
 	usagesClient, err := test.NewUsagesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	usagesClientNewListPagerPager := usagesClient.NewListPager(testsuite.location,
+	usagesClientNewListPager := usagesClient.NewListPager(testsuite.location,
 		nil)
-	for usagesClientNewListPagerPager.More() {
+	for usagesClientNewListPager.More() {
 	}
 
 	// From step SignalR_ListByResourceGroup
-	signalRClientNewListByResourceGroupPagerPager := signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
+	signalRClientNewListByResourceGroupPager := signalRClient.NewListByResourceGroupPager(testsuite.resourceGroupName,
 		nil)
-	for signalRClientNewListByResourceGroupPagerPager.More() {
+	for signalRClientNewListByResourceGroupPager.More() {
 	}
 
 	// From step SignalR_ListBySubscription
-	signalRClientNewListBySubscriptionPagerPager := signalRClient.NewListBySubscriptionPager(nil)
-	for signalRClientNewListBySubscriptionPagerPager.More() {
+	signalRClientNewListBySubscriptionPager := signalRClient.NewListBySubscriptionPager(nil)
+	for signalRClientNewListBySubscriptionPager.More() {
 	}
 
 	// From step Operations_List
 	operationsClient, err := test.NewOperationsClient(testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
-	operationsClientNewListPagerPager := operationsClient.NewListPager(nil)
-	for operationsClientNewListPagerPager.More() {
+	operationsClientNewListPager := operationsClient.NewListPager(nil)
+	for operationsClientNewListPager.More() {
 	}
 
 	// From step SignalR_Delete
-	signalRClientDeleteResponse, err := signalRClient.BeginDelete(testsuite.ctx,
+	signalRClientDeleteResponsePoller, err := signalRClient.BeginDelete(testsuite.ctx,
 		testsuite.resourceGroupName,
 		resourceName,
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, signalRClientDeleteResponse)
+	_, err = testutil.PollForTest(ctx, signalRClientDeleteResponsePoller)
 	testsuite.Require().NoError(err)
 }

@@ -84,7 +84,7 @@ func ExampleGalleryImageVersionsClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -133,7 +133,7 @@ func ExampleGalleryImageVersionsClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.GalleryImageVersionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -185,7 +185,7 @@ func ExampleGalleryImageVersionsClient_BeginDelete() {
 		"<gallery-name>",
 		"<gallery-image-name>",
 		"<gallery-image-version-name>",
-		&test.GalleryImageVersionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

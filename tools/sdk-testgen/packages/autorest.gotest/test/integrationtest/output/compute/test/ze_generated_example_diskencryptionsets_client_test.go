@@ -44,7 +44,7 @@ func ExampleDiskEncryptionSetsClient_BeginCreateOrUpdate() {
 				EncryptionType: to.Ptr(test.DiskEncryptionSetTypeEncryptionAtRestWithCustomerKey),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -82,7 +82,7 @@ func ExampleDiskEncryptionSetsClient_BeginUpdate() {
 				RotationToLatestKeyVersionEnabled: to.Ptr(true),
 			},
 		},
-		&test.DiskEncryptionSetsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -130,7 +130,7 @@ func ExampleDiskEncryptionSetsClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<disk-encryption-set-name>",
-		&test.DiskEncryptionSetsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

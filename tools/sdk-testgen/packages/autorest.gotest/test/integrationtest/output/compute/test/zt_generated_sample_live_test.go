@@ -140,7 +140,7 @@ func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceBasicCrud() {
 	virtualMachinesClient, err := test.NewVirtualMachinesClient(testsuite.subscriptionId, testsuite.cred, testsuite.options)
 	testsuite.Require().NoError(err)
 	testsuite.fakeStepVar = "signalrswaggertest6"
-	virtualMachinesClientCreateOrUpdateResponse, err := virtualMachinesClient.BeginCreateOrUpdate(testsuite.ctx,
+	virtualMachinesClientCreateOrUpdateResponsePoller, err := virtualMachinesClient.BeginCreateOrUpdate(testsuite.ctx,
 		testsuite.resourceGroupName,
 		"myVM",
 		test.VirtualMachine{
@@ -189,9 +189,9 @@ func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceBasicCrud() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	testsuite.Require().NoError(err)
-	_, err = testutil.PullResultForTest(ctx, virtualMachinesClientCreateOrUpdateResponse)
+	_, err = testutil.PollForTest(ctx, virtualMachinesClientCreateOrUpdateResponsePoller)
 	testsuite.Require().NoError(err)
 }
 func (testsuite *SampleTestSuite) TestMicrosoftSignalrserviceDeleteonly() {

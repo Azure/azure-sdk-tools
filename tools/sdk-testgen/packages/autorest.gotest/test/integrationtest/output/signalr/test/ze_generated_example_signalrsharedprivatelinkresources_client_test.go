@@ -89,7 +89,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginCreateOrUpdate() {
 				RequestMessage:        to.Ptr("<request-message>"),
 			},
 		},
-		&test.SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -116,7 +116,7 @@ func ExampleSignalRSharedPrivateLinkResourcesClient_BeginDelete() {
 		"<shared-private-link-resource-name>",
 		"<resource-group-name>",
 		"<resource-name>",
-		&test.SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

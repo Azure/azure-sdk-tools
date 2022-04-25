@@ -102,7 +102,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachineScaleSetsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -128,9 +128,7 @@ func ExampleVirtualMachineScaleSetsClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachineScaleSetsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

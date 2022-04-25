@@ -47,7 +47,7 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 				}},
 			OperationType: to.Ptr(test.SharingUpdateOperationTypesAdd),
 		},
-		&test.GallerySharingProfileClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

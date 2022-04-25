@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Primitives;
 using Xunit;
+using Azure.Core;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -27,7 +28,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             HttpContext context = new DefaultHttpContext();
 
-            foreach(var hTuple in GenerateHeaderValuesTuples(headerValueStrings))
+            foreach (var hTuple in GenerateHeaderValuesTuples(headerValueStrings))
             {
 
                 context.Request.Headers.TryAdd(hTuple.Item1, hTuple.Item2);
@@ -39,7 +40,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return context;
         }
 
-        private IEnumerable<Tuple<string, StringValues>> GenerateHeaderValuesTuples(string[] headerValueStrings) {
+        private IEnumerable<Tuple<string, StringValues>> GenerateHeaderValuesTuples(string[] headerValueStrings)
+        {
             var returnedTuples = new List<Tuple<string, StringValues>>();
             foreach (var headString in headerValueStrings)
             {
@@ -507,13 +509,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             recordingHandler.StartRecording(pathToRecording, startHttpContext.Response);
             var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
-            
+
             recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
 
             Assert.Equal(dict.Count, storedVariables.Count);
 
-            foreach(var kvp in dict)
+            foreach (var kvp in dict)
             {
                 Assert.Equal(kvp.Value, storedVariables[kvp.Key]);
             }
@@ -561,7 +563,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Response.Body = new MemoryStream();
 
             await recordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
-            
+
             Dictionary<string, string> results = JsonConvert.DeserializeObject<Dictionary<string, string>>(
                 TestHelpers.GenerateStringFromStream(httpContext.Response.Body)
             );
@@ -664,7 +666,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            
+
             Dictionary<string, object> inputBody = null;
             if (!string.IsNullOrWhiteSpace(body))
             {
@@ -678,6 +680,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
             Assert.Contains(errorText, assertion.Message);
         }
+
+        [Theory]
+        [InlineData("awesomehost.com")]
+        [InlineData("")]
+        public void TestRecordMaintainsUpstreamOverrideHostHeader(string upstreamHostHeaderValue)
+        {
+            var httpContext = new DefaultHttpContext();
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+
+            testRecordingHandler.StartRecording("hello.json", httpContext.Response);
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(String.Empty);
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+
+            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
+            {
+                httpContext.Request.Headers["x-recording-upstream-host-header"] = upstreamHostHeaderValue;
+            }
+
+            httpContext.Request.Method = "GET";
+
+            var upstreamRequest = testRecordingHandler.CreateUpstreamRequest(httpContext.Request, new byte[] { });
+
+            if (!String.IsNullOrWhiteSpace(upstreamHostHeaderValue))
+            {
+                Assert.Equal(upstreamHostHeaderValue, upstreamRequest.Headers.Host);
+            }
+            else
+            {
+                Assert.Null(upstreamRequest.Headers.Host);
+            }
+        }
     }
 
     internal class MockHttpHandler : HttpMessageHandler
@@ -689,6 +727,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(DefaultResponse)

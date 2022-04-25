@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export class UserInterfaceEntrypoint {
+export class DockerCliConfig {
     readmeMdPath: string;
     tag: string;
     sdkToGenerate: string;
@@ -14,7 +14,7 @@ export class UserInterfaceEntrypoint {
     dockerLogger: string;
 }
 
-export const userInterfaceEntrypoint = convict<UserInterfaceEntrypoint>({
+export const dockerCliConfig = convict<DockerCliConfig>({
     readmeMdPath: {
         default: '',
         env: 'README_MD_PATH',

@@ -1,6 +1,7 @@
-import { DockerContext } from "../userInterfaceCli";
-import { taskEngineConfig } from "../schema/taskEngineConfig";
+import { DockerContext } from "../dockerCli";
+import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineConfig";
 import {
+    addFileLog,
     CodegenToSdkConfig,
     GenerateAndBuildInput,
     GenerateAndBuildOptions,
@@ -12,16 +13,15 @@ import {
     initOutput,
     logger,
     MockTestInput,
-    MockTestOptions,
+    MockTestOptions, removeFileLog,
     requireJsonc,
     runScript,
     StringMap
 } from "@azure-tools/sdk-generation-lib";
 import * as path from "path";
 import * as fs from "fs";
-import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../utils/git";
+import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
 import { Logger } from "winston";
-import { addFileLog, removeFileLog } from "../../utils/logger";
 import { execSync } from "child_process";
 import { writeFileSync } from "fs";
 
@@ -55,7 +55,7 @@ export type TaskEngineContext = {
 }
 
 export function initializeTaskEngineContext(dockerContext: DockerContext): TaskEngineContext {
-    const taskEngineConfigProperties = taskEngineConfig.getProperties();
+    const taskEngineConfigProperties = dockerTaskEngineConfig.getProperties();
     const taskEngineContext: TaskEngineContext = {
         logger: dockerContext.logger,
         configFilePath: taskEngineConfigProperties.configFilePath,

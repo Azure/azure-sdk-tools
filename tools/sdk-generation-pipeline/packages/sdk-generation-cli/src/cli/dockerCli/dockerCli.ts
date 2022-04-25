@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import { UserInterfaceEntrypoint, userInterfaceEntrypoint } from "./schema/userInterfaceEntrypoint";
+import { DockerCliConfig, dockerCliConfig } from "./schema/dockerCliConfig";
 import * as fs from "fs";
 import * as path from "path";
 import { generateCodesInLocal, sdkToRepoMap } from "./core/generateCodesInLocal";
 import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
 import { Logger } from 'winston';
-import { initializeLogger } from "../utils/logger";
+import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 
 export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
@@ -24,7 +24,7 @@ export class DockerContext {
     * 2. local: grow up
     * 3. pipeline: generate codes
     * */
-    public initialize(inputParams: UserInterfaceEntrypoint) {
+    public initialize(inputParams: DockerCliConfig) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
         this.sdkToGenerate = inputParams.sdkToGenerate?.split(',').map(e => e.trim());
@@ -33,7 +33,7 @@ export class DockerContext {
         this.sdkRepo = inputParams.sdkRepo;
         this.resultOutputFolder = inputParams.resultOutputFolder;
 
-        this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger));
+        this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
         if (!this.sdkToGenerate) {
             console.log('Preparing environment to do grow up development');
@@ -105,7 +105,7 @@ export class DockerContext {
 }
 
 async function main() {
-    const inputParams: UserInterfaceEntrypoint = userInterfaceEntrypoint.getProperties();
+    const inputParams: DockerCliConfig = dockerCliConfig.getProperties();
     const context: DockerContext = new DockerContext();
     context.initialize(inputParams);
     switch (context.mode) {

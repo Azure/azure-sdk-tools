@@ -1,77 +1,76 @@
-import * as winston from 'winston';
-import {getTaskBasicConfig, TaskBasicConfig} from "../types/taskBasicConfig";
+import { createLogger, format, Logger, transports } from "winston";
+import { FileTransportInstance } from "winston/lib/winston/transports";
+import { getTaskBasicConfig } from "../types";
 
-function getLogger() {
-    const config: TaskBasicConfig = getTaskBasicConfig.getProperties();
-    const sdkAutoLogLevels = {
-        levels: {
-            error: 0,
-            warn: 1,
-            section: 5, // Log as azure devops section
-            command: 6, // Running a command
-            cmdout: 7, // Command stdout
-            cmderr: 8, // Command stdout
-            info: 15,
-            endsection: 20,
-            debug: 50
-        },
-        colors: {
-            error: 'red',
-            warn: 'yellow',
-            info: 'green',
-            cmdout: 'green underline',
-            cmderr: 'yellow underline',
-            section: 'magenta bold',
-            endsection: 'magenta bold',
-            command: 'cyan bold',
-            debug: 'blue'
-        }
+const loggerLevels = {
+    levels: {
+        error: 0,
+        warn: 1,
+        cmdout: 2,
+        cmderr: 3,
+        info: 4,
+        debug: 5
+    },
+    colors: {
+        error: 'red',
+        warn: 'yellow',
+        cmdout: 'green underline',
+        cmderr: 'yellow underline',
+        info: 'green',
+        debug: 'blue'
     }
+}
 
-    const logger = winston.createLogger({
-        levels: sdkAutoLogLevels.levels
-    });
+type WinstonInfo = {
+    level: keyof typeof loggerLevels.levels;
+    message: string;
+    timestamp: string;
+};
 
-    type WinstonInfo = {
-        level: keyof typeof sdkAutoLogLevels.levels;
-        message: string;
-        timestamp: string;
-        storeLog?: boolean;
-    };
+const fileTransportInstances: {
+    [key: string]: FileTransportInstance
+} = {};
 
-    logger.add(new winston.transports.File({
+export function addFileLog(logger: Logger, logPath: string, taskName: string) {
+    const fileTransportInstance = new transports.File({
         level: 'info',
-        filename: config.pipeFullLog,
-        options: { flags: 'w' },
-        format: winston.format.combine(
-            winston.format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
-            winston.format.printf((info: WinstonInfo) => {
+        filename: logPath,
+        options: {flags: 'w'},
+        format: format.combine(
+            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+            format.printf((info: WinstonInfo) => {
                 const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
             })
         )
-    }));
+    });
+    if (!!taskName) {
+        fileTransportInstances[taskName] = fileTransportInstance;
+    }
+    logger.add(fileTransportInstance);
+}
 
-    logger.add(new winston.transports.Console({
-        level: 'endsection',
-        format: winston.format.combine(
-            winston.format.colorize({ colors: sdkAutoLogLevels.colors }),
-            winston.format.timestamp({ format: 'YYYY-MM-DD hh:mm:ss' }),
-            winston.format.printf((info: WinstonInfo) => {
-                const {level} = info;
-                let msg = `${info.timestamp} ${info.level} \t${info.message}`;
-                switch (level) {
-                    case 'error':
-                    case 'debug':
-                    case 'command':
-                        msg = `##[${level}] ${msg}`;
-                    case 'warn':
-                        msg = `##[warning] ${msg}`;
-                    case 'section':
-                        msg = `##[group] ${info.message}`;
-                    case 'endsection':
-                        msg = `##[endgroup] ${info.message}`;
-                }
+export function removeFileLog(logger: Logger, taskName: string) {
+    if (!fileTransportInstances[taskName]) {
+        throw new Error(`Try to remove non-existed logger transport: ${taskName}`);
+    }
+    logger.remove(fileTransportInstances[taskName]);
+}
+
+export function initializeLogger(logPath: string, taskName: string): Logger {
+    const logger = createLogger({
+        levels: loggerLevels.levels
+    });
+
+    addFileLog(logger, logPath, taskName);
+
+    logger.add(new transports.Console({
+        level: 'info',
+        format: format.combine(
+            format.colorize({colors: loggerLevels.colors}),
+            format.timestamp({format: 'YYYY-MM-DD hh:mm:ss'}),
+            format.printf((info: WinstonInfo) => {
+                const msg = `${info.timestamp} ${info.level} \t${info.message}`;
                 return msg;
             })
         )
@@ -79,4 +78,5 @@ function getLogger() {
     return logger;
 }
 
-export const logger: winston.Logger = getLogger();
+// export a default logger, which can be used by pipeline commands
+export const logger = initializeLogger(getTaskBasicConfig?.getProperties()?.pipeFullLog, 'pipeline');

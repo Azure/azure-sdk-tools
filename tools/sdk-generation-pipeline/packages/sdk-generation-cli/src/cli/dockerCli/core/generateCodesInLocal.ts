@@ -1,4 +1,4 @@
-import {DockerContext} from "../userInterfaceCli";
+import {DockerContext} from "../dockerCli";
 import { existsSync } from "fs";
 import * as path from "path";
 import { execSync } from "child_process";

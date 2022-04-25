@@ -22,16 +22,10 @@
     "README.md"
   ],
   "bin": {
-    "getRepoName": "dist/taskEngineCli/getRepoNameCli.js",
-    "getTasksToRun": "dist/taskEngineCli/getTasksToRunCli.js",
-    "runInitTask": "dist/taskEngineCli/runInitTaskCli.js",
-    "runGenerateAndBuildTask": "dist/taskEngineCli/runGenerateAndBuildTaskCli.js",
-    "runMockTestTask": "dist/taskEngineCli/runMockTestTaskCli.js",
-    "runLiveTestTask": "dist/taskEngineCli/runLiveTestTaskCli.js",
-    "generateResult": "dist/taskEngineCli/generateResultCli.js",
-    "publishLog": "dist/publishLogCli.js",
-    "docker-cli": "dist/userInterfaceCli/userInterfaceCli.js",
-    "run-mockhost": "dist/mockHostCli/mockHostCli.js"
+    "getRepoName": "dist/cli/pipelineCli/getRepoNameCli.js",
+    "generateResult": "dist/cli/pipelineCli/generateResultCli.js",
+    "docker-cli": "dist/cli/dockerCli/dockerCli.js",
+    "run-mockhost": "dist/cli/dockerCli/mockHostCli.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",

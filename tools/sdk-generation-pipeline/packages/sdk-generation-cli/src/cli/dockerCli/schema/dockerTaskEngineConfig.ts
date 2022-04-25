@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-export class TaskEngineConfig {
+export class DockerTaskEngineConfig {
     configFilePath: string;
     initOutput: string;
     generateAndBuildInputJson: string;
@@ -21,7 +21,7 @@ export class TaskEngineConfig {
     taskResultJson: string;
 }
 
-export const taskEngineConfig = convict<TaskEngineConfig>({
+export const dockerTaskEngineConfig = convict<DockerTaskEngineConfig>({
     configFilePath: {
         default: 'eng/codegen_to_sdk_config.json',
         env: 'CONFIG_FILE_PATH',

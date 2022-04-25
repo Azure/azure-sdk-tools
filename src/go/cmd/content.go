@@ -406,64 +406,76 @@ func (c *content) parseFunc(tokenList *[]Token) {
 func (c *content) generateNavChildItems() []Navigation {
 	items := []Navigation{}
 	for _, cst := range c.Consts {
-		items = append(items, Navigation{
-			Text:         cst.Name(),
-			NavigationId: cst.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "enum",
-			},
-		})
+		if cst.Exported() {
+			items = append(items, Navigation{
+				Text:         cst.Name(),
+				NavigationId: cst.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "enum",
+				},
+			})
+		}
 	}
 	for _, f := range c.Funcs {
-		items = append(items, Navigation{
-			Text:         f.Name(),
-			NavigationId: f.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "delegate",
-			},
-		})
+		if f.Exported() {
+			items = append(items, Navigation{
+				Text:         f.Name(),
+				NavigationId: f.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "delegate",
+				},
+			})
+		}
 	}
 	for _, i := range c.Interfaces {
-		items = append(items, Navigation{
-			Text:         i.Name(),
-			NavigationId: i.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "interface",
-			},
-		})
+		if i.Exported() {
+			items = append(items, Navigation{
+				Text:         i.Name(),
+				NavigationId: i.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "interface",
+				},
+			})
+		}
 	}
 	for _, n := range c.SimpleTypes {
-		items = append(items, Navigation{
-			Text:         n.Name(),
-			NavigationId: n.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "struct",
-			},
-		})
+		if n.Exported() {
+			items = append(items, Navigation{
+				Text:         n.Name(),
+				NavigationId: n.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "struct",
+				},
+			})
+		}
 	}
 	for _, s := range c.Structs {
-		items = append(items, Navigation{
-			Text:         s.Name(),
-			NavigationId: s.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "class",
-			},
-		})
+		if s.Exported() {
+			items = append(items, Navigation{
+				Text:         s.Name(),
+				NavigationId: s.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "class",
+				},
+			})
+		}
 	}
 	for _, v := range c.Vars {
-		items = append(items, Navigation{
-			Text:         v.Name(),
-			NavigationId: v.ID(),
-			ChildItems:   []Navigation{},
-			Tags: &map[string]string{
-				"TypeKind": "unknown",
-			},
-		})
+		if v.Exported() {
+			items = append(items, Navigation{
+				Text:         v.Name(),
+				NavigationId: v.ID(),
+				ChildItems:   []Navigation{},
+				Tags: &map[string]string{
+					"TypeKind": "unknown",
+				},
+			})
+		}
 	}
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].Text < items[j].Text

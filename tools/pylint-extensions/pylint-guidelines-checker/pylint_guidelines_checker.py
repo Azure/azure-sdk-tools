@@ -1713,13 +1713,13 @@ class CheckEnum(BaseChecker):
     priority = -1
     msgs = {
         "C4746": (
-            "The enum must use uppercase naming. "
+            "The enum must use uppercase naming. See details: "
             "https://azure.github.io/azure-sdk/python_design.html#enumerations",
             "enum-must-be-uppercase",
             "Capitalize enum name.",
         ),
         "C4747":(
-            "The enum must inherit from CaseInsensitiveEnumMeta. "
+            "The enum must inherit from CaseInsensitiveEnumMeta. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#extensible-enumerations",
             "enum-must-inherit-case-insensitive-enum-meta",
             "Inherit CaseInsensitiveEnumMeta.",
@@ -1798,7 +1798,7 @@ class CheckAPIVersion(BaseChecker):
     priority = -1
     msgs = {
         "C4748": (
-            "The client constructor needs to take in an optional keyword-only api_version argument. "
+            "The client constructor needs to take in an optional keyword-only api_version argument. See details: "
             "https://azure.github.io/azure-sdk/python_design.html#specifying-the-service-version",
             "client-accepts-api-version-keyword",
             "Accept a keyword argument called api_version.",

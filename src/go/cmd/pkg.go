@@ -36,12 +36,11 @@ type Pkg struct {
 	path        string
 	relName     string
 
-	// typeAliases keys are type names defined in other packages that this package exports by alias.
+	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
 	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
 	// an alias like "type TokenCredential = shared.TokenCredential", in which case this map will
-	// have key "azcore/internal/shared.TokenCredential". Values are meaningless--this is a map
-	// only to facilitate identifying duplicates.
-	typeAliases map[string]interface{}
+	// have key "TokenCredential" with value "azcore/internal/shared.TokenCredential"
+	typeAliases map[string]string
 
 	// types maps the name of a type defined in this package to that type's definition
 	types map[string]typeDef
@@ -55,7 +54,7 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 		diagnostics: []Diagnostic{},
 		moduleName:  moduleName,
 		path:        dir,
-		typeAliases: map[string]interface{}{},
+		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
 	if _, after, found := strings.Cut(dir, moduleName); found {
@@ -131,16 +130,16 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.Ident:
 				// "type ETag string"
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
@@ -159,13 +158,10 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
-						// This is a re-exported SDK type e.g. "type TokenCredential = shared.TokenCredential".
+						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
 						// Track it as an alias so we can later hoist its definition into this package.
 						qn := impPath + "." + t.Sel.Name
-						if _, ok := p.typeAliases[qn]; ok {
-							fmt.Printf("multiple aliases for %s\n" + qn)
-						}
-						p.typeAliases[qn] = x
+						p.typeAliases[x.Name.Name] = qn
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
@@ -229,8 +225,8 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	}
 }
 
+// TODO: could be replaced by TokenMaker
 type typeDef struct {
-	name string
 	// n is the AST node defining the type
 	n *ast.TypeSpec
 	// p is the package defining the type

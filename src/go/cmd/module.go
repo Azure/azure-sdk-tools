@@ -59,7 +59,7 @@ func NewModule(dir string) (*Module, error) {
 	// fields visible there.
 	externalPackages := map[string]*Pkg{}
 	for _, p := range m.packages {
-		for qn := range p.typeAliases {
+		for alias, qn := range p.typeAliases {
 			// qn is a type name qualified with import path like
 			// "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared.TokenRequestOptions"
 			impPath := qn[:strings.LastIndex(qn, ".")]
@@ -91,11 +91,11 @@ func NewModule(dir string) (*Module, error) {
 				var t TokenMaker
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
-					t = p.c.addInterface(*def.p, def.name, p.Name(), n)
+					t = p.c.addInterface(*def.p, alias, p.Name(), n)
 				case *ast.StructType:
-					t = p.c.addStruct(*def.p, def.name, p.Name(), def.n)
+					t = p.c.addStruct(*def.p, alias, p.Name(), def.n)
 				case *ast.Ident:
-					t = p.c.addSimpleType(*p, def.name, p.Name(), def.n.Type.(*ast.Ident).Name)
+					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
 				default:
 					fmt.Printf("unexpected node type %T", def.n.Type)
 				}

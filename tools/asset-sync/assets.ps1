@@ -119,7 +119,7 @@ Function Resolve-AssetsJson {
     }
 
     # path to assets Json
-    $config = (Get-Content -Path $discoveredPath | ConvertFrom-Json)
+    $config = (Get-Content -Raw -Path $discoveredPath | ConvertFrom-Json)
     Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonLocation" -Value "$discoveredPath"
 
     $relPath = AscendToRepoRoot -StartPath $discoveredPath
@@ -399,7 +399,7 @@ Function Update-AssetsJson {
         $NewSHA
     )
     
-    $jsonAtRest = Get-Content $Config.AssetsJsonLocation | ConvertFrom-Json
+    $jsonAtRest = Get-Content -Raw -Path $Config.AssetsJsonLocation | ConvertFrom-Json
 
     # update the sha in our current live config
     $Config.SHA = $NewSHA
@@ -450,7 +450,7 @@ Function Push-AssetsRepo-Update {
         }
         elseif ($LASTEXITCODE -ne 0) {
             Write-Error "A non-code-128 error is not expected here. Check git command output above."
-            exit(1)
+            exit 1
         }
         # if the branch already exists, we need to check to see if we're actually on the latest commit 
         else {

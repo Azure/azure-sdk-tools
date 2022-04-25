@@ -412,7 +412,7 @@ Function Update-AssetsJson {
         $NewSHA
     )
     
-    $jsonAtRest = Get-Content $Config.AssetsJsonLocation | ConvertFrom-Json
+    $jsonAtRest = Get-Content -Raw -Path $Config.AssetsJsonLocation | ConvertFrom-Json
 
     # update the sha in our current live config
     $Config.SHA = $NewSHA

@@ -4331,7 +4331,7 @@ packages:
     hasBin: true
     dependencies:
       abbrev: 1.0.9
-      async: 1.5.2
+      async: 3.2.3
       escodegen: 1.8.1
       esprima: 2.7.3
       glob: 5.0.15

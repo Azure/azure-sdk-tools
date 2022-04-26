@@ -46,7 +46,7 @@ async function main() {
         throw new Error(`invalid taskName`);
     }
 
-    if (exeResult === undefined || taskResultFile === undefined) {
+    if (exeResult === undefined && taskResultFile === undefined) {
         printHelp();
         throw new Error(`Task execute result and taskResultFile is empty`);
     }
@@ -72,6 +72,8 @@ async function main() {
         } else {
             taskResult = createTaskResult(pipelineBuildId, taskName, totalTaskResult[taskName], logfile, logFilter, taskOutputObj);
         }
+    } else {
+        throw new Error(`taskResultFile:${taskResultFile} isn's exist`);
     }
 
     fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), {

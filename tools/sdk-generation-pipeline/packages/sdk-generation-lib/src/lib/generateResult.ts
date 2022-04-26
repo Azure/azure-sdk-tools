@@ -96,7 +96,8 @@ export function parseGenerateLog(
     return result;
 }
 
-export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, taskExeResult: PipelineResult, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
+export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, taskExeResult: PipelineResult,
+    logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
     let commonResult: TaskResultCommon = undefined;
     if (taskExeResult === 'success') {
         commonResult = {

@@ -296,10 +296,12 @@ namespace Azure.Sdk.Tools.TestProxy
                         continue;
                     }
 
-                    // if the above didn't work, then it must be a Content header
                     if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
-                        DebugLogger.LogInformation($"Omitting header {header.Key} of value {string.Join(",", values)}");
+                        throw new HttpException(
+                            HttpStatusCode.BadRequest,
+                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
+                        );
                     }
                 }
 

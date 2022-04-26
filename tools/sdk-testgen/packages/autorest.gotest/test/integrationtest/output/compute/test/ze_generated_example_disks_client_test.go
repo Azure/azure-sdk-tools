@@ -43,7 +43,7 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowPrivate),
 			},
 		},
-		&test.DisksClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -75,7 +75,7 @@ func ExampleDisksClient_BeginUpdate() {
 				DiskSizeGB:      to.Ptr[int32](1024),
 			},
 		},
-		&test.DisksClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

@@ -12501,8 +12501,7 @@ testModel:
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
               },
-              &test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -12588,8 +12587,7 @@ testModel:
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
               },
-              &test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_463
             operationGroup: *ref_374
@@ -13643,14 +13641,12 @@ testModel:
               ctx,
               "myResourceGroup",
               "mySignalRService",
-              &test.SignalRClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<resource-name>",
-              &test.SignalRClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_470
             operationGroup: *ref_374
@@ -14024,8 +14020,7 @@ testModel:
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
               },
-              &test.SignalRClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -14111,8 +14106,7 @@ testModel:
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
               },
-              &test.SignalRClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_475
             operationGroup: *ref_374
@@ -14854,8 +14848,7 @@ testModel:
               test.RegenerateKeyParameters{
               KeyType: to.Ptr(test.KeyTypePrimary),
               },
-              &test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -14863,8 +14856,7 @@ testModel:
               test.RegenerateKeyParameters{
               KeyType: to.Ptr(test.KeyTypePrimary),
               },
-              &test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginRegenerateKey
             operation: *ref_486
             operationGroup: *ref_374
@@ -14917,14 +14909,12 @@ testModel:
               ctx,
               "myResourceGroup",
               "mySignalRService",
-              &test.SignalRClientBeginRestartOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<resource-name>",
-              &test.SignalRClientBeginRestartOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginRestart
             operation: *ref_491
             operationGroup: *ref_374
@@ -15771,15 +15761,13 @@ testModel:
               "mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
               "myResourceGroup",
               "mySignalRService",
-              &test.SignalRPrivateEndpointConnectionsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<private-endpoint-connection-name>",
               "<resource-group-name>",
               "<resource-name>",
-              &test.SignalRPrivateEndpointConnectionsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_529
             operationGroup: *ref_510
@@ -16281,8 +16269,7 @@ testModel:
               RequestMessage: to.Ptr("Please approve"),
               },
               },
-              &test.SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<shared-private-link-resource-name>",
@@ -16295,8 +16282,7 @@ testModel:
               RequestMessage: to.Ptr("<request-message>"),
               },
               },
-              &test.SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_571
             operationGroup: *ref_552
@@ -16470,15 +16456,13 @@ testModel:
               "upstream",
               "myResourceGroup",
               "mySignalRService",
-              &test.SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<shared-private-link-resource-name>",
               "<resource-group-name>",
               "<resource-name>",
-              &test.SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_578
             operationGroup: *ref_552
@@ -17025,8 +17009,7 @@ testModel:
                   Tier: to.Ptr(test.SignalRSKUTierStandard),
                   },
                   },
-                  &test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_463
                 operationGroup: *ref_374
@@ -18938,8 +18921,7 @@ testModel:
                   Tier: to.Ptr(test.SignalRSKUTierStandard),
                   },
                   },
-                  &test.SignalRClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_475
                 operationGroup: *ref_374
@@ -19849,8 +19831,7 @@ testModel:
                   test.RegenerateKeyParameters{
                   KeyType: to.Ptr(test.KeyTypePrimary),
                   },
-                  &test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginRegenerateKey
                 operation: *ref_486
                 operationGroup: *ref_374
@@ -19917,8 +19898,7 @@ testModel:
                   ctx,
                   resourceGroupName,
                   resourceName,
-                  &test.SignalRClientBeginRestartOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginRestart
                 operation: *ref_491
                 operationGroup: *ref_374
@@ -21824,8 +21804,7 @@ testModel:
                   ctx,
                   resourceGroupName,
                   resourceName,
-                  &test.SignalRClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_470
                 operationGroup: *ref_374

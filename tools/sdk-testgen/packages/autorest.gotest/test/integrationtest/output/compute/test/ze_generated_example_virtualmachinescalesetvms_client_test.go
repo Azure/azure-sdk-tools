@@ -33,9 +33,7 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginDelete() {
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
 		"<instance-id>",
-		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachineScaleSetVMsClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -155,7 +153,7 @@ func ExampleVirtualMachineScaleSetVMsClient_BeginRunCommand() {
 			Script: []*string{
 				to.Ptr("# Test multi-line string\r\nWrite-Host Hello World!")},
 		},
-		&test.VirtualMachineScaleSetVMsClientBeginRunCommandOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

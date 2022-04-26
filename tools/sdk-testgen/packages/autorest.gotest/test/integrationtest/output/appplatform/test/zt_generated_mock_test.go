@@ -133,7 +133,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestServices_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json: %v", err)
 	}
@@ -341,7 +341,7 @@ func TestServices_Update(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json: %v", err)
 	}
@@ -771,7 +771,7 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json: %v", err)
 	}
@@ -827,7 +827,7 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json: %v", err)
 	}
@@ -879,7 +879,7 @@ func TestConfigServers_Validate(t *testing.T) {
 				URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json: %v", err)
 	}
@@ -955,7 +955,7 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json: %v", err)
 	}
@@ -1004,7 +1004,7 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json: %v", err)
 	}
@@ -1119,7 +1119,7 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json: %v", err)
 	}
@@ -1177,7 +1177,7 @@ func TestApps_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myservice",
 		"myapp",
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json: %v", err)
 	}
@@ -1221,7 +1221,7 @@ func TestApps_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json: %v", err)
 	}
@@ -1424,7 +1424,7 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 				ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json: %v", err)
 	}
@@ -1471,7 +1471,7 @@ func TestBindings_Delete(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mybinding",
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json: %v", err)
 	}
@@ -1504,7 +1504,7 @@ func TestBindings_Update(t *testing.T) {
 				Key: to.Ptr("xxxx"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json: %v", err)
 	}
@@ -1650,7 +1650,7 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 				VaultURI:         to.Ptr("https://myvault.vault.azure.net"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json: %v", err)
 	}
@@ -1699,7 +1699,7 @@ func TestCertificates_Delete(t *testing.T) {
 		"myResourceGroup",
 		"myservice",
 		"mycertificate",
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json: %v", err)
 	}
@@ -1815,7 +1815,7 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json: %v", err)
 	}
@@ -1855,7 +1855,7 @@ func TestCustomDomains_Delete(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mydomain.com",
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json: %v", err)
 	}
@@ -1885,7 +1885,7 @@ func TestCustomDomains_Update(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json: %v", err)
 	}
@@ -2049,7 +2049,7 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json: %v", err)
 	}
@@ -2117,7 +2117,7 @@ func TestDeployments_Delete(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json: %v", err)
 	}
@@ -2151,7 +2151,7 @@ func TestDeployments_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json: %v", err)
 	}
@@ -2356,7 +2356,7 @@ func TestDeployments_Start(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json: %v", err)
 	}
@@ -2380,7 +2380,7 @@ func TestDeployments_Stop(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json: %v", err)
 	}
@@ -2404,7 +2404,7 @@ func TestDeployments_Restart(t *testing.T) {
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json: %v", err)
 	}

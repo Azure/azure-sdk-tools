@@ -20719,8 +20719,7 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -20737,8 +20736,7 @@ testModel:
               Tier: to.Ptr("<tier>"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_807
             operationGroup: *ref_781
@@ -21384,8 +21382,7 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -21409,8 +21406,7 @@ testModel:
               Tier: to.Ptr("<tier>"),
               },
               },
-              &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_807
             operationGroup: *ref_781
@@ -22034,14 +22030,12 @@ testModel:
               ctx,
               "myResourceGroup",
               "myservice",
-              &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
-              &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_818
             operationGroup: *ref_781
@@ -22142,8 +22136,7 @@ testModel:
               Tier: to.Ptr("Standard"),
               },
               },
-              &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -22160,8 +22153,7 @@ testModel:
               Tier: to.Ptr("<tier>"),
               },
               },
-              &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_823
             operationGroup: *ref_781
@@ -23676,8 +23668,7 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -23694,8 +23685,7 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePut
             operation: *ref_882
             operationGroup: *ref_869
@@ -23929,8 +23919,7 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -23947,8 +23936,7 @@ testModel:
               },
               },
               },
-              &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePatch
             operation: *ref_888
             operationGroup: *ref_869
@@ -24169,8 +24157,7 @@ testModel:
               URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
               },
               },
-              &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -24183,8 +24170,7 @@ testModel:
               URI: to.Ptr("<uri>"),
               },
               },
-              &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginValidate
             operation: *ref_895
             operationGroup: *ref_869
@@ -24408,8 +24394,7 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -24421,8 +24406,7 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePut
             operation: *ref_915
             operationGroup: *ref_903
@@ -24631,8 +24615,7 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -24644,8 +24627,7 @@ testModel:
               TraceEnabled: to.Ptr(true),
               },
               },
-              &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdatePatch
             operation: *ref_921
             operationGroup: *ref_903
@@ -25117,8 +25099,7 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -25142,8 +25123,7 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_955
             operationGroup: *ref_929
@@ -25563,15 +25543,13 @@ testModel:
               "myResourceGroup",
               "myservice",
               "myapp",
-              &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
-              &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_962
             operationGroup: *ref_929
@@ -25725,8 +25703,7 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -25753,8 +25730,7 @@ testModel:
               },
               },
               },
-              &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_967
             operationGroup: *ref_929
@@ -26654,8 +26630,7 @@ testModel:
               ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
               },
               },
-              &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -26672,8 +26647,7 @@ testModel:
               ResourceID: to.Ptr("<resource-id>"),
               },
               },
-              &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1014
             operationGroup: *ref_998
@@ -26961,16 +26935,14 @@ testModel:
               "myservice",
               "myapp",
               "mybinding",
-              &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<binding-name>",
-              &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_1022
             operationGroup: *ref_998
@@ -27077,8 +27049,7 @@ testModel:
               Key: to.Ptr("xxxx"),
               },
               },
-              &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -27094,8 +27065,7 @@ testModel:
               Key: to.Ptr("<key>"),
               },
               },
-              &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1028
             operationGroup: *ref_998
@@ -27653,8 +27623,7 @@ testModel:
               VaultURI: to.Ptr("https://myvault.vault.azure.net"),
               },
               },
-              &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -27667,8 +27636,7 @@ testModel:
               VaultURI: to.Ptr("<vault-uri>"),
               },
               },
-              &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1060
             operationGroup: *ref_1043
@@ -27980,15 +27948,13 @@ testModel:
               "myResourceGroup",
               "myservice",
               "mycertificate",
-              &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<certificate-name>",
-              &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_1067
             operationGroup: *ref_1043
@@ -28361,8 +28327,7 @@ testModel:
               Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -28375,8 +28340,7 @@ testModel:
               Thumbprint: to.Ptr("<thumbprint>"),
               },
               },
-              &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1091
             operationGroup: *ref_1080
@@ -28582,16 +28546,14 @@ testModel:
               "myservice",
               "myapp",
               "mydomain.com",
-              &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<domain-name>",
-              &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_1099
             operationGroup: *ref_1080
@@ -28677,8 +28639,7 @@ testModel:
               Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
               },
               },
-              &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -28691,8 +28652,7 @@ testModel:
               Thumbprint: to.Ptr("<thumbprint>"),
               },
               },
-              &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1105
             operationGroup: *ref_1080
@@ -29308,8 +29268,7 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -29335,8 +29294,7 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginCreateOrUpdate
             operation: *ref_1152
             operationGroup: *ref_1122
@@ -29849,16 +29807,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<deployment-name>",
-              &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginDelete
             operation: *ref_1160
             operationGroup: *ref_1122
@@ -29965,8 +29921,7 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
@@ -29983,8 +29938,7 @@ testModel:
               },
               },
               },
-              &test.DeploymentsClientBeginUpdateOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginUpdate
             operation: *ref_1166
             operationGroup: *ref_1122
@@ -30847,16 +30801,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<deployment-name>",
-              &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginStart
             operation: *ref_1186
             operationGroup: *ref_1122
@@ -30917,16 +30869,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<deployment-name>",
-              &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginStop
             operation: *ref_1192
             operationGroup: *ref_1122
@@ -30987,16 +30937,14 @@ testModel:
               "myservice",
               "myapp",
               "mydeployment",
-              &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-              }
+              nil
             methodParametersPlaceholderOutput: |-
               ctx,
               "<resource-group-name>",
               "<service-name>",
               "<app-name>",
               "<deployment-name>",
-              &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-              }
+              nil
             opName: BeginRestart
             operation: *ref_1198
             operationGroup: *ref_1122
@@ -32125,8 +32073,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_807
                 operationGroup: *ref_781
@@ -32798,8 +32745,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.ServicesClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_823
                 operationGroup: *ref_781
@@ -33559,8 +33505,7 @@ testModel:
                   VaultURI: to.Ptr("https://integration-test-prod.vault.azure.net/"),
                   },
                   },
-                  &test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1060
                 operationGroup: *ref_1043
@@ -34122,8 +34067,7 @@ testModel:
                   URI: to.Ptr("https://github.com/VSChina/asc-config-server-test-public.git"),
                   },
                   },
-                  &test.ConfigServersClientBeginValidateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginValidate
                 operation: *ref_895
                 operationGroup: *ref_869
@@ -34265,8 +34209,7 @@ testModel:
                   },
                   },
                   },
-                  &test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePut
                 operation: *ref_882
                 operationGroup: *ref_869
@@ -34471,8 +34414,7 @@ testModel:
                   },
                   },
                   },
-                  &test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePatch
                 operation: *ref_888
                 operationGroup: *ref_869
@@ -34807,8 +34749,7 @@ testModel:
                   TraceEnabled: to.Ptr(true),
                   },
                   },
-                  &test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePut
                 operation: *ref_915
                 operationGroup: *ref_903
@@ -35120,8 +35061,7 @@ testModel:
                   AppInsightsSamplingRate: to.Ptr[float64](100),
                   },
                   },
-                  &test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdatePatch
                 operation: *ref_921
                 operationGroup: *ref_903
@@ -35331,8 +35271,7 @@ testModel:
                   Public: to.Ptr(false),
                   },
                   },
-                  &test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_955
                 operationGroup: *ref_929
@@ -35890,8 +35829,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1152
                 operationGroup: *ref_1122
@@ -36533,8 +36471,7 @@ testModel:
                   ActiveDeploymentName: to.Ptr("default"),
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -36859,8 +36796,7 @@ testModel:
                   },
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -37406,8 +37342,7 @@ testModel:
                   ResourceID: to.Ptr("/subscriptions/b46590cb-a111-4b84-935f-c305aaf1f424/resourceGroups/mary-west/providers/Microsoft.DBforMySQL/servers/fake-sql"),
                   },
                   },
-                  &test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1014
                 operationGroup: *ref_998
@@ -37655,8 +37590,7 @@ testModel:
                   ResourceID: to.Ptr("/subscriptions/" + subscriptionId + "/resourceGroups/" + resourceGroupName + "/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
                   },
                   },
-                  &test.BindingsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_1028
                 operationGroup: *ref_998
@@ -38239,8 +38173,7 @@ testModel:
                   serviceName,
                   appName,
                   bindingName,
-                  &test.BindingsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1022
                 operationGroup: *ref_998
@@ -38458,8 +38391,7 @@ testModel:
                   CertName: to.Ptr("asc-certificate"),
                   },
                   },
-                  &test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1091
                 operationGroup: *ref_1080
@@ -38620,8 +38552,7 @@ testModel:
                   CertName: to.Ptr("asc-certificate"),
                   },
                   },
-                  &test.CustomDomainsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_1105
                 operationGroup: *ref_1080
@@ -39322,8 +39253,7 @@ testModel:
                   Tier: to.Ptr("Standard"),
                   },
                   },
-                  &test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginCreateOrUpdate
                 operation: *ref_1152
                 operationGroup: *ref_1122
@@ -39678,8 +39608,7 @@ testModel:
                   ActiveDeploymentName: to.Ptr("blue"),
                   },
                   },
-                  &test.AppsClientBeginUpdateOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginUpdate
                 operation: *ref_967
                 operationGroup: *ref_929
@@ -39929,8 +39858,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginRestartOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginRestart
                 operation: *ref_1198
                 operationGroup: *ref_1122
@@ -40016,8 +39944,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginStopOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginStop
                 operation: *ref_1192
                 operationGroup: *ref_1122
@@ -40103,8 +40030,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginStartOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginStart
                 operation: *ref_1186
                 operationGroup: *ref_1122
@@ -41489,8 +41415,7 @@ testModel:
                   serviceName,
                   appName,
                   deploymentName,
-                  &test.DeploymentsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1160
                 operationGroup: *ref_1122
@@ -41576,8 +41501,7 @@ testModel:
                   serviceName,
                   appName,
                   domainName,
-                  &test.CustomDomainsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1099
                 operationGroup: *ref_1080
@@ -41657,8 +41581,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   appName,
-                  &test.AppsClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_962
                 operationGroup: *ref_929
@@ -41737,8 +41660,7 @@ testModel:
                   resourceGroupName,
                   serviceName,
                   certificateName,
-                  &test.CertificatesClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_1067
                 operationGroup: *ref_1043
@@ -41811,8 +41733,7 @@ testModel:
                   ctx,
                   resourceGroupName,
                   serviceName,
-                  &test.ServicesClientBeginDeleteOptions{ResumeToken: "",
-                  }
+                  nil
                 opName: BeginDelete
                 operation: *ref_818
                 operationGroup: *ref_781

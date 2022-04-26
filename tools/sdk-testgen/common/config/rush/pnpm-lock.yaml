@@ -3,7 +3,7 @@ lockfileVersion: 5.3
 specifiers:
   '@autorest/codemodel': 4.18.2
   '@autorest/extension-base': ~3.4.4
-  '@autorest/go': ~4.0.0-preview.39
+  '@autorest/go': ~4.0.0-preview.40
   '@azure-tools/codegen': ~2.9.0
   '@azure-tools/linq': ~3.1.0
   '@rush-temp/gotest': file:./projects/gotest.tgz
@@ -36,7 +36,7 @@ specifiers:
 dependencies:
   '@autorest/codemodel': 4.18.2
   '@autorest/extension-base': 3.4.4
-  '@autorest/go': 4.0.0-preview.39
+  '@autorest/go': 4.0.0-preview.40
   '@azure-tools/codegen': 2.9.1
   '@azure-tools/linq': 3.1.263
   '@rush-temp/gotest': file:projects/gotest.tgz
@@ -123,8 +123,8 @@ packages:
       vscode-jsonrpc: 3.6.2
     dev: false
 
-  /@autorest/go/4.0.0-preview.39:
-    resolution: {integrity: sha512-71ORnz5v3pLnvN8pXi8ZtaaapyFVH9uG+ULSNnXoRToYymvFMX/ZOdsSdzlKqXwJDlgUPU57HN9FvxIYou9E9w==}
+  /@autorest/go/4.0.0-preview.40:
+    resolution: {integrity: sha512-QnmhYy6mFglFXU2uLRNLYDyGNMM67thzG7KiIpwC4UgwknIVqfuQReAKzfqqPZgVt5lcoxGkVW0p8i/uslz2jw==}
     engines: {node: '>=10.12.0'}
     dependencies:
       '@autorest/codemodel': 4.18.2
@@ -3502,6 +3502,7 @@ packages:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -5623,6 +5624,7 @@ packages:
 
   /node-notifier/8.0.2:
     resolution: {integrity: sha512-oJP/9NAdd9+x2Q+rfphB2RJCHjod70RcRLjosiPMMu5gjIfwVnOUGq2nbTjTUbmy0DJ/tFIVT30+Qe3nzl4TJg==}
+    requiresBuild: true
     dependencies:
       growly: 1.3.0
       is-wsl: 2.2.0
@@ -6944,6 +6946,7 @@ packages:
   /source-map/0.2.0:
     resolution: {integrity: sha1-2rc/vPwrqBm03gO9b26qSBZLP50=}
     engines: {node: '>=0.8.0'}
+    requiresBuild: true
     dependencies:
       amdefine: 1.0.1
     dev: false
@@ -7518,6 +7521,7 @@ packages:
     resolution: {integrity: sha512-6iCVm2omGJbsu3JWac+p6kUiOpg3wFO2f8lIXjfEb8RrmLjzog1wTPMmwKB7swfzzqxj9YM+sGUM++u1qN4qJg==}
     engines: {node: '>=0.8.0'}
     hasBin: true
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -7995,13 +7999,13 @@ packages:
     dev: false
 
   file:projects/gotest.tgz:
-    resolution: {integrity: sha512-34+IWMaF6U5IlSQDs+roV7tIyIVQexHmQJ5+9LCaw1k+9Cmr09tEPe1YN3iO94Oqm/9yEXX/iyXwZPY1mngK9A==, tarball: file:projects/gotest.tgz}
+    resolution: {integrity: sha512-nw/WQHqT1a8oGyi9ACHXvCM5K05GmJcmlY8TXMX7++UXKAmAvIEMYsKivrWfXbFK9dzXNRgGloKbsq9p2lAAXg==, tarball: file:projects/gotest.tgz}
     name: '@rush-temp/gotest'
     version: 0.0.0
     dependencies:
       '@autorest/codemodel': 4.18.2
       '@autorest/extension-base': 3.4.4
-      '@autorest/go': 4.0.0-preview.39
+      '@autorest/go': 4.0.0-preview.40
       '@azure-tools/codegen': 2.9.1
       '@azure-tools/linq': 3.1.263
       '@types/jest': 26.0.24

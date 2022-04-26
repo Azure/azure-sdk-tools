@@ -31,7 +31,7 @@ func ExampleVirtualMachineScaleSetRollingUpgradesClient_BeginStartExtensionUpgra
 	poller, err := client.BeginStartExtensionUpgrade(ctx,
 		"<resource-group-name>",
 		"<vm-scale-set-name>",
-		&test.VirtualMachineScaleSetRollingUpgradesClientBeginStartExtensionUpgradeOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

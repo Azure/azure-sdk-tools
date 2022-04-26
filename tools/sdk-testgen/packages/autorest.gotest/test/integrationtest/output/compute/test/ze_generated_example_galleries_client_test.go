@@ -41,7 +41,7 @@ func ExampleGalleriesClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.GalleriesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -72,7 +72,7 @@ func ExampleGalleriesClient_BeginUpdate() {
 				Description: to.Ptr("<description>"),
 			},
 		},
-		&test.GalleriesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -120,7 +120,7 @@ func ExampleGalleriesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<gallery-name>",
-		&test.GalleriesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

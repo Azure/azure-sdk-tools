@@ -1296,12 +1296,22 @@ class CheckDocstringParameters(BaseChecker):
             if line.startswith("param") and line.count(" ") == 1:
                 param = line.split("param ")[1]
                 docparams[param] = None
+            if line.startswith("ivar") and line.count(" ") == 1:
+                param = line.split("ivar ")[1]
+                docparams[param] = None
             # this param has its type on the same line
             if line.startswith("param") and line.count(" ") == 2:
                 _, param_type, param = line.split(" ")
                 docparams[param] = param_type
+            if line.startswith("ivar") and line.count(" ") == 2:
+                _, param_type, param = line.split(" ")
+                docparams[param] = param_type
             if line.startswith("type"):
                 param = line.split("type ")[1]
+                if param in docparams:
+                    docparams[param] = docstring[idx+1]
+            if line.startswith("vartype"):
+                param = line.split("vartype ")[1]
                 if param in docparams:
                     docparams[param] = docstring[idx+1]
 

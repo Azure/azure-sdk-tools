@@ -2970,3 +2970,16 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
+
+class TestCheckDocstringParameters(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.CheckDocstringParameters
+
+    def test_docstring_parameters_file_acceptable(self):
+        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters_acceptable.py"))
+        node = astroid.parse(file.read())
+        file.close()
+
+
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node.body[1])
+            self.checker.visit_functiondef(node.body[2])

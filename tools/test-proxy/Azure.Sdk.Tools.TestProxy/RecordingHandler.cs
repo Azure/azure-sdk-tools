@@ -297,7 +297,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
 
                     // if the above didn't work, then it must be a Content header
-                    upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
+                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
+                    {
+                        DebugLogger.LogInformation($"Omitting header {header.Key} of value {string.Join(",", values)}");
+                    }
                 }
 
                 if(header.Key == "x-recording-upstream-host-header")

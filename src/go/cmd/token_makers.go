@@ -312,16 +312,18 @@ func (i Interface) MakeTokens() []Token {
 			makeToken(&defID, nil, name, TokenTypeTypeName, list)
 		}
 	}
-	keys := []string{}
-	for k := range i.methods {
-		if unicode.IsUpper(rune(k[0])) {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
+	if len(i.methods) > 0 {
 		makeToken(nil, nil, "", TokenTypeNewline, list)
-		*list = append(*list, i.methods[k].MakeTokens()...)
+		keys := []string{}
+		for k := range i.methods {
+			if unicode.IsUpper(rune(k[0])) {
+				keys = append(keys, k)
+			}
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			*list = append(*list, i.methods[k].MakeTokens()...)
+		}
 	}
 	makeToken(nil, nil, "}", TokenTypePunctuation, list)
 	makeToken(nil, nil, "", TokenTypeNewline, list)

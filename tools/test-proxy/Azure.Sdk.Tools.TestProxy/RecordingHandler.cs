@@ -296,13 +296,8 @@ namespace Azure.Sdk.Tools.TestProxy
                         continue;
                     }
 
-                    if(!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
-                    {
-                        throw new HttpException(
-                            HttpStatusCode.BadRequest,
-                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
-                        );
-                    }
+                    // if the above didn't work, then it must be a Content header
+                    upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values);
                 }
 
                 if(header.Key == "x-recording-upstream-host-header")

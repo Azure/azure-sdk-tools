@@ -20,7 +20,7 @@ async function main() {
     const pipelineBuildId = args['pipelineBuildId'];
     const logfile = args['logfile'];
     const logFilterStr = args['logFilter'];
-    const taskName = args['taskname'];
+    const taskName = args['taskName'];
     const exeResult = args['taskExeResult']
     const taskOutput = args['taskOutput'];
     const resultOutputPath = args['resultOutputPath'];

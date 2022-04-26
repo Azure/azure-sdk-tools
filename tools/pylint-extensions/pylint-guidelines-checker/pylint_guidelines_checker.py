@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4744
+Pylint custom checkers for SDK guidelines: C4717 - C4748
 """
 
 import logging

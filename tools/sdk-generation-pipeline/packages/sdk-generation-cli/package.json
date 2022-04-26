@@ -25,7 +25,7 @@
     "getRepoName": "dist/cli/pipelineCli/getRepoNameCli.js",
     "generateResult": "dist/cli/pipelineCli/generateResultCli.js",
     "docker-cli": "dist/cli/dockerCli/dockerCli.js",
-    "run-mockhost": "dist/cli/dockerCli/mockHostCli.js"
+    "rerun-tasks": "dist/cli/dockerCli/reRunTaskCli.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.8.0",

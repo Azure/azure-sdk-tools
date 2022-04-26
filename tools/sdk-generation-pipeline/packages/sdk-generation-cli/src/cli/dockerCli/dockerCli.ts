@@ -7,6 +7,8 @@ import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
 import { Logger } from 'winston';
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
 import { runMockHost } from "./core/runMockHost";
+import { ChildProcessWithoutNullStreams } from "child_process";
+import { growUp } from "./core/growUp";
 
 export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
@@ -18,6 +20,7 @@ export class DockerContext {
     sdkRepo?: string;
     resultOutputFolder?: string;
     logger: Logger;
+    mockHostProcess?: ChildProcessWithoutNullStreams
 
     /*
     * there are different modes to use the docker image:
@@ -28,7 +31,7 @@ export class DockerContext {
     public initialize(inputParams: DockerCliConfig) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
-        this.sdkToGenerate = inputParams.sdkToGenerate?.split(',').map(e => e.trim());
+        this.sdkToGenerate = inputParams.sdkToGenerate?.split(',').map(e => e.trim()).filter(e => e.length > 0);
         this.specRepo = inputParams.specRepo;
         this.workDir = inputParams.workDir;
         this.sdkRepo = inputParams.sdkRepo;
@@ -36,20 +39,19 @@ export class DockerContext {
 
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
-        if (!this.sdkToGenerate) {
-            console.log('Preparing environment to do grow up development');
+        if (this.sdkToGenerate?.length === 0 && fs.existsSync(this.workDir)) {
+            this.logger.info('Preparing environment to do grow up development');
             this.mode = 'growUp';
-
             this.validateSpecRepo();
             this.validateWorkDir();
         } else if (fs.existsSync(this.workDir)) {
-            console.log('Preparing environment to generate codes and do grow up development in local');
+            this.logger.info('Preparing environment to generate codes and do grow up development in local');
             this.mode = "generateCodesInLocal";
             this.validateSpecRepo();
             this.validateReadmeMdPath();
             this.validateSdkToGenerate();
         } else {
-            console.log('Preparing environment to generate codes in pipeline');
+            this.logger.info('Preparing environment to generate codes in pipeline');
             this.mode = 'generateCodesInPipeline';
             this.validateSdkRepo();
             this.validateSpecRepo();
@@ -118,6 +120,7 @@ async function main() {
             await generateCodesInLocal(context);
             break;
         case "growUp":
+            await growUp(context);
             break;
         case "generateCodesInPipeline":
             await generateCodesInPipeline(context);

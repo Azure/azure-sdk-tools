@@ -39,4 +39,5 @@ export async function runMockHost(dockerContext: DockerContext) {
     });
     child.stdout.on('data', data => context.logger.log('cmdout', data.toString()));
     child.stderr.on('data', data => context.logger.log('cmderr', data.toString()));
+    dockerContext.mockHostProcess = child;
 }

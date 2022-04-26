@@ -1965,7 +1965,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(function_node_b)
 
     def test_core_paging_file_custom_class_acceptable_and_violation(self):
-        file = open("./test_files/core_paging_acceptable_and_violation.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_acceptable_and_violation.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -1984,7 +1984,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
      
 
     def test_core_paging_file_custom_class_violation(self):
-        file = open("./test_files/core_paging_violation.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_violation.py"))
         node = astroid.parse(file.read())
         file.close()
 
@@ -1999,7 +1999,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(function_node)
     
     def test_core_paging_file_custom_class_acceptable(self):
-        file = open("./test_files/core_paging_acceptable.py")
+        file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_acceptable.py"))
         node = astroid.parse(file.read())
         file.close()
 

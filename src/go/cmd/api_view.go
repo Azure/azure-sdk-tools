@@ -5,8 +5,8 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -17,12 +17,7 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	if err != nil {
 		panic(err)
 	}
-	if outputDir == "." {
-		outputDir = ""
-	} else if !strings.HasSuffix(outputDir, "/") {
-		outputDir = fmt.Sprintf("%s/", outputDir)
-	}
-	filename := fmt.Sprintf("%s%s.json", outputDir, review.Name)
+	filename := filepath.Join(outputDir, review.Name+".json")
 	file, _ := json.MarshalIndent(review, "", " ")
 	err = ioutil.WriteFile(filename, file, 0644)
 	if err != nil {

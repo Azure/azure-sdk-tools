@@ -6,6 +6,7 @@ def with_variadic_typehints(self, *var, **kwargs):
     :param Any kwargs: Kwargs
     :rtype: None
     """
+    # var is a vararg, which is classified differently than an arg
     pass
 
 def with_ivar_typehints(self,something: str, something2: str, union: Union[bool, int]):

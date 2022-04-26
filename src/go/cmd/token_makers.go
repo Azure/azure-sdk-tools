@@ -207,10 +207,14 @@ func (f Func) MakeTokens() []Token {
 	}
 	makeToken(nil, nil, "(", TokenTypePunctuation, list)
 	for i, p := range f.params {
-		temp := strings.SplitN(p, " ", 2)
-		makeToken(nil, nil, temp[0], TokenTypeTypeName, list)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-		makeToken(nil, nil, temp[1], TokenTypeMemberName, list)
+		if name, typ, found := strings.Cut(p, " "); found {
+			makeToken(nil, nil, name, TokenTypeMemberName, list)
+			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+			makeToken(nil, nil, typ, TokenTypeTypeName, list)
+		} else {
+			// parameter names are optional
+			makeToken(nil, nil, p, TokenTypeTypeName, list)
+		}
 		if i < len(f.params)-1 {
 			makeToken(nil, nil, ",", TokenTypePunctuation, list)
 			makeToken(nil, nil, " ", TokenTypeWhitespace, list)

@@ -164,10 +164,15 @@ namespace Stress.Watcher
                         .Where(cr => ShouldStartChaos(cr, pod))
                         .Select(async cr =>
                         {
+                            string plural = "";
+                            foreach (string pluralName in Enum.GetNames(typeof(GenericChaosClient.ChaosResourcePlurals))) {
+                                if (pluralName.Contains(cr.Kind.ToLower())) {
+                                    plural = pluralName;
+                                }
+                            }
                             await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
                                     PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
-                                    pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
-
+                                    pod.Namespace(), plural, cr.Metadata.Name);
                             using (LogContext.PushProperty("chaosResource", $"{cr.Kind}/{cr.Metadata.Name}"))
                             {
                                 Logger.Information($"Started chaos for pod.");
@@ -179,11 +184,10 @@ namespace Stress.Watcher
 
         public bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.Selector.LabelSelectors?.TestInstance != pod.TestInstance())
+            if (chaos.Spec.GetTestInstance() != pod.TestInstance())
             {
                 return false;
             }
-
             return chaos.IsPaused();
         }
 

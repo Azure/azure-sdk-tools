@@ -10,6 +10,8 @@ When contributing a new pylint checker there are three cases to consider when re
 
 3. If the checker has been tested and has multiple false positives, until the false positives have been corrected, do not register the checker. 
 
+Note: (Not recommended) If code owners are unable to fix their code in time, with Pylint 2.9.3 there is an ignore-paths option in the pylintrc file. Pass in a regex representation of the paths that should be ignored and create an issue to fix the pylint warnings. 
+
 False Positives     | Impact on code | Action |
 |-----------|------------|------------| 
 | None/Few      | Low       | Register checker, and inform azure-sdk-for-python of new checker. Note which SDKs will be impacted.         |
@@ -20,28 +22,28 @@ False Positives     | Impact on code | Action |
 
 | Checker      | Number    | Status    |
 |--------------|-----------|-----------|
-| missing-client-constructor-parameter-credential | C4717      | Registered,       |
-| missing-client-constructor-parameter-kwargs      | C4718  | Registered,   | 
-| config-missing-kwargs-in-policy      | C4719  | Registered, |
+| missing-client-constructor-parameter-credential | C4717      | Registered       |
+| missing-client-constructor-parameter-kwargs      | C4718  | Registered   | 
+| config-missing-kwargs-in-policy      | C4719  | Registered |
 | unapproved-client-method-name-prefix      | C4720 | Not registered |
-| client-method-has-more-than-5-positional-arguments      | C4721  | Registered, |
-| client-method-missing-type-annotations      | C4722  | Registered, |
+| client-method-has-more-than-5-positional-arguments      | C4721  | Registered |
+| client-method-missing-type-annotations      | C4722  | Registered |
 | client-method-missing-tracing-decorator      | C4723  | Not registered |
 | client-method-missing-tracing-decorator-async      | C4724  | Not registered |
-| client-method-should-not-use-static-method      | C4725 | Registered, |
-| file-needs-copyright-header      | C4726  | Registered, |
-| client-incorrect-naming-convention      | C4727  | Registered, |
-| client-method-missing-kwargs      | C4728  | Registered, |
-| client-method-name-no-double-underscore      | C4729  | Registered, |
+| client-method-should-not-use-static-method      | C4725 | Registered |
+| file-needs-copyright-header      | C4726  | Registered |
+| client-incorrect-naming-convention      | C4727  | Registered |
+| client-method-missing-kwargs      | C4728  | Registered |
+| client-method-name-no-double-underscore      | C4729  | Registered |
 | client-docstring-use-literal-include      | C4730  | Not registered |
-| async-client-bad-name      | C4731  | Registered, |
-| specify-parameter-names-in-call      | C4732  | Registered, |
+| async-client-bad-name      | C4731  | Registered |
+| specify-parameter-names-in-call      | C4732  | Registered |
 | client-list-methods-use-paging      | C4733  | Not registered |
 | client-lro-methods-use-polling      | C4734 | Not registered |
 | lro-methods-use-correct-naming      | C4735  | Not registered |
-| connection-string-should-not-be-constructor-param      | C4736 | Registered, |
-| package-name-incorrect      | C4737  | Registered,  |
-| client-suffix-needed      | C4738  | Registered, |
+| connection-string-should-not-be-constructor-param      | C4736 | Registered |
+| package-name-incorrect      | C4737  | Registered  |
+| client-suffix-needed      | C4738  | Registered |
 | docstring-missing-param      | C4739  | Registered, Disabled |
 | docstring-missing-type      | C4740  | Registered, Disabled |
 | docstring-missing-return     | C4741  | Registered, Disabled |
@@ -51,7 +53,7 @@ False Positives     | Impact on code | Action |
 | missing-logging-policy      | C4740 | Not registered |
 | missing-retry-policy      | C4741  | Not registered |
 | missing-distributed-tracing-policy      | C4742  | Not registered |
-| docstring-admonition-needs-newline      | C4744  | Registered, |
+| docstring-admonition-needs-newline      | C4744  | Registered |
 | naming-mismatch      | C4745  | Registered |
 | enum-must-be-uppercase     | C4746 |  Registered |
 | enum-must-inherit-case-insensitive-enum-meta      | C4747  |  Registered |

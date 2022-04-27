@@ -1338,7 +1338,7 @@ class CheckDocstringParameters(BaseChecker):
         for param in docparams:
             if docparams[param] is None:
                 missing_types.append(param)
-            if param not in arg_names: 
+            if param not in arg_names:
                 should_be_keywords.append(param)
 
         if missing_types:

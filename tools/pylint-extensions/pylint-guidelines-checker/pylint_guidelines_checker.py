@@ -1283,7 +1283,10 @@ class CheckDocstringParameters(BaseChecker):
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
-            var_args = [vararg.name for vararg in node.args.vararg]
+            if node.args.vararg:
+                var_args = [vararg.name for vararg in node.args.vararg]
+            else:
+                var_args = []
 
         try:
             # not every method will have a docstring so don't crash here, just return
@@ -1335,7 +1338,7 @@ class CheckDocstringParameters(BaseChecker):
         for param in docparams:
             if docparams[param] is None:
                 missing_types.append(param)
-            if param not in arg_names or param not in var_args:
+            if param not in arg_names:  #or param not in var_args:
                 should_be_keywords.append(param)
 
         if missing_types:

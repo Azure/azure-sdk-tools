@@ -2983,3 +2983,21 @@ class TestCheckDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node.body[1])
             self.checker.visit_functiondef(node.body[2])
+
+    def test_docstring_parameters_file_violation(self):
+        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters_violation.py"))
+        node = astroid.parse(file.read())
+        file.close()
+
+        with self.assertAddsMessages(
+            pylint.testutils.Message(
+                msg_id="docstring-missing-param", node=node.body[0], args=node.body[0].args.args[2].name
+            ),
+            pylint.testutils.Message(
+                msg_id="docstring-missing-type", node=node.body[0], args=node.body[0].args.args[1].name
+            ),
+            pylint.testutils.Message(
+                msg_id="docstring-missing-rtype", node=node.body[0]
+            )
+        ):
+            self.checker.visit_functiondef(node.body[0])

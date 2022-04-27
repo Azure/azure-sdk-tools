@@ -18,7 +18,7 @@ export async function cloneRepoIfNotExist(context: DockerContext, sdkRepos: stri
         if (!existsSync(path.join(context.workDir, sdkRepo))) {
             const child = spawn(`git`, [`clone`, `https://github.com/Azure/${sdkRepo}.git`], {
                 cwd: context.workDir,
-                stdio: 'inherit'
+                stdio: ['ignore', 'pipe', 'pipe'],
             });
             child.stdout.on('data', data => context.logger.log('cmdout', data.toString()));
             child.stderr.on('data', data => context.logger.log('cmderr', data.toString()));
@@ -36,6 +36,7 @@ export async function generateCodesInLocal(dockerContext: DockerContext) {
     const sdkRepos: string[] = dockerContext.sdkToGenerate.map(ele => sdkToRepoMap[ele]);
     await cloneRepoIfNotExist(dockerContext, sdkRepos);
     for (const sdk of dockerContext.sdkToGenerate) {
+        dockerContext.sdkRepo = path.join(dockerContext.workDir, sdkToRepoMap[sdk]);
         const dockerTaskEngineContext = initializeDockerTaskEngineContext(dockerContext);
         await runTaskEngine(dockerTaskEngineContext);
     }

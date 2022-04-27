@@ -1,6 +1,6 @@
 # Contributing to the Pylint Custom Checkers
 
-When contributing a new pylint checker there are three cases to consider when registering the checker. 
+When implementing a new pylint checker there are three cases to consider:
 
 ## Checker Scenarios and Corresponding Actions:
 

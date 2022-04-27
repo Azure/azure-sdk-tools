@@ -50,6 +50,10 @@ namespace APIViewWeb.Pages.Assemblies
             reviewServices = await _manager.GetReviewsByServicesAsync(FilterType);
         }
 
+        public async Task OnGetReviewsPartialAsync()
+        {
+        }
+
         public async Task<IActionResult> OnPostUploadAsync()
         {
             if (!ModelState.IsValid)

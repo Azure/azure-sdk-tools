@@ -14,17 +14,22 @@ import { TaskResultDao } from '../utils/db/taskResultDao';
 import { CodeGeneration } from '../types/codeGeneration';
 import { CodeGenerationDaoImpl } from '../utils/db/codeGenerationDaoImpl';
 import { CodeGenerationDao } from '../utils/db/codeGenerationDao';
+import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput'
 
-export async function sendDB(
-    server: string,
-    port: number,
-    username: string,
-    password: string,
-    database: string,
-    ssl: boolean,
-    changeDatabase: boolean,
+export async function sendSdkTaskResultToDB(pipelineBuildId: string, dbConnection: Connection, taskResults: TaskResult[]) {
+    if (pipelineBuildId === undefined) {
+        throw new Error('pipelineBuildId is empty!');
+    }
+
+    const taskResultDao: TaskResultDao = new TaskResultDaoImpl(dbConnection);
+    for (const taskResult of taskResults) {
+        await taskResultDao.put(pipelineBuildId, taskResult);
+    }
+}
+
+export async function sendSdkGenerationToDB(
+    dbConnection: Connection,
     pipelineBuildId: string,
-    taskResults: TaskResult[],
     sdkGenerationName: string,
     service: string,
     serviceType: string,
@@ -40,20 +45,7 @@ export async function sendDB(
     codePR?: string
 ) {
     if (
-        server === undefined ||
-        port === undefined ||
-        username === undefined ||
-        password === undefined ||
-        database === undefined ||
-        ssl === undefined ||
-        changeDatabase === undefined
-    ) {
-        throw new Error('db parameter is empty!');
-    }
-
-    if (
         pipelineBuildId === undefined ||
-        taskResults === undefined ||
         sdkGenerationName === undefined ||
         service === undefined ||
         serviceType === undefined ||
@@ -64,31 +56,10 @@ export async function sendDB(
         triggerType === undefined ||
         status === undefined
     ) {
-        throw new Error('save data is empty!');
+        throw new Error('SdkGeneration data is empty!');
     }
 
-    const mongoDbConnection: Connection = await createConnection({
-        name: 'mongodb',
-        type: 'mongodb',
-        host: server,
-        port: port,
-        username: username,
-        password: password,
-        database: database,
-        ssl: ssl,
-        synchronize: changeDatabase,
-        logging: true,
-        entities: [TaskResultEntity, CodeGeneration],
-    });
-
-    const taskResultDao: TaskResultDao = new TaskResultDaoImpl(mongoDbConnection);
-    for (const taskResult of taskResults) {
-        await taskResultDao.put(pipelineBuildId, taskResult);
-    }
-
-    const codeGenerationDao: CodeGenerationDao = new CodeGenerationDaoImpl(
-        mongoDbConnection
-    );
+    const codeGenerationDao: CodeGenerationDao = new CodeGenerationDaoImpl(dbConnection);
     const cg: CodeGeneration = new CodeGeneration();
     cg.name = sdkGenerationName;
     cg.service = service;
@@ -104,9 +75,8 @@ export async function sendDB(
     cg.lastPipelineBuildID = pipelineBuildId;
     cg.swaggerPR = swaggerPR === undefined ? '' : swaggerPR;
     cg.codePR = codePR === undefined ? '' : codePR;
-    await codeGenerationDao.submitCodeGeneration(cg);
 
-    await mongoDbConnection.close();
+    await codeGenerationDao.submitCodeGeneration(cg);
 }
 
 export async function uploadLogsAndResult(
@@ -146,8 +116,8 @@ export async function uploadLogsAndResult(
     for (const file of logsAndResultPathArray) {
         if (fs.existsSync(file)) {
             let blobName: string = file.includes('.json')
-                ? `${pipelineBuildId}/${sdkGenerationName}-${stepName}-result.json`
-                : `${pipelineBuildId}/${sdkGenerationName}-${stepName}.log`;
+                ? `${pipelineBuildId}/logs/${sdkGenerationName}-${stepName}-result.json`
+                : `${pipelineBuildId}/logs/${sdkGenerationName}-${stepName}.log`;
             await azureBlobClient.publishBlob(file, blobName);
             logger.info(`Publish ${file} Success !!!`);
         } else {
@@ -169,54 +139,28 @@ function getFileListInPackageFolder(packageFolder: string) {
     return files;
 }
 
-export async function uploadGenerateAndBuildFile(
-    generateAndBuildOutputFile: string,
-    azureStorageBlobSasUrl: string,
-    azureBlobContainerName: string,
+export async function uploadSourceCode(
+    azureBlobClient: AzureBlobClient,
     language: string,
-    sdkGenerationName: string,
     pipelineBuildId: string,
-): Promise<{ hasFailedResult: boolean }> {
-    const res = { hasFailedResult: false };
-    if (!fs.existsSync(generateAndBuildOutputFile)) return res;
-    if (azureStorageBlobSasUrl === undefined) {
-        throw new Error('azureStorageBlobSasUrl  is empty!');
-    }
-    if (azureBlobContainerName === undefined) {
-        throw new Error('azureBlobContainerName  is empty!');
-    }
+    generateAndBuildOutputJson: GenerateAndBuildOutput
+) {
     if (language === undefined) {
         throw new Error('language  is empty!');
-    }
-    if (sdkGenerationName === undefined) {
-        throw new Error('sdkGenerationName  is empty!');
     }
     if (pipelineBuildId === undefined) {
         throw new Error('pipelineBuildId  is empty!');
     }
 
-    const generateAndBuildOutputJson = getGenerateAndBuildOutput(
-        requireJsonc(generateAndBuildOutputFile)
-    );
-    const allPackageFolders: string[] = [];
     for (const p of generateAndBuildOutputJson.packages) {
         const result = p.result;
         if (result === 'failed') {
-            res.hasFailedResult = true;
+            logger.warn(`Build ${p.packageName} failed, skipped it`);
             continue;
         }
         const packageName = p.packageName;
-        const paths = p.path;
         const packageFolder = p.packageFolder;
-        const changelog = p.changelog;
-        const artifacts = p.artifacts;
 
-        allPackageFolders.push(packageFolder);
-        // upload generated codes in packageFolder
-        const azureBlobClient = new AzureBlobClient(
-            azureStorageBlobSasUrl,
-            azureBlobContainerName
-        );
         if (fs.existsSync(packageFolder)) {
             for (const filePath of getFileListInPackageFolder(packageFolder)) {
                 if (fs.existsSync(path.join(packageFolder, filePath))) {
@@ -227,6 +171,29 @@ export async function uploadGenerateAndBuildFile(
                 }
             }
         }
+    }
+}
+
+export async function uploadArtifacts(
+    azureBlobClient: AzureBlobClient,
+    language: string,
+    pipelineBuildId: string,
+    generateAndBuildOutputJson: GenerateAndBuildOutput
+) {
+    if (language === undefined) {
+        throw new Error('language  is empty!');
+    }
+    if (pipelineBuildId === undefined) {
+        throw new Error('pipelineBuildId  is empty!');
+    }
+
+    for (const p of generateAndBuildOutputJson.packages) {
+        const result = p.result;
+        if (result === 'failed') {
+            logger.warn(`Build ${p.packageName} failed, skipped it`);
+            continue;
+        }
+        const artifacts = p.artifacts;
 
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);
@@ -236,6 +203,4 @@ export async function uploadGenerateAndBuildFile(
             );
         }
     }
-
-    return res;
 }

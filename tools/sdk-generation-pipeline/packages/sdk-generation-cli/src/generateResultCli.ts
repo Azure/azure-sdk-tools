@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import * as fs from "fs";
 import {
     createTaskResult,
@@ -62,7 +61,7 @@ async function main() {
         logFilter = JSON.parse(logFilterStr);
     }
 
-    if (exeResult) {
+    if (exeResult !== undefined) {
         taskResult = createTaskResult(pipelineBuildId, taskName, exeResult, logfile, logFilter, taskOutputObj);
     } else if (taskResultFile && fs.existsSync(taskResultFile)) {
         const totalTaskResult = JSON.parse(fs.readFileSync(taskResultFile, 'utf-8'));
@@ -73,7 +72,7 @@ async function main() {
             taskResult = createTaskResult(pipelineBuildId, taskName, totalTaskResult[taskName], logfile, logFilter, taskOutputObj);
         }
     } else {
-        throw new Error(`taskResultFile:${taskResultFile} isn's exist`);
+        taskResult = createTaskResult(pipelineBuildId, taskName, undefined, logfile, logFilter, taskOutputObj);
     }
 
     fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), {

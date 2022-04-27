@@ -39,13 +39,13 @@ export async function processGenerateAndBuildOutput(config: RunGenerateAndBuildT
         const azureBlobClient = new AzureBlobClient(config.azureStorageBlobSasUrl, config.azureBlobContainerName);
         for (const filePath of getFileListInPackageFolder(packageFolder)) {
             if (fs.existsSync(path.join(packageFolder, filePath))) {
-                await azureBlobClient.publishBlob(path.join(packageFolder, filePath), `${config.language}/${config.sdkGenerationName}/${packageName}/${filePath}`);
+                await azureBlobClient.publishBlob(path.join(packageFolder, filePath), `${config.buildId}/${config.language}/${packageName}/${filePath}`);
             }
         }
 
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);
-            await azureBlobClient.publishBlob(artifact, `${config.language}/${config.sdkGenerationName}/${artifactName}`);
+            await azureBlobClient.publishBlob(artifact, `${config.buildId}/${config.language}/${artifactName}`);
         }
 
         // TODO: Create PR in release

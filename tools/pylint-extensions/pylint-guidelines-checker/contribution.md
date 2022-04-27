@@ -2,7 +2,7 @@
 
 When implementing a new pylint checker there are three cases to consider:
 
-## Checker Scenarios and Corresponding Actions:
+**Checker Scenarios and Corresponding Actions:**
 
 1. If the checker has been tested and will have minimal impact within the code and little to no false positives, register your checker and let azure-sdk-for-python know that a new checker will be added with a list of the affected SDKs.
 

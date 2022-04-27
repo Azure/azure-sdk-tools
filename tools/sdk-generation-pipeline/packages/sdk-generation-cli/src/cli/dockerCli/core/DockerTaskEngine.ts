@@ -55,6 +55,9 @@ export type DockerTaskEngineContext = {
 }
 
 export function initializeDockerTaskEngineContext(dockerContext: DockerContext): DockerTaskEngineContext {
+    // before execute task engine, safe spec repos and sdk repos because they may be owned by others
+    safeDirectory(dockerContext.specRepo);
+    safeDirectory(dockerContext.sdkRepo);
     const dockerTaskEngineConfigProperties = dockerTaskEngineConfig.getProperties();
     const dockerTaskEngineContext: DockerTaskEngineContext = {
         logger: dockerContext.logger,
@@ -88,7 +91,6 @@ async function beforeRunTaskEngine(context: DockerTaskEngineContext) {
     if (!!context.resultOutputFolder && !fs.existsSync(context.resultOutputFolder)) {
         fs.mkdirSync(context.resultOutputFolder, {recursive: true});
     }
-    safeDirectory(context.sdkRepo);
 }
 
 async function afterRunTaskEngine(context: DockerTaskEngineContext) {

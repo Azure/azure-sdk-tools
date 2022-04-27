@@ -57,5 +57,6 @@ COPY packages/sdk-generation-cli/*.tgz /pack.tgz
 RUN npm install -g /pack.tgz
 
 COPY entrypoint.sh /entrypoint.sh
+COPY rerun-tasks /usr/bin/rerun-tasks
 
 ENTRYPOINT ["bash", "/entrypoint.sh"]

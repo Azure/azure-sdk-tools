@@ -10,8 +10,8 @@ export class DockerTaskEngineConfig {
     generateAndBuildOutputJson: string;
     mockTestInputJson: string;
     mockTestOutputJson: string;
-    headSha: string;
-    headRef: string;
+    headSha: string | undefined;
+    headRef: string | undefined;
     repoHttpsUrl: string;
     serviceType: string;
     mockServerHost?: string;
@@ -65,13 +65,13 @@ export const dockerTaskEngineConfig = convict<DockerTaskEngineConfig>({
         doc: 'The relative path to mockTestOutput.json. It will concat with resultOutputFolder'
     },
     headSha: {
-        default: '',
+        default: undefined,
         env: 'HEAD_SHA',
         format: String,
         doc: 'headSha of spec repo'
     },
     headRef: {
-        default: '',
+        default: undefined,
         env: 'HEAD_REF',
         format: String,
         doc: 'headRef of spec repo'

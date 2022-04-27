@@ -1,9 +1,11 @@
-import { execSync, spawn } from "child_process";
-import { DockerContext } from "../dockerCli";
-import { dockerMockHostConfig } from "../schema/mockHostCliSchema";
+#!/usr/bin/env node
+
+import { spawn } from "child_process";
 import * as path from "path";
 import { Logger } from "winston";
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
+import { dockerCliConfig, DockerCliConfig } from "./schema/dockerCliConfig";
+import { dockerMockHostConfig, DockerMockHostConfig } from "./schema/mockHostCliSchema";
 
 export type DockerMockHostContext = {
     readmeMdPath?: string;
@@ -12,19 +14,23 @@ export type DockerMockHostContext = {
     logger: Logger;
 }
 
-export function initializeDockerMockHostContext(dockerContext: DockerContext) {
+export function initializeDockerMockHostContext(inputParams: DockerMockHostConfig & DockerCliConfig) {
     const dockerMockHostConfigProperties = dockerMockHostConfig.getProperties();
     const dockerMockHostContext: DockerMockHostContext = {
-        readmeMdPath: dockerContext.readmeMdPath,
-        specRepo: dockerContext.specRepo,
+        readmeMdPath: inputParams.readmeMdPath,
+        specRepo: inputParams.specRepo,
         mockHostPath: dockerMockHostConfigProperties.mockHostPath,
-        logger: initializeLogger(path.join(dockerContext.resultOutputFolder, dockerMockHostConfigProperties.mockHostLogger), 'mock-host', false),
+        logger: initializeLogger(path.join(inputParams.resultOutputFolder, dockerMockHostConfigProperties.mockHostLogger), 'mock-host', false),
     }
     return dockerMockHostContext;
 }
 
-export async function runMockHost(dockerContext: DockerContext) {
-    const context = initializeDockerMockHostContext(dockerContext);
+export function runMockHost() {
+    const inputParams: DockerMockHostConfig & DockerCliConfig = {
+        ...dockerCliConfig.getProperties(),
+        ...dockerMockHostConfig.getProperties()
+    }
+    const context = initializeDockerMockHostContext(inputParams);
     const swaggerJsonFilePattern = context.readmeMdPath
         ? context.readmeMdPath.replace(/readme[.a-z-]*.md/gi, '**/*.json')
         : undefined;
@@ -39,5 +45,6 @@ export async function runMockHost(dockerContext: DockerContext) {
     });
     child.stdout.on('data', data => context.logger.log('cmdout', data.toString()));
     child.stderr.on('data', data => context.logger.log('cmderr', data.toString()));
-    dockerContext.mockHostProcess = child;
 }
+
+runMockHost();

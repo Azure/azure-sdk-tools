@@ -6,8 +6,6 @@ import { generateCodesInLocal, sdkToRepoMap } from "./core/generateCodesInLocal"
 import { generateCodesInPipeline } from "./core/generateCodesInPipeline";
 import { Logger } from 'winston';
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import { runMockHost } from "./core/runMockHost";
-import { ChildProcessWithoutNullStreams } from "child_process";
 import { growUp } from "./core/growUp";
 
 export class DockerContext {
@@ -20,7 +18,6 @@ export class DockerContext {
     sdkRepo?: string;
     resultOutputFolder?: string;
     logger: Logger;
-    mockHostProcess?: ChildProcessWithoutNullStreams
 
     /*
     * there are different modes to use the docker image:
@@ -111,9 +108,6 @@ async function main() {
     const inputParams: DockerCliConfig = dockerCliConfig.getProperties();
     const context: DockerContext = new DockerContext();
     context.initialize(inputParams);
-
-    // run mock test before everything
-    runMockHost(context);
 
     switch (context.mode) {
         case "generateCodesInLocal":

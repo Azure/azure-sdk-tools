@@ -3,6 +3,7 @@ import { existsSync } from "fs";
 import * as path from "path";
 import { execSync, spawn } from "child_process";
 import { initializeDockerTaskEngineContext, runTaskEngine } from "./DockerTaskEngine";
+import fs from "fs";
 
 export const sdkToRepoMap = {
     js: 'azure-sdk-for-js',
@@ -39,4 +40,5 @@ export async function generateCodesInLocal(dockerContext: DockerContext) {
         await runTaskEngine(dockerTaskEngineContext);
     }
     dockerContext.logger.info(`Finish generating sdk for ${dockerContext.sdkToGenerate.join(', ')}. Please use vscode to connect this container.`);
+    fs.writeFileSync('/tmp/notExit', 'yes', 'utf-8');
 }

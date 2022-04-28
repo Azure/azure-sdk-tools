@@ -274,13 +274,9 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        if hasattr(self.obj, "__bases__"):
-            for cl in [c for c in self.obj.__bases__ if c is not object]:
-                # Show module level name for internal types to show any generated internal types
-                if cl.__module__.startswith("azure"):
-                    base_classes.append("{0}.{1}".format(cl.__module__, cl.__name__))
-                else:
-                    base_classes.append(cl.__name__)
+        bases = getattr(self.obj, "__orig_bases__", getattr(self.obj, "__bases__", None)) or []
+        for cl in [c for c in bases if c is not object]:
+            base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
     def generate_tokens(self, apiview):

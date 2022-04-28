@@ -97,12 +97,13 @@ def get_dependencies(package_specifier: str) -> List[str]:
         error_encountered = True
         output = ""
 
-    print(output)
-
     if output:
         json_output = json.loads(output)
 
-    return [key + "==" + json_output[key] for key in json_output]
+        return [key + "==" + json_output[key] for key in json_output]
+    else:
+        print("Unable to get output from pipgrip invocation.")
+        return []
 
 
 def download_dependencies(targeted_packages: Set[str], target_folder: str) -> None:
@@ -142,8 +143,6 @@ if __name__ == "__main__":
     
     # powershell does some weird escaping. Leaving behind just the '`' in what would normally look like '`"`.
     pkg_list = read_package_list(args.target_packages.replace("`", "\""))
-
-    print(pkg_list)
 
     assembled_package_list = set()
 

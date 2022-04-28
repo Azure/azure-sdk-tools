@@ -42,9 +42,16 @@ jobs:
           python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py $configurations --dest-dir='$(Build.ArtifactStagingDirectory)'
         displayName: 'Download Targeted Packages'
 
-      - template: /eng/pipelines/templates/steps/auth-dev-feed.yml
-        parameters:
-          DevFeedName: ${{ parameters.DevFeed }}
+      - task: TwineAuthenticate@0
+        displayName: 'Twine Authenticate to feed'
+        inputs:
+          artifactFeeds: ${{ parameters.DevFeed }}
+
+      - task: PipAuthenticate@1
+        displayName: 'Pip Authenticate to feed'
+        inputs:
+          artifactFeeds: ${{ parameters.DevFeed }}
+          onlyAddExtraIndex: false
 
       - pwsh: |
           $results = Get-ChildItem -Force -Path $(Build.ArtifactStagingDirectory)

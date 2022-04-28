@@ -137,6 +137,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    print(args.target_packages)
 
     pkg_list = read_package_list(args.target_packages)
     assembled_package_list = set()

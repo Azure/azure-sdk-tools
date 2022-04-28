@@ -7,7 +7,8 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "prepack": "npm run build",
-    "pack": "npm pack 2>&1"
+    "pack": "npm pack 2>&1",
+    "test:prepare-environment": "ts-node test/utils/prepareEnvironment.ts"
   },
   "author": "Microsoft",
   "license": "MIT",
@@ -42,6 +43,42 @@
   ],
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "jest": "~26.6.3",
+    "ts-jest": "~26.5.4",
+    "@types/jest": "^25.2.1",
+    "typescript": "~4.6.3",
+    "ts-node": "~10.7.0"
+  },
+  "jest": {
+    "verbose": true,
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "src/**/*.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "src/cli/pipelineCli",
+      "src/cli/dockerCli/*Cli.ts"
+    ],
+    "roots": [
+      "<rootDir>/src/",
+      "<rootDir>/test/"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "test/.*.test.ts",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "testPathIgnorePatterns": [
+      "__snapshots__"
+    ]
   }
 }

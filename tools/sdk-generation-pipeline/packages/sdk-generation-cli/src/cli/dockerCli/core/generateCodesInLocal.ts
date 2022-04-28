@@ -1,10 +1,9 @@
-import { DockerContext } from "../dockerCli";
 import { existsSync } from "fs";
 import * as path from "path";
-import { execSync, spawn } from "child_process";
-import { initializeDockerTaskEngineContext, runTaskEngine } from "./DockerTaskEngine";
-import fs from "fs";
+import { spawn } from "child_process";
+import { initializeDockerTaskEngineContext, runTaskEngine } from "./dockerTaskEngine";
 import { doNotExitDockerContainer } from "./doNotExitDockerContainer";
+import { DockerContext } from "./DockerContext";
 
 export const sdkToRepoMap = {
     js: 'azure-sdk-for-js',

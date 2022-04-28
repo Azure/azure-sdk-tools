@@ -1,6 +1,5 @@
-import { DockerContext } from "../dockerCli";
-import { initializeDockerTaskEngineContext, runTaskEngine, DockerTaskEngineContext } from "./DockerTaskEngine";
-import * as fs from "fs";
+import { DockerTaskEngineContext, initializeDockerTaskEngineContext, runTaskEngine } from "./dockerTaskEngine";
+import { DockerContext } from "./DockerContext";
 
 export async function generateCodesInPipeline(dockerContext: DockerContext) {
     const context: DockerTaskEngineContext = initializeDockerTaskEngineContext(dockerContext);

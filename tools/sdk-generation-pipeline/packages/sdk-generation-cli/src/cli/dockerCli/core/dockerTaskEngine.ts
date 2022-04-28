@@ -1,4 +1,3 @@
-import { DockerContext } from "../dockerCli";
 import { dockerTaskEngineConfig } from "../schema/dockerTaskEngineConfig";
 import {
     addFileLog,
@@ -11,19 +10,20 @@ import {
     getTestOutput,
     InitOptions,
     initOutput,
-    logger,
     MockTestInput,
-    MockTestOptions, removeFileLog,
+    MockTestOptions,
+    removeFileLog,
     requireJsonc,
     runScript,
     StringMap
 } from "@azure-tools/sdk-generation-lib";
 import * as path from "path";
 import * as fs from "fs";
+import { writeFileSync } from "fs";
 import { disableFileMode, getHeadRef, getHeadSha, safeDirectory } from "../../../utils/git";
 import { Logger } from "winston";
 import { execSync } from "child_process";
-import { writeFileSync } from "fs";
+import { DockerContext } from "./DockerContext";
 
 export type DockerTaskEngineContext = {
     logger: Logger;

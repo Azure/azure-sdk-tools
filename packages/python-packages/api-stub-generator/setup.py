@@ -33,7 +33,7 @@ setup(
         "astroid",
         "charset-normalizer",
         "pylint",
-        "pylint-guidelines-checker"
+        "pylint-guidelines-checker==0.0.3"
     ],
     python_requires=">=3.7.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},

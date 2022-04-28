@@ -26,6 +26,8 @@ Set-StrictMode -Version 3
 
 . (Join-Path $PSScriptRoot common.ps1)
 
+
+
 $unencodedAuthToken = "nobody:$AccessToken"
 $unencodedAuthTokenBytes = [System.Text.Encoding]::UTF8.GetBytes($unencodedAuthToken)
 $encodedAuthToken = [System.Convert]::ToBase64String($unencodedAuthTokenBytes)

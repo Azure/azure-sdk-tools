@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, TypedDict, Union, Optional
+from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
 
 
 def my_decorator(fn):
@@ -252,3 +252,21 @@ class SomeImplementationClass(_SomeAbstractBase):
 
     def say_hello(self) -> str:
         return "Hello!"
+
+
+T = TypeVar('T')
+
+class GenericStack(Generic[T]):
+    def __init__(self) -> None:
+        # Create an empty list with items of type T
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
+
+    def empty(self) -> bool:
+        return not self.items
+

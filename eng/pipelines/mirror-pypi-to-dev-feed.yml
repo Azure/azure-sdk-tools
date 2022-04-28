@@ -21,8 +21,8 @@ jobs:
     displayName: Mirror From PyPI
 
     pool:
-      Pool: 'azsdk-pool-mms-ubuntu-2004-general'
-      vmImage: 'MMSUbuntu20.04'
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

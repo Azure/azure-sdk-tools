@@ -614,7 +614,7 @@ func TestSignalR_CreateOrUpdate(t *testing.T) {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_CreateOrUpdate.json: %v", err)
 	}
@@ -754,7 +754,7 @@ func TestSignalR_Delete(t *testing.T) {
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Delete.json: %v", err)
 	}
@@ -853,7 +853,7 @@ func TestSignalR_Update(t *testing.T) {
 				Tier:     to.Ptr(test.SignalRSKUTierStandard),
 			},
 		},
-		&test.SignalRClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Update.json: %v", err)
 	}
@@ -1021,7 +1021,7 @@ func TestSignalR_RegenerateKey(t *testing.T) {
 		test.RegenerateKeyParameters{
 			KeyType: to.Ptr(test.KeyTypePrimary),
 		},
-		&test.SignalRClientBeginRegenerateKeyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_RegenerateKey.json: %v", err)
 	}
@@ -1043,7 +1043,7 @@ func TestSignalR_Restart(t *testing.T) {
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalR_Restart.json: %v", err)
 	}
@@ -1275,7 +1275,7 @@ func TestSignalRPrivateEndpointConnections_Delete(t *testing.T) {
 		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRPrivateEndpointConnectionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRPrivateEndpointConnections_Delete.json: %v", err)
 	}
@@ -1435,7 +1435,7 @@ func TestSignalRSharedPrivateLinkResources_CreateOrUpdate(t *testing.T) {
 				RequestMessage:        to.Ptr("Please approve"),
 			},
 		},
-		&test.SignalRSharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_CreateOrUpdate.json: %v", err)
 	}
@@ -1476,7 +1476,7 @@ func TestSignalRSharedPrivateLinkResources_Delete(t *testing.T) {
 		"upstream",
 		"myResourceGroup",
 		"mySignalRService",
-		&test.SignalRSharedPrivateLinkResourcesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/signalr/resource-manager/Microsoft.SignalRService/preview/2021-06-01-preview/examples/SignalRSharedPrivateLinkResources_Delete.json: %v", err)
 	}

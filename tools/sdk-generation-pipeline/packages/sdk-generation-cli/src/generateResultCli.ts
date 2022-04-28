@@ -14,6 +14,7 @@ async function main() {
     const logfile = args['logfile'];
     const logFilterStr = args['logFilter'];
     const taskname = args['taskname'];
+    const exeResult = args['taskExeResult']
     const taskOutput = args['taskOutput'];
     const resultOutputPath = args['resultOutputPath'];
     let taskOutputObj: TaskOutput = undefined;
@@ -34,6 +35,12 @@ async function main() {
         printHelp();
         throw new Error(`invalid taskname`);
     }
+
+    if (exeResult === undefined) {
+        printHelp();
+        throw new Error(`Task execute result is empty`);
+    }
+    
     if (resultOutputPath === undefined) {
         printHelp();
         throw new Error(`resultOutputPath is empty`);
@@ -45,7 +52,7 @@ async function main() {
         logFilter = JSON.parse(logFilterStr);
     }
 
-    const taskResult: TaskResult = createTaskResult(pipelineBuildId, taskname, logfile, logFilter, taskOutputObj);
+    const taskResult: TaskResult = createTaskResult(pipelineBuildId, taskname, exeResult, logfile, logFilter, taskOutputObj);
 
     fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), { encoding: 'utf-8' });
     console.log('Generate Success !!!');

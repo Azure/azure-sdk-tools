@@ -9,17 +9,6 @@ from apistub.nodes import PylintParser
 import os
 import tempfile
 
-from ._test_util import _check, _render_string, _tokenize
-
-class StubGenTestArgs:
-    pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'apistubgentest'))
-    temp_path = tempfile.gettempdir()
-    source_url = None
-    out_path = None
-    mapping_path = None
-    verbose = None
-    filter_namespace = None
-
 
 class TestApiView:
     def _count_newlines(self, apiview):
@@ -54,12 +43,22 @@ class TestApiView:
         assert self._count_newlines(apiview) == 3 # +1 for carriage return
 
     def test_api_view_diagnostic_warnings(self):
-        args = StubGenTestArgs()
-        stub_gen = StubGenerator(args=args)
+        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 4
+        assert len(apiview.diagnostics) == 5
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1
+
+    def test_add_type(self):
+        apiview = ApiView()
+        apiview.tokens = []
+        apiview.add_type(type_name="a.b.c.1.2.3.MyType")
+        tokens = apiview.tokens
+        assert len(tokens) == 2
+        assert tokens[0].kind == TokenKind.TypeName
+        assert tokens[1].kind == TokenKind.Punctuation

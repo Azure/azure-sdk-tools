@@ -61,7 +61,7 @@ func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -94,7 +94,7 @@ func ExampleMonitoringSettingsClient_BeginUpdatePatch() {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

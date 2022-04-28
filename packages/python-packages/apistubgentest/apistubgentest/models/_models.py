@@ -6,13 +6,13 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
+import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, EnumMeta
 import functools
-from six import with_metaclass
-from typing import Any, overload, TypedDict, Union, Optional
+from typing import Any, overload, TypedDict, Union, Optional, Generic, TypeVar
 
 
 def my_decorator(fn):
@@ -237,3 +237,36 @@ class SomethingWithProperties:
         :rtype: Optional[str]
         """
         pass
+
+# pylint:disable=docstring-missing-rtype
+class _SomeAbstractBase(abc.ABC):
+    """ Some abstract base class. """
+
+    @property
+    @abc.abstractmethod
+    def say_hello(self) -> str:
+        """ A method to say hello. """
+        ...
+
+class SomeImplementationClass(_SomeAbstractBase):
+
+    def say_hello(self) -> str:
+        return "Hello!"
+
+
+T = TypeVar('T')
+
+class GenericStack(Generic[T]):
+    def __init__(self) -> None:
+        # Create an empty list with items of type T
+        self.items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self.items.append(item)
+
+    def pop(self) -> T:
+        return self.items.pop()
+
+    def empty(self) -> bool:
+        return not self.items
+

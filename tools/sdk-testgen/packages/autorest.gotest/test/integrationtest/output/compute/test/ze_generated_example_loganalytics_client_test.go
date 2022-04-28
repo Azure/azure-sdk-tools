@@ -38,7 +38,7 @@ func ExampleLogAnalyticsClient_BeginExportRequestRateByInterval() {
 			ToTime:              to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 			IntervalLength:      to.Ptr(test.IntervalInMinsFiveMins),
 		},
-		&test.LogAnalyticsClientBeginExportRequestRateByIntervalOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -72,7 +72,7 @@ func ExampleLogAnalyticsClient_BeginExportThrottledRequests() {
 			GroupByUserAgent:           to.Ptr(false),
 			ToTime:                     to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2018-01-23T01:54:06.862601Z"); return t }()),
 		},
-		&test.LogAnalyticsClientBeginExportThrottledRequestsOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

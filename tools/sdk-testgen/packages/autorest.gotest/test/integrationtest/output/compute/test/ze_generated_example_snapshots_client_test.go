@@ -42,7 +42,7 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.SnapshotsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

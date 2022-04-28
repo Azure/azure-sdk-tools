@@ -45,7 +45,7 @@ func ExampleDedicatedHostsClient_BeginCreateOrUpdate() {
 				Name: to.Ptr("<name>"),
 			},
 		},
-		&test.DedicatedHostsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

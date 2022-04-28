@@ -45,9 +45,9 @@ public enum Barcode {
 // RawValue enum
 
 public enum ASCIIControlCharacter: Character {
-    case tab = "\\t"
-    case lineFeed = "\\n"
-    case carriageReturn = "\\r"
+    case tab = "\t"
+    case lineFeed = "\n"
+    case carriageReturn = "\r"
 }
 
 // Implicitly assigned value enum

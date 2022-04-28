@@ -68,7 +68,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginCreateOrUpdate() {
 				TypeHandlerVersion: to.Ptr("<type-handler-version>"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -107,7 +107,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginUpdate() {
 				TypeHandlerVersion: to.Ptr("<type-handler-version>"),
 			},
 		},
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -135,7 +135,7 @@ func ExampleVirtualMachineScaleSetVMExtensionsClient_BeginDelete() {
 		"<vm-scale-set-name>",
 		"<instance-id>",
 		"<vm-extension-name>",
-		&test.VirtualMachineScaleSetVMExtensionsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

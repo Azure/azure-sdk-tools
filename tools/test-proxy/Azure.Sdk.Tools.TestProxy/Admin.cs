@@ -98,6 +98,15 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        [HttpPost]
+        [AllowEmptyBody]
+        public async Task SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        {
+            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+
+            _recordingHandler.SetRecordingOptions(options);
+        }
+
         public object GetSanitizer(string name, JsonDocument body)
         {
             return GenerateInstance("Azure.Sdk.Tools.TestProxy.Sanitizers.", name, new HashSet<string>() { "value" }, documentBody: body);

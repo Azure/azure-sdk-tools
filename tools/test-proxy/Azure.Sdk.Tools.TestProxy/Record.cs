@@ -19,20 +19,32 @@ namespace Azure.Sdk.Tools.TestProxy
         private readonly ILogger _logger;
 
         private readonly RecordingHandler _recordingHandler;
+
+        private static readonly HttpClient RedirectableClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient()
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
+        private static readonly HttpClient RedirectlessClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
         public Record(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
         {
             _recordingHandler = recordingHandler;
             _logger = loggerFactory.CreateLogger<Record>();
         }
-        
-        private static readonly HttpClient s_client = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
-            {
-                Timeout = TimeSpan.FromSeconds(600)
-            } :
-            new HttpClient() {
-                Timeout = TimeSpan.FromSeconds(600)
-            };
 
         [HttpPost]
         public async Task Start()
@@ -52,7 +64,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a x-recording-skip value, only value \"request-response\" is accepted.");
+                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.");
             }
 
             if (mode == EntryRecordMode.DontRecord)
@@ -67,7 +79,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, s_client);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, RedirectableClient, RedirectlessClient);
         }
     }
 }

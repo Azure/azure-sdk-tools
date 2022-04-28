@@ -16,7 +16,7 @@ param accessGroups array = [
     '56709ad9-8962-418a-ad0d-4b25fa962bae'
 ]
 
-var groupName = 'rg-stress-cluster-${groupSuffix}'
+param groupName string
 
 resource group 'Microsoft.Resources/resourceGroups@2020-10-01' = {
     name: groupName

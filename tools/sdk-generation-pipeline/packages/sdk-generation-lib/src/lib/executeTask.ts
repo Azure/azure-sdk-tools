@@ -6,7 +6,7 @@ import { InitOutput } from '../types/taskInputAndOuputSchemaTypes/InitOutput';
 import { LiveTestInput } from '../types/taskInputAndOuputSchemaTypes/LiveTestInput';
 import { MockTestInput } from '../types/taskInputAndOuputSchemaTypes/MockTestInput';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
-import { setTaskResult, taskResult, TaskResult } from '../types/taskResult';
+import { PipelineResult, setTaskResult, taskResult, TaskResult } from '../types/taskResult';
 import { requireJsonc } from '../utils/requireJsonc';
 import { runScript } from './runScript';
 import * as fs from 'fs';
@@ -34,18 +34,19 @@ export async function executeTask(
         cwd: cwd,
         args: args,
     });
+    let execResult: PipelineResult = 'success';
     if (result === 'failed') {
-        taskResult.result = 'failure';
+        execResult = 'failure';
     }
     if (fs.existsSync(outputJsonPath)) {
         const outputJson = requireJsonc(outputJsonPath);
         return {
-            taskResult: createTaskResult("", taskName, config.pipeFullLog, runScriptOptions.logFilter, outputJson),
+            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, outputJson),
             output: outputJson,
         };
     } else {
         return {
-            taskResult: createTaskResult("", taskName, config.pipeFullLog, runScriptOptions.logFilter, undefined),
+            taskResult: createTaskResult("", taskName, execResult, config.pipeFullLog, runScriptOptions.logFilter, undefined),
             output: undefined,
         };
     }

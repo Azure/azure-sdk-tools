@@ -25,7 +25,8 @@ namespace Azure.Sdk.Tools.TestProxy
     public class RecordingHandler
     {
         #region constructor and common variables
-        public string CurrentBranch = "master";
+        public bool HandleRedirects = true;
+
         public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
@@ -43,6 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private static readonly string[] s_excludedRequestHeaders = new string[] {
             // Only applies to request between client and proxy
             // TODO, we need to handle this properly, there are tests that actually test proxy functionality.
+            "Host",
             "Proxy-Connection",
         };
 
@@ -129,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
-        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient client)
+        public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse, HttpClient redirectlessClient, HttpClient redirectableClient)
         {
             await DebugLogger.LogRequestDetailsAsync(incomingRequest);
 
@@ -141,11 +143,18 @@ namespace Azure.Sdk.Tools.TestProxy
             var entry = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
             var upstreamRequest = CreateUpstreamRequest(incomingRequest, entry.Request.Body);
-            var upstreamResponse = await client.SendAsync(upstreamRequest).ConfigureAwait(false);
 
-            var headerListOrig = incomingRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
-            var headerList = upstreamRequest.Headers.Select(x => String.Format("{0}: {1}", x.Key, x.Value.First())).ToList();
+            HttpResponseMessage upstreamResponse = null;
 
+
+            if (HandleRedirects)
+            {
+                upstreamResponse = await redirectableClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+            }
+            else
+            {
+                upstreamResponse = await redirectlessClient.SendAsync(upstreamRequest).ConfigureAwait(false);
+            }
 
             byte[] body = Array.Empty<byte>();
 
@@ -295,9 +304,12 @@ namespace Azure.Sdk.Tools.TestProxy
                         );
                     }
                 }
-            }
 
-            upstreamRequest.Headers.Host = upstreamRequest.RequestUri.Host;
+                if(header.Key == "x-recording-upstream-host-header")
+                {
+                    upstreamRequest.Headers.Host = header.Value;
+                }
+            }
 
             return upstreamRequest;
         }
@@ -441,6 +453,43 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region common functions
+        public void SetRecordingOptions(IDictionary<string, object> options = null)
+        {
+            if (options != null)
+            {
+                if (options.Keys.Count == 0)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "At least one key is expected in the body being passed to SetRecordingOptions.");
+                }
+
+                if (options.TryGetValue("HandleRedirects", out var handleRedirectsObj))
+                {
+                    var handleRedirectsString = $"{handleRedirectsObj}";
+
+                    if (bool.TryParse(handleRedirectsString, out var handleRedirectsBool))
+                    {
+                        HandleRedirects = handleRedirectsBool;
+                    }
+                    else if (handleRedirectsString.Equals("0", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = false;
+                    }
+                    else if (handleRedirectsString.Equals("1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HandleRedirects = true;
+                    }
+                    else
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
+                    }
+                }
+            }
+            else
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
         public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))

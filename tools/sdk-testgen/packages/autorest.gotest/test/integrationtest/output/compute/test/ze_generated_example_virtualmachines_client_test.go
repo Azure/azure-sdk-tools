@@ -101,7 +101,7 @@ func ExampleVirtualMachinesClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -177,7 +177,7 @@ func ExampleVirtualMachinesClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachinesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -203,9 +203,7 @@ func ExampleVirtualMachinesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true),
-			ResumeToken: "",
-		})
+		&test.VirtualMachinesClientBeginDeleteOptions{ForceDeletion: to.Ptr(true)})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -319,7 +317,7 @@ func ExampleVirtualMachinesClient_BeginReapply() {
 	poller, err := client.BeginReapply(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&test.VirtualMachinesClientBeginReapplyOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -346,7 +344,6 @@ func ExampleVirtualMachinesClient_BeginReimage() {
 		&test.VirtualMachinesClientBeginReimageOptions{Parameters: &test.VirtualMachineReimageParameters{
 			TempDisk: to.Ptr(true),
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -413,7 +410,7 @@ func ExampleVirtualMachinesClient_BeginAssessPatches() {
 	poller, err := client.BeginAssessPatches(ctx,
 		"<resource-group-name>",
 		"<vm-name>",
-		&test.VirtualMachinesClientBeginAssessPatchesOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -449,7 +446,7 @@ func ExampleVirtualMachinesClient_BeginInstallPatches() {
 				MaxPatchPublishDate: to.Ptr(func() time.Time { t, _ := time.Parse(time.RFC3339Nano, "2020-11-19T02:36:43.0539904+00:00"); return t }()),
 			},
 		},
-		&test.VirtualMachinesClientBeginInstallPatchesOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -478,7 +475,7 @@ func ExampleVirtualMachinesClient_BeginRunCommand() {
 		test.RunCommandInput{
 			CommandID: to.Ptr("<command-id>"),
 		},
-		&test.VirtualMachinesClientBeginRunCommandOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

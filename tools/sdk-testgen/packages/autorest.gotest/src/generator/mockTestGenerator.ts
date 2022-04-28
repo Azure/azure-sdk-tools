@@ -167,10 +167,6 @@ export class MockTestDataRender extends BaseDataRender {
     protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[], isClient = false): string {
         // get corresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
-            // ignore resumeToken param in options
-            if (name === 'ResumeToken') {
-                return '""';
-            }
             // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
             const isPolymophismValue = param?.schema?.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true;
             const isPtr: boolean = isPolymophismValue || !(param.required || param.language.go.byValue === true);
@@ -192,6 +188,10 @@ export class MockTestDataRender extends BaseDataRender {
             for (const insideParameter of group.originalParameter) {
                 if (insideParameter.implementation === ImplementationLocation.Client) {
                     // don't add globals to the per-method options struct
+                    continue;
+                }
+                if (this.getLanguageName(insideParameter) === 'ResumeToken') {
+                    // ignore resumeToken param in options
                     continue;
                 }
                 const insideOutput = findExampleParameter(this.getLanguageName(insideParameter), insideParameter);

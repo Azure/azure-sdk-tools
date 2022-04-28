@@ -8,10 +8,12 @@ from apistub.nodes import ClassNode, KeyNode, VariableNode, FunctionNode
 from apistubgentest.models import (
     FakeTypedDict,
     FakeObject,
+    GenericStack,
     PetEnumPy3MetaclassAlt,
     PublicPrivateClass,
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
+    SomeImplementationClass,
     SomethingWithDecorators,
     SomethingWithOverloads,
     SomethingWithProperties
@@ -153,3 +155,20 @@ class TestClassParsing:
             expect = expected[idx]
             _check(actual, expect, SomethingWithProperties)
 
+    def test_abstract_class(self):
+        class_node = ClassNode(name="SomeImplementationClass", namespace=f"apistubgentest.models.SomeImplementationClass", parent_node=None, obj=SomeImplementationClass, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "class apistubgentest.models.SomeImplementationClass(_SomeAbstractBase):",
+            "",
+            "def say_hello(self) -> str"
+        ]
+        for (idx, actual) in enumerate(actuals):
+            expect = expected[idx]
+            _check(actual, expect, SomethingWithProperties)
+        
+    def test_generic_class(self):
+        obj = GenericStack
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actual = _render_lines(_tokenize(class_node))[0]
+        _check(actual, "class GenericStack(Generic[T]):", obj)

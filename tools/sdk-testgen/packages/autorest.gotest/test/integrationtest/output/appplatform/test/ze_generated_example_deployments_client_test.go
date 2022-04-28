@@ -77,7 +77,7 @@ func ExampleDeploymentsClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -105,7 +105,7 @@ func ExampleDeploymentsClient_BeginDelete() {
 		"<service-name>",
 		"<app-name>",
 		"<deployment-name>",
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -141,7 +141,7 @@ func ExampleDeploymentsClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -222,7 +222,7 @@ func ExampleDeploymentsClient_BeginStart() {
 		"<service-name>",
 		"<app-name>",
 		"<deployment-name>",
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -248,7 +248,7 @@ func ExampleDeploymentsClient_BeginStop() {
 		"<service-name>",
 		"<app-name>",
 		"<deployment-name>",
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -274,7 +274,7 @@ func ExampleDeploymentsClient_BeginRestart() {
 		"<service-name>",
 		"<app-name>",
 		"<deployment-name>",
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

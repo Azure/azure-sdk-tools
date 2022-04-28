@@ -38,8 +38,7 @@ jobs:
         displayName: Install Requirements
 
       - pwsh: |
-          $configurations = '${{ convertToJson(parameters.PackageSpecifiers) }}' -replace '\\', '/' 
-          Write-Host $configurations
+          $configurations = '${{ convertToJson(parameters.PackageSpecifiers) }}' -replace '\\', '/' -replace '"' '`"'
           python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py $configurations --dest-dir='$(Build.ArtifactStagingDirectory)'
         displayName: 'Download Targeted Packages'
 

@@ -91,6 +91,7 @@ async function beforeRunTaskEngine(context: DockerTaskEngineContext) {
     if (!!context.resultOutputFolder && !fs.existsSync(context.resultOutputFolder)) {
         fs.mkdirSync(context.resultOutputFolder, {recursive: true});
     }
+    context.logger.info(`Start to run task engine in ${path.basename(context.sdkRepo)}`);
 }
 
 async function afterRunTaskEngine(context: DockerTaskEngineContext) {
@@ -106,6 +107,7 @@ async function afterRunTaskEngine(context: DockerTaskEngineContext) {
     if (!!context.taskResults) {
         writeFileSync(context.taskResultJsonPath, JSON.stringify(context.taskResults, undefined, 2), 'utf-8');
     }
+    context.logger.info(`Finish running task engine in ${path.basename(context.sdkRepo)}`);
 }
 
 async function getTaskToRun(context: DockerTaskEngineContext): Promise<string[]> {

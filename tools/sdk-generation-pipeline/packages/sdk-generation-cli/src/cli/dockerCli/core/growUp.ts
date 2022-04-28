@@ -1,7 +1,7 @@
 import { DockerContext } from "../dockerCli";
-import fs from "fs";
+import { doNotExitDockerContainer } from "./doNotExitDockerContainer";
 
 export async function growUp(dockerContext: DockerContext) {
     dockerContext.logger.info(`Please use vscode to connect this container.`)
-    fs.writeFileSync('/tmp/notExit', 'yes', 'utf-8');
+    doNotExitDockerContainer();
 }

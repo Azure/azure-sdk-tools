@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -87,6 +88,10 @@ namespace Azure.Sdk.Tools.TestProxy
                         });
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
+                    })
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
                     })
                 );
 

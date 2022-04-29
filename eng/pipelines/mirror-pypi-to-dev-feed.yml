@@ -64,7 +64,7 @@ jobs:
                 Write-Host "Failure to upload $($result)"
               }
 
-              Write-Host "Uploaded whl `"$($file.Name)`" to devops feed "${{ parameters.DevFeed }}"
+              Write-Host "Uploaded whl `"$($file.Name)`" to devops feed `"${{ parameters.DevFeed }}`""
             }
             catch{
               Write-Host $_

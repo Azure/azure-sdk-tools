@@ -14,6 +14,10 @@ class DataClassNode(ClassNode):
 
     def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(name=name, namespace=namespace, parent_node=parent_node, obj=obj, pkg_root_namespace=pkg_root_namespace)
+        # explicitly set synthesized __init__ return type to None to fix test flakiness
+        for child in self.child_nodes:
+            if child.display_name == "__init__":
+                child.return_type = None
         self.dataclass_params = self._extract_properties(getattr(obj, "__dataclass_params__", None))
         self._allow_list = [f"__{x.argname}__" for x in self.dataclass_params if x.default == True]
 

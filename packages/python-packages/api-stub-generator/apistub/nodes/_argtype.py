@@ -28,7 +28,7 @@ class ArgType:
             self.default = default
 
         if argtype and all([not self.is_required, self.default is None, not keyword in ["ivar", "param"], not argtype.startswith("Optional")]):
-                self.argtype = f"Optional[{argtype}]"
+            self.argtype = f"Optional[{argtype}]"
         else:
             self.argtype = argtype
         self.function_node = func_node

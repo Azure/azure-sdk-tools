@@ -271,7 +271,7 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        bases = getattr(self.obj, "__orig_bases__", getattr(self.obj, "__bases__", None)) or []
+        bases = getattr(self.obj, "__orig_bases__", None) or getattr(self.obj, "__bases__", None) or []
         for cl in [c for c in bases if c is not object]:
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes

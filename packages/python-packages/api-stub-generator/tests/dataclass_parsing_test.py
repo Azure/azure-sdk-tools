@@ -37,8 +37,8 @@ class TestDataClassParsing:
 
         init_string = _merge_lines(lines[8:13])
         # TODO: quantity_on_hand actually has a default value that should be displayed
-        # assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int = 0) -> None"
-        assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int) -> None"
+        # assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int = 0)"
+        assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int)"
         
 
     def test_dataclass_fields(self):
@@ -60,8 +60,8 @@ class TestDataClassParsing:
 
         init_string = _merge_lines(lines[9:15])
         # TODO: init should display defaults
-        #assert init_string == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int = 10, mylist: list[int] = list) -> None"
-        assert init_string == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int, mylist: list[int]) -> None"
+        #assert init_string == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int = 10, mylist: list[int] = list)"
+        assert init_string == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int, mylist: list[int])"
 
 
     def test_dataclass_dynamic(self):
@@ -89,8 +89,8 @@ class TestDataClassParsing:
 
         init_string = _merge_lines(lines[8:13])
         # TODO: init should display keyword only marker '*'
-        #assert init_string == "def __init__(x: float, *, y: float, z: float) -> None"
-        assert init_string == "def __init__(x: float, y: float, z: float) -> None"
+        #assert init_string == "def __init__(x: float, *, y: float, z: float)"
+        assert init_string == "def __init__(x: float, y: float, z: float)"
 
     def test_dataclass_with_post_init(self):
             obj = DataClassWithPostInit
@@ -107,4 +107,4 @@ class TestDataClassParsing:
             ], obj)
 
             init_string = lines[8].lstrip()
-            assert init_string == "def __init__(a: float, b: float) -> None"
+            assert init_string == "def __init__(a: float, b: float)"

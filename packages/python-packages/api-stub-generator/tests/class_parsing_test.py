@@ -156,7 +156,7 @@ class TestClassParsing:
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
         actuals = _render_lines(_tokenize(class_node))
         expected = [
-            "class apistubgentest.models.SomeImplementationClass(_SomeAbstractBase):",
+            "class SomeImplementationClass(_SomeAbstractBase):",
             "",
             "def say_hello(self) -> str"
         ]

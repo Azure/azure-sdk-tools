@@ -23,12 +23,12 @@ docker run -it -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work
 
 Parameter description:
 
-| Parameter                | Description                                                                                                                                                                                                                                                                       | Example                                          |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| { local_spec_repo_path } | Required. It's used to point to the swagger folder.                                                                                                                                                                                                                               | /home/test/azure-rest-api-specs                  |
-| { local_work_folder}     | Required. It's used to point to the work folder, which will store all sdk repositories. If there is no sdk repository in the folder, the docker image will clone it                                                                                                               | /home/test/sdk-repos                             |
-| { relative_readme }      | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                | specification/compute/resource-manager/readme.md |
-| {sdk_to_generate}        | Required. It's used to specify which language of sdk you want to generate. Supported value for management sdk: js, java, python, .net, and go. Supported value for dataplane sdk: js, java, python, and .net. If you want to generate multi-packages, use comma to separate them. | js,java                                          |
+| Parameter                | Description                                                                                                                                                                                                                                                                       | Example                                            |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
+| { local_spec_repo_path } | Required. It's used to point to the swagger folder.                                                                                                                                                                                                                               | /home/test/azure-rest-api-specs                    |
+| { local_work_folder}     | Required. It's used to point to the work folder, which will store all sdk repositories. If there is no sdk repository in the folder, the docker image will clone it                                                                                                               | /home/test/sdk-repos                               |
+| { relative_readme }      | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                | specification/agrifood/resource-manager/readme.md  |
+| {sdk_to_generate}        | Required. It's used to specify which language of sdk you want to generate. Supported value for management sdk: js, java, python, .net, and go. Supported value for dataplane sdk: js, java, python, and .net. If you want to generate multi-packages, use comma to separate them. | js,java                                            |
 
 Example Command:
 ```shell
@@ -100,15 +100,15 @@ docker run -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {outpu
 
 Parameter description:
 
-| Parameter           | Description                                                                                                                                        | Example                                          |
-|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| { spec_repo_path }  | Required. It's used to point to the swagger folder.                                                                                                | /home/test/azure-rest-api-specs                  |
-| { sdk_repo_path }   | Required. It's used to point to the sdk repository.                                                                                                | /home/test/sdk-repos                             |
-| { relative_readme } | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo} | specification/compute/resource-manager/readme.md |
+| Parameter           | Description                                                                                                                                        | Example                                             |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| { spec_repo_path }  | Required. It's used to point to the swagger folder.                                                                                                | /home/test/azure-rest-api-specs                     |
+| { sdk_repo_path }   | Required. It's used to point to the sdk repository.                                                                                                | /home/test/sdk-repos                                |
+| { relative_readme } | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo} | specification/agrifood/resource-manager/readme.md   |
 
 Example Command:
 ```shell
-docker run -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/compute/resource-manager/readme.md
+docker run -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output docker.image:latest --readme=specification/agrifood/resource-manager/readme.md
 ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

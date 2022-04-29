@@ -77,6 +77,8 @@ def get_qualified_name(obj, namespace: str) -> str:
     module_name = getattr(obj, "__module__", "")
 
     if module_name.startswith("astroid"):
+        # FIXME: Here is where the problem lies... we may need to recursively build up this string and
+        # preserve quotes as needed.
         return obj.as_string()
     elif module_name == "types":
         return str(obj)

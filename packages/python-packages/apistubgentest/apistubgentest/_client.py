@@ -1,6 +1,6 @@
 from datetime import datetime
 from azure.core.paging import ItemPaged
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Any, Literal
 
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
@@ -79,6 +79,9 @@ class Python3TypeHintClient:
         pass
 
     def with_datetime_typehint(self, date: datetime) -> datetime:
+        pass
+
+    def with_literal_typehints(self, stringlit: Literal["cat", "dog"], intlit: Literal[1, 2, 3], nonelit: Literal[None], enumlit: Literal[PetEnumPy3Metaclass.DOG]):
         pass
 
 

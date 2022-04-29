@@ -95,7 +95,15 @@ class TestTypeHints:
             node = FunctionNode("test", None, obj=client.with_datetime_typehint)
             actual = _render_string(_tokenize(node))
             expected = "def with_datetime_typehint(self, date: datetime) -> datetime"
-            _check(actual, expected, client)    
+            _check(actual, expected, client)
+
+    """ Ensure typing Literal typehints display properly. """
+    def test_typing_literal_typehints(self):
+        node = FunctionNode("test", None, obj=Python3TypeHintClient.with_literal_typehints)
+        tokens = _tokenize(node)
+        actual = _render_string(tokens)
+        expected = "def with_literal_typehints(self, stringlit: Literal['cat', 'dog'], intlit: Literal[1, 2, 3], nonelit: Literal[None], enumlit: Literal[DOG])"
+        _check(actual, expected, Python3TypeHintClient)
 
 
 class TestDefaultValues:

@@ -56,11 +56,12 @@ jobs:
       - pwsh: |
           $results = Get-ChildItem -Force -Path $(Build.ArtifactStagingDirectory)
           foreach($file in $results){
+            Write-Host "Uploading $file"
             try {
               $result = twine upload --repository "${{ parameters.DevFeed }}" --config-file $(PYPIRC_PATH) $($file.Name)
   
               if ($LASTEXITCODE -gt 0) {
-                Write-Host "Failure to Upload: $($result)"
+                Write-Host "Failure to upload $($result)"
               }
 
               Write-Host "Uploaded whl `"$($file.Name)`" to devops feed "${{ parameters.DevFeed }}"

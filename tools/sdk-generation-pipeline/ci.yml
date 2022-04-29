@@ -67,6 +67,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
+            npm i -g autorest
             rushx test
           displayName: 'Test @azure-tools/sdk-generation-cli'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli

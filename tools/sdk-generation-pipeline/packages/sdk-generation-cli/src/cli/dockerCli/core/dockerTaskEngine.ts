@@ -149,6 +149,7 @@ async function runInitTask(context: DockerTaskEngineContext) {
     }
     if (fs.existsSync(context.initOutput)) {
         const initOutputJson = initOutput(requireJsonc(context.initOutput));
+        context.logger.info(`Get ${path.basename(context.initOutput)}:`);
         context.logger.info(JSON.stringify(initOutputJson, undefined, 2));
 
         if (initOutputJson?.envs) {
@@ -176,6 +177,7 @@ async function runGenerateAndBuildTask(context: DockerTaskEngineContext) {
         serviceType: context.serviceType
     };
     const inputJson = JSON.stringify(inputContent, undefined, 2)
+    context.logger.info(`Get ${path.basename(context.generateAndBuildInputJson)}:`);
     context.logger.info(inputJson);
     fs.writeFileSync(context.generateAndBuildInputJson, inputJson, {encoding: 'utf-8'});
     addFileLog(context.logger, context.generateAndBuildTaskLog, 'generateAndBuild');
@@ -192,6 +194,7 @@ async function runGenerateAndBuildTask(context: DockerTaskEngineContext) {
     }
     if (fs.existsSync(context.generateAndBuildOutputJson)) {
         const generateAndBuildOutputJson = getGenerateAndBuildOutput(requireJsonc(context.generateAndBuildOutputJson));
+        context.logger.info(`Get ${path.basename(context.generateAndBuildOutputJson)}:`);
         context.logger.info(JSON.stringify(generateAndBuildOutputJson, undefined, 2));
         const packageFolders: string[] = [];
         for (const p of generateAndBuildOutputJson.packages) {
@@ -216,12 +219,13 @@ async function runMockTestTask(context: DockerTaskEngineContext) {
             mockServerHost: context.mockServerHost
         };
         const inputJson = JSON.stringify(inputContent, undefined, 2)
-        context.logger.info(inputJson);
         const formattedPackageName = packageFolder.replace(/[^a-zA-z0-9]/g, '-');
         const mockTestInputJsonPath = context.packageFolders.length > 1? context.mockTestInputJson.replace('.json', `${formattedPackageName}.json`) : context.mockTestInputJson;
         const mockTestOutputJsonPath = context.packageFolders.length > 1? context.mockTestOutputJson.replace('.json', `${formattedPackageName}.json`) : context.mockTestOutputJson;
         const mockTestTaskLogPath = context.packageFolders.length > 1? context.mockTestTaskLog.replace('task.log', `${formattedPackageName}-task.log`) : context.mockTestTaskLog;
         fs.writeFileSync(mockTestInputJsonPath, inputJson, {encoding: 'utf-8'});
+        context.logger.info(`Get ${path.basename(mockTestInputJsonPath)}:`);
+        context.logger.info(inputJson);
         addFileLog(context.logger, mockTestTaskLogPath, `mockTest_${formattedPackageName}`);
         const executeResult = await runScript(runOptions, {
             cwd: path.resolve(context.sdkRepo),
@@ -233,6 +237,7 @@ async function runMockTestTask(context: DockerTaskEngineContext) {
         removeFileLog(context.logger, `mockTest_${formattedPackageName}`);
         if (fs.existsSync(mockTestOutputJsonPath)) {
             const mockTestOutputJson = getTestOutput(requireJsonc(mockTestOutputJsonPath))
+            context.logger.info(`Get ${path.basename(mockTestOutputJsonPath)}:`);
             context.logger.info(JSON.stringify(mockTestOutputJson, undefined, 2));
         }
         if (context.taskResults['mockTest'] === 'failure') {

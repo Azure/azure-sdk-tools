@@ -6,7 +6,7 @@ dotenv.config();
 export class DockerCliConfig {
     readmeMdPath: string;
     tag: string;
-    sdkToGenerate: string;
+    sdk: string;
     specRepo: string;
     workDir: string;
     sdkRepo: string;
@@ -29,10 +29,10 @@ export const dockerCliConfig = convict<DockerCliConfig>({
         format: String,
         doc: 'The tag used to generated codes. If not defined, default tag will be used'
     },
-    sdkToGenerate: {
+    sdk: {
         default: '',
-        env: 'SDK_TO_GENERATE',
-        arg: 'sdk-to-generate',
+        env: 'SDK',
+        arg: 'sdk',
         format: String,
         doc: 'which language of sdks do you want to generate? you can input multi language splitted by comma'
     },

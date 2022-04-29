@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { DockerCliConfig, dockerCliConfig } from "./schema/dockerCliConfig";
 import { generateCodesInLocal } from "./core/generateCodesInLocal";
 import { generateCodesInPipeline } from "./core/generateCodesInPipeline";

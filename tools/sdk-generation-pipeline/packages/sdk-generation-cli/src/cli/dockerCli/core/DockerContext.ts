@@ -9,7 +9,7 @@ export class DockerContext {
     mode: 'generateCodesInLocal' | 'growUp' | 'generateCodesInPipeline';
     readmeMdPath?: string;
     tag?: string;
-    sdkToGenerate: string[];
+    sdk: string[];
     specRepo?: string;
     workDir?: string;
     sdkRepo?: string;
@@ -25,7 +25,7 @@ export class DockerContext {
     public initialize(inputParams: DockerCliConfig) {
         this.readmeMdPath = inputParams.readmeMdPath;
         this.tag = inputParams.tag;
-        this.sdkToGenerate = inputParams.sdkToGenerate?.split(',').map(e => e.trim()).filter(e => e.length > 0);
+        this.sdk = inputParams.sdk?.split(',').map(e => e.trim()).filter(e => e.length > 0);
         this.specRepo = inputParams.specRepo;
         this.workDir = inputParams.workDir;
         this.sdkRepo = inputParams.sdkRepo;
@@ -33,7 +33,7 @@ export class DockerContext {
 
         this.logger = initializeLogger(path.join(inputParams.resultOutputFolder, inputParams.dockerLogger), 'docker');
 
-        if (this.sdkToGenerate?.length === 0 && fs.existsSync(this.workDir)) {
+        if (this.sdk?.length === 0 && fs.existsSync(this.workDir)) {
             this.logger.info('Preparing environment to do grow up development');
             this.mode = 'growUp';
             this.validateSpecRepo();
@@ -43,7 +43,7 @@ export class DockerContext {
             this.mode = "generateCodesInLocal";
             this.validateSpecRepo();
             this.validateReadmeMdPath();
-            this.validateSdkToGenerate();
+            this.validatesdk();
         } else {
             this.logger.info('Preparing environment to generate codes in pipeline');
             this.mode = 'generateCodesInPipeline';
@@ -69,10 +69,10 @@ export class DockerContext {
         }
     }
 
-    private validateSdkToGenerate() {
+    private validatesdk() {
         const supportedSdk = Object.keys(sdkToRepoMap);
         const unSupportedSdk: string[] = [];
-        for (const sdk of this.sdkToGenerate) {
+        for (const sdk of this.sdk) {
             if (!supportedSdk.includes(sdk)) {
                 unSupportedSdk.push(sdk);
             }

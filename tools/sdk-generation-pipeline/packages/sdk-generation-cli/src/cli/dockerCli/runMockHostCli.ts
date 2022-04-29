@@ -31,9 +31,11 @@ export function runMockHost() {
         ...dockerMockHostConfig.getProperties()
     }
     const context = initializeDockerMockHostContext(inputParams);
-    const swaggerJsonFilePattern = context.readmeMdPath
-        ? context.readmeMdPath.replace(/readme[.a-z-]*.md/gi, '**/*.json')
-        : undefined;
+    if (!context.readmeMdPath) {
+        context.logger.log('cmdout', `Cannot get valid readme, so do not start mock server.`);
+        return;
+    }
+    const swaggerJsonFilePattern = context.readmeMdPath.replace(/readme[.a-z-]*.md/gi, '**/*.json');
     const child = spawn(`node`,[`node_modules/@azure-tools/mock-service-host/dist/src/main.js`], {
         cwd: context.mockHostPath,
         env: {

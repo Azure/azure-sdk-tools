@@ -28,6 +28,10 @@ function cloneSdkRepoIfNotExist() {
             stdio: 'inherit'
         });
     }
+    execSync(`git checkout . && git clean -fd`, {
+        cwd: path.join('tmp', 'sdk-repo'),
+        stdio: 'inherit'
+    });
     execSync(`git checkout 67946c5b0ce135f58ecfeab1443e5be52604908e`, {
         cwd: path.join('tmp', 'sdk-repo'),
         stdio: 'inherit'

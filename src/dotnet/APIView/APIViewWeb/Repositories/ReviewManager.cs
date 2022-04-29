@@ -543,33 +543,6 @@ namespace APIViewWeb.Repositories
                     _telemetryClient.StopOperation(operation);
                 }
             }
-
-            await SyncPackageDisplayServiceName();
-        }
-
-        private async Task SyncPackageDisplayServiceName()
-        {
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All");
-            foreach (var review in reviews.Where(r => r.ServiceName == null || r.ServiceName == "Other"))
-            {
-                var newServiceName = review.ServiceName ?? "Other";
-                var newDisplayName = review.PackageDisplayName ?? "Other";
-                var pkg = _packageNameManager.GetPackageDetails(review.PackageName);
-                if (pkg != null)
-                {
-                    newServiceName = pkg.ServiceName;
-                    newDisplayName = pkg.DisplayName;
-                }
-
-                if (newServiceName != review.ServiceName || newDisplayName != review.PackageDisplayName)
-                {
-                    review.ServiceName = newServiceName;
-                    review.PackageDisplayName = newDisplayName;
-                    await _reviewsRepository.UpsertReviewAsync(review);
-                }
-                // Wait before processing next review to delay background task
-                await Task.Delay(1000);
-            }
         }
 
         public async Task<CodeFile> GetCodeFile(string repoName,

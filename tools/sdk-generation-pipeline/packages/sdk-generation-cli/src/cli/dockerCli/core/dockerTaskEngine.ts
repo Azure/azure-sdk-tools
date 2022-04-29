@@ -52,6 +52,7 @@ export type DockerTaskEngineContext = {
     mockServerHost?: string;
     taskResults?: {};
     taskResultJsonPath: string;
+    changeOwner: boolean
 }
 
 export function initializeDockerTaskEngineContext(dockerContext: DockerContext): DockerTaskEngineContext {
@@ -82,7 +83,8 @@ export function initializeDockerTaskEngineContext(dockerContext: DockerContext):
         sdkRepo: dockerContext.sdkRepo,
         resultOutputFolder: dockerContext.resultOutputFolder ?? '/tmp/output',
         mockServerHost: dockerTaskEngineConfigProperties.mockServerHost,
-        taskResultJsonPath: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson)
+        taskResultJsonPath: path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.taskResultJson),
+        changeOwner: dockerTaskEngineConfigProperties.changeOwner
     }
     return dockerTaskEngineContext;
 }
@@ -95,14 +97,15 @@ async function beforeRunTaskEngine(context: DockerTaskEngineContext) {
 }
 
 async function afterRunTaskEngine(context: DockerTaskEngineContext) {
-    if (!context.specRepo?.repoPath || !fs.existsSync(context.specRepo.repoPath)) return;
-    const userGroupId = (execSync(`stat -c "%u:%g" ${context.specRepo.repoPath}`, {encoding: "utf8"})).trim();
-    if (!!context.resultOutputFolder && fs.existsSync(context.resultOutputFolder)) {
-        execSync(`chown -R ${userGroupId} ${context.specRepo.repoPath}`);
-    }
-    if (!!context.sdkRepo && fs.existsSync(context.sdkRepo)) {
-        execSync(`chown -R ${userGroupId} ${context.sdkRepo}`, {encoding: "utf8"});
-        disableFileMode(context.sdkRepo);
+    if (context.changeOwner && !!context.specRepo?.repoPath && !!fs.existsSync(context.specRepo.repoPath)) {
+        const userGroupId = (execSync(`stat -c "%u:%g" ${context.specRepo.repoPath}`, {encoding: "utf8"})).trim();
+        if (!!context.resultOutputFolder && fs.existsSync(context.resultOutputFolder)) {
+            execSync(`chown -R ${userGroupId} ${context.specRepo.repoPath}`);
+        }
+        if (!!context.sdkRepo && fs.existsSync(context.sdkRepo)) {
+            execSync(`chown -R ${userGroupId} ${context.sdkRepo}`, {encoding: "utf8"});
+            disableFileMode(context.sdkRepo);
+        }
     }
     if (!!context.taskResults) {
         writeFileSync(context.taskResultJsonPath, JSON.stringify(context.taskResults, undefined, 2), 'utf-8');

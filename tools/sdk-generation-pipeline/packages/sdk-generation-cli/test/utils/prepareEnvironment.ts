@@ -23,12 +23,12 @@ function cloneSpecRepoIfNotExist() {
 
 function cloneSdkRepoIfNotExist() {
     if (!existsSync(path.join('tmp', 'sdk-repo'))) {
-        execSync(`git clone https://github.com/Azure/azure-sdk-for-go.git sdk-repo`, {
+        execSync(`git clone https://github.com/Azure/azure-sdk-for-js.git sdk-repo`, {
             cwd: 'tmp',
             stdio: 'inherit'
         });
     }
-    execSync(`git checkout 0fd3f1b104984ab6e35dfbd2079fde4531bf6e60`, {
+    execSync(`git checkout 67946c5b0ce135f58ecfeab1443e5be52604908e`, {
         cwd: path.join('tmp', 'sdk-repo'),
         stdio: 'inherit'
     });

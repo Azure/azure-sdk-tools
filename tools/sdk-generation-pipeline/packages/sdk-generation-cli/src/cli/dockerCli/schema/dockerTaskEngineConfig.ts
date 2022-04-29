@@ -19,6 +19,7 @@ export class DockerTaskEngineConfig {
     generateAndBuildTaskLog: string;
     mockTestTaskLog: string;
     taskResultJson: string;
+    changeOwner: boolean;
 }
 
 export const dockerTaskEngineConfig = convict<DockerTaskEngineConfig>({
@@ -117,5 +118,11 @@ export const dockerTaskEngineConfig = convict<DockerTaskEngineConfig>({
         env: 'TASK_RESULT_JSON',
         format: String,
         doc: 'The relative path to taskResult.json. It will concat with resultOutputFolder'
+    },
+    changeOwner: {
+        default: true,
+        env: 'CHANGE_OWNER',
+        format: Boolean,
+        doc: 'When the commands run in docker, it is required to change the sdk owner because generated codes is owned by root'
     }
 });

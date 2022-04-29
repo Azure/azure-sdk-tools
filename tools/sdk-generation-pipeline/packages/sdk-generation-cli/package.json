@@ -49,36 +49,5 @@
     "@types/jest": "^25.2.1",
     "typescript": "~4.6.3",
     "ts-node": "~10.7.0"
-  },
-  "jest": {
-    "verbose": true,
-    "testEnvironment": "node",
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "src/**/*.ts"
-    ],
-    "coveragePathIgnorePatterns": [
-      "src/cli/pipelineCli",
-      "src/cli/dockerCli/*Cli.ts"
-    ],
-    "roots": [
-      "<rootDir>/src/",
-      "<rootDir>/test/"
-    ],
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "test/.*.test.ts",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ],
-    "testPathIgnorePatterns": [
-      "__snapshots__"
-    ]
   }
 }

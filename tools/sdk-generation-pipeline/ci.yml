@@ -67,6 +67,11 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
+            rushx test
+          displayName: 'Test @azure-tools/sdk-generation-cli'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+        - script: |
             rushx pack
           displayName: 'Pack @azure-tools/sdk-generation-lib'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib

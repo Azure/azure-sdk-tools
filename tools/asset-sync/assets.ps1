@@ -15,39 +15,27 @@ is present A "root" directory is one where a assets.json is present OR where we 
 we can possibly ascend. 
 
 .PARAMETER TargetPath
-The path we will evaulate to detect either a root directory or a .git folder.
+A targeted directory. This MUST be a directory, not a file path.
 #>
 Function Evaluate-Target-Dir {
     param (
         [Parameter(Mandatory = $true)]
         [string] $TargetPath
     )
+    if (!(Test-Path $TargetPath)){
+        return @(
+            $false, $false
+        )
+    }
 
-    $isFile = Test-Path $TargetPath -PathType Leaf
-    $foundConfig = $false
-    $foundRoot = $false
-
-    if ($isFile) {
+    # can't handle files here
+    if (Test-Path $TargetPath -PathType Leaf) {
         throw "Evaluated a file `"$TargetPath`" as a directory. Exiting."
     }
 
-    # we need to force to ensure we grab hidden files in the directory dump
-    $files = Get-ChildItem -Force $TargetPath
-
-    foreach($file in $files)
-    {
-        if($file.Name.ToLower() -eq "assets.json"){
-            $foundConfig = $true
-        }
-
-        # need to ensure that if we're outside a git repo, we will still break out eventually.
-        if(($file.Name.ToLower() -eq ".git") -or -not (Split-Path $TargetPath)){
-            $foundRoot = $true
-        }
-    }
-
     return @(
-        $foundConfig, $foundRoot
+        (Test-Path -Path (Join-Path $TargetPath "assets.json")),
+        (Test-Path -Path (Join-Path $TargetPath ".git"))
     )
 }
 
@@ -197,7 +185,7 @@ Function Get-Default-Branch {
     param(
         $Config
     )
-    $repoJsonResult = curl "https://api.github.com/repos/$($Config.AssetsRepo)"
+    $repoJsonResult = Invoke-RestMethod -Method "GET" -Uri "https://api.github.com/repos/$($Config.AssetsRepo)"
     return ($repoJsonResult | ConvertFrom-Json).default_branch
 }
 

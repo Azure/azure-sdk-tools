@@ -444,7 +444,7 @@ Function Push-AssetsRepo-Update {
         Write-Host "Latest SHA is $retrievedLatestSHA."
 
         # if the above command fails with code 128, the target auto commit branch does not exist, and we need to create it
-        if($LASTEXITCODE -ne 0 -and $LASTEXITCODE -eq 128){
+        if($LASTEXITCODE -eq 128){
             Write-Host "Need to checkout new branch based on current changes."
             $alreadyLatestSHA = $true
         }

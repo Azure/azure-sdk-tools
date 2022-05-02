@@ -130,7 +130,7 @@ Function Resolve-AssetsJson {
 
             # relpaths are returned with "./<blah>"
             # given that, we need to get rid of it. This has possibility for bugs down the line.
-            $relPath = $relPath -replace "^\.\/"
+            $relPath = $relPath -replace "^(\.\/)|(\.\\)"
         }
         finally {
             Pop-Location

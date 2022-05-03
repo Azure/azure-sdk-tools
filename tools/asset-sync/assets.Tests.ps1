@@ -9,7 +9,7 @@ BeforeAll {
   }
 
   # clean up local .assets folder
-  $location = Resolve-AssetStore-Location
+  $location = ResolveAssetStoreLocation
   if (Test-Path $location){
     Remove-Item -Recurse -Force $location
   }
@@ -54,7 +54,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Resolve-AssetsJson" {
+  Context "ResolveAssetsJson" {
     It "Should find basic assets.json" {
       $files = @(
         "a/b.json",
@@ -65,7 +65,7 @@ Describe "AssetsModuleTests" {
       
       $testLocation.GetType().Name | Should -Be "String"
 
-      $Config = Resolve-AssetsJson -TargetPath $testLocation
+      $Config = ResolveAssetsJson -TargetPath $testLocation
       $recordingLocation = $Config.AssetsJsonLocation
       $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
     }
@@ -78,7 +78,7 @@ Describe "AssetsModuleTests" {
       )
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
-      $Result = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
+      $Result = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
       $recordingLocation = $Result.AssetsJsonLocation
       $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
     }
@@ -93,7 +93,7 @@ Describe "AssetsModuleTests" {
       
       try {
         Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
-        $Result = Resolve-AssetsJson
+        $Result = ResolveAssetsJson
         $recordingLocation = $Result.AssetsJsonLocation
         $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
       }
@@ -112,7 +112,7 @@ Describe "AssetsModuleTests" {
       
       try {
         Push-Location -Path (Join-Path $testLocation "a" "b")
-        { Resolve-AssetsJson -TargetPath $testLocation } | Should -Throw
+        { ResolveAssetsJson -TargetPath $testLocation } | Should -Throw
       }
       finally {
         Pop-Location
@@ -127,7 +127,7 @@ Describe "AssetsModuleTests" {
       )
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
 
-      $Result = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )
+      $Result = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )
       $expectedValue = (Join-Path "sdk" "storage" "assets.json")
 
       $recordingLocation = $Result.AssetsJsonRelativeLocation
@@ -141,7 +141,7 @@ Describe "AssetsModuleTests" {
       $jsonContent = Get-Basic-AssetsJson
       Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
 
-      $result = Resolve-AssetStore-Location
+      $result = ResolveAssetStoreLocation
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".assets")
       $result | Should -Be $expectedLocation.ToString()
     }
@@ -150,8 +150,8 @@ Describe "AssetsModuleTests" {
       $files = @()
       $jsonContent = Get-Basic-AssetsJson -RandomizeRepoId $false
       $testPath = Describe-TestFolder -AssetsJsonContent $jsonContent -Files $files
-      $config = Resolve-AssetsJson -TargetPath $testPath
-      $result = Resolve-AssetRepo-Location -Config $config
+      $config = ResolveAssetsJson -TargetPath $testPath
+      $result = ResolveAssetRepoLocation -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
       $expectedLocation = Resolve-Path(Join-Path $PSScriptRoot ".." ".." ".assets" "$expectedHash")
 
@@ -163,8 +163,8 @@ Describe "AssetsModuleTests" {
       $jsonContent.AssetsRepoId = "custom"
 
       $testPath = Describe-TestFolder -AssetsJsonContent $jsonContent -Files @()
-      $config = Resolve-AssetsJson -TargetPath $testPath
-      $result = Resolve-AssetRepo-Location -Config $config
+      $config = ResolveAssetsJson -TargetPath $testPath
+      $result = ResolveAssetRepoLocation -Config $config
       $expectedHash = "D41D8CD98F00B204E9800998ECF8427E"
 
       $expectedLocation = Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".assets" "$expectedHash")
@@ -173,23 +173,23 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "Update-AssetsJson" {
+  Context "UpdateAssetsJson" {
     It "Should update a targeted recording.json w/ a new SHA and output without mangling the json file." {
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
-      $config = Resolve-AssetsJson -TargetPath $testLocation
+      $config = ResolveAssetsJson -TargetPath $testLocation
 
       $config.AssetsJsonLocation
     }
 
     It "Should no-op if no change." {
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
-      $config = Resolve-AssetsJson -TargetPath $testLocation
+      $config = ResolveAssetsJson -TargetPath $testLocation
 
       $config.AssetsJsonLocation
     }
   }
 
-  Context "Resolve-CheckoutPaths" {
+  Context "ResolveCheckoutPaths" {
     It "Should correctly resolve a non-root checkout path format." {
       $files = @(
         "sdk/storage/",
@@ -198,9 +198,9 @@ Describe "AssetsModuleTests" {
       )
       $assetsContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
-      $config = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
+      $config = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
 
-      $checkoutPaths = Resolve-CheckoutPaths -Config $config
+      $checkoutPaths = ResolveCheckoutPaths -Config $config
       $checkoutPaths | Should -Be (Join-Path "recordings" "sdk" "storage").Replace("`\", "/")
     }
 
@@ -211,14 +211,14 @@ Describe "AssetsModuleTests" {
       )
       $assetsContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
-      $config = Resolve-AssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
+      $config = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
 
-      $checkoutPaths = Resolve-CheckoutPaths -Config $config
+      $checkoutPaths = ResolveCheckoutPaths -Config $config
       $checkoutPaths | Should -Be "recordings/"
     }
   }
 
-  Context "Initialize-AssetsRepo" {
+  Context "InitializeAssetsRepo" {
     It "Should create assets repo for standard sync." {
       $files = @(
         "sdk/storage/",
@@ -227,12 +227,12 @@ Describe "AssetsModuleTests" {
       $assetsContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
 
-      $config = Resolve-AssetsJson -TargetPath $testLocation
+      $config = ResolveAssetsJson -TargetPath $testLocation
 
-      Initialize-AssetsRepo -Config $config
-      $assetLocation = Resolve-AssetRepo-Location -Config $config
+      InitializeAssetsRepo -Config $config
+      $assetLocation = ResolveAssetRepoLocation -Config $config
 
-      $result = Is-AssetsRepo-Initialized -Config $config
+      $result = IsAssetsRepoInitialized -Config $config
 
       $result | Should -Be "$true"
     }
@@ -241,11 +241,11 @@ Describe "AssetsModuleTests" {
       $files = @()
       $JsonContent = Get-Basic-AssetsJson
       $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
-      $config = Resolve-AssetsJson -TargetPath $testLocation
+      $config = ResolveAssetsJson -TargetPath $testLocation
 
-      Initialize-AssetsRepo -Config $config
+      InitializeAssetsRepo -Config $config
 
-      $parsedResult = Is-AssetsRepo-Initialized -Config $config
+      $parsedResult = IsAssetsRepoInitialized -Config $config
       $parsedResult | Should -Be $true
     }
 
@@ -259,7 +259,7 @@ Describe "AssetsModuleTests" {
   #    - Auto Branch Doesn't Exist Yet, Go Off Main, push to new branch
   #    - Auto Branch Exists, we're on the latest commit, push new commit to branch
   #    - Auto Branch Exists, we're on a commit from the past, push new commit to branch
-  Context "Push-AssetsRepo-Update" {
+  Context "PushAssetsRepoUpdate" {
     It "Should push a new branch/commit to a non-existent target branch." {
       $sourceBranch = "scenario_new_push"
       $recordingJson = [PSCustomObject]@{
@@ -277,10 +277,10 @@ Describe "AssetsModuleTests" {
       )
 
       $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
-      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+      $config = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
-      Initialize-AssetsRepo -Config $config
-      $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
+      InitializeAssetsRepo -Config $config
+      $assetRepoFolder = ResolveAssetRepoLocation -Config $config
       
       foreach($file in $files){
         $sourcePath = Join-Path $testFolder $file 
@@ -295,7 +295,7 @@ Describe "AssetsModuleTests" {
       }
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Push-AssetsRepo-Update -Config $Config
+      PushAssetsRepoUpdate -Config $Config
 
       try {
         Push-Location $assetRepoFolder
@@ -306,7 +306,7 @@ Describe "AssetsModuleTests" {
       }
 
       # re-parse from the on-disk json
-      $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+      $configReparsed = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
       # re-parsed config from disk should
       #  -> match the updated sha
@@ -332,11 +332,11 @@ Describe "AssetsModuleTests" {
       )
 
       $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
-      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables")
+      $config = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables")
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
       
-      Initialize-AssetsRepo -Config $config
-      $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
+      InitializeAssetsRepo -Config $config
+      $assetRepoFolder = ResolveAssetRepoLocation -Config $config
 
       foreach($file in $files){
         $sourcePath = Join-Path $testFolder $file 
@@ -351,7 +351,7 @@ Describe "AssetsModuleTests" {
       }
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Push-AssetsRepo-Update -Config $Config
+      PushAssetsRepoUpdate -Config $Config
 
       try {
         Push-Location $assetRepoFolder
@@ -362,7 +362,7 @@ Describe "AssetsModuleTests" {
       }
 
       # re-parse from the on-disk json
-      $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+      $configReparsed = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
       # re-parsed config from disk should
       #  -> match the updated sha
@@ -388,11 +388,11 @@ Describe "AssetsModuleTests" {
       )
 
       $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IntegrationBranch $recordingJson.AssetsRepoBranch
-      $config = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables")
+      $config = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables")
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Initialize-AssetsRepo -Config $config
-      $assetRepoFolder = Resolve-AssetRepo-Location -Config $config
+      InitializeAssetsRepo -Config $config
+      $assetRepoFolder = ResolveAssetRepoLocation -Config $config
 
       foreach($file in $files){
         $sourcePath = Join-Path $testFolder $file 
@@ -407,7 +407,7 @@ Describe "AssetsModuleTests" {
       }
       $config.AssetsRepoBranch | Should -not -Be $sourceBranch
 
-      Push-AssetsRepo-Update -Config $Config
+      PushAssetsRepoUpdate -Config $Config
 
       try {
         Push-Location $assetRepoFolder
@@ -418,7 +418,7 @@ Describe "AssetsModuleTests" {
       }
 
       # re-parse from the on-disk json
-      $configReparsed = Resolve-AssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
+      $configReparsed = ResolveAssetsJson (Join-Path $testFolder "sdk" "tables" "azure-data-tables")
 
       # re-parsed config from disk should
       #  -> match the updated sha

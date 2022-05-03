@@ -78,7 +78,7 @@ Traverses upwards until it hits either a `.git` folder or a `assets.json` file. 
 .PARAMETER TargetPath
 Optional argument specifying the directory to start traversing up from. If not provided, current working directory will be used.
 #>
-Function Resolve-AssetsJson {
+Function ResolveAssetsJson {
     param (
         [Parameter(Mandatory = $false)]
         [string] $TargetPath
@@ -135,7 +135,7 @@ Function Resolve-AssetsJson {
 .SYNOPSIS
 Returns the location of the "assets" store. This should return a string of the form "<path to language repo root>/.assets."
 #>
-Function Resolve-AssetStore-Location {
+Function ResolveAssetStoreLocation {
     if (-not (Test-Path $ASSETS_STORE)){
         New-Item -Type Directory -Force -Path $ASSETS_STORE | Out-Null
     }
@@ -150,7 +150,7 @@ Takes an input string, returns the MD5 hash for the entire thing.
 .PARAMETER Input
 Any string.
 #>
-Function Get-MD5-Hash {
+Function GetMD5Hash {
     param(
         [Parameter(Mandatory=$true)]
         [string] $Input
@@ -170,14 +170,14 @@ Given a configuration, where will the assets repo exist? This function will both
 that directory exists.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Resolve-AssetRepo-Location {
+Function ResolveAssetRepoLocation {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
     )
-    $assetsLocation = Resolve-AssetStore-Location
+    $assetsLocation = ResolveAssetStoreLocation
     $repoName = $Config.AssetsRepo.Replace("/", ".")
 
     # this is where we will need to handle the multi-copying of the repository.
@@ -188,7 +188,7 @@ Function Resolve-AssetRepo-Location {
         $repoName = $Config.AssetsRepoId
     }
 
-    $repoNameHashed = Get-MD5-Hash -Input ((Join-Path $repoName $Config.AssetsJsonRelativeLocation).ToString())
+    $repoNameHashed = GetMD5Hash -Input ((Join-Path $repoName $Config.AssetsJsonRelativeLocation).ToString())
 
     $repoPath = (Join-Path $assetsLocation $repoNameHashed.Hash)
     
@@ -204,9 +204,9 @@ Function Resolve-AssetRepo-Location {
 Gets the default branch from the git repo targeted in a assets.json.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Get-Default-Branch {
+Function GetDefaultBranch {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
@@ -220,15 +220,15 @@ Function Get-Default-Branch {
 This function returns a boolean that indicates whether or not the assets repo has been initialized.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Is-AssetsRepo-Initialized {
+Function IsAssetsRepoInitialized {
     param(
         [PSCustomObject] $Config
     )
 
     $result = $false
-    $assetRepoLocation = Resolve-AssetRepo-Location -Config $Config
+    $assetRepoLocation = ResolveAssetRepoLocation -Config $Config
 
     try {
         Push-Location $assetRepoLocation
@@ -252,9 +252,9 @@ Function Is-AssetsRepo-Initialized {
 Given a configuration, determine which paths must be added to the sparse checkout of the assets repo.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Resolve-CheckoutPaths {
+Function ResolveCheckoutPaths {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
@@ -279,14 +279,14 @@ Resolve which branch on the assets repo should be checked out, given an input Co
 Determines the presence of a branch on the git repo. If the relevant auto/<service> branch does not exist, we should use main.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Resolve-TargetBranch {
+Function ResolveTargetBranch {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
     )
-    $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    $assetRepo = ResolveAssetRepoLocation -Config $Config
     $branch = "main"
     try {
         Push-Location $assetRepo
@@ -312,20 +312,20 @@ Initializes a recordings repo based on an assets.json file.
 This Function will NOT re-initialize a repo if it discovers the repo already ready to go.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json content from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json content from ResolveAssetsJson.
 
 .PARAMETER ForceReinitialize
 Should this assets repo be renewed regardless of current status?
 #>
-Function Initialize-AssetsRepo {
+Function InitializeAssetsRepo {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config,
         [Parameter(Mandatory=$false)]
         [boolean] $ForceReinitialize = $false
     )
-    $assetRepo = Resolve-AssetRepo-Location -Config $Config
-    $initialized = Is-AssetsRepo-Initialized -Config $Config
+    $assetRepo = ResolveAssetRepoLocation -Config $Config
+    $initialized = IsAssetsRepoInitialized -Config $Config
     $workCompleted = $false
 
     if ($ForceReinitialize)
@@ -341,14 +341,14 @@ Function Initialize-AssetsRepo {
             Write-Host "git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) ."
             git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) .
 
-            $targetPath = Resolve-CheckoutPaths -Config $Config
-            $targetBranch = Resolve-TargetBranch -Config $Config
+            $targetPath = ResolveCheckoutPaths -Config $Config
+            $targetBranch = ResolveTargetBranch -Config $Config
 
             Write-Host "git sparse-checkout init"
             git sparse-checkout init
 
-            Write-Host "git sparse-checkout set '/*' '!/*/' $targetPath"
-            git sparse-checkout set '/*' '!/*/' $targetPath
+            Write-Host "git sparse-checkout set $targetPath"
+            git sparse-checkout set $targetPath
             
             Write-Host "git checkout $($Config.SHA)"
             git checkout $($Config.SHA)
@@ -366,29 +366,47 @@ Function Initialize-AssetsRepo {
     return $workCompleted
 }
 
+<# 
+.SYNOPSIS
+Used to interrupt script flow and get user input.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
+#>
+Function GetUserInput {
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject] $Config,
+        [Parameter(Mandatory = $false)]
+        [string] $UserPrompt = "Please type some input, then press ENTER to accept." 
+    )
+
+    return Read-Host $UserPrompt
+}
+
 <#
 .SYNOPSIS
 This function will forcibly reset the repo to a targeted SHA. This is a **destructive** update.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Reset-AssetsRepo {
+Function ResetAssetsRepo {
     param (
         [Parameter(Mandatory = $true)]
         [PSCustomObject] $Config
     )
     try {
 
-        $assetRepo = Resolve-AssetRepo-Location -Config $Config
+        $assetRepo = ResolveAssetRepoLocation -Config $Config
         Push-Location  $assetRepo
 
         Write-Host "git checkout *"
         git checkout *
         Write-Host "git clean -xdf"
         git clean -xdf
-        Write-Host "git reset --hard (Get-Default-Branch)"
-        git reset --hard (Get-Default-Branch)
+        Write-Host "git reset --hard (GetDefaultBranch)"
+        git reset --hard (GetDefaultBranch)
 
         # need to figure out the sparse checkouts if we want to optimize this as much as possible
         # for prototyping checking out the whole repo is fine
@@ -412,12 +430,12 @@ This function's purpose is solely to update a assets.json (both config and on fi
 Retrieves the location of the target recording.json by looking at a property of the Config object. Updates the file at rest, returns the completed object.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 
 .PARAMETER NewSHA
 A string representing the new SHA.
 #>
-Function Update-AssetsJson {
+Function UpdateAssetsJson {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config,
@@ -443,9 +461,9 @@ Function Update-AssetsJson {
 This function assumes a set of changes and attempts to use the provided config to automatically push a commit to the configured branch and repo combination.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
 #>
-Function Push-AssetsRepo-Update {
+Function PushAssetsRepoUpdate {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
@@ -454,7 +472,7 @@ Function Push-AssetsRepo-Update {
     $gitUser = git config --global user.name
     $autoCommitMessage = "Automatic asset update from $gitUser."
 
-    $assetRepo = Resolve-AssetRepo-Location -Config $Config
+    $assetRepo = ResolveAssetRepoLocation -Config $Config
     try {
         Push-Location $assetRepo
         $statusResult = git status --porcelain
@@ -521,7 +539,7 @@ Function Push-AssetsRepo-Update {
         }
 
         $newSha = git rev-parse HEAD
-        Update-AssetsJson -Config $Config -NewSHA $newSha
+        UpdateAssetsJson -Config $Config -NewSHA $newSha
     }
     catch {
         Write-Error $_

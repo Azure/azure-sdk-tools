@@ -17,7 +17,7 @@ we can possibly ascend.
 .PARAMETER TargetPath
 A targeted directory. This MUST be a directory, not a file path.
 #>
-Function Evaluate-Target-Dir {
+Function EvaluateDirectory {
     param (
         [Parameter(Mandatory = $true)]
         [string] $TargetPath
@@ -41,10 +41,10 @@ Function Evaluate-Target-Dir {
 
 <#
 .SYNOPSIS
-Gets the relative path of the assets json within the target repo.
+From a start directory, stops when it finds the root of a git repository (or root of disk).
 
-.PARAMETER Config
-The config
+.PARAMETER StartPath
+The starting directory.
 #>
 Function AscendToRepoRoot {
     param(
@@ -56,12 +56,12 @@ Function AscendToRepoRoot {
         $pathForManipulation = Split-Path $pathForManipulation
     }
 
-    $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+    $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
 
     while (-not $reachedRoot){
         $pathForManipulation, $remainder = Split-Path $pathForManipulation
 
-        $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+        $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
     }
 
     return $pathForManipulation
@@ -91,12 +91,12 @@ Function Resolve-AssetsJson {
         $pathForManipulation = Get-Location
     }
     
-    $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+    $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
 
     while (-not $foundConfig -and -not $reachedRoot){
         $pathForManipulation, $remainder = Split-Path $pathForManipulation
 
-        $foundConfig, $reachedRoot = Evaluate-Target-Dir -TargetPath $pathForManipulation
+        $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
     }
 
     if ($foundConfig){
@@ -131,6 +131,10 @@ Function Resolve-AssetsJson {
     return $config
 }
 
+<#
+.SYNOPSIS
+Returns the location of the "assets" store. This should return a string of the form "<path to language repo root>/.assets."
+#>
 Function Resolve-AssetStore-Location {
     if (-not (Test-Path $ASSETS_STORE)){
         New-Item -Type Directory -Force -Path $ASSETS_STORE | Out-Null
@@ -140,6 +144,12 @@ Function Resolve-AssetStore-Location {
     return $ASSETS_STORE
 }
 
+<#
+Takes an input string, returns the MD5 hash for the entire thing.
+
+.PARAMETER Input
+Any string.
+#>
 Function Get-MD5-Hash {
     param(
         [Parameter(Mandatory=$true)]
@@ -154,6 +164,14 @@ Function Get-MD5-Hash {
     return Get-FileHash -InputStream $stringAsStream -Algorithm MD5
 }
 
+<#
+.SYNOPSIS
+Given a configuration, where will the assets repo exist? This function will both return that answer, as well as ensure
+that directory exists.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+#>
 Function Resolve-AssetRepo-Location {
     param(
         [Parameter(Mandatory=$true)]
@@ -181,9 +199,17 @@ Function Resolve-AssetRepo-Location {
     return $repoPath
 }
 
+<#
+.SYNOPSIS
+Gets the default branch from the git repo targeted in a assets.json.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+#>
 Function Get-Default-Branch {
     param(
-        $Config
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config
     )
     $repoJsonResult = Invoke-RestMethod -Method "GET" -Uri "https://api.github.com/repos/$($Config.AssetsRepo)"
     return ($repoJsonResult | ConvertFrom-Json).default_branch
@@ -192,6 +218,9 @@ Function Get-Default-Branch {
 <#
 .SYNOPSIS
 This function returns a boolean that indicates whether or not the assets repo has been initialized.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
 #>
 Function Is-AssetsRepo-Initialized {
     param(
@@ -223,16 +252,13 @@ Function Is-AssetsRepo-Initialized {
 Given a configuration, determine which paths must be added to the sparse checkout of the assets repo.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json content.
-
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
 #>
 Function Resolve-CheckoutPaths {
     param(
         [Parameter(Mandatory=$true)]
         [PSCustomObject] $Config
     )
-    $assetsJsonPath = $Config.AssetsJsonRelativeLocation
-
     $assetsJsonFolder = Split-Path $Config.AssetsJsonRelativeLocation
 
     if(!$assetsJsonFolder -or $assetsJsonFolder -in @(".", "./", ".\"))
@@ -247,10 +273,13 @@ Function Resolve-CheckoutPaths {
 
 <#
 .SYNOPSIS
-Given a configuration, determine the _current_ target path.
+Resolve which branch on the assets repo should be checked out, given an input Configuration.
 
 .DESCRIPTION 
 Determines the presence of a branch on the git repo. If the relevant auto/<service> branch does not exist, we should use main.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
 #>
 Function Resolve-TargetBranch {
     param(
@@ -341,12 +370,13 @@ Function Initialize-AssetsRepo {
 .SYNOPSIS
 This function will forcibly reset the repo to a targeted SHA. This is a **destructive** update.
 
-.DESCRIPTION
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
 #>
 Function Reset-AssetsRepo {
     param (
         [Parameter(Mandatory = $true)]
-        $Config
+        [PSCustomObject] $Config
     )
     try {
 
@@ -379,12 +409,20 @@ Function Reset-AssetsRepo {
 This function's purpose is solely to update a assets.json (both config and on file) with a new recording SHA.
 
 .DESCRIPTION
-Retrieves the location of the target recording.json by looking at a property of the Config object.
+Retrieves the location of the target recording.json by looking at a property of the Config object. Updates the file at rest, returns the completed object.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
+
+.PARAMETER NewSHA
+A string representing the new SHA.
 #>
 Function Update-AssetsJson {
     param(
-        $Config,
-        $NewSHA
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config,
+        [Parameter(Mandatory=$true)]
+        [string] $NewSHA
     )
     
     $jsonAtRest = Get-Content -Raw -Path $Config.AssetsJsonLocation | ConvertFrom-Json
@@ -405,12 +443,12 @@ Function Update-AssetsJson {
 This function assumes a set of changes and attempts to use the provided config to automatically push a commit to the configured branch and repo combination.
 
 .PARAMETER Config
-A PSCustomObject that contains an auto-parsed assets.json content from Resolve-AssetsJson.
-
+A PSCustomObject that contains an auto-parsed assets.json object from Resolve-AssetsJson.
 #>
 Function Push-AssetsRepo-Update {
     param(
-        [PSCustomObject]$Config
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config
     )
     $newSha = $Config.SHA
     $gitUser = git config --global user.name
@@ -423,7 +461,7 @@ Function Push-AssetsRepo-Update {
 
         if(!$statusResult){
             Write-Host "No pending changes."
-            exit(0)
+            exit 0
         }
 
         $alreadyLatestSHA = $true

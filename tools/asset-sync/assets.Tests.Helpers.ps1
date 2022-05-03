@@ -58,14 +58,15 @@ Function Initialize-Integration-Branches {
   $adjustedBranchName = "test_$($TestGuid)_$($Config.AssetsRepoBranch)"
   $tempPath = "TestDrive:\$([Guid]::NewGuid())\"
   New-Item -Type Directory -Force -Path $tempPath | Out-Null
+  $integrationRepo = "https://github.com/Azure/azure-sdk-assets-integration"
 
   try {
     Push-Location $tempPath
-    Write-Host "git clone https://github.com/Azure/azure-sdk-assets-integration ."
-    git clone https://github.com/Azure/azure-sdk-assets-integration .
+    Write-Host "git clone $($integrationRepo) ."
+    git clone $integrationRepo .
 
-    Write-Host "git ls-remote --heads https://github.com/Azure/azure-sdk-assets-integration $($Config.AssetsRepoBranch)"
-    $lsremoteResponse = git ls-remote --heads https://github.com/Azure/azure-sdk-assets-integration $Config.AssetsRepoBranch
+    Write-Host "git ls-remote --heads $($integrationRepo) $($Config.AssetsRepoBranch)"
+    $lsremoteResponse = git ls-remote --heads $integrationRepo $Config.AssetsRepoBranch
     
     Write-Host $lsremoteResponse
     Write-Host $adjustedBranchName

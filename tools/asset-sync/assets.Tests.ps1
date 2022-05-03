@@ -24,19 +24,19 @@ AfterAll {
 }
 
 Describe "AssetsModuleTests" {
-  Context "Evaluate-Target-Dir" {
+  Context "EvaluateDirectory" {
     It "Should evaluate a root directory properly." {
-      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot ".." "..")
+      $Value = EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot ".." "..")
       $Value | Should -Be @($false, $true)
     }
     
     It "Should evaluate a recording directory properly." {
-      $Value = Evaluate-Target-Dir -TargetPath $PSScriptRoot
+      $Value = EvaluateDirectory -TargetPath $PSScriptRoot
       $Value | Should -Be @($true, $false)
     }
   
     It "Should evaluate an transitory directory properly." {
-      $Value = Evaluate-Target-Dir -TargetPath (Join-Path $PSScriptRoot "..")
+      $Value = EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot "..")
       $Value | Should -Be @($false, $false)
     }
 
@@ -46,10 +46,10 @@ Describe "AssetsModuleTests" {
       )
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
 
-      $result = Evaluate-Target-Dir -TargetPath $testLocation
+      $result = EvaluateDirectory -TargetPath $testLocation
       $result | Should -Be @($false, $true)
 
-      $result = Evaluate-Target-Dir -TargetPath (Join-Path $testLocation "sdk")
+      $result = EvaluateDirectory -TargetPath (Join-Path $testLocation "sdk")
       $result | Should -Be @($true, $false)
     }
   }

@@ -84,6 +84,16 @@ namespace APIViewWeb.Repositories
             return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
         }
 
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
+        {
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
+        }
+
+        public async Task<IEnumerable<string>> GetDistinctReviewsProperties(string propertyName)
+        {
+            return await _reviewsRepository.GetDistinctReviewsProperties(propertyName);
+        }
+
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
@@ -635,11 +645,6 @@ namespace APIViewWeb.Repositories
                 packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
             }
             return response.Values.ToList();
-        }
-
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
-        {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
 
         public async Task AutoArchiveReviews(int archiveAfterMonths)

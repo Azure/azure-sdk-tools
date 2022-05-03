@@ -108,5 +108,21 @@ namespace APIViewWeb
             }
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
         }
+
+        public async Task<IEnumerable<string>> GetDistinctReviewsProperties(string propertyName)
+        {
+            var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
+            var reviewsProperty = new List<Object>();
+
+            var queryDefinition = new QueryDefinition(query);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<Object>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviewsProperty.AddRange(result.Resource);
+            }
+
+            return (IEnumerable<string>)reviewsProperty;
+        }
     }
 }

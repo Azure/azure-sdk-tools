@@ -1,136 +1,81 @@
 ﻿@using APIViewWeb.Models
 @using System
 @using System.Text.RegularExpressions
-@model IEnumerable<ServiceGroupModel>
+@model IEnumerable<ReviewModel>
 @if (Model.Any())
 {
-     <div class="mx-5 mt-3 row">
+    <div class="mx-5 mt-3 row">
         <div class="col p-0 border rounded table-responsive">
             <table id="reviews-table" class="table table-sm m-0" style="width:100%">
-                <thead>
-                    <tr>
-                        <th colspan="6">
-                            <span class="border-right px-1 pb-1">
-                                <button type="button" id="expand-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Groups">
-                                    <i class="fas fa-angle-right mr-1"></i>All
-                                </button>
-                                <button type="button" id="expand-all-service-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Expand all Service Groups">
-                                    <i class="fas fa-angle-right mr-1"></i>Service
-                                </button>
-                                <button type="button" id="collapse-all-groups-btn" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Collapse all Groups">
-                                    <i class="fas fa-angle-down mr-1"></i>All
-                                </button>
-                            </span>
-                            <span class="pl-2 pb-1">
-                                <button type="button" id="clear-all-filters" class="btn btn-light btn-sm" data-mdb-ripple-color="dark" data-placement="bottom" data-toggle="tooltip" title="Clear all Filters">
-                                    <i class="fas fa-ban mr-1"></i>Filters
-                                </button>
-                            </span>
-                        </th>
-                    </tr>
-                </thead>
                 <tbody>
-                    @foreach (var serviceGroup in Model)
+                    @foreach (var review in Model)
                     {
-                        var serviceGroupTag = @serviceGroup.ServiceName.ToLower().Replace(" ","-");
-                        @serviceGroupTag = @Regex.Replace(@serviceGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
-                        <tr id="@serviceGroupTag" class="service-group-row clickable animate__fadeIn animate__fadeOut">
-                            <td colspan="6" class="align-middle">
-                                <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
-                                    <i class="fas fa-angle-right"></i>
-                                </button>
-                                <span>@serviceGroup.ServiceName</span>                                
+                        var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                        <tr class="package-data-row">
+                            <td class="border-right align-middle pl-4 pt-0 pb-0">
+                                @if (review.Language != null)
+                                {
+                                    @switch (review.Language.ToLower())
+                                    {
+                                        case "c#":
+                                            <img class="mx-1" src="~/icons/csharp-original.svg" alt="@review.Language">
+                                            break;
+                                        case "javascript":
+                                            <img class="mx-1" src="~/icons/javascript-original.svg" alt="@review.Language">
+                                            break;
+                                        case "python":
+                                            <img class="mx-1" src="~/icons/python-original.svg" alt="@review.Language">
+                                            break;
+                                        case "c":
+                                            <img class="mx-1" src="~/icons/c-original.svg" alt="@review.Language">
+                                            break;
+                                        case "c++":
+                                            <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@review.Language">
+                                            break;
+                                        case "go":
+                                            <img class="mx-1" src="~/icons/go-original.svg" alt="@review.Language">
+                                            break;
+                                        case "java":
+                                            <img class="mx-1" src="~/icons/java-original.svg" alt="@review.Language">
+                                            break;
+                                        case "swift":
+                                            <img class="mx-1" src="~/icons/swift-original.svg" alt="@review.Language">
+                                            break;
+                                        default:
+                                            <img class="mx-1" src="~/icons/file-code.svg" alt="@review.Language">
+                                            break;
+                                    }
+                                }
+                                <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
+                                @if (review.IsApproved == true)
+                                {
+                                    <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
+                                }
+                            </td>
+                            <td class="border-right align-middle">
+                                <a username="@review.Author">@review.Author</a>
+                            </td>
+                            <td class="border-right align-middle">
+                                <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                            </td>
+                            <td class="border-right align-middle">
+                                <span>@review.FilterType.ToString()</span>
+                            </td>
+                            <td>
+                                @if (review.Author == User.GetGitHubLogin())
+                                {
+                                    <a asp-page="./Delete" asp-route-id="@review.ReviewId">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
+                                        <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
+                                    </span>
+                                }
                             </td>
                         </tr>
-                        @foreach (var packageGroup in serviceGroup.packages.Values)
-                        {
-                            var packageGroupTag = @serviceGroupTag + '_' + @packageGroup.PackageDisplayName.ToLower().Replace(" ","-");
-                            @packageGroupTag = @Regex.Replace(@packageGroupTag, "[^a-zA-Z0-9_-]+", "", RegexOptions.Compiled);
-                            <tr id="@packageGroupTag" class="package-group-row @serviceGroupTag clickable hidden-row animate__fadeIn animate__fadeOut">
-                                <td colspan="6" class="align-middle pl-4">
-                                    <button type="button" class="btn btn-light btn-sm mr-1" data-mdb-ripple-color="dark">
-                                        <i class="fas fa-angle-right"></i>
-                                    </button>
-                                    <span>@packageGroup.PackageDisplayName</span>
-                                </td>
-                            </tr>
-                            <tr class="review-rows-header @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                <th scope="col" class="border-top-0"><small class="ml-4">NAME</small></th>
-                                <th scope="col" class="border-top-0"><small>CREATOR</small></th>
-                                <th scope="col" class="border-top-0"><small>UPDATED</small></th>
-                                <th scope="col" class="border-top-0"><small>TYPE</small></th>
-                                <th class="border-top-0"></th>
-                            </tr>
-                            @foreach (var reviewData in packageGroup.reviews)
-                            {
-                                var truncationIndex = @Math.Min(@reviewData.ReviewDisplayName.Length, 100);
-                                <tr class="package-data-row @packageGroupTag hidden-row animate__fadeIn animate__fadeOut">
-                                    <td class="border-right align-middle pl-4 pt-0 pb-0">
-                                         @if (reviewData.Language != null)
-                                        {
-                                            @switch (reviewData.Language.ToLower())
-                                            {
-                                                case "c#":
-                                                    <img class="mx-1" src="~/icons/csharp-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "javascript":
-                                                    <img class="mx-1" src="~/icons/javascript-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "python":
-                                                    <img class="mx-1" src="~/icons/python-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "c":
-                                                    <img class="mx-1" src="~/icons/c-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "c++":
-                                                    <img class="mx-1" src="~/icons/cplusplus-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "go":
-                                                    <img class="mx-1" src="~/icons/go-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "java":
-                                                    <img class="mx-1" src="~/icons/java-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                case "swift":
-                                                    <img class="mx-1" src="~/icons/swift-original.svg" alt="@reviewData.Language">
-                                                    break;
-                                                default:
-                                                    <img class="mx-1" src="~/icons/file-code.svg" alt="@reviewData.Language">
-                                                    break;
-                                            }
-                                        }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@reviewData.id">@reviewData.ReviewDisplayName.Substring(0, @truncationIndex)</a>
-                                        @if (reviewData.IsApproved == true)
-                                        {
-                                            <span class="badge badge-pill badge-success ml-1 p-1"><i class="fas fa-check-circle"></i> APPROVED</span>
-                                        }
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <a username="@reviewData.Author">@reviewData.Author</a>
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <span data-placement="left" data-toggle="tooltip" title="@reviewData.LastUpdated" date="@reviewData.LastUpdated.ToLocalTime()"></span>
-                                    </td>
-                                    <td class="border-right align-middle">
-                                        <span>@reviewData.FilterType.ToString()</span>
-                                    </td>
-                                    <td>
-                                        @if (reviewData.Author == User.GetGitHubLogin())
-                                        {
-                                            <a asp-page="./Delete" asp-route-id="@reviewData.id">
-                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <span data-placement="left" data-toggle="tooltip" title="Only review creator can delete.">
-                                                <button type="button" class="btn pt-0 pb-0 pl-1 pr-1 btn-outline-secondary invisible" disabled="disabled"><i class="fas fa-times-circle"></i> Delete</button>
-                                            </span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        }
                     }
                 </tbody>
             </table>

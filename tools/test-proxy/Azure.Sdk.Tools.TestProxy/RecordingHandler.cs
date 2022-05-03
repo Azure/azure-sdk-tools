@@ -26,15 +26,15 @@ namespace Azure.Sdk.Tools.TestProxy
     {
         #region constructor and common variables
         public bool HandleRedirects = true;
+        public string ContextDirectory;
 
-        public string RepoPath;
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
 
         public RecordingHandler(string targetDirectory)
         {
-            RepoPath = targetDirectory;
+            ContextDirectory = targetDirectory;
 
             SetDefaultExtensions();
         }
@@ -483,10 +483,44 @@ namespace Azure.Sdk.Tools.TestProxy
                         throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
                     }
                 }
+
+                if (options.TryGetValue("ContextDirectory", out var sourceDirectoryObj))
+                {
+                    var newSourceDirectory = sourceDirectoryObj.ToString();
+
+                    if (!string.IsNullOrWhiteSpace(newSourceDirectory))
+                    {
+                        SetRecordingDirectory(newSourceDirectory);
+                    }
+                }
             }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
+            }
+        }
+
+        public void SetRecordingDirectory(string targetDirectory)
+        {
+            try
+            {
+                // Given that it is perfectly valid to pass a directory that does not yet exist, we cannot get the file attributes to "properly"
+                // determine if an incoming path is a valid one via <attr>.HasFlag(FileAttributes.Directory). We can shorthand this by checking
+                // for a file extension.
+                if (Path.GetExtension(targetDirectory) != String.Empty)
+                {
+                    targetDirectory = Path.GetDirectoryName(targetDirectory);
+                }
+                
+                if (!String.IsNullOrEmpty(targetDirectory))
+                {
+                    Directory.CreateDirectory(targetDirectory);
+                }
+                ContextDirectory = targetDirectory;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Unable set proxy context to target directory \"{targetDirectory}\". Unhandled exception was: \"{ex.Message}\".");
             }
         }
 
@@ -646,7 +680,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!Path.IsPathFullyQualified(file))
             {
-                path = Path.Join(RepoPath, file);
+                path = Path.Join(ContextDirectory, file);
             }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));

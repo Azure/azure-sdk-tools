@@ -76,7 +76,7 @@ Thankfully, the integration of the test-proxy actually provides a great opportun
 
 ## How the test-proxy can ease transition of external recordings
 
-With language-specific record/playback sollutions, there must be an abstraction layer that retrieves the recording files from an expected `recordings` folder. Where these default locations are is usually predicated on the tech being used. It's not super terrible, but custom save/load would need to be implemented for each recording stack, with varying degrees of complexity depending on how opinionated a given framework is.
+With language-specific record/playback solutions, there must be an abstraction layer that retrieves the recording files from an expected `recordings` folder. Where these default locations are is usually predicated on the tech being used. It's not super terrible, but custom save/load would need to be implemented for each recording stack, with varying degrees of complexity depending on how opinionated a given framework is.
 
 Contrast this with the the test-proxy, which starts with a **storage context**. This context is then used when **saving** and **loading** a recording file.
 

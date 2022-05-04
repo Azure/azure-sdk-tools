@@ -27,3 +27,15 @@ export enum ServiceType {
     DataPlane = 'data-plane',
     ResourceManager = 'resource-manager',
 }
+
+export enum StorageType {
+    Blob = 'blob',
+    Db = 'db',
+    EventHub = 'eventhub',
+}
+
+export enum PipelineStatus {
+    Submit = 'Submit',
+    InProgress = 'in-progress',
+    complete = 'complete',
+}

@@ -1,4 +1,5 @@
-import * as fs from "fs";
+#!/usr/bin/env node
+import * as fs from 'fs';
 import {
     createTaskResult,
     AzureSDKTaskName,
@@ -6,99 +7,75 @@ import {
     TaskOutput,
     LogFilter,
     logger,
-} from "@azure-tools/sdk-generation-lib";
+    PipelineResult,
+} from '@azure-tools/sdk-generation-lib';
 
-function printHelp() {
-    console.log('usage: generateResult --pipelineBuildId --logfile --taskName --resultOutputPath');
-    console.log('                      --taskResultFile [--taskOutput] [--logFilter]\n');
-    console.log('taskName: must be one of [Init, GenerateAndBuild, MockTest, LiveTest]');
-}
+import { generateResultCliConfig, GenerateResultCliConfig } from './cliSchema/generateResultCliConfig';
+
+generateResultCliConfig.validate();
+const config: GenerateResultCliConfig = generateResultCliConfig.getProperties();
 
 async function main() {
-    const args = parseArgs(process.argv);
-    const pipelineBuildId = args['pipelineBuildId'];
-    const logfile = args['logfile'];
-    const logFilterStr = args['logFilter'];
-    const taskName = args['taskName'];
-    const exeResult = args['taskExeResult']
-    const taskOutput = args['taskOutput'];
-    const resultOutputPath = args['resultOutputPath'];
-    const taskResultFile = args['taskResultFile'];
     let taskOutputObj: TaskOutput = undefined;
     let logFilter: LogFilter = undefined;
     let taskResult: TaskResult = undefined;
 
-    if (pipelineBuildId === undefined) {
-        printHelp();
-        throw new Error(`pipelineBuildId is empty`);
-    }
-    if (logfile === undefined) {
-        printHelp();
-        throw new Error(`logfile is empty`);
-    }
-    if (taskName === undefined) {
-        printHelp();
-        throw new Error(`taskName is empty`);
-    } else if (!Object.values(AzureSDKTaskName).includes(taskName)) {
-        printHelp();
-        console.log("Current taskName is %s", taskName);
-        throw new Error(`invalid taskName`);
+    if (!Object.values(AzureSDKTaskName).includes(config.taskName as AzureSDKTaskName)) {
+        throw new Error(`invalid taskName` + config.taskName);
     }
 
-    if (exeResult === undefined && taskResultFile === undefined) {
-        printHelp();
-        throw new Error(`Task execute result and taskResultFile is empty`);
-    }
-    
-    if (resultOutputPath === undefined) {
-        printHelp();
-        throw new Error(`resultOutputPath is empty`);
-    }
-    if (taskOutput !== undefined) {
-        taskOutputObj = JSON.parse(taskOutput);
-    }
-    if (logFilterStr !== undefined) {
-        logFilter = JSON.parse(logFilterStr);
+    if (!config.exeResult && !config.dockerResultFile) {
+        throw new Error(`Task execute result and dockerResultFile is empty`);
     }
 
-    if (exeResult !== undefined) {
-        taskResult = createTaskResult(pipelineBuildId, taskName, exeResult, logfile, logFilter, taskOutputObj);
-    } else if (taskResultFile && fs.existsSync(taskResultFile)) {
-        const totalTaskResult = JSON.parse(fs.readFileSync(taskResultFile, 'utf-8'));
-        if (totalTaskResult[taskName].includes('skipped')) {
-            console.log(taskName + `skipped`);
+    if (config.taskOutput) {
+        taskOutputObj = JSON.parse(config.taskOutput);
+    }
+    if (config.logFilterStr) {
+        logFilter = JSON.parse(config.logFilterStr);
+    }
+
+    if (config.exeResult) {
+        taskResult = createTaskResult(
+            config.pipelineBuildId,
+            config.taskName as AzureSDKTaskName,
+            config.exeResult as PipelineResult,
+            config.logfile,
+            logFilter,
+            taskOutputObj
+        );
+    } else if (config.dockerResultFile && fs.existsSync(config.dockerResultFile)) {
+        const dockerTaskResult = JSON.parse(fs.readFileSync(config.dockerResultFile, 'utf-8'));
+        if (dockerTaskResult[config.taskName].includes('skipped')) {
+            console.log(config.taskName + `skipped`);
             return;
         } else {
-            taskResult = createTaskResult(pipelineBuildId, taskName, totalTaskResult[taskName], logfile, logFilter, taskOutputObj);
+            taskResult = createTaskResult(
+                config.pipelineBuildId,
+                config.taskName as AzureSDKTaskName,
+                dockerTaskResult[config.taskName],
+                config.logfile,
+                logFilter,
+                taskOutputObj
+            );
         }
     } else {
-        taskResult = createTaskResult(pipelineBuildId, taskName, undefined, logfile, logFilter, taskOutputObj);
+        taskResult = createTaskResult(
+            config.pipelineBuildId,
+            config.taskName as AzureSDKTaskName,
+            undefined,
+            config.logfile,
+            logFilter,
+            taskOutputObj
+        );
     }
 
-    fs.writeFileSync(resultOutputPath, JSON.stringify(taskResult, null, 2), {
-        encoding: "utf-8",
+    fs.writeFileSync(config.resultOutputPath, JSON.stringify(taskResult, null, 2), {
+        encoding: 'utf-8',
     });
-    console.log("Generate Success !!!");
+    console.log('Generate Success !!!');
 
     return;
-}
-
-/**
- * Parse a list of command line arguments.
- * @param argv List of cli args(process.argv)
- */
-const flagRegex = /^--([^=:]+)([=:](.+))?$/;
-export function parseArgs(argv: string[]) {
-    const result: any = {};
-    for (const arg of argv) {
-        const match = flagRegex.exec(arg);
-        if (match) {
-            const key = match[1];
-            const rawValue = match[3];
-            result[key] = rawValue;
-        }
-    }
-    return result;
 }
 
 main().catch((e) => {

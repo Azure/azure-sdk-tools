@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-
-import {logger} from '@azure-tools/sdk-generation-lib';
-import * as path from "path";
+import { logger } from '@azure-tools/sdk-generation-lib';
+import * as path from 'path';
 
 async function main(repoKey: string, repoUrl: string) {
     repoUrl = repoUrl.replace('.git', '');
@@ -15,7 +14,7 @@ async function main(repoKey: string, repoUrl: string) {
 
 const repoUrl = process.argv.pop();
 const repoKey = process.argv.pop();
-main(repoKey, repoUrl).catch(e => {
+main(repoKey, repoUrl).catch((e) => {
     logger.error(`${e.message}
     ${e.stack}`);
 });

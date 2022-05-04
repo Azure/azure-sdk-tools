@@ -17,7 +17,7 @@ export class TaskResultEntity {
     taskResult: TaskResult;
 }
 
-export type PipelineResult = 'success' | 'failure';
+export type PipelineResult = 'success' | 'failure' | 'time_out';
 
 export type Extra = {
     [key: string]: any;
@@ -97,7 +97,7 @@ export type TaskOutput = InitOutput | GenerateAndBuildOutput | TestOutput | unde
 export function setTaskResult(config: TaskBasicConfig, taskName: string) {
     taskResult = {
         name: taskName,
-        pipelineBuildId: "",
+        pipelineBuildId: '',
         result: 'success',
         errorCount: 0,
         warningCount: 0,

@@ -45,17 +45,12 @@ export function parseGenerateLog(
 ): TaskResultCommon {
     let errorNum = 0;
     let warnNum = 0;
-    const defaultErrorFilter =
-        /(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)/g;
+    const defaultErrorFilter = /(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)/g;
     const defaultWarningFilter = /warn/g;
     const logErrorFilter: RegExp =
-        logFilter === undefined || logFilter.error === undefined
-            ? defaultErrorFilter
-            : logFilter.error;
+        logFilter === undefined || logFilter.error === undefined ? defaultErrorFilter : logFilter.error;
     const logWarningFilter: RegExp =
-        logFilter === undefined || logFilter.warning === undefined
-            ? defaultWarningFilter
-            : logFilter.warning;
+        logFilter === undefined || logFilter.warning === undefined ? defaultWarningFilter : logFilter.warning;
     const messages: MessageRecord[] = [];
     if (fs.existsSync(logfile)) {
         const fullLog = fs.readFileSync(logfile, 'utf-8');
@@ -96,8 +91,14 @@ export function parseGenerateLog(
     return result;
 }
 
-export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, taskExeResult: PipelineResult,
-    logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
+export function createTaskResult(
+    pipelineBuildId: string,
+    taskname: AzureSDKTaskName,
+    taskExeResult: PipelineResult,
+    logfile: string,
+    logFilter: LogFilter,
+    taskOutput: TaskOutput
+): TaskResult {
     let commonResult: TaskResultCommon = undefined;
     if (taskExeResult === 'success') {
         commonResult = {

@@ -2,14 +2,11 @@ import { Connection, MongoRepository } from 'typeorm';
 
 import { CodeGenerationDao } from './codeGenerationDao';
 import { CodeGeneration } from '../../types/codeGeneration';
-import { logger } from '../logger';
 
 export class CodeGenerationDaoImpl implements CodeGenerationDao {
     private repo: MongoRepository<CodeGeneration>;
 
-    constructor(
-        connection: Connection,
-    ) {
+    constructor(connection: Connection) {
         this.repo = connection.getMongoRepository(CodeGeneration);
     }
 
@@ -19,16 +16,14 @@ export class CodeGenerationDaoImpl implements CodeGenerationDao {
     }
 
     public async submitCodeGeneration(codegen: CodeGeneration): Promise<void> {
+        // findOneAndReplace will not trigger BeforeInsert and BeforeUpdate event, so validate here
+        codegen.validate();
         try {
-            await this.repo.findOneAndReplace(
-                { name: codegen.name },
-                codegen,
-                { upsert: true },
-            );
+            await this.repo.findOneAndReplace({ name: codegen.name }, codegen, { upsert: true });
         } catch (e) {
-            logger.error(`${e.message}
+            console.error(`${e.message}
             ${e.stack}`);
-        };
+        }
     }
 
     /* update code-gen information. */

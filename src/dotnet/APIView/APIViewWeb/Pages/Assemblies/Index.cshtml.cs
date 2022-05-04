@@ -39,8 +39,6 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ServiceGroupModel> reviewServices { get; set; }
 
-        public IEnumerable<string> AllPackageNames { get; set; }
-
         public async Task OnGetAsync()
         {
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
@@ -49,8 +47,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Language = this.Language,
             });
 
-            Assemblies = await _manager.GetReviewsAsync("Storage", "Queues", this.FilterType);
-            AllPackageNames = await _manager.GetDistinctReviewsProperties("PackageDisplayName");
+            Assemblies = await _manager.GetReviewsAsync(false, this.Language, null, this.FilterType);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()

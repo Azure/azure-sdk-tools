@@ -633,6 +633,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+
         [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
         [InlineData("{ \"HandleRedirects\": \"false\"}", false)]
@@ -646,7 +647,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"HandleRedirects\": false }", false)]
         [InlineData("{ \"HandleRedirects\": 1 }", true)]
         [InlineData("{ \"HandleRedirects\": 0 }", false)]
-        public void TestSetRecordingOptionsHandlesValidInputs(string body, bool expectedSetting)
+        public void TestSetRecordingOptionsHandlesValidRedirectSetting(string body, bool expectedSetting)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -662,7 +663,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{ \"HandleRedirects\": \"true2\"}", "The value of key \"HandleRedirects\" MUST be castable to a valid boolean value.")]
         [InlineData("{}", "At least one key is expected in the body being passed to SetRecordingOptions.")]
         [InlineData(null, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.")]
-        public void TestSetRecordingOptionsThrowsOnInvalidInputs(string body, string errorText)
+        public void TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -715,6 +716,48 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Assert.Null(upstreamRequest.Headers.Host);
             }
+        }
+
+
+        [Theory]
+        [InlineData("hellothere", "generalkenobi")]
+        [InlineData("", "")]
+        public void TestSetRecordingOptionsHandlesValidContextDirectory(params string[] relativePaths)
+        {
+            var relativePath = Path.Combine(relativePaths);
+            var testDirectory = Path.GetTempPath();
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(testDirectory);
+            testDirectory = Path.Combine(testDirectory, relativePath);
+            var body = $"{{ \"ContextDirectory\": \"{testDirectory.Replace("\\", "/")}\"}}";
+
+            var httpContext = new DefaultHttpContext();
+            Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+
+            testRecordingHandler.SetRecordingOptions(inputBody);
+
+            Assert.Equal(new Uri(testDirectory), new Uri(testRecordingHandler.ContextDirectory));
+        }
+
+        [Theory]
+        [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
+        public void TestSetRecordingOptionsThrowsOnInvalidContextDirectory(string body, string errorText)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+
+            Dictionary<string, object> inputBody = null;
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
+            }
+
+            var assertion = Assert.Throws<HttpException>(
+               () => testRecordingHandler.SetRecordingOptions(inputBody)
+            );
+
+            Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
+            Assert.StartsWith(errorText, assertion.Message);
         }
     }
 

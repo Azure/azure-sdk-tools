@@ -1,4 +1,4 @@
-FROM alpine:3.14
+FROM mcr.microsoft.com/dotnet/sdk:6.0.202-alpine3.14-amd64
 RUN apk add --no-cache wget
 RUN apk add --no-cache bash
 

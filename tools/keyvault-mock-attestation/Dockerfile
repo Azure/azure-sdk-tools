@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM mcr.microsoft.com/cbl-mariner/base/nodejs:16
 
 WORKDIR /usr/src/app
 

@@ -57,6 +57,15 @@ Label,Cognitive - Vision,,e99695
 Label,Cognitive Services,,e99695
 Label,Commerce,,e99695
 Label,Communication,,e99695
+Label,Communication - Calling Server,,e99695
+Label,Communication - Chat,,e99695
+Label,Communication - Common,,e99695
+Label,Communication - Identity,,e99695
+Label,Communication - Network Traversal,,e99695
+Label,Communication - Phone Numbers,,e99695
+Label,Communication - Short Codes,,e99695
+Label,Communication - SMS,,e99695
+Label,Communication - Resource Manager,,e99695
 Label,Community Contribution,Community members are working on the issue,1aa874
 Label,Compute,,e99695
 Label,Compute - Extensions,,e99695

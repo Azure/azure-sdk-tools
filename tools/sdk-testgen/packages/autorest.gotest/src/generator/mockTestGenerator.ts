@@ -52,6 +52,9 @@ export class MockTestDataRender extends BaseDataRender {
     protected fillExampleOutput(example: GoExampleModel) {
         const op = example.operation;
         example.opName = op.language.go.name;
+        if (isPageableOperation(op) && !isLROOperation(op)) {
+            example.opName = `New${example.opName}Pager`;
+        }
         if (isLROOperation(op as any)) {
             example.opName = 'Begin' + example.opName;
             example.isLRO = true;
@@ -72,7 +75,7 @@ export class MockTestDataRender extends BaseDataRender {
             return rawValue;
         };
         example.methodParametersOutput = this.toParametersOutput(getAPIParametersSig(op), example.methodParameters);
-        example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
+        example.clientParametersOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters, true);
         example.returnInfo = generateReturnsInfo(op, 'op');
         const schemaResponse = getSchemaResponse(op as any);
         if (example.isPageable) {
@@ -83,7 +86,6 @@ export class MockTestDataRender extends BaseDataRender {
                     break;
                 }
             }
-            example.pageableType = example.operation.language.go.pageableType.name;
         }
 
         example.checkResponse =
@@ -105,7 +107,14 @@ export class MockTestDataRender extends BaseDataRender {
             this.replaceValueFunc = (rawValue: any, exampleValue: ExampleValue): any => {
                 // mock-test will change all ProvisioningState to Succeeded
                 if (exampleValue.language?.go?.name === 'ProvisioningState') {
-                    return 'Succeeded';
+                    if (
+                        exampleValue.schema.type !== SchemaType.SealedChoice ||
+                        (exampleValue.schema as ChoiceSchema).choices.filter((choice) => choice.value === 'Succeeded').length > 0
+                    ) {
+                        return 'Succeeded';
+                    } else {
+                        return (exampleValue.schema as ChoiceSchema).choices[0].value;
+                    }
                 }
                 return rawValue;
             };
@@ -114,26 +123,25 @@ export class MockTestDataRender extends BaseDataRender {
                 example.responseTypePointer = false;
                 example.responseType = 'Value';
             } else {
-                let responseEnv = op.language.go.responseEnv;
-                if (isLROOperation(op)) {
-                    responseEnv = op.language.go.finalResponseEnv;
-                }
+                const responseEnv = op.language.go.responseEnv;
 
-                if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.serialization?.xml?.name) {
-                    example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.byValue;
-                    example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.schema.language.go?.name;
-                    if (responseEnv.language.go?.resultEnv.language.go?.resultField.schema.isDiscriminator === true) {
-                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
-                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                if (responseEnv.language.go?.resultProp.schema.serialization?.xml?.name) {
+                    example.responseTypePointer = !responseEnv.language.go?.resultProp.schema.language.go?.byValue;
+                    example.responseType = responseEnv.language.go?.resultProp.schema.language.go?.name;
+                    if (responseEnv.language.go?.resultProp.schema.isDiscriminator === true) {
+                        example.responseIsDiscriminator = true;
+                        example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
+                        example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
                             &${example.responseOutput},
                         }`;
                     }
                 } else {
-                    example.responseTypePointer = !responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.byValue;
-                    example.responseType = responseEnv.language.go?.resultEnv.language.go?.resultField.language.go?.name;
-                    if (responseEnv.language.go?.resultEnv.language.go?.resultField.isDiscriminator === true) {
-                        example.responseType = responseEnv.language.go.resultEnv.language.go.name;
-                        example.responseOutput = `${this.context.packageName}.${example.responseType}{
+                    example.responseTypePointer = !responseEnv.language.go?.resultProp.language.go?.byValue;
+                    example.responseType = responseEnv.language.go?.resultProp.language.go?.name;
+                    if (responseEnv.language.go?.resultProp.isDiscriminator === true) {
+                        example.responseIsDiscriminator = true;
+                        example.responseType = responseEnv.language.go.resultProp.schema.language.go?.discriminatorInterface;
+                        example.responseOutput = `${this.context.packageName}.${responseEnv.language.go.name}{
                             &${example.responseOutput},
                         }`;
                     }
@@ -143,30 +151,32 @@ export class MockTestDataRender extends BaseDataRender {
     }
 
     // get GO code of all parameters for one operation invoke
-    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[]): string {
+    protected toParametersOutput(paramsSig: Array<[string, string, Parameter | GroupProperty]>, exampleParameters: ExampleParameter[], isClient = false): string {
         return paramsSig
             .map(([paramName, typeName, parameter]) => {
-                if (parameter === undefined || parameter === null) {
-                    return paramName;
+                if (paramName === 'ctx') {
+                    return 'ctx';
                 }
-                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters);
+                return this.genParameterOutput(paramName, typeName, parameter, exampleParameters, isClient);
             })
             .join(',\n');
     }
 
     // get GO code of single parameter for one operation invoke
-    protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[]): string {
-        // get cooresponding example value of a parameter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected genParameterOutput(paramName: string, paramType: string, parameter: Parameter | GroupProperty, exampleParameters: ExampleParameter[], isClient = false): string {
+        // get corresponding example value of a parameter
         const findExampleParameter = (name: string, param: Parameter): string => {
             // isPtr need to consider three situation: 1) param is required 2) param is polymorphism 3) param is byValue
             const isPolymophismValue = param?.schema?.type === SchemaType.Object && (param.schema as ObjectSchema).discriminator?.property.isDiscriminator === true;
             const isPtr: boolean = isPolymophismValue || !(param.required || param.language.go.byValue === true);
             for (const methodParameter of exampleParameters) {
                 if (this.getLanguageName(methodParameter.parameter) === name) {
-                    // we should judge wheter a param or property is ptr or not from outside of exampleValueToString
+                    // we should judge whether a param or property is ptr or not from outside of exampleValueToString
                     return this.exampleValueToString(methodParameter.exampleValue, isPtr, elementByValueForParam(param));
                 }
             }
+
             return this.getDefaultValue(param, isPtr, elementByValueForParam(param));
         };
 
@@ -178,6 +188,10 @@ export class MockTestDataRender extends BaseDataRender {
             for (const insideParameter of group.originalParameter) {
                 if (insideParameter.implementation === ImplementationLocation.Client) {
                     // don't add globals to the per-method options struct
+                    continue;
+                }
+                if (this.getLanguageName(insideParameter) === 'ResumeToken') {
+                    // ignore resumeToken param in options
                     continue;
                 }
                 const insideOutput = findExampleParameter(this.getLanguageName(insideParameter), insideParameter);
@@ -232,6 +246,8 @@ export class MockTestDataRender extends BaseDataRender {
                     }
                 case SchemaType.AnyObject:
                     return 'nil';
+                case SchemaType.Any:
+                    return 'nil';
                 default:
                     return '';
             }
@@ -256,7 +272,7 @@ export class MockTestDataRender extends BaseDataRender {
                 const result = `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{}`;
                 return result;
             } else {
-                // for pholymophism element, need to add type name, so pass false for inArray
+                // for polymorphism element, need to add type name, so pass false for inArray
                 const result =
                     `${ptr}[]${elementPtr}${GoHelper.addPackage(elementTypeName, this.context.packageName)}{\n` +
                     exampleValue.elements.map((x) => this.exampleValueToString(x, elementIsPolymophism || elementIsPtr, false, elementIsPolymophism ? false : true)).join(',\n') +
@@ -285,7 +301,7 @@ export class MockTestDataRender extends BaseDataRender {
                         (parentsProp.schema as ObjectSchema).discriminator?.property.isDiscriminator === true);
                 output += `${this.getLanguageName(parentsProp)}: ${this.exampleValueToString(parentsProp, isPolymophismValue || !parentsProp.language.go?.byValue === true)},\n`;
             }
-            // TODO: handle multiplue additionalProps
+            // TODO: handle multiple additionalProps
             for (const additionalProp of additionalProps) {
                 output += `AdditionalProperties: ${this.exampleValueToString(additionalProp, false)},\n`;
             }
@@ -357,7 +373,12 @@ export class MockTestDataRender extends BaseDataRender {
         const goType = this.getLanguageName(schema);
         if (schema.type === SchemaType.Choice) {
             if ((schema as ChoiceSchema).choiceType.type === SchemaType.String) {
-                ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+                try {
+                    const choiceValue = Helper.findChoiceValue(schema as ChoiceSchema, rawValue);
+                    ret = this.context.packageName + '.' + this.getLanguageName(choiceValue);
+                } catch (error) {
+                    ret = `${this.context.packageName}.${this.getLanguageName(schema)}("${rawValue}")`;
+                }
             } else {
                 ret = `${this.context.packageName}.${this.getLanguageName(schema)}(${rawValue})`;
             }
@@ -396,17 +417,17 @@ export class MockTestDataRender extends BaseDataRender {
 
         if (isPtr) {
             const ptrConverts = {
-                string: 'StringPtr',
-                bool: 'BoolPtr',
-                'time.Time': 'TimePtr',
-                int32: 'Int32Ptr',
-                int64: 'Int64Ptr',
-                float32: 'Float32Ptr',
-                float64: 'Float64Ptr',
+                string: 'Ptr',
+                bool: 'Ptr',
+                'time.Time': 'Ptr',
+                int32: 'Ptr[int32]',
+                int64: 'Ptr[int64]',
+                float32: 'Ptr[float32]',
+                float64: 'Ptr[float64]',
             };
 
             if ([SchemaType.Choice, SchemaType.SealedChoice].indexOf(schema.type) >= 0) {
-                ret += '.ToPtr()';
+                ret = `to.Ptr(${ret})`;
             } else if (Object.prototype.hasOwnProperty.call(ptrConverts, goType)) {
                 ret = `to.${ptrConverts[goType]}(${ret})`;
                 this.context.importManager.add('github.com/Azure/azure-sdk-for-go/sdk/azcore/to');

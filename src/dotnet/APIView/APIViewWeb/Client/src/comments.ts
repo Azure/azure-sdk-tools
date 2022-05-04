@@ -34,7 +34,12 @@
 
     $(document).on("click", "#show-comments-checkbox", e => {
         ensureMessageIconInDOM();
-        toggleAllCommentsAndDiagnosticsVisibility(e.target.checked);
+        toggleAllCommentsVisibility(e.target.checked);
+    });
+
+    $(document).on("click", "#show-system-comments-checkbox", e => {
+        ensureMessageIconInDOM();
+        toggleAllDiagnosticsVisibility(e.target.checked);
     });
 
     $(document).on("click", SEL_COMMENT_ICON, e => {
@@ -61,6 +66,7 @@
                 data: $.param(serializedForm)
             }).done(partialViewResult => {
                 updateCommentThread(commentRow, partialViewResult);
+                addCommentThreadNavigation();
             });
         }
         e.preventDefault();
@@ -144,6 +150,7 @@
 
     addEventListener("load", e => {
         highlightCurrentRow();
+        addCommentThreadNavigation();
     });
 
     function highlightCurrentRow() {
@@ -265,11 +272,20 @@
         return false;
     }
 
-    function toggleAllCommentsAndDiagnosticsVisibility(showComments: boolean) {
-        $(SEL_COMMENT_CELL + ", " + SEL_CODE_DIAG).each(function () {
+    function toggleAllCommentsVisibility(showComments: boolean) {
+        $(SEL_COMMENT_CELL).each(function () {
             var id = getElementId(this);
             if (id) {
                 getCommentsRow(id).toggle(showComments);
+                toggleCommentIcon(id, !showComments);
+            }
+        });
+    }
+
+    function toggleAllDiagnosticsVisibility(showComments: boolean) {
+        $(SEL_CODE_DIAG).each(function () {
+            var id = getElementId(this);
+            if (id) {
                 getDiagnosticsRow(id).toggle(showComments);
                 toggleCommentIcon(id, !showComments);
             }
@@ -283,12 +299,40 @@
 
     function ensureMessageIconInDOM() {
         if (!MessageIconAddedToDom) {
-            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `">💬</span>`);
+            $(".line-comment-button-cell").append(`<span class="icon icon-comments ` + INVISIBLE + `"><i class="far fa-comment-alt pt-1 pl-1"></i></span>`);
             MessageIconAddedToDom = true;
         }
     }
 
     function toggleCommentIcon(id, show: boolean) {
         getCodeRow(id).find(SEL_COMMENT_ICON).toggleClass(INVISIBLE, !show);
+    }
+
+    function addCommentThreadNavigation(){
+        var commentRows = $('.comment-row');
+        commentRows.each(function (index) {
+            var commentThreadAnchorId = "comment-thread-" + index;
+            $(this).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+
+            var commentNavigationButtons = $(this).find('.comment-navigation-buttons').last();
+            commentNavigationButtons.empty();
+
+            var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
+            var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+
+            if (commentRows.length != 1)
+            {
+                if (index == 0) {
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${nextCommentThreadAnchor}"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+                }
+                else if (index == commentRows.length - 1) {
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+                }
+                else {
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary" href="#${previousCommentThreadAnchor}"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+                    commentNavigationButtons.append(`<a class="btn btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+                }
+            }
+        });
     }
 });

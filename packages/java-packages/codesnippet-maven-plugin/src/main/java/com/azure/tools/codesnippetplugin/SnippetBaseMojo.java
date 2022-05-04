@@ -12,12 +12,15 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base Mojo for the codesnippet plugin.
  */
+@SuppressWarnings("unused")
 public abstract class SnippetBaseMojo extends AbstractMojo {
     private static final String PROPERTY_PREFIX = "codesnippet.";
 
@@ -32,8 +35,8 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     public static final String DEFAULT_SOURCE_GLOB = "**/src/main/java/**/*.java";
 
     /**
-    * Default glob to match README files.
-    */
+     * Default glob to match README files.
+     */
     public static final String DEFAULT_README_GLOB = "**/README.md";
 
     /**
@@ -52,6 +55,12 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     @Parameter(property = PROPERTY_PREFIX + "codesnippetRootDirectory",
         defaultValue = "${project.basedir}/src/samples/java")
     private File codesnippetRootDirectory;
+
+    /**
+     * Additional root directories and globs for codesnippets.
+     */
+    @Parameter
+    private RootAndGlob[] additionalCodesnippets;
 
     /**
      * Glob for the source files to inject codesnippets.
@@ -78,20 +87,26 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     private boolean includeSource;
 
     /**
-    * Glob for the README files to inject codesnippets.
-    * <p>
-    * Default value is {@link #DEFAULT_README_GLOB}.
-    */
+     * Glob for the README files to inject codesnippets.
+     * <p>
+     * Default value is {@link #DEFAULT_README_GLOB}.
+     */
     @Parameter(property = PROPERTY_PREFIX + "readmeGlob", defaultValue = DEFAULT_README_GLOB)
     private String readmeGlob;
 
     /**
-    * Root directory to begin searching for README files.
-    * <p>
-    * Default value is {@code ${project.basedir}}.
-    */
+     * Root directory to begin searching for README files.
+     * <p>
+     * Default value is {@code ${project.basedir}}.
+     */
     @Parameter(property = PROPERTY_PREFIX + "readmeRootDirectory", defaultValue = "${project.basedir}")
     private File readmeRootDirectory;
+
+    /**
+     * Additional root directories and globs for READMEs.
+     */
+    @Parameter
+    private RootAndGlob[] additionalReadmes;
 
     /**
      * Flag indicating if README files should be targeted for codesnippet injection or validation.
@@ -126,105 +141,6 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     private boolean failOnError;
 
     /**
-     * Gets the glob for the files that contain codesnippet definitions.
-     *
-     * @return The glob for the files that contain codesnippet definitions.
-     */
-    protected String getCodesnippetGlob() {
-        return codesnippetGlob;
-    }
-
-    /**
-     * Gets the root directory to begin searching for codesnippet files.
-     *
-     * @return The root directory to begin searching for codesnippet files.
-     */
-    protected File getCodesnippetRootDirectory() {
-        return codesnippetRootDirectory;
-    }
-
-    /**
-     * Gets the glob for the source files to inject codesnippets.
-     *
-     * @return The glob for the source files to inject codesnippets.
-     */
-    protected String getSourceGlob() {
-        return sourceGlob;
-    }
-
-    /**
-     * Gets the root directory to begin searching for source files.
-     *
-     * @return The root directory to begin searching for source files.
-     */
-    protected File getSourceRootDirectory() {
-        return sourceRootDirectory;
-    }
-
-    /**
-     * Gets whether source files should be targeted for codesnippet injection or validation.
-     *
-     * @return Whether source files should be targeted for codesnippet injection or validation.
-     */
-    protected boolean isIncludeSource() {
-        return includeSource;
-    }
-
-    /**
-     * Gets the glob for the README files to inject codesnippets.
-     *
-     * @return The glob for the README files to inject codesnippets.
-     */
-    protected String getReadmeGlob() {
-        return readmeGlob;
-    }
-
-    /**
-     * Gets the root directory to begin searching for README files.
-     *
-     * @return The root directory to begin searching for README files.
-     */
-    protected File getReadmeRootDirectory() {
-        return readmeRootDirectory;
-    }
-
-    /**
-     * Gets whether the README should be targeted for codesnippet injection or validation.
-     *
-     * @return Whether the README should be targeted for codesnippet injection or validation.
-     */
-    protected boolean isIncludeReadme() {
-        return includeReadme;
-    }
-
-    /**
-     * Gets the maximum line length for a Javadoc comment after the codesnippet has been injected.
-     *
-     * @return The maximum line length for a Javadoc comment after the codesnippet has been injected.
-     */
-    protected int getMaxLineLength() {
-        return maxLineLength;
-    }
-
-    /**
-     * Gets whether the plugin execution should be skipped.
-     *
-     * @return Whether the plugin execution should be skipped.
-     */
-    protected boolean isSkip() {
-        return skip;
-    }
-
-    /**
-     * Gets whether execution will fail if there is an error updating or verifying codesnippets.
-     *
-     * @return Whether execution will fail if there is an error updating or verifying codesnippets.
-     */
-    protected boolean isFailOnError() {
-        return failOnError;
-    }
-
-    /**
      * Runs codesnippets for the specified {@link ExecutionMode}.
      *
      * @param executionMode The codesnippet execution mode.
@@ -234,35 +150,53 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
     protected void executeCodesnippet(ExecutionMode executionMode) throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
 
-        if (isSkip()) {
+        if (skip) {
             log.info("Skipping codesnippet execution since skip is set.");
             return;
         }
 
-        Path codesnippetRootDirectory = getAndLogConfiguration("Using codesnippet root directory: %s",
-            () -> getCodesnippetRootDirectory().toPath(), log);
-        String codesnippetGlob = getAndLogConfiguration("Using codesnippet glob: %s", this::getCodesnippetGlob, log);
+        RootAndGlob codesnippetRootAndGlob = new RootAndGlob()
+            .setRoot(logConfiguration("Using codesnippet root directory: %s", codesnippetRootDirectory, log))
+            .setGlob(logConfiguration("Using codesnippet glob: %s", codesnippetGlob, log));
 
-        Path sourcesRootDirectory = getAndLogConfiguration("Using sources root directory: %s",
-            () -> getSourceRootDirectory().toPath(), log);
-        String sourcesGlob = getAndLogConfiguration("Using source glob: %s", this::getSourceGlob, log);
+        List<RootAndGlob> additionalCodesnippetRootAndGlobs = processRootAndGlobs(additionalCodesnippets,
+            DEFAULT_CODESNIPPET_GLOB);
+        if (!additionalCodesnippetRootAndGlobs.isEmpty()) {
+            log.debug("Using additional codesnippet roots and globs:");
+            for (RootAndGlob rootAndGlob : additionalCodesnippetRootAndGlobs) {
+                log.debug(String.format("\tRoot: %s, Glob: %s", rootAndGlob.getRoot(), rootAndGlob.getGlob()));
+            }
+        }
 
-        boolean includeSource = getAndLogConfiguration("Is source included? %b", this::isIncludeSource, log);
+        RootAndGlob sourcesRootAndGlob = new RootAndGlob()
+            .setRoot(logConfiguration("Using sources root directory: %s", sourceRootDirectory, log))
+            .setGlob(logConfiguration("Using source glob: %s", sourceGlob, log));
 
-        Path readmeRootDirectory = getAndLogConfiguration("Using README root directory: %s",
-            () -> getReadmeRootDirectory().toPath(), log);
-        String readmeGlob = getAndLogConfiguration("Using README glob: %s", this::getReadmeGlob, log);
-        boolean includeReadme = getAndLogConfiguration("Is README included? %b", this::isIncludeReadme, log);
+        logConfiguration("Is source included? %b", includeSource, log);
 
-        int maxLineLength = getAndLogConfiguration("Using max line length: %d", this::getMaxLineLength, log);
-        boolean failOnError = getAndLogConfiguration("Should fail on error: %b", this::isFailOnError, log);
+        RootAndGlob readmeRootAndGlob = new RootAndGlob()
+            .setRoot(logConfiguration("Using README root directory: %s", readmeRootDirectory, log))
+            .setGlob(logConfiguration("Using README glob: %s", readmeGlob, log));
+
+        List<RootAndGlob> additionalReadmeRootAndGlobs = processRootAndGlobs(additionalReadmes, DEFAULT_README_GLOB);
+        if (!additionalReadmeRootAndGlobs.isEmpty()) {
+            log.debug("Using additional README roots and globs:");
+            for (RootAndGlob rootAndGlob : additionalReadmeRootAndGlobs) {
+                log.debug(String.format("\tRoot: %s, Glob: %s", rootAndGlob.getRoot(), rootAndGlob.getGlob()));
+            }
+        }
+
+        logConfiguration("Is README included? %b", includeReadme, log);
+
+        logConfiguration("Using max line length: %d", maxLineLength, log);
+        logConfiguration("Should fail on error: %b", failOnError, log);
 
         if (executionMode == ExecutionMode.UPDATE) {
             try {
                 log.debug("Beginning codesnippet update execution.");
-                SnippetReplacer.updateCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory,
-                    sourcesGlob, includeSource, readmeRootDirectory, readmeGlob, includeReadme, maxLineLength,
-                    failOnError, log);
+                SnippetReplacer.updateCodesnippets(codesnippetRootAndGlob, additionalCodesnippetRootAndGlobs,
+                    sourcesRootAndGlob, includeSource, readmeRootAndGlob, additionalReadmeRootAndGlobs, includeReadme,
+                    maxLineLength, failOnError, log);
                 log.debug("Completed codesnippet update execution.");
             } catch (IOException ex) {
                 log.error(ex);
@@ -273,9 +207,9 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
         } else if (executionMode == ExecutionMode.VERIFY) {
             try {
                 log.debug("Beginning codesnippet verification execution.");
-                SnippetReplacer.verifyCodesnippets(codesnippetRootDirectory, codesnippetGlob, sourcesRootDirectory,
-                    sourcesGlob, includeSource, readmeRootDirectory, readmeGlob, includeReadme, maxLineLength,
-                    failOnError, log);
+                SnippetReplacer.verifyCodesnippets(codesnippetRootAndGlob, additionalCodesnippetRootAndGlobs,
+                    sourcesRootAndGlob, includeSource, readmeRootAndGlob, additionalReadmeRootAndGlobs, includeReadme,
+                    maxLineLength, failOnError, log);
                 log.debug("Completed codesnippet verification execution.");
             } catch (IOException ex) {
                 log.error(ex);
@@ -290,10 +224,23 @@ public abstract class SnippetBaseMojo extends AbstractMojo {
         }
     }
 
-    private static <T> T getAndLogConfiguration(String formattable, Supplier<T> configurationGetter, Log log) {
-        T configuration = configurationGetter.get();
+    private static <T> T logConfiguration(String formattable, T configuration, Log log) {
         log.debug(String.format(formattable, configuration));
 
         return configuration;
+    }
+
+    private static List<RootAndGlob> processRootAndGlobs(RootAndGlob[] rootAndGlobs, String defaultGlob) {
+        if (rootAndGlobs == null) {
+            return new ArrayList<>();
+        }
+
+        for (RootAndGlob rootAndGlob : rootAndGlobs) {
+            if (rootAndGlob.getGlob() == null) {
+                rootAndGlob.setGlob(defaultGlob);
+            }
+        }
+
+        return Arrays.stream(rootAndGlobs).collect(Collectors.toList());
     }
 }

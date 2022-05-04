@@ -1,6 +1,59 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Wed, 12 Jan 2022 09:10:46 GMT and should not be manually modified.
+This log was last generated on Sun, 24 Apr 2022 09:41:30 GMT and should not be manually modified.
+
+## 2.2.5
+Sun, 24 Apr 2022 09:41:30 GMT
+
+### Patches
+
+- Use oav@2.12.1
+
+## 2.2.4
+Tue, 29 Mar 2022 01:56:58 GMT
+
+### Patches
+
+- Oav loader cache problem.
+
+## 2.2.3
+Wed, 23 Mar 2022 06:19:34 GMT
+
+### Patches
+
+- upgrade @autorest/codemodel from 4.17.2 to 4.18.2
+
+## 2.2.2
+Mon, 14 Mar 2022 09:19:34 GMT
+
+### Patches
+
+- add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString
+
+## 2.2.1
+Thu, 03 Mar 2022 02:23:21 GMT
+
+### Patches
+
+- Use autorest session to log warning.
+
+## 2.2.0
+Tue, 22 Feb 2022 10:58:11 GMT
+
+### Minor changes
+
+- Add support for json pointer modeler for output variable of scenario test.
+
+## 2.1.0
+Fri, 11 Feb 2022 09:47:39 GMT
+
+### Minor changes
+
+- Refine scenario test modeler.
+
+### Patches
+
+- Fix newline platform compatibility problem.
 
 ## 2.0.0
 Wed, 12 Jan 2022 09:10:46 GMT

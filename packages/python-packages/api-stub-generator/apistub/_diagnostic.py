@@ -1,17 +1,32 @@
-import logging
+from enum import Enum
+
+class DiagnosticLevel(int, Enum):
+    DEFAULT = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+
+    def __str__(self):
+        if self == 0:
+            return "DEFAULT"
+        elif self == 1:
+            return "INFO"
+        elif self == 2:
+            return "WARNING"
+        elif self == 3:
+            return "ERROR"
+
 
 class Diagnostic:
     id_counter = 1
 
-    def __init__(self, target_id, message):
-        self.DiagnosticId = "AZ_PY_{}".format(Diagnostic.id_counter)
-        Diagnostic.id_counter+=1
-        self.Text = message
-        self.HelpLinkUri = ""
-        self.TargetId = target_id
+    def __init__(self, *, obj: "PylintError", target_id: str):
+        self.diagnostic_id = "AZ_PY_{}".format(Diagnostic.id_counter)
+        Diagnostic.id_counter += 1
+        self.text = f"{obj.message} [{obj.symbol}]"
+        self.help_link_uri = obj.help_link
+        self.target_id = target_id
+        self.level = obj.level
 
-    def set_text(self, text):
-        self.Text = text
-
-    def set_helplink(self, helplink):
-        self.HelpLinkUri = helplink
+    def log(self, log_func):
+        log_func(f"{str(self.level)}: {self.target_id}: {self.text}")

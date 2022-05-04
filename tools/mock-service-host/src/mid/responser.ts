@@ -135,8 +135,8 @@ export class ResponseGenerator {
                     urlMappingResult.groups &&
                     urlMappingResult.groups[paramSpec.name]
                 ) {
-                    parameters[paramSpec.name] = unescape(
-                        decodeURI(urlMappingResult.groups[paramSpec.name])
+                    parameters[paramSpec.name] = decodeURIComponent(
+                        urlMappingResult.groups[paramSpec.name]
                     )
                     types[paramSpec.name] = ParameterType.Path
                 }

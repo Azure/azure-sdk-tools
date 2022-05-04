@@ -32,7 +32,11 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.Name;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
@@ -69,6 +73,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptT
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
@@ -314,6 +319,12 @@ public class JavaASTAnalyser implements Analyser {
             addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
         }
 
+        // Maven name
+        tokeniseKeyValue("name", mavenPom.getName(), "");
+
+        // Maven description
+        tokeniseKeyValue("description", mavenPom.getDescription(), "");
+
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
@@ -364,11 +375,18 @@ public class JavaASTAnalyser implements Analyser {
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
+    /*
+     * Tokenizes a key-value pair.
+     *
+     * @param key Key of the token.
+     * @param value Value of the token.
+     * @param linkPrefix Link prefix.
+     */
     private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
-        addToken(new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value), NEWLINE);
+        addToken(MiscUtils.tokeniseKeyValue(key, value, linkPrefix), NEWLINE);
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {
@@ -403,7 +421,7 @@ public class JavaASTAnalyser implements Analyser {
             visitJavaDoc(typeDeclaration);
 
             // public custom annotation @interface's annotations
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
 
                 // Annotations on top of AnnotationDeclaration class, for example
@@ -433,7 +451,7 @@ public class JavaASTAnalyser implements Analyser {
             boolean isInterfaceDeclaration = isInterfaceType(typeDeclaration);
 
             // public custom annotation @interface's members
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
                 tokeniseAnnotationMember(annotationDeclaration);
             }

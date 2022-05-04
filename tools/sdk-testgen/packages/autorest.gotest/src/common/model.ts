@@ -26,8 +26,8 @@ export class GoExampleModel extends ExampleModel {
     checkResponse: boolean;
     responseOutput: string;
     responseType: string;
+    responseIsDiscriminator: boolean;
     responseTypePointer: boolean;
     pollerType: string;
-    pageableType: string;
     pageableItemName: string;
 }

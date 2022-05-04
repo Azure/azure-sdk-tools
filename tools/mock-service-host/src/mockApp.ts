@@ -1,46 +1,17 @@
-import bodyParser = require('body-parser')
-import { Config } from './common/config'
-import { Container } from 'inversify'
 import { Coordinator } from './mid/coordinator'
 import { InjectableTypes } from './lib/injectableTypes'
-import { InversifyExpressServer } from 'inversify-express-utils'
-import { ResponseGenerator } from './mid/responser'
-import { SpecRetrievalMethod } from './common/environment'
-import { SpecRetriever } from './lib/specRetriever'
-import { SpecRetrieverFilesystem } from './lib/specRetrieverFilesystem'
-import { SpecRetrieverGit } from './lib/specRetrieverGit'
+import { authServerRouter } from './router/authServerRouter'
+import { buildContainer, container } from './container'
 import { config } from './common'
-import { getHttpServer, getHttpsServer } from './webserver/httpServerConstructor'
+import { getHttpServer, getHttpsServer } from './controller/httpServerConstructor'
 import { logger } from './common/utils'
-
-/*eslint-disable */
-import './webserver/validateAndMockController'
-import './webserver/authServerController'
-import './webserver/metadataController'
-/*eslint-enable */
+import { metadataRouter } from './router/metadataRouter'
+import { validateAndMockRouter } from './router/validateAndMockRouter'
+import express from 'express'
 
 class MockApp {
-    private container: Container
-
-    private buildContainer(): void {
-        this.container = new Container()
-        this.container.bind<Config>(InjectableTypes.Config).toConstantValue(config)
-        this.container
-            .bind<SpecRetriever>(InjectableTypes.SpecRetriever)
-            .to(this.determineSpecRetriever(config.specRetrievalMethod))
-            .inSingletonScope()
-        this.container
-            .bind<ResponseGenerator>(InjectableTypes.ResponseGenerator)
-            .to(ResponseGenerator)
-            .inSingletonScope()
-        this.container
-            .bind<Coordinator>(InjectableTypes.Coordinator)
-            .to(Coordinator)
-            .inSingletonScope()
-    }
-
     private initializeCoordinator(): void {
-        const validator = this.container.get<Coordinator>(InjectableTypes.Coordinator)
+        const validator = container.get<Coordinator>(InjectableTypes.Coordinator)
         validator.initialize()
     }
 
@@ -76,60 +47,50 @@ class MockApp {
     }
 
     private buildExpress(): void {
-        const server = new InversifyExpressServer(this.container)
+        const app = express()
 
-        server.setErrorConfig((app) => {
-            app.use((err: Error) => {
-                logger.error(`[Internal Error] ${err.stack}`)
+        app.use(
+            express.json({
+                limit: '20mb',
+                inflate: true,
+                strict: false
             })
-        })
-        server.setConfig((app) => {
-            app.use(
-                bodyParser.json({
-                    limit: '20mb',
-                    inflate: true,
-                    strict: false
-                })
-            )
+        )
+        app.use(express.urlencoded({ extended: false }))
+        app.use(express.json())
+        app.use(this.logResponseBody)
 
-            app.use(bodyParser.urlencoded({ extended: false }))
-            app.use(bodyParser.json())
-            app.use(this.logResponseBody)
-        })
-        const serverInstance = server.build()
+        app.use(authServerRouter)
+        app.use(metadataRouter)
+        app.use(validateAndMockRouter)
 
-        const httpsServer = getHttpsServer(serverInstance)
+        app.use((err: Error) => {
+            logger.error(`[Internal Error] ${err.stack}`)
+        })
+
+        const httpsServer = getHttpsServer(app)
         httpsServer.listen(config.httpsPortStateful, () => {
             console.log(`Listening https on port: ${config.httpsPortStateful}`)
         })
 
-        const httpServer = getHttpServer(serverInstance)
+        const httpServer = getHttpServer(app)
         httpServer.listen(config.httpPortStateless, () => {
             console.log(`Listening http on port: ${config.httpPortStateless}`)
         })
 
-        const statelessServer = getHttpsServer(serverInstance)
+        const statelessServer = getHttpsServer(app)
         statelessServer.listen(config.httpsPortStateless, () => {
             console.log(`Listening https on port: ${config.httpsPortStateless}`)
         })
 
-        const internalErrorServer = getHttpsServer(serverInstance)
+        const internalErrorServer = getHttpsServer(app)
         internalErrorServer.listen(config.internalErrorPort, () => {
             console.log(`Listening https on port: ${config.internalErrorPort}`)
         })
     }
 
-    private determineSpecRetriever(method: string): any {
-        switch (method) {
-            case SpecRetrievalMethod.Filesystem:
-                return SpecRetrieverFilesystem
-            case SpecRetrievalMethod.Git:
-                return SpecRetrieverGit
-        }
-    }
-
     public start(): void {
-        this.buildContainer()
+        buildContainer()
         this.buildExpress()
         this.initializeCoordinator()
     }

@@ -15,7 +15,7 @@ env:
   - name: DEBUG_SHARE_ROOT
     value: /mnt/share/
 volumeMounts:
-  - name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
+  - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
     mountPath: /mnt/outputs
   - name: debug-file-share-{{ .Release.Name }}
     mountPath: /mnt/share

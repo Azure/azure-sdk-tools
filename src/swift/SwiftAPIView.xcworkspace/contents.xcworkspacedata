@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:SwiftAPIViewCore/SwiftAPIViewCore.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftAPIView/SwiftAPIView.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftAPIViewTests/SwiftAPIViewTests.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftAPIView/../CHANGELOG.md">
+   </FileRef>
+   <FileRef
+      location = "group:SwiftAPIView/../README.md">
+   </FileRef>
+</Workspace>

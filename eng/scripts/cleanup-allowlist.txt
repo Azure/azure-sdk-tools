@@ -1,0 +1,12 @@
+# This allowlist contains static resource groups automatically added to
+# Microsoft owned subscriptions by policy
+
+cleanupservice
+NetworkWatcherRG
+AzSecPackAutoConfigRG
+
+# Exclude static groups used for testing. These groups should already be 
+# excluded via owners tags, but add a second exclusion just in case
+
+static-test-resources
+LiveTestSecrets

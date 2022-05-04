@@ -7,6 +7,7 @@ import { GenerateContext } from '../../../src/generator/generateContext';
 import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestCodeGenerator, MockTestDataRender } from '../../../src/generator/mockTestGenerator';
 import { MockTool } from '../../tools';
+import { SampleCodeGenerator, SampleDataRender } from '../../../src/generator/sampleGenerator';
 import { ScenarioTestCodeGenerator, ScenarioTestDataRender } from '../../../src/generator/scenarioTestGenerator';
 import { TestConfig } from '@autorest/testmodeler/dist/src/common/testConfig';
 import { configDefaults } from '../../../src/common/constant';
@@ -19,6 +20,9 @@ describe('processRequest of go-tester', () => {
     let spyMockTestGenerateCode;
     let spyScenarioTestRenderData;
     let spyScenarioTestGenerateCode;
+    let spySampleRenderData;
+    let spySampleGenerateCode;
+
     beforeEach(() => {
         Helper.outputToModelerfour = jest.fn().mockResolvedValue(undefined);
         Helper.dump = jest.fn().mockResolvedValue(undefined);
@@ -29,6 +33,8 @@ describe('processRequest of go-tester', () => {
         spyMockTestGenerateCode = jest.spyOn(MockTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
         spyScenarioTestRenderData = jest.spyOn(ScenarioTestDataRender.prototype, 'renderData').mockReturnValue(undefined);
         spyScenarioTestGenerateCode = jest.spyOn(ScenarioTestCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
+        spySampleRenderData = jest.spyOn(SampleDataRender.prototype, 'renderData').mockReturnValue(undefined);
+        spySampleGenerateCode = jest.spyOn(SampleCodeGenerator.prototype, 'generateCode').mockReturnValue(undefined);
     });
 
     afterEach(() => {
@@ -41,6 +47,7 @@ describe('processRequest of go-tester', () => {
                 if (key === '') {
                     return {
                         testmodeler: {
+                            'generate-mock-test': true,
                             'export-codemodel': true,
                         },
                     };
@@ -58,6 +65,8 @@ describe('processRequest of go-tester', () => {
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).toHaveBeenCalledTimes(2);
         expect(Helper.dump).toHaveBeenCalledTimes(1);
@@ -69,6 +78,7 @@ describe('processRequest of go-tester', () => {
                 if (key === '') {
                     return {
                         testmodeler: {
+                            'generate-mock-test': true,
                             'export-codemodel': false,
                         },
                     };
@@ -85,18 +95,20 @@ describe('processRequest of go-tester', () => {
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
         expect(Helper.addCodeModelDump).not.toHaveBeenCalled();
         expect(Helper.dump).toHaveBeenCalledTimes(1);
     });
 
-    it("don't generate mock test if generate-mock-test is false", async () => {
+    it("don't generate mock test if generate-mock-test is true", async () => {
         TestCodeModeler.getSessionFromHost = jest.fn().mockResolvedValue({
             getValue: jest.fn().mockImplementation((key: string) => {
                 if (key === '') {
                     return {
                         testmodeler: {
-                            'generate-mock-test': false,
+                            'generate-mock-test': true,
                         },
                     };
                 } else if (key === 'header-text') {
@@ -106,11 +118,13 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
+        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
         expect(spyExampleRenderData).not.toHaveBeenCalled();
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate sdk example if generate-sdk-example is true', async () => {
@@ -129,11 +143,13 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
         expect(spyExampleRenderData).toHaveBeenCalledTimes(1);
         expect(spyExampleGenerateCode).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
         expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
     });
 
     it('generate scenario test if generate-scenario-test is true', async () => {
@@ -152,11 +168,38 @@ describe('processRequest of go-tester', () => {
         });
         await processRequest(undefined);
         expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
-        expect(spyMockTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
         expect(spyExampleRenderData).not.toHaveBeenCalled();
         expect(spyExampleGenerateCode).not.toHaveBeenCalled();
         expect(spyScenarioTestRenderData).toHaveBeenCalledTimes(1);
         expect(spyScenarioTestGenerateCode).toHaveBeenCalledTimes(1);
+        expect(spySampleRenderData).not.toHaveBeenCalled();
+        expect(spySampleGenerateCode).not.toHaveBeenCalled();
+    });
+
+    it('generate sdk sample if generate-sdk-sample is true', async () => {
+        TestCodeModeler.getSessionFromHost = jest.fn().mockResolvedValue({
+            getValue: jest.fn().mockImplementation((key: string) => {
+                if (key === '') {
+                    return {
+                        testmodeler: {
+                            'generate-sdk-sample': true,
+                        },
+                    };
+                } else if (key === 'header-text') {
+                    return '';
+                }
+            }),
+        });
+        await processRequest(undefined);
+        expect(spyMockTestRenderData).toHaveBeenCalledTimes(1);
+        expect(spyMockTestGenerateCode).not.toHaveBeenCalled();
+        expect(spyExampleRenderData).not.toHaveBeenCalled();
+        expect(spyExampleGenerateCode).not.toHaveBeenCalled();
+        expect(spyScenarioTestRenderData).not.toHaveBeenCalled();
+        expect(spyScenarioTestGenerateCode).not.toHaveBeenCalled();
+        expect(spySampleRenderData).toHaveBeenCalledTimes(1);
+        expect(spySampleGenerateCode).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -175,7 +218,7 @@ describe('GoTestGenerator from RP agrifood', () => {
                 configDefaults,
             ),
         );
-        testCodeModel.genMockTests();
+        testCodeModel.genMockTests(undefined);
     });
 
     afterEach(() => {
@@ -223,18 +266,18 @@ describe('GoTestGenerator from RP signalR', () => {
         const codeModel = MockTool.loadCodeModel('signalR/test-modeler.yaml');
         const swaggerFolder = path.join(__dirname, '..', '..', '..', '..', '..', 'swagger/specification/signalr/resource-manager/');
         testCodeModel = TestCodeModeler.createInstance(
-            codeModel as TestCodeModel,
+            codeModel as any,
             new TestConfig(
                 {
                     __parents: {
-                        'Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
+                        'Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json': process.platform.toLowerCase().startsWith('win')
                             ? `file:///${swaggerFolder}`
                             : `file://${swaggerFolder}`,
                     },
-                    'input-file': ['Microsoft.SignalRService/preview/2020-07-01-preview/signalr.json'],
+                    'input-file': ['Microsoft.SignalRService/preview/2021-06-01-preview/signalr.json'],
                     'test-resources': [
                         {
-                            test: 'Microsoft.SignalRService/preview/2020-07-01-preview/test-scenarios/signalR.yaml',
+                            test: 'Microsoft.SignalRService/preview/2021-06-01-preview/scenarios/signalR.yaml',
                         },
                     ],
                     testmodeler: {

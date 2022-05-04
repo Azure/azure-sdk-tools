@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -41,9 +42,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = statusCode;
                 response.ContentType = "application/json;";
 
-                if(e is TestRecordingMismatchException)
+                var encodedException = Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message));
+
+                if (e is TestRecordingMismatchException)
                 {
                     response.Headers.Add("x-request-mismatch", "true");
+                    response.Headers.Add("x-request-mismatch-error", encodedException);
+                }
+                else
+                {
+                    response.Headers.Add("x-request-known-exception", "true");
+                    response.Headers.Add("x-request-known-exception-error", encodedException);
                 }
                 
                 var bodyObj = new
@@ -51,6 +60,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     Message = e.Message,
                     Status = e.StatusCode.ToString()
                 };
+
+                DebugLogger.LogInformation(e.Message);
 
                 var body = JsonSerializer.Serialize(bodyObj);
                 await context.Response.WriteAsync(body);
@@ -64,10 +75,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = unexpectedStatusCode;
                 response.ContentType = "application/json";
 
+                response.Headers.Add("x-request-exception", "true");
+                response.Headers.Add("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
+
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = unexpectedStatusCode.ToString()
+                    Status = unexpectedStatusCode.ToString(),
+                    StackTrace = e.StackTrace,
                 };
 
                 var body = JsonSerializer.Serialize(bodyObj);

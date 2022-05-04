@@ -25,41 +25,23 @@ namespace APIViewWeb.Controllers
                 
         [HttpGet]
         public async Task<ActionResult> DetectApiChanges(
-            string buildId, 
-            string artifactName, 
-            string filePath, 
-            int pullRequestNumber, 
-            string commitSha,
-            string repoName,
-            string packageName)
-        {
-            if (!ValidateInputParams())
-            {
-                return StatusCode(StatusCodes.Status400BadRequest);
-            }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber);
-            return Ok();
-        }
-
-        [HttpGet]
-        public async Task<ActionResult> CreateApiReview(
             string buildId,
             string artifactName,
-            string originalFilePath,
-            string reviewFilePath,
+            string filePath,
             string commitSha,
             string repoName,
             string packageName,
-            int pullRequestNumber = 0)
+            int pullRequestNumber = 0,
+            string codeFile = null,
+            string baselineCodeFile = null,
+            bool commentOnPR = true)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, originalFilePath, commitSha, repoName, packageName, pullRequestNumber, reviewFilePath);
-            return Ok();
+            var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR);
+            return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
         }
 
         private bool ValidateInputParams()

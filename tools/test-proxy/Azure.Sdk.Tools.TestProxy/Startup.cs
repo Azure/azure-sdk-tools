@@ -12,8 +12,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -42,15 +44,18 @@ namespace Azure.Sdk.Tools.TestProxy
         /// </summary>
         /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
         /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="version">Flag. Invoke to get the version of the tool.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
+        /// <param name="dump">Flag. Pass to dump configuration values before starting the application.</param>
+        /// <param name="version">Flag. Pass to get the version of the tool.</param>
+        /// <param name="args">Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider.</param>
+        public static void Main(bool insecure = false, string storageLocation = null, bool dump = false, bool version = false, string[] args = null)
         {
             if (version)
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var nameVersion = assembly.GetName().Version;
+                var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+                var assemblyVersion = assembly.GetName().Version;
 
-                Console.WriteLine(nameVersion);
+                Console.WriteLine($"Built from ${assemblyVersion.Major}.${assemblyVersion.Minor}.${assemblyVersion.Build}-dev.{semanticVersion}");
 
                 Environment.Exit(0);
             }
@@ -64,15 +69,48 @@ namespace Azure.Sdk.Tools.TestProxy
             TargetLocation = resolveRepoLocation(storageLocation);
 
             var statusThread = PrintStatus(
-                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
+                () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder();
+            var host = Host.CreateDefaultBuilder(args);
 
             host.ConfigureWebHostDefaults(
-                builder => builder.UseStartup<Startup>());
+                builder =>
+                    builder.UseStartup<Startup>()
+                    // ripped directly from implementation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
+                    .ConfigureLogging((hostBuilder, loggingBuilder) =>
+                    {
+                        loggingBuilder.ClearProviders();
+                        loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
+                        loggingBuilder.AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[HH:mm:ss] ";
+                        });
+                        loggingBuilder.AddDebug();
+                        loggingBuilder.AddEventSourceLogger();
+                    })
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                    })
+                );
 
-            host.Build().Run();
+            var app = host.Build();
+
+            if (dump)
+            {
+                var config = app.Services?.GetService<IConfiguration>();
+                Console.WriteLine("Dumping Resolved Configuration Values:");
+                if (config != null)
+                {
+                    foreach (var c in config.AsEnumerable())
+                    {
+                        Console.WriteLine(c.Key + " = " + c.Value);
+                    }
+                }
+            }
+
+            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();
@@ -101,7 +139,7 @@ namespace Azure.Sdk.Tools.TestProxy
             services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -109,6 +147,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             app.UseCors("DefaultPolicy");
             app.UseMiddleware<HttpExceptionMiddleware>();
+
+            DebugLogger.ConfigureLogger(loggerFactory);
 
             MapRecording(app);
             app.UseRouting();

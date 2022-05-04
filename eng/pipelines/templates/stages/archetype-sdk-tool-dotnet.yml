@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211215.1
+      ref: refs/tags/azure-sdk-build-tools_20220329.1
 
 parameters:
   - name: ToolDirectory
@@ -21,6 +21,16 @@ parameters:
   - name: TestPostSteps
     type: object
     default: []
+  - name: DockerDeployments
+    type: object
+    default: []
+  - name: DockerTagPrefix
+    type: string
+    default: '1.0.0-dev'
+  - name: ManifestDeployment
+    type: object
+    default: []
+
 variables:
   - template: ../variables/globals.yml
   - name: Warn
@@ -86,8 +96,26 @@ stages:
               testResultsFormat: 'VSTest'
               mergeTestResults: true
 
+      - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
+        - template: /eng/pipelines/publish-docker-image.yml
+          parameters:
+            DockerDeployments: ${{ parameters.DockerDeployments }}
+            Publish: false
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+
   - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
     - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
       parameters:
         # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
         DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+
+  - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: PublishDockerImages
+      displayName: Publish Docker Images
+      dependsOn: BuildTestAndPackage
+      jobs:
+        - template: /eng/pipelines/publish-docker-image.yml
+          parameters:
+            DockerDeployments: ${{ parameters.DockerDeployments }}
+            ManifestDeployment: ${{ parameters.ManifestDeployment }}
+            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

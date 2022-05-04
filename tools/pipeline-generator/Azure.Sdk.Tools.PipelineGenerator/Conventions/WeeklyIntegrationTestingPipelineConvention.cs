@@ -9,14 +9,8 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        public override string GetDefinitionName(SdkComponent component)
-        {
-            var definitionName = $"{Context.Prefix} - {component.Name} - tests-weekly";
-            if (component.Variant != null) {
-                definitionName += $".{component.Variant}";
-            }
-            return definitionName;
-        }
+        public override string PipelineNameSuffix => " - tests-weekly";
+        public override string PipelineCategory => "tests-weekly";
 
         protected override Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {

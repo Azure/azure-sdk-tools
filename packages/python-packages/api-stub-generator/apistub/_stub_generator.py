@@ -10,23 +10,19 @@ import sys
 import os
 import argparse
 
-import inspect
 import io
 import importlib
-import json
 import logging
-import pkgutil
 import shutil
 import ast
 import textwrap
-import re
-import typing
 import tempfile
 from subprocess import check_call
 import zipfile
 
 
 from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._metadata_map import MetadataMap
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -35,69 +31,100 @@ logging.getLogger().setLevel(logging.ERROR)
 
 
 class StubGenerator:
-    def __init__(self):
-        parser = argparse.ArgumentParser(
-            description="Parse a python package and generate json token file to be supplied to API review tool"
-        )
-        parser.add_argument(
-            "--pkg-path", required=True, help=("Package root path"),
-        )
-        parser.add_argument(
-            "--temp-path", 
-            help=("Temp path to extract package"),
-            default=tempfile.gettempdir(),
-        )
-        parser.add_argument(
-            "--out-path",
-            default=os.getcwd(),
-            help=("Path to generate json file with parsed tokens"),
-        )
-        parser.add_argument(
-            "--verbose",
-            help=("Enable verbose logging"),
-            default=False,
-            action="store_true",
-        )
+    def __init__(self, **kwargs):
+        from .nodes import PylintParser
+        self._kwargs = kwargs
+        if not kwargs:
+            parser = argparse.ArgumentParser(
+                description="Parses a Python package and generates a JSON token file for consumption by the APIView tool."
+            )
+            parser.add_argument(
+                "--pkg-path", required=True, help=("Path to the package source root, WHL or ZIP file."),
+            )
+            parser.add_argument(
+                "--temp-path", 
+                help=("Extract the package to the specified temporary path. Defaults to a random temp dir."),
+                default=tempfile.gettempdir(),
+            )
+            parser.add_argument(
+                "--out-path",
+                default=os.getcwd(),
+                help=("Path at which to write the generated JSON file. Defaults to CWD."),
+            )
+            parser.add_argument(
+                "--mapping-path",
+                default=None,
+                help=("Path to an 'apiview_mapping.json' file that supplies cross-langauge definition IDs.")
+            )
+            parser.add_argument(
+                "--verbose",
+                help=("Enable verbose logging."),
+                default=False,
+                action="store_true",
+            )
+            parser.add_argument(
+                "--filter-namespace",
+                help=("Generate APIView only for a specific namespace."),
+            )
+            parser.add_argument(
+                "--source-url",
+                help=("URL to the pull request URL that contains the source used to generate this APIView.")
+            )
+            parser.add_argument(
+                "--skip-pylint",
+                help=("Skips running pylint on the package to obtain diagnostics."),
+                default=False,
+                action="store_true"
+            )
+            self._args = parser.parse_args()
 
-        parser.add_argument(
-            "--hide-report",
-            help=("Hide diagnostic report"),
-            default=False,
-            action="store_true",
-        )
+        pkg_path = self._parse_arg("pkg_path")
+        temp_path = self._parse_arg("temp_path") or tempfile.gettempdir()
+        out_path = self._parse_arg("out_path")
+        mapping_path = self._parse_arg("mapping_path")
+        verbose = self._parse_arg("verbose")
+        filter_namespace = self._parse_arg("filter_namespace")
+        source_url = self._parse_arg("source_url")
+        skip_pylint = self._parse_arg("skip_pylint")
 
-        parser.add_argument(
-            "--filter-namespace",
-            help=("Generate Api view only for a specific namespace"),
-        )
-        
-
-        args = parser.parse_args()
-        if not os.path.exists(args.pkg_path):
-            logging.error("Package path [{}] is invalid".format(args.pkg_path))
+        if not os.path.exists(pkg_path):
+            logging.error("Package path [{}] is invalid".format(pkg_path))
             exit(1)
-        elif not os.path.exists(args.temp_path):
-            logging.error("Temp path [{0}] is invalid".format(args.temp_path))
+        elif not os.path.exists(temp_path):
+            logging.error("Temp path [{0}] is invalid".format(temp_path))
             exit(1)
 
-
-        self.pkg_path = args.pkg_path
-        self.temp_path = args.temp_path
-        self.out_path = args.out_path
-        self.hide_report = args.hide_report
-        if args.verbose:
+        self.pkg_path = pkg_path
+        self.temp_path = temp_path
+        self.out_path = out_path
+        self.source_url = source_url
+        self.mapping_path = mapping_path
+        self.filter_namespace = filter_namespace or ''
+        if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
-        self.filter_namespace = ''
-        if args.filter_namespace:
-            self.filter_namespace = args.filter_namespace
-            
+        # Extract package to temp directory if it is wheel or sdist
+        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
+            self.wheel_path = self._extract_wheel()
+        else:
+            self.wheel_path = None
+
+        if not skip_pylint:
+            PylintParser.parse(self.wheel_path or self.pkg_path)
+
+    def _parse_arg(self, name):
+        value = self._kwargs.get(name, None)
+        if not value:
+            try:
+                value = getattr(self._args, name, None)
+            except AttributeError:
+                value = None
+        return value
 
     def generate_tokens(self):
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
-            logging.info("Extracting package to temp path")
-            pkg_root_path = self._extract_wheel()
+            pkg_root_path = self.wheel_path
             pkg_name, version = self._parse_pkg_name()
             namespace = self.get_module_root_name(pkg_root_path)
         else:
@@ -107,6 +134,7 @@ class StubGenerator:
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
+        # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
         
@@ -115,18 +143,12 @@ class StubGenerator:
             namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, version, namespace)
-        if apiview.Diagnostics:
-            # Show error report in console
-            if not self.hide_report:
-                print("************************** Error Report **************************")
-                for m in self.module_dict.keys():
-                    self.module_dict[m].print_errors()
+        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, source_url=self.source_url)
+        if apiview.diagnostics:
             logging.info("*************** Completed parsing package with errors ***************")
         else:
             logging.info("*************** Completed parsing package and generating tokens ***************")
         return apiview
-
 
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON
@@ -167,7 +189,7 @@ class StubGenerator:
         return modules
 
 
-    def _generate_tokens(self, pkg_root_path, package_name, version, namespace):
+    def _generate_tokens(self, pkg_root_path, package_name, namespace, *, source_url):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
         # Import ModuleNode.
@@ -175,9 +197,13 @@ class StubGenerator:
         from apistub.nodes._module_node import ModuleNode
 
         self.module_dict = {}
-        nodeindex = NodeIndex()
-        # todo (Update the version number correctly)
-        apiview = ApiView(nodeindex, package_name, version, namespace)
+        mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
+        apiview = ApiView(
+            pkg_name=package_name,
+            namespace=namespace,
+            metadata_map=mapping,
+            source_url=source_url
+        )
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -189,16 +215,17 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, nodeindex, namespace)
+            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
         # Create navigation info to navigate within APIreview tool
         navigation = Navigation(package_name, None)
-        navigation.set_tag(NavigationTag(Kind.type_package))
+        navigation.tags = NavigationTag(Kind.type_package)
         apiview.add_navigation(navigation)
 
         # Generate tokens
         modules = self.module_dict.keys()
         for m in modules:
+            self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
             self.module_dict[m].generate_tokens(apiview)
@@ -257,32 +284,8 @@ class StubGenerator:
         return pkg_name, version
 
     def _install_package(self, pkg_name):
-        # Uninstall the package and reinstall it to parse so inspect can get members in package
-        # We don't want to force reinstall to avoid reinstalling other dependent packages
-        commands = [sys.executable, "-m", "pip", "uninstall", pkg_name, "--yes", "-q"]
-        check_call(commands)
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
-        check_call(commands)
-
-
-class NodeIndex:
-    """Maintains name to navigation ID"""
-    def __init__(self):
-        self.index = {}
-
-    def add(self, name, node):
-        if name in self.index:
-            raise ValueError("Index already has {} node".format(name))
-        self.index[name] = node
-
-    def get(self, name):
-        return self.index.get(name, None)
-
-    def get_id(self, name):
-        node = self.get(name)
-        if node and hasattr(node, "namespace_id"):
-            return node.namespace_id
-        return None
+        check_call(commands, timeout = 60)
 
 
 def parse_setup_py(setup_path):

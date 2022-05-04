@@ -1,53 +1,67 @@
-import json
 from json import JSONEncoder
 import logging
 import re
-import importlib
-import inspect
+import os
 import platform
 
+from ._node_index import NodeIndex
 from ._token import Token
 from ._token_kind import TokenKind
 from ._version import VERSION
 from ._diagnostic import Diagnostic
+from ._metadata_map import MetadataMap
 
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
-TYPE_NAME_REGEX = re.compile("(~?[a-zA-Z\d._]+)")
-TYPE_OR_SEPERATOR = " or "
-
-# Lint warnings
-SOURCE_LINK_NOT_AVAILABLE = "Source definition link is not available for [{0}]. Please check and ensure type is fully qualified name in docstring"
+TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
+TYPE_OR_SEPARATOR = " or "
 
 
 class ApiView:
     """Entity class that holds API view for all namespaces within a package
-    :param NodeIndex: nodeindex
-    :param str: pkg_name
-    :param str: pkg_version
-    :param str: ver_string
+    :param str pkg_name: The package name.
+    :param str namespace: The package namespace.
+    :param MetadataMap metadata_map: A metadata mapping object.
+    :param str source_url: An optional source URL to display in the preamble.
     """
 
-    def __init__(self, nodeindex, pkg_name="", pkg_version="", namespace = ""):
-        self.Name = pkg_name
-        self.Version = 0
-        self.VersionString = ""
-        self.Language = "Python"
-        self.Tokens = []
-        self.Navigation = []
-        self.Diagnostics = []
+    @classmethod
+    def get_root_path(cls):
+        """ Looks for the root of the api-stub-generator package.
+        """
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+        while os.path.split(path)[1]:
+            dirname = os.path.split(path)[1]
+            if dirname == "api-stub-generator":
+                return path
+            else:
+                path = os.path.split(path)[0]
+        return None
+
+    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
+        self.name = pkg_name
+        self.version = 0
+        self.version_string = ""
+        self.language = "Python"
+        self.tokens = []
+        self.navigation = []
+        self.diagnostics = []
         self.indent = 0    
         self.namespace = namespace
-        self.nodeindex = nodeindex
-        self.PackageName = pkg_name
+        self.node_index = NodeIndex()
+        self.package_name = pkg_name
+        self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
+        if source_url:
+            self.set_blank_lines(1)
+            self.add_literal(f"# Source URL: {source_url}")
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
-        self.add_new_line(2)
+        self.set_blank_lines(2)
 
     def add_token(self, token):
-        self.Tokens.append(token)
+        self.tokens.append(token)
 
     def begin_group(self, group_name=""):
         """Begin a new group in API view by shifting to right
@@ -61,18 +75,51 @@ class ApiView:
             raise ValueError("Invalid intendation")
         self.indent -= 1
 
-    def add_whitespace(self):
+    def add_whitespace(self, count: int = None):
+        """ Inject appropriate whitespace for indentation,
+            or inject a specific number of whitespace characters.
+        """
         if self.indent:
             self.add_token(Token(" " * (self.indent * 4)))
+        elif count:
+            self.add_token(Token(" " * (count)))
 
     def add_space(self):
-        self.add_token(Token(" ", TokenKind.Whitespace))
+        """ Used to add a single space. Cannot add mutliple spaces.
+        """
+        if self.tokens[-1].kind != TokenKind.Whitespace:
+            self.add_token(Token(" ", TokenKind.Whitespace))
 
-    def add_new_line(self, additional_line_count=0):
-        self.add_token(Token("", TokenKind.Newline))
-        for n in range(additional_line_count):
-            self.add_space()
+    def add_newline(self):
+        """ Used to END a line and wrap to the next.
+            Cannot be used to inject blank lines.
+        """
+        # don't add newline if it already is in place
+        if self.tokens[-1].kind != TokenKind.Newline:
             self.add_token(Token("", TokenKind.Newline))
+
+    def set_blank_lines(self, count):
+        """ Ensures a specific number of blank lines.
+            Will add or remove newline tokens as needed
+            to ensure the exact number of blank lines.
+        """
+        # count the number of trailing newlines
+        newline_count = 0
+        for token in self.tokens[::-1]:
+            if token.kind == TokenKind.Newline:
+                newline_count += 1
+            else:
+                break
+        
+        if newline_count < (count + 1):
+            # if there are not enough newlines, add some
+            for n in range((count + 1) - newline_count):
+                self.add_token(Token("", TokenKind.Newline))
+        elif newline_count > (count + 1):
+            # if there are too many newlines, remove some
+            excess = newline_count - (count + 1)
+            for _ in range(excess):
+                self.tokens.pop()
 
     def add_punctuation(self, value, prefix_space=False, postfix_space=False):
         if prefix_space:
@@ -81,14 +128,16 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def add_line_marker(self, text):
+    def add_line_marker(self, line_id):
         token = Token("", TokenKind.LineIdMarker)
-        token.set_definition_id(text)
+        token.definition_id = line_id
         self.add_token(token)
 
-    def add_text(self, id, text):
+    def add_text(self, text, *, definition_id=None, add_cross_language_id=False):
         token = Token(text, TokenKind.Text)
-        token.DefinitionId = id
+        self.definition_id = definition_id
+        if add_cross_language_id:
+            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(definition_id, None)
         self.add_token(token)
 
     def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
@@ -100,6 +149,8 @@ class ApiView:
 
 
     def add_type(self, type_name, line_id=None):
+        # TODO: add_type should require an ArgType or similar object so we can link *all* types
+
         # This method replace full qualified internal types to short name and generate tokens
         if not type_name:
             return
@@ -108,8 +159,8 @@ class ApiView:
         logging.debug("Processing type {}".format(type_name))
         # Check if multiple types are listed with 'or' seperator
         # Encode multiple types with or separator into Union
-        if TYPE_OR_SEPERATOR in type_name:
-            types = [t.strip() for t in type_name.split(TYPE_OR_SEPERATOR) if t != TYPE_OR_SEPERATOR]
+        if TYPE_OR_SEPARATOR in type_name:
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 
@@ -120,23 +171,17 @@ class ApiView:
         logging.debug("Generating tokens for type name {}".format(type_name))
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
-        token.set_value(type_full_name.split(".")[-1])
-        navigate_to_id = self.nodeindex.get_id(type_full_name)
+        token.value = type_full_name.split(".")[-1]
+        navigate_to_id = self.node_index.get_id(type_full_name)
         if navigate_to_id:
-            token.NavigateToId = navigate_to_id
-        elif type_name.startswith("~") and line_id:
-            # Check if type name is importable. If type name is incorrect in docstring then it wont be importable
-            # If type name is importable then it's a valid type name. Source link wont be available if type is from 
-            # different package
-            if not is_valid_type_name(type_full_name):
-                # Navigation ID is missing for internal type, add diagnostic error
-                self.add_diagnostic(SOURCE_LINK_NOT_AVAILABLE.format(token.Value), line_id)            
+            token.navigate_to_id = navigate_to_id
         self.add_token(token)
 
 
-    def _add_type_token(self, type_name, line_id = None):
+    def _add_type_token(self, type_name, line_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
+
         types = re.search(TYPE_NAME_REGEX, type_name)
         if types:
             # Generate token for the prefix before internal type
@@ -157,13 +202,13 @@ class ApiView:
             self.add_punctuation(type_name)        
 
 
-    def add_diagnostic(self, text, line_id):
-        self.Diagnostics.append(Diagnostic(line_id, text))
+    def add_diagnostic(self, *, obj, target_id):
+        self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
 
 
     def add_member(self, name, id):
         token = Token(name, TokenKind.MemberName)
-        token.DefinitionId = id
+        token.definition_id = id
         self.add_token(token)
 
 
@@ -176,40 +221,43 @@ class ApiView:
 
 
     def add_navigation(self, navigation):
-        self.Navigation.append(navigation)
-
+        self.navigation.append(navigation)
 
 class APIViewEncoder(JSONEncoder):
     """Encoder to generate json for APIview object
     """
 
+    def _snake_to_pascal(self, text: str) -> str:
+        return text.replace("_", " ").title().replace(" ", "")
+
+    def _pascal_to_snake(self, text: str) -> str:
+        results = "_".join([x.lower() for x in re.findall('[A-Z][^A-Z]*', text)])
+        return results
+
     def default(self, obj):
         obj_dict = {}
-        if (
-            isinstance(obj, ApiView)
-            or isinstance(obj, Token)
-            or isinstance(obj, Navigation)
-            or isinstance(obj, NavigationTag)
-            or isinstance(obj, Diagnostic)
-        ):            
+        if isinstance(obj, (ApiView, Token, Navigation, NavigationTag, Diagnostic)):            
             # Remove fields in APIview that are not required in json
             if isinstance(obj, ApiView):
                 for key in JSON_FIELDS:
-                    if key in obj.__dict__:
-                        obj_dict[key] = obj.__dict__[key]
+                    snake_key = self._pascal_to_snake(key)
+                    if snake_key in obj.__dict__:
+                        obj_dict[key] = obj.__dict__[snake_key]
             elif isinstance(obj, Token):
-                obj_dict = obj.__dict__
+                obj_dict = {self._snake_to_pascal(k):v for k, v in obj.__dict__.items()}
                 # Remove properties from serialization to reduce size if property is not set
-                if not obj.DefinitionId:
+                if not obj.definition_id:
                     del obj_dict["DefinitionId"]
-                if not obj.NavigateToId:
+                if not obj.navigate_to_id:
                     del obj_dict["NavigateToId"]
+                if not obj.cross_language_definition_id:
+                    del obj_dict["CrossLanguageDefinitionId"]
             elif isinstance(obj, Diagnostic):
-                obj_dict = obj.__dict__
-                if not obj.HelpLinkUri:
+                obj_dict = {self._snake_to_pascal(k):v for k, v in obj.__dict__.items()}
+                if not obj.help_link_uri:
                     del obj_dict["HelpLinkUri"]
             else:
-                obj_dict = obj.__dict__
+                obj_dict = {self._snake_to_pascal(k):v for k, v in obj.__dict__.items()}
 
             return obj_dict
         elif isinstance(obj, TokenKind) or isinstance(obj, Kind):
@@ -224,7 +272,7 @@ class APIViewEncoder(JSONEncoder):
 
 class NavigationTag:
     def __init__(self, kind):
-        self.TypeKind = kind
+        self.type_kind = kind
 
 
 class Kind:
@@ -239,26 +287,10 @@ class Navigation:
     """Navigation model to be added into tokens files. List of Navigation object represents the tree panel in tool"""
 
     def __init__(self, text, nav_id):
-        self.Text = text
-        self.NavigationId = nav_id
-        self.ChildItems = []
-        self.Tags = None
-
-    def set_tag(self, tag):
-        self.Tags = tag
+        self.text = text
+        self.navigation_id = nav_id
+        self.child_items = []
+        self.tags = None
 
     def add_child(self, child):
-        self.ChildItems.append(child)
-
-
-def is_valid_type_name(type_name):
-    try:
-        module_end_index = type_name.rfind(".")
-        if module_end_index > 0:
-            module_name = type_name[:module_end_index]
-            class_name = type_name[module_end_index+1:]
-            mod = importlib.import_module(module_name)
-            return class_name in [x[0] for x in inspect.getmembers(mod)]
-    except:
-        logging.error("Failed to import {}".format(type_name))    
-    return False
+        self.child_items.append(child)

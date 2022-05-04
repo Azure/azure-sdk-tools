@@ -27,27 +27,28 @@
 import AST
 import Foundation
 
+
 extension PatternInitializer {
-    var name: String {
-        if let ident = self.pattern as? IdentifierPattern {
-            return ident.identifier.textDescription
-        }
-        SharedLogger.fail("Unable to extract name from \(self)")
+    var name: String? {
+        return (self.pattern as? IdentifierPattern)?.identifier.textDescription
     }
 
     var typeModel: TypeModel? {
         if case let typeAnno as IdentifierPattern = pattern,
             let typeInfo = typeAnno.typeAnnotation?.type {
-            return TypeModel(from: typeInfo)
+            return typeInfo.toTokenizable()
         }
         if case let literalExpression as LiteralExpression = initializerExpression {
-            // TODO: Revisit this
-            return TypeModel(name: literalExpression.kind.textDescription)
+            return TypeIdentifierModel(name: literalExpression.kind.textDescription)
         }
-        SharedLogger.fail("Unsupported pattern: \(self)")
+        if case let functionExpression as FunctionCallExpression = initializerExpression {
+            return TypeIdentifierModel(name: functionExpression.postfixExpression.textDescription)
+        }
+        return nil
     }
 
     var defaultValue: String? {
-        return initializerExpression?.textDescription
+        // TODO: This only works for literal expressions. What about closures, etc? Do we care?
+        return (initializerExpression as? LiteralExpression)?.textDescription
     }
 }

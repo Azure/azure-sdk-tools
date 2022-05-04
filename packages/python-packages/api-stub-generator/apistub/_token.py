@@ -6,16 +6,28 @@ class Token:
     """
 
     def __init__(self, value="", kind=TokenKind.Text):
-        self.Kind = kind
-        self.DefinitionId = None
-        self.NavigateToId = None
-        self.Value = value
+        self.kind = kind
+        self.definition_id = None
+        self.cross_language_definition_id = None
+        self.navigate_to_id = None
+        self.value = value
 
-    def set_definition_id(self, id):
-        self.DefinitionId = id
-
-    def set_navigation_id(self, id):
-        self.NavigateToId = id
-
-    def set_value(self, value):
-        self.Value = value
+    def render(self):
+        rendered_kinds = [
+            TokenKind.Text,
+            TokenKind.Newline,
+            TokenKind.Whitespace,
+            TokenKind.Keyword,
+            TokenKind.TypeName,
+            TokenKind.MemberName,
+            TokenKind.StringLiteral,
+            TokenKind.Literal,
+            TokenKind.Comment,
+            TokenKind.Punctuation
+        ]
+        if self.kind == TokenKind.Newline:
+            return "\n"
+        elif self.kind in rendered_kinds:
+            return self.value
+        else:
+            return ""

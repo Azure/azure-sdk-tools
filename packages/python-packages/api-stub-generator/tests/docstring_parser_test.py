@@ -4,17 +4,19 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from pydoc import Doc
 from apistub.nodes import DocstringParser
 
 
-docstring_standard_return_type = """
-Dummy docstring to verify standard return types and param types
-:rtype: str
-"""
-
-docstring_Union_return_type1 = """
-Dummy docstring to verify standard return types and param types
-:rtype: Union[str, int]
+docstring_default_legacy = """
+:param value: Some dummy value. Default value
+  is "cat". Extra text.
+:type value: str
+:param another: Something else. Default value
+  is dog. Extra text.
+:type value: str
+:param some_class: Some kind of class type. Default value is :py:class:`apistubgen.test.models.FakeObject`.
+:type some_class: class
 """
 
 docstring_union_return_type_followed_by_irrelevant_text = """
@@ -133,7 +135,8 @@ class TestDocstringParser:
     def _test_variable_type(self, docstring, expected):
         parser = DocstringParser(docstring)
         for varname, expect_val in expected.items():
-            assert expect_val == parser.type_for(varname)
+            actual = parser.type_for(varname)
+            assert expect_val == actual
 
     def _test_return_type(self, docstring, expected):
         parser = DocstringParser(docstring)
@@ -182,12 +185,6 @@ class TestDocstringParser:
             "name": "str",
             "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
         })
-
-    def test_return_builtin_return_type(self):
-        self._test_return_type(docstring_standard_return_type, "str")
-
-    def test_return_union_return_type(self):
-        self._test_return_type(docstring_Union_return_type1, "Union[str, int]")
     
     def test_return_union_return_type_followed_by_irrelevant_text(self):
         self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
@@ -211,9 +208,12 @@ class TestDocstringParser:
     
     def test_defaults(self):
         parser = DocstringParser(docstring_multi_complex_type)
-        # the docstring parser adds "..." for keyword-arguments
-        # to signify they are optional
+        # optional keyword-arguments are documented with "..."
         assert parser.default_for("country_hint") == "..."
-        # for "everything else" we don't set a default from the docstring
-        # instead we will seek the default from the signature inspection
-        assert parser.default_for("documents") is None
+        assert parser.default_for("documents") == None
+
+    def test_docstring_defaults_legacy(self):
+        parser = DocstringParser(docstring_default_legacy)
+        assert parser.default_for("value") == "cat"
+        assert parser.default_for("another") == "dog"
+        assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"

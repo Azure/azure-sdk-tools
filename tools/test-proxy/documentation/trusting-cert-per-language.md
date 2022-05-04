@@ -10,7 +10,8 @@ Within this folder are components of a **dev certificate** that has no usage out
 
 ```powershell
 # ensure root access
-> $rootCert = $(Import-PfxCertificate -FilePath eng/common/testproxy/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root')
+> $pfxpass = ConvertTo-SecureString -String 'password' -AsPlainText -Force
+> $rootCert = $(Import-PfxCertificate -FilePath eng/common/testproxy/dotnet-devcert.pfx -CertStoreLocation 'Cert:\LocalMachine\Root' -Password $pfxpass)
 ```
 
 or via `dotnet`

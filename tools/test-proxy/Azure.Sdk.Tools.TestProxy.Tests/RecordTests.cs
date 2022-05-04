@@ -1,15 +1,16 @@
 using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Matchers;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -17,40 +18,44 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordTests
     {
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
         [Fact]
-        public void TestStartRecordSimple()
+        public async Task TestStartRecordSimple()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-recording-file"] = "recordings/TestStartRecordSimple.json";
+            var body = "{\"x-recording-file\":\"recordings/TestStartRecordSimple.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
 
-            var controller = new Record(testRecordingHandler)
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             Assert.NotNull(recordingId);
             Assert.True(testRecordingHandler.RecordingSessions.ContainsKey(recordingId));
         }
 
         [Fact]
-        public void TestStartRecordInMemory()
+        public async Task TestStartRecordInMemory()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Record(testRecordingHandler)
+            var controller = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             var (fileName, session) = testRecordingHandler.RecordingSessions[recordingId];
@@ -58,53 +63,119 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Empty(fileName);
         }
 
-        [Fact]
-        public void TestStopRecordingSimple()
+        [Theory]
+        [InlineData("recordings/TestStartRecordSimple_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimplé_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimple.json", "")]
+        [InlineData("recordings/TestStartRecordSimplé.json", "")]
+        public async Task TestStopRecordingSimple(string targetFile, string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            var targetFile = "recordings/TestStartRecordSimple.json";
-            httpContext.Request.Headers["x-recording-file"] = targetFile;
-
-            var controller = new Record(testRecordingHandler)
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
                     HttpContext = httpContext
                 }
             };
-            controller.Start();
+            await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers.Remove("x-recording-file");
 
+            if (!string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            }
+
             controller.Stop();
 
-            var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
-            Assert.True(File.Exists(fullPath));
+            if (string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                Assert.True(File.Exists(fullPath));
+            }
+            else
+            {
+                var fullPath = testRecordingHandler.GetRecordingPath(targetFile);
+                Assert.False(File.Exists(fullPath));
+            }
         }
 
         [Fact]
-        public void TestStopRecordingInMemory()
+        public async Task TestStopRecordingThrowsOnInvalidSkipValue()
+        {
+            string targetFile = "recordings/TestStartRecordSimple_nosave.json";
+            string additionalEntryModeHeader = "request-body";
+
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers.Remove("x-recording-file");
+
+            httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+
+
+            var resultingException = Assert.Throws<HttpException>(
+               () => controller.Stop()
+            );
+
+            Assert.Equal("When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.", resultingException.Message);
+            Assert.Equal(HttpStatusCode.BadRequest, resultingException.StatusCode);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("request-response")]
+        public async Task TestStopRecordingInMemory(string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             var recordContext = new DefaultHttpContext();
-            var recordController = new Record(testRecordingHandler)
+            var recordController = new Record(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
                     HttpContext = recordContext
                 }
             };
-            recordController.Start();
+            await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId
             };
+
+            if (!string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                recordContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            }
+
             recordController.Stop();
 
-            Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
-            Assert.NotNull(testRecordingHandler.InMemorySessions[inMemId]);
+            if (string.IsNullOrEmpty(additionalEntryModeHeader))
+            {
+                Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
+                Assert.NotNull(testRecordingHandler.InMemorySessions[inMemId]);
+            }
+            else
+            {
+                Assert.True(testRecordingHandler.InMemorySessions.Count() == 0);
+            }
         }
 
         [Fact]
@@ -114,6 +185,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
             playbackContext.Request.Headers["x-recording-file"] = targetFile;
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
 
             var controller = new Playback(testRecordingHandler)
             {
@@ -157,6 +231,5 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Contains("Uri doesn't match:", resultingException.Message);
         }
-
     }
 }

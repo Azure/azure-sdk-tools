@@ -63,7 +63,7 @@ public class APIViewManager {
 
     // MARK: Properties
 
-    public var config = APIViewConfiguration()
+    var config = APIViewConfiguration()
 
     var mode: APIViewManagerMode
 
@@ -82,19 +82,19 @@ public class APIViewManager {
         guard let sourceUrl = URL(string: config.sourcePath) else {
             SharedLogger.fail("usage error: source path was invalid.")
         }
-        let tokenFile = try buildTokenFile(from: sourceUrl)
+        let apiView = try createApiView(from: sourceUrl)
 
         switch mode {
         case .commandLine:
-            save(tokenFile: tokenFile)
+            save(apiView: apiView)
             return ""
         case .testing:
-            return tokenFile.text
+            return apiView.text
         }
     }
 
     /// Persist the token file to disk
-    func save(tokenFile: TokenFile) {
+    func save(apiView: APIViewModel) {
         let destUrl: URL
         if let destPath = config.destPath {
             destUrl = URL(fileURLWithPath: destPath)
@@ -108,7 +108,7 @@ public class APIViewManager {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
-            let tokenData = try encoder.encode(tokenFile)
+            let tokenData = try encoder.encode(apiView)
             try tokenData.write(to: destUrl)
         } catch {
             SharedLogger.fail(error.localizedDescription)
@@ -187,7 +187,7 @@ public class APIViewManager {
         return filePaths
     }
 
-    func buildTokenFile(from sourceUrl: URL) throws -> TokenFile {
+    func createApiView(from sourceUrl: URL) throws -> APIViewModel {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var packageName: String?
         var packageVersion: String?
@@ -236,8 +236,7 @@ public class APIViewManager {
         config.packageName = packageName!
         config.packageVersion = packageVersion!
         let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        let tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: packageVersion!)
-        tokenFile.process(statements: Array(statements.values))
-        return tokenFile
+        let apiView = APIViewModel(name: apiViewName, packageName: packageName!, versionString: packageVersion!, statements: Array(statements.values))
+        return apiView
     }
 }

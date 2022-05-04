@@ -31,4 +31,12 @@ public class Diagnostic {
         this.level = level;
         this.helpLinkUri = helpLinkUri;
     }
+
+    public String getText() {
+        return text;
+    }
+
+    public String getHelpLinkUri() {
+        return helpLinkUri;
+    }
 }

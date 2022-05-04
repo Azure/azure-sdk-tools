@@ -21,6 +21,10 @@ import java.util.List;
 public class Pom implements MavenGAV {
     private Gav gav;
     private Gav parent;
+
+    private String name;
+    private String description;
+
     private List<Dependency> dependencies;
 
     private Float jacocoMinLineCoverage;
@@ -28,11 +32,14 @@ public class Pom implements MavenGAV {
 
     private String checkstyleExcludes;
 
+    private boolean fileExists;
+
     // These are the dependencies specifies in the maven-enforcer that are allowed
     private List<String> allowedDependencies;
 
-    public Pom(final String groupId, final String artifactId, final String version) {
+    public Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
         this.gav = new Gav(groupId, artifactId, version);
+        this.fileExists = fileExists;
     }
 
     public Pom(InputStream pomFileStream) throws IOException {
@@ -68,6 +75,14 @@ public class Pom implements MavenGAV {
             // checkstyle excludes
             n = (Node) xPath.evaluate("/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes", xmlDocument, XPathConstants.NODE);
             this.checkstyleExcludes = n == null ? null : n.getTextContent();
+
+            // Maven name
+            n = (Node) xPath.evaluate("/project/name", xmlDocument, XPathConstants.NODE);
+            this.name = (n == null) ? null : n.getTextContent();
+
+            // Maven description
+            n = (Node) xPath.evaluate("/project/description", xmlDocument, XPathConstants.NODE);
+            this.description = (n == null) ? null : n.getTextContent();
 
             // actual dependencies
             final String dependencyExpression = "/project/dependencies/dependency";
@@ -108,6 +123,14 @@ public class Pom implements MavenGAV {
         return parent;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
     public List<Dependency> getDependencies() {
         return dependencies;
     }
@@ -126,6 +149,13 @@ public class Pom implements MavenGAV {
 
     public List<String> getAllowedDependencies() {
         return allowedDependencies;
+    }
+
+    /**
+     * Sometimes we can't find a pom file, so we fake it with the info we do have.
+     */
+    public boolean isPomFileReal() {
+        return fileExists;
     }
 
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {

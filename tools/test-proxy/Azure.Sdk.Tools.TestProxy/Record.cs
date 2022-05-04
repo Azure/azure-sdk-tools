@@ -3,10 +3,10 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -16,23 +16,40 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Record : ControllerBase
     {
+        private readonly ILogger _logger;
+
         private readonly RecordingHandler _recordingHandler;
-        public Record(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
 
-
-        private static readonly HttpClient s_client = Startup.Insecure ?
-            new HttpClient(new HttpClientHandler() {  ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+        private static readonly HttpClient RedirectableClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
             {
-                Timeout = TimeSpan.FromSeconds(600)
+                Timeout = TimeSpan.FromSeconds(600),
             } :
-            new HttpClient() {
+            new HttpClient()
+            {
                 Timeout = TimeSpan.FromSeconds(600)
             };
 
-        [HttpPost]
-        public void Start()
+        private static readonly HttpClient RedirectlessClient = Startup.Insecure ?
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false, ServerCertificateCustomValidationCallback = (_, _, _, _) => true })
+            {
+                Timeout = TimeSpan.FromSeconds(600),
+            } :
+            new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })
+            {
+                Timeout = TimeSpan.FromSeconds(600)
+            };
+
+        public Record(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
         {
-            string file = RecordingHandler.GetHeader(Request, "x-recording-file", allowNulls: true);
+            _recordingHandler = recordingHandler;
+            _logger = loggerFactory.CreateLogger<Record>();
+        }
+
+        [HttpPost]
+        public async Task Start()
+        {
+            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", allowNulls: true);
 
             _recordingHandler.StartRecording(file, Response);
         }
@@ -42,15 +59,27 @@ namespace Azure.Sdk.Tools.TestProxy
         public void Stop([FromBody()] IDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            bool save = true;
+            EntryRecordMode mode = RecordingHandler.GetRecordMode(Request);
 
-            _recordingHandler.StopRecording(id, variables: variables);
+            if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.");
+            }
+
+            if (mode == EntryRecordMode.DontRecord)
+            {
+                save = false;
+            }
+
+            _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
 
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
 
-            await _recordingHandler.HandleRecordRequest(id, Request, Response, s_client);
+            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response, RedirectableClient, RedirectlessClient);
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.tools.apiview.processor.Main;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +77,10 @@ public class APIListing {
 
     public void addDiagnostic(Diagnostic diagnostic) {
         this.diagnostics.add(diagnostic);
+    }
+
+    public List<Diagnostic> getDiagnostics() {
+        return Collections.unmodifiableList(diagnostics);
     }
 
     public String getLanguage() {

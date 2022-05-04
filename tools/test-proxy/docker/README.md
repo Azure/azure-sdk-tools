@@ -67,7 +67,7 @@ Most issues we've seen are related to having a prior `az acr login` or the like.
 
 If your error looks something like this:
 
-```
+```bash
 > docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 Error response from daemon: Head https://azsdkengsys.azurecr.io/v2/engsys/testproxy-lin/manifests/latest: unauthorized: authentication required
 ```
@@ -82,7 +82,7 @@ This occurs when a user has a **prior login** to `azsdkengsys.azurecr.io`. `az a
 
 For errors that look like:
 
-```
+```bash
 > docker pull azsdkengsys.azurecr.io/engsys/testproxy-lin:latest
 Error response from daemon: Get https://azsdkengsys.azurecr.io/v2/: x509: certificate has expired or is not yet valid
 ```
@@ -93,3 +93,33 @@ Open up docker desktop and click the bug.
 
 Then click `Restart`. Reference [this stack overflow](https://stackoverflow.com/questions/35289802/docker-pull-error-x509-certificate-has-expired-or-is-not-yet-valid) post. The docker daemon clock doesn't stay synced with windows, which causes these certificate failures.
 
+## Building a multiplatform image
+
+To build the `arm64` version of the linux image, simply provide a build time argument of `ARCH=-arm64v8`.
+
+```pwsh
+./prepare.ps1
+docker build -t testproxy --build-arg ARCH=-arm64v8 . --platform linux/arm64
+```
+
+## Publishing a multiplatform image
+
+- Use `docker manifest`
+- `experimental` mode must be enabled to gain access to `docker manifest` features.
+- Push images that we want to base the manifest list on
+
+Create a manifest list
+
+```pwsh
+docker manifest create azsdkengsys.azurecr.io/engsys/testproxy:1.0.0-dev.20220407.1 `
+                                             #[    repo      ] [     tag           ]
+  azsdkengsys.azurecr.io/engsys/testproxy-lin-arm64:1.0.0-dev.20220407.1 `
+  azsdkengsys.azurecr.io/engsys/testproxy-lin:1.0.0-dev.20220407.1 `
+  azsdkengsys.azurecr.io/engsys/testproxy-win:1.0.0-dev.20220407.1
+```
+
+Push it
+
+```pwsh
+docker manifest push azsdkengsys.azurecr.io/engsys/testproxy:1.0.0-dev.20220407.1
+```

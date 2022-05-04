@@ -50,6 +50,7 @@ public class Diagnostics {
                             "root name for XML content than other formats.\"")
         ));
         diagnostics.add(new BuilderTraitsDiagnosticRule());
+        diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

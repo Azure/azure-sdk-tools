@@ -16,6 +16,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
         public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
+        public RecordMatcher RecordMatcher = new RecordMatcher();
+
+        [Theory]
+        [InlineData("Test.RecordEntries/response_with_xml_body.json", "Content-Type", "application/json;     odata=nometadata")]
+        [InlineData("Test.RecordEntries/response_with_xml_body.json", "Content-Type", "application/json;odata=nometadata")]
+        [InlineData("Test.RecordEntries/request_with_accept_commas.json", "Accept", "application/vnd.oci.image.manifest.v1\u002Bjson,    application/json")]
+        [InlineData("Test.RecordEntries/request_with_accept_commas.json", "Accept", "application/vnd.oci.image.manifest.v1\u002Bjson,application/json")]
+        public void MatchesBadlyNormalizedHeader(string file, string targetHeader, string overrideValue)
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession(file);
+            var identicalRequest = TestHelpers.LoadRecordSession(file).Session.Entries[0];
+            identicalRequest.Request.Headers[targetHeader][0] = overrideValue;
+
+            var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, RecordMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
 
         [Fact]
         public void BodilessMatcherMatchesIdenticalRequest()
@@ -241,8 +256,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
             var playbackContext = new DefaultHttpContext();
             var targetFile = "Test.RecordEntries/request_with_subscriptionid.json";
-            playbackContext.Request.Headers["x-recording-file"] = targetFile;
-
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+           
             var controller = new Playback(testRecordingHandler)
             {
                 ControllerContext = new ControllerContext()

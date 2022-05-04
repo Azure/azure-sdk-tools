@@ -9,6 +9,7 @@
 {
     <tr class="comment-row" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
+            <a class="comment-thread-anchor"></a>
             @if (Model.IsResolved)
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
@@ -18,82 +19,57 @@
                     @foreach (var comment in Model.Comments)
                     {
                         <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
-                            <div class="comment-actions">
-                                <form data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
-                                    <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                    <button type="submit" class="btn btn-light btn-sm btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
-                                        @{
-                                            if (comment.Upvotes.Any())
-                                            {
-                                                @comment.Upvotes.Count
-                                            }
-                                            <span active-if="@comment.Upvotes.Any()">👍</span>
-                                        }
-                                    </button>
-                                </form>
-
-                                <div class="dropdown show">
-                                    <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        ...
-                                    </a>
-
-                                    <div class="dropdown-menu">
-                                        @if (comment.Username == User.GetGitHubLogin())
-                                        {
-                                            <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
-                                                <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                                <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
-                                            </form>
-                                            <a href="#" class="dropdown-item js-edit-comment">Edit</a>
-                                        }
-                                        <button type="button" class="btn dropdown-toggle dropdown-item" data-toggle="dropdown" aria-haspopup="true"
-                                                aria-expanded="false">
-                                            Create GitHub issue
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <table>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.NET</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JS</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="media">
                                 <a username="@comment.Username">
                                     <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
                                 </a>
                                 <div class="media-body comment-contents">
-                                    <div>
-                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0 comment-header align-top">@comment.Username</a>
-                                        <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
-                                    </div>
+                                    <span>
+                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0">@comment.Username</a>
+                                        <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small"></a>
+                                    </span>
+                                    <span class="float-right mr-1">
+                                        <form class="float-left" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
+                                            <input type="hidden" name="commentId" value="@comment.CommentId" />
+                                            <button type="submit" class="btn btn-light btn-xs btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
+                                                @{
+                                                    <span active-if="@comment.Upvotes.Any()">👍</span>
+                                                    if (comment.Upvotes.Any())
+                                                    {
+                                                        <small class="mr-1">@comment.Upvotes.Count</small>
+                                                    }
+                                                }
+                                            </button>
+                                        </form>
+
+                                        <div class="btn-group dropup float-right">
+                                            <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fa-solid fa-ellipsis"></i>
+                                            </a>
+
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                @if (comment.Username == User.GetGitHubLogin())
+                                                {
+                                                    <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
+                                                        <input type="hidden" name="commentId" value="@comment.CommentId" />
+                                                        <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
+                                                    </form>
+                                                    <a href="#" class="dropdown-item js-edit-comment">Edit</a>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                }
+                                                <li><h4 class="dropdown-header">Create GitHub Issue</h4></li>
+                                                <div class="px-4">
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.Net</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JavaScript</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
+                                                    <a href="#" class="badge badge-light js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </span>
                                     <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
                                     @Html.FormatAsMarkdown(@comment.Comment)
                                 </div>
@@ -110,7 +86,7 @@
                         </div>
                     </div>
 
-                    <div class="m-2">
+                    <div class="m-2 d-flex justify-content-between">
                         @if (Model.IsResolved)
                         {
                             <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
@@ -123,6 +99,9 @@
                                 <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
                             </form>
                         }
+                        <div class="comment-navigation-buttons">
+                            <!-- Navigation button are added via JavaScript-->
+                        </div>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,95 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.2.5",
+      "tag": "@autorest/testmodeler_v2.2.5",
+      "date": "Sun, 24 Apr 2022 09:41:30 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use oav@2.12.1"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.4",
+      "tag": "@autorest/testmodeler_v2.2.4",
+      "date": "Tue, 29 Mar 2022 01:56:58 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Oav loader cache problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.3",
+      "tag": "@autorest/testmodeler_v2.2.3",
+      "date": "Wed, 23 Mar 2022 06:19:34 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "upgrade @autorest/codemodel from 4.17.2 to 4.18.2"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.2",
+      "tag": "@autorest/testmodeler_v2.2.2",
+      "date": "Mon, 14 Mar 2022 09:19:34 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.1",
+      "tag": "@autorest/testmodeler_v2.2.1",
+      "date": "Thu, 03 Mar 2022 02:23:21 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use autorest session to log warning."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.0",
+      "tag": "@autorest/testmodeler_v2.2.0",
+      "date": "Tue, 22 Feb 2022 10:58:11 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add support for json pointer modeler for output variable of scenario test."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.1.0",
+      "tag": "@autorest/testmodeler_v2.1.0",
+      "date": "Fri, 11 Feb 2022 09:47:39 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Refine scenario test modeler."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Fix newline platform compatibility problem."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.0.0",
       "tag": "@autorest/testmodeler_v2.0.0",
       "date": "Wed, 12 Jan 2022 09:10:46 GMT",

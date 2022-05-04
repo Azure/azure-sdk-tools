@@ -26,12 +26,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public HeaderCondition ResponseHeader { get; set; }
 
-        private JsonProperty GetProp(string name, JsonElement jsonElement)
-        {
-            return jsonElement.EnumerateObject()
-                        .FirstOrDefault(p => string.Compare(p.Name, name, StringComparison.OrdinalIgnoreCase) == 0);
-        }
-
         public ApplyCondition() { }
 
         /// <summary>
@@ -47,7 +41,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             try
             {
                 // URI condition
-                var uriProp = GetProp(nameof(UriRegex), jsonElement);
+                var uriProp = HttpRequestInteractions.GetProp(nameof(UriRegex), jsonElement);
 
                 if(uriProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
@@ -56,7 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 // Response header condition
-                var headerProp = GetProp(nameof(ResponseHeader), jsonElement);
+                var headerProp = HttpRequestInteractions.GetProp(nameof(ResponseHeader), jsonElement);
                 if(headerProp.Value.ValueKind != JsonValueKind.Undefined)
                 {
                     

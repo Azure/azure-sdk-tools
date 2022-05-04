@@ -28,7 +28,7 @@ hint: you can change the `readme` to yours, and get codegen version from [NPM](h
 This command is only used in swagger pipeline.
 ```shell script
 cd azure-sdk-for-js
-hlc-code-ge-for-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
+code-gen-pipeline --inputJsonPath=a.json --outputJsonPath=b.json --use=@autorest/typescript@6.0.0-beta.5
 ```
 hint: you can get codegen version from [NPM](https://www.npmjs.com/package/@autorest/typescript).
 

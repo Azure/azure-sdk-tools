@@ -87,7 +87,7 @@ sdk/tables/azure-data-tables/recordings/test_retry.pyTestStorageRetrytest_no_ret
 [----------------test path--------------------------][--------------test name----------]
 ```
 
-[What this looks like in source](https://github.com/YalinLi0312/azure-sdk-for-python/blob/main/sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_no_retry.json)
+[What this looks like in source](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/tables/azure-data-tables/tests/recordings/test_retry.pyTestStorageRetrytest_no_retry.json)
 
 Given that the test-proxy is storing/retrieving data independent of the client code (other than the key), client side changes for a wholesale shift of the recordings location is actually simple. The source code for the test _won't need to change at all_. From the perspective of the client test code, nothing has functionally changed.
 

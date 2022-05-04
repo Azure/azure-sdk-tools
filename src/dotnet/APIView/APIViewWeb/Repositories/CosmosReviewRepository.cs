@@ -66,6 +66,9 @@ namespace APIViewWeb
                 }
                 queryStringBuilder.Append("))");
             }
+            
+            // Limit to top 50
+            queryStringBuilder.Append("OFFSET 0 LIMIT 50");
 
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
@@ -107,22 +110,6 @@ namespace APIViewWeb
                 reviews.AddRange(result.Resource);
             }
             return reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
-        }
-
-        public async Task<IEnumerable<string>> GetDistinctReviewsProperties(string propertyName)
-        {
-            var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
-            var reviewsProperty = new List<Object>();
-
-            var queryDefinition = new QueryDefinition(query);
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<Object>(queryDefinition);
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                reviewsProperty.AddRange(result.Resource);
-            }
-
-            return (IEnumerable<string>)reviewsProperty;
         }
     }
 }

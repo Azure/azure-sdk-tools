@@ -90,6 +90,11 @@ namespace APIViewWeb.Repositories
             return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
         }
 
+        public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
+        {
+            return await _reviewsRepository.GetReviewFirstLevelProprtiesAsync(propertyName);
+        }
+
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);

@@ -740,8 +740,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("{ \"ContextDirectory\": \":/repo/\"}", "Unable set proxy context to target directory")]
-        [InlineData("{ \"ContextDirectory\": \"helloworld/*\\/ /\"}", "Unable set proxy context to target directory")]
+        [InlineData("{ \"ContextDirectory\": \":/repo/\0\"}", "Unable set proxy context to target directory")]
         public void TestSetRecordingOptionsThrowsOnInvalidContextDirectory(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

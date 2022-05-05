@@ -26,7 +26,7 @@ var err error
         {%- endif %}
         {%- if example.returnInfo.length == 2 %}
             {%- if example.isLRO %}
-                {%- set pollerVariable = jsFunc.genVariableName(example.pollerType)%}
+                {%- set pollerVariable = jsFunc.genVariableName(example.pollerType) + "Poller" %}
                 {{pollerVariable}}, err {%- if allVariables.indexOf(pollerVariable)<0 %}:{%- set _ = allVariables.push(pollerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
             {%- else %}
                 {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err {% if example.checkResponse and allVariables.indexOf(resVariable)<0 %}:{%- set _ = allVariables.push(resVariable) %}{% endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
@@ -39,11 +39,11 @@ var err error
             {%- set _ = allVariables.push(resVariable) %}
             {%- endif %}
             {%- endif %}
-            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = testutil.PullResultForTest(ctx, {{pollerVariable}})
+            {% if example.checkResponse %}{{resVariable}}{%- else %}_{%- endif %}, err = testutil.PollForTest(ctx, {{pollerVariable}})
             testsuite.Require().NoError(err)
             {%- endif %}
         {%- elif  (example.returnInfo.length == 1) and (example.isPageable) %}
-            {%- set pagerVariable = clientVariable + example.opName + 'Pager' %}
+            {%- set pagerVariable = clientVariable + example.opName %}
             {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
             for {{pagerVariable}}.More() {
                 {%- if example.checkResponse %}

@@ -46,7 +46,7 @@ func ExampleGalleryImagesClient_BeginCreateOrUpdate() {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -85,7 +85,7 @@ func ExampleGalleryImagesClient_BeginUpdate() {
 				OSType:  to.Ptr(test.OperatingSystemTypesWindows),
 			},
 		},
-		&test.GalleryImagesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -135,7 +135,7 @@ func ExampleGalleryImagesClient_BeginDelete() {
 		"<resource-group-name>",
 		"<gallery-name>",
 		"<gallery-image-name>",
-		&test.GalleryImagesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

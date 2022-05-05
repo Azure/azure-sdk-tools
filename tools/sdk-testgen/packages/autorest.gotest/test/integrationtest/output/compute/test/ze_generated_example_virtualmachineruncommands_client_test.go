@@ -101,7 +101,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginCreateOrUpdate() {
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -135,7 +135,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.VirtualMachineRunCommandsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -162,7 +162,7 @@ func ExampleVirtualMachineRunCommandsClient_BeginDelete() {
 		"<resource-group-name>",
 		"<vm-name>",
 		"<run-command-name>",
-		&test.VirtualMachineRunCommandsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

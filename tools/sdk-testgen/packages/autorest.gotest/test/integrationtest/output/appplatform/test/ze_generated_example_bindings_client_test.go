@@ -68,7 +68,7 @@ func ExampleBindingsClient_BeginCreateOrUpdate() {
 				ResourceID: to.Ptr("<resource-id>"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -96,7 +96,7 @@ func ExampleBindingsClient_BeginDelete() {
 		"<service-name>",
 		"<app-name>",
 		"<binding-name>",
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -131,7 +131,7 @@ func ExampleBindingsClient_BeginUpdate() {
 				Key: to.Ptr("<key>"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

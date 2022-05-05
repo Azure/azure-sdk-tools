@@ -274,13 +274,9 @@ class ClassNode(NodeEntityBase):
     def _get_base_classes(self):
         # Find base classes
         base_classes = []
-        if hasattr(self.obj, "__bases__"):
-            for cl in [c for c in self.obj.__bases__ if c is not object]:
-                # Show module level name for internal types to show any generated internal types
-                if cl.__module__.startswith("azure"):
-                    base_classes.append("{0}.{1}".format(cl.__module__, cl.__name__))
-                else:
-                    base_classes.append(cl.__name__)
+        bases = getattr(self.obj, "__orig_bases__", getattr(self.obj, "__bases__", None)) or []
+        for cl in [c for c in bases if c is not object]:
+            base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
     def generate_tokens(self, apiview):
@@ -299,14 +295,14 @@ class ClassNode(NodeEntityBase):
         # Add inherited base classes
         if self.base_class_names:
             apiview.add_punctuation("(")
-            self._generate_token_for_collection(self.base_class_names, apiview)
+            self._generate_tokens_for_collection(self.base_class_names, apiview)
             apiview.add_punctuation(")")
         apiview.add_punctuation(":")
 
         # Add any ABC implementation list
         if self.implements:
             apiview.add_keyword("implements", True, True)
-            self._generate_token_for_collection(self.implements, apiview)
+            self._generate_tokens_for_collection(self.implements, apiview)
         apiview.add_newline()
 
         # Generate token for child nodes
@@ -332,11 +328,11 @@ class ClassNode(NodeEntityBase):
         apiview.end_group()
 
 
-    def _generate_token_for_collection(self, values, apiview):
+    def _generate_tokens_for_collection(self, values, apiview):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
-        for index in range(list_len):
-            apiview.add_type(values[index], self.namespace_id)
+        for (idx, value) in enumerate(values):
+            apiview.add_type(value, self.namespace_id)
             # Add punctuation between types
-            if index < list_len - 1:
+            if idx < list_len - 1:
                 apiview.add_punctuation(",", False, True)

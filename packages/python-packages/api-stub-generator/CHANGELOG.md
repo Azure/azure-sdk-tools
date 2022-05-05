@@ -13,6 +13,8 @@ Fixed issue where types would appear wrapped in "Optional" even though
   they do not accept `None`.
 Fixed issue where, in some cases, string literal default values would not appear wrapped
   in quotes.
+Fixed issue where class declarations were not properly displayed if the class
+  inherited from a generic type.
 Changed default for retrieving type info from docstrings to annotation/type comments.
 APIView will now display diagnostics only for custom pylint rule violations
   described in the `azure-sdk-for-python` repo.

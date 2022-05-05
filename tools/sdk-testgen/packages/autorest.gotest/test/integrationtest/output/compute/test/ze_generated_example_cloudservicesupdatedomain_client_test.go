@@ -32,9 +32,7 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		"<resource-group-name>",
 		"<cloud-service-name>",
 		1,
-		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil,
-			ResumeToken: "",
-		})
+		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

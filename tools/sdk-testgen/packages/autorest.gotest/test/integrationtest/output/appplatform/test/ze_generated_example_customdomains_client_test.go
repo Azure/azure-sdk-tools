@@ -64,7 +64,7 @@ func ExampleCustomDomainsClient_BeginCreateOrUpdate() {
 				Thumbprint: to.Ptr("<thumbprint>"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -92,7 +92,7 @@ func ExampleCustomDomainsClient_BeginDelete() {
 		"<service-name>",
 		"<app-name>",
 		"<domain-name>",
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -124,7 +124,7 @@ func ExampleCustomDomainsClient_BeginUpdate() {
 				Thumbprint: to.Ptr("<thumbprint>"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

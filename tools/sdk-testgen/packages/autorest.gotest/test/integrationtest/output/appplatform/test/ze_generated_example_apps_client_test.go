@@ -74,7 +74,7 @@ func ExampleAppsClient_BeginCreateOrUpdate() {
 				},
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -101,7 +101,7 @@ func ExampleAppsClient_BeginDelete() {
 		"<resource-group-name>",
 		"<service-name>",
 		"<app-name>",
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -147,7 +147,7 @@ func ExampleAppsClient_BeginUpdate() {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

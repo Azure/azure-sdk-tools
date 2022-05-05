@@ -39,7 +39,7 @@ func ExampleRestorePointsClient_BeginCreate() {
 					ID: to.Ptr("<id>"),
 				}},
 		},
-		&test.RestorePointsClientBeginCreateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

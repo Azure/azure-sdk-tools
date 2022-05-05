@@ -32,7 +32,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginDelete() {
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServiceRoleInstancesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -129,7 +129,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginRestart() {
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServiceRoleInstancesClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -154,7 +154,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginReimage() {
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServiceRoleInstancesClientBeginReimageOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -179,7 +179,7 @@ func ExampleCloudServiceRoleInstancesClient_BeginRebuild() {
 		"<role-instance-name>",
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServiceRoleInstancesClientBeginRebuildOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

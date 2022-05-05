@@ -76,7 +76,6 @@ func ExampleCloudServicesClient_BeginCreateOrUpdate() {
 				UpgradeMode: to.Ptr(test.CloudServiceUpgradeModeAuto),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -108,7 +107,6 @@ func ExampleCloudServicesClient_BeginUpdate() {
 				"Documentation": to.Ptr("RestAPI"),
 			},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -135,7 +133,7 @@ func ExampleCloudServicesClient_BeginDelete() {
 	poller, err := client.BeginDelete(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -252,7 +250,7 @@ func ExampleCloudServicesClient_BeginStart() {
 	poller, err := client.BeginStart(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServicesClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -276,7 +274,7 @@ func ExampleCloudServicesClient_BeginPowerOff() {
 	poller, err := client.BeginPowerOff(ctx,
 		"<resource-group-name>",
 		"<cloud-service-name>",
-		&test.CloudServicesClientBeginPowerOffOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -305,7 +303,6 @@ func ExampleCloudServicesClient_BeginRestart() {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -335,7 +332,6 @@ func ExampleCloudServicesClient_BeginReimage() {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -365,7 +361,6 @@ func ExampleCloudServicesClient_BeginRebuild() {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -395,7 +390,6 @@ func ExampleCloudServicesClient_BeginDeleteInstances() {
 				to.Ptr("ContosoFrontend_IN_0"),
 				to.Ptr("ContosoBackend_IN_1")},
 		},
-			ResumeToken: "",
 		})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

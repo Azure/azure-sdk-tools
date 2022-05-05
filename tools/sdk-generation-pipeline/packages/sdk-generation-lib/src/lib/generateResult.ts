@@ -82,8 +82,19 @@ export function parseGenerateLog(pipelineBuildId: string, taskname: string, logf
     return result;
 }
 
-export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
-    const commonResult: TaskResultCommon = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
+export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, taskExeResult: PipelineResult, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
+    let commonResult: TaskResultCommon = undefined;
+    if (taskExeResult === 'success') {
+        commonResult = {
+            name: taskname,
+            pipelineBuildId: pipelineBuildId,
+            result: taskExeResult,
+            errorCount: 0,
+            warningCount: 0,
+        };
+    } else {
+        commonResult = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
+    }
     if (taskname === AzureSDKTaskName.MockTest || taskname === AzureSDKTaskName.LiveTest) {
         if (taskOutput === undefined) {
             logger.error('taskOutput is undefined');

@@ -14,7 +14,7 @@ from ._metadata_map import MetadataMap
 JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
 
 HEADER_TEXT = "# Package is parsed using api-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
-TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\\d._]+)")
+TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPARATOR = " or "
 
 
@@ -181,6 +181,7 @@ class ApiView:
     def _add_type_token(self, type_name, line_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
+
         types = re.search(TYPE_NAME_REGEX, type_name)
         if types:
             # Generate token for the prefix before internal type

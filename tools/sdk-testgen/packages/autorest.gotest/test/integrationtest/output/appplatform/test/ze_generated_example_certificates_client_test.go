@@ -63,7 +63,7 @@ func ExampleCertificatesClient_BeginCreateOrUpdate() {
 				VaultURI:         to.Ptr("<vault-uri>"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}
@@ -90,7 +90,7 @@ func ExampleCertificatesClient_BeginDelete() {
 		"<resource-group-name>",
 		"<service-name>",
 		"<certificate-name>",
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
 	}

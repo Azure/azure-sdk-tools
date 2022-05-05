@@ -1,14 +1,14 @@
-import { DockerTaskEngineContext, initializeDockerTaskEngineContext } from "../src/cli/dockerCli/core/dockerTaskEngine";
-import { DockerContext } from "../src/cli/dockerCli/core/DockerContext";
+import { DockerTaskEngineContext, initializeDockerTaskEngineContext } from "../../src/cli/dockerCli/core/dockerTaskEngine";
+import { DockerContext } from "../../src/cli/dockerCli/core/DockerContext";
 import * as path from "path";
 import { initializeLogger } from "@azure-tools/sdk-generation-lib";
-import { runTaskEngine } from "../dist/cli/dockerCli/core/dockerTaskEngine";
+import { runTaskEngine } from "../../dist/cli/dockerCli/core/dockerTaskEngine";
 import { existsSync } from "fs";
 
 describe('task engine', () => {
     it('should initialize a DockerTaskEngineContext by DockerContext', async () => {
         const dockerContext = new DockerContext();
-        const tmpFolder = path.join(path.resolve('.'), 'tmp');
+        const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
         dockerContext.initialize({
             readmeMdPath: 'specification/agrifood/resource-manager/readme.md',
             tag: '',
@@ -35,7 +35,7 @@ describe('task engine', () => {
 
     it('should run tasks', async () => {
         jest.setTimeout(999999);
-        const tmpFolder = path.join(path.resolve('.'), 'tmp');
+        const tmpFolder = path.join(path.resolve('.'), 'test', 'unit', 'tmp');
         const dockerTaskEngineContext: DockerTaskEngineContext = {
             sdkRepo: path.join(tmpFolder, 'sdk-repo'),
             taskResultJsonPath: path.join(tmpFolder, 'output', 'taskResults.json'),

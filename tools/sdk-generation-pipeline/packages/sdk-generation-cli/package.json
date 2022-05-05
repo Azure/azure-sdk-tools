@@ -8,8 +8,10 @@
     "build": "rimraf dist && tsc",
     "prepack": "npm run build",
     "pack": "npm pack 2>&1",
-    "test:prepare-environment": "ts-node test/utils/prepareEnvironment.ts",
-    "test": "npm run test:prepare-environment && jest "
+    "test:unit-prepare-environment": "ts-node test/unit/utils/prepareEnvironment.ts",
+    "test:unit": "npm run test:unit-prepare-environment && jest",
+    "test:integration": "ts-node test/integration/integrationTest.ts",
+    "test": "npm run test:unit && npm run test:integration"
   },
   "author": "Microsoft",
   "license": "MIT",
@@ -38,7 +40,8 @@
     "dotenv": "^16.0.0",
     "winston": "~3.7.2",
     "@types/convict": "^5.2.0",
-    "simple-git": "~3.7.1"
+    "simple-git": "~3.7.1",
+    "command-line-args": "~5.2.1"
   },
   "bundledDependencies": [
     "@azure-tools/sdk-generation-lib"

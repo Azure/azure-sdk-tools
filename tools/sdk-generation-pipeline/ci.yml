@@ -44,8 +44,7 @@ stages:
     jobs:
       - job: Build
         pool:
-          name: "azsdk-pool-mms-ubuntu-2004-perf"
-          vmImage: "MMSUbuntu20.04"
+          vmImage: 'ubuntu-latest'
         steps:
         - task: NodeTool@0
           inputs:

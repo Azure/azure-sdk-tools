@@ -85,8 +85,8 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
         - script: |
-          mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
-          cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
+            mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
+            cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
           displayName: 'copy @azure-tools/sdk-generation-lib to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
 
@@ -102,8 +102,8 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
-          mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
-          docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
+            mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
+            docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
           displayName: 'docker image save'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 

@@ -165,7 +165,7 @@ stages:
 
           - bash: |
               set -x
-              rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) --sdkRepo=$(sdkRepo)"
+              rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) --sdk-repo=$(sdkRepo)"
             displayName: 'Run integration test'
             workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 

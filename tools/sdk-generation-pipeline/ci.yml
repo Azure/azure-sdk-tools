@@ -131,6 +131,10 @@ stages:
             Net:
               sdkRepo: 'azure-sdk-for-net'
         steps:
+          - bash: |
+              npm install -g @microsoft/rush
+              npm install -g typescript@4.6.2
+              displayName: 'Install dependencies'
           - task: DownloadBuildArtifacts@0
             inputs:
               buildType: 'current'
@@ -145,6 +149,7 @@ stages:
               set -x
               rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) --sdkRepo=$(sdkRepo)"
             displayName: 'Run integration test'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release

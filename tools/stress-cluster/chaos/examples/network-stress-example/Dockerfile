@@ -1,5 +1,4 @@
-FROM node:14-alpine
-
+FROM alpine:3.14
 RUN apk add --no-cache wget
 RUN apk add --no-cache bash
 

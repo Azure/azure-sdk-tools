@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04
 
 RUN apt-get update -y &&  apt upgrade -y && apt install curl -y
 RUN apt install build-essential -y

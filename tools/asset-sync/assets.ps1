@@ -91,9 +91,10 @@ Function ResolveAssetsJson {
     if(-not $TargetPath){
         $pathForManipulation = Get-Location
     }
+    else {
+        $pathForManipulation = Resolve-Path -Path $TargetPath
+    }
     
-    $pathForManipulation = Resolve-Path -Path $TargetPath
-
     $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
 
     while (-not $foundConfig -and -not $reachedRoot){
@@ -135,9 +136,11 @@ Function ResolveAssetsJson {
     $missingMembers = Compare-Object -ReferenceObject $EXPECTED_MEMBERS -DifferenceObject $props `
         | Where-Object { $_.SideIndicator -ne "=>"} | Foreach-Object { $_.InputObject }
 
-    if($missingMembers.Length -gt 0){
-        $allMissingMembers = $missingMembers -Join ", "
-        throw "Missing required members for assets json detected: `"$($allMissingMembers)`""
+    if($missingMembers){
+        if($missingMembers.Length -gt 0){
+            $allMissingMembers = $missingMembers -Join ", "
+            throw "Missing required members for assets json detected: `"$($allMissingMembers)`""
+        }
     }
 
     return $config

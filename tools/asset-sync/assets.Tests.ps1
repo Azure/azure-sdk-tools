@@ -155,7 +155,8 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should throw on missing properties." {
-      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
+      $assetsJson = Get-Basic-AssetsJson | Select-Object -ExcludeProperty "SHA"
+      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsJson -Files @()
       { ResolveAssetsJson -TargetPath $testLocation } | Should -Throw
     }
   }
@@ -324,7 +325,7 @@ Describe "AssetsModuleTests" {
 
       try {
         Push-Location $assetRepoFolder
-        $repoBranchSHA = git rev-parse origin/$($config.AssetsRepoBranch) --quiet
+        $repoBranchSHA = git rev-parse origin/$($config.AssetsRepoBranch) --quiet 2>$null
       }
       finally {
         Pop-Location

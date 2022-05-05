@@ -87,7 +87,7 @@ stages:
         - script: |
             mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
             cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
-          displayName: 'copy @azure-tools/sdk-generation-lib to staging dir'
+          displayName: 'Copy @azure-tools/sdk-generation-lib to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
 
         - task: PublishBuildArtifacts@1
@@ -98,13 +98,13 @@ stages:
             publishLocation: 'Container'
 
         - script: 'docker build -t sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) .'
-          displayName: 'build docker image'
+          displayName: 'Build docker image'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - script: |
             mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
             docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
-          displayName: 'docker image save'
+          displayName: 'Save docker image'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
         - task: PublishBuildArtifacts@1
@@ -128,9 +128,9 @@ stages:
               buildType: 'current'
               downloadType: 'single'
               artifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
-              downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
+              downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           - bash: |
-              docker load --input $(VAR_DOCKER_IMAGE_ARTIFACT_NAME)/image.tar
+              docker load --input $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/image.tar
             displayName: 'Docker Load'
 
           - bash: |
@@ -140,7 +140,7 @@ stages:
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release
-      dependsOn: InstallAndBuild
+      dependsOn: InstallAndBuild1
       condition: succeeded()
       jobs:
       - job: approve
@@ -164,7 +164,7 @@ stages:
             buildType: 'current'
             downloadType: 'single'
             artifactName: '$(VAR_ARTIFACT_NAME)'
-            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
+            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
 
         - script: |
             echo -e "\e[32m[$(date -u)] LOG: Ensure npm is installed"
@@ -173,7 +173,7 @@ stages:
 
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
             echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
-            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/$(VAR_ARTIFACT_NAME)/*.tgz
+            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
             do
               echo -e "\e[32m[$(date -u)] LOG: File: $file"
               npm publish $file --access public || { echo 'publish $file failed' ; }

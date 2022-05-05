@@ -39,9 +39,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public IEnumerable<ServiceGroupModel> reviewServices { get; set; }
 
-        public IEnumerable<string> PackageNames { get; set; }
-
-        public IEnumerable<string> ServiceNames { get; set; }
+        public ReviewsProperties ReviewsProperties { get; set; } = new ReviewsProperties();
 
         public async Task OnGetAsync()
         {
@@ -51,14 +49,17 @@ namespace APIViewWeb.Pages.Assemblies
                 Language = this.Language,
             });
 
+            ReviewsProperties.PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
+            ReviewsProperties.ServiceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
+            ReviewsProperties.Authors = await _manager.GetReviewProprtiesAsync("Revisions[0].Author");
             Assemblies = await _manager.GetReviewsAsync(false, this.Language, null, this.FilterType);
         }
 
-        public async Task<PartialViewResult> OnGetReviewFilterPartialAsync()
+        public async Task<PartialViewResult> OnGetReviewsFilterPartialAsync()
         {
-            PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
-            ServiceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
-            return Partial("_ReviewFiltersPartial", this);
+            ReviewsProperties.PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
+            ReviewsProperties.ServiceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
+            return Partial("_ReviewsFiltersPartial", ReviewsProperties);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -90,5 +91,12 @@ namespace APIViewWeb.Pages.Assemblies
             routingData["filterType"] = filterType.ToString();
             return routingData;
         }
+    }
+
+    public class ReviewsProperties 
+    {
+        public IEnumerable<string> PackageNames { get; set; } = new List<string>();
+        public IEnumerable<string> ServiceNames { get; set; } = new List<string>();
+        public IEnumerable<string> Authors { get; set; } = new List<string>();
     }
 }

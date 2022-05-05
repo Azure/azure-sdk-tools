@@ -112,7 +112,7 @@ Given the same relative path in the assets repo, zero changes to test code are n
 
 ## Which external storage mediums were considered?
 
-Prior to ScottB starting on this project, JimS was the one leading the charge. As part of that work, Jim explored few potentional storage solutions. He did not evaluate these strictly from a `usability` standpoint.
+Prior to ScottB starting on this project, JimS was the one leading the charge. As part of that work, [Jim explored a few potentional storage solutions](https://microsoft.sharepoint.com/:w:/t/AzureDeveloperExperience/EZ8CA-UTsENIoORsOxekfG8BzwoNV4xhVOIzTGmdk8j4rA?e=RKAkkc). He did not evaluate these strictly from a `usability` standpoint.
 
 - **external git repo**
 - git modules

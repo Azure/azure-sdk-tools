@@ -58,33 +58,86 @@ export default class SwaggerMocker {
         }
         example.parameters = this.mockRequest(example.parameters, specItem.content.parameters, rp)
         example.responses = this.mockResponse(example.responses, specItem)
-        this.patchResourceIdAndType(example.responses, liveRequest)
+        this.patchResourceIdAndType(example.responses, liveRequest, specItem, spec)
         this.patchUserAssignedIdentities(example.responses, liveRequest)
+    }
+
+    public findResourcePathByListSchema(spec: any, listSchemaRef: any) {
+        let elementSchema = null
+        const modelName = listSchemaRef?.split('/').slice(-1)[0]
+        if (
+            modelName in spec.definitions &&
+            spec.definitions[modelName]['properties']?.value?.type === 'array'
+        ) {
+            elementSchema = spec.definitions[modelName].properties.value.items
+        }
+        for (const path in spec.paths || {}) {
+            for (const verb in spec.paths[path]) {
+                for (const responseCode in spec.paths[path][verb].responses || {}) {
+                    if (
+                        responseCode.startsWith('2') &&
+                        JSON.stringify(spec.paths[path][verb].responses[responseCode].schema) ===
+                            JSON.stringify(elementSchema)
+                    ) {
+                        return path
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    public mockIdFromPath(path: string | null, requestPath: string) {
+        if (!path) {
+            return requestPath
+        }
+        const pathValues: Record<string, string> = {}
+        const realElements = requestPath.split('/')
+        for (let i = 2; i < realElements.length; i++) {
+            pathValues[realElements[i - 1]] = realElements[i]
+        }
+
+        const elements = path.split('/')
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i].startsWith('{') && elements[i].endsWith('}')) {
+                elements[i] = pathValues[elements[i - 1]] || `mocked${elements[i].slice(1, -1)}`
+            }
+        }
+        return elements.join('/')
     }
 
     /**
      * Replaces mock resource IDs with IDs that match current resource.
      */
-    private patchResourceIdAndType(responses: any, liveRequest: LiveRequest) {
+    private patchResourceIdAndType(
+        responses: any,
+        liveRequest: LiveRequest,
+        specItem: SpecItem,
+        spec: any
+    ) {
         const url = parseUrl(liveRequest.url)
 
-        const pathElements = (url.pathname || '').split('/')
-        let resourceType = ''
-        let foundProvider = false
-        for (let i = 0; i < pathElements.length; i++) {
-            if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
-                foundProvider = true
-                resourceType = pathElements[i]
-            }
-            if (foundProvider && i % 2 === 1) {
-                resourceType = `${resourceType}/${pathElements[i]}`
-            }
-        }
-        if (resourceType.length === 0) {
-            resourceType = mockedResourceType
-        }
-
         Object.keys(responses).forEach((key) => {
+            const resourcePath = this.findResourcePathByListSchema(
+                spec,
+                specItem.content?.responses[key]?.schema?.['$ref']
+            )
+            const pathElements = (resourcePath || url.pathname || '').split('/')
+            let resourceType = ''
+            let foundProvider = false
+            for (let i = 0; i < pathElements.length; i++) {
+                if (i % 2 === 0 && pathElements[i].match(/microsoft\..+/i)) {
+                    foundProvider = true
+                    resourceType = pathElements[i]
+                }
+                if (foundProvider && i % 2 === 1) {
+                    resourceType = `${resourceType}/${pathElements[i]}`
+                }
+            }
+            if (resourceType.length === 0) {
+                resourceType = mockedResourceType
+            }
+
             if (responses[key]?.body?.id) {
                 // put
                 if (liveRequest.method.toLowerCase() === 'put') {
@@ -112,8 +165,10 @@ export default class SwaggerMocker {
                     arr.forEach((item: any) => {
                         if (item.id) {
                             const resourceName = item.name || 'resourceName'
-                            url.pathname = `${url.pathname}/${resourceName}`
-                            item.id = url.pathname
+                            item.id = this.mockIdFromPath(
+                                resourcePath,
+                                `${url.pathname}/${resourceName}`
+                            )
                         }
                         setStringIfExist(item, 'type', resourceType)
                     })

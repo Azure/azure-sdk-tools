@@ -13,24 +13,34 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
+
+// diagnostic messages
+const (
+	aliasFor               = "Alias for "
+	embedsUnexportedStruct = "Anonymously embeds unexported struct "
+	sealedInterface        = "Applications can't implement this interface"
+)
+
+var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
-	c          content
-	files      map[string][]byte
-	fs         *token.FileSet
-	moduleName string
-	p          *ast.Package
-	path       string
-	relName    string
+	c           content
+	diagnostics []Diagnostic
+	files       map[string][]byte
+	fs          *token.FileSet
+	moduleName  string
+	p           *ast.Package
+	path        string
+	relName     string
 
-	// typeAliases keys are type names defined in other packages that this package exports by alias.
+	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
 	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
 	// an alias like "type TokenCredential = shared.TokenCredential", in which case this map will
-	// have key "azcore/internal/shared.TokenCredential". Values are meaningless--this is a map
-	// only to facilitate identifying duplicates.
-	typeAliases map[string]interface{}
+	// have key "TokenCredential" with value "azcore/internal/shared.TokenCredential"
+	typeAliases map[string]string
 
 	// types maps the name of a type defined in this package to that type's definition
 	types map[string]typeDef
@@ -41,9 +51,10 @@ type Pkg struct {
 func NewPkg(dir, moduleName string) (*Pkg, error) {
 	pk := &Pkg{
 		c:           newContent(),
+		diagnostics: []Diagnostic{},
 		moduleName:  moduleName,
 		path:        dir,
-		typeAliases: map[string]interface{}{},
+		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
 	if _, after, found := strings.Cut(dir, moduleName); found {
@@ -63,16 +74,14 @@ func NewPkg(dir, moduleName string) (*Pkg, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(packages) != 1 {
-		err = fmt.Errorf(`found %d packages in "%s"`, len(packages), dir)
+	if ps := len(packages); ps != 1 {
+		err = ErrNoPackages
+		if ps > 1 {
+			err = fmt.Errorf(`found %d packages in "%s"`, ps, dir)
+		}
 		return nil, err
 	}
-	for name, p := range packages {
-		// prune non-exported nodes
-		if exp := ast.PackageExports(p); !exp {
-			err = fmt.Errorf(`package "%s" exports nothing`, name)
-			return nil, err
-		}
+	for _, p := range packages {
 		pk.p = p
 		return pk, nil
 	}
@@ -87,7 +96,6 @@ func (pkg Pkg) Name() string {
 
 // Index parses the package's files, adding exported types to the package's content as discovered.
 func (p *Pkg) Index() {
-	fmt.Println(p.path)
 	for _, f := range p.p.Files {
 		p.indexFile(f)
 	}
@@ -95,12 +103,12 @@ func (p *Pkg) Index() {
 
 func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
-	sdkImports := map[string]string{}
+	imports := map[string]string{}
 	for _, imp := range f.Imports {
-		// ignore third party and stdlib imports because we don't want to hoist their type definitions
+		// ignore obvious stdlib packages whose definitions we don't want to hoist
 		path := strings.Trim(imp.Path.Value, `"`)
-		if strings.HasPrefix(path, "github.com/Azure/azure-sdk-for-go/sdk/") {
-			sdkImports[filepath.Base(path)] = path
+		if strings.Contains(path, "/") {
+			imports[filepath.Base(path)] = path
 		}
 	}
 
@@ -113,68 +121,70 @@ func (p *Pkg) indexFile(f *ast.File) {
 		case *ast.GenDecl:
 			if x.Tok == token.CONST || x.Tok == token.VAR {
 				// const or var declaration
-				kind := "const"
-				if x.Tok == token.VAR {
-					kind = "var  "
+				for _, s := range x.Specs {
+					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec))
 				}
-				fmt.Printf("\t%s     %s\n", kind, x.Specs[0].(*ast.ValueSpec).Names[0])
-				p.c.addGenDecl(*p, x)
 			}
 		case *ast.TypeSpec:
 			switch t := x.Type.(type) {
 			case *ast.ArrayType:
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, txt)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, txt)
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, txt)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.Ident:
 				// "type ETag string"
-				fmt.Printf("\ttype      %s %s\n", x.Name.Name, t.Name)
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, t.Name)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
 			case *ast.InterfaceType:
-				if _, ok := p.types[x.Name.Name]; ok {
-					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)
+				if in.Sealed {
+					p.diagnostics = append(p.diagnostics, Diagnostic{
+						TargetID: in.ID(),
+						Level:    DiagnosticLevelInfo,
+						Text:     sealedInterface,
+					})
 				}
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				fmt.Printf("\tinterface %s\n", x.Name.Name)
-				p.c.addInterface(*p, x.Name.Name, t)
+			case *ast.MapType:
+				// "type opValues map[reflect.Type]interface{}"
+				txt := p.getText(t.Pos(), t.End())
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
-					if impPath, ok := sdkImports[ident.Name]; ok {
-						// This is a re-exported SDK type e.g. "type TokenCredential = shared.TokenCredential".
+					if impPath, ok := imports[ident.Name]; ok {
+						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
 						// Track it as an alias so we can later hoist its definition into this package.
 						qn := impPath + "." + t.Sel.Name
-						if _, ok := p.typeAliases[qn]; ok {
-							fmt.Printf("\tWARNING:  multiple aliases for '%s'\n", qn)
-						}
-						p.typeAliases[qn] = x
-						fmt.Printf("\talias     %s => %s\n", t.Sel.Name, qn)
+						p.typeAliases[x.Name.Name] = qn
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
 						expr := p.getText(t.Pos(), t.End())
-						fmt.Printf("\ttype      %s %s\n", x.Name.Name, expr)
-						p.c.addSimpleType(*p, x.Name.Name, expr)
+						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr)
 					}
 				}
 			case *ast.StructType:
-				fmt.Printf("\tstruct    %s\n", x.Name.Name)
-				if _, ok := p.types[x.Name.Name]; ok {
-					fmt.Printf("\tWARNING:  multiple definitions of '%s'\n", x.Name.Name)
+				p.types[x.Name.Name] = typeDef{n: x, p: p}
+				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x)
+				for _, t := range s.AnonymousFields {
+					// if t contains "." it must be exported
+					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
+						p.diagnostics = append(p.diagnostics, Diagnostic{
+							Level:    DiagnosticLevelError,
+							TargetID: s.ID(),
+							Text:     embedsUnexportedStruct + t,
+						})
+					}
 				}
-				p.types[x.Name.Name] = typeDef{name: x.Name.Name, n: x, p: p}
-				p.c.addStruct(*p, x.Name.Name, x)
 			default:
 				txt := p.getText(x.Pos(), x.End())
-				fmt.Printf("\tWARNING:  unexpected node type %T: %s\n", t, txt)
+				fmt.Printf("unhandled node type %T: %s\n", t, txt)
 			}
 		}
 		return true
@@ -196,39 +206,6 @@ func (pkg Pkg) getText(start token.Pos, end token.Pos) string {
 	return string(pkg.files[p.Filename][p.Offset : p.Offset+int(end-start)])
 }
 
-// creates a Func object from the specified ast.FuncType
-func (pkg Pkg) buildFunc(ft *ast.FuncType) Func {
-	f := Func{}
-
-	if ft.TypeParams != nil {
-		f.TypeParams = make([]string, 0, len(ft.TypeParams.List))
-		pkg.translateFieldList(ft.TypeParams.List, func(param *string, constraint string) {
-			// constraint == "" when the parameter has no constraint
-			f.TypeParams = append(f.TypeParams, strings.TrimRight(*param+" "+constraint, " "))
-		})
-	}
-
-	if ft.Params.List != nil {
-		f.Params = make([]string, 0, len(ft.Params.List))
-		pkg.translateFieldList(ft.Params.List, func(n *string, t string) {
-			p := ""
-			if n != nil {
-				p = *n + " "
-			}
-			p += t
-			f.Params = append(f.Params, p)
-		})
-	}
-
-	if ft.Results != nil {
-		f.Returns = make([]string, 0, len(ft.Results.List))
-		pkg.translateFieldList(ft.Results.List, func(n *string, t string) {
-			f.Returns = append(f.Returns, t)
-		})
-	}
-	return f
-}
-
 // iterates over the specified field list, for each field the specified
 // callback is invoked with the name of the field and the type name.  the field
 // name can be nil, e.g. anonymous fields in structs, unnamed return types etc.
@@ -236,7 +213,7 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	for _, f := range fl {
 		t := pkg.getText(f.Type.Pos(), f.Type.End())
 		if len(f.Names) == 0 {
-			// field is an unnamed func return
+			// field is an unnamed func return or anonymously embedded
 			cb(nil, t)
 		}
 		// field could have multiple names: in "type A struct { m, n int }",
@@ -248,8 +225,8 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 	}
 }
 
+// TODO: could be replaced by TokenMaker
 type typeDef struct {
-	name string
 	// n is the AST node defining the type
 	n *ast.TypeSpec
 	// p is the package defining the type

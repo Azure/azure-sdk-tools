@@ -110,33 +110,33 @@ stages:
             ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
             publishLocation: 'Container'
 
-  - stage: IntegrationTest
-    dependsOn: InstallAndBuild
-    condition: succeeded()
-    displayName: Integration Test
-    strategy:
-      matrix:
-        JS:
-          sdkRepo: 'azure-sdk-for-js'
-    steps:
-      - task: DownloadBuildArtifacts@0
-        inputs:
-          buildType: 'current'
-          downloadType: 'single'
-          artifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
-          downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
-      - bash: |
-          docker load --input $(VAR_DOCKER_IMAGE_ARTIFACT_NAME)/image.tar
-        displayName: 'Docker Load'
+      - job: IntegrationTest
+        dependsOn: Build
+        condition: succeeded()
+        displayName: Integration Test
+        strategy:
+          matrix:
+            JS:
+              sdkRepo: 'azure-sdk-for-js'
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
+              downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
+          - bash: |
+              docker load --input $(VAR_DOCKER_IMAGE_ARTIFACT_NAME)/image.tar
+            displayName: 'Docker Load'
 
-      - bash: |
-          set -x
-          rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) --sdkRepo=$(sdkRepo)"
-        displayName: 'Run integration test'
+          - bash: |
+              set -x
+              rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) --sdkRepo=$(sdkRepo)"
+            displayName: 'Run integration test'
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release
-      dependsOn: IntegrationTest
+      dependsOn: InstallAndBuild
       condition: succeeded()
       jobs:
       - job: approve

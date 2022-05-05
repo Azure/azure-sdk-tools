@@ -40,9 +40,9 @@
     });
   });
 
-  $( "#reviews-filter-column" ).load(function() {
-    $( '#reviews-filter-partial' ).load('/ajaxpartial/reviewsfilterspartial');
-  });
+  //$( document ).ready(function() {
+  //  $( '#reviews-filter-partial' ).load('?handler=reviewsfilterpartial');
+  //});
 
   // enable tooltip and popover
   (<any>$('[data-toggle="tooltip"]')).tooltip();

@@ -134,13 +134,26 @@ stages:
           - bash: |
               npm install -g @microsoft/rush
               npm install -g typescript@4.6.2
-              displayName: 'Install dependencies'
+            displayName: 'Install dependencies'
+
+          - script: |
+              rush update
+            displayName: 'rush update'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+          - script: |
+              rush build
+            displayName: 'rush build'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
           - task: DownloadBuildArtifacts@0
             inputs:
               buildType: 'current'
               downloadType: 'single'
               artifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
               downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+            displayName: 'Download image'
+
           - bash: |
               docker load --input $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)/image.tar
             displayName: 'Docker Load'

@@ -2,6 +2,5 @@ variables:
   OfficialBuildId: $(Build.BuildNumber)
   skipComponentGovernanceDetection: true
   DotNetCoreVersion: '3.1.405'
-  NugetSecurityAnalysisWarningLevel: 'none'
   NotificationsCreatorVersion: '1.0.0-dev.20220414.1'
   CodeOwnersSubscriberVersion: '1.0.0-dev.20220302.2'

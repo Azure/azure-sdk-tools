@@ -35,7 +35,9 @@ variables:
   - name: NodeVersion
     value: '14.x'
   - name: VAR_ARTIFACT_NAME
-    value: 'drop'
+    value: 'packages'
+  - name: VAR_DOCKER_IMAGE_ARTIFACT_NAME
+    value: 'dockerImages'
   - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
     value: $(Build.ArtifactStagingDirectory)
 
@@ -82,18 +84,30 @@ stages:
           displayName: 'Pack @azure-tools/sdk-generation-cli'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
-        - script: 'cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: 'cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
           displayName: 'copy @azure-tools/sdk-generation-lib to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish packages'
+          inputs:
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
+            ArtifactName: '$(VAR_ARTIFACT_NAME)'
+            publishLocation: 'Container'
 
         - script: 'docker build -t sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) .'
           displayName: 'build docker image'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
+        - script: 'docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar'
+          displayName: 'docker image save'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
         - task: PublishBuildArtifacts@1
+          displayName: 'Publish docker image'
           inputs:
-            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-            ArtifactName: '$(VAR_ARTIFACT_NAME)'
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
+            ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
             publishLocation: 'Container'
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:

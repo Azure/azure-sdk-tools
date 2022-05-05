@@ -23,7 +23,7 @@
     - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
       - [Overall evaluation of `Pulling a zipfile of the repository`](#overall-evaluation-of-pulling-a-zipfile-of-the-repository)
   - [Exploring An External Git Repo](#exploring-an-external-git-repo)
-    - [Recording.json discovery](#recordingjson-discovery)
+    - [assets.json discovery](#assetsjson-discovery)
       - [When establishing recordings for a new service](#when-establishing-recordings-for-a-new-service)
     - [Repo Organization](#repo-organization)
     - [Auto-commits and merges to `main`](#auto-commits-and-merges-to-main)
@@ -200,7 +200,7 @@ Yes, commit histories do add _some_ weight to the git database, but it's definit
 - No publically available UI to browse recordings at rest and recorded
 - A native level unzip/zip operation is extremely heavy for larger recordings folders
   - An example of this is the storage service, where we have upwards of half a gigabyte of data present. This is an enormous tax to zip and unzip with each push/pull.
-  - This is somewhat mitigated when swapping to per-package `recording.json` (which we would do with this approach)
+  - This is somewhat mitigated when swapping to per-package `assets.json` (which we would do with this approach)
 - The storage is not geolocated normally, though geo replication be set for as many as _all_ regions supported by azure.
 - There is no concept of "history". It's all point in time.
 - Cost _may_ be a problem, git is free as far as we are concerned.
@@ -241,10 +241,10 @@ As of now, it seems the best place to locate this assets SHA is in a new file in
 <repo-root>
   /sdk
     /<service>
-      recording.json
+      assets.json
 ```
 
-And within a sample recording.json file...
+And within a sample assets.json file...
 
 ```jsonc
 {
@@ -258,7 +258,7 @@ And within a sample recording.json file...
     "AssetsRepoId": "",
 
     // By default, will fall back to main. this will ONLY be used if there is no auto/<servicename> branch in the repo.
-    "AssetsrepoFallbackBranch": "main",
+    "AssetsRepoFallbackBranch": "main",
 
     // By default, will be resolved auto/<service>.
     "AssetsRepoBranch": "auto/tables",
@@ -273,19 +273,19 @@ And within a sample recording.json file...
 
 While this works really well for local playback, it does not work for submitting a PR with your code changes. Why? Because the PR checks won't _have_ your updated assets repo that you may have created by recording your tests locally!
 
-This necessitates some local action that can be run **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `recording.json` to consume it.
+This necessitates some local action that can be run **against a local branch or PR** that will push a commit to the `assets` repo and then update the **local reference** within a `assets.json` to consume it.
 
 You will note that the above JSON configuration lends itself well to more individual solutions, while allowing space for more _targeted_ overrides later.
 
-### Recording.json discovery
+### assets.json discovery
 
-Any interactors with the asset script must be able to parse a `recording.json` given only a `current working directory`. The `assets.ps1` implementation as it exists now allows a user to pass a target directory as well. Whatever the chosen method, given a _start_ directory, the algo should traverse _up_ the file tree until it discovers a file named exactly `recording.json` OR hits `root`.
+Any interactors with the asset script must be able to parse a `assets.json` given only a `current working directory`. The `assets.ps1` implementation as it exists now allows a user to pass a target directory as well. Whatever the chosen method, given a _start_ directory, the algo should traverse _up_ the file tree until it discovers a file named exactly `assets.json` OR hits `root`.
 
 `root` can be either a folder with `.git` present within it OR the actual current-disk root `/`.
 
 #### When establishing recordings for a new service
 
-One must _create_ a recording.json. The recording framework should base a _new_ recording.json off of one further up the directory tree. Everything is safe to use _other than_ the `AssetsRepoBranch` property.
+One must _create_ a assets.json. The recording framework should base a _new_ assets.json off of one further up the directory tree. Everything is safe to use _other than_ the `AssetsRepoBranch` property.
 
 ### Repo Organization
 
@@ -300,7 +300,7 @@ One must _create_ a recording.json. The recording framework should base a _new_ 
 |  |
 |  |             <TestPath>
 |  |
-|  | recording.json
+|  | assets.json
 |  +---AssetsRepoPrefixPath:"recordings"
 |      AssetsRepo:"azure/azure-sdk-for-python"
 +------AssetsRepoId:"azure2"
@@ -326,17 +326,17 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 | azure-sdk-for-<language>/                         | assets-repo/                                                  |
 |                                                   |                                                               |
 |                                                   |                                                               |
-|   sdk/core/recording.json-------------------------+>auto-commit/core@SHA1                                         |
+|   sdk/core/assets.json----------------------------+>auto-commit/core@SHA1                                         |
 |      ...         |                                |   /recordings/sdk/core/azure-core/recordings/YYY.json         |
 |      SHA: "SHA1" |                                |                                                               |
 |      ...                               +----------+>auto-commit/storage@SHA2                                      |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recording.json           |          |                                                               |
+|   sdk/storage/assets.json              |          |                                                               |
 |      ...         +---------------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "SHA2" |                                | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recording.json (from release tag)   | |                                                             |
+|   sdk/storage/assets.json (from release tag)      | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |
@@ -344,7 +344,7 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 +---------------------------------------------------+---------------------------------------------------------------+
 ```
 
-After nightly automation has copied commits into `main`, we will update the current recording.json files in `main` to reflect the newly merged _common_ commit.
+After nightly automation has copied commits into `main`, we will update the current assets.json files in `main` to reflect the newly merged _common_ commit.
 
 - auto-commit/core@SHA1 -> commits merge-commit to main
 - auto-commit/core@SHA2 -> commits merge-commit to main
@@ -360,12 +360,12 @@ After nightly automation has copied commits into `main`, we will update the curr
 |      SHA: "NewMainSHA" |                          |                                                               |
 |      ...                               +----------+>auto-commit/storage@NewMainSHA                                |
 |                                        |          |   /recordings/sdk/core/azure-storage-blob/recordings/XXX.json |
-|   sdk/storage/recording.json           |          |                                                               |
+|   sdk/storage/assets.json              |          |                                                               |
 |      ...               +---------------+          | hotfix-commit/storage@SHA3                                    |
 |      SHA: "NewMainSHA" |                          | ^ /recordings/sdk/core/azure-storage-blob/recordings/YYY.json |
 |      ...                                          | |                                                             |
 |                                                   | |                                                             |
-|   sdk/storage/recording.json (from release tag)   | |                                                             |
+|   sdk/storage/assets.json (from release tag)      | |                                                             |
 |      ...                                          | |                                                             |
 |      SHA: "SHA3" ---------------------------------+-+                                                             |
 |      ...                                          |                                                               |
@@ -388,23 +388,23 @@ For all of these, any supplementary functionality is laid out in `asset.ps1`. Ju
 This is the easiest case, there is no existing place to start.
 
 ```text
-  <user> Invoke Record Tests - logic in the recording.json discover needs to _create_ a service-level recording.json.
+  <user> Invoke Record Tests - logic in the assets.json discover needs to _create_ a service-level assets.json.
   <tooling-assets.ps1> Initialize-Assets-Repo - Function from psm1. Clone down with 0 blobs, init in a known location.
   <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation
     <tooling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
   <tooling-assets.ps1> If no remote references, create branch under format of auto/<servicename> push empty branch.
-  <tooling-assets.ps1> After above invocation, recording.json values of the following fields will be updated as per main, since  there is no existing auto/<service> branch.
+  <tooling-assets.ps1> After above invocation, assets.json values of the following fields will be updated as per main, since  there is no existing auto/<service> branch.
             AssetsRepo
             AssetsRepoPrefixPath
             Branch
             TargetSHA
   <tooling-assets.ps1> Return the root of the initialized repo to the framework  -- for example <path-to-your-language>/.assets/<azpythonassets>/recordings/<storage path>
   <tooling-assets.ps1> Start Test-Proxy in context of returned root
-  <user> git status -- see a new recording.json in the area's root. sdk/<servicearea>
+  <user> git status -- see a new assets.json in the area's root. sdk/<servicearea>
   <user> runs tests -- recording mode
   <user> runs assets.ps1 push -- implementation detail
-    <tooling> updates recording.json with new SHA from a newly created assets repo auto/<servicearea> branch.
-  <user commits their other changes, including recording.json updates, submits for PR>
+    <tooling> updates assets.json with new SHA from a newly created assets repo auto/<servicearea> branch.
+  <user commits their other changes, including assets.json updates, submits for PR>
 ```
 
 ### Single Dev: Update single service's recordings
@@ -413,15 +413,15 @@ This situation is the "normal" use case. Merely adding an additional commit to t
 
 ```text
   <user> runs tests -- recording mode
-  <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation via existing recording.json
+  <tooling-assets.ps1> Check for SHA/auto branch in the repo - The "Sync" operation via existing assets.json
     <tooling-prompt> If changes are being abandoned in a different directory, prompt user before discarding changes.
   <tooling-assets.ps1> Return the root of the initialized repo to the framework  -- for example <path-to-your-language>/.assets/<azpythonassets>/recordings/<storage path>
   <tooling-assets.ps1> Start Test-Proxy in context of returned root
   <tooling-assets.ps1> Invoke push. A "recording" push can only work against the latest commit of the auto/<service> branch.
     <tooling-assets.ps1> Need to "stash" new recordings, pull "latest" commit from auto/<service> branch, unstash new changes to to the cloned commit.
   <user> runs assets.ps1 push -- implementation detail
-    <tooling> updates recording.json with new SHA from a newly created assets repo auto/<servicearea> branch.
-  <user commits their other changes, including recording.json updates, submits for PR>
+    <tooling> updates assets.json with new SHA from a newly created assets repo auto/<servicearea> branch.
+  <user commits their other changes, including assets.json updates, submits for PR>
 ```
 
 ### Single Dev: Update recordings for a hotfix release
@@ -436,7 +436,7 @@ Given above scenario plays out how we expect, this is identical to a normal serv
 
 First one in wins. The way we have the above scenario laid out.
 
-When the second person attempts to merge, they'll hit conflicts on `recording.json`. They will need to update, then re-record their tests with the latest from the PR branch, to ensure they have the changes THEY added as well as the changes that were checked in by their co-dev.
+When the second person attempts to merge, they'll hit conflicts on `assets.json`. They will need to update, then re-record their tests with the latest from the PR branch, to ensure they have the changes THEY added as well as the changes that were checked in by their co-dev.
 
 ### Multiple Devs: Update recordings for two packages under same service in parallel
 
@@ -444,7 +444,7 @@ Same above.
 
 ## Asset sync script implementation
 
-Alright, so we know how we want to structure the `recording.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
+Alright, so we know how we want to structure the `assets.json`, and we know WHAT needs to happen. Now we need to delve into the HOW this needs to happen. Colloqially, anything referred to as a `sync` operation should be understood to be part of these abstraction scripts handling git pull and push operations.
 
 They key mention here is that **regardless** of what storage methodology is used, we need to describe some integration points for each language's proxy-shim.
 
@@ -454,10 +454,10 @@ Specifically, we need to do the following:
   - Current  implementation is in [Resolve-RecordingJson](https://github.com/Azure/azure-sdk-tools/blob/240426ec98a62606bf1c9d99991e31eadd1b22f5/eng/common/asset-sync/assets.ps1#L63) 
   - The key here is we will resolve a lot of the the relative paths here.
   - This "context" will be passed around internally when referring to various operations.
-  - The relative path to the target recording.json in the language repo will be used to _focus sparse checkouts_.
+  - The relative path to the target assets.json in the language repo will be used to _focus sparse checkouts_.
 - Clone the assets repo if it is not yet initialized
 - Figure out which auto-branch to go after
-- Grab "the assets" from the storage medium given an `Target Asset Identifier` (given git storage it would be a SHA) in the recording.json, restore into the target directory
+- Grab "the assets" from the storage medium given an `Target Asset Identifier` (given git storage it would be a SHA) in the assets.json, restore into the target directory
 - Return the **root** of the cloned directory to the tooling for use when starting the test-proxy)
 
 ### Cross-platform capabilities
@@ -485,20 +485,20 @@ The external repo will probably be a _git_ repo, so it's not like devs won't be 
 | Operation | Description |
 |---|---|
 | Sync | When one first checks out the repo, one must initialize the recordings repo so that we can run in `playback` mode.  |
-| Push | Submits a PR to the assets repo, updates local `recording.json` with new SHA. |
-| Reset | Return assets repo and `recording.json` to "just-cloned" state. |
+| Push | Submits a PR to the assets repo, updates local `assets.json` with new SHA. |
+| Reset | Return assets repo and `assets.json` to "just-cloned" state. |
 | Checkout | Abandon Any Pending Changes (prompt the user!), then Sync to the targeted SHA |
 
-One benefit of building on top of a git repository is that we have a possible no-op checkout posible when switching the target assets repo SHA. EG: a dev is working a `storage` PR and needs to check a possible issue in `keyvault`. That dev will need to probably need to retarget their assets repo to point at the SHA defined in the `storage` recording.json sync-script. However, the recording.jsons probably don't have the same SHA!  
+One benefit of building on top of a git repository is that we have a possible no-op checkout posible when switching the target assets repo SHA. EG: a dev is working a `storage` PR and needs to check a possible issue in `keyvault`. That dev will need to probably need to retarget their assets repo to point at the SHA defined in the `storage` assets.json sync-script. However, the assets.jsons probably don't have the same SHA!
 
 ```text
 Commits in assets repository on main
 (A) -> (B) -> (C) -> (D) -> (E)
 
-sdk/storage/recording.json
+sdk/storage/assets.json
   SHA: D
 
-sdk/keyvault/recording.json
+sdk/keyvault/assets.json
   SHA: E
 ```
 
@@ -534,12 +534,12 @@ sdk/
 As `playback` sessions are started, the repo should:
 
 1. Discard pending changes, reset to empty
-2. If there is no `recording.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
-   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recording.json`.
+2. If there is no `assets.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
+   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `assets.json`.
    2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`, check grab the latest commit and use as base.
 3. Add `sparse-checkout` for the service folder needed by the current playback request.
    1. If changing targeted service, this means removing the previous `sdk/<service>` directory from the local git config before adding the current target
-4. `checkout` exact SHA specified in `recording.json`
+4. `checkout` exact SHA specified in `assets.json`
    1. If the SHA isn't supplanted by currently checked out SHA, leave the current SHA checked out and no-op.
 5. `pull`
 
@@ -549,11 +549,11 @@ Given the context advantages discussed earlier, one most only start the proxy at
 
 The `start` point here will be defined by what we settle on for the "main" branch OR the _latest commit on the `auto/<servicename>` branch.
 
-1. If there is no `recording.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
-   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `recording.json`.
+1. If there is no `assets.json`, create it. It should populate rational defaults for the repo. (maybe a recording json in root?)
+   1. Check out assets repo `sdk/<service>` directory with the targeted SHA from `assets.json`.
    2. If there is no existing `auto/<servicename>` branch, initialize from `main`. If there _is_ an existing `auto/<servicename>`, check grab the latest commit and use as base.
 2. Create a new commit to the branch `auto/<servicename>`. Push.
-3. Update recording.json with new SHA from assets repo push.
+3. Update assets.json with new SHA from assets repo push.
 
 ### Integrating the sync script w/ language frameworks
 
@@ -586,7 +586,7 @@ What needs to be done on each of the repos to utilize this the sync script?
 
 To utilize the _base_ version of the script, the necessary steps are fairly simple.
 
-- [ ] Add base recording.json
+- [ ] Add base assets.json
 - [ ] Update test-proxy `shim`s to call asset-sync scripts to prepare the test directory prior to tests invoking.
 
 Where the difficulty _really_ lies is in the weird situations that folks will into.

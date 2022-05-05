@@ -10,7 +10,7 @@
     "pack": "npm pack 2>&1",
     "test:unit-prepare-environment": "ts-node test/unit/utils/prepareEnvironment.ts",
     "test:unit": "npm run test:unit-prepare-environment && jest",
-    "test:integration": "ts-node test/integration/integrationTest.ts",
+    "test:integration": "npm run pack && ts-node test/integration/integrationTest.ts",
     "test": "npm run test:unit && npm run test:integration"
   },
   "author": "Microsoft",

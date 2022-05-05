@@ -119,7 +119,7 @@ Describe "AssetsModuleTests" {
       }
     }
 
-    It "Should should calculate relative path from root of repo to the target assets.json." {
+    It "Should calculate relative path from root of repo to the target assets.json." {
       $files = @(
         "pylintrc"
         "sdk/storage/assets.json",
@@ -132,6 +132,31 @@ Describe "AssetsModuleTests" {
 
       $recordingLocation = $Result.AssetsJsonRelativeLocation
       $recordingLocation | Should -Be $expectedValue
+    }
+
+
+    It "Should resolve shortcut paths like '.'" {
+      $files = @(
+        "sdk/storage/",
+        "sdk/storage/assets.json",
+        "sdk/storage/azure-storage-blob/awesome.json"
+      )
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+
+      try {
+        Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
+        $Result = ResolveAssetsJson -TargetPath "."
+        $recordingLocation = $Result.AssetsJsonLocation
+        $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+      }
+      finally {
+        Pop-Location
+      }
+    }
+
+    It "Should throw on missing properties." {
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
+      { ResolveAssetsJson -TargetPath $testLocation } | Should -Throw
     }
   }
   

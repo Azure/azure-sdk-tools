@@ -2,6 +2,7 @@ Set-StrictMode -Version 3
 
 $REPO_ROOT = Resolve-Path (Join-Path $PSScriptRoot ".." "..")
 $ASSETS_STORE = (Join-Path $REPO_ROOT ".assets")
+$EXPECTED_MEMBERS = @("AssetsRepo", "AssetsRepoPrefixPath", "AssetsRepoBranch", "SHA")
 
 . (Join-Path $REPO_ROOT "eng" "common" "scripts" "common.ps1")
 
@@ -91,6 +92,8 @@ Function ResolveAssetsJson {
         $pathForManipulation = Get-Location
     }
     
+    $pathForManipulation = Resolve-Path -Path $TargetPath
+
     $foundConfig, $reachedRoot = EvaluateDirectory -TargetPath $pathForManipulation
 
     while (-not $foundConfig -and -not $reachedRoot){
@@ -126,6 +129,15 @@ Function ResolveAssetsJson {
 
         # relative path to assets Json from within path
         Add-Member -InputObject $config -MemberType "NoteProperty" -Name "AssetsJsonRelativeLocation" -Value $relPath
+    }
+
+    $props = Get-Member -InputObject $config -MemberType NoteProperty | ForEach-Object { $_.Name }
+    $missingMembers = Compare-Object -ReferenceObject $EXPECTED_MEMBERS -DifferenceObject $props `
+        | Where-Object { $_.SideIndicator -ne "=>"} | Foreach-Object { $_.InputObject }
+
+    if($missingMembers.Length -gt 0){
+        $allMissingMembers = $missingMembers -Join ", "
+        throw "Missing required members for assets json detected: `"$($allMissingMembers)`""
     }
 
     return $config

@@ -5,7 +5,11 @@ import commandLineArgs from "command-line-args";
 
 const repoCommitId = {
     'azure-rest-api-specs': '0baca05c851c1749e92beb0d2134cd958827dd54',
-    'azure-sdk-for-js': '67946c5b0ce135f58ecfeab1443e5be52604908e'
+    'azure-sdk-for-js': '67946c5b0ce135f58ecfeab1443e5be52604908e',
+    'azure-sdk-for-java': '307df24267304fbf3947025bef7eaf9698410de8',
+    'azure-sdk-for-python': '53f66170cc47739204cedfe0a46989290c047c98',
+    'azure-sdk-for-go': '241bdb849ce431e1a5e398a5649cde93149ee374',
+    'azure-sdk-for-net': 'e9db0733a642d50c34101339f74fdc487599d824'
 }
 
 const defaultImageName = 'sdkgeneration.azurecr.io/sdk-generation:v1.0';

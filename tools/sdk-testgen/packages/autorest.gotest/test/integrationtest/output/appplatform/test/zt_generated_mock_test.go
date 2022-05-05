@@ -45,7 +45,6 @@ func TestServices_Get(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -119,7 +118,6 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -135,7 +133,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate.json: %v", err)
 	}
@@ -206,7 +204,6 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 	client, err = test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err = client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -230,7 +227,7 @@ func TestServices_CreateOrUpdate(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_CreateOrUpdate_VNetInjection.json: %v", err)
 	}
@@ -307,12 +304,11 @@ func TestServices_Delete(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
-		&test.ServicesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Delete.json: %v", err)
 	}
@@ -330,7 +326,6 @@ func TestServices_Update(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -346,7 +341,7 @@ func TestServices_Update(t *testing.T) {
 				Tier: to.Ptr("Standard"),
 			},
 		},
-		&test.ServicesClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Services_Update.json: %v", err)
 	}
@@ -419,7 +414,6 @@ func TestServices_ListTestKeys(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListTestKeys(ctx,
 		"myResourceGroup",
@@ -451,7 +445,6 @@ func TestServices_RegenerateTestKey(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.RegenerateTestKey(ctx,
 		"myResourceGroup",
@@ -486,7 +479,6 @@ func TestServices_DisableTestEndpoint(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	_, err = client.DisableTestEndpoint(ctx,
 		"myResourceGroup",
@@ -505,7 +497,6 @@ func TestServices_EnableTestEndpoint(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.EnableTestEndpoint(ctx,
 		"myResourceGroup",
@@ -537,7 +528,6 @@ func TestServices_CheckNameAvailability(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.CheckNameAvailability(ctx,
 		"eastus",
@@ -570,9 +560,8 @@ func TestServices_ListBySubscription(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListBySubscription(nil)
+	pager := client.NewListBySubscriptionPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -648,9 +637,8 @@ func TestServices_List(t *testing.T) {
 	client, err := test.NewServicesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -727,7 +715,6 @@ func TestConfigServers_Get(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -768,7 +755,6 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
@@ -785,7 +771,7 @@ func TestConfigServers_UpdatePut(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePut.json: %v", err)
 	}
@@ -825,7 +811,6 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
@@ -842,7 +827,7 @@ func TestConfigServers_UpdatePatch(t *testing.T) {
 				},
 			},
 		},
-		&test.ConfigServersClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_UpdatePatch.json: %v", err)
 	}
@@ -882,7 +867,6 @@ func TestConfigServers_Validate(t *testing.T) {
 	client, err := test.NewConfigServersClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginValidate(ctx,
 		"myResourceGroup",
@@ -895,7 +879,7 @@ func TestConfigServers_Validate(t *testing.T) {
 				URI: to.Ptr("https://github.com/fake-user/fake-repository.git"),
 			},
 		},
-		&test.ConfigServersClientBeginValidateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/ConfigServers_Validate.json: %v", err)
 	}
@@ -922,7 +906,6 @@ func TestMonitoringSettings_Get(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -961,7 +944,6 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePut(ctx,
 		"myResourceGroup",
@@ -973,7 +955,7 @@ func TestMonitoringSettings_UpdatePut(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePutOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePut.json: %v", err)
 	}
@@ -1011,7 +993,6 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
 		"myResourceGroup",
@@ -1023,7 +1004,7 @@ func TestMonitoringSettings_UpdatePatch(t *testing.T) {
 				TraceEnabled:                  to.Ptr(true),
 			},
 		},
-		&test.MonitoringSettingsClientBeginUpdatePatchOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/MonitoringSettings_UpdatePatch.json: %v", err)
 	}
@@ -1061,7 +1042,6 @@ func TestApps_Get(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1116,7 +1096,6 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1140,7 +1119,7 @@ func TestApps_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_CreateOrUpdate.json: %v", err)
 	}
@@ -1193,13 +1172,12 @@ func TestApps_Delete(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
-		&test.AppsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Delete.json: %v", err)
 	}
@@ -1217,7 +1195,6 @@ func TestApps_Update(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1244,7 +1221,7 @@ func TestApps_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.AppsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Apps_Update.json: %v", err)
 	}
@@ -1297,9 +1274,8 @@ func TestApps_List(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		nil)
 	for pager.More() {
@@ -1357,7 +1333,6 @@ func TestApps_ValidateDomain(t *testing.T) {
 	client, err := test.NewAppsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ValidateDomain(ctx,
 		"myResourceGroup",
@@ -1390,7 +1365,6 @@ func TestBindings_Get(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1434,7 +1408,6 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1451,7 +1424,7 @@ func TestBindings_CreateOrUpdate(t *testing.T) {
 				ResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/my-cosmosdb-1"),
 			},
 		},
-		&test.BindingsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_CreateOrUpdate.json: %v", err)
 	}
@@ -1492,14 +1465,13 @@ func TestBindings_Delete(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mybinding",
-		&test.BindingsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Delete.json: %v", err)
 	}
@@ -1517,7 +1489,6 @@ func TestBindings_Update(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1533,7 +1504,7 @@ func TestBindings_Update(t *testing.T) {
 				Key: to.Ptr("xxxx"),
 			},
 		},
-		&test.BindingsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Bindings_Update.json: %v", err)
 	}
@@ -1574,9 +1545,8 @@ func TestBindings_List(t *testing.T) {
 	client, err := test.NewBindingsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
@@ -1623,7 +1593,6 @@ func TestCertificates_Get(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1669,7 +1638,6 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1682,7 +1650,7 @@ func TestCertificates_CreateOrUpdate(t *testing.T) {
 				VaultURI:         to.Ptr("https://myvault.vault.azure.net"),
 			},
 		},
-		&test.CertificatesClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_CreateOrUpdate.json: %v", err)
 	}
@@ -1726,13 +1694,12 @@ func TestCertificates_Delete(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"mycertificate",
-		&test.CertificatesClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Certificates_Delete.json: %v", err)
 	}
@@ -1750,9 +1717,8 @@ func TestCertificates_List(t *testing.T) {
 	client, err := test.NewCertificatesClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myService",
 		nil)
 	for pager.More() {
@@ -1801,7 +1767,6 @@ func TestCustomDomains_Get(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -1838,7 +1803,6 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -1851,7 +1815,7 @@ func TestCustomDomains_CreateOrUpdate(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_CreateOrUpdate.json: %v", err)
 	}
@@ -1885,14 +1849,13 @@ func TestCustomDomains_Delete(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydomain.com",
-		&test.CustomDomainsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Delete.json: %v", err)
 	}
@@ -1910,7 +1873,6 @@ func TestCustomDomains_Update(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -1923,7 +1885,7 @@ func TestCustomDomains_Update(t *testing.T) {
 				Thumbprint: to.Ptr("934367bf1c97033f877db0f15cb1b586957d3133"),
 			},
 		},
-		&test.CustomDomainsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/CustomDomains_Update.json: %v", err)
 	}
@@ -1957,9 +1919,8 @@ func TestCustomDomains_List(t *testing.T) {
 	client, err := test.NewCustomDomainsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		nil)
@@ -1999,7 +1960,6 @@ func TestDeployments_Get(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.Get(ctx,
 		"myResourceGroup",
@@ -2064,7 +2024,6 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
 		"myResourceGroup",
@@ -2090,7 +2049,7 @@ func TestDeployments_CreateOrUpdate(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginCreateOrUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_CreateOrUpdate.json: %v", err)
 	}
@@ -2152,14 +2111,13 @@ func TestDeployments_Delete(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginDelete(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginDeleteOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Delete.json: %v", err)
 	}
@@ -2177,7 +2135,6 @@ func TestDeployments_Update(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginUpdate(ctx,
 		"myResourceGroup",
@@ -2194,7 +2151,7 @@ func TestDeployments_Update(t *testing.T) {
 				},
 			},
 		},
-		&test.DeploymentsClientBeginUpdateOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Update.json: %v", err)
 	}
@@ -2256,9 +2213,8 @@ func TestDeployments_List(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List("myResourceGroup",
+	pager := client.NewListPager("myResourceGroup",
 		"myservice",
 		"myapp",
 		&test.DeploymentsClientListOptions{Version: []string{}})
@@ -2326,9 +2282,8 @@ func TestDeployments_ListForCluster(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.ListForCluster("myResourceGroup",
+	pager := client.NewListForClusterPager("myResourceGroup",
 		"myservice",
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for pager.More() {
@@ -2395,14 +2350,13 @@ func TestDeployments_Start(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginStart(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Start.json: %v", err)
 	}
@@ -2420,14 +2374,13 @@ func TestDeployments_Stop(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginStop(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginStopOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Stop.json: %v", err)
 	}
@@ -2445,14 +2398,13 @@ func TestDeployments_Restart(t *testing.T) {
 	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	poller, err := client.BeginRestart(ctx,
 		"myResourceGroup",
 		"myservice",
 		"myapp",
 		"mydeployment",
-		&test.DeploymentsClientBeginRestartOptions{ResumeToken: ""})
+		nil)
 	if err != nil {
 		t.Fatalf("Failed to get result for example specification/appplatform/resource-manager/Microsoft.AppPlatform/preview/2020-11-01-preview/examples/Deployments_Restart.json: %v", err)
 	}
@@ -2470,9 +2422,8 @@ func TestOperations_List(t *testing.T) {
 	client, err := test.NewOperationsClient(cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {
@@ -2511,7 +2462,6 @@ func TestRuntimeVersions_ListRuntimeVersions(t *testing.T) {
 	client, err := test.NewRuntimeVersionsClient(cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
 	res, err := client.ListRuntimeVersions(ctx,
 		nil)
@@ -2552,9 +2502,8 @@ func TestSKUs_List(t *testing.T) {
 	client, err := test.NewSKUsClient("00000000-0000-0000-0000-000000000000", cred, &options)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
-		return
 	}
-	pager := client.List(nil)
+	pager := client.NewListPager(nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
 		if err != nil {

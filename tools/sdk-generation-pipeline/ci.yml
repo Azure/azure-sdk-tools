@@ -130,8 +130,8 @@ stages:
             downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
 
         - script: |
-            echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
-            sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
+            echo -e "\e[32m[$(date -u)] LOG: Ensure npm is installed"
+            sudo npm install -g npm@6.14.16 || { echo 'npm install failed' ; exit 1; }
             sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
 
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
@@ -139,7 +139,7 @@ stages:
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
             do
               echo -e "\e[32m[$(date -u)] LOG: File: $file"
-              npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }
+              npm publish $file --access public || { echo 'publish $file failed' ; }
             done
             rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
           displayName: Publish

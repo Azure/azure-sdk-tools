@@ -11,18 +11,17 @@ namespace APIViewWeb.HostedServices
 {
     public class ReviewBackgroundHostedService : IHostedService, IDisposable
     {
-        private bool _isDisabled = false;
-        private ReviewManager _reviewManager;
-        private int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+        private readonly bool _isDisabled;
+        private readonly ReviewManager _reviewManager;
+        private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
 
         public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
         {
             _reviewManager = reviewManager;
             // We can disable background task using app settings if required
-            var taskDisabled = configuration["BackgroundTaskDisabled"];
-            if (!String.IsNullOrEmpty(taskDisabled) && taskDisabled == "true")
+            if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled))
             {
-                _isDisabled = true;
+                _isDisabled = taskDisabled;
             }
 
             var gracePeriod = configuration["ArchiveReviewGracePeriodInMonths"];

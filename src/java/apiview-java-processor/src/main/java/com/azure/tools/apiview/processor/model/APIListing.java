@@ -32,7 +32,7 @@ public class APIListing {
     // This string is taken from here:
     // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
     @JsonProperty("VersionString")
-    private final String versionString = "20";
+    private final String versionString = "21";
 
     @JsonProperty("Tokens")
     private List<Token> tokens;

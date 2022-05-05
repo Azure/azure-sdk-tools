@@ -2,6 +2,45 @@
   "name": "@autorest/gotest",
   "entries": [
     {
+      "version": "3.1.2",
+      "tag": "@autorest/gotest_v3.1.2",
+      "date": "Mon, 25 Apr 2022 08:06:55 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use oav@2.12.1"
+          },
+          {
+            "comment": "Fix some generation issue."
+          }
+        ]
+      }
+    },
+    {
+      "version": "3.1.1",
+      "tag": "@autorest/gotest_v3.1.1",
+      "date": "Mon, 18 Apr 2022 06:25:24 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix wrong log.Fatalf usage."
+          }
+        ]
+      }
+    },
+    {
+      "version": "3.1.0",
+      "tag": "@autorest/gotest_v3.1.0",
+      "date": "Fri, 15 Apr 2022 03:08:44 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Upgrade to latest codegen and change list operation name."
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.1",
       "tag": "@autorest/gotest_v3.0.1",
       "date": "Mon, 11 Apr 2022 09:15:12 GMT",

@@ -1,5 +1,51 @@
 # Azure SDK Tools Test Proxy
 
+- [Azure SDK Tools Test Proxy](#azure-sdk-tools-test-proxy)
+  - [Installation](#installation)
+    - [Via Local Compile or .NET](#via-local-compile-or-net)
+    - [Via Docker Image](#via-docker-image)
+      - [A note about docker caching](#a-note-about-docker-caching)
+  - [Command line arguments](#command-line-arguments)
+    - [Storage Location](#storage-location)
+    - [Port Assignation](#port-assignation)
+      - [Environment Variable](#environment-variable)
+      - [Input arguments](#input-arguments)
+  - [Environment Variables](#environment-variables)
+  - [How do I use the test-proxy to get a recording?](#how-do-i-use-the-test-proxy-to-get-a-recording)
+    - [Where will my recordings end up?](#where-will-my-recordings-end-up)
+    - [Start the test run](#start-the-test-run)
+    - [Run your tests](#run-your-tests)
+    - [When finished running test](#when-finished-running-test)
+      - [Storing `variables`](#storing-variables)
+      - [Customizing what gets recorded](#customizing-what-gets-recorded)
+  - [How do I use the test-proxy to play a recording back?](#how-do-i-use-the-test-proxy-to-play-a-recording-back)
+    - [Start playback](#start-playback)
+      - [Optional `variables` returned](#optional-variables-returned)
+    - [During your test run](#during-your-test-run)
+    - [Stop playback](#stop-playback)
+    - [An important note about perf testing](#an-important-note-about-perf-testing)
+    - [See example implementations](#see-example-implementations)
+  - [Session and Test Level Transforms, Sanitizers, and Matchers](#session-and-test-level-transforms-sanitizers-and-matchers)
+    - [Add Sanitizer](#add-sanitizer)
+      - [A note about where sanitizers apply](#a-note-about-where-sanitizers-apply)
+    - [For Sanitizers, Matchers, or Transforms in general](#for-sanitizers-matchers-or-transforms-in-general)
+    - [Viewing available/active Sanitizers, Matchers, and Transforms](#viewing-availableactive-sanitizers-matchers-and-transforms)
+    - [Resetting active Sanitizers, Matchers, and Transforms](#resetting-active-sanitizers-matchers-and-transforms)
+      - [Reset the session](#reset-the-session)
+      - [Reset for a specific recordingId](#reset-for-a-specific-recordingid)
+  - [Redirection Settings](#redirection-settings)
+    - [Providing your own `Host` header](#providing-your-own-host-header)
+  - [Testing](#testing)
+  - [SSL Support](#ssl-support)
+    - [On Mac and Windows, .NET can be used to generate a local certificate](#on-mac-and-windows-net-can-be-used-to-generate-a-local-certificate)
+      - [Option 1](#option-1)
+      - [Option 2](#option-2)
+    - [Docker Image + SSL](#docker-image--ssl)
+  - [Troubleshooting](#troubleshooting)
+    - [Visual studio](#visual-studio)
+      - [ASP.NET and web development](#aspnet-and-web-development)
+      - [Windows IIS](#windows-iis)
+
 For a detailed explanation and more-or-less spec, check the [README.md](../README.md) one level up from this one.
 
 This test proxy is intended to provide out-of-process record/playback capabilities compatible with any language. It offers session and recording level customization during both `record` and `playback` of a test.
@@ -69,13 +115,35 @@ To ensure that your local copy is up to date, run:
 
 ## Command line arguments
 
+This is the help information for test-proxy. It uses the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
+
+```text
+Azure.Sdk.Tools.TestProxy
+  test-proxy
+
+Usage:
+  Azure.Sdk.Tools.TestProxy [options] [<args>...]
+
+Arguments:
+  <args>  Unmapped arguments un-used by the test-proxy are sent directly to the ASPNET configuration provider. [default: ]
+
+Options:
+  --insecure                             Allow untrusted SSL certs from upstream server [default: False]
+  --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized. [default: ]
+  --dump                                 Flag. Pass to dump configuration values before starting the application. [default: False]
+  --version                              Flag. Pass to get the version of the tool. [default: False]
+
+```
+
+### Storage Location
+
 The test-proxy resolves the storage location via:
 
 1. Command Line argument `storage-location`
 2. Environment variable TEST_PROXY_FOLDER
 3. If neither are present, the working directory from which the server is invoked.
 
-It uses the pre-release package [`System.CommandLine.DragonFruit`](https://github.com/dotnet/command-line-api) to parse arguments.
+### Port Assignation
 
 By default, the server will listen on the following port mappings:
 
@@ -216,6 +284,8 @@ An alternative is this `variable` concept. During a final POST to `/Record/Stop`
 #### Customizing what gets recorded
 
 Some tests send large request bodies that are not meaningful and should not be stored in the session records. In order to disable storing the request body for a specific request, add the request header "x-recording-skip" and set the value to "request-body". This header can also be used to skip an entire request/response pair from being included in the recording - this is useful for cleanup code that you might have as part of your test. To skip the request/response pair, set the "x-recording-skip" header value to "request-response". Note that the "x-recording-skip" should only be specified when in `Record` mode. As a result, any request that would use the "request-response" value when in `Record` mode should not be sent when in `Playback` mode. For requests that use "request-body" in `Record` mode, you should either null out the body of the request before sending to the test proxy when in `Playback` mode, or you can set a `CustomDefaultMatcher` with `compareBodies = false`.
+
+One can also prevent update of a recording file on disk by providing a header of value `x-recording-skip: "request-response"` along with your POST to `/Record/Stop`.
 
 ## How do I use the test-proxy to play a recording back?
 
@@ -382,6 +452,46 @@ headers: {
 
 If the recordingId is specified in the header, that individual recording's settings will be cleared. The session level updates will remain unchanged.
 
+## Redirection Settings
+
+The test-proxy does NOT transparent follow redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will not** follow. It will return that redirect response to the client to allow THEM to handle the redirect.
+
+In certain cases, this is not a possibility for the client. Javascript Browser tests are a great example of this. Since both "modes" are supported, the test-proxy exposes this as a setting `HandleRedirects`.
+
+To set this setting, POST to the `/Admin/SetRecordingOptions` route.
+
+Example:
+
+```jsonc
+POST https://localhost:5001/Admin/SetRecordingOptions
+
+// Body should be a json dictionary to enable
+{
+    "HandleRedirects": true
+}
+// to enable alternative
+{
+    "HandleRedirects": "true"
+}
+
+// to disable
+{
+    "HandleRedirects": false
+}
+// to disable alternative
+{
+    "HandleRedirects": "false"
+}
+```
+
+### Providing your own `Host` header
+
+In normal running, the test-proxy actually sets the Host header automatically. If one wants to provide a _specific_ header that gets used during the request, the request must be accompanied by header:
+
+```text
+"x-recording-upstream-host-header": "<host value>"
+```
+
 ## Testing
 
 This project uses `xunit` as the test framework. This is the most popular .NET test solution [according to this twitter poll](https://twitter.com/shahedC/status/1131337874903896065?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1131337874903896065%7Ctwgr%5E%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwakeupandcode.com%2Funit-testing-in-asp-net-core%2F) and it's also what the majority of the test projects in the `Azure/azure-sdk-tools` repo utilize as well.
@@ -401,6 +511,7 @@ For further details on importing and using the provided dev-certificates, please
 ### On Mac and Windows, .NET can be used to generate a local certificate
 
 There are two options here, generate your own SSL Cert, or import an existing one.
+
 #### Option 1
 
 Invoke the command:
@@ -444,4 +555,3 @@ Then, confirm in the right panel that `Development time IIS support` is not chec
 [Add Internet Information](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/development-time-iis-support?view=aspnetcore-6.0) Services to your Windows installation. Here is the list of features to enable:
 
 ![image](https://user-images.githubusercontent.com/24213737/152258180-0bac3e7f-910c-45fd-aa5f-fc932fce91e6.png)
-

@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-import { CodeGenerationPipelineTaskName } from '../types/commonType';
+import { AzureSDKTaskName } from '../types/commonType';
 import { LogFilter } from '../types/taskInputAndOuputSchemaTypes/CodegenToSdkConfig';
 import { TestOutput } from '../types/taskInputAndOuputSchemaTypes/TestOutput';
 import { PipelineResult, TaskResultCommon, MessageRecord, RawMessageRecord, TaskOutput, TaskResult, TestTaskResult } from '../types/taskResult';
@@ -30,7 +29,7 @@ export function spliteLog(fullLog: string): string[] {
     return lines;
 }
 
-export function parseGenerateLog(codegenName: string, logfile: string, logFilter: LogFilter): TaskResultCommon {
+export function parseGenerateLog(pipelineBuildId: string, taskname: string, logfile: string, logFilter: LogFilter): TaskResultCommon {
     let execResult: PipelineResult = 'success';
     let errorNum = 0;
     let warnNum = 0;
@@ -72,7 +71,8 @@ export function parseGenerateLog(codegenName: string, logfile: string, logFilter
     }
 
     const result: TaskResultCommon = {
-        name: codegenName,
+        name: taskname,
+        pipelineBuildId: pipelineBuildId,
         result: execResult,
         errorCount: errorNum,
         warningCount: warnNum,
@@ -82,9 +82,20 @@ export function parseGenerateLog(codegenName: string, logfile: string, logFilter
     return result;
 }
 
-export function createTaskResult(codegenName: string, logfile: string, logFilter: LogFilter, taskname: CodeGenerationPipelineTaskName, taskOutput: TaskOutput): TaskResult {
-    const commonResult: TaskResultCommon = parseGenerateLog(codegenName, logfile, logFilter);
-    if (taskname === CodeGenerationPipelineTaskName.MockTest || taskname === CodeGenerationPipelineTaskName.LiveTest) {
+export function createTaskResult(pipelineBuildId: string, taskname: AzureSDKTaskName, taskExeResult: PipelineResult, logfile: string, logFilter: LogFilter, taskOutput: TaskOutput): TaskResult {
+    let commonResult: TaskResultCommon = undefined;
+    if (taskExeResult === 'success') {
+        commonResult = {
+            name: taskname,
+            pipelineBuildId: pipelineBuildId,
+            result: taskExeResult,
+            errorCount: 0,
+            warningCount: 0,
+        };
+    } else {
+        commonResult = parseGenerateLog(pipelineBuildId, taskname, logfile, logFilter);
+    }
+    if (taskname === AzureSDKTaskName.MockTest || taskname === AzureSDKTaskName.LiveTest) {
         if (taskOutput === undefined) {
             logger.error('taskOutput is undefined');
             return {

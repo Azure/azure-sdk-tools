@@ -10,6 +10,14 @@ https://github.com/Azure/azure-rest-api-specs
 autorest --version=3.7.3 --use=<test model extension> --output-folder=<RP package path> --testmodeler.export-codemodel --clear-output-folder=false --debug <RP config md file path>
 ```
 
+## Contribution
+
+The testmodeler use both rush and npm to manage the project. So if there is changes on package.json, remember to execute `npm ci` for testmodeler to keep autorest.testmodeler/npm-shrinkwrap.json updated.
+~~~
+> cd packages/autorest.testmodeler
+> npm ci
+~~~
+
 ## Configurations
 
 Below are options can be used for autorest.testmodeler

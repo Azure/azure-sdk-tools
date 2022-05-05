@@ -3,57 +3,24 @@
 
 package cmd
 
-// Declaration is a const or var declaration.
-type Declaration struct {
-	// the type of the constant
-	Type string `json:"type"`
+// This file contains models comprising an APIView document
 
-	// the value of the constant
-	Value string `json:"value"`
+type Diagnostic struct {
+	DiagnosticID string          `json:"DiagnosticId,omitempty"`
+	HelpLinkURI  string          `json:"HelpLinkUri,omitempty"`
+	Level        DiagnosticLevel `json:"Level,omitempty"`
+	// TargetID is the DefinitionID of the Token to which this diagnostic applies
+	TargetID string `json:"TargetId,omitempty"`
+	Text     string `json:"Text,omitempty"`
 }
 
-// Func contains parameter and return types of a function/method.
-type Func struct {
-	// Params lists the func's parameters as strings of the form "name type"
-	Params []string `json:"params,omitempty"`
+type DiagnosticLevel int
 
-	// Returns lists the func's return types
-	Returns []string `json:"returns,omitempty"`
-
-	// TypeParams lists the func's type parameters as strings of the form "name constraint"
-	TypeParams []string
-}
-
-type SimpleType struct {
-	Name           *string `json:"name,omitempty"`
-	UnderlyingType *string `json:"underlyingType,omitempty"`
-}
-
-// Interface contains the list of methods for an interface.
-type Interface struct {
-	EmbeddedInterfaces []string
-	Methods            map[string]Func
-}
-
-// Struct contains field info about a struct.
-type Struct struct {
-	// a list of anonymous fields
-	AnonymousFields []string `json:"anon,omitempty"`
-
-	// key/value pairs of the field names and types respectively.
-	Fields map[string]string `json:"fields,omitempty"`
-
-	// TypeParams lists the func's type parameters as strings of the form "name constraint"
-	TypeParams []string
-}
-
-// Token ...
-type Token struct {
-	DefinitionID *string   `json:"DefinitionId"`
-	NavigateToID *string   `json:"NavigateToId"`
-	Value        string    `json:"Value"`
-	Kind         TokenType `json:"Kind"`
-}
+const (
+	DiagnosticLevelInfo    DiagnosticLevel = 1
+	DiagnosticLevelWarning DiagnosticLevel = 2
+	DiagnosticLevelError   DiagnosticLevel = 3
+)
 
 type Navigation struct {
 	Text         string             `json:"Text"`
@@ -64,8 +31,33 @@ type Navigation struct {
 
 // PackageReview ...
 type PackageReview struct {
-	Language   string       `json:"Language"`
-	Name       string       `json:"Name"`
-	Tokens     []Token      `json:"Tokens"`
-	Navigation []Navigation `json:"Navigation"`
+	Diagnostics []Diagnostic `json:"Diagnostics,omitempty"`
+	Language    string       `json:"Language,omitempty"`
+	Name        string       `json:"Name,omitempty"`
+	Tokens      []Token      `json:"Tokens,omitempty"`
+	Navigation  []Navigation `json:"Navigation,omitempty"`
 }
+
+// Token ...
+type Token struct {
+	DefinitionID *string   `json:"DefinitionId"`
+	NavigateToID *string   `json:"NavigateToId"`
+	Value        string    `json:"Value"`
+	Kind         TokenType `json:"Kind"`
+}
+
+type TokenType int
+
+const (
+	TokenTypeText          TokenType = 0
+	TokenTypeNewline       TokenType = 1
+	TokenTypeWhitespace    TokenType = 2
+	TokenTypePunctuation   TokenType = 3
+	TokenTypeKeyword       TokenType = 6
+	TokenTypeLineIDMarker  TokenType = 5
+	TokenTypeTypeName      TokenType = 4
+	TokenTypeMemberName    TokenType = 7
+	TokenTypeStringLiteral TokenType = 8
+	TokenTypeLiteral       TokenType = 9
+	TokenTypeComment       TokenType = 10
+)

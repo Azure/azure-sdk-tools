@@ -4,12 +4,17 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"io/fs"
 	"path/filepath"
 	"strings"
 )
+
+// indexTestdata allows tests to index this module's testdata
+// (we never want to do that for real reviews)
+var indexTestdata bool
 
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
@@ -29,19 +34,19 @@ func NewModule(dir string) (*Module, error) {
 		baseSDKPath = filepath.Join(before, "sdk")
 		baseImportPath = "github.com/Azure/azure-sdk-for-go/sdk/"
 	} else {
-		panic(dir + " isn't part of the Azure SDK for Go")
+		fmt.Println(dir + " isn't part of the Azure SDK for Go. Output may be incomplete or inaccurate.")
 	}
 	m := Module{Name: filepath.Base(dir), packages: map[string]*Pkg{}, path: dir}
 
 	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
-			if strings.Contains(path, "testdata") {
+			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
 			}
 			p, err := NewPkg(path, m.Name)
 			if err == nil {
 				m.packages[baseImportPath+p.Name()] = p
-			} else {
+			} else if !errors.Is(err, ErrNoPackages) {
 				fmt.Printf("error: %v\n", err)
 			}
 		}
@@ -58,7 +63,7 @@ func NewModule(dir string) (*Module, error) {
 	// fields visible there.
 	externalPackages := map[string]*Pkg{}
 	for _, p := range m.packages {
-		for qn := range p.typeAliases {
+		for alias, qn := range p.typeAliases {
 			// qn is a type name qualified with import path like
 			// "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared.TokenRequestOptions"
 			impPath := qn[:strings.LastIndex(qn, ".")]
@@ -73,7 +78,8 @@ func NewModule(dir string) (*Module, error) {
 						path := filepath.Join(baseSDKPath, after)
 						pkg, err := NewPkg(path, after)
 						if err != nil {
-							panic("couldn't load " + impPath)
+							fmt.Printf("couldn't parse %s: %v", impPath, err)
+							continue
 						}
 						pkg.Index()
 						externalPackages[impPath] = pkg
@@ -81,22 +87,36 @@ func NewModule(dir string) (*Module, error) {
 					}
 				}
 			}
+
+			var t TokenMaker
 			if source == nil {
-				panic("haven't indexed " + impPath)
-			}
-			if def, ok := source.types[typeName]; ok {
+				t = p.c.addSimpleType(*p, alias, p.Name(), qn)
+			} else if def, ok := source.types[typeName]; ok {
 				switch n := def.n.Type.(type) {
 				case *ast.InterfaceType:
-					p.c.addInterface(*def.p, def.n.Name.Name, n)
+					t = p.c.addInterface(*def.p, alias, p.Name(), n)
 				case *ast.StructType:
-					p.c.addStruct(*def.p, def.n.Name.Name, def.n)
+					t = p.c.addStruct(*def.p, alias, p.Name(), def.n)
 				case *ast.Ident:
-					p.c.addSimpleType(*p, def.n.Name.Name, def.n.Type.(*ast.Ident).Name)
+					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name)
 				default:
-					fmt.Printf("WARNING:  unexpected node type %T\n", def.n.Type)
+					fmt.Printf("unexpected node type %T", def.n.Type)
 				}
 			} else {
-				panic("no definition for " + qn)
+				fmt.Println("found no definition for " + qn)
+			}
+			if t != nil {
+				path := strings.TrimPrefix(qn, baseImportPath)
+				level := DiagnosticLevelInfo
+				if !strings.Contains(path, m.Name) {
+					// this type is defined in another module
+					level = DiagnosticLevelWarning
+				}
+				p.diagnostics = append(p.diagnostics, Diagnostic{
+					Level:    level,
+					TargetID: t.ID(),
+					Text:     aliasFor + path,
+				})
 			}
 		}
 	}

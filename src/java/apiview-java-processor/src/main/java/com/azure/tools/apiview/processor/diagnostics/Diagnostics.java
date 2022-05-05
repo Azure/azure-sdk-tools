@@ -1,21 +1,6 @@
 package com.azure.tools.apiview.processor.diagnostics;
 
-import com.azure.tools.apiview.processor.diagnostics.rules.ConsiderFinalClassDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.FluentSetterReturnTypeDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodNamesDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.IllegalPackageAPIExportsDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.ImportsDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.MissingAnnotationsDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavaDocDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.MissingJavadocCodeSnippetsRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.ModuleInfoDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.NoLocalesInJavadocUrlDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.NoPublicFieldsDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.PackageNameDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.ServiceVersionDiagnosticRule;
-import com.azure.tools.apiview.processor.diagnostics.rules.UpperCaseNamingDiagnosticRule;
+import com.azure.tools.apiview.processor.diagnostics.rules.*;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
@@ -32,6 +17,7 @@ import static com.azure.tools.apiview.processor.diagnostics.rules.IllegalMethodN
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.DirectSubclassCheckFunction;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ExactTypeNameCheckFunction;
 import static com.azure.tools.apiview.processor.diagnostics.rules.RequiredBuilderMethodsDiagnosticRule.ParameterAllowedTypes;
+import static com.azure.tools.apiview.processor.diagnostics.rules.BadAnnotationDiagnosticRule.BadAnnotation;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
 public class Diagnostics {
@@ -57,6 +43,13 @@ public class Diagnostics {
         diagnostics.add(new NoLocalesInJavadocUrlDiagnosticRule());
         diagnostics.add(new ModuleInfoDiagnosticRule());
         diagnostics.add(new ServiceVersionDiagnosticRule());
+        diagnostics.add(new BadAnnotationDiagnosticRule(
+            new BadAnnotation("JacksonXmlRootElement",
+                    "From the Jackson JavaDoc: \"NOTE! Since 2.4 this annotation is usually not necessary and " +
+                            "you should use JsonRootName instead. About the only expected usage may be to have different " +
+                            "root name for XML content than other formats.\"")
+        ));
+        diagnostics.add(new BuilderTraitsDiagnosticRule());
         diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)

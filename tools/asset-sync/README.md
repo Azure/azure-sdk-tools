@@ -22,6 +22,7 @@
       - [Disadvantages of `Blob Storage`](#disadvantages-of-blob-storage)
     - [`Pulling a zipfile of the repository`](#pulling-a-zipfile-of-the-repository)
       - [Overall evaluation of `Pulling a zipfile of the repository`](#overall-evaluation-of-pulling-a-zipfile-of-the-repository)
+    - [Conclusion - External Git Repo](#conclusion---external-git-repo)
   - [Exploring An External Git Repo](#exploring-an-external-git-repo)
     - [assets.json discovery](#assetsjson-discovery)
       - [When establishing recordings for a new service](#when-establishing-recordings-for-a-new-service)
@@ -47,7 +48,6 @@
   - [Integration Checklist](#integration-checklist)
   - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
     - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
-  - [Conclusions](#conclusions)
   - [Follow-Ups](#follow-ups)
 
 ## What is the problem? Why?
@@ -211,13 +211,21 @@ Yes, commit histories do add _some_ weight to the git database, but it's definit
 
 While it is possible to download a zipfile of a GIT repository it’s not very practical. Downloading the zip is only slightly faster than just syncing the repository but the unpacking of the zip that makes this a non-starter. For example: On my Surface Laptop 2, taking zipfile of azure-sdk-for-net and using powershell’s Expand-Archive took 8:07 to unpack. Using System.IO.Compression.ZipFile’s ExtractToDirectory took 5:06 to unpack. The decompression times alone were enough to end this investigation but even if that could be rectified the result would effectively be a read-only copy of the repository.
 
+### Conclusion - External Git Repo
+
+[After a discussion with the Engineering System team, the external git repo option was selected.](https://microsoft-my.sharepoint.com/:v:/p/scbedd/EXiLEz0k7H5Pqr4rWNkjb7cBcVRxJBOX8iPOLZatZnOEFQ?e=ZAkJbb&isSPOFile=1). We will finish a prototype in powershell and revisit the technology choice if necessary.
+
 ## Exploring An External Git Repo
 
 This is where the story gets complicated. Now that recordings are no longer stored directly alongside the code that they support, the process to _initially retrieve_ and _update_ the recordings gets a bit more stilted.
 
 In a previous section, we established that another git repo is the most obvious solution.
 
-As part of this project, we have established these `assets` repos for the four main languages.
+It makes sense to start with a single, common assets repo.
+
+- [Azure/azure-sdk-assets](https://github.com/Azure/azure-sdk-assets)
+
+However, if that pans out to be extremely messy, we have also established these `assets` repos for the four main languages.
 
 - [Azure/azure-sdk-for-python-assets](https://github.com/Azure/azure-sdk-for-python-assets)
 - [Azure/azure-sdk-for-js-assets](https://github.com/Azure/azure-sdk-for-js-assets)
@@ -228,6 +236,9 @@ So for a given language, we will have the following resources at play:
 
 ```bash
 Azure/azure-sdk-for-<language>
+Azure/azure-sdk-assets
+
+# if necessary
 Azure/azure-sdk-for-<language>-assets
 ```
 
@@ -251,8 +262,8 @@ And within a sample assets.json file...
     // Within the assets repo, should we prefix anything before the recording path being written?
     "AssetsRepoPrefixPath": "recordings/",
 
-    // In the case of the -pr repo, we would have Azure/azure-sdk-for-python-assets-pr
-    "AssetsRepo": "Azure/azure-sdk-for-python-assets",
+    // We are not intending on making a azure-sdk-assets-pr repository.
+    "AssetsRepo": "Azure/azure-sdk-assets",
 
     // We will design this to support multiple identical assets repos at the same time. Will be mostly unused.
     "AssetsRepoId": "",
@@ -323,7 +334,7 @@ When PRs are submitted, the SHAs referencing the assets repo will be _different_
 
 ```text
 +---------------------------------------------------+---------------------------------------------------------------+
-| azure-sdk-for-<language>/                         | assets-repo/                                                  |
+| azure-sdk-assets                                  | assets-repo/                                                  |
 |                                                   |                                                               |
 |                                                   |                                                               |
 |   sdk/core/assets.json----------------------------+>auto-commit/core@SHA1                                         |
@@ -352,7 +363,7 @@ After nightly automation has copied commits into `main`, we will update the curr
 
 ```text
 +---------------------------------------------------+---------------------------------------------------------------+
-| azure-sdk-for-<language>/                         | assets-repo/                                                  |
+| azure-sdk-assets                                  | assets-repo/                                                  |
 |                                                   |                                                               |
 |                                                   |                                                               |
 |   sdk/core/record      +---------------------------+>auto-commit/core@NewMainSHA                                  |
@@ -377,7 +388,9 @@ In this way, a concept of `main` can still exist, and will be used where possibl
 
 ### Drawbacks
 
-The `auto` commit branches will need to stick around. At least as far as we need to keep the commits in them that are referenced from the `azure-sdk-for-python` repo. Any commits present in the `azure-sdk-for-<language>-assets` and referenced anywhere from the `azure-sdk-for-<language>` repo MUST continue to exist. They cannot be automatically trimmed. For example, there is nothing stopping a dev from releasing a package when the assets repo SHA is set to the intial "auto" commit. We'd prefer that folks wait for the merge to `main` to release the package, but to enforce that will cause a whole acre of headache.
+The `auto` commit branches will need to stick around. At least as far as we need to keep the commits in them that are referenced from the `azure-sdk-for-python` repo. Any commits present in the `azure-sdk-assets` and referenced anywhere from the `azure-sdk-for-<language>` repo MUST continue to exist. They cannot be automatically trimmed. For example, there is nothing stopping a dev from releasing a package when the assets repo SHA is set to the intial "auto" commit. We'd prefer that folks wait for the merge to `main` to release the package, but to enforce that will cause a whole acre of headache.
+
+One alternative to hard SHAs is to create tags that point to these SHAs. This will allow us to rewrite a tag when combining recordings resulting in a different SHAs.
 
 ## Scenario Walkthroughs
 
@@ -597,14 +610,14 @@ Where the difficulty _really_ lies is in the weird situations that folks will in
 
 For more than a few of the storage recordings, some request bodies are obviously made up of generated content. We can significantly reduce the amount of data that is actually needed to be stored by allowing the test-proxy to _fill in_ these request bodies based on a known seed value (maybe from the original request body?).
 
-## Conclusions
-
-[After a discussion with the Engineering System team, the external git repo option was selected.](https://microsoft-my.sharepoint.com/:v:/p/scbedd/EXiLEz0k7H5Pqr4rWNkjb7cBw7riqgguGmvYc1iP7gIM9g). We will finish a prototype in powershell and revisit after it is complete.
-
 ## Follow-Ups
 
-- [ ] Need to resolve what the nighty automation would _actually look like._.
-- [ ] Can we target commits instead of branches/tags? That would allow us to move things around under the hood and actually squash if we needed to
+- [x] Initial Prototype version of the scripts
+- [ ] Tackle Integration and Cleanup issues
+  - [ ] Can we target commits instead of branches/tags? That would allow us to move things around under the hood and actually squash if we needed to
   - [ ] Do we make these tags bidirectional? As in they can also contain the local SHA of the language repo at the time of push?
-- [ ] Use `.bat`/`.sh` shims to the powershell script. That's what we do with the New-TestResources script
-- [ ] Can we add telemetry to the tooling?
+  - [ ] Use `.bat`/`.sh` shims to the powershell script. That's what we do with the New-TestResources script
+  - [ ] Can we add telemetry to the tooling?
+- [ ] Should the tool be re-written in `go`?
+
+The plan is to tackle .NET first, then move through the other languages that currently support test proxy, tackling any integration issues along the way.

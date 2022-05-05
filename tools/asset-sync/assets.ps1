@@ -231,16 +231,12 @@ Function IsAssetsRepoInitialized {
     $assetRepoLocation = ResolveAssetRepoLocation -Config $Config
 
     try {
-        Push-Location $assetRepoLocation
         $gitLocation = Join-Path $assetRepoLocation ".git"
         $result = Test-Path $gitLocation
     }
     catch {
         Write-Error $_
         $result = $false
-    }
-    finally {
-        Pop-Location
     }
 
     return $result

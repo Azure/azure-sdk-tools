@@ -108,7 +108,7 @@ stages:
             ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
             publishLocation: 'Container'
 
-  - stage: 
+  - stage: Test
     dependsOn: Build
     condition: succeeded()
     jobs:

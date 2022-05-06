@@ -39,7 +39,7 @@ stages:
             displayName: Install Pester
 
           # default test steps
-          - ${{ if eq(length(parameters.TestSteps), 0) }}:
+          - ${{ if eq(length(parameters.CustomTestSteps), 0) }}:
             - pwsh: |
                 $configurations = '${{ convertToJson(parameters.TestFiles) }}' -replace '\\', '/' | ConvertFrom-Json
                 Write-Host "$($configurations)"
@@ -48,6 +48,6 @@ stages:
               displayName: Run Tests
               env: ${{ parameters.EnvVars }}
 
-          - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
+          - ${{ if not(eq(length(parameters.CustomTestSteps), 0)) }}:
             - ${{ parameters.CustomTestSteps }}
 

@@ -24,6 +24,7 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
+    TargetDirectory: tools/asset-sync/
     TestFiles:
      - tools/asset-sync/assets.Tests.ps1
     EnvVars:

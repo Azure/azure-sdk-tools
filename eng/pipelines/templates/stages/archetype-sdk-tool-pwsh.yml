@@ -1,5 +1,5 @@
 parameters:
-  - name: PackageDirectory
+  - name: TargetDirectory
     type: string
   - name: TestFiles
     type: object
@@ -50,6 +50,7 @@ stages:
 
                 $config = New-PesterConfiguration
                 $config.CodeCoverage.Enabled = $true
+                $config.TestResult.Enabled = $true
                 
                 # if we are internal, etc, we need to set `integration tag`
                 # let's simply start with a single tag, "Unit"
@@ -58,16 +59,22 @@ stages:
                 Invoke-Pester -Configuration $config
               displayName: Run Tests
               env: ${{ parameters.EnvVars }}
-              workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackageDirectory }}
+              workingDirectory: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}
 
           - ${{ if not(eq(length(parameters.CustomTestSteps), 0)) }}:
             - ${{ parameters.CustomTestSteps }}
 
-
           - task: PublishTestResults@2
-              condition: succeededOrFailed()
-              inputs:
-                testResultsFiles: '**/*.trx'
-                testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
-                testResultsFormat: 'VSTest'
-                mergeTestResults: true
+            displayName: 'Publish Test Results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'NUnit'
+              testResultsFiles: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/*.xml
+              testRunTitle: 'Tests_$(Image)'
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish Code Coverage to Azure DevOps'
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: '$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/coverage.xml'
+              pathToSources: '$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/'

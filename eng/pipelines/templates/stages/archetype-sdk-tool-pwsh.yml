@@ -70,7 +70,7 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}
             inputs:
               testResultsFormat: 'NUnit'
-              testResultsFiles: testResult.xml
+              testResultsFiles: testResults.xml
               testRunTitle: 'Tests_$(Image)'
 
           - task: PublishCodeCoverageResults@1

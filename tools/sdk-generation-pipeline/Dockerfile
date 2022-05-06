@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/oss/mirror/docker.io/library/ubuntu:20.04
+FROM mcr.microsoft.com/dotnet/runtime:3.1-focal
 
 RUN apt-get update -y &&  apt upgrade -y && apt install curl -y
 RUN apt install build-essential -y

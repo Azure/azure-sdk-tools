@@ -69,7 +69,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFormat: 'NUnit'
-              testResultsFiles: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/*.xml
+              testResultsFiles: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/testResult.xml
               testRunTitle: 'Tests_$(Image)'
 
           - task: PublishCodeCoverageResults@1

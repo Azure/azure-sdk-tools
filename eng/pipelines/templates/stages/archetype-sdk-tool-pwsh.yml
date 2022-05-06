@@ -1,0 +1,53 @@
+parameters:
+  - name: TestFiles
+    type: object
+    default: []
+  - name: CustomTestSteps
+    type: object
+    default: []
+  - name: EnvVars
+    type: object
+    default: {}
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: 'Test'
+    jobs:
+      - job: 'Test'
+
+        strategy:
+          matrix:
+            Windows:
+              Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+              vmImage: 'MMSUbuntu20.04'
+            Linux:
+              Pool: 'azsdk-pool-mms-win-2019-general'
+              vmImage: 'MMS2019'
+            Mac:
+              Pool: 'Azure Pipelines'
+              Image: 'macOS-10.15'
+
+        pool:
+          name: $(Pool)
+          vmImage: $(Image)
+
+        steps:
+          - pwsh: |
+              Install-Module -Name Pester -Force
+            displayName: Install Pester
+
+          # default test steps
+          - ${{ if eq(length(parameters.TestSteps), 0) }}:
+            - pwsh: |
+                $configurations = '${{ convertToJson(parameters.TestFiles) }}' -replace '\\', '/' | ConvertFrom-Json
+                Write-Host "$($configurations)"
+
+                # invoke pester here.
+              displayName: Run Tests
+              env: ${{ parameters.EnvVars }}
+
+          - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
+            - ${{ parameters.CustomTestSteps }}
+

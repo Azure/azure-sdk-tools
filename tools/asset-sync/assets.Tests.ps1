@@ -24,7 +24,7 @@ AfterAll {
 }
 
 Describe "AssetsModuleTests" {
-  Context "EvaluateDirectory" {
+  Context "EvaluateDirectory" -Tag "Unit" {
     It "Should evaluate a root directory properly." {
       $Value = EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot ".." "..")
       $Value | Should -Be @($false, $true)
@@ -54,7 +54,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "ResolveAssetsJson" {
+  Context "ResolveAssetsJson" -Tag "Unit" {
     It "Should find basic assets.json" {
       $files = @(
         "a/b.json",
@@ -161,7 +161,7 @@ Describe "AssetsModuleTests" {
     }
   }
   
-  Context "Resolve-Assets" {
+  Context "Resolve-Assets" -Tag "Unit" {
     It "Should resolve the asset store location." {
       $files = @()
       $jsonContent = Get-Basic-AssetsJson
@@ -199,7 +199,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "UpdateAssetsJson" {
+  Context "UpdateAssetsJson" -Tag "Unit" {
     It "Should update a targeted recording.json w/ a new SHA and output without mangling the json file." {
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @()
       $config = ResolveAssetsJson -TargetPath $testLocation
@@ -215,7 +215,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "ResolveCheckoutPaths" {
+  Context "ResolveCheckoutPaths" -Tag "Unit" {
     It "Should correctly resolve a non-root checkout path format." {
       $files = @(
         "sdk/storage/",
@@ -244,7 +244,7 @@ Describe "AssetsModuleTests" {
     }
   }
 
-  Context "InitializeAssetsRepo" {
+  Context "InitializeAssetsRepo" -Tag "Unit" {
     It "Should create assets repo for standard sync." {
       $files = @(
         "sdk/storage/",
@@ -285,7 +285,7 @@ Describe "AssetsModuleTests" {
   #    - Auto Branch Doesn't Exist Yet, Go Off Main, push to new branch
   #    - Auto Branch Exists, we're on the latest commit, push new commit to branch
   #    - Auto Branch Exists, we're on a commit from the past, push new commit to branch
-  Context "PushAssetsRepoUpdate" {
+  Context "PushAssetsRepoUpdate" -Tag "Integration" {
     It "Should push a new branch/commit to a non-existent target branch." {
       $sourceBranch = "scenario_new_push"
       $recordingJson = [PSCustomObject]@{

@@ -1,4 +1,6 @@
 parameters:
+  - name: PackageDirectory
+    type: string
   - name: TestFiles
     type: object
     default: []
@@ -10,7 +12,9 @@ parameters:
     default: {}
 
 variables:
+  
   - template: /eng/pipelines/templates/variables/globals.yml
+  
 
 stages:
   - stage: 'Test'
@@ -44,10 +48,26 @@ stages:
                 $configurations = '${{ convertToJson(parameters.TestFiles) }}' -replace '\\', '/' | ConvertFrom-Json
                 Write-Host "$($configurations)"
 
-                # invoke pester here.
+                $config = New-PesterConfiguration
+                $config.CodeCoverage.Enabled = $true
+                
+                # if we are internal, etc, we need to set `integration tag`
+                # let's simply start with a single tag, "Unit"
+                $config.Filter.Tag = @("Unit")
+
+                Invoke-Pester -Configuration $config
               displayName: Run Tests
               env: ${{ parameters.EnvVars }}
+              workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackageDirectory }}
 
           - ${{ if not(eq(length(parameters.CustomTestSteps), 0)) }}:
             - ${{ parameters.CustomTestSteps }}
 
+
+          - task: PublishTestResults@2
+              condition: succeededOrFailed()
+              inputs:
+                testResultsFiles: '**/*.trx'
+                testRunTitle: 'Windows DotNet $(DotNetCoreVersion)'
+                testResultsFormat: 'VSTest'
+                mergeTestResults: true

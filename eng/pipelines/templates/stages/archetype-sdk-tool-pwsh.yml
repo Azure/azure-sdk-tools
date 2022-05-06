@@ -10,11 +10,12 @@ parameters:
   - name: EnvVars
     type: object
     default: {}
+  - name: TargetTags
+    type: string
+    default: ''
 
 variables:
-  
   - template: /eng/pipelines/templates/variables/globals.yml
-  
 
 stages:
   - stage: 'Test'
@@ -45,16 +46,15 @@ stages:
           # default test steps
           - ${{ if eq(length(parameters.CustomTestSteps), 0) }}:
             - pwsh: |
-                $configurations = '${{ convertToJson(parameters.TestFiles) }}' -replace '\\', '/' | ConvertFrom-Json
-                Write-Host "$($configurations)"
+                $tags = "${{ parameters.TargetTags }}" -Split "," | ForEach-Object { return $_.Trim() }
 
                 $config = New-PesterConfiguration
                 $config.CodeCoverage.Enabled = $true
                 $config.TestResult.Enabled = $true
                 
-                # if we are internal, etc, we need to set `integration tag`
-                # let's simply start with a single tag, "Unit"
-                $config.Filter.Tag = @("Unit")
+                if ($tags) {
+                  $config.Filter.Tag = $tags
+                }
 
                 Invoke-Pester -Configuration $config
               displayName: Run Tests

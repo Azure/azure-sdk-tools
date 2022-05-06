@@ -27,5 +27,4 @@ extends:
     TargetDirectory: tools/asset-sync/
     TestFiles:
      - tools/asset-sync/assets.Tests.ps1
-    EnvVars:
-      HelloThere: "GeneralK"
+    TargetTags: 'Unit'

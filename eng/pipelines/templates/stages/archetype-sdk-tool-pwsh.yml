@@ -67,16 +67,15 @@ stages:
           - task: PublishTestResults@2
             displayName: 'Publish Test Results'
             condition: succeededOrFailed()
-            workingDirectory: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}
             inputs:
               testResultsFormat: 'NUnit'
-              testResultsFiles: testResults.xml
+              testResultsFiles: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/testResults.xml
               testRunTitle: 'Tests_$(Image)'
 
           - task: PublishCodeCoverageResults@1
             displayName: 'Publish Code Coverage to Azure DevOps'
-            workingDirectory: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}
+            condition: succeededOrFailed()
             inputs:
               codeCoverageTool: 'JaCoCo'
-              summaryFileLocation: 'coverage.xml'
+              summaryFileLocation: '$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/coverage.xml'
               pathToSources: '$(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}'

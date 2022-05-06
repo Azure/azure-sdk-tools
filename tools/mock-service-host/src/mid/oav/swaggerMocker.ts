@@ -390,16 +390,19 @@ export default class SwaggerMocker {
                             buildItemOption(properties[key])
                         )
                     } else {
-                        example[key] = this.mockCachedObj(
-                            key,
-                            properties[key],
-                            example[key],
-                            visited,
-                            isRequest,
-                            discriminatorValue,
-                            false,
-                            isAzureResourceObj
-                        )
+                        // do not mock response value with x-ms-secret
+                        if (isRequest || !properties[key]['x-ms-secret']) {
+                            example[key] = this.mockCachedObj(
+                                key,
+                                properties[key],
+                                example[key],
+                                visited,
+                                isRequest,
+                                discriminatorValue,
+                                false,
+                                isAzureResourceObj
+                            )
+                        }
                     }
                 })
             }

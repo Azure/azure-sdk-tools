@@ -169,6 +169,9 @@ export class ResponseGenerator {
     }
 
     private resolveValue(paramSpec: any, value: string | string[]): any {
+        if (!paramSpec.type) {
+            paramSpec = paramSpec.schema
+        }
         switch (paramSpec.type) {
             case 'integer':
                 return _.toInteger(value)

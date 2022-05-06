@@ -46,17 +46,17 @@
             {%- set pagerVariable = clientVariable + example.opName + 'Pager' %}
             {{pagerVariable}} {%- if allVariables.indexOf(pagerVariable)<0 %}:{%- set _ = allVariables.push(pagerVariable) %}{%- endif %}= {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
             for {{pagerVariable}}.More() {
+                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(ctx)
+                if err != nil {
+                    panic(err)
+                }
                 {%- if example.checkResponse %}
-                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
-                    if err != nil {
-                        panic(err)
-                    }
                     {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
                         {% set newVariableConfigs = variableConfigs.slice(1) %}
                         {{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
                     {%- endfor %}
-                    break
                 {%- endif %}
+                break
             }
         {%- else %}
             {{clientVariable}}.{{example.opName}}({{example.methodParametersOutput}})
@@ -64,17 +64,17 @@
 
         {%- if example.isLRO and example.isPageable %}
             for {{resVariable}}.More() {
+                {% if example.checkResponse %}nextResult{% else %}_{% endif %}, err := {{pagerVariable}}.NextPage(ctx)
+                if err != nil {
+                    panic(err)
+                }
                 {%- if example.checkResponse %}
-                    nextResult, err := {{pagerVariable}}.NextPage(ctx)
-                    if err != nil {
-                        panic(err)
-                    }
                     {%- for outputVariableName, variableConfigs in step.outputVariablesModel%}
                         {% set newVariableConfigs = variableConfigs.slice(1) %}
                         {% if globalVariables.indexOf(outputVariableName)>=0 %}testsuite.{% endif %}{{outputVariableName}} = {% if step.outputVariables[outputVariableName]["isPtr"] %}*{% endif %}nextResult.{{example.pageableItemName}}{% for variableConfig in newVariableConfigs %}{{variableConfig.languageName}}{% endfor %}
                     {%- endfor %}
-                    break
                 {%- endif %}
+                break
             }
         {%- endif %}
 

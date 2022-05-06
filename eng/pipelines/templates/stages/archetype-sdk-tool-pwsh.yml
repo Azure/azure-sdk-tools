@@ -1,9 +1,6 @@
 parameters:
   - name: TargetDirectory
     type: string
-  - name: TestFiles
-    type: object
-    default: []
   - name: CustomTestSteps
     type: object
     default: []

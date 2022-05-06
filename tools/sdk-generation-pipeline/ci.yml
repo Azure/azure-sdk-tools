@@ -42,7 +42,7 @@ variables:
     value: $(Build.ArtifactStagingDirectory)
 
 stages:
-  - stage: InstallAndBuild
+  - stage: Build
     jobs:
       - job: Build
         pool:
@@ -67,12 +67,6 @@ stages:
             rush build
           displayName: 'rush build'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
-
-        - script: |
-            npm i -g autorest
-            rushx test:unit
-          displayName: 'Test @azure-tools/sdk-generation-cli'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
         - script: |
             rushx pack
@@ -114,9 +108,42 @@ stages:
             ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
             publishLocation: 'Container'
 
+  - stage: 
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: UnitTestForCli
+        displayName: Unit Test For Cli Package
+        condition: always()
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Install Node.js'
+
+          - bash: |
+              npm install -g @microsoft/rush
+              npm install -g typescript@4.6.2
+            displayName: 'Install dependencies'
+
+          - script: |
+              rush update
+            displayName: 'rush update'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+          - script: |
+              rush build
+            displayName: 'rush build'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            
+          - script: |
+              npm i -g autorest
+              rushx test:unit
+            displayName: 'Test @azure-tools/sdk-generation-cli'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
       - job: IntegrationTest
-        dependsOn: Build
-        condition: succeeded()
+        condition: always()
         displayName: Integration Test for
         strategy:
           matrix:
@@ -171,7 +198,7 @@ stages:
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release
-      dependsOn: InstallAndBuild1
+      dependsOn: Test
       condition: succeeded()
       jobs:
       - job: approve

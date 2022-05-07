@@ -26,48 +26,30 @@ AfterAll {
 Describe "AssetsModuleTests" {
   Context "EvaluateDirectory" -Tag "Unit" {
     It "Should evaluate a root directory properly." {
-      $Value = EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot ".." "..")
-      $Value | Should -Be @($false, $true)
+      EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot ".." "..") | Should -Be @($false, $true)
     }
     
     It "Should evaluate a recording directory properly." {
-      $Value = EvaluateDirectory -TargetPath $PSScriptRoot
-      $Value | Should -Be @($true, $false)
+      EvaluateDirectory -TargetPath $PSScriptRoot | Should -Be @($true, $false)
     }
   
     It "Should evaluate an transitory directory properly." {
-      $Value = EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot "..")
-      $Value | Should -Be @($false, $false)
+      EvaluateDirectory -TargetPath (Join-Path $PSScriptRoot "..") | Should -Be @($false, $false)
     }
 
     It "Should recognize root in a test directory."{
-      $files = @(
-        "sdk/assets.json"
-      )
-      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
-
-      $result = EvaluateDirectory -TargetPath $testLocation
-      $result | Should -Be @($false, $true)
-
-      $result = EvaluateDirectory -TargetPath (Join-Path $testLocation "sdk")
-      $result | Should -Be @($true, $false)
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @("sdk/assets.json")
+      EvaluateDirectory -TargetPath $testLocation | Should -Be @($false, $true)
+      EvaluateDirectory -TargetPath (Join-Path $testLocation "sdk") | Should -Be @($true, $false)
     }
   }
 
   Context "ResolveAssetsJson" -Tag "Unit" {
     It "Should find basic assets.json" {
-      $files = @(
-        "a/b.json",
-        "a/b/c.json"
-      )
-
-      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files @("a/b.json", "a/b/c.json")
       
       $testLocation.GetType().Name | Should -Be "String"
-
-      $Config = ResolveAssetsJson -TargetPath $testLocation
-      $recordingLocation = $Config.AssetsJsonLocation
-      $recordingLocation | Should -Be (Join-Path $testLocation "assets.json")
+      (ResolveAssetsJson -TargetPath $testLocation).AssetsJsonLocation | Should -Be (Join-Path $testLocation "assets.json")
     }
 
     It "Should should traverse upwards to find assets.json." {
@@ -78,9 +60,8 @@ Describe "AssetsModuleTests" {
       )
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       
-      $Result = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
-      $recordingLocation = $Result.AssetsJsonLocation
-      $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+      $Result = (ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")).AssetsJsonLocation
+      $Result | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
     }
 
     It "Should be able to resolve the assets json based on CWD" {
@@ -93,9 +74,8 @@ Describe "AssetsModuleTests" {
       
       try {
         Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
-        $Result = ResolveAssetsJson
-        $recordingLocation = $Result.AssetsJsonLocation
-        $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+        $jsonLocation = (ResolveAssetsJson).AssetsJsonLocation
+        $jsonLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
       }
       finally {
         Pop-Location
@@ -103,12 +83,7 @@ Describe "AssetsModuleTests" {
     }
 
     It "Should should error when unable to find a recording json." {
-      $files = @(
-        "a/b.json",
-        "a/b/c.json"
-      )
-
-      $testLocation = Describe-TestFolder -AssetsJsonContent "" -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent "" -Files @("a/b.json", "a/b/c.json")
       
       try {
         Push-Location -Path (Join-Path $testLocation "a" "b")
@@ -127,13 +102,11 @@ Describe "AssetsModuleTests" {
       )
       $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
 
-      $Result = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )
-      $expectedValue = (Join-Path "sdk" "storage" "assets.json")
+      $actualLocation = (ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage" )).AssetsJsonRelativeLocation
+      $expectedLocation = (Join-Path "sdk" "storage" "assets.json")
 
-      $recordingLocation = $Result.AssetsJsonRelativeLocation
-      $recordingLocation | Should -Be $expectedValue
+      $actualLocation | Should -Be $expectedLocation
     }
-
 
     It "Should resolve shortcut paths like '.'" {
       $files = @(
@@ -145,9 +118,9 @@ Describe "AssetsModuleTests" {
 
       try {
         Push-Location -Path (Join-Path $testLocation "sdk" "storage" "azure-storage-blob")
-        $Result = ResolveAssetsJson -TargetPath "."
-        $recordingLocation = $Result.AssetsJsonLocation
-        $recordingLocation | Should -Be (Join-Path $testLocation "sdk" "storage" "assets.json")
+        $actualLocation = (ResolveAssetsJson -TargetPath ".").AssetsJsonLocation
+        $expectedLocation = (Join-Path $testLocation "sdk" "storage" "assets.json")
+        $actualLocation | Should -Be $expectedLocation
       }
       finally {
         Pop-Location
@@ -222,12 +195,10 @@ Describe "AssetsModuleTests" {
         "sdk/storage/assets.json",
         "sdk/storage/azure-storage-blob/awesome.json"
       )
-      $assetsContent = Get-Basic-AssetsJson
-      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       $config = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
 
-      $checkoutPaths = ResolveCheckoutPaths -Config $config
-      $checkoutPaths | Should -Be (Join-Path "recordings" "sdk" "storage").Replace("`\", "/")
+      ResolveCheckoutPaths -Config $config | Should -Be (Join-Path "recordings" "sdk" "storage").Replace("`\", "/")
     }
 
     It "Should correctly resolve a root checkout path." {
@@ -239,8 +210,7 @@ Describe "AssetsModuleTests" {
       $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
       $config = ResolveAssetsJson -TargetPath (Join-Path $testLocation "sdk" "storage")
 
-      $checkoutPaths = ResolveCheckoutPaths -Config $config
-      $checkoutPaths | Should -Be "recordings/"
+      ResolveCheckoutPaths -Config $config | Should -Be "recordings/"
     }
   }
 
@@ -250,33 +220,23 @@ Describe "AssetsModuleTests" {
         "sdk/storage/",
         "sdk/storage/azure-storage-blob/awesome.json"
       )
-      $assetsContent = Get-Basic-AssetsJson
-      $testLocation = Describe-TestFolder -AssetsJsonContent $assetsContent -Files $files
-
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson) -Files $files
       $config = ResolveAssetsJson -TargetPath $testLocation
 
       InitializeAssetsRepo -Config $config
-      $assetLocation = ResolveAssetRepoLocation -Config $config
-
-      $result = IsAssetsRepoInitialized -Config $config
-
-      $result | Should -Be "$true"
+      IsAssetsRepoInitialized -Config $config | Should -Be "$true"
     }
 
     It "Should recognize an initialized repository and no-op." {
-      $files = @()
-      $JsonContent = Get-Basic-AssetsJson
-      $testLocation = Describe-TestFolder -AssetsJsonContent $JsonContent -Files $files
+      $testLocation = Describe-TestFolder -AssetsJsonContent (Get-Basic-AssetsJson)
       $config = ResolveAssetsJson -TargetPath $testLocation
 
       InitializeAssetsRepo -Config $config
-
-      $parsedResult = IsAssetsRepoInitialized -Config $config
-      $parsedResult | Should -Be $true
+      IsAssetsRepoInitialized -Config $config | Should -Be $true
     }
 
     It "Should initialize language repo with a new assets.json at sdk/ if necessary" {
-      # TODO, do we even need this?
+      # TODO, do we even need this? no, right?
     }
   }
 
@@ -451,6 +411,33 @@ Describe "AssetsModuleTests" {
       #  -> match the SHA we get back from the repo
       $repoBranchSHA | Should -Be $config.SHA
       $configReparsed.SHA | Should -Be $config.SHA
+    }
+  }
+
+  Context "ResetAssetsRepo" -Tag "Unit" {
+    It "Should properly process an UserPrompt preventing changes with an accept." {
+      Mock GetUserInput { param([PSCustomObject] $Config, [string] $UserPrompt) return 'y' }
+
+    }
+
+    It "Should properly process an UserPrompt preventing changes with a denial." {
+      Mock GetUserInput { param([PSCustomObject] $Config, [string] $UserPrompt) return 'n' }
+
+    }
+
+    It "Should properly process a UserPrompt with no affirm or deny present." {
+      Mock GetUserInput { param([PSCustomObject] $Config, [string] $UserPrompt) return '' }
+
+
+    }
+
+    It "Should noop when on the same SHA." {
+      Mock GetUserInput { param([PSCustomObject] $Config, [string] $UserPrompt) return '' }
+
+    }
+
+    It "Should cleanly swap without any changes present." {
+      Mock GetUserInput { param([PSCustomObject] $Config, [string] $UserPrompt) return '' }
     }
   }
 }

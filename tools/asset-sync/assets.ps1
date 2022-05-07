@@ -317,6 +317,31 @@ Function ResolveTargetBranch {
 
 <#
 .SYNOPSIS
+Uses a target config to reset an already initialized assets repository to another service/commit SHA.
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json content from ResolveAssetsJson.
+
+.PARAMETER SparseCheckoutPath
+The target path within the repo that should be sparsely checked out. Multiple path values are supported, but one must place spaces between them.
+
+#>
+Function CheckoutRepoAtConfig {
+    param(
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject] $Config,
+        [string] $SparseCheckoutPath
+    )
+
+    Write-Host "git sparse-checkout set $($SparseCheckoutPath)"
+    git sparse-checkout set $SparseCheckoutPath
+
+    Write-Host "git checkout $($Config.SHA)"
+    git checkout $($Config.SHA)
+}
+
+<#
+.SYNOPSIS
 Initializes a recordings repo based on an assets.json file. 
 
 .DESCRIPTION
@@ -353,16 +378,11 @@ Function InitializeAssetsRepo {
             git clone --no-checkout --filter=tree:0 https://github.com/$($Config.AssetsRepo) .
 
             $targetPath = ResolveCheckoutPaths -Config $Config
-            $targetBranch = ResolveTargetBranch -Config $Config
 
             Write-Host "git sparse-checkout init"
             git sparse-checkout init
 
-            Write-Host "git sparse-checkout set $targetPath"
-            git sparse-checkout set $targetPath
-            
-            Write-Host "git checkout $($Config.SHA)"
-            git checkout $($Config.SHA)
+            CheckoutRepoAtConfig -Config $Config -SparseCheckoutPath $targetPath
             
             if($LASTEXITCODE -gt 0){
                 throw "Unable to clone to directory $assetRepo"
@@ -383,6 +403,10 @@ Used to interrupt script flow and get user input.
 
 .PARAMETER Config
 A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
+
+.PARAMETER UserPrompt
+This is the message that should be shown to the user before waiting for input.
+
 #>
 Function GetUserInput {
     param(
@@ -397,6 +421,33 @@ Function GetUserInput {
 
 <#
 .SYNOPSIS
+Are there any files changed?
+
+.PARAMETER Config
+A PSCustomObject that contains an auto-parsed assets.json object from ResolveAssetsJson.
+#>
+Function DetectPendingChanges {
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject] $Config
+    )
+    $assetRepo = ResolveAssetRepoLocation -Config $Config
+    $filesChanged = @()
+
+    try {
+        Push-Location  $assetRepo
+        Write-Host "git diff-index --name-only HEAD"
+        $filesChanged = git diff-index --name-only HEAD
+    }
+    finally {
+        Pop-Location
+    }
+
+    return $filesChanged
+}
+
+<#
+.SYNOPSIS
 This function will forcibly reset the repo to a targeted SHA. This is a **destructive** update.
 
 .PARAMETER Config
@@ -405,27 +456,42 @@ A PSCustomObject that contains an auto-parsed assets.json object from ResolveAss
 Function ResetAssetsRepo {
     param (
         [Parameter(Mandatory = $true)]
-        [PSCustomObject] $Config
+        [PSCustomObject] $Config,
+        [Parameter(Mandatory = $false)]
+        [bool] $IgnorePendingChanges = $false
     )
     try {
-
         $assetRepo = ResolveAssetRepoLocation -Config $Config
+        $allowReset = $true
+
         Push-Location  $assetRepo
 
-        Write-Host "git checkout *"
-        git checkout *
-        Write-Host "git clean -xdf"
-        git clean -xdf
-        Write-Host "git reset --hard (GetDefaultBranch)"
-        git reset --hard (GetDefaultBranch)
+        if(!$IgnorePendingChanges){
+            # detect pending changes
+            $pendingChanges = DetectPendingChanges -Config $Config
 
-        # need to figure out the sparse checkouts if we want to optimize this as much as possible
-        # for prototyping checking out the whole repo is fine
-        if($AssetsRepoSHA){
-            Write-Host "git checkout $AssetsRepoSHA"
-            git checkout $AssetsRepoSHA
-            Write-Host "git pull"
-            git pull
+            if($pendingChanges){
+                Write-Host "Visible Pending Changes:"
+                Write-Host $pendingChanges
+                $userInput = GetUserInput "This operation will need to undo pending changes prior to checking out a different SHA. To abandon pending changes, enter 'y'. An empty 'enter' or 'n' will result in no action."
+
+                if($userInput.Trim().ToLower() -ne 'y'){
+                    $allowReset = $false
+                }
+            }
+        }
+
+        if($allowReset){
+            Write-Host "git checkout *"
+            git checkout *
+            Write-Host "git clean -xdf"
+            git clean -xdf
+
+            # need to figure out the sparse checkouts if we want to optimize this as much as possible
+            # for prototyping checking out the whole repo is fine
+            if($Config.SHA){
+                CheckoutRepoAtConfig -Config $Config -SparseCheckoutPath (ResolveCheckoutPaths -Config $Config)
+            }
         }
     }
     finally {

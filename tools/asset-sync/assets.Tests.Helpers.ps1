@@ -147,7 +147,7 @@ The target branch that will be duplicated and set in the AssetsJson that is writ
 Function Describe-TestFolder{
   param(
     [PSCustomObject] $AssetsJsonContent, 
-    [string[]] $Files,
+    [string[]] $Files = @(),
     [string] $IntegrationBranch = ""
   )
 

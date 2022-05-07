@@ -5,10 +5,17 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   mode: "production",
-  entry: [
-    './src/main.ts',
-    './css/site.scss'
-  ],
+  entry: {
+    comments: './src/comments.ts',
+    revisions: './src/revisions.ts',
+    fileInput: './src/file-input.ts',
+    navbar: './src/navbar.ts',
+    review: './src/review.ts',
+    reviews: './src/reviews.ts',
+    main: './src/main.ts',
+    api: './src/api.ts',
+    site: './css/site.scss'
+  },
   devtool: 'source-map',
   module: {
     rules: [
@@ -53,7 +60,7 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ],
   },
   output: {
-    filename: 'site.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, '../wwwroot'),
   },
 }

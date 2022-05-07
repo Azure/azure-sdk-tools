@@ -40,10 +40,6 @@
     });
   });
 
-  //$( document ).ready(function() {
-  //  $( '#reviews-filter-partial' ).load('?handler=reviewsfilterpartial');
-  //});
-
   // enable tooltip and popover
   (<any>$('[data-toggle="tooltip"]')).tooltip();
   (<any>$('[data-toggle="popover"]')).popover();

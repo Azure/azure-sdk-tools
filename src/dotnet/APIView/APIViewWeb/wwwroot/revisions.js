@@ -1,0 +1,2 @@
+!function(){"use strict";$((()=>{function n(n){n.toggle(),n.siblings(".revision-name-input").toggle()}$(document).on("click",".revision-rename-icon",(e=>{n($(e.target))})),$(document).on("click",".cancel-revision-rename",(e=>{n($(e.target).parent().siblings(".revision-rename-icon"))})),$(document).on("click",".submit-revision-rename",(n=>{$(n.target).parents(".revision-rename-form").submit()}))}))}();
+//# sourceMappingURL=revisions.js.map

@@ -6,6 +6,10 @@
 @{
     ViewData["Title"] = "Reviews";
 }
+@section Scripts
+{
+   <script  type="text/javascript" src="@Url.Content("~/reviews.js")"></script>
+}
 <nav class="navbar-light shadow-sm bg-light sticky-top">
     <div class="container-fluid">
         <div class="row mx-5 d-flex flex-row align-items-center">
@@ -201,7 +205,7 @@
     <div class="mx-5 mt-3 row">
         <div class="col-md-2">
             <div class="mt-3 row border-left sticky-top" style="top: 70px;">
-                <div class="col" id="reviews-filter-partial">
+                <div class="col">
                     <h4>Filters</h4>
                     <select class="selectpicker show-tick show-menu-arrow p-0 mb-2" multiple title="PackageName" data-size="10" data-live-search="true" data-selected-text-format="static" data-style="btn-light border mr-2" data-width="100%" data-container="body" id="name-filter-bootstraps-select">
                         @foreach (var pkgName in Model.ReviewsProperties.PackageNames)
@@ -210,62 +214,61 @@
                         }
                     </select>
                     <select class="selectpicker show-tick show-menu-arrow p-0 mb-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border mr2" data-width="100%" data-container="body" id="language-filter-bootstraps-select">
-                        <option value="^C$">C</option>
-                        <option value="^C#$">C#</option>
-                        <option value="^C\+\+$">C++</option>
-                        <option value="^Go$">Go</option>
-                        <option value="^Java$">Java</option>
-                        <option value="^JavaScript$">JavaScript</option>
-                        <option value="^Python$">Python</option>
-                        <option value="^Protocol$">Protocol</option>
-                        <option value="^Swift$">Swift</option>
-                        <option value="^Swagger$">Swagger</option>
-                        <option value="^Xml$">Xml</option>
+                        @foreach (var language in Model.ReviewsProperties.Languages)
+                        {
+                            <option value="@language">@language</option>
+                        }
                     </select>
-                    <select class="selectpicker show-menu-arrow p-0 mb-2" data-live-search="true" title="Author" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="owner-filter-bootstraps-select">
+                    <select class="selectpicker show-menu-arrow p-0 mb-2" multiple data-live-search="true" title="Author" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="author-filter-bootstraps-select">
                         @foreach (var author in Model.ReviewsProperties.Authors)
                         {
                             <option value="@author">@author</option>
                         }
                     </select>
-                    <select class="selectpicker show-menu-arrow p-0 mb-2" data-live-search="true" title="Tags" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="tags-filter-bootstraps-select">
-                        @foreach (var serviceName in Model.ReviewsProperties.ServiceNames)
+                    <select class="selectpicker show-menu-arrow p-0 mb-2" multiple data-live-search="true" title="Tags" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="tags-filter-bootstraps-select">
+                        @foreach (var tag in Model.ReviewsProperties.Tags)
                         {
-                            <option value="@serviceName">@serviceName</option>
+                            <option value="@tag">@tag</option>
                         }
                     </select>
                     <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="open-filter-check">
+                        <input class="form-check-input" checked type="checkbox" id="open-filter-check">
                         <label class="form-check-label" for="open-filter-check">
                         Open
                         </label>
                     </div>
                     <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="closed-filter-check">
+                        <input class="form-check-input" type="checkbox" id="closed-filter-check">
                         <label class="form-check-label" for="closed-filter-check">
                         Closed
                         </label>
                     </div>
                     <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="automatic-filter-check">
-                        <label class="form-check-label" for="automatic-filter-check">
-                        Automatic
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="manual-filter-check">
+                        <input class="form-check-input" checked type="checkbox" id="manual-filter-check">
                         <label class="form-check-label" for="manual-filter-check">
                         Manual
                         </label>
                     </div>
                     <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="approved-filter-check">
+                        <input class="form-check-input" checked type="checkbox" id="automatic-filter-check">
+                        <label class="form-check-label" for="automatic-filter-check">
+                        Automatic
+                        </label>
+                    </div>
+                    <div class="form-check border-bottom py-1">
+                        <input class="form-check-input" checked type="checkbox" id="pullrequest-filter-check">
+                        <label class="form-check-label" for="pullrequest-filter-check">
+                        Pull Request
+                        </label>
+                    </div>
+                    <div class="form-check border-bottom py-1">
+                        <input class="form-check-input" checked type="checkbox" id="approved-filter-check">
                         <label class="form-check-label" for="approved-filter-check">
                         Approved
                         </label>
                     </div>
                     <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" value="" id="pending-filter-check">
+                        <input class="form-check-input" checked type="checkbox" id="pending-filter-check">
                         <label class="form-check-label" for="pending-filter-check">
                         Pending
                         </label>
@@ -274,8 +277,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-10">
-            <partial name="_ReviewsPartial" model="Model.Assemblies" />
+        <div class="col-md-10" id="reviews-list-partial">
+            <partial name="_ReviewsPartial" model="Model.PagedResults" />
         </div>
     </div>
 </div>

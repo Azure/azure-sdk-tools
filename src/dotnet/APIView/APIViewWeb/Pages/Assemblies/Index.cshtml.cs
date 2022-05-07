@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
+using System.Web;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -41,6 +41,10 @@ namespace APIViewWeb.Pages.Assemblies
 
         public ReviewsProperties ReviewsProperties { get; set; } = new ReviewsProperties();
 
+        public (IEnumerable<ReviewModel> Reviews,
+            int TotalCount, int TotalPages, 
+            int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
+
         public async Task OnGetAsync()
         {
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
@@ -50,16 +54,59 @@ namespace APIViewWeb.Pages.Assemblies
             });
 
             ReviewsProperties.PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
-            ReviewsProperties.ServiceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
-            ReviewsProperties.Authors = await _manager.GetReviewProprtiesAsync("Revisions[0].Author");
-            Assemblies = await _manager.GetReviewsAsync(false, this.Language, null, this.FilterType);
+            ReviewsProperties.Tags = await _manager.GetReviewProprtiesAsync("ServiceName");
+            ReviewsProperties.Authors = await _manager.GetReviewProprtiesAsync("Author");
+            ReviewsProperties.Languages = await _manager.GetReviewProprtiesAsync("Revisions[0].Files[0].Language");
+            PagedResults = await _manager.GetPagedReviewsAsync(null, null, null, null, false, null, null);
         }
 
-        public async Task<PartialViewResult> OnGetReviewsFilterPartialAsync()
+        public async Task<PartialViewResult> OnGetReviewsPartialAsync(
+            List<string> packageNames=null, List<string> languages=null, List<string> authors=null,
+            List<string> tags=null, bool? isClosed=false, bool isOpen=true,
+            bool isManual=true, bool isAutomatic=true, bool isPullRequest=true, bool? isApproved=true,
+            bool isPending=true, int offset=0, int limit=50)
         {
-            ReviewsProperties.PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
-            ReviewsProperties.ServiceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
-            return Partial("_ReviewsFiltersPartial", ReviewsProperties);
+            packageNames = packageNames.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            languages = languages.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            authors = authors.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            tags = tags.Select(x => HttpUtility.UrlDecode(x)).ToList();
+
+            // Resolve isClosed value
+            if ((isOpen == true) && (isClosed == false))
+            {
+                isClosed = false;
+            }
+            else if ((isOpen == false) && (isClosed == true))
+            {
+                isClosed = true;
+            }
+            else
+            {
+                isClosed = null;
+            }
+
+            // Resolve FilterType
+            List<int> filterTypes = new List<int>();
+            if (isManual) { filterTypes.Add((int)ReviewType.Manual); } 
+            if (isAutomatic) { filterTypes.Add((int)ReviewType.Automatic); }
+            if (isPullRequest) { filterTypes.Add((int)ReviewType.PullRequest); }
+
+            // Resolve Approval State
+            if ((isApproved == true) && (isPending == false))
+            {
+                isApproved = true;
+            }
+            else if ((isApproved == false) && (isPending == true))
+            {
+                isApproved = false;
+            }
+            else
+            {
+                isApproved = null;
+            }
+
+            PagedResults = await _manager.GetPagedReviewsAsync(packageNames, languages, authors, tags, isClosed, filterTypes, isApproved, offset, limit);
+            return Partial("_ReviewsPartial", PagedResults);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -96,7 +143,8 @@ namespace APIViewWeb.Pages.Assemblies
     public class ReviewsProperties 
     {
         public IEnumerable<string> PackageNames { get; set; } = new List<string>();
-        public IEnumerable<string> ServiceNames { get; set; } = new List<string>();
+        public IEnumerable<string> Tags { get; set; } = new List<string>();
         public IEnumerable<string> Authors { get; set; } = new List<string>();
+        public IEnumerable<string> Languages { get; set; } = new List<string>();
     }
 }

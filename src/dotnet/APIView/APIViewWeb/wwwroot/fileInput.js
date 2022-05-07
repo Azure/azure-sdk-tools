@@ -1,0 +1,2 @@
+!function(){"use strict";addEventListener("load",(()=>{$(".custom-file-input").on("change",(function(){const t=this.files[0].name;$(this).next(".custom-file-label").html(t)}))}))}();
+//# sourceMappingURL=fileInput.js.map

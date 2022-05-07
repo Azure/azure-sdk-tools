@@ -52,7 +52,7 @@ namespace APIViewWeb
             //Add filter if looking for automatic, manual or PR reviews
             if (filterType != null && filterType != ReviewType.All)
             {
-               queryStringBuilder.Append("AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
+                queryStringBuilder.Append("AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
             }
 
             // Add language and package name clause
@@ -66,7 +66,7 @@ namespace APIViewWeb
                 }
                 queryStringBuilder.Append("))");
             }
-            
+
             // Limit to top 50
             queryStringBuilder.Append("OFFSET 0 LIMIT 50");
 
@@ -116,7 +116,7 @@ namespace APIViewWeb
         {
             var query = $"SELECT DISTINCT VALUE r.{propertyName} FROM Reviews r";
             var properties = new List<string>();
-            
+
             QueryDefinition queryDefinition = new QueryDefinition(query);
             using FeedIterator<string> feedIterator = _reviewsContainer.GetItemQueryIterator<string>(queryDefinition);
 
@@ -126,6 +126,111 @@ namespace APIViewWeb
                 properties.AddRange(response);
             }
             return properties;
+        }
+
+        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(List<string> packageNames, List<string> languages,
+            List<string> authors, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit)
+        {
+            (IEnumerable<ReviewModel> Reviews, int TotalCount) result = (Reviews: new List<ReviewModel>(), TotalCount: 0);
+
+            // Build up Query
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r");
+            queryStringBuilder.Append(" WHERE IS_DEFINED(r.id)"); // Allows for appending the other query parts in any order
+
+            if (packageNames != null && packageNames.Count > 0)
+            {
+                var packageNamesAsQueryStr = ArrayToQueryString<string>(packageNames);
+                queryStringBuilder.Append($" AND r.PackageDisplayName IN {packageNamesAsQueryStr}");
+            }
+
+            if (languages != null && languages.Count > 0)
+            {
+                var languagesAsQueryStr = ArrayToQueryString<string>(languages);
+                queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
+            }
+
+            if (authors != null && authors.Count > 0)
+            {
+                var authorsAsQueryStr = ArrayToQueryString<string>(authors);
+                queryStringBuilder.Append($" AND r.Author IN {authorsAsQueryStr}");
+            }
+
+            // Tags are ServiceNames for now.
+            if (tags != null && tags.Count > 0)
+            {
+                var tagsAsQueryStr = ArrayToQueryString<string>(tags);
+                queryStringBuilder.Append($" AND r.ServiceName IN {tagsAsQueryStr}");
+            }
+
+            if (isClosed != null)
+            {
+                queryStringBuilder.Append(" AND r.IsClosed = @isClosed");
+            }
+
+            if (filterTypes != null && filterTypes.Count > 0)
+            {
+                var filterTypeAsQueryStr = ArrayToQueryString<int>(filterTypes);
+                queryStringBuilder.Append($" AND r.FilterType IN {filterTypeAsQueryStr}");
+            }
+
+            if (isApproved != null)
+            {
+                queryStringBuilder.Append(" AND r.Revisions[0].IsApproved = @isApproved");
+            }
+
+            // First get the total count to help with paging
+            var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
+            QueryDefinition countQueryDefinition = new QueryDefinition(countQuery)
+                .WithParameter("@isClosed", isClosed)
+                .WithParameter("@filterTypes", filterTypes)
+                .WithParameter("@isApproved", isApproved);
+
+            using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
+            while (countFeedIterator.HasMoreResults)
+            {
+                result.TotalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
+            }
+
+            queryStringBuilder.Append(" ORDER BY r.Name");
+            queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
+
+            var reviews = new List<ReviewModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@isClosed", isClosed)
+                .WithParameter("@filterTypes", filterTypes)
+                .WithParameter("@isApproved", isApproved)
+                .WithParameter("@offset", offset)
+                .WithParameter("@limit", limit);
+
+            using FeedIterator<ReviewModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<ReviewModel> response = await feedIterator.ReadNextAsync();
+                reviews.AddRange(response);
+            }
+            result.Reviews = reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
+            return result;
+        }
+
+        private static string ArrayToQueryString<T>(IList<T> items)
+        {
+            var result = new StringBuilder();
+            result.Append("(");
+            foreach (var item in items)
+            {
+                if (item is int)
+                {
+                    result.Append($"{item},");
+                }
+                else
+                {
+                    result.Append($"\"{item}\",");
+                }
+                
+            }
+            result.Remove(result.Length - 1, 1);
+            result.Append(")");
+            return result.ToString();
         }
     }
 }

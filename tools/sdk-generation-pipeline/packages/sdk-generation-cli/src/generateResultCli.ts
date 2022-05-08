@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
 import {
-    createTaskResult,
     AzureSDKTaskName,
-    TaskResult,
-    TaskOutput,
+    createTaskResult,
     LogFilter,
     logger,
     PipelineResult,
+    requireJsonc,
+    TaskResult,
+    TaskOutput,
 } from '@azure-tools/sdk-generation-lib';
 
 import { generateResultCliConfig, GenerateResultCliConfig } from './cliSchema/generateResultCliConfig';
@@ -28,8 +29,8 @@ async function main() {
         throw new Error(`Task execute result and dockerResultFile is empty`);
     }
 
-    if (config.taskOutput) {
-        taskOutputObj = JSON.parse(config.taskOutput);
+    if (config.taskOutputPath) {
+        taskOutputObj = requireJsonc(config.taskOutputPath);
     }
     if (config.logFilterStr) {
         logFilter = JSON.parse(config.logFilterStr);

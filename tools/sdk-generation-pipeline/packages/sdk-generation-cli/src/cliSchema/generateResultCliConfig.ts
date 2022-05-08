@@ -12,7 +12,7 @@ export class GenerateResultCliConfig {
     logFilterStr?: string;
     taskName: string;
     exeResult?: string;
-    taskOutput?: string;
+    taskOutputPath?: string;
     resultOutputPath: string;
     dockerResultFile?: string;
 }
@@ -45,9 +45,9 @@ export const generateResultCliConfig = convict<GenerateResultCliConfig>({
         nullable: true,
         format: ['success', 'failure', 'timed_out'],
     },
-    taskOutput: {
+    taskOutputPath: {
         default: '',
-        env: 'TASK_OUTPUT',
+        env: 'TASK_OUTPUT_PATH',
         nullable: true,
         format: String,
     },

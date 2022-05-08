@@ -13,7 +13,8 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
-     * [Helm Chart Dependencies](#helm-chart-dependencies)
+     * [Helm Chart File](#helm-chart-file)
+        * [Customize Docker Build](#customize-docker-build)
      * [Manifest Special Fields](#manifest-special-fields)
      * [Job Manifest](#job-manifest)
      * [Chaos Manifest](#chaos-manifest)
@@ -171,7 +172,7 @@ The basic layout for a stress test is the following (see [`examples/stress_deplo
 
 ```
 <stress test root directory>
-    Dockerfile                          # A Dockerfile for building the stress test image
+    Dockerfile                          # A Dockerfile for building the stress test image. Custom dockerfile names are also supported.
     stress-test-resources.[bicep|json]  # An Azure Bicep or ARM template for deploying stress test azure resources.
 
     Chart.yaml                          # A YAML file containing information about the helm chart and its dependencies
@@ -271,7 +272,7 @@ output RESOURCE_GROUP string = resourceGroup().name
 output AZURE_CLIENT_OID string = testApplicationOid
 ```
 
-### Helm Chart Dependencies
+### Helm Chart File
 
 The `<chart root>/Chart.yaml` file should look something like below. It must include the `stress-test-addons` dependency and the included annotations:
 
@@ -284,6 +285,8 @@ appVersion: v0.1
 annotations:
   stressTest: 'true'  # enable auto-discovery of this test via `find-all-stress-packages.ps1`
   namespace: <your stress test namespace, e.g. python>
+  dockerbuilddir: <OPTIONAL: custom docker build directory when dependencies are located in a parent directory>
+  dockerfile: <OPTIONAL: custom dockerfile path when file is not named Dockerfile>
   <optional key/value annotations for filtering>
 
 dependencies:
@@ -294,6 +297,13 @@ dependencies:
 
 The `stress-test-addons` dependency is a [helm library chart](https://helm.sh/docs/topics/library_charts/), which
 pre-defines a lot of the kubernetes config boilerplate needed to configure stress tests correctly.
+
+#### Customize Docker Build
+
+To customize the docker build behavior, update the following fields in `Chart.yaml`:
+
+- `annotations.dockerbuilddir` - docker build can only reference files within its build directory context. To run the docker build from a higher level context, e.g. to include file dependencies in other locations, set this value.
+- `annotations.dockerfile` - If a stress test directory has multiple dockerfiles that need to be used for different purposes, you can customize which one to build with this field.
 
 ### Manifest Special Fields
 

@@ -41,12 +41,14 @@ variables:
   - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
     value: $(Build.ArtifactStagingDirectory)
 
+pool:
+  name: "azsdk-pool-mms-ubuntu-2004-general"
+  vmImage: "MMSUbuntu20.04"
+  
 stages:
   - stage: Build
     jobs:
       - job: Build
-        pool:
-          vmImage: 'ubuntu-latest'
         steps:
         - task: NodeTool@0
           inputs:

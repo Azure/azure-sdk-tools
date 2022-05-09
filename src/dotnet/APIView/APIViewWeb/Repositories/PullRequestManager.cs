@@ -95,7 +95,7 @@ namespace APIViewWeb.Repositories
                 originalFileName = originalFileName ?? codeFileName;
                 string[] repoInfo = repoName.Split("/");
                 var pullRequestModel = await GetPullRequestModel(prNumber, repoName, packageName, originalFileName);
-                if (pullRequestModel.Commits.Any(c=> c== commitSha))
+                if (pullRequestModel == null || pullRequestModel.Commits.Any(c=> c== commitSha))
                 {
                     // PR commit is already processed. No need to reprocess it again.
                     return "";
@@ -163,6 +163,12 @@ namespace APIViewWeb.Repositories
             {
                 string[] repoInfo = repoName.Split("/");
                 var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
+                if(issue?.PullRequest?.Draft == true)
+                {
+                    // Do not check for api changes if pull request is in draft state
+                    return null;
+                }
+
                 pullRequestModel = new PullRequestModel()
                 {
                     RepoName = repoName,

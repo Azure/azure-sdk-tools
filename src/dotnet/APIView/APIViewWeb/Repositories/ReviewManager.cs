@@ -160,6 +160,8 @@ namespace APIViewWeb.Repositories
                     {
                         var fileOriginal = await _originalsRepository.GetOriginalAsync(file.ReviewFileId);
                         var languageService = GetLanguageService(file.Language);
+                        if (languageService == null)
+                            continue;
 
                         // file.Name property has been repurposed to store package name and version string
                         // This is causing issue when updating review using latest parser since it expects Name field as file name
@@ -319,7 +321,7 @@ namespace APIViewWeb.Repositories
 
         private LanguageService GetLanguageService(string language)
         {
-           return _languageServices.Single(service => service.Name == language);
+           return _languageServices.FirstOrDefault(service => service.Name == language);
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)
@@ -378,7 +380,7 @@ namespace APIViewWeb.Repositories
         {
             return review.Revisions
                .SelectMany(r => r.Files)
-               .Any(f => f.HasOriginal && GetLanguageService(f.Language).CanUpdate(f.VersionString));
+               .Any(f => f.HasOriginal && GetLanguageService(f.Language)?.CanUpdate(f.VersionString) == true);
         }
 
         public async Task<bool> IsReviewSame(ReviewRevisionModel revision, RenderedCodeFile renderedCodeFile)

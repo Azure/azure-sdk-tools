@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/sdk-generation-lib",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,9 +26,9 @@
     "@azure/storage-blob": "^12.8.0",
     "ajv": "^6.12.6",
     "colors": "1.4.0",
-    "convict": "^6.2.1",
+    "convict": "^6.2.2",
     "jsonc-parser": "^3.0.0",
-    "winston": "^3.3.3"
+    "winston": "^3.7.2"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",

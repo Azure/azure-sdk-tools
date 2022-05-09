@@ -54,7 +54,6 @@ class PylintParser:
     @classmethod
     def parse(cls, path):
         from apistub import ApiView
-
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), "pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")

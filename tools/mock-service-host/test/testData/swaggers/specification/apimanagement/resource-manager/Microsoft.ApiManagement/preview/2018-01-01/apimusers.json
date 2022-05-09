@@ -204,6 +204,15 @@
             "description": "Create or update parameters."
           },
           {
+            "name": "test",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Test."
+          },
+          {
             "$ref": "./apimanagement.json#/parameters/IfMatchOptionalParameter"
           },
           {

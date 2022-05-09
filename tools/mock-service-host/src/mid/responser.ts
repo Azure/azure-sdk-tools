@@ -135,8 +135,9 @@ export class ResponseGenerator {
                     urlMappingResult.groups &&
                     urlMappingResult.groups[paramSpec.name]
                 ) {
-                    parameters[paramSpec.name] = decodeURIComponent(
-                        urlMappingResult.groups[paramSpec.name]
+                    parameters[paramSpec.name] = this.resolveValue(
+                        paramSpec,
+                        decodeURIComponent(urlMappingResult.groups[paramSpec.name])
                     )
                     types[paramSpec.name] = ParameterType.Path
                 }
@@ -148,7 +149,10 @@ export class ResponseGenerator {
                     liveRequest.query &&
                     Object.prototype.hasOwnProperty.call(liveRequest.query, paramSpec.name)
                 ) {
-                    parameters[paramSpec.name] = liveRequest.query[paramSpec.name]
+                    parameters[paramSpec.name] = this.resolveValue(
+                        paramSpec,
+                        liveRequest.query[paramSpec.name]
+                    )
                     types[paramSpec.name] = ParameterType.Query
                 }
             } else if (paramSpec.in === ParameterType.Header.toString()) {
@@ -162,6 +166,26 @@ export class ResponseGenerator {
             }
         }
         return { exampleParameter: parameters as SwaggerExampleParameter, parameterTypes: types }
+    }
+
+    private resolveValue(paramSpec: any, value: string | string[]): any {
+        if (!paramSpec.type) {
+            paramSpec = paramSpec.schema
+        }
+        switch (paramSpec.type) {
+            case 'integer':
+                return _.toInteger(value)
+            case 'number':
+                return _.toNumber(value)
+            case 'boolean':
+                return value === 'true'
+            case 'array':
+                return _.map(value, (s) => {
+                    return this.resolveValue(paramSpec.items, s)
+                })
+            default:
+                return value
+        }
     }
 
     private validateRequestByExample(

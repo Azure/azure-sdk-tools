@@ -163,6 +163,10 @@ export async function uploadArtifacts(
             continue;
         }
         const artifacts = p.artifacts;
+        if (!artifacts) {
+            // artifacts is optional
+            continue;
+        }
 
         for (const artifact of artifacts) {
             const artifactName = path.basename(artifact);

@@ -162,8 +162,8 @@ namespace APIViewWeb.Repositories
             if (pullRequestModel == null)
             {
                 string[] repoInfo = repoName.Split("/");
-                var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prNumber);
-                if(issue?.PullRequest?.Draft == true)
+                var pullRequest = await _githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
+                if(pullRequest.Draft == true)
                 {
                     // Do not check for api changes if pull request is in draft state
                     return null;
@@ -174,7 +174,7 @@ namespace APIViewWeb.Repositories
                     RepoName = repoName,
                     PullRequestNumber = prNumber,
                     FilePath = originalFile,
-                    Author = issue.User.Login,
+                    Author = pullRequest.User.Login,
                     PackageName = packageName
                 };
             }

@@ -1,0 +1,45 @@
+parameters:
+- name: Repos
+  type: object
+  default:
+    - Azure/azure-powershell-pr
+    - Azure/azure-sdk-for-go-pr
+    - Azure/azure-sdk-for-java-pr
+    - Azure/azure-sdk-for-js-pr
+    - Azure/azure-sdk-for-net-pr
+    - Azure/azure-sdk-for-python-pr
+
+- name: BranchPrefix
+  type: string
+  default: 'sdkAuto'
+
+- name: PRCreator
+  type: string
+  default: 'azure-sdk'
+
+jobs:
+  - job: SDKAutomationBranchCleanUp
+    pool:
+      name: "azsdk-pool-mms-ubuntu-2004-general"
+      vmImage: "MMSUbuntu20.04"
+    variables:
+      - template: ../../eng/pipelines/templates/variables/globals.yml
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '14.x'
+        displayName: 'Install Node.js'
+
+      - script: |
+          npm install
+          npm run build
+        displayName: 'npm install and build'
+        workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-automation-branch-cleanup
+
+      - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
+        - ${{ each repo in parameters.Repos }}:
+          - bash: |
+              set -e
+              node dist/cleanupBranch.js --repo=${{ repo }} --auth-token=$(azuresdk-github-pat) --branch-prefix=${{ parameters.BranchPrefix }} --pr-creator=${{ parameters.PRCreator }}
+            displayName: Cleanup Branch in ${{ repo }}
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-automation-branch-cleanup

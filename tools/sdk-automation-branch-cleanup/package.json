@@ -1,0 +1,20 @@
+{
+  "name": "@azure-tools/sdk-automation-branch-cleanup",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "rimraf dist && tsc -p ."
+  },
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "18.12.0",
+    "command-line-args": "5.1.1",
+    "tslib": "1.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.31",
+    "rimraf": "3.0.2",
+    "typescript": "3.9.7"
+  }
+}

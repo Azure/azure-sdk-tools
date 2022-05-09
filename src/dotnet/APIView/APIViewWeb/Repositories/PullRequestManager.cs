@@ -281,13 +281,8 @@ namespace APIViewWeb.Repositories
                 var renderedCodeFile = new RenderedCodeFile(codeFile);
                 if (await IsReviewSame(review, renderedCodeFile))
                 {
-                    //Do not update the comment if review was already created and it matches with current revision.
-                    if (pullRequestModel.ReviewId != null)
-                        return "";
-
-                    //Baseline review was not created earlier or this is the first commit of PR
-                    stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
-                    return stringBuilder.ToString();
+                    // Disable the comment when API change is not detected.
+                    return "";
                 }
 
                 if (pullRequestModel.ReviewId != null)
@@ -300,10 +295,7 @@ namespace APIViewWeb.Repositories
                     review.ReviewId = pullRequestModel.ReviewId;
                     if (await IsReviewSame(review, renderedCodeFile))
                     {
-                        // We will run into this if some one makes unintended API changes in a PR and then reverts it back.
-                        // We must clear previous comment and update it to show no changes found.
-                        stringBuilder.Append($"API changes are not detected in this pull request for `{codeFile.PackageName}`");
-                        return stringBuilder.ToString();
+                        return "";
                     }
                     // Update revision ID to previous revision ID so existing comments linked to previous revision 
                     // will not become invalid. Similarly previously generated link will still be valid.

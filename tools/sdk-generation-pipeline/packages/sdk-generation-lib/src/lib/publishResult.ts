@@ -4,15 +4,17 @@ import * as path from 'path';
 import { Connection } from 'typeorm';
 
 import { AzureBlobClient } from '../utils/blob/AzureBlobClient';
-import { logger } from '../utils/logger';
-import { AzureSDKTaskName, PipelineStatus } from '../types/commonType';
-import { TaskResult } from '../types/taskResult';
-import { TaskResultDaoImpl } from '../utils/db/taskResultDaoImpl';
-import { TaskResultDao } from '../utils/db/taskResultDao';
+import { AzureSDKTaskName, SDKPipelineStatus } from '../types/commonType';
 import { CodeGeneration } from '../types/codeGeneration';
-import { CodeGenerationDaoImpl } from '../utils/db/codeGenerationDaoImpl';
 import { CodeGenerationDao } from '../utils/db/codeGenerationDao';
+import { CodeGenerationDaoImpl } from '../utils/db/codeGenerationDaoImpl';
+import { EventHubProducer } from '../utils/eventhub/EventHubProducer';
 import { GenerateAndBuildOutput } from '../types/taskInputAndOuputSchemaTypes/GenerateAndBuildOutput';
+import { logger } from '../utils/logger';
+import { PipelineRunEvent } from '../types/events';
+import { TaskResult } from '../types/taskResult';
+import { TaskResultDao } from '../utils/db/taskResultDao';
+import { TaskResultDaoImpl } from '../utils/db/taskResultDaoImpl';
 
 export async function sendSdkTaskResultToDB(
     pipelineBuildId: string,
@@ -40,7 +42,7 @@ export async function sendSdkGenerationToDB(
     sdkRepo: string,
     codegenRepo: string,
     triggerType: string,
-    status: PipelineStatus,
+    status: SDKPipelineStatus,
     owner?: string,
     tag?: string,
     swaggerPR?: string,
@@ -128,7 +130,7 @@ export async function uploadSourceCode(
         const packageName = p.packageName;
         const packageFolder = p.packageFolder;
 
-        if (fs.existsSync(packageFolder)) {
+        if (packageFolder && fs.existsSync(packageFolder)) {
             for (const filePath of getFileListInPackageFolder(packageFolder)) {
                 if (fs.existsSync(path.join(packageFolder, filePath))) {
                     await azureBlobClient.publishBlob(
@@ -166,5 +168,20 @@ export async function uploadArtifacts(
             const artifactName = path.basename(artifact);
             await azureBlobClient.publishBlob(artifact, `${pipelineBuildId}/${language}/${artifactName}`);
         }
+    }
+}
+
+export async function publishEvent(
+    eventHubConnectionString: string,
+    event: PipelineRunEvent,
+    partitionKey?: string
+): Promise<void> {
+    try {
+        const producer = new EventHubProducer(eventHubConnectionString);
+        await producer.send([JSON.stringify(event)], partitionKey);
+        await producer.close();
+    } catch (e) {
+        logger.error('Failed to send pipeline result:', JSON.stringify(event), e);
+        throw e;
     }
 }

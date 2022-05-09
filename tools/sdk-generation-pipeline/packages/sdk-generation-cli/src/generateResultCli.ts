@@ -29,7 +29,7 @@ async function main() {
         throw new Error(`Task execute result and dockerResultFile is empty`);
     }
 
-    if (config.taskOutputPath) {
+    if (config.taskOutputPath && fs.existsSync(config.taskOutputPath)) {
         taskOutputObj = requireJsonc(config.taskOutputPath);
     }
     if (config.logFilterStr) {

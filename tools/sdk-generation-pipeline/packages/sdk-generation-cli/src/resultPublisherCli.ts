@@ -4,14 +4,20 @@ import { Connection, createConnection } from 'typeorm';
 import {
     AzureSDKTaskName,
     CodeGeneration,
+    CompletedEvent,
+    InProgressEvent,
     logger,
-    PipelineStatus,
+    publishEvent,
+    QueuedEvent,
     requireJsonc,
+    SDKPipelineStatus,
     sendSdkGenerationToDB,
     sendSdkTaskResultToDB,
     StorageType,
     TaskResult,
     TaskResultEntity,
+    Trigger,
+    UnifiedPipelineTrigger,
     uploadLogsAndResult,
 } from '@azure-tools/sdk-generation-lib';
 
@@ -22,6 +28,8 @@ import {
     ResultPublisherDBCGConfig,
     resultPublisherDBResultConfig,
     ResultPublisherDBResultConfig,
+    resultPublisherEventHubConfig,
+    ResultPublisherEventHubConfig,
 } from './cliSchema/resultPublisherConfig';
 
 async function publishBlob() {
@@ -37,7 +45,7 @@ async function publishBlob() {
     );
 }
 
-async function publishDB(pipelineStatus: PipelineStatus) {
+async function publishDB(pipelineStatus: SDKPipelineStatus) {
     resultPublisherDBCGConfig.validate();
     const config: ResultPublisherDBCGConfig = resultPublisherDBCGConfig.getProperties();
     const mongoDbConnection: Connection = await createConnection({
@@ -68,7 +76,7 @@ async function publishDB(pipelineStatus: PipelineStatus) {
         pipelineStatus
     );
 
-    if (pipelineStatus === PipelineStatus.complete) {
+    if (pipelineStatus === 'completed') {
         resultPublisherDBResultConfig.validate();
         const resultConfig: ResultPublisherDBResultConfig = resultPublisherDBResultConfig.getProperties();
         const taskResultsPathArray = JSON.parse(resultConfig.taskResultsPath);
@@ -77,6 +85,8 @@ async function publishDB(pipelineStatus: PipelineStatus) {
         for (const taskResultPath of taskResultsPathArray) {
             if (fs.existsSync(taskResultPath)) {
                 taskResults.push(requireJsonc(taskResultPath));
+            } else {
+                logger.error(`SendSdkGenerationToDB failed !, ${taskResultPath} isn't exist`);
             }
         }
 
@@ -86,7 +96,60 @@ async function publishDB(pipelineStatus: PipelineStatus) {
     await mongoDbConnection.close();
 }
 
-function publishEventhub(pipelineStatus: PipelineStatus) {}
+async function publishEventhub(pipelineStatus: SDKPipelineStatus) {
+    resultPublisherEventHubConfig.validate();
+    const config: ResultPublisherEventHubConfig = resultPublisherEventHubConfig.getProperties();
+    let trigger: any = undefined;
+    if (
+        config.pipelineTriggerSource &&
+        config.pullRequestNumber &&
+        config.headSha &&
+        config.unifiedPipelineBuildId &&
+        config.unifiedPipelineTaskKey
+    ) {
+        trigger = {
+            name: config.triggerName,
+            source: config.pipelineTriggerSource,
+            pullRequestNumber: config.pullRequestNumber,
+            headSha: config.headSha,
+            unifiedPipelineBuildId: config.unifiedPipelineBuildId,
+            unifiedPipelineTaskKey: config.unifiedPipelineTaskKey,
+            unifiedPipelineSubTaskKey: config.unifiedPipelineSubTaskKey,
+        } as UnifiedPipelineTrigger;
+    } else {
+        trigger = { name: config.triggerName } as Trigger;
+    }
+
+    switch (pipelineStatus) {
+        case 'queued':
+            await publishEvent(config.eventHubConnectionString, {
+                status: 'queued',
+                trigger: trigger,
+                pipelineBuildId: config.pipelineBuildId,
+            } as QueuedEvent);
+            break;
+        case 'in_progress':
+            await publishEvent(config.eventHubConnectionString, {
+                status: 'in_progress',
+                trigger: trigger,
+                pipelineBuildId: config.pipelineBuildId,
+            } as InProgressEvent);
+            break;
+        case 'completed':
+            if (!config.resultPath || !config.logPath || !fs.existsSync(config.resultPath)) {
+                throw new Error(`Invalid completed event parameter!`);
+            }
+            const taskResult: TaskResult = requireJsonc(config.resultPath);
+            await publishEvent(config.eventHubConnectionString, {
+                status: 'completed',
+                trigger: trigger,
+                pipelineBuildId: config.pipelineBuildId,
+                logPath: config.logPath,
+                result: taskResult,
+            } as CompletedEvent);
+            break;
+    }
+}
 
 async function main() {
     const args = parseArgs(process.argv);
@@ -98,10 +161,10 @@ async function main() {
             await publishBlob();
             break;
         case StorageType.Db:
-            publishDB(pipelineStatus);
+            await publishDB(pipelineStatus);
             break;
         case StorageType.EventHub:
-            publishEventhub(pipelineStatus);
+            await publishEventhub(pipelineStatus);
             break;
         default:
             throw new Error(`Unknown storageType:${storageType}!`);

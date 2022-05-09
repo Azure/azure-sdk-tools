@@ -76,39 +76,39 @@ export const resultPublisherDBCGConfig = convict<ResultPublisherDBCGConfig>({
     mongodb: {
         server: {
             doc: 'The host used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbHost',
+            format: stringMustHaveLength,
         },
         port: {
             doc: 'The port used to connect db',
-            format: Number,
             default: 10225,
             env: 'sdkGenerationMongoDbPort',
+            format: Number,
         },
         database: {
             doc: 'The database used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbDatabase',
+            format: stringMustHaveLength,
         },
         username: {
             doc: 'The username used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbUsername',
+            format: stringMustHaveLength,
         },
         password: {
             doc: 'The password used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbPassword',
+            format: stringMustHaveLength,
         },
         ssl: {
             doc: 'Whether used ssl to connect db',
-            format: Boolean,
             default: true,
             env: 'sdkGenerationMongoDbSsl',
+            format: Boolean,
         },
     },
     pipelineBuildId: {
@@ -176,39 +176,39 @@ export const resultPublisherDBResultConfig = convict<ResultPublisherDBResultConf
     mongodb: {
         server: {
             doc: 'The host used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbHost',
+            format: stringMustHaveLength,
         },
         port: {
             doc: 'The port used to connect db',
-            format: Number,
             default: 10225,
             env: 'sdkGenerationMongoDbPort',
+            format: Number,
         },
         database: {
             doc: 'The database used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbDatabase',
+            format: stringMustHaveLength,
         },
         username: {
             doc: 'The username used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbUsername',
+            format: stringMustHaveLength,
         },
         password: {
             doc: 'The password used to connect db',
-            format: stringMustHaveLength,
             default: '',
             env: 'sdkGenerationMongoDbPassword',
+            format: stringMustHaveLength,
         },
         ssl: {
             doc: 'Whether used ssl to connect db',
-            format: Boolean,
             default: true,
             env: 'sdkGenerationMongoDbSsl',
+            format: Boolean,
         },
     },
     pipelineBuildId: {
@@ -219,6 +219,93 @@ export const resultPublisherDBResultConfig = convict<ResultPublisherDBResultConf
     taskResultsPath: {
         default: '',
         env: 'TASK_RESULTS_PATH',
+        format: stringMustHaveLength,
+    },
+});
+
+export class ResultPublisherEventHubConfig {
+    eventHubConnectionString: string;
+    partitionKey?: string;
+    pipelineBuildId: string;
+    triggerName: string; // the agent, e.g. UnifiedPipeline, Release, individual
+    pipelineTriggerSource?: string; // e.g. github, openapi_hub
+    pullRequestNumber?: string; // the pull request number if it is triggerred by pr
+    headSha?: string; // the CI commit
+    unifiedPipelineBuildId?: string; // a unique build id unified pipeline assigned for each completed pipeline build id
+    unifiedPipelineTaskKey?: string; // a unified pipeline task key, e.g. LintDiff, Semantic
+    unifiedPipelineSubTaskKey?: string; // sub task key, for dynamic generated sub task message
+    logPath?: string;
+    resultPath?: string;
+}
+
+export const resultPublisherEventHubConfig = convict<ResultPublisherEventHubConfig>({
+    eventHubConnectionString: {
+        default: '',
+        env: 'EVENTHUB_SAS_URL',
+        format: stringMustHaveLength,
+    },
+    partitionKey: {
+        default: '',
+        env: 'PARTITIONKEY',
+        nullable: true,
+        format: String,
+    },
+    pipelineBuildId: {
+        default: '',
+        env: 'PIPELINE_BUILDID',
+        format: stringMustHaveLength,
+    },
+    triggerName: {
+        default: '',
+        env: 'TRIGGER_NAME',
+        format: ['UnifiedPipeline', 'Release', 'individual'],
+    },
+    pipelineTriggerSource: {
+        default: null,
+        env: 'PIPELINE_TRIGGER_SOURCE',
+        nullable: true,
+        format: ['github', 'openapi_hub'],
+    },
+    pullRequestNumber: {
+        default: null,
+        env: 'PULLREQUEST_NUMBER',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    headSha: {
+        default: null,
+        env: 'HEAD_SHA',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    unifiedPipelineBuildId: {
+        default: null,
+        env: 'UNIFIED_PIPELINE_BUILDID',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    unifiedPipelineTaskKey: {
+        default: null,
+        env: 'UNIFIED_PIPELINE_TASKKEY',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    unifiedPipelineSubTaskKey: {
+        default: null,
+        env: 'UNIFIED_PIPELINE_SUBTASKKEY',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    logPath: {
+        default: null,
+        env: 'LOG_PATH',
+        nullable: true,
+        format: stringMustHaveLength,
+    },
+    resultPath: {
+        default: null,
+        env: 'RESULT_PATH',
+        nullable: true,
         format: stringMustHaveLength,
     },
 });

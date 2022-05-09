@@ -34,8 +34,4 @@ export enum StorageType {
     EventHub = 'eventhub',
 }
 
-export enum PipelineStatus {
-    Submit = 'Submit',
-    InProgress = 'in-progress',
-    complete = 'complete',
-}
+export type SDKPipelineStatus = 'bot_update' | 'queued' | 'in_progress' | 'completed' | 'skipped';

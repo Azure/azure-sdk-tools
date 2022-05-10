@@ -416,7 +416,9 @@ export class Coordinator {
     private setStatusToSuccess(ret: any) {
         // set status to succeed to stop polling
         if (ret) {
-            ret.status = 'Succeeded'
+            if (_.has(ret, 'status')) {
+                ret.status = 'Succeeded'
+            }
         } else {
             ret = { status: 'Succeeded' }
         }

@@ -154,7 +154,7 @@ namespace APIViewWeb.Repositories
             bldr.Append(Environment.NewLine).Append(Environment.NewLine);            
             if(prReviews.Count > 0)
             {
-                bldr.Append(PR_APIVIEW_BOT_COMMENT);
+                bldr.Append(PR_APIVIEW_BOT_COMMENT).Append(Environment.NewLine).Append(Environment.NewLine);
                 foreach (var p in prReviews)
                 {
                     var reviewLink = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", p.ReviewId);

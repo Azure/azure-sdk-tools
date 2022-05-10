@@ -168,7 +168,7 @@ export class ResponseGenerator {
         return { exampleParameter: parameters as SwaggerExampleParameter, parameterTypes: types }
     }
 
-    private resolveValue(paramSpec: any, value: string | string[]): any {
+    private resolveValue(paramSpec: any, value: any): any {
         if (!paramSpec.type) {
             paramSpec = paramSpec.schema
         }
@@ -178,7 +178,7 @@ export class ResponseGenerator {
             case 'number':
                 return _.toNumber(value)
             case 'boolean':
-                return value === 'true'
+                return value === 'true' || value === true
             case 'array':
                 return _.map(value, (s) => {
                     return this.resolveValue(paramSpec.items, s)

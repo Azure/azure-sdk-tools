@@ -25,7 +25,9 @@ namespace APIViewWeb.Repositories
     public class PullRequestManager
     {
         static readonly string REVIEW_URL = "https://{hostName}/Assemblies/Review/{ReviewId}";
-        static readonly string PR_APIVIEW_BOT_COMMENT_DENTIFIER = "**APIView has identified API level changes in this PR and created following API reviews.**";
+        static readonly string PR_APIVIEW_BOT_COMMENT_IDENTIFIER = "**API change check**";
+        static readonly string PR_APIVIEW_BOT_COMMENT = "APIView has identified API level changes in this PR and created following API reviews.";
+        static readonly string PR_APIVIEW_BOT_NO_CHANGE_COMMENT = "API changes are not detected in this pull request.";
         static readonly GitHubClient _githubClient = new GitHubClient(new Octokit.ProductHeaderValue("apiview"));
         readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
@@ -125,7 +127,7 @@ namespace APIViewWeb.Repositories
 
                 //Generate combined single comment to update on PR.
                 var prReviews = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, repoName);
-                if (commentOnPR && prReviews.Count > 0)
+                if (commentOnPR)
                 {
                     await CreateOrUpdateComment(prReviews, repoInfo[0], repoInfo[1], prNumber, hostName);
                 }
@@ -148,14 +150,24 @@ namespace APIViewWeb.Repositories
         private async Task CreateOrUpdateComment(List<PullRequestModel> prReviews,string repoOwner, string repoName, int prNumber, string hostName)
         {
             var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);
-            var bldr = new StringBuilder(PR_APIVIEW_BOT_COMMENT_DENTIFIER);
-            bldr.Append(Environment.NewLine).Append(Environment.NewLine);
-
-            foreach(var p in prReviews)
+            var bldr = new StringBuilder(PR_APIVIEW_BOT_COMMENT_IDENTIFIER);
+            bldr.Append(Environment.NewLine).Append(Environment.NewLine);            
+            if(prReviews.Count > 0)
             {
-                var reviewLink = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", p.ReviewId);
-                bldr.Append('[').Append(p.PackageName).Append("](").Append(reviewLink).Append(')');
+                bldr.Append(PR_APIVIEW_BOT_COMMENT);
+                foreach (var p in prReviews)
+                {
+                    var reviewLink = REVIEW_URL.Replace("{hostName}", hostName).Replace("{ReviewId}", p.ReviewId);
+                    bldr.Append('[').Append(p.PackageName).Append("](").Append(reviewLink).Append(')');
+                    bldr.Append(Environment.NewLine);
+                }
+                bldr.Append(Environment.NewLine);
             }
+            else
+            {
+                bldr.Append(PR_APIVIEW_BOT_NO_CHANGE_COMMENT);
+            }
+
             if (existingComment != null)
             {
                 await _githubClient.Issue.Comment.Update(repoOwner, repoName, existingComment.Id, bldr.ToString());

@@ -25,13 +25,13 @@ func ExampleMonitoringSettingsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -47,16 +47,16 @@ func ExampleMonitoringSettingsClient_BeginUpdatePut() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdatePut(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+				AppInsightsInstrumentationKey: to.Ptr("00000000-0000-0000-0000-000000000000"),
 				AppInsightsSamplingRate:       to.Ptr[float64](10),
 				TraceEnabled:                  to.Ptr(true),
 			},
@@ -80,16 +80,16 @@ func ExampleMonitoringSettingsClient_BeginUpdatePatch() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewMonitoringSettingsClient("<subscription-id>", cred, nil)
+	client, err := test.NewMonitoringSettingsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdatePatch(ctx,
-		"<resource-group-name>",
-		"<service-name>",
+		"myResourceGroup",
+		"myservice",
 		test.MonitoringSettingResource{
 			Properties: &test.MonitoringSettingProperties{
-				AppInsightsInstrumentationKey: to.Ptr("<app-insights-instrumentation-key>"),
+				AppInsightsInstrumentationKey: to.Ptr("00000000-0000-0000-0000-000000000000"),
 				AppInsightsSamplingRate:       to.Ptr[float64](10),
 				TraceEnabled:                  to.Ptr(true),
 			},

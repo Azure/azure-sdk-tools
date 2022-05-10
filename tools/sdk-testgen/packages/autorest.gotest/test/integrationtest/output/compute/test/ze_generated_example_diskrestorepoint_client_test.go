@@ -22,15 +22,15 @@ func ExampleDiskRestorePointClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskRestorePointClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<restore-point-collection-name>",
-		"<vm-restore-point-name>",
-		"<disk-restore-point-name>",
+		"myResourceGroup",
+		"rpc",
+		"vmrp",
+		"TestDisk45ceb03433006d1baee0_b70cd924-3362-4a80-93c2-9415eaa12745",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -46,13 +46,13 @@ func ExampleDiskRestorePointClient_NewListByRestorePointPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDiskRestorePointClient("<subscription-id>", cred, nil)
+	client, err := test.NewDiskRestorePointClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByRestorePointPager("<resource-group-name>",
-		"<restore-point-collection-name>",
-		"<vm-restore-point-name>",
+	pager := client.NewListByRestorePointPager("myResourceGroup",
+		"rpc",
+		"vmrp",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

@@ -355,6 +355,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		nil)
 	for certificatesClientNewListPager.More() {
+		_, err := certificatesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step ConfigServers_Validate
@@ -596,6 +599,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		nil)
 	for appsClientNewListPager.More() {
+		_, err := appsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Bindings_Create
@@ -660,6 +666,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.appName,
 		nil)
 	for bindingsClientNewListPager.More() {
+		_, err := bindingsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Bindings_Delete
@@ -737,6 +746,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.appName,
 		nil)
 	for customDomainsClientNewListPager.More() {
+		_, err := customDomainsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Apps_GetResourceUploadUrl
@@ -918,6 +930,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.appName,
 		&test.DeploymentsClientListOptions{Version: []string{}})
 	for deploymentsClientNewListPager.More() {
+		_, err := deploymentsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Deployments_ListForCluster
@@ -925,17 +940,26 @@ func (testsuite *SpringTestSuite) TestSpring() {
 		testsuite.serviceName,
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for deploymentsClientNewListForClusterPager.More() {
+		_, err := deploymentsClientNewListForClusterPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Services_List
 	servicesClientNewListPager := servicesClient.NewListPager(testsuite.resourceGroupName,
 		nil)
 	for servicesClientNewListPager.More() {
+		_, err := servicesClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Services_ListBySubscription
 	servicesClientNewListBySubscriptionPager := servicesClient.NewListBySubscriptionPager(nil)
 	for servicesClientNewListBySubscriptionPager.More() {
+		_, err := servicesClientNewListBySubscriptionPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Deployments_Delete
@@ -998,6 +1022,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 	sKUsClientNewListPager := sKUsClient.NewListPager(nil)
 	for sKUsClientNewListPager.More() {
+		_, err := sKUsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 
 	// From step Operations_List
@@ -1005,6 +1032,9 @@ func (testsuite *SpringTestSuite) TestSpring() {
 	testsuite.Require().NoError(err)
 	operationsClientNewListPager := operationsClient.NewListPager(nil)
 	for operationsClientNewListPager.More() {
+		_, err := operationsClientNewListPager.NextPage(ctx)
+		testsuite.Require().NoError(err)
+		break
 	}
 }
 

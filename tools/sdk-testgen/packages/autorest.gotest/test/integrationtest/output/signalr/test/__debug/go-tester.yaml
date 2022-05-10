@@ -10057,7 +10057,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -10090,10 +10090,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<location>",
+              "eastus",
               test.NameAvailabilityParameters{
-              Name: to.Ptr("<name>"),
-              Type: to.Ptr("<type>"),
+              Name: to.Ptr("mySignalRService"),
+              Type: to.Ptr("Microsoft.SignalRService/SignalR"),
               },
               nil
             opName: CheckNameAvailability
@@ -10148,7 +10148,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_444
@@ -10814,7 +10814,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_448
@@ -10828,7 +10828,7 @@ testModel:
               "myResourceGroup",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
+              "myResourceGroup",
               nil
             opName: NewListByResourceGroupPager
             operation: *ref_446
@@ -11489,7 +11489,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -11510,8 +11510,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: Get
             operation: *ref_451
@@ -12159,7 +12159,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -12504,10 +12504,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               test.ResourceInfo{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Tags: map[string]*string{
               "key1": to.Ptr("value1"),
               },
@@ -12528,25 +12528,25 @@ testModel:
               Flag: to.Ptr(test.FeatureFlagsServiceMode),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("Serverless"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("True"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableMessagingLogs),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("False"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableLiveTrace),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("False"),
               }},
               NetworkACLs: &test.SignalRNetworkACLs{
               DefaultAction: to.Ptr(test.ACLActionDeny),
@@ -12554,14 +12554,14 @@ testModel:
               {
               Allow: []*test.SignalRRequestType{
               to.Ptr(test.SignalRRequestTypeServerConnection)},
-              Name: to.Ptr("<name>"),
+              Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
               }},
               PublicNetwork: &test.NetworkACL{
               Allow: []*test.SignalRRequestType{
               to.Ptr(test.SignalRRequestTypeClientConnection)},
               },
               },
-              PublicNetworkAccess: to.Ptr("<public-network-access>"),
+              PublicNetworkAccess: to.Ptr("Enabled"),
               TLS: &test.SignalRTLSSettings{
               ClientCertEnabled: to.Ptr(false),
               },
@@ -12571,18 +12571,18 @@ testModel:
               Auth: &test.UpstreamAuthSettings{
               Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
               ManagedIdentity: &test.ManagedIdentitySettings{
-              Resource: to.Ptr("<resource>"),
+              Resource: to.Ptr("api://example"),
               },
               },
-              CategoryPattern: to.Ptr("<category-pattern>"),
-              EventPattern: to.Ptr("<event-pattern>"),
-              HubPattern: to.Ptr("<hub-pattern>"),
-              URLTemplate: to.Ptr("<urltemplate>"),
+              CategoryPattern: to.Ptr("*"),
+              EventPattern: to.Ptr("connect,disconnect"),
+              HubPattern: to.Ptr("*"),
+              URLTemplate: to.Ptr("https://example.com/chat/api/connect"),
               }},
               },
               },
               SKU: &test.ResourceSKU{
-              Name: to.Ptr("<name>"),
+              Name: to.Ptr("Standard_S1"),
               Capacity: to.Ptr[int32](1),
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
@@ -13623,7 +13623,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -13644,8 +13644,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: BeginDelete
             operation: *ref_470
@@ -13678,7 +13678,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -14023,10 +14023,10 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               test.ResourceInfo{
-              Location: to.Ptr("<location>"),
+              Location: to.Ptr("eastus"),
               Tags: map[string]*string{
               "key1": to.Ptr("value1"),
               },
@@ -14047,25 +14047,25 @@ testModel:
               Flag: to.Ptr(test.FeatureFlagsServiceMode),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("Serverless"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableConnectivityLogs),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("True"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableMessagingLogs),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("False"),
               },
               {
               Flag: to.Ptr(test.FeatureFlagsEnableLiveTrace),
               Properties: map[string]*string{
               },
-              Value: to.Ptr("<value>"),
+              Value: to.Ptr("False"),
               }},
               NetworkACLs: &test.SignalRNetworkACLs{
               DefaultAction: to.Ptr(test.ACLActionDeny),
@@ -14073,14 +14073,14 @@ testModel:
               {
               Allow: []*test.SignalRRequestType{
               to.Ptr(test.SignalRRequestTypeServerConnection)},
-              Name: to.Ptr("<name>"),
+              Name: to.Ptr("mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e"),
               }},
               PublicNetwork: &test.NetworkACL{
               Allow: []*test.SignalRRequestType{
               to.Ptr(test.SignalRRequestTypeClientConnection)},
               },
               },
-              PublicNetworkAccess: to.Ptr("<public-network-access>"),
+              PublicNetworkAccess: to.Ptr("Enabled"),
               TLS: &test.SignalRTLSSettings{
               ClientCertEnabled: to.Ptr(false),
               },
@@ -14090,18 +14090,18 @@ testModel:
               Auth: &test.UpstreamAuthSettings{
               Type: to.Ptr(test.UpstreamAuthTypeManagedIdentity),
               ManagedIdentity: &test.ManagedIdentitySettings{
-              Resource: to.Ptr("<resource>"),
+              Resource: to.Ptr("api://example"),
               },
               },
-              CategoryPattern: to.Ptr("<category-pattern>"),
-              EventPattern: to.Ptr("<event-pattern>"),
-              HubPattern: to.Ptr("<hub-pattern>"),
-              URLTemplate: to.Ptr("<urltemplate>"),
+              CategoryPattern: to.Ptr("*"),
+              EventPattern: to.Ptr("connect,disconnect"),
+              HubPattern: to.Ptr("*"),
+              URLTemplate: to.Ptr("https://example.com/chat/api/connect"),
               }},
               },
               },
               SKU: &test.ResourceSKU{
-              Name: to.Ptr("<name>"),
+              Name: to.Ptr("Standard_S1"),
               Capacity: to.Ptr[int32](1),
               Tier: to.Ptr(test.SignalRSKUTierStandard),
               },
@@ -14756,7 +14756,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -14777,8 +14777,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: ListKeys
             operation: *ref_480
@@ -14817,7 +14817,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -14851,8 +14851,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               test.RegenerateKeyParameters{
               KeyType: to.Ptr(test.KeyTypePrimary),
               },
@@ -14891,7 +14891,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -14912,8 +14912,8 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: BeginRestart
             operation: *ref_491
@@ -14945,7 +14945,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_506
@@ -14959,7 +14959,7 @@ testModel:
               "eastus",
               nil
             methodParametersPlaceholderOutput: |-
-              "<location>",
+              "eastus",
               nil
             opName: NewListPager
             operation: *ref_494
@@ -15091,7 +15091,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_513
@@ -15111,8 +15111,8 @@ testModel:
               "mySignalRService",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: NewListPager
             operation: *ref_509
@@ -15291,7 +15291,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -15318,9 +15318,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<private-endpoint-connection-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: Get
             operation: *ref_517
@@ -15486,7 +15486,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -15557,16 +15557,16 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<private-endpoint-connection-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+              "myResourceGroup",
+              "mySignalRService",
               test.PrivateEndpointConnection{
               Properties: &test.PrivateEndpointConnectionProperties{
               PrivateEndpoint: &test.PrivateEndpoint{
-              ID: to.Ptr("<id>"),
+              ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
               },
               PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-              ActionsRequired: to.Ptr("<actions-required>"),
+              ActionsRequired: to.Ptr("None"),
               Status: to.Ptr(test.PrivateLinkServiceConnectionStatusApproved),
               },
               },
@@ -15737,7 +15737,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -15764,9 +15764,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<private-endpoint-connection-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: BeginDelete
             operation: *ref_529
@@ -15799,7 +15799,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_548
@@ -15819,8 +15819,8 @@ testModel:
               "mySignalRService",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: NewListPager
             operation: *ref_533
@@ -15963,7 +15963,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             isPageable: *ref_561
@@ -15983,8 +15983,8 @@ testModel:
               "mySignalRService",
               nil
             methodParametersPlaceholderOutput: |-
-              "<resource-group-name>",
-              "<resource-name>",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: NewListPager
             operation: *ref_551
@@ -16090,7 +16090,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: false
             isMultiRespOperation: false
             methodParameters:
@@ -16117,9 +16117,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<shared-private-link-resource-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "upstream",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: Get
             operation: *ref_565
@@ -16215,7 +16215,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -16272,14 +16272,14 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<shared-private-link-resource-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "upstream",
+              "myResourceGroup",
+              "mySignalRService",
               test.SharedPrivateLinkResource{
               Properties: &test.SharedPrivateLinkResourceProperties{
-              GroupID: to.Ptr("<group-id>"),
-              PrivateLinkResourceID: to.Ptr("<private-link-resource-id>"),
-              RequestMessage: to.Ptr("<request-message>"),
+              GroupID: to.Ptr("sites"),
+              PrivateLinkResourceID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Web/sites/myWebApp"),
+              RequestMessage: to.Ptr("Please approve"),
               },
               },
               nil
@@ -16432,7 +16432,7 @@ testModel:
                   language: *ref_368
                 parameter: *ref_182
             clientParametersOutput: '"00000000-0000-0000-0000-000000000000"'
-            clientParametersPlaceholderOutput: '"<subscription-id>"'
+            clientParametersPlaceholderOutput: '"00000000-0000-0000-0000-000000000000"'
             isLRO: true
             isMultiRespOperation: false
             methodParameters:
@@ -16459,9 +16459,9 @@ testModel:
               nil
             methodParametersPlaceholderOutput: |-
               ctx,
-              "<shared-private-link-resource-name>",
-              "<resource-group-name>",
-              "<resource-name>",
+              "upstream",
+              "myResourceGroup",
+              "mySignalRService",
               nil
             opName: BeginDelete
             operation: *ref_578

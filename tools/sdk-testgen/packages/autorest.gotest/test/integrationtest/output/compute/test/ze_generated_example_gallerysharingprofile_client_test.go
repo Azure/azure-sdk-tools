@@ -25,13 +25,13 @@ func ExampleGallerySharingProfileClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewGallerySharingProfileClient("<subscription-id>", cred, nil)
+	client, err := test.NewGallerySharingProfileClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<gallery-name>",
+		"myResourceGroup",
+		"myGalleryName",
 		test.SharingUpdate{
 			Groups: []*test.SharingProfileGroup{
 				{

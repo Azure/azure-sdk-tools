@@ -23,17 +23,17 @@ func ExampleSSHPublicKeysClient_Create() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Create(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		test.SSHPublicKeyResource{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			Properties: &test.SSHPublicKeyResourceProperties{
-				PublicKey: to.Ptr("<public-key>"),
+				PublicKey: to.Ptr("{ssh-rsa public key}"),
 			},
 		},
 		nil)
@@ -51,13 +51,13 @@ func ExampleSSHPublicKeysClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscriptionId}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -73,13 +73,13 @@ func ExampleSSHPublicKeysClient_GenerateKeyPair() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSSHPublicKeysClient("<subscription-id>", cred, nil)
+	client, err := test.NewSSHPublicKeysClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GenerateKeyPair(ctx,
-		"<resource-group-name>",
-		"<ssh-public-key-name>",
+		"myResourceGroup",
+		"mySshPublicKeyName",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

@@ -25,12 +25,12 @@ func ExampleSignalRPrivateEndpointConnectionsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<resource-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"mySignalRService",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -51,14 +51,14 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<private-endpoint-connection-name>",
-		"<resource-group-name>",
-		"<resource-name>",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"myResourceGroup",
+		"mySignalRService",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -74,21 +74,21 @@ func ExampleSignalRPrivateEndpointConnectionsClient_Update() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Update(ctx,
-		"<private-endpoint-connection-name>",
-		"<resource-group-name>",
-		"<resource-name>",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"myResourceGroup",
+		"mySignalRService",
 		test.PrivateEndpointConnection{
 			Properties: &test.PrivateEndpointConnectionProperties{
 				PrivateEndpoint: &test.PrivateEndpoint{
-					ID: to.Ptr("<id>"),
+					ID: to.Ptr("/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/myResourceGroup/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"),
 				},
 				PrivateLinkServiceConnectionState: &test.PrivateLinkServiceConnectionState{
-					ActionsRequired: to.Ptr("<actions-required>"),
+					ActionsRequired: to.Ptr("None"),
 					Status:          to.Ptr(test.PrivateLinkServiceConnectionStatusApproved),
 				},
 			},
@@ -108,14 +108,14 @@ func ExampleSignalRPrivateEndpointConnectionsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSignalRPrivateEndpointConnectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSignalRPrivateEndpointConnectionsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<private-endpoint-connection-name>",
-		"<resource-group-name>",
-		"<resource-name>",
+		"mysignalrservice.1fa229cd-bf3f-47f0-8c49-afb36723997e",
+		"myResourceGroup",
+		"mySignalRService",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

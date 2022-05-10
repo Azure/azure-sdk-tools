@@ -24,13 +24,13 @@ func ExampleCloudServicesUpdateDomainClient_BeginWalkUpdateDomain() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginWalkUpdateDomain(ctx,
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"ConstosoRG",
+		"{cs-name}",
 		1,
 		&test.CloudServicesUpdateDomainClientBeginWalkUpdateDomainOptions{Parameters: nil})
 	if err != nil {
@@ -49,13 +49,13 @@ func ExampleCloudServicesUpdateDomainClient_GetUpdateDomain() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.GetUpdateDomain(ctx,
-		"<resource-group-name>",
-		"<cloud-service-name>",
+		"ConstosoRG",
+		"{cs-name}",
 		1,
 		nil)
 	if err != nil {
@@ -72,12 +72,12 @@ func ExampleCloudServicesUpdateDomainClient_NewListUpdateDomainsPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewCloudServicesUpdateDomainClient("<subscription-id>", cred, nil)
+	client, err := test.NewCloudServicesUpdateDomainClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListUpdateDomainsPager("<resource-group-name>",
-		"<cloud-service-name>",
+	pager := client.NewListUpdateDomainsPager("ConstosoRG",
+		"{cs-name}",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

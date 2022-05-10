@@ -25,20 +25,20 @@ func ExampleSnapshotsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<snapshot-name>",
+		"myResourceGroup",
+		"mySnapshot1",
 		test.Snapshot{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.SnapshotProperties{
 				CreationData: &test.CreationData{
 					CreateOption:     to.Ptr(test.DiskCreateOptionImport),
-					SourceURI:        to.Ptr("<source-uri>"),
-					StorageAccountID: to.Ptr("<storage-account-id>"),
+					SourceURI:        to.Ptr("https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd"),
+					StorageAccountID: to.Ptr("subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/myStorageAccount"),
 				},
 			},
 		},
@@ -61,13 +61,13 @@ func ExampleSnapshotsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<snapshot-name>",
+		"myResourceGroup",
+		"mySnapshot",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -83,11 +83,11 @@ func ExampleSnapshotsClient_NewListByResourceGroupPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByResourceGroupPager("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -108,7 +108,7 @@ func ExampleSnapshotsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewSnapshotsClient("<subscription-id>", cred, nil)
+	client, err := test.NewSnapshotsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}

@@ -23,21 +23,21 @@ func ExampleRestorePointCollectionsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.CreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<restore-point-collection-name>",
+		"myResourceGroup",
+		"myRpc",
 		test.RestorePointCollection{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("norwayeast"),
 			Tags: map[string]*string{
 				"myTag1": to.Ptr("tagValue1"),
 			},
 			Properties: &test.RestorePointCollectionProperties{
 				Source: &test.RestorePointCollectionSourceProperties{
-					ID: to.Ptr("<id>"),
+					ID: to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM"),
 				},
 			},
 		},
@@ -56,13 +56,13 @@ func ExampleRestorePointCollectionsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<restore-point-collection-name>",
+		"myResourceGroup",
+		"myRpc",
 		&test.RestorePointCollectionsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -78,11 +78,11 @@ func ExampleRestorePointCollectionsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
+	pager := client.NewListPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -103,7 +103,7 @@ func ExampleRestorePointCollectionsClient_NewListAllPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewRestorePointCollectionsClient("<subscription-id>", cred, nil)
+	client, err := test.NewRestorePointCollectionsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}

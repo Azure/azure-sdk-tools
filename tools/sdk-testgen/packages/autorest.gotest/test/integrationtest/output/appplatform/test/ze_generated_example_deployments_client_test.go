@@ -25,15 +25,15 @@ func ExampleDeploymentsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -49,15 +49,15 @@ func ExampleDeploymentsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				DeploymentSettings: &test.DeploymentSettings{
@@ -65,15 +65,15 @@ func ExampleDeploymentsClient_BeginCreateOrUpdate() {
 					EnvironmentVariables: map[string]*string{
 						"env": to.Ptr("test"),
 					},
-					JvmOptions:     to.Ptr("<jvm-options>"),
+					JvmOptions:     to.Ptr("-Xms1G -Xmx3G"),
 					MemoryInGB:     to.Ptr[int32](3),
 					RuntimeVersion: to.Ptr(test.RuntimeVersionJava8),
 				},
 				Source: &test.UserSourceInfo{
 					Type:             to.Ptr(test.UserSourceTypeSource),
-					ArtifactSelector: to.Ptr("<artifact-selector>"),
-					RelativePath:     to.Ptr("<relative-path>"),
-					Version:          to.Ptr("<version>"),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 		},
@@ -96,15 +96,15 @@ func ExampleDeploymentsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -122,22 +122,22 @@ func ExampleDeploymentsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		test.DeploymentResource{
 			Properties: &test.DeploymentResourceProperties{
 				Source: &test.UserSourceInfo{
 					Type:             to.Ptr(test.UserSourceTypeSource),
-					ArtifactSelector: to.Ptr("<artifact-selector>"),
-					RelativePath:     to.Ptr("<relative-path>"),
-					Version:          to.Ptr("<version>"),
+					ArtifactSelector: to.Ptr("sub-module-1"),
+					RelativePath:     to.Ptr("resources/a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333-2019082605-e3095339-1723-44b7-8b5e-31b1003978bc"),
+					Version:          to.Ptr("1.0"),
 				},
 			},
 		},
@@ -160,13 +160,13 @@ func ExampleDeploymentsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
+	pager := client.NewListPager("myResourceGroup",
+		"myservice",
+		"myapp",
 		&test.DeploymentsClientListOptions{Version: []string{}})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -187,12 +187,12 @@ func ExampleDeploymentsClient_NewListForClusterPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListForClusterPager("<resource-group-name>",
-		"<service-name>",
+	pager := client.NewListForClusterPager("myResourceGroup",
+		"myservice",
 		&test.DeploymentsClientListForClusterOptions{Version: []string{}})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -213,15 +213,15 @@ func ExampleDeploymentsClient_BeginStart() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginStart(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -239,15 +239,15 @@ func ExampleDeploymentsClient_BeginStop() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginStop(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -265,15 +265,15 @@ func ExampleDeploymentsClient_BeginRestart() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDeploymentsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDeploymentsClient("00000000-0000-0000-0000-000000000000", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginRestart(ctx,
-		"<resource-group-name>",
-		"<service-name>",
-		"<app-name>",
-		"<deployment-name>",
+		"myResourceGroup",
+		"myservice",
+		"myapp",
+		"mydeployment",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

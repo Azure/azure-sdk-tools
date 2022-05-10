@@ -23,15 +23,15 @@ func ExampleDedicatedHostGroupsClient_CreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostGroupsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.CreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<host-group-name>",
+		"myResourceGroup",
+		"myDedicatedHostGroup",
 		test.DedicatedHostGroup{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("westus"),
 			Tags: map[string]*string{
 				"department": to.Ptr("finance"),
 			},
@@ -57,13 +57,13 @@ func ExampleDedicatedHostGroupsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDedicatedHostGroupsClient("<subscription-id>", cred, nil)
+	client, err := test.NewDedicatedHostGroupsClient("{subscriptionId}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<host-group-name>",
+		"myResourceGroup",
+		"myDedicatedHostGroup",
 		&test.DedicatedHostGroupsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)

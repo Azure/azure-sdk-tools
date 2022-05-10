@@ -25,20 +25,20 @@ func ExampleDisksClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-name>",
+		"myResourceGroup",
+		"myDisk",
 		test.Disk{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.DiskProperties{
 				CreationData: &test.CreationData{
 					CreateOption: to.Ptr(test.DiskCreateOptionEmpty),
 				},
-				DiskAccessID:        to.Ptr("<disk-access-id>"),
+				DiskAccessID:        to.Ptr("/subscriptions/{subscription-id}/resourceGroups/myResourceGroup/providers/Microsoft.Compute/diskAccesses/{existing-diskAccess-name}"),
 				DiskSizeGB:          to.Ptr[int32](200),
 				NetworkAccessPolicy: to.Ptr(test.NetworkAccessPolicyAllowPrivate),
 			},
@@ -62,13 +62,13 @@ func ExampleDisksClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<disk-name>",
+		"myResourceGroup",
+		"myDisk",
 		test.DiskUpdate{
 			Properties: &test.DiskUpdateProperties{
 				BurstingEnabled: to.Ptr(true),
@@ -94,13 +94,13 @@ func ExampleDisksClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<disk-name>",
+		"myResourceGroup",
+		"myManagedDisk",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -116,11 +116,11 @@ func ExampleDisksClient_NewListByResourceGroupPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListByResourceGroupPager("<resource-group-name>",
+	pager := client.NewListByResourceGroupPager("myResourceGroup",
 		nil)
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)
@@ -141,7 +141,7 @@ func ExampleDisksClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewDisksClient("<subscription-id>", cred, nil)
+	client, err := test.NewDisksClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}

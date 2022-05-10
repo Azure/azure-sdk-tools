@@ -25,32 +25,32 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginCreateOrUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginCreateOrUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myvmScaleSet",
+		"0",
+		"myRunCommand",
 		test.VirtualMachineRunCommand{
-			Location: to.Ptr("<location>"),
+			Location: to.Ptr("West US"),
 			Properties: &test.VirtualMachineRunCommandProperties{
 				AsyncExecution: to.Ptr(false),
 				Parameters: []*test.RunCommandInputParameter{
 					{
-						Name:  to.Ptr("<name>"),
-						Value: to.Ptr("<value>"),
+						Name:  to.Ptr("param1"),
+						Value: to.Ptr("value1"),
 					},
 					{
-						Name:  to.Ptr("<name>"),
-						Value: to.Ptr("<value>"),
+						Name:  to.Ptr("param2"),
+						Value: to.Ptr("value2"),
 					}},
-				RunAsPassword: to.Ptr("<run-as-password>"),
-				RunAsUser:     to.Ptr("<run-as-user>"),
+				RunAsPassword: to.Ptr("<runAsPassword>"),
+				RunAsUser:     to.Ptr("user1"),
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.Ptr("<script>"),
+					Script: to.Ptr("Write-Host Hello World!"),
 				},
 				TimeoutInSeconds: to.Ptr[int32](3600),
 			},
@@ -74,19 +74,19 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginUpdate() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginUpdate(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myvmScaleSet",
+		"0",
+		"myRunCommand",
 		test.VirtualMachineRunCommandUpdate{
 			Properties: &test.VirtualMachineRunCommandProperties{
 				Source: &test.VirtualMachineRunCommandScriptSource{
-					Script: to.Ptr("<script>"),
+					Script: to.Ptr("Write-Host Script Source Updated!"),
 				},
 			},
 		},
@@ -109,15 +109,15 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_BeginDelete() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	poller, err := client.BeginDelete(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myvmScaleSet",
+		"0",
+		"myRunCommand",
 		nil)
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -135,15 +135,15 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_Get() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 	res, err := client.Get(ctx,
-		"<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
-		"<run-command-name>",
+		"myResourceGroup",
+		"myvmScaleSet",
+		"0",
+		"myRunCommand",
 		&test.VirtualMachineScaleSetVMRunCommandsClientGetOptions{Expand: nil})
 	if err != nil {
 		log.Fatalf("failed to finish the request: %v", err)
@@ -159,13 +159,13 @@ func ExampleVirtualMachineScaleSetVMRunCommandsClient_NewListPager() {
 		log.Fatalf("failed to obtain a credential: %v", err)
 	}
 	ctx := context.Background()
-	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("<subscription-id>", cred, nil)
+	client, err := test.NewVirtualMachineScaleSetVMRunCommandsClient("{subscription-id}", cred, nil)
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
-	pager := client.NewListPager("<resource-group-name>",
-		"<vm-scale-set-name>",
-		"<instance-id>",
+	pager := client.NewListPager("myResourceGroup",
+		"myvmScaleSet",
+		"0",
 		&test.VirtualMachineScaleSetVMRunCommandsClientListOptions{Expand: nil})
 	for pager.More() {
 		nextResult, err := pager.NextPage(ctx)

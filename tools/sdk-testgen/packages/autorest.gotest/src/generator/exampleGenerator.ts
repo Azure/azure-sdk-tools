@@ -17,14 +17,6 @@ export class ExampleDataRender extends MockTestDataRender {
         example.methodParametersPlaceholderOutput = this.toParametersOutput(getAPIParametersSig(op), example.methodParameters);
         example.clientParametersPlaceholderOutput = this.toParametersOutput(getClientParametersSig(example.operationGroup), example.clientParameters);
     }
-
-    protected getRawValue(exampleValue: ExampleValue) {
-        let rawValue = exampleValue.rawValue;
-        if (this.getLanguageName(exampleValue.schema) === 'string' && exampleValue.language) {
-            rawValue = '<' + Helper.toKebabCase(this.getLanguageName(exampleValue)) + '>';
-        }
-        return rawValue;
-    }
 }
 
 export class ExampleCodeGenerator extends BaseCodeGenerator {

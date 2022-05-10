@@ -204,7 +204,7 @@ namespace APIViewWeb.Repositories
             {
                 // Check for comment created for current package.
                 // GitHub issue comment unfortunately doesn't have any key to verify. So we need to check actual body to find the comment.
-                return comments.Where(c => c.Body.Contains(PR_APIVIEW_BOT_COMMENT_DENTIFIER)).LastOrDefault();
+                return comments.Where(c => c.Body.Contains(PR_APIVIEW_BOT_COMMENT_IDENTIFIER)).LastOrDefault();
             }
             return null;
         }

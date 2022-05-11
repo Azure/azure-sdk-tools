@@ -87,21 +87,22 @@ namespace APIViewWeb
             return allReviews.OrderByDescending(r => r.LastUpdated);
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName, ReviewType? filterType = null)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string serviceName, string packageDisplayName, IEnumerable<ReviewType> filterTypes = null)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = false");
             queryStringBuilder.Append(" AND r.ServiceName = @serviceName");
             queryStringBuilder.Append(" AND r.PackageDisplayName = @packageDisplayName");
-            if (filterType != null && filterType != ReviewType.All)
+            if (filterTypes != null && filterTypes.Count() > 0)
             {
-                queryStringBuilder.Append(" AND (IS_DEFINED(r.FilterType) ? r.FilterType : 0) = @filterType ");
+                var filterTypesAsInts = filterTypes.Cast<int>().ToList();
+                var filterTypeAsQueryStr = ArrayToQueryString<int>(filterTypesAsInts);
+                queryStringBuilder.Append(" AND r.FilterType IN {filterTypeAsQueryStr} ");
             }
 
             var reviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@serviceName", serviceName)
-                .WithParameter("@packageDisplayName", packageDisplayName)
-                .WithParameter("@filterType", filterType);
+                .WithParameter("@packageDisplayName", packageDisplayName);
 
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)
@@ -128,19 +129,20 @@ namespace APIViewWeb
             return properties;
         }
 
-        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(List<string> packageNames, List<string> languages,
-            List<string> authors, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit)
+        public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(
+            List<string> search, List<string> languages, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
         {
             (IEnumerable<ReviewModel> Reviews, int TotalCount) result = (Reviews: new List<ReviewModel>(), TotalCount: 0);
 
             // Build up Query
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r");
-            queryStringBuilder.Append(" WHERE IS_DEFINED(r.id)"); // Allows for appending the other query parts in any order
+            queryStringBuilder.Append(" WHERE IS_DEFINED(r.id)"); // Allows for appending the other query parts as AND's in any order
 
-            if (packageNames != null && packageNames.Count > 0)
+            if (search != null && search.Count > 0)
             {
-                var packageNamesAsQueryStr = ArrayToQueryString<string>(packageNames);
-                queryStringBuilder.Append($" AND r.PackageDisplayName IN {packageNamesAsQueryStr}");
+                var searchAsQueryStr = ArrayToQueryString<string>(search);
+                var searchAsSingleString = '"' + String.Join(' ', search) + '"';
+                queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr} OR CONTAINS(r.Name, {searchAsSingleString}, true) OR CONTAINS(r.ServiceName, {searchAsSingleString}, true) OR CONTAINS(r.PackageDisplayName, {searchAsSingleString}, true))");
             }
 
             if (languages != null && languages.Count > 0)
@@ -149,17 +151,11 @@ namespace APIViewWeb
                 queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
             }
 
-            if (authors != null && authors.Count > 0)
-            {
-                var authorsAsQueryStr = ArrayToQueryString<string>(authors);
-                queryStringBuilder.Append($" AND r.Author IN {authorsAsQueryStr}");
-            }
-
             // Tags are ServiceNames for now.
             if (tags != null && tags.Count > 0)
             {
                 var tagsAsQueryStr = ArrayToQueryString<string>(tags);
-                queryStringBuilder.Append($" AND r.ServiceName IN {tagsAsQueryStr}");
+                queryStringBuilder.Append($" AND (r.ServiceName IN {tagsAsQueryStr} OR r.PackageDisplayName IN {tagsAsQueryStr})");
             }
 
             if (isClosed != null)
@@ -175,14 +171,13 @@ namespace APIViewWeb
 
             if (isApproved != null)
             {
-                queryStringBuilder.Append(" AND r.Revisions[0].IsApproved = @isApproved");
+                queryStringBuilder.Append(" AND ARRAY_SLICE(r.Revisions, -1).IsApproved = @isApproved");
             }
 
             // First get the total count to help with paging
             var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
             QueryDefinition countQueryDefinition = new QueryDefinition(countQuery)
                 .WithParameter("@isClosed", isClosed)
-                .WithParameter("@filterTypes", filterTypes)
                 .WithParameter("@isApproved", isApproved);
 
             using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
@@ -191,13 +186,12 @@ namespace APIViewWeb
                 result.TotalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
             }
 
-            queryStringBuilder.Append(" ORDER BY r.Name");
+            queryStringBuilder.Append($" ORDER BY r.{orderBy}, r.Revisions.CreationDate DESC");
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
 
             var reviews = new List<ReviewModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@isClosed", isClosed)
-                .WithParameter("@filterTypes", filterTypes)
                 .WithParameter("@isApproved", isApproved)
                 .WithParameter("@offset", offset)
                 .WithParameter("@limit", limit);
@@ -208,7 +202,7 @@ namespace APIViewWeb
                 FeedResponse<ReviewModel> response = await feedIterator.ReadNextAsync();
                 reviews.AddRange(response);
             }
-            result.Reviews = reviews.OrderBy(r => r.Name).ThenByDescending(r => r.LastUpdated);
+            result.Reviews = reviews;
             return result;
         }
 

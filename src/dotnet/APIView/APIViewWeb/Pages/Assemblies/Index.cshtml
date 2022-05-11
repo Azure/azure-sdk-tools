@@ -12,11 +12,30 @@
 }
 <nav class="navbar-light shadow-sm bg-light sticky-top">
     <div class="container-fluid">
-        <div class="row mx-5 d-flex flex-row align-items-center">
-            <div class="col px-0 py-2 d-flex flex-wrap flex-sm-nowrap flex-row align-items-center">
+        <div class="row mx-5">
+            <div class="col-4 px-0 py-2">
                 <div class="input-group" style="min-width: 200px;">
                     <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.."/>
                 </div>
+            </div>
+            <div class="col-2"></div>
+            <div class="col-6 px-0 d-flex flex-row justify-content-end">
+                    <select class="selectpicker show-tick show-menu-arrow py-2 mr-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border" data-width="120px" data-container="body" id="language-filter-bootstraps-select">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Languages" />
+                    </select>
+                    <select class="selectpicker show-menu-arrow py-2 mr-2" multiple data-live-search="true" title="Tags" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="80px" data-container="body" id="tags-filter-bootstraps-select">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Tags" />
+                    </select>
+                    <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="State" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="85px" data-container="body" id="state-filter-bootstraps-select">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
+                    </select>
+                    <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Status" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="90px" data-container="body" id="status-filter-bootstraps-select">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
+                    </select>
+                    <select class="selectpicker show-menu-arrow py-2 mr-2" multiple title="Type" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="80px" data-container="body" id="type-filter-bootstraps-select">
+                        <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
+                    </select>
+                    <button type="button" class="btn btn-outline-primary btn-sm my-2"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
             </div>
         </div>
     </div>
@@ -202,84 +221,10 @@
         <button type="button" class="btn btn-primary btn-circle btn-circle-xl" data-toggle="modal" data-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
     </div>
 
-    <div class="mx-5 mt-3 row">
-        <div class="col-md-2">
-            <div class="mt-3 row border-left sticky-top" style="top: 70px;">
-                <div class="col">
-                    <h4>Filters</h4>
-                    <select class="selectpicker show-tick show-menu-arrow p-0 mb-2" multiple title="PackageName" data-size="10" data-live-search="true" data-selected-text-format="static" data-style="btn-light border mr-2" data-width="100%" data-container="body" id="name-filter-bootstraps-select">
-                        @foreach (var pkgName in Model.ReviewsProperties.PackageNames)
-                        {
-                            <option value="@pkgName">@pkgName</option>
-                        }
-                    </select>
-                    <select class="selectpicker show-tick show-menu-arrow p-0 mb-2" multiple data-selected-text-format="static" title="Language" data-style="btn-light border mr2" data-width="100%" data-container="body" id="language-filter-bootstraps-select">
-                        @foreach (var language in Model.ReviewsProperties.Languages)
-                        {
-                            <option value="@language">@language</option>
-                        }
-                    </select>
-                    <select class="selectpicker show-menu-arrow p-0 mb-2" multiple data-live-search="true" title="Author" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="author-filter-bootstraps-select">
-                        @foreach (var author in Model.ReviewsProperties.Authors)
-                        {
-                            <option value="@author">@author</option>
-                        }
-                    </select>
-                    <select class="selectpicker show-menu-arrow p-0 mb-2" multiple data-live-search="true" title="Tags" data-size="10" data-selected-text-format="static" data-style="btn-light border" data-width="100%" data-container="body" id="tags-filter-bootstraps-select">
-                        @foreach (var tag in Model.ReviewsProperties.Tags)
-                        {
-                            <option value="@tag">@tag</option>
-                        }
-                    </select>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="open-filter-check">
-                        <label class="form-check-label" for="open-filter-check">
-                        Open
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" type="checkbox" id="closed-filter-check">
-                        <label class="form-check-label" for="closed-filter-check">
-                        Closed
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="manual-filter-check">
-                        <label class="form-check-label" for="manual-filter-check">
-                        Manual
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="automatic-filter-check">
-                        <label class="form-check-label" for="automatic-filter-check">
-                        Automatic
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="pullrequest-filter-check">
-                        <label class="form-check-label" for="pullrequest-filter-check">
-                        Pull Request
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="approved-filter-check">
-                        <label class="form-check-label" for="approved-filter-check">
-                        Approved
-                        </label>
-                    </div>
-                    <div class="form-check border-bottom py-1">
-                        <input class="form-check-input" checked type="checkbox" id="pending-filter-check">
-                        <label class="form-check-label" for="pending-filter-check">
-                        Pending
-                        </label>
-                    </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset</button>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-10" id="reviews-list-partial">
+    <div class="mx-5 row">
+        <div class="col-md-12" id="reviews-filter-partial">
             <partial name="_ReviewsPartial" model="Model.PagedResults" />
-        </div>
+        </div> 
     </div>
 </div>
 

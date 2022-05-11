@@ -85,9 +85,9 @@ namespace APIViewWeb.Repositories
             return _reviewsRepository.GetReviewsAsync(closed, language, packageName: packageName, filterType: filterType);
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, ReviewType filterType)
+        public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(string ServiceName, string PackageName, IEnumerable<ReviewType> filterTypes)
         {
-            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterType);
+            return await _reviewsRepository.GetReviewsAsync(ServiceName, PackageName, filterTypes);
         }
 
         public async Task<IEnumerable<string>> GetReviewProprtiesAsync(string propertyName)
@@ -96,10 +96,9 @@ namespace APIViewWeb.Repositories
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            List<string> packageNames=null, List<string> languages=null, List<string> authors=null, List<string> tags=null, bool? isClosed=null, 
-            List<int> filterTypes=null, bool? isApproved=null, int offset=0, int limit=50) 
+            List<string> search, List<string> languages, List<string> tags, bool? isClosed, List<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy) 
         {
-            var result = await _reviewsRepository.GetReviewsAsync(packageNames, languages, authors, tags, isClosed, filterTypes, isApproved, offset, limit);
+            var result = await _reviewsRepository.GetReviewsAsync(search, languages, tags, isClosed, filterTypes, isApproved, offset, limit, orderBy);
 
             // Calculate and add Previous and Next and Current page to the returned result
             var totalPages = (int)Math.Ceiling((double)result.TotalCount / (double)limit);

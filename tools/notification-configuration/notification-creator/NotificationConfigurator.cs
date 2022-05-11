@@ -191,7 +191,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 if (repoUrl != null)
                 {
-                    repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"`.git$", String.Empty));
+                    repoUrl = new Uri(Regex.Replace(repoUrl.ToString(), @"\.git$", String.Empty));
                 }
                 else
                 {

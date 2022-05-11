@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "languages", HelpText = "List of languages (separated by spaces)")]
             public IEnumerable<Language> Languages { get; set; }
 
-            [Option('v', "languageVersions", HelpText = "Regex of language versions to run")]
+            [Option('v', "language-versions", HelpText = "Regex of language versions to run")]
             public string LanguageVersions { get; set; }
 
             [Option("no-async")]
@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('o', "output-file-prefix", Default = "results/results")]
             public string OutputFilePrefix { get; set; }
 
-            [Option('p', "packageVersions", HelpText = "Regex of package versions to run")]
+            [Option('p', "package-versions", HelpText = "Regex of package versions to run")]
             public string PackageVersions { get; set; }
 
             [Option('s', "services", HelpText = "Regex of services to run")]

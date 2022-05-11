@@ -186,7 +186,16 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 // Get contents of CODEOWNERS
                 logger.LogInformation("Fetching CODEOWNERS file");
-                var managementUrl = new Uri(pipeline.Repository.Properties["manageUrl"]);
+                var managementUrl = default(Uri);
+                if (pipeline.Repository.Properties.ContainsKey("manageUrl"))
+                {
+                    managementUrl = new Uri(pipeline.Repository.Properties["manageUrl"]);
+                }
+                if (managementUrl == null)
+                {
+                    logger.LogWarning("There is no url in pipeline. Url: ", pipeline.Repository.Url);
+                    return;
+                }
                 var codeOwnerEntries = await gitHubService.GetCodeownersFile(managementUrl);
 
                 if (codeOwnerEntries == default)

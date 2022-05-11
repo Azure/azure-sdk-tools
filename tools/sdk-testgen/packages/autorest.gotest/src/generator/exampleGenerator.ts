@@ -5,9 +5,8 @@
 
 import { BaseCodeGenerator } from './baseGenerator';
 import { Config } from '../common/constant';
-import { ExampleModel, ExampleValue, MockTestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
+import { ExampleModel, MockTestDefinitionModel } from '@autorest/testmodeler/dist/src/core/model';
 import { GoExampleModel } from '../common/model';
-import { Helper } from '@autorest/testmodeler/dist/src/util/helper';
 import { MockTestDataRender } from './mockTestGenerator';
 import { getAPIParametersSig, getClientParametersSig } from '../util/codegenBridge';
 

@@ -187,7 +187,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
 
                 // Get contents of CODEOWNERS
                 logger.LogInformation("Fetching CODEOWNERS file");
-                var repoUrl = pipeline.Repository.Url;
+                Uri repoUrl = pipeline.Repository.Url;
 
                 if (repoUrl != null)
                 {
@@ -195,7 +195,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 }
                 else
                 {
-                    logger.LogWarning("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
+                    logger.LogError("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
                     return;
                 }
                 var codeOwnerEntries = await gitHubService.GetCodeownersFile(repoUrl);

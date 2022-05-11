@@ -6,6 +6,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Azure;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -13,6 +14,8 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ReviewManager _manager;
         private readonly UserPreferenceCache _preferenceCache;
+        public const int _defaultPageSize = 50;
+        public const string _defaultSortField = "Name";
 
         public IndexPageModel(ReviewManager manager, UserPreferenceCache preferenceCache)
         {
@@ -26,87 +29,43 @@ namespace APIViewWeb.Pages.Assemblies
         [FromForm]
         public string Label { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public bool Closed { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string Language { get; set; } = "All";
-
-        [BindProperty(SupportsGet = true)]
-        public ReviewType FilterType { get; set; } = ReviewType.Automatic;
-
-        public IEnumerable<ReviewModel> Assemblies { get; set; } = new List<ReviewModel>();
-
-        public IEnumerable<ServiceGroupModel> reviewServices { get; set; }
-
         public ReviewsProperties ReviewsProperties { get; set; } = new ReviewsProperties();
 
-        public (IEnumerable<ReviewModel> Reviews,
-            int TotalCount, int TotalPages, 
+        public (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages,
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(
+            List<string> search = null, List<string> languages=null, List<string> tags=null, List<string> state =null,
+            List<string> status =null, List<string> type =null, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel() {
-                UserName = User.GetGitHubLogin(),
-                FilterType = this.FilterType,
-                Language = this.Language,
-            });
-
-            ReviewsProperties.PackageNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
-            ReviewsProperties.Tags = await _manager.GetReviewProprtiesAsync("ServiceName");
-            ReviewsProperties.Authors = await _manager.GetReviewProprtiesAsync("Author");
-            ReviewsProperties.Languages = await _manager.GetReviewProprtiesAsync("Revisions[0].Files[0].Language");
-            PagedResults = await _manager.GetPagedReviewsAsync(null, null, null, null, false, null, null);
+            await RunGetRequest(search, languages, tags, state, status, type, pageNo, pageSize, sortField);
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
-            List<string> packageNames=null, List<string> languages=null, List<string> authors=null,
-            List<string> tags=null, bool? isClosed=false, bool isOpen=true,
-            bool isManual=true, bool isAutomatic=true, bool isPullRequest=true, bool? isApproved=true,
-            bool isPending=true, int offset=0, int limit=50)
+            List<string> search = null, List<string> languages = null, List<string> tags = null, List<string> state = null,
+            List<string> status = null, List<string> type = null, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            packageNames = packageNames.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            languages = languages.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            authors = authors.Select(x => HttpUtility.UrlDecode(x)).ToList();
-            tags = tags.Select(x => HttpUtility.UrlDecode(x)).ToList();
-
-            // Resolve isClosed value
-            if ((isOpen == true) && (isClosed == false))
-            {
-                isClosed = false;
-            }
-            else if ((isOpen == false) && (isClosed == true))
-            {
-                isClosed = true;
-            }
-            else
-            {
-                isClosed = null;
-            }
-
-            // Resolve FilterType
-            List<int> filterTypes = new List<int>();
-            if (isManual) { filterTypes.Add((int)ReviewType.Manual); } 
-            if (isAutomatic) { filterTypes.Add((int)ReviewType.Automatic); }
-            if (isPullRequest) { filterTypes.Add((int)ReviewType.PullRequest); }
-
-            // Resolve Approval State
-            if ((isApproved == true) && (isPending == false))
-            {
-                isApproved = true;
-            }
-            else if ((isApproved == false) && (isPending == true))
-            {
-                isApproved = false;
-            }
-            else
-            {
-                isApproved = null;
-            }
-
-            PagedResults = await _manager.GetPagedReviewsAsync(packageNames, languages, authors, tags, isClosed, filterTypes, isApproved, offset, limit);
+            await RunGetRequest(search, languages, tags, state, status, type, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
+        }
+
+        public async Task<PartialViewResult> OnGetReviewsTagsAsync(List<string> selectedTags=null)
+        {
+            var serviceNames = await _manager.GetReviewProprtiesAsync("ServiceName");
+            var packageDisplayNames = await _manager.GetReviewProprtiesAsync("PackageDisplayName");
+            ReviewsProperties.Tags.All = serviceNames.Concat(packageDisplayNames);
+
+            selectedTags = selectedTags.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            ReviewsProperties.Tags.Selected = selectedTags;
+            return Partial("_SelectPickerPartial", ReviewsProperties.Tags);
+        }
+
+        public async Task<PartialViewResult> OnGetReviewsLanguagesAsync(List<string> selectedLanguages = null)
+        {
+            ReviewsProperties.Languages.All = await _manager.GetReviewProprtiesAsync("Revisions[0].Files[0].Language");
+            selectedLanguages = selectedLanguages.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            ReviewsProperties.Languages.Selected = selectedLanguages;
+            return Partial("_SelectPickerPartial", ReviewsProperties.Languages);
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -130,21 +89,75 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage();
         }
 
-        public Dictionary<string, string> GetRoutingData(string language = null, bool? closed = null, ReviewType filterType = ReviewType.Manual)
+        private async Task RunGetRequest(List<string> search, List<string> languages, List<string> tags,
+            List<string> state, List<string> status, List<string> type, int pageNo, int pageSize, string sortField)
         {
-            var routingData = new Dictionary<string, string>();
-            routingData["language"] = language ?? Language;
-            routingData["closed"] = (closed ?? Closed) == true ? "true" : "false";
-            routingData["filterType"] = filterType.ToString();
-            return routingData;
+            search = search.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            languages = languages.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            tags = tags.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            state = state.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            status = status.Select(x => HttpUtility.UrlDecode(x)).ToList();
+            type = type.Select(x => HttpUtility.UrlDecode(x)).ToList();
+
+            // Update selected properties
+            ReviewsProperties.State.Selected = state;
+            ReviewsProperties.Status.Selected = status;
+            ReviewsProperties.Type.Selected = type;
+
+            bool? isClosed = null;
+            // Resolve isClosed value
+            if (state.Contains("Open") && !state.Contains("Closed"))
+            {
+                isClosed = false;
+            }
+            else if (!state.Contains("Open") && state.Contains("Closed"))
+            {
+                isClosed = true;
+            }
+            else
+            {
+                isClosed = null;
+            }
+
+            // Resolve FilterType
+            List<int> filterTypes = new List<int>();
+            if (type.Contains("Manual")) { filterTypes.Add((int)ReviewType.Manual); }
+            if (type.Contains("Automatic")) { filterTypes.Add((int)ReviewType.Automatic); }
+            if (type.Contains("PullRequest")) { filterTypes.Add((int)ReviewType.PullRequest); }
+
+            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
+            {
+                UserName = User.GetGitHubLogin(),
+                FilterType = filterTypes.Cast<ReviewType>().ToList(),
+                Language = languages
+            });
+
+            bool? isApproved = null;
+            // Resolve Approval State
+            if (state.Contains("Approved") && !state.Contains("Pending"))
+            {
+                isApproved = true;
+            }
+            else if (!state.Contains("Approved") && state.Contains("Pending"))
+            {
+                isApproved = false;
+            }
+            else
+            {
+                isApproved = null;
+            }
+            var offset = (pageNo - 1) * pageSize;
+
+            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, tags, isClosed, filterTypes, isApproved, offset, pageSize, sortField);
         }
     }
 
     public class ReviewsProperties 
     {
-        public IEnumerable<string> PackageNames { get; set; } = new List<string>();
-        public IEnumerable<string> Tags { get; set; } = new List<string>();
-        public IEnumerable<string> Authors { get; set; } = new List<string>();
-        public IEnumerable<string> Languages { get; set; } = new List<string>();
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Tags = (All : new List<string>(), Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Languages = (All: new List<string>(), Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Open", "Closed" }, Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Manual", "Automatic", "PullRequest" }, Selected: new List<string>());
     }
 }

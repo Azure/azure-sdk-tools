@@ -195,7 +195,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                 }
                 else
                 {
-                    logger.LogWarning("No reposatory url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
+                    logger.LogWarning("No repository url returned from pipeline. Repo id: {0}", pipeline.Repository.Id);
                     return;
                 }
                 var codeOwnerEntries = await gitHubService.GetCodeownersFile(repoUrl);

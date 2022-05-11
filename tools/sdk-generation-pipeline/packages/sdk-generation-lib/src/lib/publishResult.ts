@@ -175,6 +175,78 @@ export async function uploadArtifacts(
     }
 }
 
+export async function publishSourceCode(
+    artifactDir: string,
+    language: string,
+    generateAndBuildOutputJson: GenerateAndBuildOutput
+) {
+    if (language === undefined) {
+        throw new Error('language  is empty!');
+    }
+
+    for (const p of generateAndBuildOutputJson.packages) {
+        const result = p.result;
+        if (result === 'failed') {
+            logger.warn(`Build ${p.packageName} failed, skipped it`);
+            continue;
+        }
+        const packageName = p.packageName;
+        const packageFolder = p.packageFolder;
+
+        if (packageFolder && fs.existsSync(packageFolder)) {
+            for (const filePath of getFileListInPackageFolder(packageFolder)) {
+                if (fs.existsSync(path.join(packageFolder, filePath))) {
+                    child_process.execSync(`mkdir -p ${artifactDir}/${language}/${packageName}`, {
+                        encoding: 'utf8',
+                    });
+                    child_process.execSync(
+                        `cp ${path.join(
+                            packageFolder,
+                            filePath
+                        )} ${artifactDir}/${language}/${packageName}/${filePath}`,
+                        {
+                            encoding: 'utf8',
+                        }
+                    );
+                }
+            }
+        }
+    }
+}
+
+export async function publishArtifacts(
+    artifactDir: string,
+    language: string,
+    generateAndBuildOutputJson: GenerateAndBuildOutput
+) {
+    if (language === undefined) {
+        throw new Error('language  is empty!');
+    }
+
+    for (const p of generateAndBuildOutputJson.packages) {
+        const result = p.result;
+        if (result === 'failed') {
+            logger.warn(`Build ${p.packageName} failed, skipped it`);
+            continue;
+        }
+        const artifacts = p.artifacts;
+        if (!artifacts) {
+            // artifacts is optional
+            continue;
+        }
+
+        for (const artifact of artifacts) {
+            const artifactName = path.basename(artifact);
+            child_process.execSync(`mkdir -p ${artifactDir}/${language}`, {
+                encoding: 'utf8',
+            });
+            child_process.execSync(`cp ${artifact} ${artifactDir}/${language}/${artifactName}`, {
+                encoding: 'utf8',
+            });
+        }
+    }
+}
+
 export async function publishEvent(
     eventHubConnectionString: string,
     event: PipelineRunEvent,

@@ -6,7 +6,7 @@ const stringMustHaveLength = (value: string) => {
     }
 };
 
-export class ArtifactUploaderConfig {
+export class UploadBlobConfig {
     generateAndBuildOutputFile: string;
     pipelineBuildId: string;
     language: string;
@@ -14,7 +14,7 @@ export class ArtifactUploaderConfig {
     azureBlobContainerName: string;
 }
 
-export const artifactUploaderConfig = convict<ArtifactUploaderConfig>({
+export const uploadBlobConfig = convict<UploadBlobConfig>({
     generateAndBuildOutputFile: {
         default: '',
         format: stringMustHaveLength,
@@ -40,5 +40,29 @@ export const artifactUploaderConfig = convict<ArtifactUploaderConfig>({
         env: 'AZURE_BLOB_CONTAINER_NAME',
         nullable: true,
         format: stringMustHaveLength,
+    },
+});
+
+export class UploadPipelineArtifactConfig {
+    generateAndBuildOutputFile: string;
+    artifactDir: string;
+    language: string;
+}
+
+export const uploadPipelineArtifactConfig = convict<UploadPipelineArtifactConfig>({
+    generateAndBuildOutputFile: {
+        default: '',
+        format: stringMustHaveLength,
+        env: 'GENERATE_AND_BUILD_OUTPUTFILE',
+    },
+    artifactDir: {
+        default: '',
+        env: 'ARTIFACT_DIR',
+        format: stringMustHaveLength,
+    },
+    language: {
+        default: '',
+        env: 'LANGUAGE',
+        format: ['js', 'python', 'go', 'net', 'java'],
     },
 });

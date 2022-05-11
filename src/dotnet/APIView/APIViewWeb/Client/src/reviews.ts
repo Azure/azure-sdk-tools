@@ -1,17 +1,12 @@
 ﻿$(() => {
   // Search
-  const reviewsFilterPartial = $( '#reviews-list-partial' );
-  const pkgNameFilter = $( '#name-filter-bootstraps-select' );
+  const defaultPageSize = 50;
+  const reviewsFilterPartial = $( '#reviews-filter-partial' );
   const languageFilter = $( '#language-filter-bootstraps-select' );
   const tagFilter = $( '#tags-filter-bootstraps-select' );
-  const authorFilter = $( '#author-filter-bootstraps-select' );
-  const openFilter = $( '#open-filter-check' );
-  const closedFilter = $( '#closed-filter-check' );
-  const manualFilter = $( '#manual-filter-check' );
-  const automaticFilter = $( '#automatic-filter-check' );
-  const pullRequestFilter = $( '#pullrequest-filter-check' );
-  const approvedFilter = $( '#approved-filter-check' );
-  const pendingFilter = $( '#pending-filter-check' );
+  const stateFilter = $( '#state-filter-bootstraps-select' );
+  const statusFilter = $( '#status-filter-bootstraps-select' );
+  const typeFilter = $( '#type-filter-bootstraps-select' );
 
   const searchBox = $('#reviews-table-search-box');
   const searchContext = $('.review-name') as any;
@@ -19,13 +14,20 @@
   // Enable tooltip
   (<any>$('[data-toggle="tooltip"]')).tooltip();
 
-  function updateListedReviews(pageNo=0)
+  // Computes the uri string using the values of search, pagination and various filters
+  // Invokes partial page update to list of reviews using ajax
+  // Updates the uri displayed on the client
+  function updateListedReviews({ pageNo = 1, pageSize = defaultPageSize, sortField = "Name", search = "" } = {})
   {
-    var uri = "?handler=reviewspartial";
+    var uri = '?handler=reviewspartial';
 
-    pkgNameFilter.children(":selected").each(function() {
-      uri = uri + '&packageNames=' + encodeURIComponent(`${$(this).val()}`);
-    });
+    if (search != null && search.trim() != '')
+    {
+      var searchTerms = search.trim().split(/\s+/);
+      searchTerms.forEach(function(value, index){
+        uri = uri + '&search=' + encodeURIComponent(value);
+      });
+    }
 
     languageFilter.children(":selected").each(function() {
       uri = uri + '&languages=' + encodeURIComponent(`${$(this).val()}`);
@@ -35,29 +37,33 @@
       uri = uri + '&tags=' + encodeURIComponent(`${$(this).val()}`);
     });
     
-    authorFilter.children(":selected").each(function() {
-      uri = uri + '&authors=' + encodeURIComponent(`${$(this).val()}`);
+    stateFilter.children(":selected").each(function() {
+      uri = uri + '&state=' + encodeURIComponent(`${$(this).val()}`);
     });
 
-    uri = uri + '&isOpen=' + openFilter.prop('checked');
-    uri = uri + '&isClosed=' + closedFilter.prop('checked');
-    uri = uri + '&isManual=' + manualFilter.prop('checked');
-    uri = uri + '&isAutomatic=' + automaticFilter.prop('checked');
-    uri = uri + '&isPullRequest=' + pullRequestFilter.prop('checked');
-    uri = uri + '&isApproved=' + approvedFilter.prop('checked');
-    uri = uri + '&isPending=' + pendingFilter.prop('checked');
-    uri = uri + '&offset=' + (pageNo * 50); //50 is the default size of a page
-    uri = encodeURI(uri)
+    statusFilter.children(":selected").each(function() {
+      uri = uri + '&status=' + encodeURIComponent(`${$(this).val()}`);
+    });
+
+    typeFilter.children(":selected").each(function() {
+      uri = uri + '&type=' + encodeURIComponent(`${$(this).val()}`);
+    });
+
+    uri = uri + '&pageNo=' + encodeURIComponent(pageNo);
+    uri = uri + '&pageSize=' + encodeURIComponent(pageSize);
+    uri = uri + '&sortField=' + encodeURIComponent(sortField);
+    uri = encodeURI(uri);
 
     $.ajax({
       url: uri
     }).done(function(partialViewResult) {
       reviewsFilterPartial.html(partialViewResult);
+      history.pushState({}, '', uri.replace('handler=reviewspartial&', ''));
       addPaginationEventHandlers(); // This ensures that the event handlers are re-added after ajax refresh
     });
   }
 
-  // Add onclick handler to pagination
+  // Add custom behaviour and event to pagination buttons
   function addPaginationEventHandlers()
   {
     $( '.page-link' ).each(function() {
@@ -65,11 +71,31 @@
         event.preventDefault();
         var linkParts = $(this).prop('href').split('/');
         var pageNo = linkParts[linkParts.length - 1];
-      if (pageNo !== null && pageNo !== undefined)
-      {
-        updateListedReviews(pageNo);
-      }
+        if (pageNo !== null && pageNo !== undefined)
+        {
+          updateListedReviews({ pageNo: pageNo });
+        }
       });
+    });
+  }
+
+  // Triggers partial page update to retriev properties for poulating filter dropdowns
+  function updateFilterDropDown(filter, query)
+  {
+    // update tags dropdown select
+    var uri = `?handler=reviews${query}`;
+    var urlParams = new URLSearchParams(location.search);
+    if (urlParams.has(query))
+    {
+      urlParams.getAll(query).forEach(function(value, index) {
+        uri = uri + `&selected${query}=` + encodeURIComponent(value);
+      });
+    }
+    $.ajax({
+      url: uri
+    }).done(function(partialViewResult) {
+      filter.html(partialViewResult);
+      (<any>filter).selectpicker('refresh');
     });
   }
 
@@ -84,28 +110,30 @@
     });
   }
 
+  // Update content of dropdown on page load
+  $(document).on('ready', function() {
+    updateFilterDropDown(tagFilter, "tags");
+    updateFilterDropDown(languageFilter, "languages");
+    addPaginationEventHandlers();
+  });
+
+
   // Update when any dropdown is changed
-  [pkgNameFilter, languageFilter, tagFilter, authorFilter].forEach(function(value, index) {
+  [languageFilter, tagFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
     value.on('hidden.bs.select', function() {
       updateListedReviews();
     });
   });
-
-  // Update when any checkbox is checked
-  [openFilter, closedFilter, automaticFilter, manualFilter, pullRequestFilter, approvedFilter, pendingFilter].forEach(function(value, index) {
-    value.on('click', function() {
-      updateListedReviews();
-    });
-  });
-
-  addPaginationEventHandlers();
 
   // If already populated from navigating back, filter again
   if (searchBox.val()) {
     filterReviews();
   }
 
-  searchBox.on('input', function() {
-    setTimeout(filterReviews, 300);
+  searchBox.on('keypress', function(e) {
+    if (e.key == "Enter" && searchBox.val() != null)
+    {
+      updateListedReviews({ search : searchBox.val() as string });
+    }
   });
 });
